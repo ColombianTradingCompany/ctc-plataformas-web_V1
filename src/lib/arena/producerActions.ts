@@ -27,7 +27,8 @@ async function requireProducer(): Promise<{ userId: string } | { error: string }
   return { userId: user.id };
 }
 
-export async function postularLote(lotId: string, campaignCode?: string): Promise<PostularResult> {
+/** V5.80 (folio 7, paso 7): el productor puede pedir un descuento por NOTA; CTCx decide la subvención al corroborar. */
+export async function postularLote(lotId: string, campaignCode?: string, notaSolicitud?: string): Promise<PostularResult> {
   const auth = await requireProducer();
   if ("error" in auth) return { ok: false, message: auth.error };
   const service = createServiceRoleClient();
@@ -80,6 +81,7 @@ export async function postularLote(lotId: string, campaignCode?: string): Promis
     entry_code: codeRow.code,
     entry_code_id: codeRow.id,
     season_id: season?.id ?? null,
+    nota_solicitud: notaSolicitud?.trim().slice(0, 600) || null,
   });
   if (error) {
     // UNIQUE(lot_id) — carrera con otra postulación simultánea.
@@ -99,7 +101,7 @@ export async function postularLote(lotId: string, campaignCode?: string): Promis
     producer_id: auth.userId,
     context_label: `Lote ${lot.name}`,
     lot_id: lotId,
-    note: `Su solicitud de evaluación CTC quedó registrada. Código de inscripción: ${codeRow.code}${codeRow.discount_pct > 0 ? ` (descuento ${codeRow.discount_pct}%)` : ""} · valor a pagar: ${formatCop(due)}. Use el código como referencia del pago.`,
+    note: `Su solicitud de evaluación quedó registrada. Código: ${codeRow.code}${codeRow.discount_pct > 0 ? ` (subvención ${codeRow.discount_pct}%)` : ""} · tarifa: ${formatCop(due)}. CTC la corroborará y le emitirá la factura de cobro; con ella paga y envía la muestra de 2 kg contra entrega.`,
   });
 
   return { ok: true, entryCode: codeRow.code, discountPct: codeRow.discount_pct, dueCop: due };

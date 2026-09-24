@@ -116,6 +116,15 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   (`EudrDossierDoc`) deja fuera las retiradas; **(c)+(d)** el **dossier del lote ES/EN** (`/kaffetal-regal/dossier/[id]?lang=`,
   `LotDossierDoc`), enlazado desde «Lotes Galardonados», es la Ficha descargable. **Lo que sigue siendo de KR**: el Pasaporte
   de la finca sigue solo en español (`EudrDossierDoc`); el dossier del lote muestra el estado del Pasaporte pero no lo reemplaza.
+- **Fase 3 del `PLAN_CIRCUITO_DEL_LOTE` (V5.80) — lo que le tocaba a KR, HECHO desde la sesión `consolas` con el mismo sí** (línea
+  en §3): al solicitar la evaluación el productor puede **pedir un descuento por nota** (`postularLote(lotId, código?, nota?)`);
+  la tarjeta dice «Solicitud recibida — CTC la corrobora y emite su factura», luego enseña **la factura de cobro** (`Ver factura`,
+  `src/lib/arena/factura.ts`, la misma plantilla que el OCP) y **solo con factura** las instrucciones de pago; el envío es
+  **contra entrega** (instrucciones y confirmación); «en fila» y «en bache» hablan del Bache de Evaluación y del Centro de
+  Calidad. La barra del lote lee el estado nuevo **`solicitada`** de `estadoDelCircuito()` (`qa-circuito` lo exige). La tarifa que
+  muestra es `EVALUATION_FEE_COP` = $200.000 (`src/lib/trato/terminos.ts`). **Lo que sigue siendo de KR**: el copy «Cupping
+  Arena» y «No abrir antes de la Arena» de las instrucciones de envío y su etiqueta recortable; la caja «Cómo pagar · Nequi»
+  sigue esperando el número (lo escribe el owner).
 - **La Arena y el Club cambiaron (V5.77, fase 1 del `PLAN_CIRCUITO_DEL_LOTE`) — copy de KR con dueño `kaffetal-regal`**: el
   Club como membresía **ya no existe** (firmar y publicar no lo exigen; el galardón no lo reparte), así que `ContratosTab`
   («Pasaporte del Club», `isClubMember`) y el gate visual de «Mis contratos» hablan de algo retirado; la Arena es una **sesión de

@@ -246,6 +246,8 @@ Toda acción del servidor declara su **clase** —qué HACE—, y la clase decid
 | `marcarInteresTtContactado` | BCP · LCP · Terratalento | lo mismo |
 | `setBuzonTags` | LCP · Buzón | etiquetas internas del correo; reversible |
 | `markInboundEmailRead` | LCP · Buzón | leído / no leído; si un viewer no pudiera, abrir su propio correo fallaría en silencio |
+| `ubicarMuestra` | OCP · Gestión de Muestras | dónde queda la muestra y quién la tiene: el cuaderno interno del estante; nadie de fuera lo ve (V5.80) |
+| `anotarSalidaDeMuestra` | OCP · Gestión de Muestras | cuántos gramos salieron y por qué (cata, análisis, al Centro…); se corrige con otra anotación y no avisa a nadie (V5.80) |
 
 **Lo que parece un borrador y NO lo es** (para que nadie lo «arregle»): `logProducerComm` —la nota sobre un productor—
 **la ve el productor** en su panel; `guardarContexto` es la doctrina que lee la redacción asistida; `recordAnchor` alimenta

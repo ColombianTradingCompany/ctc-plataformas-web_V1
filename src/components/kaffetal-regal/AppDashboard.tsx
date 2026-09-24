@@ -174,6 +174,7 @@ export function AppDashboard({
           <EvaluacionesTab
             lots={lots}
             fincas={fincas}
+            productorNombre={userName}
             onRefreshData={onRefreshData}
             onConfirmSampleShipped={onConfirmSampleShipped}
             onVerLotes={irALotes}

@@ -3,46 +3,31 @@
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
-import { ARENA_FEE_COP, MAX_BATCH_LOTS, dueFor, formatCop, isSettled, type InscriptionStatus } from "@/lib/arena/inscriptions";
+import { ARENA_FEE_COP, MAX_BATCH_LOTS, avanzarAFilaSiCompleta, dueFor, formatCop, type InscriptionStatus } from "@/lib/arena/inscriptions";
 import { claimCampaignCode, insertEntryCode } from "@/lib/arena/entryCodes";
 import { generateMejorasDoc } from "@/lib/arena/mejoras";
 import { labEvaluationHasData, labEvaluationScore, toLabEvaluationList, computeFactor, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import { currentSeason, lotSeasonCount, MAX_SEASONS_PER_LOT } from "@/lib/arena/seasons";
+import { saldoDe } from "@/lib/muestras/particion";
 import { ATRIBUTOS_SCA } from "@/lib/fichas/tipos";
 import { gradoPorPuntaje, redondeaPuntaje } from "@/lib/grados/definicion";
 
-// ── Nominados: el tramo pagado de la Arena, lado BCP ────────────────────────
-// Rediseño 2026-07-20 (paquete del owner). El tablero de arriba tiene TRES
-// columnas de inscripciones: Embotellados (postulado >5 días, pago o muestra
-// pendientes) · Recién Nominados (≤5 días, ídem) · En Fila (pagado + muestra
-// ⇒ phase='fila': el POOL — de aquí los baches de sondeo toman lotes, y aquí
-// vuelven los aprobados con su puntaje, listos para asignarse a sesión).
-// Debajo vive el kanban de BACHES DE SONDEO: abierto (Nuevo Sondeo, selección
-// ≤30 del pool) → planeado (Cerrar Bache: lab + Solicitud formal) → pendiente
-// (Bache Enviado con prueba de recibo) → registro (recibido + pruebas
-// entregadas ⇒ B2/B3 por lote, varios por lote, y el veredicto).
+// ── El tramo pagado del lote, lado OCP (era «Nominados»; V5.80 = fase 3 del PLAN_CIRCUITO_DEL_LOTE) ──
+// Folio 7 del owner, pasos 7–12. Lo que vive aquí:
+//   · la solicitud en nombre del productor y el pago (confirmar sobre la factura, asumir el costo, revertir);
+//     la factura, la subvención y el recibo están en `solicitudesActions.ts`;
+//   · los BACHES DE EVALUACIÓN: abierto (se arma con lotes de «Lotes a Evaluar», ≤30) → en_centro (se manda al
+//     Centro de Calidad con su Q-Grader; ya no hay laboratorio externo, prueba de envío ni «solicitud formal»)
+//     → cerrado (todos con veredicto). Hasta la fase 4 (el módulo del socio) el veredicto lo registra CTCx aquí;
+//   · el veredicto (el puntaje manda), el cashback del que no supera y las mejoras IA.
 // Todas las acciones devuelven resultado — nunca lanzan (lección V12).
 
 type Result = { ok: true } | { ok: false; error: string };
 
-// Las DOS secciones que fueron «Nominados» (V5.63): un lote pasa de una a otra al confirmarse pago y muestra.
-const PATHS = ["/ocp/a-evaluar", "/ocp/en-evaluacion", "/ocp/kr", "/bcp"];
+// Las tres vistas del circuito (`nominados/CircuitoVista.tsx`): un lote pasa de una a otra con el pago, la muestra y el bache.
+const PATHS = ["/ocp/solicitudes", "/ocp/a-evaluar", "/ocp/en-evaluacion", "/ocp/muestras", "/ocp/kr", "/bcp"];
 function revalidateAll() {
   for (const p of PATHS) revalidatePath(p);
-}
-
-
-/** Avanza postulacion → fila cuando pago Y muestra están confirmados: el lote
- *  entra al pool desde el que se arman los baches de sondeo. */
-async function maybeAdvanceToFila(service: ReturnType<typeof createServiceRoleClient>, lotId: string) {
-  const [{ data: ins }, { data: lot }] = await Promise.all([
-    service.from("arena_inscriptions").select("id, status, phase").eq("lot_id", lotId).maybeSingle(),
-    service.from("lots").select("sample_2kg_confirmed_at").eq("id", lotId).maybeSingle(),
-  ]);
-  if (!ins || ins.phase !== "postulacion") return;
-  if (isSettled(ins.status as InscriptionStatus) && lot?.sample_2kg_confirmed_at) {
-    await service.from("arena_inscriptions").update({ phase: "fila" }).eq("id", ins.id);
-  }
 }
 
 /** BCP postula en nombre del productor (lotes grandfathered o registrados a mano). */
@@ -97,7 +82,7 @@ export async function postularOnBehalf(lotId: string): Promise<Result> {
     producer_id: lot.producer_id,
     context_label: `Lote ${lot.name}`,
     lot_id: lotId,
-    note: `CTC postuló su lote a la Kaffetal Regal Arena. Código de inscripción: ${codeRow.code} · valor a pagar: ${formatCop(ARENA_FEE_COP)}. Use el código como referencia del pago.`,
+    note: `CTC registró la solicitud de evaluación de su lote. Código: ${codeRow.code} · tarifa: ${formatCop(ARENA_FEE_COP)}. CTC corroborará la solicitud y le emitirá la factura de cobro.`,
     created_by: adminId,
   });
   revalidateAll();
@@ -187,7 +172,7 @@ export async function asumirEvaluacion(lotId: string): Promise<Result> {
     created_by: adminId,
   });
 
-  await maybeAdvanceToFila(service, lotId);
+  await avanzarAFilaSiCompleta(service, lotId);
   revalidateAll();
   return { ok: true };
 }
@@ -196,6 +181,8 @@ export async function asumirEvaluacion(lotId: string): Promise<Result> {
  * Confirma el pago (o la exención cuando el descuento del código es 100%).
  * Sin input de descuento: el % viene EXCLUSIVAMENTE del código aplicado.
  * Este es el momento en que el código queda bloqueado (locked_at).
+ * V5.80 (folio 7, paso 8 → 9): el pago se confirma SOBRE la factura de cobro — sin factura emitida no hay
+ * qué conciliar. La única puerta sin factura es «CTCx asume el costo» (`asumirEvaluacion`).
  */
 export async function confirmInscriptionPayment(lotId: string, paymentRef?: string): Promise<Result> {
   const permiso = await permisoDeEscritura("ocp", "emite");
@@ -205,11 +192,12 @@ export async function confirmInscriptionPayment(lotId: string, paymentRef?: stri
 
   const { data: ins } = await service
     .from("arena_inscriptions")
-    .select("id, status, discount_pct, entry_code, entry_code_id, producer_id, lots(name)")
+    .select("id, status, discount_pct, entry_code, entry_code_id, producer_id, factura_ref, lots(name)")
     .eq("lot_id", lotId)
     .maybeSingle();
   if (!ins) return { ok: false, error: "Postulación no encontrada." };
   if (ins.status !== "pendiente") return { ok: false, error: "Este pago ya está confirmado." };
+  if (!ins.factura_ref) return { ok: false, error: "Emita primero la factura de cobro — el pago se confirma sobre ella." };
 
   const pct = ins.discount_pct;
   const status: InscriptionStatus = pct === 100 ? "exento" : "pagado";
@@ -230,7 +218,7 @@ export async function confirmInscriptionPayment(lotId: string, paymentRef?: stri
     previous_status: "pendiente",
     new_status: status,
     performed_by: adminId,
-    notes: `Código ${ins.entry_code ?? "—"} · descuento ${pct}% · ${formatCop(dueFor(pct))}${paymentRef ? ` · ref ${paymentRef.trim()}` : ""}`,
+    notes: `Factura ${ins.factura_ref} · código ${ins.entry_code ?? "—"} · descuento ${pct}% · ${formatCop(dueFor(pct))}${paymentRef ? ` · ref ${paymentRef.trim()}` : ""}`,
   });
   await service.from("producer_comm_log").insert({
     producer_id: ins.producer_id,
@@ -243,7 +231,7 @@ export async function confirmInscriptionPayment(lotId: string, paymentRef?: stri
     created_by: adminId,
   });
 
-  await maybeAdvanceToFila(service, lotId);
+  await avanzarAFilaSiCompleta(service, lotId);
   revalidateAll();
   return { ok: true };
 }
@@ -280,59 +268,30 @@ export async function unsettleInscription(lotId: string): Promise<Result> {
   return { ok: true };
 }
 
-/** Confirma el recibo físico de la muestra de 2 kg (ya bajo postulación). */
-export async function confirmSampleReceivedNom(lotId: string): Promise<Result> {
-  const permiso = await permisoDeEscritura("ocp", "emite");
-  if (!permiso.ok) return { ok: false as const, error: permiso.error };
-  const adminId = permiso.userId;
-  const service = createServiceRoleClient();
+// (El recibo de la muestra vive desde la V5.80 en `solicitudesActions.ts` → `src/lib/muestras/recibo.ts`:
+//  los kilos reales, la partición del folio 7 y la marca, en una sola acción.)
 
-  const { data: ins } = await service.from("arena_inscriptions").select("id, phase").eq("lot_id", lotId).maybeSingle();
-  if (!ins) return { ok: false, error: "Este lote no está postulado — la muestra se recibe dentro de la postulación." };
-  if (ins.phase !== "postulacion") return { ok: false, error: "La muestra de esta postulación ya fue procesada." };
-
-  const { data: lot } = await service.from("lots").select("stage, sample_shipped_at, sample_2kg_confirmed_at, source").eq("id", lotId).single();
-  if (!lot) return { ok: false, error: "Lote no encontrado." };
-  if (lot.sample_2kg_confirmed_at) return { ok: false, error: "La muestra ya estaba confirmada." };
-  if (!lot.sample_shipped_at && lot.source !== "bcp_manual_entry") {
-    return { ok: false, error: "El productor todavía no ha confirmado el envío de la muestra." };
-  }
-
-  await service.from("lots").update({ sample_2kg_confirmed_at: new Date().toISOString() }).eq("id", lotId);
-  await service.from("audit_log").insert({
-    entity_type: "lot",
-    entity_id: lotId,
-    action: "sample_received",
-    previous_status: lot.stage,
-    new_status: lot.stage, // el stage ya no cambia aquí — fila_arena llega con la sesión
-    performed_by: adminId,
-  });
-  await maybeAdvanceToFila(service, lotId);
-  revalidateAll();
-  return { ok: true };
-}
-
-// ── Baches de Sondeo (ciclo de vida completo, 2026-07-20) ────────────────────
+// ── Baches de Evaluación (V5.80: abierto → en_centro → cerrado) ─────────────
 
 async function auditBatch(service: ReturnType<typeof createServiceRoleClient>, batchId: string, action: string, adminId: string, notes?: string) {
   await service.from("audit_log").insert({ entity_type: "sondeo_batch", entity_id: batchId, action, performed_by: adminId, notes: notes?.slice(0, 300) ?? null });
 }
 
-/** Nuevo Sondeo: un bache abierto al que se le seleccionan lotes del pool. */
+/** Un Bache de Evaluación abierto, al que se le suben lotes de «Lotes a Evaluar». */
 export async function createSondeoBatch(formData: FormData): Promise<Result> {
   const permiso = await permisoDeEscritura("ocp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const label = String(formData.get("label") ?? "").trim();
-  if (!label) return { ok: false, error: "Escriba el nombre del bache (p. ej. «Sondeo agosto 2026»)." };
+  if (!label) return { ok: false, error: "Escriba el nombre del bache (p. ej. «Bache octubre 2026»)." };
   await service.from("sondeo_batches").insert({ label, created_by: adminId });
   revalidateAll();
   return { ok: true };
 }
 
-/** Selección múltiple desde «En Fila»: hasta 30 lotes por bache. Solo entran
- *  lotes del pool SIN sondeo previo (un aprobado no vuelve al laboratorio). */
+/** Selección múltiple desde «Lotes a Evaluar»: hasta 30 lotes por bache. Solo entran
+ *  lotes pagados y recibidos SIN veredicto previo (un evaluado no vuelve al Centro por esta vía). */
 export async function assignLotsToBatch(batchId: string, lotIds: string[]): Promise<Result> {
   const permiso = await permisoDeEscritura("ocp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
@@ -352,8 +311,8 @@ export async function assignLotsToBatch(batchId: string, lotIds: string[]): Prom
   const rows = (insRows as { id: string; lot_id: string; phase: string; sondeo_result: string | null; sondeo_batch_id: string | null }[] | null) ?? [];
   for (const id of ids) {
     const r = rows.find((x) => x.lot_id === id);
-    if (!r || r.phase !== "fila") return { ok: false, error: "Solo se seleccionan lotes de la columna «En Fila»." };
-    if (r.sondeo_result) return { ok: false, error: "Un lote con sondeo registrado no vuelve al laboratorio." };
+    if (!r || r.phase !== "fila") return { ok: false, error: "Solo se suben lotes de «Lotes a Evaluar» (pagados y recibidos)." };
+    if (r.sondeo_result) return { ok: false, error: "Un lote con veredicto registrado no vuelve al Centro por esta vía." };
     if (r.sondeo_batch_id) return { ok: false, error: "Un lote seleccionado ya está en otro bache." };
   }
   for (const r of rows) {
@@ -406,104 +365,98 @@ export async function removeFromBatch(lotId: string): Promise<Result> {
   return { ok: true };
 }
 
-/** «Cerrar Bache de sondeo»: abierto → planeado. Ahora se define el laboratorio
- *  y se produce la Solicitud de Bache de muestras (documento formal). */
-export async function planSondeoBatch(batchId: string): Promise<Result> {
+/**
+ * «Enviar al Centro de Calidad»: abierto → en_centro (folio 7, paso 10: «los lotes se apilan en Baches de
+ * Evaluación que van al Q-Grader»). Sin laboratorio externo, sin prueba de envío, sin solicitud formal. El
+ * Q-Grader se escribe aquí HASTA la fase 4 (respuesta 5 del owner: con la credencial del Centro deja de
+ * teclearse); su nombre firma la planilla oficial al galardonar. Cada lote deja una salida de su muestra de
+ * evaluación (`muestra_movimientos`, motivo `a_centro`) y su productor recibe una nota.
+ */
+export async function enviarAlCentro(batchId: string, formData: FormData): Promise<Result> {
   const permiso = await permisoDeEscritura("ocp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
-  const [{ data: batch }, { count }] = await Promise.all([
+  const qGrader = String(formData.get("q_grader") ?? "").trim();
+  if (!qGrader) return { ok: false, error: "Escriba el nombre del Q-Grader que evaluará el bache — firma la planilla oficial." };
+
+  const [{ data: batch }, { data: insRows }, { data: centros }] = await Promise.all([
     service.from("sondeo_batches").select("id, status, label").eq("id", batchId).maybeSingle(),
-    service.from("arena_inscriptions").select("id", { count: "exact", head: true }).eq("sondeo_batch_id", batchId),
+    service.from("arena_inscriptions").select("id, lot_id, producer_id, lots(name)").eq("sondeo_batch_id", batchId).eq("phase", "sondeo"),
+    service.from("partner_accounts").select("profile_id, org_name").eq("node_type", "centro-calidad").eq("status", "active"),
   ]);
   if (!batch || batch.status !== "abierto") return { ok: false, error: "Ese bache no está abierto." };
-  if (!count) return { ok: false, error: "El bache está vacío — seleccione lotes de «En Fila» primero." };
-  await service.from("sondeo_batches").update({ status: "planeado" }).eq("id", batchId);
-  await auditBatch(service, batchId, "batch_planned", adminId, batch.label);
-  revalidateAll();
-  return { ok: true };
-}
+  const lotes = (insRows as { id: string; lot_id: string; producer_id: string; lots: { name: string } | { name: string }[] | null }[] | null) ?? [];
+  if (!lotes.length) return { ok: false, error: "El bache está vacío — suba lotes de «Lotes a Evaluar» primero." };
+  // La credencial del Centro: si hay exactamente una activa, el bache queda a su nombre (la fase 4 la usa).
+  const centro = (centros ?? []).length === 1 ? (centros as { profile_id: string; org_name: string }[])[0] : null;
 
-/** Datos del laboratorio que recibirá el bache (editable mientras está planeado).
- *  Desde V5.17 incluye el Q-GRADER del bache: su nombre firma la planilla
- *  oficial (`lot_evaluations.q_grader_reference`) cuando el veredicto galardona. */
-export async function setBatchLab(batchId: string, labName: string, labContact: string, qGraderName?: string): Promise<Result> {
-  const permiso = await permisoDeEscritura("ocp", "emite");
-  if (!permiso.ok) return { ok: false as const, error: permiso.error };
-  const service = createServiceRoleClient();
-  const { data: batch } = await service.from("sondeo_batches").select("id, status").eq("id", batchId).maybeSingle();
-  if (!batch || batch.status !== "planeado") return { ok: false, error: "El laboratorio se define con el bache planeado." };
-  if (!labName.trim()) return { ok: false, error: "Escriba el nombre del laboratorio." };
-  await service
+  const now = new Date().toISOString();
+  const { error } = await service
     .from("sondeo_batches")
-    .update({ lab_name: labName.trim(), lab_contact: labContact.trim() || null, q_grader_name: qGraderName?.trim() || null })
+    .update({ status: "en_centro", shipped_at: now, q_grader_name: qGrader, centro_calidad_account_id: centro?.profile_id ?? null })
     .eq("id", batchId);
+  if (error) return { ok: false, error: "No se pudo enviar el bache: " + error.message };
+
+  // La muestra de evaluación de cada lote sale hacia el Centro (lo que quede de ella).
+  const { data: muestras } = await service
+    .from("muestras")
+    .select("id, lot_id, kg")
+    .eq("tipo", "evaluacion")
+    .in("lot_id", lotes.map((l) => l.lot_id));
+  const ids = ((muestras as { id: string }[] | null) ?? []).map((m) => m.id);
+  const { data: salidas } = ids.length ? await service.from("muestra_movimientos").select("muestra_id, kg").in("muestra_id", ids) : { data: [] };
+  for (const m of (muestras as { id: string; lot_id: string; kg: number }[] | null) ?? []) {
+    const saldo = saldoDe(Number(m.kg), ((salidas as { muestra_id: string; kg: number }[] | null) ?? []).filter((s) => s.muestra_id === m.id));
+    if (saldo <= 0) continue;
+    await service.from("muestra_movimientos").insert({
+      muestra_id: m.id,
+      kg: saldo,
+      motivo: "a_centro",
+      destino: centro?.org_name ?? "Centro de Calidad",
+      batch_id: batchId,
+      por: adminId,
+    });
+  }
+
+  await auditBatch(service, batchId, "batch_sent_to_centro", adminId, `${batch.label} · ${lotes.length} lote(s) · Q-Grader ${qGrader}${centro ? ` · ${centro.org_name}` : ""}`);
+  for (const l of lotes) {
+    const lot = (Array.isArray(l.lots) ? l.lots[0] : l.lots) as { name: string } | null;
+    await service.from("producer_comm_log").insert({
+      producer_id: l.producer_id,
+      context_label: lot ? `Lote ${lot.name}` : null,
+      lot_id: l.lot_id,
+      note: `Su lote entró al Bache de Evaluación «${batch.label}» y está en manos del Q-Grader en el Centro de Calidad. El resultado —puntaje, Grado CTC y feedback— le llegará aquí.`,
+      created_by: adminId,
+    });
+  }
   revalidateAll();
   return { ok: true };
 }
 
-/** URL firmada para la prueba de confirmación de recibo (correo del lab en PDF, etc.). */
-export async function createBatchProofUploadUrl(
-  batchId: string,
-  filename: string
-): Promise<{ ok: true; path: string; token: string } | { ok: false; error: string }> {
-  const permiso = await permisoDeEscritura("ocp", "emite");
-  if (!permiso.ok) return { ok: false as const, error: permiso.error };
-  const service = createServiceRoleClient();
-  const clean = filename.replace(/[^\w.\-]+/g, "_").slice(0, 80) || "confirmacion";
-  const path = `sondeo/${batchId}/proof-${Date.now()}-${clean}`;
-  const { data, error } = await service.storage.from("kaffetal-media").createSignedUploadUrl(path);
-  if (error || !data) return { ok: false, error: "No se pudo preparar la subida." };
-  return { ok: true, path, token: data.token };
+/** El bache se cierra solo cuando su último lote recibe veredicto; esto lo hace, sin quejarse si falta alguno. */
+async function cerrarBacheSiTermino(service: ReturnType<typeof createServiceRoleClient>, batchId: string, adminId: string) {
+  const [{ data: batch }, { count }] = await Promise.all([
+    service.from("sondeo_batches").select("id, status, label").eq("id", batchId).maybeSingle(),
+    service.from("arena_inscriptions").select("id", { count: "exact", head: true }).eq("sondeo_batch_id", batchId).eq("phase", "sondeo"),
+  ]);
+  if (!batch || batch.status !== "en_centro" || (count ?? 0) > 0) return;
+  await service.from("sondeo_batches").update({ status: "cerrado", cerrado_at: new Date().toISOString() }).eq("id", batchId);
+  await auditBatch(service, batchId, "batch_closed", adminId, batch.label);
 }
 
-/** «Bache Enviado»: planeado → pendiente. Exige el lab definido Y la prueba de
- *  confirmación de recibo subida — sin soporte no hay seguimiento. */
-export async function markBatchSent(batchId: string, proofPath: string, proofFilename: string): Promise<Result> {
+/** «Cerrar bache» a mano: solo cuando ya no queda ningún lote sin veredicto. */
+export async function cerrarBache(batchId: string): Promise<Result> {
   const permiso = await permisoDeEscritura("ocp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
-  const adminId = permiso.userId;
   const service = createServiceRoleClient();
-  const { data: batch } = await service.from("sondeo_batches").select("id, status, label, lab_name").eq("id", batchId).maybeSingle();
-  if (!batch || batch.status !== "planeado") return { ok: false, error: "Ese bache no está planeado." };
-  if (!batch.lab_name) return { ok: false, error: "Defina primero el laboratorio del bache." };
-  if (!proofPath || !proofFilename) return { ok: false, error: "Adjunte la prueba de confirmación de recibo." };
-  await service
-    .from("sondeo_batches")
-    .update({ status: "pendiente", shipped_at: new Date().toISOString(), proof_storage_path: proofPath, proof_filename: proofFilename })
-    .eq("id", batchId);
-  await auditBatch(service, batchId, "batch_sent", adminId, `${batch.label} · prueba ${proofFilename}`);
-  revalidateAll();
-  return { ok: true };
-}
-
-/** «Bache recibido en Lab» — primera de las dos confirmaciones de pendiente. */
-export async function markBatchReceived(batchId: string): Promise<Result> {
-  const permiso = await permisoDeEscritura("ocp", "emite");
-  if (!permiso.ok) return { ok: false as const, error: permiso.error };
-  const adminId = permiso.userId;
-  const service = createServiceRoleClient();
-  const { data: batch } = await service.from("sondeo_batches").select("id, status").eq("id", batchId).maybeSingle();
-  if (!batch || batch.status !== "pendiente") return { ok: false, error: "Ese bache no está pendiente." };
-  await service.from("sondeo_batches").update({ received_at: new Date().toISOString() }).eq("id", batchId);
-  await auditBatch(service, batchId, "batch_received", adminId);
-  revalidateAll();
-  return { ok: true };
-}
-
-/** «Pruebas entregadas»: pendiente → registro (exige el recibo previo).
- *  A partir de aquí se registran las planillas B2/B3 por lote. */
-export async function markBatchDelivered(batchId: string): Promise<Result> {
-  const permiso = await permisoDeEscritura("ocp", "emite");
-  if (!permiso.ok) return { ok: false as const, error: permiso.error };
-  const adminId = permiso.userId;
-  const service = createServiceRoleClient();
-  const { data: batch } = await service.from("sondeo_batches").select("id, status, received_at").eq("id", batchId).maybeSingle();
-  if (!batch || batch.status !== "pendiente") return { ok: false, error: "Ese bache no está pendiente." };
-  if (!batch.received_at) return { ok: false, error: "Confirme primero «Bache recibido en Lab»." };
-  await service.from("sondeo_batches").update({ status: "registro", delivered_at: new Date().toISOString() }).eq("id", batchId);
-  await auditBatch(service, batchId, "batch_delivered", adminId);
+  const [{ data: batch }, { count }] = await Promise.all([
+    service.from("sondeo_batches").select("id, status").eq("id", batchId).maybeSingle(),
+    service.from("arena_inscriptions").select("id", { count: "exact", head: true }).eq("sondeo_batch_id", batchId).eq("phase", "sondeo"),
+  ]);
+  if (!batch || batch.status !== "en_centro") return { ok: false, error: "Ese bache no está en el Centro de Calidad." };
+  if ((count ?? 0) > 0) return { ok: false, error: `Quedan ${count} lote(s) sin veredicto en este bache.` };
+  await cerrarBacheSiTermino(service, batchId, permiso.userId);
   revalidateAll();
   return { ok: true };
 }
@@ -537,9 +490,9 @@ export async function addSondeoEvaluation(lotId: string, evaluation: LabEvaluati
     .select("id, phase, sondeo_batch_id, sondeo_evaluation")
     .eq("lot_id", lotId)
     .maybeSingle();
-  if (!ins || ins.phase !== "sondeo" || !ins.sondeo_batch_id) return { ok: false, error: "Este lote no está en un bache de sondeo." };
+  if (!ins || ins.phase !== "sondeo" || !ins.sondeo_batch_id) return { ok: false, error: "Este lote no está en un Bache de Evaluación." };
   const { data: batch } = await service.from("sondeo_batches").select("status").eq("id", ins.sondeo_batch_id).maybeSingle();
-  if (batch?.status !== "registro") return { ok: false, error: "El bache aún no está en Registro de Sondeo (recibo + pruebas entregadas primero)." };
+  if (batch?.status !== "en_centro") return { ok: false, error: "El bache no está en el Centro de Calidad — envíelo primero." };
   const list = [...toLabEvaluationList(ins.sondeo_evaluation), { ...evaluation, registered_at: new Date().toISOString() }];
   const { error } = await service.from("arena_inscriptions").update({ sondeo_evaluation: list }).eq("id", ins.id);
   if (error) return { ok: false, error: "No se pudo guardar la planilla." };
@@ -592,16 +545,16 @@ export async function recordEvaluationVerdict(
     .maybeSingle();
   if (!ins || ins.phase !== "sondeo") return { ok: false, error: "Este lote no está en evaluación." };
 
-  // El veredicto solo existe en la fase de REGISTRO del bache: recibido en el
-  // laboratorio y con las pruebas entregadas.
-  if (!ins.sondeo_batch_id) return { ok: false, error: "Este lote no está en un bache de evaluación." };
+  // El veredicto solo existe con el bache EN el Centro de Calidad (V5.80): hasta la fase 4 lo registra CTCx
+  // aquí; después lo escribirá el Q-Grader con su credencial y esto quedará como «confirmar».
+  if (!ins.sondeo_batch_id) return { ok: false, error: "Este lote no está en un Bache de Evaluación." };
   const { data: batch } = await service
     .from("sondeo_batches")
     .select("status, q_grader_name")
     .eq("id", ins.sondeo_batch_id)
     .maybeSingle();
-  if (batch?.status !== "registro") {
-    return { ok: false, error: "El bache aún no está en Registro — confirme recibo y pruebas entregadas primero." };
+  if (batch?.status !== "en_centro") {
+    return { ok: false, error: "El bache no está en el Centro de Calidad — envíelo primero." };
   }
 
   const lot = (Array.isArray(ins.lots) ? ins.lots[0] : ins.lots) as { name: string; stage: string } | null;
@@ -637,7 +590,7 @@ export async function recordEvaluationVerdict(
       return { ok: false, error: `Con puntaje ${puntaje} no hay galardón (mínimo 80). Registre el veredicto como «rechazado».` };
     }
     if (!batch.q_grader_name?.trim()) {
-      return { ok: false, error: "Defina el Q-Grader del bache (junto al laboratorio) — la planilla oficial lleva su nombre." };
+      return { ok: false, error: "Defina el Q-Grader del bache (al enviarlo al Centro) — la planilla oficial lleva su nombre." };
     }
 
     // La planilla del Q-Grader queda como evaluación OFICIAL del lote, con su
@@ -744,13 +697,14 @@ export async function recordEvaluationVerdict(
       producer_id: ins.producer_id,
       context_label: lot ? `Lote ${lot.name}` : null,
       lot_id: lotId,
-      note: `Su café no superó el sondeo preliminar esta vez. Resultado: ${cleanNotes}${cashback ? ` · CTC le reembolsará el 80% de su inscripción (${formatCop(cashback)}) por Nequi.` : ""} En su panel encontrará las Recomendaciones de Mejora.`,
+      note: `Su café no superó la evaluación esta vez. Resultado: ${cleanNotes}${cashback ? ` · CTC le reembolsará el 80% de su inscripción (${formatCop(cashback)}) por Nequi.` : ""} En su panel encontrará las Recomendaciones de Mejora.`,
       created_by: adminId,
     });
     // Best-effort — un fallo de la IA jamás bloquea el registro del resultado.
     await generateMejorasDoc(service, lotId);
   }
 
+  await cerrarBacheSiTermino(service, ins.sondeo_batch_id, adminId);
   revalidateAll();
   return { ok: true };
 }

@@ -119,7 +119,8 @@ export function shipmentInstructionsHtml(lotCode: string, shortRef: string): str
 
   ${layersDiagram(short)}
 
-  <div class="address"><b>Enviar a:</b> ${esc(ADDRESS)} &nbsp;·&nbsp; Al despachar, confirme el envío en su panel (módulo <i>Envío de muestras</i>).</div>
+  <div class="address"><b>Enviar a:</b> ${esc(ADDRESS)} &nbsp;·&nbsp; Al despachar, confirme el envío en su panel (módulo <i>Evaluar mi Café</i>).</div>
+  <div class="address"><b>Contra entrega:</b> despache el paquete <b>con pago del flete al recibir</b> — el envío lo paga CTC cuando llega; a usted no le cuesta nada.</div>
 
   <div class="cutWrap">
     <p class="cutHint">Recorte esta etiqueta por la línea punteada y péguela con cinta transparente sobre la bolsa interior (Capa 1):</p>

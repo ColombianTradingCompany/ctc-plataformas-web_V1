@@ -4,70 +4,75 @@ import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { formatCop, MAX_BATCH_LOTS, type ArenaInscription } from "@/lib/arena/inscriptions";
 import { toLabEvaluationList } from "@/lib/arena/labEvaluation";
 import { segmentPostulacion } from "@/lib/bcp/producerSegments";
+import { NEQUI, PAYMENT_EMAIL } from "@/lib/arena/payment";
+import type { FacturaData } from "@/lib/arena/factura";
+import { TIPO_LABEL, type TipoDeMuestra } from "@/lib/muestras/particion";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { createSondeoBatch } from "../nominadosActions";
 import {
   BatchPicker,
   CashbackControls,
-  ConfirmSampleButton,
+  CerrarBacheButton,
   DeleteBatchButton,
+  EmitirFacturaButton,
+  EnviarAlCentroForm,
   PaymentControls,
-  PendingBatchControls,
-  PlanBatchButton,
-  PlannedBatchControls,
+  ReciboForm,
   RegenerateMejorasButton,
   RemoveFromBatchButton,
   SondeoRegistroControls,
+  SubvencionForm,
+  VerFacturaButton,
 } from "./NominadosClient";
 import styles from "@/components/panel/shared.module.css";
 
-// ── Las dos primeras secciones del circuito del lote (V5.63) ────────────────
-// Este archivo era la página de «Nominados» (rediseño del 2026-07-20): un tablero de inscripciones y, debajo,
-// el kanban de los baches de sondeo. El cuadro del owner (2026-09-19) lo parte en DOS entradas del rail:
+// ── Las tres primeras entradas del circuito del lote (V5.63 → V5.80) ────────
+// Este archivo era la página de «Nominados» (2026-07-20). El cuadro del owner (2026-09-19) lo partió en dos
+// entradas del rail y su folio 7 (2026-09-24, fase 3 del PLAN_CIRCUITO_DEL_LOTE) lo dejó en TRES:
 //
-//   «Lotes a Evaluar»      nota 2 — el productor pidió la evaluación; falta confirmar el pago, la muestra o
-//                          las dos. Son las columnas Embotellados (>5 días esperando) y Recién llegados.
-//   «Lotes en Evaluación»  nota 3 — pagados y recibidos, en cola para la evaluación completa: En Fila, los
-//                          baches y el reembolso de los que no pasaron. Desde aquí se abren las Fichas Técnicas.
+//   «Solicitudes de Evaluación»  pasos 7–9 — el productor pidió la evaluación (y quizá un descuento por nota);
+//                                CTCx decide la subvención, emite la factura de cobro, confirma el pago y recibe
+//                                la muestra (2 kg contra entrega). Recién llegadas / Embotelladas (>5 días).
+//   «Lotes a Evaluar»            paso 10 — «recibe café Y pago». Aquí se arman los Baches de Evaluación (≤30) y
+//                                se mandan al Centro de Calidad.
+//   «Lotes en Evaluación»        los baches en manos del Centro. Hasta la fase 4 (el módulo del socio) el
+//                                veredicto del Q-Grader lo registra CTCx aquí; el que no supera sale con reembolso.
 //
-// Es UNA carga y UN componente con dos vistas, no dos páginas copiadas: las dos leen las mismas inscripciones,
+// Es UNA carga y UN componente con tres vistas, no tres páginas copiadas: todas leen las mismas solicitudes,
 // y un lote pasa de una a otra en cuanto se confirma lo que faltaba.
-//
-// ⚠️ LOS BACHES SIGUEN AQUÍ A PROPÓSITO. La D5 del overhaul los saca de la pantalla, pero
-// `recordEvaluationVerdict` EXIGE hoy que el lote esté en un bache en estado «registro»: quitarlos sin cambiar
-// esa regla dejaría a la casa sin poder evaluar un solo lote. Salen con la fase 4b, que parte el veredicto.
-// Ninguna Server Action cambió.
 
-export type VistaDelCircuito = "a-evaluar" | "en-evaluacion";
+export type VistaDelCircuito = "solicitudes" | "a-evaluar" | "en-evaluacion";
 
-type LotJoin = { id: string; name: string; producer_id: string; stage: string; sample_shipped_at: string | null; sample_2kg_confirmed_at: string | null };
+type LotJoin = { id: string; name: string; producer_id: string; stage: string; source: string; sample_shipped_at: string | null; sample_2kg_confirmed_at: string | null };
 type BatchRow = {
   id: string;
   label: string;
   status: string;
-  lab_name: string | null;
-  lab_contact: string | null;
   q_grader_name: string | null;
-  proof_filename: string | null;
-  received_at: string | null;
-  delivered_at: string | null;
   shipped_at: string | null;
+  cerrado_at: string | null;
   created_at: string;
+  centro_calidad_account_id: string | null;
 };
+type MuestraRow = { id: string; lot_id: string; tipo: TipoDeMuestra; kg: number; ubicacion: string | null };
+
+const fecha = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString("es-CO") : "—");
 
 export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
   const service = createServiceRoleClient();
 
-  const [{ data: insRaw }, { data: batchesRaw }] = await Promise.all([
+  const [{ data: insRaw }, { data: batchesRaw }, { data: campaignsRaw }, { data: centrosRaw }] = await Promise.all([
     service
       .from("arena_inscriptions")
-      .select("*, lots(id, name, producer_id, stage, sample_shipped_at, sample_2kg_confirmed_at)")
-      // Los aptos (phase='arena') ya NO viven en Nominados: pasaron al módulo Arena.
+      .select("*, lots(id, name, producer_id, stage, source, sample_shipped_at, sample_2kg_confirmed_at)")
+      // Los galardonados ya no viven aquí: pasaron a Pendiente de Oferta.
       .in("phase", ["postulacion", "sondeo", "fila", "retirado"]),
     service
       .from("sondeo_batches")
-      .select("id, label, status, lab_name, lab_contact, q_grader_name, proof_filename, received_at, delivered_at, shipped_at, created_at")
+      .select("id, label, status, q_grader_name, shipped_at, cerrado_at, created_at, centro_calidad_account_id")
       .order("created_at", { ascending: false }),
+    service.from("club_campaigns").select("id, name, discount_pct").order("name"),
+    service.from("partner_accounts").select("profile_id, org_name").eq("node_type", "centro-calidad"),
   ]);
 
   const inscriptions = ((insRaw as (ArenaInscription & { lots: LotJoin | LotJoin[] | null })[] | null) ?? []).map((i) => ({
@@ -75,165 +80,125 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
     lot: (Array.isArray(i.lots) ? i.lots[0] : i.lots) as LotJoin | null,
   }));
   const batches = (batchesRaw as BatchRow[] | null) ?? [];
+  const campaigns = ((campaignsRaw as { id: string; name: string; discount_pct: number }[] | null) ?? []).map((c) => ({ id: c.id, name: c.name, pct: c.discount_pct }));
+  const centros = new Map(((centrosRaw as { profile_id: string; org_name: string }[] | null) ?? []).map((c) => [c.profile_id, c.org_name]));
 
-  const postulados = inscriptions.filter((i) => i.phase === "postulacion" && i.lot);
-  const embotellados = postulados.filter((i) => segmentPostulacion({ postulatedAt: i.postulated_at }) === "embotellados");
-  const recien = postulados.filter((i) => segmentPostulacion({ postulatedAt: i.postulated_at }) === "recien");
-  const fila = inscriptions.filter((i) => i.phase === "fila" && i.lot);
+  const solicitadas = inscriptions.filter((i) => i.phase === "postulacion" && i.lot);
+  const embotelladas = solicitadas.filter((i) => segmentPostulacion({ postulatedAt: i.postulated_at }) === "embotellados");
+  const recien = solicitadas.filter((i) => segmentPostulacion({ postulatedAt: i.postulated_at }) === "recien");
+  const aEvaluar = inscriptions.filter((i) => i.phase === "fila" && i.lot);
   const enBache = inscriptions.filter((i) => i.phase === "sondeo" && i.lot);
   const retiradosPend = inscriptions.filter((i) => i.phase === "retirado" && i.cashback_status === "pendiente" && i.lot);
 
-  const producers = await fetchProducerContacts(service, inscriptions.map((i) => i.producer_id));
+  const [producers, { data: muestrasRaw }] = await Promise.all([
+    fetchProducerContacts(service, inscriptions.map((i) => i.producer_id)),
+    service
+      .from("muestras")
+      .select("id, lot_id, tipo, kg, ubicacion")
+      .in("lot_id", [...aEvaluar, ...enBache, ...solicitadas].map((i) => i.lot_id)),
+  ]);
   const name = (producerId: string) => producers.get(producerId)?.fullName ?? "Productor";
+  const muestrasPorLote = new Map<string, MuestraRow[]>();
+  for (const m of (muestrasRaw as MuestraRow[] | null) ?? []) muestrasPorLote.set(m.lot_id, [...(muestrasPorLote.get(m.lot_id) ?? []), m]);
+  const muestraLinea = (lotId: string) => {
+    const ms = muestrasPorLote.get(lotId) ?? [];
+    if (!ms.length) return null;
+    const total = ms.reduce((s, m) => s + Number(m.kg), 0);
+    const ubic = ms.find((m) => m.ubicacion)?.ubicacion;
+    return `${total} kg (${ms.map((m) => `${TIPO_LABEL[m.tipo]} ${Number(m.kg)}`).join(" · ")})${ubic ? ` · en ${ubic}` : ""}`;
+  };
 
-  const postCard = (i: (typeof postulados)[number]) => (
-    <div key={i.id} className={styles.card} style={{ flexDirection: "column", alignItems: "stretch" }}>
-      <b>{i.lot!.name}</b>
-      <p className={styles.meta}>
-        {name(i.producer_id)} · código <span className="mono">{i.entry_code ?? "—"}</span>
-        {i.discount_pct > 0 && ` · descuento ${i.discount_pct}%`}
-        {` · postulado ${new Date(i.postulated_at).toLocaleDateString("es-CO")}`}
-      </p>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-        <span className={`${styles.badge} ${i.status !== "pendiente" ? styles.badgeGood : styles.badgeWarn}`}>
-          {i.status !== "pendiente" ? `Pago ✓ (${i.status})` : `Pago pendiente · ${formatCop(i.amount_due_cop)}`}
-        </span>
-        <span className={`${styles.badge} ${i.lot!.sample_2kg_confirmed_at ? styles.badgeGood : styles.badgeWarn}`}>
-          {i.lot!.sample_2kg_confirmed_at ? "Muestra ✓" : i.lot!.sample_shipped_at ? "Muestra enviada" : "Muestra sin enviar"}
-        </span>
-      </div>
-      <PaymentControls lotId={i.lot_id} status={i.status} entryCode={i.entry_code} dueLabel={formatCop(i.amount_due_cop)} />
-      {!i.lot!.sample_2kg_confirmed_at && <ConfirmSampleButton lotId={i.lot_id} shipped={Boolean(i.lot!.sample_shipped_at)} />}
-    </div>
-  );
+  const facturaDe = (i: (typeof solicitadas)[number]): FacturaData | null =>
+    i.factura_ref && i.factura_emitida_at
+      ? {
+          ref: i.factura_ref,
+          emitidaAt: i.factura_emitida_at,
+          productor: name(i.producer_id),
+          lote: i.lot!.name,
+          codigoLote: ctcLotReferenceShort(i.lot_id),
+          tarifaCop: i.amount_cop,
+          subvencionPct: i.discount_pct,
+          subvencionNombre: campaigns.find((c) => c.id === i.subvencion_id)?.name ?? null,
+          totalCop: i.amount_due_cop,
+          contraEntrega: i.pago_contra_entrega,
+          carril: { nequiNumber: NEQUI.number, nequiHolder: NEQUI.holder, email: PAYMENT_EMAIL },
+        }
+      : null;
 
-  const columns = [
-    { label: "Embotellados", count: embotellados.length, body: embotellados.map(postCard) },
-    { label: "Recién llegados", count: recien.length, body: recien.map(postCard) },
-    {
-      label: "En Fila",
-      count: fila.length,
-      // Sala de espera del sondeo: pago + muestra confirmados, esperando bache.
-      // Los aptos ya no están aquí — pasaron al módulo Arena.
-      body: fila.map((i) => (
-        <div key={i.id} className={styles.card} style={{ flexDirection: "column", alignItems: "stretch" }}>
-          <b>{i.lot!.name}</b>
-          <p className={styles.meta}>{name(i.producer_id)}</p>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <span className={`${styles.badge} ${styles.badgeWarn}`}>Sondeo pendiente — elegible para bache</span>
-          </div>
+  // ── La tarjeta de una solicitud: subvención → factura → pago → recibo ──
+  const solicitudCard = (i: (typeof solicitadas)[number]) => {
+    const pendiente = i.status === "pendiente";
+    const factura = facturaDe(i);
+    const recibida = Boolean(i.lot!.sample_2kg_confirmed_at);
+    const subvencion = campaigns.find((c) => c.id === i.subvencion_id);
+    return (
+      <div key={i.id} className={styles.card} style={{ flexDirection: "column", alignItems: "stretch" }}>
+        <b>{i.lot!.name}</b>
+        <p className={styles.meta}>
+          {name(i.producer_id)} · <span className="mono">{ctcLotReferenceShort(i.lot_id)}</span> · código <span className="mono">{i.entry_code ?? "—"}</span>
+          {` · solicitada ${fecha(i.postulated_at)}`}
+        </p>
+        {i.nota_solicitud && (
+          <p style={{ margin: "2px 0 6px", padding: "6px 10px", borderLeft: "3px solid var(--accent)", background: "var(--paper)", fontSize: 12.5 }}>
+            <b>Pide descuento:</b> «{i.nota_solicitud}»
+          </p>
+        )}
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <span className={`${styles.badge} ${i.discount_pct > 0 ? styles.badgeGood : ""}`}>
+            {i.discount_pct > 0 ? `Subvención ${i.discount_pct} %${subvencion ? ` · ${subvencion.name}` : ""}` : "Sin subvención"}
+          </span>
+          <span className={`${styles.badge} ${factura ? styles.badgeGood : styles.badgeWarn}`}>{factura ? `Factura ${factura.ref}` : "Sin factura"}</span>
+          <span className={`${styles.badge} ${!pendiente ? styles.badgeGood : styles.badgeWarn}`}>
+            {!pendiente ? `Pago ✓ (${i.status})` : `Pago pendiente · ${formatCop(i.amount_due_cop)}`}
+          </span>
+          <span className={`${styles.badge} ${recibida ? styles.badgeGood : styles.badgeWarn}`}>
+            {recibida ? "Muestra ✓" : i.lot!.sample_shipped_at ? "Muestra enviada" : "Muestra sin enviar"}
+          </span>
         </div>
-      )),
-    },
-  ];
 
-  // ── Baches: derivaciones por columna ──
+        {pendiente && (
+          <div style={{ marginTop: 8 }}>
+            <p className={styles.meta} style={{ margin: "0 0 4px" }}>1 · Subvención (la decide CTCx; 30–70 % de la tarifa)</p>
+            <SubvencionForm lotId={i.lot_id} campaigns={campaigns} actualId={i.subvencion_id} />
+          </div>
+        )}
+        <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <p className={styles.meta} style={{ margin: 0 }}>2 · Factura de cobro</p>
+          {factura ? (
+            <>
+              <VerFacturaButton factura={factura} />
+              <span className={styles.meta}>emitida el {fecha(factura.emitidaAt)} · {formatCop(factura.totalCop)}{i.pago_contra_entrega ? " · muestra contra entrega" : ""}</span>
+            </>
+          ) : pendiente ? (
+            <EmitirFacturaButton lotId={i.lot_id} />
+          ) : (
+            <span className={styles.meta}>sin factura (costo asumido por CTCx)</span>
+          )}
+        </div>
+        <p className={styles.meta} style={{ margin: "8px 0 0" }}>3 · Pago</p>
+        <PaymentControls lotId={i.lot_id} status={i.status} entryCode={i.entry_code} dueLabel={formatCop(i.amount_due_cop)} facturaEmitida={Boolean(i.factura_ref)} />
+        <p className={styles.meta} style={{ margin: "8px 0 0" }}>4 · Muestra</p>
+        {recibida ? (
+          <p className={styles.meta} style={{ margin: "4px 0 0" }}>Recibida el {fecha(i.lot!.sample_2kg_confirmed_at)}{muestraLinea(i.lot_id) ? ` · ${muestraLinea(i.lot_id)}` : ""}</p>
+        ) : (
+          <ReciboForm lotId={i.lot_id} shipped={Boolean(i.lot!.sample_shipped_at) || i.lot!.source === "bcp_manual_entry"} />
+        )}
+      </div>
+    );
+  };
+
+  // ── Los baches ──
   const byBatch = new Map<string, typeof enBache>();
   for (const i of enBache) {
     if (!i.sondeo_batch_id) continue;
     byBatch.set(i.sondeo_batch_id, [...(byBatch.get(i.sondeo_batch_id) ?? []), i]);
   }
-  const filaCandidates = fila
-    .filter((i) => !i.sondeo_result)
-    .map((i) => ({ lotId: i.lot_id, name: i.lot!.name, producer: name(i.producer_id) }));
-
   const batchLots = (b: BatchRow) => byBatch.get(b.id) ?? [];
-  const batchHead = (b: BatchRow) => (
-    <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
-      <b style={{ fontSize: 14 }}>{b.label}</b>
-      <span className={styles.badge}>{batchLots(b).length}/{MAX_BATCH_LOTS}</span>
-      {b.lab_name && <span className={styles.meta}>{b.lab_name}</span>}
-      <DeleteBatchButton batchId={b.id} label={b.label} lotCount={batchLots(b).length} />
-    </div>
-  );
+  const candidatos = aEvaluar.filter((i) => !i.sondeo_result).map((i) => ({ lotId: i.lot_id, name: i.lot!.name, producer: name(i.producer_id) }));
 
-  const batchColumns = [
-    {
-      label: "Nuevo Sondeo",
-      items: batches.filter((b) => b.status === "abierto"),
-      render: (b: BatchRow) => (
-        <div key={b.id} className={styles.miniCard}>
-          {batchHead(b)}
-          {batchLots(b).length > 0 && (
-            <div style={{ display: "grid", gap: 4, margin: "8px 0" }}>
-              {batchLots(b).map((i) => (
-                <p key={i.id} className={styles.meta} style={{ margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ flex: 1 }}>{i.lot!.name}</span>
-                  <RemoveFromBatchButton lotId={i.lot_id} />
-                </p>
-              ))}
-            </div>
-          )}
-          <BatchPicker batchId={b.id} candidates={filaCandidates} slotsLeft={MAX_BATCH_LOTS - batchLots(b).length} />
-          <div style={{ marginTop: 8 }}>
-            <PlanBatchButton batchId={b.id} />
-          </div>
-        </div>
-      ),
-    },
-    {
-      label: "Sondeo Planeado",
-      items: batches.filter((b) => b.status === "planeado"),
-      render: (b: BatchRow) => (
-        <div key={b.id} className={styles.miniCard}>
-          {batchHead(b)}
-          <p className={styles.meta} style={{ margin: "4px 0 8px" }}>
-            Defina el laboratorio, imprima la Solicitud y despache; el «Bache Enviado» exige la prueba de recibo.
-          </p>
-          <PlannedBatchControls
-            batch={{ id: b.id, label: b.label, labName: b.lab_name ?? "", labContact: b.lab_contact ?? "", qGraderName: b.q_grader_name ?? "" }}
-            samples={batchLots(b).map((i) => ({ reference: ctcLotReferenceShort(i.lot_id), kg: "2 kg" }))}
-          />
-        </div>
-      ),
-    },
-    {
-      label: "Sondeo Pendiente",
-      items: batches.filter((b) => b.status === "pendiente"),
-      render: (b: BatchRow) => (
-        <div key={b.id} className={styles.miniCard}>
-          {batchHead(b)}
-          <p className={styles.meta} style={{ margin: "4px 0 8px" }}>
-            Despachado el {b.shipped_at ? new Date(b.shipped_at).toLocaleDateString("es-CO") : "—"}
-            {b.proof_filename && ` · prueba: ${b.proof_filename}`}
-          </p>
-          <PendingBatchControls batchId={b.id} received={Boolean(b.received_at)} />
-        </div>
-      ),
-    },
-    {
-      label: "Registro de Sondeo",
-      items: batches.filter((b) => b.status === "registro"),
-      render: (b: BatchRow) => (
-        <div key={b.id} className={styles.miniCard}>
-          {batchHead(b)}
-          <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
-            {batchLots(b).map((i) => (
-              <div key={i.id} style={{ borderTop: "1px dashed var(--line)", paddingTop: 6 }}>
-                <p className={styles.meta} style={{ margin: 0 }}>
-                  <b style={{ color: "var(--ink)" }}>{i.lot!.name}</b> · {name(i.producer_id)} ·{" "}
-                  <span className="mono">{ctcLotReferenceShort(i.lot_id)}</span>
-                </p>
-                <SondeoRegistroControls
-                  lotId={i.lot_id}
-                  lotName={i.lot!.name}
-                  evaluations={toLabEvaluationList(i.sondeo_evaluation)}
-                  resultFilename={i.sondeo_result_filename ?? null}
-                  qGraderName={b.q_grader_name ?? ""}
-                />
-              </div>
-            ))}
-            {!batchLots(b).length && <p className={styles.meta}>Todos los lotes de este bache ya tienen veredicto.</p>}
-          </div>
-        </div>
-      ),
-    },
-  ];
-
-  const columnasDeLaVista = vista === "a-evaluar" ? columns.slice(0, 2) : columns.slice(2);
-  const tablero = (
+  const board = (columns: { label: string; count: number; body: React.ReactNode }[]) => (
     <div className={styles.board}>
-      {columnasDeLaVista.map((col) => (
+      {columns.map((col) => (
         <div className={styles.column} key={col.label}>
           <div className={styles.columnHead}>
             <h3>{col.label}</h3>
@@ -245,79 +210,174 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
     </div>
   );
 
-  if (vista === "a-evaluar") {
+  if (vista === "solicitudes") {
     return (
       <div>
-        <h1 className={styles.title}>Lotes a Evaluar</h1>
+        <h1 className={styles.title}>Solicitudes de Evaluación</h1>
         <p className={styles.subtitle}>
-          El productor confirmó que quiere la evaluación. El lote se queda aquí mientras se confirman <b>el pago</b> y{" "}
-          <b>la muestra</b>; con las dos cosas pasa solo a <Link href="/ocp/en-evaluacion">Lotes en Evaluación</Link>.{" "}
-          <b>Embotellados</b> lleva más de 5 días esperando.
+          El productor pidió la evaluación de su lote (y quizá un descuento, por nota). Aquí CTCx la <b>corrobora</b>: decide la
+          subvención, emite la <b>factura de cobro</b>, confirma el <b>pago</b> y recibe la <b>muestra</b> de 2 kg (viaja contra
+          entrega). Con el pago y la muestra confirmados el lote pasa solo a <Link href="/ocp/a-evaluar">Lotes a Evaluar</Link>.{" "}
+          <b>Embotelladas</b> lleva más de 5 días esperando.
         </p>
-        {tablero}
-        {fila.length + enBache.length > 0 && (
+        {board([
+          { label: "Recién llegadas", count: recien.length, body: recien.map(solicitudCard) },
+          { label: "Embotelladas", count: embotelladas.length, body: embotelladas.map(solicitudCard) },
+        ])}
+        {aEvaluar.length + enBache.length > 0 && (
           <p className={styles.meta} style={{ marginTop: 16 }}>
-            {fila.length + enBache.length} lote(s) ya pagados y recibidos están en <Link href="/ocp/en-evaluacion">Lotes en Evaluación</Link>.
+            {aEvaluar.length} lote(s) ya pagados y recibidos en <Link href="/ocp/a-evaluar">Lotes a Evaluar</Link>
+            {enBache.length > 0 && <> · {enBache.length} en <Link href="/ocp/en-evaluacion">Lotes en Evaluación</Link></>}.
           </p>
         )}
       </div>
     );
   }
 
+  if (vista === "a-evaluar") {
+    const abiertos = batches.filter((b) => b.status === "abierto");
+    return (
+      <div>
+        <h1 className={styles.title}>Lotes a Evaluar</h1>
+        <p className={styles.subtitle}>
+          Pagados y con la muestra en la casa (folio 7, paso 10). Súbalos a un <b>Bache de Evaluación</b> (≤{MAX_BATCH_LOTS} lotes) y
+          mándelo al <b>Centro de Calidad</b>; desde ese momento viven en <Link href="/ocp/en-evaluacion">Lotes en Evaluación</Link>.
+        </p>
+        {board([
+          {
+            label: "A evaluar (sin bache)",
+            count: aEvaluar.length,
+            body: aEvaluar.map((i) => (
+              <div key={i.id} className={styles.card} style={{ flexDirection: "column", alignItems: "stretch" }}>
+                <b>{i.lot!.name}</b>
+                <p className={styles.meta}>
+                  {name(i.producer_id)} · <span className="mono">{ctcLotReferenceShort(i.lot_id)}</span> · pago {i.status} · recibida {fecha(i.lot!.sample_2kg_confirmed_at)}
+                </p>
+                {muestraLinea(i.lot_id) && <p className={styles.meta}>Muestra: {muestraLinea(i.lot_id)}</p>}
+              </div>
+            )),
+          },
+        ])}
+
+        <div style={{ marginTop: 30 }}>
+          <h2 style={{ fontSize: 17, marginBottom: 6 }}>Baches de Evaluación</h2>
+          <p className={styles.subtitle}>
+            Un bache abierto se arma con lotes de arriba y se envía al Centro de Calidad con el nombre del Q-Grader que lo evaluará.
+          </p>
+          <form
+            action={async (formData: FormData) => {
+              "use server";
+              await createSondeoBatch(formData);
+            }}
+            style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "end", marginBottom: 14 }}
+          >
+            <div className={styles.field} style={{ margin: 0 }}>
+              <label htmlFor="label">Nuevo bache</label>
+              <input id="label" name="label" placeholder="Bache octubre 2026" required />
+            </div>
+            <button className="btn btn-sm btn-solid" type="submit">
+              Crear bache
+            </button>
+          </form>
+
+          {abiertos.length === 0 && <p className={styles.empty}>Ningún bache abierto.</p>}
+          <div style={{ display: "grid", gap: 12 }}>
+            {abiertos.map((b) => (
+              <div key={b.id} className={styles.miniCard}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+                  <b style={{ fontSize: 14 }}>{b.label}</b>
+                  <span className={styles.badge}>{batchLots(b).length}/{MAX_BATCH_LOTS}</span>
+                  <span className={styles.meta}>creado {fecha(b.created_at)}</span>
+                  <DeleteBatchButton batchId={b.id} label={b.label} lotCount={batchLots(b).length} />
+                </div>
+                {batchLots(b).length > 0 && (
+                  <div style={{ display: "grid", gap: 4, margin: "8px 0" }}>
+                    {batchLots(b).map((i) => (
+                      <p key={i.id} className={styles.meta} style={{ margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ flex: 1 }}>
+                          {i.lot!.name} · {name(i.producer_id)} · <span className="mono">{ctcLotReferenceShort(i.lot_id)}</span>
+                        </span>
+                        <RemoveFromBatchButton lotId={i.lot_id} />
+                      </p>
+                    ))}
+                  </div>
+                )}
+                <BatchPicker batchId={b.id} candidates={candidatos} slotsLeft={MAX_BATCH_LOTS - batchLots(b).length} />
+                <div style={{ marginTop: 10 }}>
+                  <EnviarAlCentroForm batchId={b.id} lotCount={batchLots(b).length} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Lotes en Evaluación ──
+  const enCentro = batches.filter((b) => b.status === "en_centro");
+  const cerrados = batches.filter((b) => b.status === "cerrado");
   return (
     <div>
       <h1 className={styles.title}>Lotes en Evaluación</h1>
       <p className={styles.subtitle}>
-        Pagados y recibidos, en cola para la evaluación completa. <b>En Fila</b> espera bache → bache de sondeo (≤{MAX_BATCH_LOTS}{" "}
-        lotes, laboratorio formal) → registro B2/B3 y veredicto. Los soportes y el escáner están en{" "}
-        <Link href="/ocp/fichas">Fichas Técnicas</Link>. Con el veredicto, el lote pasa a{" "}
-        <Link href="/ocp/ofertas">Pendiente de Oferta</Link>; el que no supera el sondeo sale con reembolso.
+        Los baches en manos del <b>Centro de Calidad</b>: cada lote se evalúa anónimo (solo su código), física y sensorialmente.
+        Hasta que el Centro tenga su módulo (fase 4), CTCx registra aquí las planillas y el veredicto del Q-Grader. Los soportes y
+        el escáner están en <Link href="/ocp/fichas">Fichas Técnicas</Link>. Con el veredicto, el lote pasa a{" "}
+        <Link href="/ocp/ofertas">Pendiente de Oferta</Link>; el que no supera sale con reembolso del 80 %.
       </p>
 
-      {tablero}
-
-      {/* ── Baches de Sondeo ── */}
-      <div style={{ marginTop: 30 }}>
-        <h2 style={{ fontSize: 17, marginBottom: 6 }}>Baches de Sondeo</h2>
-        <p className={styles.subtitle}>
-          Nuevo Sondeo (selección desde En Fila) → Planeado (laboratorio + Solicitud formal) → Pendiente (despachado,
-          esperando recibo y pruebas) → Registro (planillas B2/B3 por lote y veredicto).
-        </p>
-        <form
-          action={async (formData: FormData) => {
-            "use server";
-            await createSondeoBatch(formData);
-          }}
-          style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "end", marginBottom: 14 }}
-        >
-          <div className={styles.field} style={{ margin: 0 }}>
-            <label htmlFor="label">Nuevo bache</label>
-            <input id="label" name="label" placeholder="Sondeo agosto 2026" required />
-          </div>
-          <button className="btn btn-sm btn-solid" type="submit">
-            Crear bache
-          </button>
-        </form>
-
-        <div className={styles.board}>
-          {batchColumns.map((col) => (
-            <div className={styles.column} key={col.label}>
-              <div className={styles.columnHead}>
-                <h3>{col.label}</h3>
-                <span className={styles.columnCount}>{col.items.length}</span>
-              </div>
-              <div className={styles.columnList}>
-                {col.items.length ? col.items.map((b) => col.render(b)) : <p className={styles.empty}>—</p>}
-              </div>
+      {enCentro.length === 0 && <p className={styles.empty}>Ningún bache en el Centro de Calidad.</p>}
+      <div style={{ display: "grid", gap: 12 }}>
+        {enCentro.map((b) => (
+          <div key={b.id} className={styles.miniCard}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+              <b style={{ fontSize: 14 }}>{b.label}</b>
+              <span className={styles.badge}>{batchLots(b).length} sin veredicto</span>
+              <span className={styles.meta}>
+                Q-Grader {b.q_grader_name ?? "—"} · {b.centro_calidad_account_id ? (centros.get(b.centro_calidad_account_id) ?? "Centro de Calidad") : "Centro de Calidad"} · enviado {fecha(b.shipped_at)}
+              </span>
+              <CerrarBacheButton batchId={b.id} pendientes={batchLots(b).length} />
             </div>
-          ))}
-        </div>
+            <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
+              {batchLots(b).map((i) => (
+                <div key={i.id} style={{ borderTop: "1px dashed var(--line)", paddingTop: 6 }}>
+                  <p className={styles.meta} style={{ margin: 0 }}>
+                    <b style={{ color: "var(--ink)" }}>{i.lot!.name}</b> · {name(i.producer_id)} ·{" "}
+                    <span className="mono">{ctcLotReferenceShort(i.lot_id)}</span>
+                  </p>
+                  <SondeoRegistroControls
+                    lotId={i.lot_id}
+                    lotName={i.lot!.name}
+                    evaluations={toLabEvaluationList(i.sondeo_evaluation)}
+                    resultFilename={i.sondeo_result_filename ?? null}
+                    qGraderName={b.q_grader_name ?? ""}
+                  />
+                </div>
+              ))}
+              {!batchLots(b).length && <p className={styles.meta}>Todos los lotes de este bache ya tienen veredicto — puede cerrarlo.</p>}
+            </div>
+          </div>
+        ))}
       </div>
+
+      {cerrados.length > 0 && (
+        <details style={{ marginTop: 20 }}>
+          <summary style={{ cursor: "pointer", fontWeight: 600, fontSize: 13 }}>Baches cerrados ({cerrados.length})</summary>
+          <div style={{ marginTop: 8, display: "grid", gap: 4 }}>
+            {cerrados.map((b) => (
+              <p key={b.id} className={styles.meta} style={{ margin: 0 }}>
+                <b>{b.label}</b> · Q-Grader {b.q_grader_name ?? "—"} · enviado {fecha(b.shipped_at)} · cerrado {fecha(b.cerrado_at)}
+              </p>
+            ))}
+          </div>
+        </details>
+      )}
 
       {/* Retirados con cashback pendiente */}
       {retiradosPend.length > 0 && (
         <div style={{ marginTop: 30 }}>
-          <h2 style={{ fontSize: 17, marginBottom: 6 }}>Cashback pendiente (sondeo no superado)</h2>
+          <h2 style={{ fontSize: 17, marginBottom: 6 }}>Cashback pendiente (no superó la evaluación)</h2>
           <div style={{ display: "grid", gap: 10 }}>
             {retiradosPend.map((i) => (
               <div key={i.id} className={styles.card}>

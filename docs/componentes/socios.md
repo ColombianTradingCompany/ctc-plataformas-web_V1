@@ -89,7 +89,10 @@ Ninguno propio (deuda). Lo tocan `qa-recuperacion-check.mjs` (las cinco puertas 
   jornada en vivo sino una sesión de segunda apreciación, así que el sello del **Estudio de Contenido** «video de Arena + assets del
   lote» (`partners.ts`) queda sin objeto en su primera mitad: pasa a «assets del lote»; (b) la fase 4 del plan construye el módulo
   **Evaluación de Lotes** del Centro de Calidad sobre su credencial (hoy suspendida), con módulos activables (Evaluación ·
-  Procesamiento) y uso directo (respuesta 5 del owner, 2026-09-24).
+  Procesamiento) y uso directo (respuesta 5 del owner, 2026-09-24). **(c) V5.80 (fase 3)**: los baches ya LLEGAN al Centro —
+  `sondeo_batches.status = en_centro`, con `centro_calidad_account_id` (= la credencial `centro-calidad` activa, si hay UNA) y
+  `q_grader_name` tecleado por CTCx al enviarlos; cada lote trae su muestra de evaluación (`muestra_movimientos` `a_centro`). La
+  fase 4 construye `panel/evaluacion` sobre eso: el Q-Grader escribe con su credencial y el nombre deja de teclearse.
 
 - **Plan de ejecución de la narrativa** (`docs/PLAN_NARRATIVA_2026-09-17.md`): **SO-1** (narrativa de los nodos; ola 1)
   · SO-2 (panel del Master Roaster con etiquetas y Centro de Calidad con el CIR; espera CN-8 y las alianzas O-5).

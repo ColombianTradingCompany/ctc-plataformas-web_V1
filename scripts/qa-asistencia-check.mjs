@@ -127,7 +127,7 @@ const lee = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
   check("asumirEvaluacion existe y es emite", cuerpo.includes('permisoDeEscritura("ocp", "emite")'));
   check("deja la inscripción exenta al 100 % con la razón escrita", cuerpo.includes('discount_pct: 100, status: "exento", payment_ref: "Asumida por CTCx"'));
   check("solo sobre un pago pendiente", cuerpo.includes('ins.status !== "pendiente"'));
-  check("con rastro y nota al productor, y avanza a la fila si la muestra ya llegó", cuerpo.includes('action: "assumed_by_ctcx"') && cuerpo.includes('from("producer_comm_log")') && cuerpo.includes("maybeAdvanceToFila(service, lotId)"));
+  check("con rastro y nota al productor, y avanza a la fila si la muestra ya llegó", cuerpo.includes('action: "assumed_by_ctcx"') && cuerpo.includes('from("producer_comm_log")') && cuerpo.includes("avanzarAFilaSiCompleta(service, lotId)"));
   const cliente = lee("src/app/ocp/(app)/nominados/NominadosClient.tsx");
   check("y tiene su botón junto a «Confirmar pago», con confirmación", cliente.includes("asumirEvaluacion(lotId)") && /confirm\("¿CTCx asume el costo/.test(cliente));
 }

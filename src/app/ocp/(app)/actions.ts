@@ -6,6 +6,7 @@ import { countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrDecl
 import { deriveArchetype, deriveClaims, CUSTODY_MODEL, type ContributionInput } from "@/lib/lotComposition";
 import { deriveCertSchemes } from "@/components/kaffetal-regal/ficha/fichaData";
 import { lotInscriptionSettled } from "@/lib/arena/inscriptions";
+import { recibirMuestra } from "@/lib/muestras/recibo";
 import { lotEudrGate } from "@/lib/arena/eudrGate";
 import { isEvaChecklistKey, missingEvaItems, type EvaChecklist } from "./kr/evaChecklist";
 import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
@@ -361,36 +362,16 @@ export async function confirmSampleReceived(lotId: string): Promise<{ ok: true }
   if (!(await lotInscriptionSettled(service, lotId))) {
     return { ok: false, error: "La inscripción de Arena de este lote no está saldada — confírmala (pago, subvención o exención) en Lotes a Evaluar." };
   }
-  // 3. Y la muestra tiene que haber salido de la finca.
-  if (!lot.sample_shipped_at && lot.source !== "bcp_manual_entry") {
-    return { ok: false, error: "El productor todavía no ha confirmado el envío de la muestra." };
-  }
-
-  // V5.19: el recibo YA NO empuja el stage a fila_arena (ese valor quedó
-  // legado — el galardón nace del bache, V5.17). Aquí solo se confirma la
-  // muestra; la INSCRIPCIÓN avanza postulacion → fila (el pool de baches),
-  // igual que hace confirmSampleReceivedNom en Nominados — el pago ya se
-  // validó en la compuerta 2.
-  await service
-    .from("lots")
-    .update({ sample_2kg_confirmed_at: new Date().toISOString() })
-    .eq("id", lotId);
-  await service
-    .from("arena_inscriptions")
-    .update({ phase: "fila" })
-    .eq("lot_id", lotId)
-    .eq("phase", "postulacion");
-  await service.from("audit_log").insert({
-    entity_type: "lot",
-    entity_id: lotId,
-    action: "sample_received",
-    previous_status: lot.stage,
-    new_status: lot.stage,
-    performed_by: adminId,
-    notes: "Muestra de 2 kg confirmada — la inscripción pasa a la fila de baches.",
-  });
+  // 3. El recibo mismo: V5.80 — las filas de `muestras` con la partición del folio 7 Y la marca que lee el
+  //    circuito, en una sola acción (`src/lib/muestras/recibo.ts`, la misma que usa Solicitudes de Evaluación).
+  //    Sin formulario aquí: los 2 kg del folio; los kilos reales y la ubicación se anotan en Gestión de Muestras.
+  const res = await recibirMuestra(service, { lotId, adminId });
+  if (!res.ok) return res;
 
   revalidatePath("/ocp/kr");
+  revalidatePath("/ocp/solicitudes");
+  revalidatePath("/ocp/a-evaluar");
+  revalidatePath("/ocp/muestras");
   revalidatePath("/bcp");
   return { ok: true };
 }

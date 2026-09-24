@@ -215,6 +215,12 @@ export type Lot = {
     amountDueCop: number;
     phase: "postulacion" | "sondeo" | "fila" | "galardonado" | "arena" | "sesion" | "competido" | "retirado";
     entryCode: string | null;
+    // V5.80 · la solicitud (fase 3): la nota con la que pidió descuento, la factura de cobro que CTC emitió al
+    // corroborar, y si la muestra viaja contra entrega (el flete lo paga CTC al recibir).
+    notaSolicitud: string | null;
+    facturaRef: string | null;
+    facturaEmitidaAt: string | null;
+    pagoContraEntrega: boolean;
     sondeoResult: "aprobado" | "rechazado" | null;
     sondeoResultNotes: string | null;
     sondeoScore: number | null;

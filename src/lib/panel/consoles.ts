@@ -225,23 +225,27 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
       },
       {
         // El camino del lote, en el orden en que lo recorre. Es el mismo que DERIVA `src/lib/ocp/circuito.ts`.
+        // El orden es el de la respuesta 7 del owner al plan (2026-09-24): las dos «Ofertas» son el STAGING del
+        // Catálogo Activo, que va al final.
         label: "OCP · Catálogo",
         links: [
-          // Nota 2: el lote cae aquí cuando el productor pide la evaluación, y se queda mientras se confirman
-          // el pago y la muestra. Era la mitad «postulación» de Nominados.
+          // Folio 7, pasos 7–9 (V5.80): el productor pidió la evaluación; CTCx corrobora, decide la subvención y
+          // emite la factura; se confirman el pago y el recibo de la muestra. Era la mitad «postulación» de Nominados.
+          { href: "/ocp/solicitudes", label: "Solicitudes de Evaluación" },
+          // Paso 10: «recibe café Y pago → Lotes a Evaluar». Aquí se arman los Baches de Evaluación y se mandan
+          // al Centro de Calidad.
           { href: "/ocp/a-evaluar", label: "Lotes a Evaluar" },
-          // Nota 3: pagados y recibidos, en cola para la evaluación completa. Era la otra mitad de Nominados.
-          // ⚠️ Conserva los baches: `recordEvaluationVerdict` EXIGE hoy que el lote esté en un bache en
-          // «registro». Salen de la pantalla con la fase 4b, que cambia esa regla — no antes.
+          // Los baches en manos del Centro de Calidad. Hasta la fase 4 (el módulo del socio) el veredicto del
+          // Q-Grader se registra aquí, por CTCx.
           { href: "/ocp/en-evaluacion", label: "Lotes en Evaluación" },
           // Nota 4: el Q-Grader ya dijo; falta que CTCx confirme el grado y empuje la oferta.
           { href: "/ocp/ofertas", label: "Lotes Evaluados → Pendiente Oferta" },
+          // Las ofertas que el productor aceptó: el contrato, sus liberaciones y la humedad mes a mes (staging KR).
+          { href: "/ocp/contratos", label: "Ofertas CP Aceptadas" },
+          // Lo que CTCx compra en firme para venderlo como productor (staging Compras). Tyrian no cabe: lo impide un CHECK.
+          { href: "/ocp/ctc-selection", label: "Oferta desde CTCx Selection" },
           // Nota 5: lo publicado. Las subastas Tyrian son su pestaña (Tyrian no se oferta: se subasta).
           { href: "/ocp/catalogo", label: "Catálogo Activo" },
-          // Las ofertas que el productor aceptó: el contrato, sus liberaciones y la humedad mes a mes.
-          { href: "/ocp/contratos", label: "Ofertas CP Aceptadas" },
-          // Lo que CTCx compra en firme para venderlo como productor. Tyrian no cabe: lo impide un CHECK.
-          { href: "/ocp/ctc-selection", label: "Oferta desde CTCx Selection" },
         ],
       },
       {

@@ -9,32 +9,31 @@ import {
   applyCodeOnBehalf,
   asumirEvaluacion,
   assignLotsToBatch,
+  cerrarBache,
   confirmInscriptionPayment,
-  confirmSampleReceivedNom,
-  createBatchProofUploadUrl,
   createSondeoLotResultUploadUrl,
   deleteSondeoBatch,
-  markBatchDelivered,
-  markBatchReceived,
-  markBatchSent,
+  enviarAlCentro,
   markCashbackPaid,
-  planSondeoBatch,
   postularOnBehalf,
   recordEvaluationVerdict,
   regenerateMejoras,
   removeFromBatch,
-  setBatchLab,
   unsettleInscription,
 } from "../nominadosActions";
+import { decidirSubvencion, emitirFactura, recibirMuestraAction } from "../solicitudesActions";
 import { LabEvalEditor } from "@/components/bcp/LabEvalEditor";
 import { EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, computeSca, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import { gradoPorPuntaje, redondeaPuntaje } from "@/lib/grados/definicion";
-import { openSondeoRequest } from "@/lib/arena/sondeoRequestPrint";
+import { openFactura, type FacturaData } from "@/lib/arena/factura";
+import { MAX_BATCH_LOTS } from "@/lib/arena/inscriptions";
+import { MUESTRA_EVALUACION_KG } from "@/lib/trato/terminos";
 import styles from "@/components/panel/shared.module.css";
 
-// Cada control del tablero Nominados sigue el patrón resultado-inline (V12):
-// la acción devuelve {ok}|{ok:false,error} y el error se muestra junto al
-// botón — nunca un throw, nunca un error boundary.
+// Cada control del circuito sigue el patrón resultado-inline (V12): la acción devuelve {ok}|{ok:false,error}
+// y el error se muestra junto al botón — nunca un throw, nunca un error boundary.
+// V5.80 (fase 3): los controles de la solicitud (subvención, factura, recibo) y de los Baches de Evaluación
+// (enviar al Centro, cerrar); el kanban de sondeo con laboratorio, prueba y solicitud formal se retiró.
 
 type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -67,10 +66,72 @@ export function PostularOnBehalfButton({ lotId }: { lotId: string }) {
   return (
     <div style={{ marginTop: 8 }}>
       <button className="btn btn-sm btn-solid" disabled={pending} onClick={() => run(() => postularOnBehalf(lotId))}>
-        {pending ? "Postulando…" : "Postular en nombre del productor"}
+        {pending ? "Registrando…" : "Registrar la solicitud de evaluación en nombre del productor"}
       </button>
       <ErrorLine error={error} />
     </div>
+  );
+}
+
+// ── La solicitud: subvención → factura → pago → recibo ──────────────────────
+
+/** CTCx decide la subvención de la solicitud (folio 7, paso 8). Solo con el pago pendiente. */
+export function SubvencionForm({
+  lotId,
+  campaigns,
+  actualId,
+}: {
+  lotId: string;
+  campaigns: { id: string; name: string; pct: number }[];
+  actualId: string | null;
+}) {
+  const { pending, error, run } = useAction();
+  const [sel, setSel] = useState(actualId ?? "");
+  return (
+    <div style={{ display: "grid", gap: 4 }}>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+        <select value={sel} onChange={(e) => setSel(e.target.value)} style={{ maxWidth: 260 }}>
+          <option value="">Sin subvención (tarifa plena)</option>
+          {campaigns.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name} · {c.pct} %
+            </option>
+          ))}
+        </select>
+        <button
+          className="btn btn-sm"
+          disabled={pending || sel === (actualId ?? "")}
+          onClick={() => {
+            const fd = new FormData();
+            fd.set("campaign_id", sel);
+            run(() => decidirSubvencion(lotId, fd));
+          }}
+        >
+          {pending ? "Guardando…" : "Decidir subvención"}
+        </button>
+      </div>
+      <ErrorLine error={error} />
+    </div>
+  );
+}
+
+export function EmitirFacturaButton({ lotId }: { lotId: string }) {
+  const { pending, error, run } = useAction();
+  return (
+    <span>
+      <button className="btn btn-sm btn-solid" disabled={pending} onClick={() => run(() => emitirFactura(lotId))}>
+        {pending ? "Emitiendo…" : "Corroborar y emitir factura de cobro"}
+      </button>
+      <ErrorLine error={error} />
+    </span>
+  );
+}
+
+export function VerFacturaButton({ factura }: { factura: FacturaData }) {
+  return (
+    <button className="btn btn-sm" onClick={() => openFactura(factura)}>
+      Ver factura {factura.ref} ↗
+    </button>
   );
 }
 
@@ -79,11 +140,14 @@ export function PaymentControls({
   status,
   entryCode,
   dueLabel,
+  facturaEmitida,
 }: {
   lotId: string;
   status: string;
   entryCode: string | null;
   dueLabel: string;
+  /** V5.80: el pago se confirma SOBRE la factura; sin ella el botón espera. */
+  facturaEmitida: boolean;
 }) {
   const { pending, error, run } = useAction();
   const [ref, setRef] = useState("");
@@ -112,7 +176,8 @@ export function PaymentControls({
         />
         <button
           className="btn btn-sm btn-solid"
-          disabled={pending}
+          disabled={pending || !facturaEmitida}
+          title={facturaEmitida ? "" : "Emita primero la factura de cobro: el pago se confirma sobre ella"}
           onClick={() => run(() => confirmInscriptionPayment(lotId, ref))}
         >
           {pending ? "Guardando…" : `Confirmar pago · ${dueLabel}`}
@@ -129,16 +194,21 @@ export function PaymentControls({
           CTCx asume el costo
         </button>
       </div>
+      {!facturaEmitida && (
+        <p className={styles.meta} style={{ margin: 0 }}>
+          Sin factura emitida no hay pago que conciliar (salvo que CTCx asuma el costo).
+        </p>
+      )}
       {/* Un código de campaña (KRX-) ya aplicado cierra la caja: el descuento
           quedó ligado y solo se confirma o revierte. */}
       {entryCode?.startsWith("KRX-") ? (
         <p className={styles.meta} style={{ margin: 0 }}>
-          Código de campaña aplicado: <span className="mono">{entryCode}</span> — el descuento ya está ligado.
+          Código de subvención aplicado: <span className="mono">{entryCode}</span> — el descuento ya está ligado.
         </p>
       ) : (
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
           <input
-            placeholder={`Código de campaña (activo: ${entryCode ?? "—"})`}
+            placeholder={`Código de subvención (activo: ${entryCode ?? "—"})`}
             value={code}
             onChange={(e) => setCode(e.target.value)}
             style={{ maxWidth: 220 }}
@@ -157,21 +227,51 @@ export function PaymentControls({
   );
 }
 
-export function ConfirmSampleButton({ lotId, shipped }: { lotId: string; shipped: boolean }) {
+/** El recibo físico: los kilos que llegaron y dónde quedan. Crea las filas de `muestras` Y la marca (una acción). */
+export function ReciboForm({ lotId, shipped }: { lotId: string; shipped: boolean }) {
   const { pending, error, run } = useAction();
+  const [kg, setKg] = useState(String(MUESTRA_EVALUACION_KG));
+  const [ubicacion, setUbicacion] = useState("");
+  const [custodio, setCustodio] = useState("");
+  if (!shipped) {
+    return (
+      <p className={styles.meta} style={{ margin: "6px 0 0" }}>
+        Muestra aún no enviada por el productor.
+      </p>
+    );
+  }
   return (
-    <div style={{ marginTop: 6 }}>
-      <button className="btn btn-sm" disabled={pending || !shipped} onClick={() => run(() => confirmSampleReceivedNom(lotId))}>
-        {pending ? "Confirmando…" : shipped ? "Confirmar muestra recibida" : "Muestra aún no enviada"}
-      </button>
+    <div style={{ marginTop: 6, display: "grid", gap: 6 }}>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+        <input value={kg} onChange={(e) => setKg(e.target.value)} inputMode="decimal" style={{ width: 80 }} aria-label="Kilos recibidos" />
+        <span className={styles.meta}>kg</span>
+        <input placeholder="Ubicación (estante, oficina…)" value={ubicacion} onChange={(e) => setUbicacion(e.target.value)} style={{ maxWidth: 200 }} />
+        <input placeholder="Custodio" value={custodio} onChange={(e) => setCustodio(e.target.value)} style={{ maxWidth: 160 }} />
+        <button
+          className="btn btn-sm btn-solid"
+          disabled={pending}
+          onClick={() => {
+            const fd = new FormData();
+            fd.set("kg", kg);
+            fd.set("ubicacion", ubicacion);
+            fd.set("custodio", custodio);
+            run(() => recibirMuestraAction(lotId, fd));
+          }}
+        >
+          {pending ? "Recibiendo…" : "Confirmar muestra recibida"}
+        </button>
+      </div>
+      <p className={styles.meta} style={{ margin: 0 }}>
+        Se parte en 500 g evaluación · 500 g contramuestra · el resto testeo in-house (folio 7).
+      </p>
       <ErrorLine error={error} />
     </div>
   );
 }
 
-// ── Baches de Sondeo ─────────────────────────────────────────────────────────
+// ── Baches de Evaluación ─────────────────────────────────────────────────────
 
-/** Columna «Nuevo Sondeo»: selección múltiple (≤30) desde el pool En Fila. */
+/** Bache abierto: selección múltiple (≤30) desde «Lotes a Evaluar». */
 export function BatchPicker({
   batchId,
   candidates,
@@ -193,12 +293,12 @@ export function BatchPicker({
     });
 
   if (!candidates.length) {
-    return <p className={styles.meta}>Sin lotes elegibles en «En Fila» (pendientes de sondeo).</p>;
+    return <p className={styles.meta}>Sin lotes a evaluar que subir (pagados y recibidos, sin bache).</p>;
   }
   return (
     <div style={{ display: "grid", gap: 6 }}>
       <p className={styles.meta} style={{ margin: 0 }}>
-        Elija lotes de «En Fila» ({slotsLeft} cupos libres de 30):
+        Elija lotes de «Lotes a Evaluar» ({slotsLeft} cupos libres de {MAX_BATCH_LOTS}):
       </p>
       {candidates.map((c) => (
         <label key={c.lotId} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12.5 }}>
@@ -213,7 +313,7 @@ export function BatchPicker({
         disabled={pending || sel.size === 0 || sel.size > slotsLeft}
         onClick={() => run(() => assignLotsToBatch(batchId, [...sel]))}
       >
-        {pending ? "Agregando…" : `Agregar ${sel.size || ""} al bache`}
+        {pending ? "Subiendo…" : `Subir ${sel.size || ""} al bache`}
       </button>
       {sel.size > slotsLeft && <p className={styles.warn}>Seleccionó más lotes que cupos libres.</p>}
       <ErrorLine error={error} />
@@ -233,7 +333,7 @@ export function RemoveFromBatchButton({ lotId }: { lotId: string }) {
   );
 }
 
-/** Elimina un bache (con confirmación); los cafés sin veredicto vuelven a En Fila. */
+/** Elimina un bache (con confirmación); los cafés sin veredicto vuelven a «Lotes a Evaluar». */
 export function DeleteBatchButton({ batchId, label, lotCount }: { batchId: string; label: string; lotCount: number }) {
   const { pending, error, run } = useAction();
   return (
@@ -243,7 +343,7 @@ export function DeleteBatchButton({ batchId, label, lotCount }: { batchId: strin
         disabled={pending}
         style={{ borderColor: "var(--red)", color: "var(--red)" }}
         onClick={() => {
-          if (window.confirm(`¿Eliminar el bache «${label}»?\n\n${lotCount} café(s) sin veredicto vuelven a «En Fila». Esta acción no se puede deshacer.`)) {
+          if (window.confirm(`¿Eliminar el bache «${label}»?\n\n${lotCount} café(s) sin veredicto vuelven a «Lotes a Evaluar». Esta acción no se puede deshacer.`)) {
             run(() => deleteSondeoBatch(batchId));
           }
         }}
@@ -255,116 +355,48 @@ export function DeleteBatchButton({ batchId, label, lotCount }: { batchId: strin
   );
 }
 
-export function PlanBatchButton({ batchId }: { batchId: string }) {
+/** «Enviar al Centro de Calidad»: abierto → en_centro, con el Q-Grader que firmará las planillas. */
+export function EnviarAlCentroForm({ batchId, lotCount }: { batchId: string; lotCount: number }) {
   const { pending, error, run } = useAction();
-  return (
-    <div>
-      <button className="btn btn-sm btn-solid" disabled={pending} onClick={() => run(() => planSondeoBatch(batchId))}>
-        {pending ? "Cerrando…" : "Cerrar Bache de sondeo →"}
-      </button>
-      <ErrorLine error={error} />
-    </div>
-  );
-}
-
-/** Columna «Sondeo Planeado»: lab + Solicitud formal + prueba de recibo + Bache Enviado. */
-export function PlannedBatchControls({
-  batch,
-  samples,
-}: {
-  batch: { id: string; label: string; labName: string; labContact: string; qGraderName: string };
-  samples: { reference: string; kg: string }[];
-}) {
-  const { pending, error, run } = useAction();
-  const [labName, setLabName] = useState(batch.labName);
-  const [labContact, setLabContact] = useState(batch.labContact);
-  const [qGrader, setQGrader] = useState(batch.qGraderName);
-  const [proof, setProof] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const proofUp = useUpload();
-
-  function send() {
-    run(async () => {
-      if (!proof) return { ok: false as const, error: "Adjunte la prueba de confirmación de recibo (PDF del correo o confirmación escrita)." };
-      setUploading(true);
-      proofUp.start();
-      try {
-        const prep = await createBatchProofUploadUrl(batch.id, proof.name);
-        if (!prep.ok) { proofUp.fail(); return prep; }
-        const put = await putSignedUrlWithProgress(prep.path, prep.token, proof, proofUp.progress);
-        if (!put.ok) { proofUp.fail(); return { ok: false as const, error: "La subida de la prueba falló. Intente de nuevo." }; }
-        proofUp.done();
-        return markBatchSent(batch.id, prep.path, proof.name);
-      } finally {
-        setUploading(false);
-      }
-    });
-  }
-
+  const [qGrader, setQGrader] = useState("");
   return (
     <div style={{ display: "grid", gap: 6 }}>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-        <input placeholder="Laboratorio (nombre)" value={labName} onChange={(e) => setLabName(e.target.value)} style={{ maxWidth: 200 }} />
-        <input placeholder="Contacto (correo / tel.)" value={labContact} onChange={(e) => setLabContact(e.target.value)} style={{ maxWidth: 200 }} />
-        {/* El Q-Grader del bache firma la planilla oficial cuando el veredicto
-            galardona (V5.17) — sin su nombre no hay galardón. */}
-        <input placeholder="Q-Grader del bache" value={qGrader} onChange={(e) => setQGrader(e.target.value)} style={{ maxWidth: 200 }} />
-        <button className="btn btn-sm" disabled={pending || !labName.trim()} onClick={() => run(() => setBatchLab(batch.id, labName, labContact, qGrader))}>
-          Guardar lab
-        </button>
-      </div>
-      <div>
+        {/* El Q-Grader del bache firma la planilla oficial al galardonar. Se teclea HASTA la fase 4
+            (respuesta 5 del owner): con la credencial del Centro de Calidad deja de escribirse a mano. */}
+        <input placeholder="Q-Grader del bache" value={qGrader} onChange={(e) => setQGrader(e.target.value)} style={{ maxWidth: 220 }} />
         <button
-          className="btn btn-sm"
-          disabled={!batch.labName}
-          title={batch.labName ? "" : "Guarde primero el laboratorio"}
-          onClick={() => openSondeoRequest({ batchLabel: batch.label, labName: batch.labName, labContact: batch.labContact, samples })}
+          className="btn btn-sm btn-solid"
+          disabled={pending || lotCount === 0 || !qGrader.trim()}
+          title={lotCount === 0 ? "Suba lotes al bache primero" : ""}
+          onClick={() => {
+            const fd = new FormData();
+            fd.set("q_grader", qGrader);
+            run(() => enviarAlCentro(batchId, fd));
+          }}
         >
-          Solicitud de Bache de muestras (imprimir) ↗
+          {pending ? "Enviando…" : "Enviar al Centro de Calidad →"}
         </button>
-      </div>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-        <label className="btn btn-sm" style={{ cursor: "pointer" }}>
-          {proof ? `Prueba: ${proof.name}` : "Adjuntar prueba de recibo…"}
-          <input
-            type="file"
-            style={{ display: "none" }}
-            onChange={(e) => setProof(e.target.files?.[0] ?? null)}
-          />
-        </label>
-        <button className="btn btn-sm btn-solid" disabled={pending || uploading || !proof} onClick={send}>
-          {uploading || pending ? "Enviando…" : "Bache Enviado →"}
-        </button>
-        <UploadProgressRing state={proofUp.state} size={26} />
       </div>
       <ErrorLine error={error} />
     </div>
   );
 }
 
-/** Columna «Sondeo Pendiente»: las dos confirmaciones. */
-export function PendingBatchControls({ batchId, received }: { batchId: string; received: boolean }) {
+export function CerrarBacheButton({ batchId, pendientes }: { batchId: string; pendientes: number }) {
   const { pending, error, run } = useAction();
   return (
-    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-      {!received ? (
-        <button className="btn btn-sm" disabled={pending} onClick={() => run(() => markBatchReceived(batchId))}>
-          Bache recibido en Lab ✓
-        </button>
-      ) : (
-        <span className={`${styles.badge} ${styles.badgeGood}`}>Recibido en lab ✓</span>
-      )}
-      <button className="btn btn-sm btn-solid" disabled={pending || !received} onClick={() => run(() => markBatchDelivered(batchId))}>
-        Pruebas entregadas →
+    <span>
+      <button className="btn btn-sm" disabled={pending || pendientes > 0} title={pendientes > 0 ? `Quedan ${pendientes} lote(s) sin veredicto` : ""} onClick={() => run(() => cerrarBache(batchId))}>
+        {pending ? "Cerrando…" : "Cerrar bache"}
       </button>
       <ErrorLine error={error} />
-    </div>
+    </span>
   );
 }
 
-/** Columna «Registro de Sondeo», por lote: varias planillas B2/B3 + archivo del
- *  lab + el veredicto (galardona con el grado derivado del puntaje /
- *  rechazado ⇒ cashback 80%). Desde V5.17 el galardón nace AQUÍ. */
+/** Por lote, con el bache en el Centro: varias planillas B2/B3 + archivo + el veredicto (galardona con el grado
+ *  derivado del puntaje / rechazado ⇒ cashback 80%). Hasta la fase 4 lo registra CTCx; después, el Q-Grader. */
 export function SondeoRegistroControls({
   lotId,
   lotName,
@@ -426,7 +458,7 @@ export function SondeoRegistroControls({
   return (
     <div style={{ marginTop: 6 }}>
       <button className="btn btn-sm btn-solid" onClick={() => setOpen(true)}>
-        Registrar sondeo ({evaluations.length} planilla{evaluations.length === 1 ? "" : "s"})…
+        Registrar veredicto ({evaluations.length} planilla{evaluations.length === 1 ? "" : "s"})…
       </button>
       {open && (
         <div className="modal-bg open" onClick={() => setOpen(false)}>
@@ -434,9 +466,9 @@ export function SondeoRegistroControls({
             <button className="close" onClick={() => setOpen(false)} aria-label="Cerrar">
               ×
             </button>
-            <h3>Registro de Sondeo · {lotName}</h3>
+            <h3>Registro de evaluación · {lotName}</h3>
             <p className={styles.meta} style={{ marginTop: 2 }}>
-              Un lote puede tener VARIAS planillas B2/B3 (réplicas del laboratorio). El puntaje del sondeo sale de la
+              Un lote puede tener VARIAS planillas B2/B3 (réplicas del Q-Grader). El puntaje sale de la
               última registrada, salvo veredicto con puntaje explícito.
             </p>
 
@@ -473,7 +505,7 @@ export function SondeoRegistroControls({
             )}
 
             <div className={styles.field} style={{ marginTop: 12 }}>
-              <label>Archivo del laboratorio {resultFilename && <span className={styles.meta}>(actual: {resultFilename})</span>}</label>
+              <label>Archivo del Q-Grader {resultFilename && <span className={styles.meta}>(actual: {resultFilename})</span>}</label>
               <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                 <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} disabled={pending || uploading} />
                 <UploadProgressRing state={resultUp.state} size={26} />
@@ -481,7 +513,7 @@ export function SondeoRegistroControls({
             </div>
             <div className={styles.field}>
               <label>Resumen del resultado (el productor lo verá)</label>
-              <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Resultado del laboratorio…" />
+              <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Resultado de la evaluación…" />
             </div>
             {/* El puntaje manda (V5.17): el grado se DERIVA de la última
                 planilla con gradoPorPuntaje — aquí se previsualiza para que el
@@ -500,7 +532,7 @@ export function SondeoRegistroControls({
                       : grado
                         ? <>Puntaje <b>{puntaje}</b> → Grado <b style={{ color: grado.hex }}>{grado.nombre}</b> (derivado — el puntaje manda).</>
                         : <>Puntaje <b>{puntaje}</b>: por debajo de 80 no hay galardón — registre «No supera».</>}
-                    {grado && sinQGrader && <> ⚠ Defina el Q-Grader del bache (columna Sondeo Planeado) antes de galardonar.</>}
+                    {grado && sinQGrader && <> ⚠ Defina el Q-Grader del bache (al enviarlo al Centro) antes de galardonar.</>}
                   </p>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <button

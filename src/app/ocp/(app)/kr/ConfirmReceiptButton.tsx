@@ -45,7 +45,7 @@ export function ConfirmReceiptButton({
         </span>
       </div>
       <button className="btn btn-sm btn-solid" onClick={confirm} disabled={pending}>
-        {pending ? "Confirmando…" : "Confirmar recibido → Muestras Recibidas"}
+        {pending ? "Confirmando…" : "Confirmar muestra recibida (2 kg)"}
       </button>
       {error && (
         <p className={styles.warn} style={{ marginTop: 8 }}>

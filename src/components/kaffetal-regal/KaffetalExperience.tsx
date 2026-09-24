@@ -417,7 +417,7 @@ function Experience() {
           supabase
             .from("arena_inscriptions")
             .select(
-              "lot_id, status, amount_cop, discount_pct, amount_due_cop, phase, entry_code, sondeo_result, sondeo_result_notes, sondeo_score, mejoras_doc, cashback_cop, cashback_status"
+              "lot_id, status, amount_cop, discount_pct, amount_due_cop, phase, entry_code, nota_solicitud, factura_ref, factura_emitida_at, pago_contra_entrega, sondeo_result, sondeo_result_notes, sondeo_score, mejoras_doc, cashback_cop, cashback_status"
             ),
           // RLS (parcelas/finca_certs *_own) scopes both to the producer's fincas.
           supabase.from("finca_parcelas").select("*").order("position", { ascending: true }),
@@ -482,6 +482,10 @@ function Experience() {
         amount_due_cop: number;
         phase: NonNullable<Lot["inscription"]>["phase"];
         entry_code: string | null;
+        nota_solicitud: string | null;
+        factura_ref: string | null;
+        factura_emitida_at: string | null;
+        pago_contra_entrega: boolean | null;
         sondeo_result: "aprobado" | "rechazado" | null;
         sondeo_result_notes: string | null;
         sondeo_score: number | string | null;
@@ -498,6 +502,10 @@ function Experience() {
           amountDueCop: i.amount_due_cop,
           phase: i.phase,
           entryCode: i.entry_code,
+          notaSolicitud: i.nota_solicitud,
+          facturaRef: i.factura_ref,
+          facturaEmitidaAt: i.factura_emitida_at,
+          pagoContraEntrega: i.pago_contra_entrega ?? true,
           sondeoResult: i.sondeo_result,
           sondeoResultNotes: i.sondeo_result_notes,
           sondeoScore: i.sondeo_score != null ? Number(i.sondeo_score) : null,

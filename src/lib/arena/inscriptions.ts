@@ -1,22 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { TARIFA_EVALUACION_COP } from "@/lib/trato/terminos";
 
-// ── Inscripción de Arena ─────────────────────────────────────────────────────
-// Participating in the Arena costs COP 80.000 per lot (2026-07-16). Payment
-// happens OUT OF BAND (Nequi transfer) — the platform only records BCP's
-// confirmation.
-//
-// Since the 2026-07-17 restructuring the inscription row IS the paid track of
-// a lot: it is created at POSTULATION (an Apto lot's producer asks to compete)
-// and carries the whole pipeline in `phase`:
-//   postulacion → sondeo → fila → sesion → competido | retirado
-// `status` keeps its original meaning (payment): pendiente → pagado | exento.
-// Discounts come exclusively from campaign entry codes (free % per campaign) —
-// the old fixed 0/25/50/75/100 tramos are gone.
+// ── La solicitud de evaluación (nació como «inscripción de Arena») ───────────
+// La fila de `arena_inscriptions` ES la solicitud de evaluación de un lote (PLAN_CIRCUITO_DEL_LOTE §3,
+// CONSERVAR: «se le cambia el nombre en el vocabulario, no en la base»). Nace cuando el productor de un
+// lote Apto la pide (o CTCx en su nombre) y lleva el tramo pagado en `phase`:
+//   postulacion (solicitada: factura, pago y muestra) → fila (a evaluar) → sondeo (en un bache) → galardonado | retirado
+// `status` es el pago: pendiente → pagado | exento. El descuento sale de la subvención que CTCx decide
+// (`subvencion_id`) o de un código de campaña (KRX-); el pago se confirma a mano sobre la factura de cobro.
 
-export const ARENA_FEE_COP = 80000;
-// V5.17: el mismo valor, con su nombre de HOY — es la tarifa de la evaluación
-// CTC (muestra + bache del Q-Grader), no una entrada a la Arena. El alias
-// viejo se conserva porque lo usan pantallas y acciones ya desplegadas.
+// V5.80: la tarifa vive en `src/lib/trato/terminos.ts` ($200.000, respuesta 2 del owner). Los dos nombres
+// de abajo se conservan porque los usan pantallas y acciones ya desplegadas; son el MISMO número.
+export const ARENA_FEE_COP = TARIFA_EVALUACION_COP;
 export const EVALUATION_FEE_COP = ARENA_FEE_COP;
 
 /** Un bache de sondeo admite máximo 30 lotes (regla del owner, 2026-07-20). */
@@ -87,6 +82,13 @@ export type ArenaInscription = {
   sondeo_result_storage_path: string | null;
   sondeo_result_filename: string | null;
   season_id: string | null;
+  // V5.80 · la solicitud (fase 3): la nota del productor, la factura de cobro, la subvención decidida, contra entrega.
+  nota_solicitud: string | null;
+  factura_ref: string | null;
+  factura_emitida_at: string | null;
+  factura_emitida_by: string | null;
+  subvencion_id: string | null;
+  pago_contra_entrega: boolean;
   mejoras_doc: string | null;
   mejoras_generated_at: string | null;
   cashback_cop: number | null;
@@ -99,7 +101,7 @@ export function isSettled(status: InscriptionStatus | null | undefined): boolean
   return status === "pagado" || status === "exento";
 }
 
-/** Formats COP for the panel/producer copy: 80000 → "$80.000". */
+/** Formats COP for the panel/producer copy: 200000 → "$200.000". */
 export function formatCop(v: number): string {
   return "$" + v.toLocaleString("es-CO");
 }
@@ -111,4 +113,21 @@ export async function lotInscriptionSettled(
 ): Promise<boolean> {
   const { data } = await service.from("arena_inscriptions").select("status").eq("lot_id", lotId).maybeSingle();
   return isSettled(data?.status as InscriptionStatus | undefined);
+}
+
+/**
+ * Avanza postulacion → fila cuando pago Y muestra están confirmados (folio 7, paso 10: «recibe café Y pago →
+ * Lotes a Evaluar»). La llaman las tres puertas que pueden cerrar la última condición —confirmar el pago,
+ * asumir el costo, recibir la muestra— para que ninguna tenga que saber de las otras. (Era `maybeAdvanceToFila`
+ * en `nominadosActions.ts`; V5.80 la saca aquí porque el recibo ya no vive solo allí.)
+ */
+export async function avanzarAFilaSiCompleta(service: SupabaseClient, lotId: string): Promise<void> {
+  const [{ data: ins }, { data: lot }] = await Promise.all([
+    service.from("arena_inscriptions").select("id, status, phase").eq("lot_id", lotId).maybeSingle(),
+    service.from("lots").select("sample_2kg_confirmed_at").eq("id", lotId).maybeSingle(),
+  ]);
+  if (!ins || ins.phase !== "postulacion") return;
+  if (isSettled(ins.status as InscriptionStatus) && lot?.sample_2kg_confirmed_at) {
+    await service.from("arena_inscriptions").update({ phase: "fila" }).eq("id", ins.id);
+  }
 }

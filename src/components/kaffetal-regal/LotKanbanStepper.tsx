@@ -46,7 +46,8 @@ export type DestinoDeChip = "evaluaciones" | "contratos";
 
 // El orden del circuito, para comparar «¿ya pasé por aquí?» sin escribir la
 // misma cadena de condiciones cuatro veces.
-const ORDEN: EstadoDelCircuito[] = ["en_ficha", "a_evaluar", "en_evaluacion", "pendiente_oferta", "oferta_emitida", "catalogo_activo"];
+// V5.80: «solicitada» (pidió la evaluación; falta factura, pago o muestra) va antes de «a evaluar» (pagado y recibido, sin bache).
+const ORDEN: EstadoDelCircuito[] = ["en_ficha", "solicitada", "a_evaluar", "en_evaluacion", "pendiente_oferta", "oferta_emitida", "catalogo_activo"];
 const alMenos = (estado: EstadoDelCircuito, hito: EstadoDelCircuito) => ORDEN.indexOf(estado) >= ORDEN.indexOf(hito);
 
 export function LotKanbanStepper({
@@ -96,21 +97,23 @@ export function LotKanbanStepper({
     tieneInscripcion: inscription != null,
     pagoConfirmado: inscription?.status === "pagado" || inscription?.status === "exento",
     muestraRecibida: !!sampleConfirmedAt,
+    // La fase «sondeo» de la solicitud = el lote va en un Bache de Evaluación (V5.80).
+    enBache: inscription?.phase === "sondeo",
     grado: grade,
     ultimaOferta,
     contrato,
   });
 
-  // MUE — el productor pidió la evaluación: manda la muestra y paga la tarifa.
-  // Sale de aquí cuando CTCx confirma LAS DOS cosas.
-  const mueDone = alMenos(estado, "en_evaluacion");
-  const mueActive = estado === "a_evaluar";
+  // MUE — el productor pidió la evaluación: recibe la factura, paga la tarifa y manda la muestra.
+  // Sale de aquí cuando CTCx confirma LAS DOS cosas (pago y muestra).
+  const mueDone = alMenos(estado, "a_evaluar");
+  const mueActive = estado === "solicitada";
 
-  // EVA — la EVALUACIÓN: CTCx manda la(s) muestra(s) al Q-Grader para el perfil
-  // sensorial y la granulometría. Mientras está aquí, el lote queda ABIERTO a
-  // recibir los dos informes.
+  // EVA — la EVALUACIÓN: CTCx sube el lote a un Bache de Evaluación y lo manda al Q-Grader
+  // del Centro de Calidad para el perfil sensorial y la granulometría. Mientras está aquí,
+  // el lote queda ABIERTO a recibir los dos informes.
   const evaDone = alMenos(estado, "pendiente_oferta");
-  const evaActive = estado === "en_evaluacion";
+  const evaActive = estado === "a_evaluar" || estado === "en_evaluacion";
 
   // GRADO — se emite con la EVA entregada. Es el punto de equilibrio donde CTCx
   // decide si el lote entra al catálogo.

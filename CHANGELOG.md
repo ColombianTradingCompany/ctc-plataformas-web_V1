@@ -19,6 +19,43 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.80] — 2026-09-24 (commit pendiente)
+
+- **Hito**: **la fase 3 del `PLAN_CIRCUITO_DEL_LOTE.md` — solicitud, factura, muestra y Baches de Evaluación** (folio 7 del
+  owner, pasos 7–10). El lado de Kaffetal Regal se ejecutó desde la sesión `consolas` con el sí del owner y línea en `ALINEACION` §3.
+- **Añadido**: **«Solicitudes de Evaluación»** (`/ocp/solicitudes`, primera entrada de OCP · Catálogo): la solicitud del productor
+  con su **nota de descuento**; CTCx **decide la subvención** (una campaña del 30–70 %, o ninguna; emite y canjea el código KRX-
+  a nombre del productor), **corrobora y emite la factura de cobro** (`FE-AAAA-NNNNN` de una secuencia de la base; documento
+  imprimible con la tarifa, la subvención, el total y el carril), **confirma el pago SOBRE la factura** (sin ella no hay qué
+  conciliar; la única puerta sin factura es «CTCx asume el costo») y **recibe la muestra** con los kilos reales.
+- **Añadido**: **la tarifa vive en `src/lib/trato/terminos.ts`** ($200.000, respuesta 2 del owner), con los mínimos por grado de
+  la respuesta 1 (Black/Red 6 cargas · Blue 3 · Gold 200 kg), la muestra de 2 kg y la regla **contra entrega** (el flete lo paga
+  CTC al recibir). `ARENA_FEE_COP`/`EVALUATION_FEE_COP` son ahora ese mismo número.
+- **Añadido**: **Gestión de Muestras, 1.ª tanda** (`/ocp/muestras` deja de decir que no existe): tablas `muestras` y
+  `muestra_movimientos`; el recibo crea las filas con la **partición del folio 7 (500 g evaluación · 500 g contramuestra · 1 kg
+  testeo)** Y la marca que lee el circuito, en una sola acción (`src/lib/muestras/recibo.ts`; si una falla, no queda la otra);
+  la lista «qué hay y dónde» con el **saldo derivado** (recibido − Σ salidas, nunca guardado), ubicar y anotar salidas
+  (`borrador`, en la lista blanca), y la pestaña **Pedidos de muestra** que por fin enseña `sample_pack_orders`.
+- **Cambiado**: **los baches son «Baches de Evaluación»** que van al **Centro de Calidad**: `abierto` (se arma en «Lotes a Evaluar»
+  con los pagados y recibidos, ≤30) → `en_centro` («Enviar al Centro de Calidad», con el Q-Grader que firmará —se teclea hasta
+  la fase 4—; la muestra de evaluación de cada lote deja su salida `a_centro`; nota a cada productor) → `cerrado` (solo cuando
+  cae el último veredicto). El veredicto exige el bache `en_centro` y lo registra CTCx en «Lotes en Evaluación» hasta que el
+  socio tenga su módulo. **Retirado** el kanban de sondeo con laboratorio externo, prueba de envío y «solicitud formal».
+- **Cambiado**: **el circuito derivado gana «solicitada»** (`estadoDelCircuito` v2): *solicitada* (pidió; falta factura, pago o
+  muestra) → *a evaluar* (pagado y recibido, sin bache) → *en evaluación* (en un bache en el Centro). La tabla del OCP y la barra
+  del lote del productor lo leen de la misma función. El rail de OCP · Catálogo queda en el orden de la respuesta 7 (las dos
+  «Ofertas» son el staging; Catálogo Activo al final).
+- **Cambiado**: **Kaffetal Regal**: al solicitar, el productor puede **pedir un descuento por nota**; ve **«Solicitud recibida —
+  CTC la corrobora y emite su factura»** y luego **la factura con su total** (la misma plantilla que el OCP); las instrucciones de
+  pago aparecen solo con factura emitida; el envío dice **contra entrega**; «en fila» y «en bache» hablan del Bache de Evaluación
+  y del Centro de Calidad, no de un laboratorio.
+- **Datos**: migración `solicitudes_muestras_baches` (acta en `docs/migraciones/`): cinco columnas en `arena_inscriptions`,
+  `next_factura_ref()` (SECURITY DEFINER, solo service role), el CHECK de `sondeo_batches.status` con los tres estados nuevos +
+  `centro_calidad_account_id` y `cerrado_at`, y las dos tablas de muestras (RLS, cero políticas).
+- **Docs**: guardianes nuevos `qa-solicitud-evaluacion-check` (78 — la tarifa, los mínimos, la partición y «contra entrega» se
+  leen DEL PLAN; el pago sobre la factura; los tres estados del bache; el rail de la respuesta 7) y `qa-muestras-check` (41 — los
+  cinco puntos del brief); `qa-circuito-check` 31 → 38 (el estado nuevo, `enBache`, la barra del productor).
+
 ## [V5.79] — 2026-09-24 (commit ef8f87b)
 
 - **Hito**: **la fase 2 del `PLAN_CIRCUITO_DEL_LOTE.md` cierra por el lado de Kaffetal Regal** — código de `kaffetal-regal`

@@ -40,7 +40,7 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 |---|---|---|
 | `/login` · `/verify` · `/panel` · `/cambiar-contrasena` | login maestro (2FA), selector, cambio forzado | `src/app/api/panel/auth/{password,verify,logout}` |
 | `/bcp/(app)/…` | Business | Ecosistema de Valor: `herramientas`, `directorio`, `coffeed`, `ctc-tech`, `varietales`, `terratalento`, `arena` (+ `[sessionId]`: sesiones de segunda apreciación, V5.77; + `temporadas`) · Configuración: `usuarios`, `socios/[nodo]`, `documentacion`, `mapa`, `consumo`, `plataformas`. `club` → 308 a `/ocp/subvenciones` (V5.77) |
-| `/ocp/(app)/…` | Operation — **el rail es el cuadro del owner (V5.63)**: Kaffetal Regal · Catálogo · Manejo de Stock Físico | `kr` (+ `kr/[id]/{dossier,kml}`, el Pasaporte de una finca) · **`asistencia`** y **`desacoplado`** (V5.75: la sesión asistida y el proveedor sin buzón, `src/lib/asistencia/`) · **`subvenciones`** (+ `campanas/[id]`, V5.77: las campañas del Club, `subvencionesActions.ts`) · `a-evaluar` y `en-evaluacion` (las dos vistas de lo que fue Nominados: `nominados/CircuitoVista.tsx`) · `ofertas` («Pendiente Oferta»), `catalogo`, `contratos`, `subastas`, `fichas`, `ctc-selection` |
+| `/ocp/(app)/…` | Operation — **el rail es el cuadro del owner (V5.63)**: Kaffetal Regal · Catálogo · Manejo de Stock Físico | `kr` (+ `kr/[id]/{dossier,kml}`, el Pasaporte de una finca) · **`asistencia`** y **`desacoplado`** (V5.75: la sesión asistida y el proveedor sin buzón, `src/lib/asistencia/`) · **`subvenciones`** (+ `campanas/[id]`, V5.77: las campañas del Club, `subvencionesActions.ts`) · **`solicitudes`**, `a-evaluar` y `en-evaluacion` (las TRES vistas de lo que fue Nominados: `nominados/CircuitoVista.tsx`; V5.80: la solicitud con factura y subvención, los Baches de Evaluación, el veredicto hasta la fase 4) · **`muestras`** (V5.80: Gestión de Muestras, 1.ª tanda) · `ofertas` («Pendiente Oferta»), `catalogo`, `contratos`, `subastas`, `fichas`, `ctc-selection` |
 | `/ecp/(app)/…` | Execution | `/ecp` (Tablero de Ejecución), `transcripciones` — y, **de `herramientas-internas`**: `direccionamiento/*`, `pvc/*`, `cotizador-{lotes,logistico,empaque}`, `anclas-mercado`, `automatizaciones` |
 | `/lcp/(app)/…` | Relationship (V5.59) | `buzon`, `leads`, `lista-espera` (`?lista=ctc-home·roast·x·directorio·herramientas·terratalento`), `crm/{caas,green,roast,x}` |
 | `/bcp|/ocp|/ecp/<modulo>/[[...resto]]` | **talones 308** de las mudanzas V4.24–V5.61 (53 rutas; nueve viajes de vuelta en la V5.60; cuatro «muchas a una» en la V5.61) | fuente: `src/lib/panel/rutasMovidas.ts`; fuera de `(app)` a propósito |
@@ -76,15 +76,21 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
   cada `--poll` s, latido en hilo aparte). **La plataforma NO transcribe**: el modelo corre en un equipo del owner o en
   AssemblyAI; Vercel guarda y enriquece. La credencial que escribe el instalador es la `service_role`: solo equipos propios.
   **Stripe**: `docs/STRIPE_PLUGIN_SETUP.md` + `connect-recommend-plan.md` (sin código; bloqueado por la entidad legal).
-- `src/lib/arena/` (compartido con KR): `jornada.ts`, `labEvaluation.ts`, `club.ts`, `seasons.ts`,
-  `inscriptions.ts`, `entryCodes.ts`, `mejoras.ts`, `payment.ts`.
+- `src/lib/arena/` (compartido con KR): `labEvaluation.ts`, `seasons.ts`, `inscriptions.ts` (la solicitud; `avanzarAFilaSiCompleta`),
+  `entryCodes.ts`, `mejoras.ts`, `payment.ts`, `subvencion.ts`, **`factura.ts`** (V5.80: la factura de cobro, una plantilla para las dos
+  caras), `producerActions.ts` (lo que el productor ejecuta; dueño KR).
+- **`src/lib/trato/terminos.ts`** (V5.80, puro, versionado): la tarifa de evaluación ($200.000), los mínimos por grado, la muestra de
+  2 kg y «contra entrega». **`src/lib/muestras/`** (V5.80): `particion.ts` (puro: la partición 500/500/1000 y el saldo derivado) y
+  `recibo.ts` (el recibo: filas + marca en una acción; el ÚNICO escritor de `sample_2kg_confirmed_at`). Acciones: `solicitudesActions.ts`
+  (subvención, factura, recibo) y `muestrasActions.ts` (ubicar, salidas — `borrador`).
 
 ## Tablas que posee (escritura service-role desde aquí)
 
 `panel_users` · `admin_otp_codes` · `audit_log` · `inbound_emails` · `buzon_outbound` ·
 `platform_settings` · `platform_surfaces` · `automations` · `integration_events` ·
 `work_map_proposals` · `bcp_task_state` · `partner_accounts` ·
-`leads` · `lead_replies` · `harvest_seasons` · `sondeo_batches` · `arena_inscriptions` ·
+`leads` · `lead_replies` · `harvest_seasons` · `sondeo_batches` (los Baches de Evaluación) · `arena_inscriptions` (la solicitud) ·
+`muestras` · `muestra_movimientos` (V5.80) ·
 `arena_entry_codes` · `arena_sessions` · `arena_session_lots` · `arena_scores` · `lot_evaluations`
 (filas `q_grader_batch` y `bcp_arena`) · `lot_offers` (emisión) · `lot_fichas` (escáner y set) ·
 `lot_auctions` (administración) · `black_negotiations` · `purchase_contracts` · `contract_releases` ·
@@ -109,8 +115,12 @@ portal y el peso de las imágenes) ·
 blanca de borradores se leen DEL PLAN) · `qa-transcripciones-check.mjs` (50, con `ts-resolve`) ·
 `qa-transcripciones-nube.mjs` (20, toca AssemblyAI, ~US$0,002) · **`qa-asistencia-check.mjs`** (57 — la sesión asistida solo para
 productores y siempre con rastro; la etiqueta del desacoplado no recibe correos; el guard de `gestion`) · **`qa-registro-check.mjs`**
-(50 — la regla de los recordatorios desde el folio 7, rastro en cada movimiento de una certificación, el cron con secreto, el
-chequeo EUDR y la transcripción de FT2 en la vista del lote). Los siete `qa-pvc-*`, `qa-grados`, `qa-definicion`,
+(67 — la regla de los recordatorios desde el folio 7, rastro en cada movimiento de una certificación, el cron con secreto, el
+chequeo EUDR y la transcripción de FT2 en la vista del lote; y el lado de KR) · **`qa-solicitud-evaluacion-check.mjs`** (78, V5.80 — la
+tarifa, los mínimos, la partición y «contra entrega» se leen DEL PLAN; el pago se confirma sobre la factura; los tres estados del bache;
+el rail en el orden de la respuesta 7; el lado de KR) · **`qa-muestras-check.mjs`** (41, V5.80 — los cinco puntos del brief: saldo derivado
+y nunca negativo, recibo = filas + marca o nada, toda muestra de un lote, la alerta de 90 días sin campo aparte, acciones en la lista
+blanca) · `qa-circuito-check.mjs` (38 — la tabla de verdad del circuito desde las notas y el folio, TOTAL y MONÓTONO). Los siete `qa-pvc-*`, `qa-grados`, `qa-definicion`,
 `qa-direccionamiento` y `qa-anclas` pasaron a `herramientas-internas` el 2026-09-19.
 
 ## Reglas propias
@@ -170,8 +180,15 @@ chequeo EUDR y la transcripción de FT2 en la vista del lote). Los siete `qa-pvc
   con estado y recordatorios semanales ×4 (`src/lib/registro/`, cron `/api/cron/recordatorios`), el chequeo EUDR de CTC en la
   finca (texto + adjuntos), y la transcripción de FT2 en la vista del lote (set de fichas + `crearFichaManual`). **Y en la V5.79, el lado de
   KR, desde esta sesión con el sí del owner**: A5 último paso, el dossier del lote ES/EN (`/kaffetal-regal/dossier/[id]`), el
-  estado de cada certificación en la finca del productor. **Sigue: fase 3** (Solicitudes de Evaluación, factura, subvención decidida, pago contra entrega,
-  muestras 500/500/1000 y los Baches de Evaluación).
+  estado de cada certificación en la finca del productor. **Fase 3 EJECUTADA en la V5.80** (OCP y, con el sí del owner, KR):
+  «Solicitudes de Evaluación» (`/ocp/solicitudes`: nota de descuento, subvención decidida por CTCx, factura de cobro `FE-…`, pago SOBRE
+  la factura, recibo con kilos), `terminos.ts` ($200.000, mínimos, 2 kg, contra entrega), Gestión de Muestras 1.ª tanda (partición
+  500/500/1000, saldo derivado, salidas, pedidos de muestra), los **Baches de Evaluación** (abierto → en_centro → cerrado; sin
+  laboratorio ni prueba) y el circuito con «solicitada». ⚠️ **Hasta la fase 4** el Q-Grader se teclea al enviar el bache y CTCx registra
+  el veredicto en «Lotes en Evaluación» (respuesta 5: con la credencial del Centro deja de teclearse). **Diferido de la fase 3**: la 2.ª
+  tanda de Muestras (alerta de 90 días como tarea derivada; muestras «para comprador» y el pack de cosecha). **Sigue: fase 4**
+  (Centro de Calidad · Evaluación de Lotes — módulo del socio, credencial activable, planilla SCA/CVA + rueda, dar de alta; la
+  Datasheet interna) — exige una credencial `centro-calidad` para conducirse.
   También en la V5.76, las cuatro indicaciones del owner sobre `/ocp/kr`: sin «Nuevo lote», agrupada por productor, el mapa por
   elemento, y «Ver fincas» con el filtro de Pasaporte por etapa.
 - **LAS TRES RUTAS DEL PROVEEDOR (owner, 2026-09-23)** — brief `briefs/consolas-rutas-del-proveedor.md`, con las siete

@@ -2,8 +2,8 @@ import { CircuitoVista } from "../nominados/CircuitoVista";
 
 export const dynamic = "force-dynamic";
 
-// OCP · Catálogo · nota 2 del owner: el productor pidió la evaluación; falta confirmar el pago, la muestra o las dos.
-// Una de las dos vistas de lo que fue «Nominados» (`../nominados/CircuitoVista.tsx`, V5.63).
+// OCP · Catálogo · folio 7 del owner, paso 10 (V5.80): «recibe café Y pago → Lotes a Evaluar». Aquí se arman los
+// Baches de Evaluación y se mandan al Centro de Calidad. La segunda vista de `../nominados/CircuitoVista.tsx`.
 export default function LotesAEvaluarPage() {
   return <CircuitoVista vista="a-evaluar" />;
 }

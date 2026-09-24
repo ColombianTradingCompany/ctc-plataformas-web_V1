@@ -6,19 +6,21 @@ import { GRADES, ctcLotReference, ctcLotReferenceShort, type Finca, type Lot } f
 import { lotEudrStatus } from "@/lib/eudr";
 import { EVALUATION_FEE_COP, formatCop } from "@/lib/arena/inscriptions";
 import { NEQUI, PAYMENT_EMAIL, nequiConfigured } from "@/lib/arena/payment";
+import { openFactura } from "@/lib/arena/factura";
 import { aplicarCodigoCampana, peekCampaignCodeAction, postularLote } from "@/lib/arena/producerActions";
 import { openShipmentInstructions } from "../ficha/shipmentInstructionsPrint";
 import { useToast } from "@/components/Toast";
 import { CtcRef } from "./CtcRef";
 import styles from "../AppDashboard.module.css";
 
-// ── Evaluar mi Café (V5.17: las tres secciones) ─────────────────────────────
-// El camino del lote después del EVA verde, en el orden en que lo vive el
-// productor (mockups del owner, 2026-08-21):
-//   1. SOLICITUDES DE EVALUACIÓN — lotes Aptos: solicitar, pagar y despachar
-//      la muestra de 2 kg (MUE).
+// ── Evaluar mi Café (V5.17: las tres secciones · V5.80: la solicitud del folio 7) ──────────
+// El camino del lote después de la Visa, en el orden en que lo vive el
+// productor (mockups del owner, 2026-08-21; folio 7, 2026-09-24):
+//   1. SOLICITUDES DE EVALUACIÓN — lotes Aptos: solicitar (y pedir un descuento
+//      por nota), recibir la factura de cobro de CTC, pagar y despachar la
+//      muestra de 2 kg contra entrega (MUE).
 //   2. EVALUACIONES EN FILA — muestra recibida y pago confirmado: el lote
-//      espera su bache y al Q-Grader (SON / la fila).
+//      espera su Bache de Evaluación y al Q-Grader del Centro de Calidad.
 //   3. LOTES GALARDONADOS — evaluación completada: el Grado CTC (derivado del
 //      puntaje — «el puntaje manda»), los documentos y el feedback.
 // La Arena ya NO es parte de este camino: quedó como vitrina post-galardón
@@ -26,12 +28,15 @@ import styles from "../AppDashboard.module.css";
 export function EvaluacionesTab({
   lots,
   fincas,
+  productorNombre = "",
   onRefreshData,
   onConfirmSampleShipped,
   onVerLotes,
 }: {
   lots: Lot[];
   fincas: Finca[];
+  /** Para la factura de cobro imprimible (V5.80). */
+  productorNombre?: string;
   onRefreshData: () => void;
   onConfirmSampleShipped: (lotId: string) => void;
   onVerLotes: () => void;
@@ -51,7 +56,8 @@ export function EvaluacionesTab({
   // Sección 3: galardonados (y el legado 'evaluado').
   const galardonados = lots.filter((l) => l.stage >= 7 || l.inscription?.phase === "galardonado" || l.inscription?.phase === "competido");
 
-  const paymentsDue = lots.filter((l) => l.inscription && l.inscription.status === "pendiente" && l.inscription.phase === "postulacion");
+  // Se paga SOBRE la factura de cobro (V5.80): sin factura emitida todavía no hay nada que pagar.
+  const paymentsDue = lots.filter((l) => l.inscription && l.inscription.status === "pendiente" && l.inscription.phase === "postulacion" && l.inscription.facturaRef);
   const totalDueCop = paymentsDue.reduce((sum, l) => sum + (l.inscription?.amountDueCop ?? EVALUATION_FEE_COP), 0);
 
   return (
@@ -62,11 +68,13 @@ export function EvaluacionesTab({
         </div>
         <div className={styles.secSub}>Lleve sus lotes registrados al siguiente nivel</div>
         <div className={styles.alist} style={{ marginTop: 8 }}>
-          Registrar su finca y armar la ficha no cuesta nada. Cuando CTC declara un lote <b>Apto</b> (EVA en verde, con
-          su Visa EUDR emitida), usted decide si <b>solicita su evaluación</b>: cuesta <b>{formatCop(EVALUATION_FEE_COP)}</b>{" "}
+          Registrar su finca y armar la ficha no cuesta nada. Cuando CTC declara un lote <b>Apto</b> (con su Visa EUDR
+          emitida), usted decide si <b>solicita su evaluación</b>: la tarifa es <b>{formatCop(EVALUATION_FEE_COP)}</b>{" "}
           por lote y cubre el análisis físico, la catación por un <b>Q-Grader certificado</b>, el factor de rendimiento,
-          la certificación CTC y el feedback — <b>salga o no salga galardonado</b>. ¿Tiene un <b>código de campaña</b>?
-          Aplíquelo al solicitar y verá su descuento al instante.
+          la certificación CTC y el feedback — <b>salga o no salga galardonado</b>. CTC corrobora su solicitud y le emite
+          la <b>factura de cobro</b>; con ella paga y envía su muestra de 2 kg <b>contra entrega</b> (el flete lo paga CTC).
+          ¿Tiene un <b>código de subvención</b>? Aplíquelo al solicitar y verá su descuento al instante; si no, puede
+          pedir un descuento en la nota y CTC decidirá la subvención al corroborar.
         </div>
         {solicitudes.length === 0 ? (
           <div className={styles.alist} style={{ marginTop: 10 }}>
@@ -76,7 +84,7 @@ export function EvaluacionesTab({
         ) : (
           <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
             {solicitudes.map((l) => (
-              <SolicitudCard key={l.id} lot={l} onRefreshData={onRefreshData} onConfirmSampleShipped={onConfirmSampleShipped} onVerLotes={onVerLotes} />
+              <SolicitudCard key={l.id} lot={l} productorNombre={productorNombre} onRefreshData={onRefreshData} onConfirmSampleShipped={onConfirmSampleShipped} onVerLotes={onVerLotes} />
             ))}
           </div>
         )}
@@ -96,10 +104,10 @@ export function EvaluacionesTab({
                   {paymentsDue.length > 1 && <> por {paymentsDue.length} lotes</>}.
                 </div>
                 <ol style={{ margin: "10px 0 0 18px", fontSize: 13, color: "var(--muted)", lineHeight: 1.8 }}>
-                  <li>Envíe el valor por Nequi al número de arriba.</li>
-                  <li>Escriba en el mensaje del pago su <b>código de inscripción</b> (aparece en cada tarjeta).</li>
+                  <li>Envíe el valor de su <b>factura de cobro</b> por Nequi al número de arriba.</li>
+                  <li>Escriba en el mensaje del pago la <b>referencia de su lote</b> (los 7 caracteres de la factura).</li>
                   <li>Mándenos el comprobante a <b>{PAYMENT_EMAIL}</b> o por su hilo de &quot;Mensajes y Notificaciones&quot;.</li>
-                  <li>CTC confirma el pago y su lote sigue su camino a la fila de evaluación.</li>
+                  <li>CTC confirma el pago y, con la muestra recibida, su lote pasa a «Lotes a Evaluar».</li>
                 </ol>
               </>
             ) : (
@@ -181,17 +189,20 @@ function CardHead({ lot, onVerLotes }: { lot: Lot; onVerLotes?: () => void }) {
 // (Era «ArenaLotCard»; V5.17 la reescribe al vocabulario de la evaluación.)
 function SolicitudCard({
   lot,
+  productorNombre,
   onRefreshData,
   onConfirmSampleShipped,
   onVerLotes,
 }: {
   lot: Lot;
+  productorNombre: string;
   onRefreshData: () => void;
   onConfirmSampleShipped: (lotId: string) => void;
   onVerLotes: () => void;
 }) {
   const { showToast } = useToast();
   const [code, setCode] = useState("");
+  const [nota, setNota] = useState("");
   const [peek, setPeek] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const ins = lot.inscription;
@@ -208,12 +219,29 @@ function SolicitudCard({
 
   async function solicitar() {
     setBusy(true);
-    const res = await postularLote(lot.id, code.trim() || undefined);
+    const res = await postularLote(lot.id, code.trim() || undefined, nota.trim() || undefined);
     setBusy(false);
     if (res.ok) {
       showToast(`Evaluación solicitada ✓ · código ${res.entryCode}`);
       onRefreshData();
     } else showToast(res.message);
+  }
+
+  // La factura de cobro que CTC emitió al corroborar (V5.80): la misma plantilla que ve el OCP.
+  function verFactura() {
+    if (!ins?.facturaRef || !ins.facturaEmitidaAt) return;
+    openFactura({
+      ref: ins.facturaRef,
+      emitidaAt: ins.facturaEmitidaAt,
+      productor: productorNombre,
+      lote: lot.name,
+      codigoLote: ctcLotReferenceShort(lot.id),
+      tarifaCop: ins.amountCop,
+      subvencionPct: ins.discountPct,
+      totalCop: ins.amountDueCop,
+      contraEntrega: ins.pagoContraEntrega,
+      carril: { nequiNumber: NEQUI.number, nequiHolder: NEQUI.holder, email: PAYMENT_EMAIL },
+    });
   }
 
   async function applyCode() {
@@ -241,7 +269,7 @@ function SolicitudCard({
           <div style={{ fontSize: 13, color: "var(--green)", fontWeight: 700 }}>✓ Apto — listo para solicitar su evaluación</div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginTop: 8 }}>
             <input
-              placeholder="¿Código de campaña? (opcional)"
+              placeholder="¿Código de subvención? (opcional)"
               value={code}
               onChange={(e) => {
                 setCode(e.target.value);
@@ -255,8 +283,18 @@ function SolicitudCard({
             </button>
           </div>
           {peek && <div style={{ fontSize: 12.5, marginTop: 6, color: "var(--muted)" }}>{peek}</div>}
+          {/* Folio 7, paso 7: «puede pedir un descuento por nota». CTC decide la subvención al corroborar. */}
+          <textarea
+            rows={2}
+            maxLength={600}
+            placeholder="¿Pide un descuento? Cuéntele a CTC por qué (opcional)"
+            value={nota}
+            onChange={(e) => setNota(e.target.value)}
+            style={{ marginTop: 8, width: "100%", fontSize: 13 }}
+          />
           <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>
-            Inscripción: {formatCop(EVALUATION_FEE_COP)} — con un código de campaña el descuento se muestra al escribirlo.
+            Tarifa: {formatCop(EVALUATION_FEE_COP)} — con un código de subvención el descuento se muestra al escribirlo; sin código, CTC
+            decide la subvención al corroborar su solicitud y la factura llega con el total.
           </div>
         </div>
       ) : (
@@ -270,25 +308,36 @@ function SolicitudCard({
             </span>
           </div>
 
+          {ins.notaSolicitud && (
+            <div style={{ fontSize: 12.5, color: "var(--muted)" }}>Su nota: «{ins.notaSolicitud}»</div>
+          )}
           <div style={{ fontSize: 13 }}>
             {settled ? (
               <span style={{ color: "var(--green)", fontWeight: 700 }}>
-                {ins.status === "exento" ? "✓ Inscripción eximida (100%)." : `✓ Inscripción pagada${ins.discountPct > 0 ? ` (descuento ${ins.discountPct}%)` : ""}.`}
+                {ins.status === "exento" ? "✓ Evaluación sin costo para usted (la asume CTC)." : `✓ Factura pagada${ins.discountPct > 0 ? ` (subvención ${ins.discountPct}%)` : ""}.`}
               </span>
-            ) : (
+            ) : ins.facturaRef ? (
               <>
-                Pago pendiente: <b>{formatCop(ins.amountDueCop)}</b>
-                {ins.discountPct > 0 && <span style={{ color: "var(--green)", fontWeight: 700 }}> · descuento {ins.discountPct}%</span>}
-                <span className="mono" style={{ fontSize: 11.5, color: "var(--muted)" }}> · referencia: {ins.entryCode}</span>
+                Factura de cobro <b className="mono">{ins.facturaRef}</b>: <b>{formatCop(ins.amountDueCop)}</b>
+                {ins.discountPct > 0 && <span style={{ color: "var(--green)", fontWeight: 700 }}> · subvención {ins.discountPct}%</span>}
+                <span className="mono" style={{ fontSize: 11.5, color: "var(--muted)" }}> · referencia: {ctcLotReferenceShort(lot.id)}</span>{" "}
+                <button className="btn btn-sm" onClick={verFactura} style={{ marginLeft: 6 }}>
+                  Ver factura ↗
+                </button>
               </>
+            ) : (
+              <span style={{ color: "var(--muted)" }}>
+                Solicitud recibida — CTC la corrobora y le emite su factura de cobro (tarifa {formatCop(ins.amountCop)}
+                {ins.discountPct > 0 ? `, con su subvención del ${ins.discountPct}%` : ""}).
+              </span>
             )}
           </div>
-          {/* Con un código de campaña (KRX-) ya aplicado, la caja desaparece:
+          {/* Con un código de subvención (KRX-) ya aplicado, la caja desaparece:
               cada lote admite UN código y el descuento ya quedó puesto. */}
           {!settled && !ins.entryCode?.startsWith("KRX-") && (
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
               <input
-                placeholder="Aplicar código de campaña"
+                placeholder="Aplicar código de subvención"
                 value={code}
                 onChange={(e) => {
                   setCode(e.target.value);
@@ -307,14 +356,14 @@ function SolicitudCard({
           {!lot.sampleShippedAt ? (
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
               <button className="btn btn-sm" onClick={() => openShipmentInstructions(ctcLotReference(lot.id), ctcLotReferenceShort(lot.id))}>
-                Instrucciones de envío (2 kg)
+                Instrucciones de envío (2 kg · contra entrega)
               </button>
               <button
                 className="btn btn-sm btn-solid-accent"
                 onClick={() => {
                   const ok = window.confirm(
                     `¿Confirma que ya despachó la muestra de 2 kg de pergamino del lote ${lot.name}?\n\n` +
-                      "Recuerde: el paquete debe ir marcado ÚNICAMENTE con el código del lote (sin su nombre ni el de su finca — la cata es a ciegas).",
+                      "Recuerde: el paquete va contra entrega (el flete lo paga CTC al recibirlo) y debe ir marcado ÚNICAMENTE con el código del lote (sin su nombre ni el de su finca — la cata es a ciegas).",
                   );
                   if (ok) onConfirmSampleShipped(lot.id);
                 }}
@@ -324,7 +373,7 @@ function SolicitudCard({
             </div>
           ) : (
             <div style={{ fontSize: 12.5, color: "var(--muted)" }}>
-              Muestra enviada — al confirmarse el recibo físico y el pago, su lote pasa a <b>Evaluaciones en Fila</b>.
+              Muestra enviada — al confirmarse el recibo físico y el pago, su lote pasa a <b>Lotes a Evaluar</b> y CTC lo sube a un Bache de Evaluación.
             </div>
           )}
         </div>
@@ -342,13 +391,13 @@ function FilaCard({ lot }: { lot: Lot }) {
       <CardHead lot={lot} />
       {phase === "fila" && (
         <div style={{ fontSize: 13, color: "var(--muted)" }}>
-          ✓ Pago y muestra confirmados — <b>en fila</b> para el próximo bache de evaluación.
+          ✓ Pago y muestra confirmados — <b>a evaluar</b>: CTC sube su lote al próximo <b>Bache de Evaluación</b>.
         </div>
       )}
       {phase === "sondeo" && (
         <div style={{ fontSize: 13, color: "var(--muted)" }}>
-          Su muestra viaja en un <b>bache de evaluación</b> rumbo al laboratorio del <b>Q-Grader</b>. El resultado —
-          puntaje, Grado CTC y feedback — le llegará aquí y a su feed.
+          Su lote está en un <b>Bache de Evaluación</b> en manos del <b>Q-Grader</b> del Centro de Calidad, evaluado a ciegas
+          (solo su código). El resultado —puntaje, Grado CTC y feedback— le llegará aquí y a su feed.
         </div>
       )}
       {/* Fases de la Arena vieja (legado defensivo): ningún veredicto nuevo las

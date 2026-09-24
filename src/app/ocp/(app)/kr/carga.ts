@@ -95,7 +95,7 @@ type LotRow = {
   sample_shipped_at: string | null;
   sample_2kg_confirmed_at: string | null;
 };
-type InsRow = { lot_id: string; producer_id: string; phase: string; status: string };
+type InsRow = { lot_id: string; producer_id: string; phase: string; status: string; sondeo_batch_id: string | null };
 type OfferRow = { lot_id: string; status: string; emitted_at: string };
 type ContractRow = { id: string; lot_id: string; status: string };
 
@@ -122,7 +122,7 @@ export async function cargarKr(service: SupabaseClient): Promise<{
         .from("lots")
         .select("id, name, producer_id, finca_id, stage, intake_step, grade, source, season_id, sample_shipped_at, sample_2kg_confirmed_at")
         .order("created_at", { ascending: false }),
-      service.from("arena_inscriptions").select("lot_id, producer_id, phase, status"),
+      service.from("arena_inscriptions").select("lot_id, producer_id, phase, status, sondeo_batch_id"),
       service.from("lot_offers").select("lot_id, status, emitted_at").order("emitted_at", { ascending: false }),
       service.from("purchase_contracts").select("id, lot_id, status"),
       service.from("harvest_seasons").select("id, kind, year, arena_starts_at, arena_ends_at").order("year", { ascending: false }),
@@ -256,6 +256,7 @@ export async function cargarKr(service: SupabaseClient): Promise<{
           tieneInscripcion: !!ins,
           pagoConfirmado: ins?.status === "pagado" || ins?.status === "exento",
           muestraRecibida: !!l.sample_2kg_confirmed_at,
+          enBache: ins?.phase === "sondeo" && !!ins.sondeo_batch_id,
           grado: l.grade,
           ultimaOferta: oferta?.status ?? null,
           contrato: contrato?.status ?? null,

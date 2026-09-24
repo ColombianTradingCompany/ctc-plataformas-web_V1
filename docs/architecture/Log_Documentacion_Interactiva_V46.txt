@@ -265,3 +265,34 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
 - ANN: el productor ve el estado de cada certificación (`FincaModal`); el Pasaporte impreso filtra `retirada`.
 - Guardianes: `qa-registro-check` 50 → 67 (el lado KR); `qa-evaluaciones` §6 con el orden nuevo.
 (commit: ef8f87b)
+
+## [2026-09-24] V5.80 · Consolas (+ Kaffetal Regal con el sí del owner) — fase 3 del PLAN_CIRCUITO_DEL_LOTE: solicitud, factura, muestra, Baches de Evaluación
+- NODO NUEVO (OCP · Catálogo, primera entrada) «Solicitudes de Evaluación» `/ocp/solicitudes` (`nominados/CircuitoVista.tsx`, vista 1 de 3;
+  `solicitudesActions.ts`): la solicitud del productor con su nota de descuento → CTCx decide la SUBVENCIÓN (campaña 30–70 % o
+  ninguna; emite y canjea un KRX- a nombre del productor) → emite la FACTURA DE COBRO (`FE-AAAA-NNNNN`, `next_factura_ref()`;
+  documento imprimible `src/lib/arena/factura.ts`, el mismo para las dos caras) → confirma el PAGO sobre la factura → RECIBE la
+  muestra (kilos reales). Con pago y muestra el lote pasa solo a «Lotes a Evaluar».
+- REGLA NUEVA (DICT `terminos`): `src/lib/trato/terminos.ts` (puro, versionado): tarifa $200.000, mínimos por grado (6 · 6 · 3 cargas ·
+  200 kg), muestra 2 kg, CONTRA ENTREGA (el flete lo paga CTC al recibir), re-evaluación 80 %. `ARENA_FEE_COP` = ese número.
+- NODO «Gestión de Muestras» `/ocp/muestras` deja de ser un placeholder (1.ª tanda del brief): tablas `muestras` + `muestra_movimientos`;
+  el recibo (`src/lib/muestras/recibo.ts`) crea las filas con la partición del folio 7 (500 g evaluación · 500 g contramuestra · 1 kg
+  testeo, `particion.ts` puro) Y la marca `sample_2kg_confirmed_at`, o ninguna; saldo DERIVADO; ubicar y anotar salidas
+  (`muestrasActions.ts`, borrador, lista blanca); pestaña «Pedidos de muestra» (`sample_pack_orders`, por fin visible).
+- FLUJO «Baches de Evaluación» (`sondeo_batches.status`: abierto → en_centro → cerrado): se arman en «Lotes a Evaluar» (≤30, pagados y
+  recibidos) y se ENVÍAN AL CENTRO DE CALIDAD con el Q-Grader (tecleado hasta la fase 4; `centro_calidad_account_id` si hay una
+  credencial activa); cada lote deja la salida `a_centro` de su muestra de evaluación y una nota al productor. El veredicto exige
+  `en_centro` (lo registra CTCx en «Lotes en Evaluación» hasta el módulo del socio) y cierra el bache al caer el último.
+  RETIRADO el kanban de sondeo (planeado · pendiente · registro, laboratorio, prueba de envío, `sondeoRequestPrint.ts`).
+- CIRCUITO v2 (`src/lib/ocp/circuito.ts`): estado nuevo «solicitada» y entrada `enBache`: solicitada → a evaluar → en evaluación →
+  pendiente de oferta → oferta emitida → catálogo activo. La tabla del OCP (`kr/carga.ts`) y la barra del productor
+  (`LotKanbanStepper`) lo leen de la misma función. Rail OCP · Catálogo en el orden de la respuesta 7 (Catálogo Activo al final).
+- CÓDIGO AJENO con el sí del owner y línea en §3 (kaffetal-regal): `producerActions.postularLote(…, nota)`, `EvaluacionesTab`
+  (nota de descuento, «Solicitud recibida — CTC emite su factura», «Ver factura», pago solo con factura, contra entrega, copy de
+  fila/bache), `KaffetalExperience` + `data.ts` (columnas nuevas), `LotKanbanStepper` (ORDEN con «solicitada», `enBache`),
+  `shipmentInstructionsPrint.ts` (contra entrega), `AppDashboard` (nombre del productor para la factura).
+- DATOS: migración `solicitudes_muestras_baches` (acta en `docs/migraciones/`).
+- Guardianes: `qa-solicitud-evaluacion-check` (78, nuevo — cifras DEL PLAN), `qa-muestras-check` (41, nuevo — los cinco puntos del
+  brief), `qa-circuito` 31 → 38; `qa-evaluaciones` y `qa-asistencia` re-apuntados al recibo único.
+- PENDIENTE: fase 4 (Centro de Calidad · Evaluación de Lotes: el Q-Grader escribe con su credencial, el nombre deja de teclearse);
+  2.ª tanda de Muestras (alerta de 90 días derivada, muestras para comprador); la Datasheet interna.
+(commit: pendiente)

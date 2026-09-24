@@ -153,7 +153,8 @@ check("y lo hace exclusivo por lote (todas a false, una a true)", arena.includes
 check("el oficial del lote sale de la que rige, no de un promedio", evaluations.includes("export function evaluacionQueRige") && !evaluations.includes("function average("));
 check("por defecto rige la inicial del Q-Grader", evaluations.includes('e.source === "q_grader_batch"'));
 check("confirmar el recibo no escribe fila_arena", !acciones.includes('stage: "fila_arena"'));
-check("y avanza la inscripción a la fila", acciones.includes('.eq("phase", "postulacion")'));
+// V5.80: el recibo pasa por `src/lib/muestras/recibo.ts` (filas de muestras + marca, una acción), que es quien avanza la solicitud a la fila.
+check("y avanza la inscripción a la fila", acciones.includes("recibirMuestra(service, { lotId, adminId })") && lee("src/lib/muestras/recibo.ts").includes("avanzarAFilaSiCompleta(service, r.lotId)"));
 
 if (fallos.length) {
   console.error(`✗ qa-evaluaciones: ${fallos.length} fallo(s), ${ok} OK\n`);

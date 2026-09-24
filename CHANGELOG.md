@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.87] — 2026-09-25 (commit pendiente)
+## [V5.87] — 2026-09-25 (commit 8a5e25a)
 
 - **Añadido**: **las mezclas de CTCx Selection** (2.ª tanda del brief de Compras): `/ocp/compras/mezclas` arma una mezcla como
   borrador, componente a componente, con compras en firme del mismo grado, y la **cierra** cuando cumple la regla del owner —

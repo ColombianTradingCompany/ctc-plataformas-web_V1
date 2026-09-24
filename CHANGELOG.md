@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.78] — 2026-09-24 (commit pendiente)
+## [V5.78] — 2026-09-24 (commit a5a7f1c)
 
 - **Hito**: **fase 2 del `PLAN_CIRCUITO_DEL_LOTE.md` — el registro** (lado OCP; lo de Kaffetal Regal queda con dueño en su charter).
 - **Añadido**: **las certificaciones de la finca tienen estado** (folio 7 del owner): `declarada` → **evidencia pedida** (CTC

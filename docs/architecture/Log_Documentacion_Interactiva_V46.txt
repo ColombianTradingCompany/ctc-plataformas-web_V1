@@ -252,4 +252,4 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
 - Guardianes: `qa-registro-check` (50, nuevo).
 - PENDIENTE con dueño `kaffetal-regal`: A5 último paso del intake; dossier ES/EN por lote (+ el de la finca); Ficha descargable;
   enseñar el estado de cada certificación al productor (y sus «retiradas» fuera del Pasaporte impreso).
-(commit: pendiente)
+(commit: a5a7f1c)

@@ -410,4 +410,4 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
   `qa-rutas-consolas` 512.
 - PENDIENTE: conducir las fases 6–8 con `prueba-*` (Etapa 2); 2.ª tanda de Compras (mezclas, pergamino/verde, ubicación); la imagen
   en `LotCard` (cherry-picked); copy «Red o superior» de KR; recordatorios de mora; 2.ª tanda de Muestras; wrap V47.
-(commit: pendiente)
+(commit: 85e5014)

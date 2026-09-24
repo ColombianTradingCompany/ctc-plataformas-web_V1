@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.85] — 2026-09-24 (commit pendiente)
+## [V5.85] — 2026-09-24 (commit 85e5014)
 
 - **Hito**: **la fase 8 del `PLAN_CIRCUITO_DEL_LOTE.md` — CTCx Selection y Compras** (folio 8, paso 19; decisión 7; respuesta 7
   del 23-sep). Con ella **la Etapa 1 queda ejecutada en código** (fases 0–8, V5.76–V5.85); las fases 6–8 no se condujeron en

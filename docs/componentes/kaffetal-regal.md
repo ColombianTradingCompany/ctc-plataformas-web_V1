@@ -125,6 +125,11 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   muestra es `EVALUATION_FEE_COP` = $200.000 (`src/lib/trato/terminos.ts`). **Lo que sigue siendo de KR**: el copy «Cupping
   Arena» y «No abrir antes de la Arena» de las instrucciones de envío y su etiqueta recortable; la caja «Cómo pagar · Nequi»
   sigue esperando el número (lo escribe el owner).
+- **Fase 4 (V5.81) — una línea tocada y un pendiente con dueño aquí**: `LotKanbanStepper` conoce el estado **`evaluado`** del
+  circuito en su ORDEN (`qa-circuito` lo exige). **Pendiente KR**: alimentar `evaluacionPendiente` a `estadoDelCircuito()` (hay
+  una `lot_evaluations` `q_grader_batch` en `pending` para el lote — el productor ya la ve por `lot_evaluations_select_own_lot`)
+  para que la barra diga «evaluado» y no «en evaluación» mientras CTCx confirma; y decidir si «Lotes Galardonados» muestra la
+  **rueda** (`lot_evaluations.rueda`, etiquetas ES/EN en `src/lib/catacion/rueda.ts`) y la escala (SCA/CVA) de la evaluación.
 - **La Arena y el Club cambiaron (V5.77, fase 1 del `PLAN_CIRCUITO_DEL_LOTE`) — copy de KR con dueño `kaffetal-regal`**: el
   Club como membresía **ya no existe** (firmar y publicar no lo exigen; el galardón no lo reparte), así que `ContratosTab`
   («Pasaporte del Club», `isClubMember`) y el gate visual de «Mis contratos» hablan de algo retirado; la Arena es una **sesión de

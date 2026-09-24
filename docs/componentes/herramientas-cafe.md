@@ -121,6 +121,12 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 
 ## Pendientes
 
+- **V5.81 (`consolas`, fase 4 del `PLAN_CIRCUITO_DEL_LOTE`) — con dueño aquí**: la **rueda de sabores tiene UNA taxonomía**
+  en `src/lib/catacion/rueda.ts` (nueve familias SCA/WCR, ES/EN, solo ids en la base): la Rueda del Café del taller debería
+  leer de ahí cuando se rehaga (el owner la quiere en el Centro de Calidad). Y la **variante interna de la Datasheet Tool**
+  (`green-datasheet` para CTCx: transcribir FT2 y caracterizar varios lotes, embebida con el puente `CTC_TOOL`; folio 11)
+  sigue sin hacerse — la planilla del Q-Grader es React (`LabEvalEditor`, SCA o CVA) y enlaza Defectos y el Varieties Map
+  por su URL del taller.
 - **V5.66 · una carpeta por herramienta, y una conversación por herramienta** (owner, 2026-09-21). El orden
   sugerido y la línea «Hoy:» de cada una están en `herramientas-cafe/README.md` y en cada ficha. Lo que el recuento
   destapó: **(a)** la Rueda del Café vive en DOS versiones y el Sneak Peek dibuja con la vieja (V10) — es la

@@ -146,6 +146,41 @@ export async function setPartnerStatus(profileId: string, to: "suspended" | "act
   return { ok: true };
 }
 
+/**
+ * V5.81 (respuesta 5 del owner, 2026-09-24): la credencial del Centro de Calidad ACTIVA uno o ambos módulos —
+ * Evaluación de Lotes · Procesamiento de Lotes (`partner_accounts.modulos`). Solo el owner, como el resto de la
+ * credencial; el socio ve el módulo aparecer o apagarse en su panel. Devuelve resultado (nunca lanza).
+ */
+export async function setPartnerModulos(profileId: string, formData: FormData): Promise<ActionResult> {
+  let ownerId: string;
+  try {
+    ownerId = await requireOwner();
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "No autorizado." };
+  }
+  const service = createServiceRoleClient();
+  const { data: target } = await service.from("partner_accounts").select("node_type, modulos, org_name").eq("profile_id", profileId).maybeSingle();
+  if (!target) return { ok: false, error: "Credencial no encontrada." };
+  if (target.node_type !== "centro-calidad") return { ok: false, error: "Solo el Centro de Calidad tiene módulos activables." };
+
+  const modulos = { evaluacion: formData.get("evaluacion") === "on", procesamiento: formData.get("procesamiento") === "on" };
+  const { error } = await service.from("partner_accounts").update({ modulos }).eq("profile_id", profileId);
+  if (error) return { ok: false, error: "No se pudieron guardar los módulos: " + error.message };
+  await service.from("audit_log").insert({
+    entity_type: "partner_account",
+    entity_id: profileId,
+    action: "modulos_set",
+    previous_status: JSON.stringify(target.modulos ?? {}),
+    new_status: JSON.stringify(modulos),
+    performed_by: ownerId,
+    notes: target.org_name,
+  });
+  revalidatePath("/bcp/socios");
+  revalidatePath("/bcp/socios/centro-calidad");
+  revalidatePath("/socios/centro-calidad/panel");
+  return { ok: true };
+}
+
 // Resend invite (invited-only) or owner reset (active): both regenerate the temp
 // password and re-deliver — the password is never shown on screen.
 export async function resendPartnerCredential(profileId: string): Promise<ActionResult> {

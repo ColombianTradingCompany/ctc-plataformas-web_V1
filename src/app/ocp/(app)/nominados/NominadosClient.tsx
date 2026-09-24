@@ -13,6 +13,7 @@ import {
   confirmInscriptionPayment,
   createSondeoLotResultUploadUrl,
   deleteSondeoBatch,
+  devolverEvaluacionAlCentro,
   enviarAlCentro,
   markCashbackPaid,
   postularOnBehalf,
@@ -355,30 +356,123 @@ export function DeleteBatchButton({ batchId, label, lotCount }: { batchId: strin
   );
 }
 
-/** «Enviar al Centro de Calidad»: abierto → en_centro, con el Q-Grader que firmará las planillas. */
-export function EnviarAlCentroForm({ batchId, lotCount }: { batchId: string; lotCount: number }) {
+/** «Enviar al Centro de Calidad»: abierto → en_centro. El Q-Grader es el contacto de la credencial elegida (V5.81). */
+export function EnviarAlCentroForm({
+  batchId,
+  lotCount,
+  centros,
+}: {
+  batchId: string;
+  lotCount: number;
+  /** Las credenciales del Centro con Evaluación de Lotes activa. Con una sola, no se pregunta. */
+  centros: { id: string; nombre: string; qGrader: string }[];
+}) {
   const { pending, error, run } = useAction();
-  const [qGrader, setQGrader] = useState("");
+  const [centroId, setCentroId] = useState(centros.length === 1 ? centros[0].id : "");
+  const elegido = centros.find((c) => c.id === centroId);
   return (
     <div style={{ display: "grid", gap: 6 }}>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-        {/* El Q-Grader del bache firma la planilla oficial al galardonar. Se teclea HASTA la fase 4
-            (respuesta 5 del owner): con la credencial del Centro de Calidad deja de escribirse a mano. */}
-        <input placeholder="Q-Grader del bache" value={qGrader} onChange={(e) => setQGrader(e.target.value)} style={{ maxWidth: 220 }} />
+        {centros.length > 1 && (
+          <select value={centroId} onChange={(e) => setCentroId(e.target.value)} style={{ maxWidth: 260 }}>
+            <option value="">Centro de Calidad…</option>
+            {centros.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nombre} · Q-Grader {c.qGrader}
+              </option>
+            ))}
+          </select>
+        )}
         <button
           className="btn btn-sm btn-solid"
-          disabled={pending || lotCount === 0 || !qGrader.trim()}
+          disabled={pending || lotCount === 0 || !elegido}
           title={lotCount === 0 ? "Suba lotes al bache primero" : ""}
           onClick={() => {
             const fd = new FormData();
-            fd.set("q_grader", qGrader);
+            fd.set("centro_id", centroId);
             run(() => enviarAlCentro(batchId, fd));
           }}
         >
-          {pending ? "Enviando…" : "Enviar al Centro de Calidad →"}
+          {pending ? "Enviando…" : `Enviar al Centro de Calidad →${elegido && centros.length === 1 ? ` (${elegido.nombre} · Q-Grader ${elegido.qGrader})` : ""}`}
         </button>
       </div>
+      {centros.length === 0 && (
+        <p className={styles.warn} style={{ margin: 0 }}>
+          Ningún Centro de Calidad tiene activo el módulo Evaluación de Lotes — actívelo en BCP · Socios.
+        </p>
+      )}
       <ErrorLine error={error} />
+    </div>
+  );
+}
+
+/** V5.81 · el alta del Centro de Calidad, pendiente: CTCx la CONFIRMA (galardona con el grado derivado / no supera) o la devuelve. */
+export function ConfirmarCentroControls({
+  lotId,
+  lotName,
+  alta,
+}: {
+  lotId: string;
+  lotName: string;
+  alta: { id: string; escala: string; puntaje: number | null; qGrader: string | null; fecha: string; rueda: string[]; notas: string | null };
+}) {
+  const { pending, error, run } = useAction();
+  const [open, setOpen] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [motivo, setMotivo] = useState("");
+  const puntaje = alta.puntaje != null ? redondeaPuntaje(alta.puntaje) : null;
+  const grado = puntaje != null ? gradoPorPuntaje(puntaje) : null;
+  return (
+    <div style={{ marginTop: 6 }}>
+      <button className="btn btn-sm btn-solid" onClick={() => setOpen(true)}>
+        Confirmar el alta del Centro…
+      </button>
+      {open && (
+        <div className="modal-bg open" onClick={() => setOpen(false)}>
+          <div className="modal modal-wide" onClick={(e) => e.stopPropagation()}>
+            <button className="close" onClick={() => setOpen(false)} aria-label="Cerrar">
+              ×
+            </button>
+            <h3>Alta del Centro de Calidad · {lotName}</h3>
+            <p className={styles.meta} style={{ marginTop: 2 }}>
+              Q-Grader <b>{alta.qGrader ?? "—"}</b> · {alta.escala.toUpperCase()} <b>{alta.puntaje != null ? alta.puntaje.toFixed(2) : "—"}</b> · dada de alta el {alta.fecha}
+              {alta.rueda.length > 0 && <> · rueda: {alta.rueda.join(", ")}</>}
+            </p>
+            {alta.notas && <p className={styles.meta}>Notas del Q-Grader: {alta.notas}</p>}
+            <div className={styles.field} style={{ marginTop: 10 }}>
+              <label>Resumen del resultado (el productor lo verá)</label>
+              <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Resultado de la evaluación…" />
+            </div>
+            {/* El puntaje manda: el grado se DERIVA del alta del Centro; nadie lo digita. */}
+            <p className={styles.meta} style={{ margin: "8px 0 6px" }}>
+              {puntaje == null
+                ? "El alta no trae puntaje — devuélvala al Centro."
+                : grado
+                  ? <>Puntaje <b>{puntaje}</b> → Grado <b style={{ color: grado.hex }}>{grado.nombre}</b> (derivado — el puntaje manda).</>
+                  : <>Puntaje <b>{puntaje}</b>: por debajo de 80 no hay galardón — registre «No supera».</>}
+            </p>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              <button
+                className="btn btn-sm btn-solid"
+                disabled={pending || !notes.trim() || !grado}
+                onClick={() => run(() => recordEvaluationVerdict(lotId, "aprobado", notes, undefined, { centroEvaluationId: alta.id }))}
+              >
+                {grado ? `Galardonar → ${grado.nombre}` : "Galardonar"}
+              </button>
+              <button className="btn btn-sm" disabled={pending || !notes.trim()} onClick={() => run(() => recordEvaluationVerdict(lotId, "rechazado", notes, undefined, { centroEvaluationId: alta.id }))}>
+                No supera (cashback 80% + mejoras IA)
+              </button>
+            </div>
+            <div style={{ borderTop: "1px dashed var(--line)", marginTop: 12, paddingTop: 10, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+              <input placeholder="Motivo para devolverla al Centro" value={motivo} onChange={(e) => setMotivo(e.target.value)} style={{ maxWidth: 300 }} />
+              <button className="btn btn-sm" disabled={pending || !motivo.trim()} onClick={() => run(() => devolverEvaluacionAlCentro(alta.id, motivo))}>
+                Devolver al Centro
+              </button>
+            </div>
+            <ErrorLine error={error} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

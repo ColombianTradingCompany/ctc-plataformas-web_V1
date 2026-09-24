@@ -47,7 +47,8 @@ export type DestinoDeChip = "evaluaciones" | "contratos";
 // El orden del circuito, para comparar «¿ya pasé por aquí?» sin escribir la
 // misma cadena de condiciones cuatro veces.
 // V5.80: «solicitada» (pidió la evaluación; falta factura, pago o muestra) va antes de «a evaluar» (pagado y recibido, sin bache).
-const ORDEN: EstadoDelCircuito[] = ["en_ficha", "solicitada", "a_evaluar", "en_evaluacion", "pendiente_oferta", "oferta_emitida", "catalogo_activo"];
+// V5.81: «evaluado» (el Q-Grader lo dio de alta; CTCx confirma) va entre «en evaluación» y «pendiente de oferta».
+const ORDEN: EstadoDelCircuito[] = ["en_ficha", "solicitada", "a_evaluar", "en_evaluacion", "evaluado", "pendiente_oferta", "oferta_emitida", "catalogo_activo"];
 const alMenos = (estado: EstadoDelCircuito, hito: EstadoDelCircuito) => ORDEN.indexOf(estado) >= ORDEN.indexOf(hito);
 
 export function LotKanbanStepper({

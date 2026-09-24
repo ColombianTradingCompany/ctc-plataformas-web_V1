@@ -53,6 +53,10 @@ const CASOS = [
   ["paso 10: el lote que registró CTC a mano no paga inscripción: con el recibo basta", { registradoPorCtc: true, muestraRecibida: true }, "a_evaluar"],
   ["paso 10: subido a un Bache de Evaluación → en evaluación", { ...pagadoYRecibido, enBache: true }, "en_evaluacion"],
   ["un bache sin pago o sin muestra no existe: el dato suelto no adelanta al lote", { tieneInscripcion: true, enBache: true }, "solicitada"],
+  // FOLIO 7, PASOS 11–12 (V5.81) — «da de alta cada lote individualmente» … registrar ≠ confirmar: con el alta del
+  // Q-Grader pendiente el lote está EVALUADO; el grado llega cuando CTCx confirma.
+  ["paso 11: el Q-Grader lo dio de alta y CTCx no ha confirmado → evaluado", { ...pagadoYRecibido, enBache: true, evaluacionPendiente: true }, "evaluado"],
+  ["un alta sin bache no adelanta al lote", { ...pagadoYRecibido, evaluacionPendiente: true }, "a_evaluar"],
   // NOTA 4 — «toda la información del Q-Grader está; falta que alguien de CTCx confirme el grado y empuje la oferta»
   ["nota 4: tiene grado y ninguna oferta → pendiente de oferta", { ...pagadoYRecibido, grado: "blue", stage: "galardonado" }, "pendiente_oferta"],
   ["nota 4: la oferta anterior fue rechazada → vuelve a estar pendiente de oferta", { grado: "red", ultimaOferta: "rechazada" }, "pendiente_oferta"],
@@ -84,6 +88,7 @@ for (const [nombre, entrada, esperado] of CASOS) {
   check("solicitada con la muestra: solo falta el pago", /pago/.test(soloMuestra) && !/muestra/.test(soloMuestra), soloMuestra);
   check("a evaluar dice que falta el Bache (paso 10)", E(pagadoYRecibido).falta.some((f) => /[Bb]ache/.test(f)));
   check("en evaluación dice que falta el Q-Grader del Centro", E({ ...pagadoYRecibido, enBache: true }).falta.some((f) => /Q-Grader|Centro/.test(f)));
+  check("evaluado dice que falta confirmar el veredicto", E({ ...pagadoYRecibido, enBache: true, evaluacionPendiente: true }).falta.some((f) => /confirmar/.test(f)));
   check("un contrato por firmar lo dice", E({ grado: "blue", contrato: "pending_signature" }).falta.some((f) => /firmar/.test(f)));
   check("un contrato vigente no le debe nada a nadie aquí", E({ grado: "blue", contrato: "active" }).falta.length === 0);
   check("una oferta muerta dice por qué hay que decidir otra", E({ grado: "red", ultimaOferta: "rechazada" }).falta.some((f) => /rechazada/.test(f)));
@@ -97,9 +102,9 @@ const B = [false, true];
 let combinaciones = 0;
 const desconocidos = [];
 for (const stage of STAGES) for (const registradoPorCtc of B) for (const tieneInscripcion of B) for (const pagoConfirmado of B)
-  for (const muestraRecibida of B) for (const enBache of B) for (const grado of [null, "blue"]) for (const ultimaOferta of OFERTAS) for (const contrato of CONTRATOS) {
+  for (const muestraRecibida of B) for (const enBache of B) for (const evaluacionPendiente of B) for (const grado of [null, "blue"]) for (const ultimaOferta of OFERTAS) for (const contrato of CONTRATOS) {
     combinaciones++;
-    const r = estadoDelCircuito({ stage, registradoPorCtc, tieneInscripcion, pagoConfirmado, muestraRecibida, enBache, grado, ultimaOferta, contrato });
+    const r = estadoDelCircuito({ stage, registradoPorCtc, tieneInscripcion, pagoConfirmado, muestraRecibida, enBache, evaluacionPendiente, grado, ultimaOferta, contrato });
     if (!CIRCUITO_LABEL[r.estado] || r.label !== CIRCUITO_LABEL[r.estado] || !Array.isArray(r.falta)) desconocidos.push(JSON.stringify(r));
   }
 check(`TOTAL: las ${combinaciones} combinaciones dan un estado conocido y etiquetado`, desconocidos.length === 0, desconocidos.slice(0, 3).join(" "));
@@ -114,6 +119,7 @@ check(`TOTAL: las ${combinaciones} combinaciones dan un estado conocido y etique
     ["confirmar el pago", { pagoConfirmado: true }],
     ["recibir la muestra", { muestraRecibida: true }],
     ["subirlo a un bache", { enBache: true }],
+    ["que el Q-Grader lo dé de alta", { evaluacionPendiente: true }],
     ["poner el grado", { grado: "blue" }],
     ["emitir la oferta", { ultimaOferta: "emitida" }],
     ["que acepten la oferta", { ultimaOferta: "aceptada" }],
@@ -121,8 +127,8 @@ check(`TOTAL: las ${combinaciones} combinaciones dan un estado conocido y etique
   ];
   const retrocesos = [];
   for (const registradoPorCtc of B) for (const tieneInscripcion of B) for (const pagoConfirmado of B) for (const muestraRecibida of B)
-    for (const enBache of B) for (const grado of [null, "blue"]) {
-      const antes = { ...base, registradoPorCtc, tieneInscripcion, pagoConfirmado, muestraRecibida, enBache, grado };
+    for (const enBache of B) for (const evaluacionPendiente of B) for (const grado of [null, "blue"]) {
+      const antes = { ...base, registradoPorCtc, tieneInscripcion, pagoConfirmado, muestraRecibida, enBache, evaluacionPendiente, grado };
       const a = pos(estadoDelCircuito(antes).estado);
       for (const [nombre, cambio] of AVANCES) {
         const d = pos(estadoDelCircuito({ ...antes, ...cambio }).estado);
@@ -130,7 +136,7 @@ check(`TOTAL: las ${combinaciones} combinaciones dan un estado conocido y etique
       }
     }
   check("MONÓTONO: ningún avance hace retroceder a un lote", retrocesos.length === 0, retrocesos.slice(0, 2).join(" | "));
-  check("el orden del circuito nombra los cinco estados del owner, en su orden", ["solicitada", "a_evaluar", "en_evaluacion", "pendiente_oferta", "catalogo_activo"].every((s, i, arr) => i === 0 || pos(arr[i - 1]) < pos(s)));
+  check("el orden del circuito nombra los seis estados del owner, en su orden", ["solicitada", "a_evaluar", "en_evaluacion", "evaluado", "pendiente_oferta", "catalogo_activo"].every((s, i, arr) => i === 0 || pos(arr[i - 1]) < pos(s)));
 }
 
 // ── 5. El módulo es puro, y quien pinta el estado lo LEE de él ───────────────
@@ -145,7 +151,7 @@ check(`TOTAL: las ${combinaciones} combinaciones dan un estado conocido y etique
   check("y no se inventa etiquetas del circuito por su cuenta", !/["'`](Solicitada|A evaluar|En evaluación|Pendiente de oferta|Catálogo activo)["'`]/.test(tabla));
   // La otra cara (V5.64): la barra del lote del productor lee la MISMA función y conoce el estado nuevo.
   const stepper = readFileSync("src/components/kaffetal-regal/LotKanbanStepper.tsx", "utf8");
-  check("la barra del productor conoce «solicitada» en su orden", /ORDEN[^=]*=\s*\[\s*"en_ficha",\s*"solicitada",\s*"a_evaluar",\s*"en_evaluacion"/.test(stepper));
+  check("la barra del productor conoce «solicitada» y «evaluado» en su orden", /ORDEN[^=]*=\s*\[\s*"en_ficha",\s*"solicitada",\s*"a_evaluar",\s*"en_evaluacion",\s*"evaluado",\s*"pendiente_oferta"/.test(stepper));
   check("y deriva el bache de la fase de la solicitud", stepper.includes('enBache: inscription?.phase === "sondeo"'));
 }
 

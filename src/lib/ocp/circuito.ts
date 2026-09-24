@@ -22,6 +22,7 @@ export type EstadoDelCircuito =
   | "solicitada" // paso 7–9: pidió la evaluación; falta la factura, el pago, la muestra, o varias
   | "a_evaluar" // paso 10: pagado y recibido; espera que CTCx lo suba a un Bache de Evaluación
   | "en_evaluacion" // en un bache en manos del Centro de Calidad
+  | "evaluado" // paso 11–12: el Q-Grader lo dio de alta; falta que CTCx confirme el veredicto (registrar ≠ confirmar)
   | "pendiente_oferta" // nota 4: evaluado; falta que CTCx confirme el grado y empuje la oferta
   | "oferta_emitida" // la oferta salió y espera al productor
   | "catalogo_activo"; // nota 5: el productor aceptó; hay trato
@@ -38,6 +39,8 @@ export type EntradaDelCircuito = {
   muestraRecibida: boolean;
   /** `arena_inscriptions.phase === "sondeo"` con `sondeo_batch_id`: el lote va en un Bache de Evaluación. */
   enBache: boolean;
+  /** Hay una `lot_evaluations` `q_grader_batch` en `pending`: el Centro lo dio de alta y CTCx no ha confirmado (V5.81). */
+  evaluacionPendiente?: boolean;
   /** `lots.grade`: solo lo escribe el veredicto del Q-Grader. */
   grado: string | null;
   /** El `status` de la ÚLTIMA oferta del lote (`lot_offers`), o null si nunca tuvo. */
@@ -60,6 +63,7 @@ export const CIRCUITO_LABEL: Record<EstadoDelCircuito, string> = {
   solicitada: "Solicitada",
   a_evaluar: "A evaluar",
   en_evaluacion: "En evaluación",
+  evaluado: "Evaluado",
   pendiente_oferta: "Pendiente de oferta",
   oferta_emitida: "Oferta emitida",
   catalogo_activo: "Catálogo activo",
@@ -71,6 +75,7 @@ export const ORDEN_DEL_CIRCUITO: EstadoDelCircuito[] = [
   "solicitada",
   "a_evaluar",
   "en_evaluacion",
+  "evaluado",
   "pendiente_oferta",
   "oferta_emitida",
   "catalogo_activo",
@@ -116,6 +121,8 @@ export function estadoDelCircuito(e: EntradaDelCircuito): LecturaDelCircuito {
   //     apilan en Baches de Evaluación que van al Q-Grader»); sin bache, A evaluar: espera que CTCx lo suba.
   const pago = e.pagoConfirmado || (e.registradoPorCtc && !e.tieneInscripcion);
   if (e.muestraRecibida && pago) {
+    // Paso 11–12 (V5.81): el Q-Grader lo dio de alta (registrar) y CTCx todavía no confirmó el veredicto.
+    if (e.enBache && e.evaluacionPendiente) return lee("evaluado", "warn", ["confirmar el veredicto del Q-Grader (o devolverle el alta)"]);
     if (e.enBache) return lee("en_evaluacion", "warn", ["la evaluación del Q-Grader en el Centro de Calidad"]);
     return lee("a_evaluar", "warn", ["subirlo a un Bache de Evaluación y mandarlo al Centro de Calidad"]);
   }

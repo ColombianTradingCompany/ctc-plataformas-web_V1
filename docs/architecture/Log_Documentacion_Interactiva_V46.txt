@@ -296,3 +296,26 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
 - PENDIENTE: fase 4 (Centro de Calidad · Evaluación de Lotes: el Q-Grader escribe con su credencial, el nombre deja de teclearse);
   2.ª tanda de Muestras (alerta de 90 días derivada, muestras para comprador); la Datasheet interna.
 (commit: bf2a0a5)
+
+## [2026-09-24] V5.81 · Consolas → Socios (Centro de Calidad) — fase 4 del PLAN_CIRCUITO_DEL_LOTE: Evaluación de Lotes
+- NODO NUEVO (socio) «Evaluación de Lotes» `/socios/centro-calidad/panel/evaluacion` (`page.tsx`, `PlanillaCentro.tsx`,
+  `evaluacionActions.ts`): los baches `en_centro` a nombre de la credencial, lote a lote ANÓNIMO (solo el código corto), planilla
+  SCA o CVA + factor + mallas + rueda, «dar de alta» → `lot_evaluations` {q_grader_batch, pending, batch_id, escala, rueda,
+  uid_anonimo, q_grader_reference = contacto de la credencial}. `anularRegistro` mientras esté pendiente.
+- REGLA NUEVA (DICT `modulosdelsocio`, respuesta 5): `partner_accounts.modulos` {evaluacion, procesamiento}; `getPartnerIdentity`
+  (sin redirect) + `requirePartner` los devuelven; `setPartnerModulos` (owner) en `/bcp/socios/[nodo]`; el panel del Centro enseña
+  los dos módulos (Procesamiento = Etapa 3).
+- FLUJO «registrar ≠ confirmar» (§3 del plan): en «Lotes en Evaluación» el alta pendiente se CONFIRMA (`recordEvaluationVerdict`
+  con `centroEvaluationId`: la fila pasa a accepted + rige_grado, grado derivado del puntaje) o se DEVUELVE
+  (`devolverEvaluacionAlCentro` → rejected + motivo, visible en el Centro). Registrar a mano queda plegado. `enviarAlCentro` toma la
+  credencial (`centrosConEvaluacion`) y el Q-Grader es su contacto: ya no se teclea.
+- PLANILLA (DICT `escala`): `labEvaluation.ts` gana `escala` sca|cva, siete secciones CVA con `computeCva` (0,65625·Σ + 52,75 −
+  2u − 4d, impresión general doble; constantes `CVA`), `rueda` (ids), `labEvaluationScaData`; `LabEvalEditor` con radio SCA/CVA,
+  la rueda por familias y enlaces (no iframes) a Defectos y Varieties Map. Taxonomía única: `src/lib/catacion/rueda.ts`.
+- CIRCUITO: estado «evaluado» (alta pendiente en bache) entre en_evaluacion y pendiente_oferta; `carga.ts` lo alimenta;
+  `LotKanbanStepper` (KR, una línea) conoce el orden.
+- DATOS: migración `centro_calidad_evaluacion` (acta en `docs/migraciones/`).
+- Guardianes: `qa-centro-calidad-check` (65, nuevo), `qa-circuito` 41, `qa-solicitud-evaluacion` re-apuntado.
+- PENDIENTE: uso directo de la credencial (Ficha sin bache); `green-datasheet` variante interna (herramientas-cafe); KR alimenta
+  `evaluacionPendiente`; validar la fórmula del CVA con el Q-Grader; nadie ha conducido el módulo en vivo.
+(commit: pendiente)

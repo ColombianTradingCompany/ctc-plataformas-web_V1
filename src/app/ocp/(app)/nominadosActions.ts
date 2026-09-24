@@ -6,10 +6,11 @@ import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { ARENA_FEE_COP, MAX_BATCH_LOTS, avanzarAFilaSiCompleta, dueFor, formatCop, type InscriptionStatus } from "@/lib/arena/inscriptions";
 import { claimCampaignCode, insertEntryCode } from "@/lib/arena/entryCodes";
 import { generateMejorasDoc } from "@/lib/arena/mejoras";
-import { labEvaluationHasData, labEvaluationScore, toLabEvaluationList, computeFactor, type LabEvaluation } from "@/lib/arena/labEvaluation";
+import { labEvaluationHasData, labEvaluationScaData, labEvaluationScore, toLabEvaluationList, computeFactor, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import { currentSeason, lotSeasonCount, MAX_SEASONS_PER_LOT } from "@/lib/arena/seasons";
 import { saldoDe } from "@/lib/muestras/particion";
-import { ATRIBUTOS_SCA } from "@/lib/fichas/tipos";
+import { normalizaRueda } from "@/lib/catacion/rueda";
+import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { gradoPorPuntaje, redondeaPuntaje } from "@/lib/grados/definicion";
 
 // ── El tramo pagado del lote, lado OCP (era «Nominados»; V5.80 = fase 3 del PLAN_CIRCUITO_DEL_LOTE) ──
@@ -25,7 +26,7 @@ import { gradoPorPuntaje, redondeaPuntaje } from "@/lib/grados/definicion";
 type Result = { ok: true } | { ok: false; error: string };
 
 // Las tres vistas del circuito (`nominados/CircuitoVista.tsx`): un lote pasa de una a otra con el pago, la muestra y el bache.
-const PATHS = ["/ocp/solicitudes", "/ocp/a-evaluar", "/ocp/en-evaluacion", "/ocp/muestras", "/ocp/kr", "/bcp"];
+const PATHS = ["/ocp/solicitudes", "/ocp/a-evaluar", "/ocp/en-evaluacion", "/ocp/muestras", "/ocp/kr", "/bcp", "/socios/centro-calidad/panel/evaluacion"];
 function revalidateAll() {
   for (const p of PATHS) revalidatePath(p);
 }
@@ -365,36 +366,55 @@ export async function removeFromBatch(lotId: string): Promise<Result> {
   return { ok: true };
 }
 
+/** Las credenciales del Centro de Calidad con el módulo Evaluación de Lotes activo (respuesta 5 del owner). */
+export async function centrosConEvaluacion(service: ReturnType<typeof createServiceRoleClient>) {
+  const { data } = await service
+    .from("partner_accounts")
+    .select("profile_id, org_name, contact_name")
+    .eq("node_type", "centro-calidad")
+    .eq("status", "active")
+    .contains("modulos", { evaluacion: true });
+  return (data as { profile_id: string; org_name: string; contact_name: string | null }[] | null) ?? [];
+}
+
 /**
  * «Enviar al Centro de Calidad»: abierto → en_centro (folio 7, paso 10: «los lotes se apilan en Baches de
- * Evaluación que van al Q-Grader»). Sin laboratorio externo, sin prueba de envío, sin solicitud formal. El
- * Q-Grader se escribe aquí HASTA la fase 4 (respuesta 5 del owner: con la credencial del Centro deja de
- * teclearse); su nombre firma la planilla oficial al galardonar. Cada lote deja una salida de su muestra de
- * evaluación (`muestra_movimientos`, motivo `a_centro`) y su productor recibe una nota.
+ * Evaluación que van al Q-Grader»). Sin laboratorio externo, sin prueba de envío, sin solicitud formal. V5.81
+ * (respuesta 5 del owner): el bache va a UNA credencial del Centro con Evaluación de Lotes activa —la única, o la
+ * elegida— y el Q-Grader es el contacto de esa credencial: nadie lo teclea. Su nombre firma la planilla oficial.
+ * Cada lote deja una salida de su muestra de evaluación (`muestra_movimientos`, motivo `a_centro`) y su productor
+ * recibe una nota.
  */
 export async function enviarAlCentro(batchId: string, formData: FormData): Promise<Result> {
   const permiso = await permisoDeEscritura("ocp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
-  const qGrader = String(formData.get("q_grader") ?? "").trim();
-  if (!qGrader) return { ok: false, error: "Escriba el nombre del Q-Grader que evaluará el bache — firma la planilla oficial." };
 
-  const [{ data: batch }, { data: insRows }, { data: centros }] = await Promise.all([
+  const [{ data: batch }, { data: insRows }, centros] = await Promise.all([
     service.from("sondeo_batches").select("id, status, label").eq("id", batchId).maybeSingle(),
     service.from("arena_inscriptions").select("id, lot_id, producer_id, lots(name)").eq("sondeo_batch_id", batchId).eq("phase", "sondeo"),
-    service.from("partner_accounts").select("profile_id, org_name").eq("node_type", "centro-calidad").eq("status", "active"),
+    centrosConEvaluacion(service),
   ]);
   if (!batch || batch.status !== "abierto") return { ok: false, error: "Ese bache no está abierto." };
   const lotes = (insRows as { id: string; lot_id: string; producer_id: string; lots: { name: string } | { name: string }[] | null }[] | null) ?? [];
   if (!lotes.length) return { ok: false, error: "El bache está vacío — suba lotes de «Lotes a Evaluar» primero." };
-  // La credencial del Centro: si hay exactamente una activa, el bache queda a su nombre (la fase 4 la usa).
-  const centro = (centros ?? []).length === 1 ? (centros as { profile_id: string; org_name: string }[])[0] : null;
+  const centroId = String(formData.get("centro_id") ?? "").trim();
+  const centro = centroId ? centros.find((c) => c.profile_id === centroId) : centros.length === 1 ? centros[0] : undefined;
+  if (!centro) {
+    return {
+      ok: false,
+      error: centros.length
+        ? "Elija la credencial del Centro de Calidad que evaluará el bache."
+        : "Ningún Centro de Calidad tiene activo el módulo Evaluación de Lotes — actívelo en BCP · Socios.",
+    };
+  }
+  const qGrader = centro.contact_name?.trim() || centro.org_name;
 
   const now = new Date().toISOString();
   const { error } = await service
     .from("sondeo_batches")
-    .update({ status: "en_centro", shipped_at: now, q_grader_name: qGrader, centro_calidad_account_id: centro?.profile_id ?? null })
+    .update({ status: "en_centro", shipped_at: now, q_grader_name: qGrader, centro_calidad_account_id: centro.profile_id })
     .eq("id", batchId);
   if (error) return { ok: false, error: "No se pudo enviar el bache: " + error.message };
 
@@ -413,13 +433,13 @@ export async function enviarAlCentro(batchId: string, formData: FormData): Promi
       muestra_id: m.id,
       kg: saldo,
       motivo: "a_centro",
-      destino: centro?.org_name ?? "Centro de Calidad",
+      destino: centro.org_name,
       batch_id: batchId,
       por: adminId,
     });
   }
 
-  await auditBatch(service, batchId, "batch_sent_to_centro", adminId, `${batch.label} · ${lotes.length} lote(s) · Q-Grader ${qGrader}${centro ? ` · ${centro.org_name}` : ""}`);
+  await auditBatch(service, batchId, "batch_sent_to_centro", adminId, `${batch.label} · ${lotes.length} lote(s) · Q-Grader ${qGrader} · ${centro.org_name}`);
   for (const l of lotes) {
     const lot = (Array.isArray(l.lots) ? l.lots[0] : l.lots) as { name: string } | null;
     await service.from("producer_comm_log").insert({
@@ -432,6 +452,38 @@ export async function enviarAlCentro(batchId: string, formData: FormData): Promi
   }
   revalidateAll();
   return { ok: true };
+}
+
+/**
+ * V5.81 · «Devolver al Centro»: el alta del Q-Grader (pendiente) no convence a CTCx — queda `rejected` con el motivo
+ * y el Q-Grader evalúa de nuevo. Registrar ≠ confirmar: aquí se decide, allá se registra.
+ */
+export async function devolverEvaluacionAlCentro(evaluationId: string, motivo: string): Promise<Result> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const razon = motivo.trim();
+  if (!razon) return { ok: false, error: "Escriba por qué se devuelve — el Q-Grader lo leerá." };
+  const { data: row } = await service.from("lot_evaluations").select("id, lot_id, status, source, notes").eq("id", evaluationId).maybeSingle();
+  if (!row || row.source !== "q_grader_batch" || row.status !== "pending") return { ok: false, error: "Esa alta ya no está pendiente." };
+  const { error } = await service
+    .from("lot_evaluations")
+    .update({ status: "rejected", reviewed_by: adminId, reviewed_at: new Date().toISOString(), notes: [row.notes, `Devuelta por CTC: ${razon}`].filter(Boolean).join(" · ") })
+    .eq("id", evaluationId);
+  if (error) return { ok: false, error: "No se pudo devolver: " + error.message };
+  await service.from("audit_log").insert({ entity_type: "lot", entity_id: row.lot_id, action: "evaluacion_devuelta_al_centro", performed_by: adminId, notes: razon.slice(0, 300) });
+  revalidateAll();
+  return { ok: true };
+}
+
+/** La fila del Centro que CTCx confirma: pasa a `accepted` y es la que RIGE el grado (una sola por lote). */
+async function confirmarFilaDelCentro(service: ReturnType<typeof createServiceRoleClient>, evaluationId: string, lotId: string, adminId: string) {
+  await service.from("lot_evaluations").update({ rige_grado: false }).eq("lot_id", lotId);
+  await service
+    .from("lot_evaluations")
+    .update({ status: "accepted", reviewed_by: adminId, reviewed_at: new Date().toISOString(), rige_grado: true })
+    .eq("id", evaluationId);
 }
 
 /** El bache se cierra solo cuando su último lote recibe veredicto; esto lo hace, sin quejarse si falta alguno. */
@@ -528,6 +580,8 @@ export async function recordEvaluationVerdict(
     evaluation?: LabEvaluation;
     /** Archivo del resultado ya subido a Storage vía createSondeoLotResultUploadUrl. */
     resultFile?: { path: string; filename: string };
+    /** V5.81: el alta PENDIENTE del Centro de Calidad que se confirma (registrar ≠ confirmar). Con ella no se teclea planilla. */
+    centroEvaluationId?: string;
   }
 ): Promise<Result> {
   const permiso = await permisoDeEscritura("ocp", "emite");
@@ -559,16 +613,30 @@ export async function recordEvaluationVerdict(
 
   const lot = (Array.isArray(ins.lots) ? ins.lots[0] : ins.lots) as { name: string; stage: string } | null;
 
-  // Si el veredicto llega con una planilla nueva, se AÑADE a la lista (un lote
-  // puede tener varias). El puntaje del sondeo = el explícito, o el total SCA
-  // de la última planilla registrada.
-  const newEval = extras?.evaluation && labEvaluationHasData(extras.evaluation) ? extras.evaluation : null;
+  // V5.81 · el camino del Centro de Calidad: el Q-Grader ya dio de alta el lote (fila `pending`) y CTCx CONFIRMA.
+  // Esa fila es la evaluación oficial; no se teclea otra planilla.
+  let centroRow: { id: string; sca_total: number | string | null } | null = null;
+  if (extras?.centroEvaluationId) {
+    const { data: row } = await service
+      .from("lot_evaluations")
+      .select("id, lot_id, status, source, sca_total")
+      .eq("id", extras.centroEvaluationId)
+      .maybeSingle();
+    if (!row || row.lot_id !== lotId || row.source !== "q_grader_batch" || row.status !== "pending") {
+      return { ok: false, error: "Esa alta del Centro ya no está pendiente." };
+    }
+    centroRow = { id: row.id, sca_total: row.sca_total };
+  }
+
+  // Sin alta del Centro (hasta que lo tenga): si el veredicto llega con una planilla nueva, se AÑADE a la lista
+  // (un lote puede tener varias). El puntaje = el explícito, o el total de la última planilla registrada.
+  const newEval = !centroRow && extras?.evaluation && labEvaluationHasData(extras.evaluation) ? extras.evaluation : null;
   const list = [
     ...toLabEvaluationList(ins.sondeo_evaluation),
     ...(newEval ? [{ ...newEval, registered_at: new Date().toISOString() }] : []),
   ];
-  const lastEval = list.length ? list[list.length - 1] : null;
-  const effectiveScore = score ?? (lastEval ? labEvaluationScore(lastEval) : null);
+  const lastEval = centroRow ? null : list.length ? list[list.length - 1] : null;
+  const effectiveScore = centroRow ? Number(centroRow.sca_total) : (score ?? (lastEval ? labEvaluationScore(lastEval) : null));
   const resultCols = {
     sondeo_result_notes: cleanNotes,
     sondeo_score: effectiveScore,
@@ -589,23 +657,28 @@ export async function recordEvaluationVerdict(
     if (!grado) {
       return { ok: false, error: `Con puntaje ${puntaje} no hay galardón (mínimo 80). Registre el veredicto como «rechazado».` };
     }
-    if (!batch.q_grader_name?.trim()) {
+    if (!centroRow && !batch.q_grader_name?.trim()) {
       return { ok: false, error: "Defina el Q-Grader del bache (al enviarlo al Centro) — la planilla oficial lleva su nombre." };
     }
 
-    // La planilla del Q-Grader queda como evaluación OFICIAL del lote, con su
+    // El alta del Centro se confirma: pasa a accepted y rige el grado.
+    if (centroRow) await confirmarFilaDelCentro(service, centroRow.id, lotId, adminId);
+
+    // Sin Centro: la planilla tecleada queda como evaluación OFICIAL del lote, con su
     // procedencia propia — el comprador confía en esa etiqueta.
     if (lastEval) {
-      const scaData: Record<string, number> = {};
-      for (const key of ATRIBUTOS_SCA) scaData[key] = Number(lastEval[`sca_${key}` as keyof LabEvaluation]) || 0;
       const derived = computeFactor(lastEval);
       const { error: evalError } = await service.from("lot_evaluations").insert({
         lot_id: lotId,
         source: "q_grader_batch",
         status: "accepted",
         sca_total: puntaje,
-        sca_data: scaData,
+        sca_data: labEvaluationScaData(lastEval),
         factor_rendimiento: derived.yieldFactor,
+        batch_id: ins.sondeo_batch_id,
+        escala: lastEval.escala,
+        rueda: normalizaRueda(lastEval.rueda),
+        uid_anonimo: ctcLotReferenceShort(lotId),
         physical_data: {
           fa_start: lastEval.fa_start,
           fa_green_remainder: lastEval.fa_green_remainder,
@@ -685,6 +758,8 @@ export async function recordEvaluationVerdict(
         cashback_status: cashback ? "pendiente" : null,
       })
       .eq("id", ins.id);
+    // El alta del Centro también se confirma cuando el café no supera: la evaluación vale, el lote no pasa.
+    if (centroRow) await confirmarFilaDelCentro(service, centroRow.id, lotId, adminId);
     await service.from("audit_log").insert({
       entity_type: "arena_inscription",
       entity_id: lotId,

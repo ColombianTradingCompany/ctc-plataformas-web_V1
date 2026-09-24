@@ -7,12 +7,14 @@ import { segmentPostulacion } from "@/lib/bcp/producerSegments";
 import { NEQUI, PAYMENT_EMAIL } from "@/lib/arena/payment";
 import type { FacturaData } from "@/lib/arena/factura";
 import { TIPO_LABEL, type TipoDeMuestra } from "@/lib/muestras/particion";
+import { descriptorLabel } from "@/lib/catacion/rueda";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
-import { createSondeoBatch } from "../nominadosActions";
+import { centrosConEvaluacion, createSondeoBatch } from "../nominadosActions";
 import {
   BatchPicker,
   CashbackControls,
   CerrarBacheButton,
+  ConfirmarCentroControls,
   DeleteBatchButton,
   EmitirFacturaButton,
   EnviarAlCentroForm,
@@ -55,6 +57,7 @@ type BatchRow = {
   centro_calidad_account_id: string | null;
 };
 type MuestraRow = { id: string; lot_id: string; tipo: TipoDeMuestra; kg: number; ubicacion: string | null };
+type AltaRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; escala: string; rueda: unknown; q_grader_reference: string | null; notes: string | null; created_at: string };
 
 const fecha = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString("es-CO") : "—");
 
@@ -81,7 +84,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
   }));
   const batches = (batchesRaw as BatchRow[] | null) ?? [];
   const campaigns = ((campaignsRaw as { id: string; name: string; discount_pct: number }[] | null) ?? []).map((c) => ({ id: c.id, name: c.name, pct: c.discount_pct }));
-  const centros = new Map(((centrosRaw as { profile_id: string; org_name: string }[] | null) ?? []).map((c) => [c.profile_id, c.org_name]));
+  const nombreDelCentro = new Map(((centrosRaw as { profile_id: string; org_name: string }[] | null) ?? []).map((c) => [c.profile_id, c.org_name]));
 
   const solicitadas = inscriptions.filter((i) => i.phase === "postulacion" && i.lot);
   const embotelladas = solicitadas.filter((i) => segmentPostulacion({ postulatedAt: i.postulated_at }) === "embotellados");
@@ -90,13 +93,25 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
   const enBache = inscriptions.filter((i) => i.phase === "sondeo" && i.lot);
   const retiradosPend = inscriptions.filter((i) => i.phase === "retirado" && i.cashback_status === "pendiente" && i.lot);
 
-  const [producers, { data: muestrasRaw }] = await Promise.all([
+  const [producers, { data: muestrasRaw }, centros, { data: altasRaw }] = await Promise.all([
     fetchProducerContacts(service, inscriptions.map((i) => i.producer_id)),
     service
       .from("muestras")
       .select("id, lot_id, tipo, kg, ubicacion")
       .in("lot_id", [...aEvaluar, ...enBache, ...solicitadas].map((i) => i.lot_id)),
+    centrosConEvaluacion(service),
+    // V5.81: las altas del Centro de Calidad (pendientes o devueltas) de los lotes en bache.
+    service
+      .from("lot_evaluations")
+      .select("id, lot_id, batch_id, status, sca_total, escala, rueda, q_grader_reference, notes, created_at")
+      .eq("source", "q_grader_batch")
+      .in("status", ["pending", "rejected"])
+      .in("lot_id", enBache.map((i) => i.lot_id))
+      .order("created_at", { ascending: false }),
   ]);
+  const altasPorLote = new Map<string, AltaRow[]>();
+  for (const a of (altasRaw as AltaRow[] | null) ?? []) altasPorLote.set(a.lot_id, [...(altasPorLote.get(a.lot_id) ?? []), a]);
+  const centrosParaElegir = centros.map((c) => ({ id: c.profile_id, nombre: c.org_name, qGrader: c.contact_name?.trim() || c.org_name }));
   const name = (producerId: string) => producers.get(producerId)?.fullName ?? "Productor";
   const muestrasPorLote = new Map<string, MuestraRow[]>();
   for (const m of (muestrasRaw as MuestraRow[] | null) ?? []) muestrasPorLote.set(m.lot_id, [...(muestrasPorLote.get(m.lot_id) ?? []), m]);
@@ -304,7 +319,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
                 )}
                 <BatchPicker batchId={b.id} candidates={candidatos} slotsLeft={MAX_BATCH_LOTS - batchLots(b).length} />
                 <div style={{ marginTop: 10 }}>
-                  <EnviarAlCentroForm batchId={b.id} lotCount={batchLots(b).length} />
+                  <EnviarAlCentroForm batchId={b.id} lotCount={batchLots(b).length} centros={centrosParaElegir} />
                 </div>
               </div>
             ))}
@@ -335,26 +350,65 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
               <b style={{ fontSize: 14 }}>{b.label}</b>
               <span className={styles.badge}>{batchLots(b).length} sin veredicto</span>
               <span className={styles.meta}>
-                Q-Grader {b.q_grader_name ?? "—"} · {b.centro_calidad_account_id ? (centros.get(b.centro_calidad_account_id) ?? "Centro de Calidad") : "Centro de Calidad"} · enviado {fecha(b.shipped_at)}
+                Q-Grader {b.q_grader_name ?? "—"} · {b.centro_calidad_account_id ? (nombreDelCentro.get(b.centro_calidad_account_id) ?? "Centro de Calidad") : "Centro de Calidad"} · enviado {fecha(b.shipped_at)}
               </span>
               <CerrarBacheButton batchId={b.id} pendientes={batchLots(b).length} />
             </div>
             <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
-              {batchLots(b).map((i) => (
-                <div key={i.id} style={{ borderTop: "1px dashed var(--line)", paddingTop: 6 }}>
-                  <p className={styles.meta} style={{ margin: 0 }}>
-                    <b style={{ color: "var(--ink)" }}>{i.lot!.name}</b> · {name(i.producer_id)} ·{" "}
-                    <span className="mono">{ctcLotReferenceShort(i.lot_id)}</span>
-                  </p>
-                  <SondeoRegistroControls
-                    lotId={i.lot_id}
-                    lotName={i.lot!.name}
-                    evaluations={toLabEvaluationList(i.sondeo_evaluation)}
-                    resultFilename={i.sondeo_result_filename ?? null}
-                    qGraderName={b.q_grader_name ?? ""}
-                  />
-                </div>
-              ))}
+              {batchLots(b).map((i) => {
+                const altas = (altasPorLote.get(i.lot_id) ?? []).filter((a) => a.batch_id === b.id);
+                const pendiente = altas.find((a) => a.status === "pending");
+                const devuelta = !pendiente ? altas.find((a) => a.status === "rejected") : null;
+                return (
+                  <div key={i.id} style={{ borderTop: "1px dashed var(--line)", paddingTop: 6 }}>
+                    <p className={styles.meta} style={{ margin: 0 }}>
+                      <b style={{ color: "var(--ink)" }}>{i.lot!.name}</b> · {name(i.producer_id)} ·{" "}
+                      <span className="mono">{ctcLotReferenceShort(i.lot_id)}</span>
+                    </p>
+                    {pendiente ? (
+                      // V5.81: el Q-Grader ya lo dio de alta — CTCx confirma o devuelve; no teclea otra planilla.
+                      <>
+                        <p className={styles.meta} style={{ margin: "4px 0 0" }}>
+                          <span className={`${styles.badge} ${styles.badgeWarn}`}>Alta del Centro pendiente</span> {pendiente.escala.toUpperCase()}{" "}
+                          <b>{pendiente.sca_total != null ? Number(pendiente.sca_total).toFixed(2) : "—"}</b> · {pendiente.q_grader_reference ?? "—"} · {fecha(pendiente.created_at)}
+                        </p>
+                        <ConfirmarCentroControls
+                          lotId={i.lot_id}
+                          lotName={i.lot!.name}
+                          alta={{
+                            id: pendiente.id,
+                            escala: pendiente.escala,
+                            puntaje: pendiente.sca_total != null ? Number(pendiente.sca_total) : null,
+                            qGrader: pendiente.q_grader_reference,
+                            fecha: fecha(pendiente.created_at),
+                            rueda: Array.isArray(pendiente.rueda) ? (pendiente.rueda as string[]).map((id) => descriptorLabel(id)) : [],
+                            notas: pendiente.notes,
+                          }}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        {devuelta && (
+                          <p className={styles.meta} style={{ margin: "4px 0 0" }}>
+                            <span className={`${styles.badge} ${styles.badgeBad}`}>Alta devuelta al Centro</span> {devuelta.notes ?? ""}
+                          </p>
+                        )}
+                        <p className={styles.meta} style={{ margin: "4px 0 0" }}>Esperando el alta del Q-Grader en el Centro de Calidad.</p>
+                        <details>
+                          <summary className={styles.meta} style={{ cursor: "pointer" }}>Registrar a mano (sin el Centro)…</summary>
+                          <SondeoRegistroControls
+                            lotId={i.lot_id}
+                            lotName={i.lot!.name}
+                            evaluations={toLabEvaluationList(i.sondeo_evaluation)}
+                            resultFilename={i.sondeo_result_filename ?? null}
+                            qGraderName={b.q_grader_name ?? ""}
+                          />
+                        </details>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
               {!batchLots(b).length && <p className={styles.meta}>Todos los lotes de este bache ya tienen veredicto — puede cerrarlo.</p>}
             </div>
           </div>

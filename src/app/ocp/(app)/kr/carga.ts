@@ -108,7 +108,7 @@ export async function cargarKr(service: SupabaseClient): Promise<{
   filas: KrFila[];
   temporadas: { id: string; label: string }[];
 }> {
-  const [{ data: pRaw }, { data: ppRaw }, { data: fRaw }, { data: lRaw }, { data: iRaw }, { data: oRaw }, { data: cRaw }, { data: sRaw }, { data: aRaw }] =
+  const [{ data: pRaw }, { data: ppRaw }, { data: fRaw }, { data: lRaw }, { data: iRaw }, { data: oRaw }, { data: cRaw }, { data: sRaw }, { data: aRaw }, { data: evRaw }] =
     await Promise.all([
       service.from("profiles").select("id, full_name, email, phone, created_at, role").order("created_at", { ascending: true }),
       service.from("producer_profiles").select("profile_id, company_name, tax_id, cedula_cafetera, avatar_asset_id, country, department, gestion"),
@@ -127,7 +127,10 @@ export async function cargarKr(service: SupabaseClient): Promise<{
       service.from("purchase_contracts").select("id, lot_id, status"),
       service.from("harvest_seasons").select("id, kind, year, arena_starts_at, arena_ends_at").order("year", { ascending: false }),
       service.from("lot_contributions").select("lot_id, finca_id"),
+      // V5.81: el alta del Centro de Calidad que CTCx no ha confirmado → estado «evaluado» del circuito.
+      service.from("lot_evaluations").select("lot_id").eq("source", "q_grader_batch").eq("status", "pending"),
     ]);
+  const pendientesDelCentro = new Set(((evRaw as { lot_id: string }[] | null) ?? []).map((r) => r.lot_id));
 
   const perfiles = (pRaw as ProfileRow[] | null) ?? [];
   const pp = new Map(((ppRaw as PPRow[] | null) ?? []).map((r) => [r.profile_id, r]));
@@ -257,6 +260,7 @@ export async function cargarKr(service: SupabaseClient): Promise<{
           pagoConfirmado: ins?.status === "pagado" || ins?.status === "exento",
           muestraRecibida: !!l.sample_2kg_confirmed_at,
           enBache: ins?.phase === "sondeo" && !!ins.sondeo_batch_id,
+          evaluacionPendiente: pendientesDelCentro.has(l.id),
           grado: l.grade,
           ultimaOferta: oferta?.status ?? null,
           contrato: contrato?.status ?? null,

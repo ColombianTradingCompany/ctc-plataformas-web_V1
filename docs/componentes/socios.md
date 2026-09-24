@@ -17,7 +17,7 @@ Los socios son un **tier de identidad aparte**: `profiles.role = 'partner'` + un
 
 | Nodo (`slug`) | Rol | Sella en el pasaporte | Panel hoy |
 |---|---|---|---|
-| **Centro de Calidad** (`centro-calidad`) | trilla, monitoreo y selección óptica · pergamino → verde | merma + humedad + verde liberado | scaffold (pantallas declaradas: Lotes en camino · Orden de trilla · Control de proceso · Liberación) |
+| **Centro de Calidad** (`centro-calidad`) | trilla, monitoreo y selección óptica · pergamino → verde | merma + humedad + verde liberado | **Evaluación de Lotes construido (V5.81)**: `panel/evaluacion` — los baches `en_centro` a su nombre, cada lote anónimo (solo el código), planilla SCA o CVA + factor + mallas + rueda, «dar de alta» → `lot_evaluations` pendiente que CTCx confirma; módulos activables desde BCP (`modulos`). Procesamiento de Lotes: scaffold (Etapa 3) |
 | **Agente de Carga** (`agente-carga`) | flete internacional · Colombia → Europa | booking + BL + ETA | scaffold (Lotes listos · Booking · Documentos · Tracking) |
 | **Agente de Nacionalización** (`agente-nacionalizacion`) | aduana en destino · importación en la UE | nacionalizado + DDS enlazada | scaffold (Contenedores en tránsito · Expediente aduanero · Liquidación · Liberación) |
 | **Master Roaster** (`master-roaster`) | el pivote de destino · bodega, tueste, empaque, última milla | recepción + tueste + despacho | scaffold (Contenedor en camino · Bodega · Desconsolidación y ruta · Cola de tueste · Empaque y despacho) |
@@ -29,7 +29,8 @@ Los socios son un **tier de identidad aparte**: `profiles.role = 'partner'` + un
 |---|---|
 | `/socios/[partner]` | landing del nodo (`PARTNERS[slug]`: rol, qué hace, por qué, sello, pantallas, color y logo) |
 | `/socios/[partner]/acceso` | login de credencial (`PartnerLoginForm` → `POST /api/socios/auth/login`; logout en `/logout`) — un solo factor, por diseño |
-| `/socios/[partner]/panel` | el panel (`requirePartner(slug)`: sesión + `role partner` + fila activa de ESE nodo); cambio de contraseña (`PartnerPasswordCard`); en el Estudio, `panel/{source-wrapper,datawave,rt-scriptor}` |
+| `/socios/[partner]/panel` | el panel (`requirePartner(slug)`: sesión + `role partner` + fila activa de ESE nodo + sus `modulos`); cambio de contraseña (`PartnerPasswordCard`); en el Estudio, `panel/{source-wrapper,datawave,rt-scriptor}` |
+| `/socios/centro-calidad/panel/evaluacion` | **Evaluación de Lotes** (V5.81): los baches en manos de esa credencial, lote a lote anónimo, la planilla (`LabEvalEditor`: SCA o CVA, factor, mallas, rueda) y «dar de alta» (`evaluacionActions.ts`: `registrarEvaluacion`, `anularRegistro`; compuerta `getPartnerIdentity("centro-calidad")` + `modulos.evaluacion`) |
 | `/bcp/socios` · `/bcp/socios/[nodo]` | **backstage** (consolas): alta, baja, reenvío de invitación; la **ficha de estado por nodo** (V4.31: quién tiene credencial, en qué estado, último acceso, qué sella) |
 | subdominios | `centro-calidad.*` · `agente-carga.*` · `agente-nacionalizacion.*` · `master-roaster.*` · `ctc-content.*` (`src/lib/red/subdominios.ts`) |
 | `/recuperar-acceso?puerta=<nodo>` | la puerta de servicio común (charter `plataforma`) |
@@ -38,7 +39,11 @@ Los socios son un **tier de identidad aparte**: `profiles.role = 'partner'` + un
 
 - `src/lib/partners/partners.ts` — **fuente única** de los cinco nodos (`PARTNERS`, `PartnerSlug`,
   `isPartnerSlug`); copy y colores vienen del vision board. `src/lib/partners/requirePartner.ts` (la
-  compuerta del panel: redirige a `/socios/<slug>/acceso` si falta cualquiera de las tres condiciones).
+  compuerta del panel: redirige a `/socios/<slug>/acceso` si falta cualquiera de las tres condiciones; V5.81:
+  `getPartnerIdentity` es la misma compuerta SIN redirect, para las Server Actions, y la identidad trae `modulos`).
+- **Centro de Calidad · Evaluación de Lotes** (V5.81): `src/app/socios/[partner]/panel/evaluacion/{page,PlanillaCentro}.tsx`,
+  `panel/evaluacionActions.ts`; la planilla es `src/components/bcp/LabEvalEditor.tsx` + `src/lib/arena/labEvaluation.ts`
+  (SCA / CVA, `computeCva`) y la rueda `src/lib/catacion/rueda.ts` (los tres de `consolas`).
 - `src/app/socios/layout.tsx`, `src/app/socios/[partner]/{page,acceso/page,panel/page}.tsx`,
   `panel/actions.ts`, `socios.module.css`; `src/app/api/socios/auth/{login,logout}/route.ts`.
 - `src/app/bcp/(app)/socios/{page,SociosClient}.tsx`, `[nodo]/page.tsx`, `sociosActions.ts` (invitación
@@ -53,12 +58,16 @@ Los socios son un **tier de identidad aparte**: `profiles.role = 'partner'` + un
 `partner_accounts` (service-role-only: `profile_id` PK → `profiles`, `node_type` CHECK contra los 5 slugs,
 `org_name`, `contact_name`, `status` invited/active/suspended, rastro de invitación, **`delivery_email`** —
 el buzón real, distinto del correo de acceso, que puede ser una etiqueta sin buzón como
-`estudio-contenido@ctcexport.com`). Solo lee: `profiles`. Lo que el Estudio produce vive en `coffeed_*`
-(charter `coffeed`). **Ningún nodo tiene tablas operativas propias todavía** (ver Pendientes).
+`estudio-contenido@ctcexport.com`, **`modulos`** jsonb — V5.81: `{evaluacion, procesamiento}`, lo conmuta el owner en
+`/bcp/socios/[nodo]`). Solo lee: `profiles`. Lo que el Estudio produce vive en `coffeed_*` (charter `coffeed`). El Centro de
+Calidad **escribe** `lot_evaluations` (procedencia `q_grader_batch`, `pending`; con `batch_id`, `escala`, `rueda`, `uid_anonimo`)
+por Server Action con el service role — la tabla es de `consolas`. Ningún otro nodo tiene tablas operativas todavía.
 
 ## Guardianes
 
-Ninguno propio (deuda). Lo tocan `qa-recuperacion-check.mjs` (las cinco puertas de socio) y
+**`qa-centro-calidad-check.mjs`** (65, V5.81 — el paso 11 del folio: la pantalla y las acciones del Centro no leen productor,
+finca, variedad ni ficha; el módulo se activa por credencial y el Q-Grader firma con su contacto; registrar ≠ confirmar; la
+fórmula del CVA y la rueda única). Lo tocan también `qa-recuperacion-check.mjs` (las cinco puertas de socio) y
 `qa-rutas-consolas` (el rail de `/bcp/socios`).
 
 ## Reglas propias
@@ -69,7 +78,11 @@ Ninguno propio (deuda). Lo tocan `qa-recuperacion-check.mjs` (las cinco puertas 
 - **Una credencial suspendida no se reactiva sola** y la suspensión gana a Google en el veredicto de
   «Recuperar acceso».
 - El panel de un nodo se construye **nodo a nodo, en su propia interfaz**; la ficha del BCP es de ESTADO,
-  no de operación, y no escribe nada.
+  no de operación — lo único que escribe (V5.81) son los **módulos** que activa una credencial del Centro de Calidad,
+  porque eso es configuración de la credencial.
+- **El Centro de Calidad evalúa a ciegas**: su pantalla y sus acciones no leen productor, finca, variedad ni ficha — solo el
+  bache, el código corto del lote y los gramos de la muestra (`qa-centro-calidad`). Registrar ≠ confirmar: el Q-Grader da de
+  alta, CTCx confirma el veredicto en el OCP.
 - Máxima lectura narrativa, **cero acceso al dinero** para el Estudio (vision board): ningún panel de
   socio ve precios, contratos ni datos comerciales del productor — si algún día uno los necesita, es una
   vista `SECURITY DEFINER` estrecha, nunca una política ancha.
@@ -91,8 +104,14 @@ Ninguno propio (deuda). Lo tocan `qa-recuperacion-check.mjs` (las cinco puertas 
   **Evaluación de Lotes** del Centro de Calidad sobre su credencial (hoy suspendida), con módulos activables (Evaluación ·
   Procesamiento) y uso directo (respuesta 5 del owner, 2026-09-24). **(c) V5.80 (fase 3)**: los baches ya LLEGAN al Centro —
   `sondeo_batches.status = en_centro`, con `centro_calidad_account_id` (= la credencial `centro-calidad` activa, si hay UNA) y
-  `q_grader_name` tecleado por CTCx al enviarlos; cada lote trae su muestra de evaluación (`muestra_movimientos` `a_centro`). La
-  fase 4 construye `panel/evaluacion` sobre eso: el Q-Grader escribe con su credencial y el nombre deja de teclearse.
+  `q_grader_name` tecleado por CTCx al enviarlos; cada lote trae su muestra de evaluación (`muestra_movimientos` `a_centro`).
+  **(d) V5.81 (fase 4) — HECHO**: `panel/evaluacion` construido; el bache va a UNA credencial con Evaluación activa y el
+  Q-Grader es su contacto (nadie lo teclea); dar de alta → `lot_evaluations` pendiente; CTCx confirma o devuelve. ⚠️ **La fórmula
+  del CVA** (`src/lib/arena/labEvaluation.ts`, `CVA`: 0,65625 × Σ + 52,75 − 2u − 4d con la impresión general doble) la debe
+  validar el Q-Grader de la casa: está en constantes con nombre y `qa-centro-calidad` la lee de ahí. **Queda**: el «uso
+  directo» (emitir una Ficha Técnica o un reporte sin bache — respuesta 5), `Procesamiento de Lotes` (Etapa 3), la variante
+  interna de la Datasheet Tool (charter `herramientas-cafe`), y **nadie ha conducido el módulo en vivo** con la credencial
+  (se verificó por `tsc`, build y guardianes; la credencial interna existe y tiene Evaluación activa).
 
 - **Plan de ejecución de la narrativa** (`docs/PLAN_NARRATIVA_2026-09-17.md`): **SO-1** (narrativa de los nodos; ola 1)
   · SO-2 (panel del Master Roaster con etiquetas y Centro de Calidad con el CIR; espera CN-8 y las alianzas O-5).

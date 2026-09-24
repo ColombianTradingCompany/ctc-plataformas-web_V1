@@ -19,6 +19,28 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.81] — 2026-09-24 (commit pendiente)
+
+- **Hito**: **la fase 4 del `PLAN_CIRCUITO_DEL_LOTE.md` — Centro de Calidad · Evaluación de Lotes** (folio 7 del owner, paso 11;
+  respuesta 5). Código de `socios` tocado desde la sesión `consolas` con el «continúa con la fase 4» del owner; línea en `ALINEACION` §3.
+- **Añadido**: **el módulo del socio** `/socios/centro-calidad/panel/evaluacion`: los Baches de Evaluación en manos de esa
+  credencial, cada lote **anónimo (solo su código)**, la planilla (SCA **o CVA**, factor, mallas, **rueda de sabores**) y **«dar de
+  alta»** lote a lote → `lot_evaluations` pendiente. El Q-Grader puede anular su alta mientras CTCx no decida.
+- **Añadido**: **la credencial activa módulos** (`partner_accounts.modulos`: Evaluación de Lotes · Procesamiento de Lotes),
+  conmutados por el owner en `/bcp/socios/[nodo]`; el panel del socio enseña el módulo o dice que no está activo.
+- **Cambiado**: **registrar ≠ confirmar**: en «Lotes en Evaluación» CTCx ve el alta del Centro y la **confirma** (galardona con el
+  grado derivado del puntaje / no supera; la fila pasa a `accepted` y rige el grado) o la **devuelve** con motivo; registrar a
+  mano queda plegado como recurso. Al enviar un bache, el **Q-Grader es el contacto de la credencial elegida** — deja de teclearse.
+- **Cambiado**: **la planilla distingue SCA y CVA en la información** (folio 11): escala como dato, siete secciones afectivas 1–9
+  con la fórmula del SCA (`computeCva`), y la **rueda** con UNA taxonomía (`src/lib/catacion/rueda.ts`, ES/EN, solo ids en la
+  base). Defectos del Café y el Coffee Varieties Map se enlazan desde la planilla, no se embeben.
+- **Cambiado**: **el circuito gana «evaluado»** (alta del Centro pendiente, entre «en evaluación» y «pendiente de oferta»); la tabla
+  del OCP lo alimenta; la barra del productor conoce el orden (y queda con dueño KR alimentar el dato).
+- **Datos**: migración `centro_calidad_evaluacion` (acta en `docs/migraciones/`): `partner_accounts.modulos` (la credencial interna
+  queda con Evaluación activa), `lot_evaluations.batch_id/escala/rueda/uid_anonimo`.
+- **Docs**: guardián nuevo `qa-centro-calidad-check` (65 — anonimato, módulo por credencial, registrar ≠ confirmar, CVA 58–100,
+  rueda única); `qa-circuito` 38 → 41; `qa-solicitud-evaluacion` re-apuntado al Q-Grader por credencial.
+
 ## [V5.80] — 2026-09-24 (commit bf2a0a5)
 
 - **Hito**: **la fase 3 del `PLAN_CIRCUITO_DEL_LOTE.md` — solicitud, factura, muestra y Baches de Evaluación** (folio 7 del

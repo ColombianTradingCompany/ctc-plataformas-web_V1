@@ -4,6 +4,8 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireConsoleAccess } from "@/lib/panel/requireConsoleAccess";
 import { PARTNERS, isPartnerSlug } from "@/lib/partners/partners";
 import { origenDeSuperficie } from "@/lib/red/subdominios";
+import { ActionForm } from "@/components/panel/ActionForm";
+import { setPartnerModulos } from "../../sociosActions";
 import styles from "@/components/panel/shared.module.css";
 
 // ── BCP · Red de Socios · la ficha de un nodo (paso (iii)-4, V4.31) ─────────
@@ -19,8 +21,9 @@ import styles from "@/components/panel/shared.module.css";
 // la red.
 //
 // Todo lo que se ve se DEDUCE de `partner_accounts` y de la configuración del
-// nodo. Esta página no escribe nada: alta, baja y reenvío siguen en el tablero
-// de `/bcp/socios`, que es donde ya estaban y funcionan.
+// nodo. Alta, baja y reenvío siguen en el tablero de `/bcp/socios`. LA ÚNICA cosa que se escribe aquí desde la
+// V5.81: los MÓDULOS que activa una credencial del Centro de Calidad (respuesta 5 del owner: Evaluación de Lotes ·
+// Procesamiento de Lotes), porque es configuración de la credencial, no operación.
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +33,7 @@ type CuentaRow = {
   org_name: string | null;
   contact_name: string | null;
   status: string | null;
+  modulos: { evaluacion?: boolean; procesamiento?: boolean } | null;
   invited_at: string | null;
   activated_at: string | null;
   suspended_at: string | null;
@@ -70,7 +74,7 @@ export default async function FichaSocioPage({ params }: { params: Promise<{ nod
   const { data } = await service
     .from("partner_accounts")
     .select(
-      "profile_id, email, org_name, contact_name, status, invited_at, activated_at, suspended_at, last_login_at, invite_email_sent_at, invite_email_error"
+      "profile_id, email, org_name, contact_name, status, modulos, invited_at, activated_at, suspended_at, last_login_at, invite_email_sent_at, invite_email_error"
     )
     .eq("node_type", nodo)
     .order("created_at", { ascending: true });
@@ -149,6 +153,22 @@ export default async function FichaSocioPage({ params }: { params: Promise<{ nod
                     ⚠️ El correo de invitación no salió ({c.invite_email_error}). La credencial existe pero el socio no lo
                     sabe — reenvíela desde <Link href="/bcp/socios">Red de Socios</Link>.
                   </p>
+                )}
+                {nodo === "centro-calidad" && (
+                  <ActionForm
+                    action={setPartnerModulos.bind(null, c.profile_id)}
+                    submitLabel="Guardar módulos"
+                    buttonClassName="btn btn-sm"
+                    style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center", marginTop: 6 }}
+                  >
+                    <span className={styles.meta}>Módulos activos:</span>
+                    <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12.5 }}>
+                      <input type="checkbox" name="evaluacion" defaultChecked={Boolean(c.modulos?.evaluacion)} /> Evaluación de Lotes
+                    </label>
+                    <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12.5 }}>
+                      <input type="checkbox" name="procesamiento" defaultChecked={Boolean(c.modulos?.procesamiento)} /> Procesamiento de Lotes (Etapa 3)
+                    </label>
+                  </ActionForm>
                 )}
               </div>
             ))}

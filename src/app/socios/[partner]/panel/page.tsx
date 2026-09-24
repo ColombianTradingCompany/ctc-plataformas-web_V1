@@ -53,7 +53,39 @@ export default async function PartnerPanelPage({ params }: { params: Promise<{ p
             </p>
           </div>
         </div>
-        <span className={styles.soon}>Módulos en construcción — así se verá tu tramo del pasaporte</span>
+        {/* V5.81 (fase 4 del PLAN_CIRCUITO_DEL_LOTE, respuesta 5 del owner): el Centro de Calidad tiene dos MÓDULOS
+            que su credencial activa por separado desde BCP · Socios — Evaluación de Lotes (construido) y Procesamiento
+            de Lotes (Etapa 3). Los demás nodos siguen siendo andamiaje. */}
+        {p.slug === "centro-calidad" ? (
+          <div className={styles.screens}>
+            {identity.modulos.evaluacion ? (
+              <Link href="/socios/centro-calidad/panel/evaluacion" className={styles.scr}>
+                <span className={styles.scrN}>01</span>
+                <span>
+                  <strong>Evaluación de Lotes</strong>
+                  <small>Los baches que CTC le manda: cada lote anónimo, su planilla SCA o CVA, factor, mallas y rueda. Dar de alta lote a lote.</small>
+                </span>
+              </Link>
+            ) : (
+              <div className={styles.scr} style={{ opacity: 0.6 }}>
+                <span className={styles.scrN}>01</span>
+                <span>
+                  <strong>Evaluación de Lotes · no activado</strong>
+                  <small>Su credencial no tiene este módulo activo. Pídalo a CTC (BCP · Socios).</small>
+                </span>
+              </div>
+            )}
+            <div className={styles.scr} style={{ opacity: 0.6 }}>
+              <span className={styles.scrN}>02</span>
+              <span>
+                <strong>Procesamiento de Lotes · en construcción</strong>
+                <small>Trilla, monitoreo y selección óptica → mermas. Llega con la Etapa 3 y el Modelo de Producción.</small>
+              </span>
+            </div>
+          </div>
+        ) : (
+          <span className={styles.soon}>Módulos en construcción — así se verá tu tramo del pasaporte</span>
+        )}
 
         <div className={styles.screens}>
           {p.screens.map(([name, desc], i) => (

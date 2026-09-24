@@ -83,6 +83,9 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
   2 kg y «contra entrega». **`src/lib/muestras/`** (V5.80): `particion.ts` (puro: la partición 500/500/1000 y el saldo derivado) y
   `recibo.ts` (el recibo: filas + marca en una acción; el ÚNICO escritor de `sample_2kg_confirmed_at`). Acciones: `solicitudesActions.ts`
   (subvención, factura, recibo) y `muestrasActions.ts` (ubicar, salidas — `borrador`).
+- **`src/lib/catacion/rueda.ts`** (V5.81, puro): la taxonomía ÚNICA de la rueda de sabores (nueve familias SCA/WCR, ES/EN;
+  `lot_evaluations.rueda` guarda solo ids). La planilla `src/components/bcp/LabEvalEditor.tsx` + `src/lib/arena/labEvaluation.ts`
+  (SCA o CVA con `computeCva`) la usan el Centro de Calidad (charter `socios`), el OCP y la Arena.
 
 ## Tablas que posee (escritura service-role desde aquí)
 
@@ -120,7 +123,9 @@ chequeo EUDR y la transcripción de FT2 en la vista del lote; y el lado de KR) �
 tarifa, los mínimos, la partición y «contra entrega» se leen DEL PLAN; el pago se confirma sobre la factura; los tres estados del bache;
 el rail en el orden de la respuesta 7; el lado de KR) · **`qa-muestras-check.mjs`** (41, V5.80 — los cinco puntos del brief: saldo derivado
 y nunca negativo, recibo = filas + marca o nada, toda muestra de un lote, la alerta de 90 días sin campo aparte, acciones en la lista
-blanca) · `qa-circuito-check.mjs` (38 — la tabla de verdad del circuito desde las notas y el folio, TOTAL y MONÓTONO). Los siete `qa-pvc-*`, `qa-grados`, `qa-definicion`,
+blanca) · `qa-circuito-check.mjs` (41 — la tabla de verdad del circuito desde las notas y el folio, TOTAL y MONÓTONO; con
+«solicitada» y «evaluado») · **`qa-centro-calidad-check.mjs`** (65, V5.81 — el Centro de Calidad: anonimato, módulo por credencial,
+registrar ≠ confirmar, CVA, rueda; charter `socios`, guardián de `consolas` porque vigila el circuito). Los siete `qa-pvc-*`, `qa-grados`, `qa-definicion`,
 `qa-direccionamiento` y `qa-anclas` pasaron a `herramientas-internas` el 2026-09-19.
 
 ## Reglas propias
@@ -186,9 +191,16 @@ blanca) · `qa-circuito-check.mjs` (38 — la tabla de verdad del circuito desde
   500/500/1000, saldo derivado, salidas, pedidos de muestra), los **Baches de Evaluación** (abierto → en_centro → cerrado; sin
   laboratorio ni prueba) y el circuito con «solicitada». ⚠️ **Hasta la fase 4** el Q-Grader se teclea al enviar el bache y CTCx registra
   el veredicto en «Lotes en Evaluación» (respuesta 5: con la credencial del Centro deja de teclearse). **Diferido de la fase 3**: la 2.ª
-  tanda de Muestras (alerta de 90 días como tarea derivada; muestras «para comprador» y el pack de cosecha). **Sigue: fase 4**
-  (Centro de Calidad · Evaluación de Lotes — módulo del socio, credencial activable, planilla SCA/CVA + rueda, dar de alta; la
-  Datasheet interna) — exige una credencial `centro-calidad` para conducirse.
+  tanda de Muestras (alerta de 90 días como tarea derivada; muestras «para comprador» y el pack de cosecha). **Fase 4 EJECUTADA
+  en la V5.81**: el módulo **Evaluación de Lotes** del Centro de Calidad (`/socios/centro-calidad/panel/evaluacion`, código de
+  `socios`): los baches van a UNA credencial con el módulo activo (`partner_accounts.modulos`, conmutado en `/bcp/socios/[nodo]`)
+  y el Q-Grader es su contacto; evalúa lote a lote anónimo con la planilla SCA **o CVA** + rueda (`src/lib/catacion/rueda.ts`) y
+  **da de alta** → `lot_evaluations` pendiente; en «Lotes en Evaluación» CTCx **confirma** (galardona con el grado derivado / no
+  supera) o **devuelve**; el circuito gana «evaluado». Registrar a mano sigue como recurso plegado. **Diferido de la fase 4**: el
+  «uso directo» de la credencial (Ficha sin bache), la variante interna de la Datasheet Tool (`herramientas-cafe`), y que KR
+  alimente `evaluacionPendiente` a la barra (hoy el productor ve «en evaluación» hasta que CTCx confirma). ⚠️ La fórmula del
+  CVA está en constantes con nombre (`CVA` en `labEvaluation.ts`): la valida el Q-Grader de la casa. **Sigue: fase 5** (confirmar
+  y ofertar: `pvcParaGrado`, `confirmarGradoYOfertar`, oferta anclada, rechazo automático, re-evaluación, `directa`).
   También en la V5.76, las cuatro indicaciones del owner sobre `/ocp/kr`: sin «Nuevo lote», agrupada por productor, el mapa por
   elemento, y «Ver fincas» con el filtro de Pasaporte por etapa.
 - **LAS TRES RUTAS DEL PROVEEDOR (owner, 2026-09-23)** — brief `briefs/consolas-rutas-del-proveedor.md`, con las siete

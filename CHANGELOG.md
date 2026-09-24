@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.77] — 2026-09-24 (commit pendiente)
+## [V5.77] — 2026-09-24 (commit 1c80795)
 
 - **Hito**: **fase 1 del `PLAN_CIRCUITO_DEL_LOTE.md` — retiros y mudanzas**, con la nota del owner sobre la Arena.
 - **Cambiado**: **la Kaffetal Regal Arena se rehace como sesiones de segunda apreciación** (BCP · Ecosistema de Valor). Una sesión es

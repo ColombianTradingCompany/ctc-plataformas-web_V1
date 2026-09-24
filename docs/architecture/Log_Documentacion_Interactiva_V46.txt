@@ -234,4 +234,4 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
 - Guardianes: `qa-jornada-check` retirado; `qa-evaluaciones` 51 (sin Club; la Arena no toca el circuito); `qa-rutas-consolas` 505.
 - DIFERIDO de la fase 1: temporadas siguen en `/bcp/arena/temporadas`; `src/lib/arena/` no se renombra; cashback del 80 % y
   `RELEASE_STAIRCASE` en la fase 5; copy de KR (Arena, Club) es de `kaffetal-regal`.
-(commit: pendiente)
+(commit: 1c80795)

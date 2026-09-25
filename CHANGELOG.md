@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.89] — 2026-09-25 (commit pendiente)
+## [V5.89] — 2026-09-25 (commit 2d0c8e2)
 
 - **Añadido**: **las bodegas de muestras** (owner, 2026-09-25; decisión 1 del brief → opción C): `bodegas_muestras` con responsable,
   dirección, capacidad en muestras de 1 kg y estado, y las cuatro sedes de arranque (Planta de Empaque Santillana 400 · Oficina CCB

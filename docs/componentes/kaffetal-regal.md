@@ -6,10 +6,12 @@
 
 La plataforma del **caficultor**: la landing (`kaffetal-regal.ctcexport.com`, tres idiomas) y, tras el
 login, el **panel en cinco interfaces** (V5.16): Mensajes · Ecosistema · Mi Perfil · Evaluaciones ·
-Contratos. Desde aquí el productor registra fincas y lotes, llena la **Ficha Técnica** (FT → FT2 → EUDR
-→ VID), pide su **evaluación** (muestra + COP 80.000), sigue su lote hasta el **galardón**, y responde a
-las **ofertas** (temporada · black · subasta Tyrian) cuya aceptación crea el contrato. El camino base
-del lote (**redibujado por el owner, V5.64**) son DOS líneas: el **expediente** `FT · FT2 · EUDR · FOTO → VISA` y el
+Contratos. Desde aquí el productor registra fincas y lotes, llena la **Ficha Técnica** (FT → FT2 → FOTO
+→ EUDR, V5.79), pide su **evaluación** (muestra de 2 kg contra entrega + la tarifa de **$200.000**, `EVALUATION_FEE_COP` =
+`TARIFA_EVALUACION_COP` de `src/lib/trato/terminos.ts`, V5.80 — la landing y el FAQ todavía dicen $80.000: ver «Pendientes»),
+sigue su lote hasta el **galardón**, y responde a las **ofertas** (temporada · directa · excepción, ancladas al PVC desde la
+V5.82; la subasta Tyrian aparte) cuya aceptación, con su declaración, crea el contrato. El camino base
+del lote (**redibujado por el owner, V5.64**; orden del intake de la V5.79) son DOS líneas: el **expediente** `FT · FT2 · FOTO · EUDR → VISA` y el
 **tramo comercial** `MUE → EVA → GRADO → CONT`. **VISA** es la del LOTE — se hereda del **Pasaporte** de su finca y es el **primer entregable de CTCx, y gratis** — y **EVA** es la
 **Evaluación de Muestras en Origen** (al Q-Grader y de vuelta con granulometría y perfil sensorial); `SON`, `GAL` y `ARE`
 salieron de la barra. El vocabulario lo asentó el owner el 2026-09-20 y vive escrito en la cabecera de `src/lib/eudr.ts`.
@@ -19,7 +21,8 @@ salieron de la barra. El vocabulario lo asentó el owner el 2026-09-20 y vive es
 | Ruta | Qué |
 |---|---|
 | `/kaffetal-regal` | landing + app (`KaffetalExperience.tsx`: landing · panel · Ficha; `?m=` legado → pestaña/drill) |
-| `/kaffetal-regal/certificacion/[id]` · `/certificacion-lote/[id]` | sello/visa EUDR de finca y de lote |
+| `/kaffetal-regal/certificacion/[id]` · `/certificacion-lote/[id]` | Pasaporte EUDR de la finca y Visa del lote (vocabulario de la V5.65) |
+| `/kaffetal-regal/dossier/[id]?lang=es\|en` | el **dossier del lote** ES/EN (`LotDossierDoc`, V5.79): la Ficha descargable |
 | `/kaffetal-regal/herramientas/[slug]` | la concha de Herramientas del Café en esta superficie (charter `herramientas-cafe`) |
 | `/api/kaffetal-regal/next-step` | el asesor «¿Y ahora qué?» (plumbing conservado a propósito) |
 | `/kaffetal-regal/auth/callback` | OAuth de Google |
@@ -88,14 +91,14 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 | Quién | Qué | Dónde |
 |---|---|---|
-| OCP · Fincas | la **visa EUDR** de la finca (`fincas.status`, `eudr_*` de evaluación) | `/ocp/fincas`, `qa-visa` |
+| OCP · Fincas | el **Pasaporte EUDR** de la finca (~~visa EUDR~~, vocabulario de la V5.65/V5.74; `fincas.status`, `eudr_*` de evaluación) | `/ocp/fincas`, `qa-visa` |
 | OCP · Lotes | **EVA** (checklist + `lotEudrGate`) → `apto` + sello; borrado de abandonados | `markLotApto`, `actions.ts` |
 | OCP · Productores, Fincas y Lotes (`/ocp/kr`, V5.61 — eran tres módulos) | la **Visa** de la finca (aprobar · rechazar · compartir la certificación), la **EVA** del lote (checklist y veredicto Apto/No apto), el recibo de la muestra, la DDS | `actions.ts` (sin cambios) |
-| OCP · Nominados | bache, planilla y **veredicto** (`gradoPorPuntaje` → `galardonado` + Club) | `recordEvaluationVerdict` |
+| OCP · Nominados (Lotes a Evaluar · en Evaluación) | bache al Centro de Calidad (V5.80–V5.81), confirmar o devolver el alta del Q-Grader y el **veredicto** — decide **el Punto** (`decidirPorPunto`, `src/lib/arena/homologacion.ts`, V5.92) → `gradoPorPuntaje` → `galardonado` (~~+ Club~~: el galardón no reparte membresía desde la V5.77) | `recordEvaluationVerdict` |
 | OCP · Ofertas / Contratos | emisión de ofertas ancladas al PVC (temporada · directa · excepción · black · subasta) y la decisión «sin oferta»; la firma del contrato (que nace lleno de la aceptación con declaración, V5.83); **el trato mes a mes** (V5.84: pedido · envío · pago por mes; la **ruptura** la declara el owner y congela la cuenta — `producer_profiles.estado_cuenta` —; la renovación a los 90 días) | `ofertasActions`, `contractActions` |
 | OCP · Fichas | el set de Fichas Técnicas y cuál es la **oficial ★** | `fichasActions` |
-| BCP · Kaffetal Regal Arena (del OCP hasta la V5.59) | la invitación a la **vitrina** (Blue/Gold/Tyrian con contrato) | `inviteLotToArena` |
-| BCP · Kaffetal Club (del OCP hasta la V5.59) | membresía (llega con el galardón), campañas de pasaporte | `club.ts`, `clubActions` |
+| BCP · Kaffetal Regal Arena (del OCP hasta la V5.59) | ~~la invitación a la **vitrina** (Blue/Gold/Tyrian con contrato)~~ — desde la V5.77, **sesiones de segunda apreciación** sobre lotes galardonados: cada apreciación llega al productor como nota y como una evaluación más, y el owner puede elegir la que rige | `arenaActions.ts` (`registrarApreciacion`, `elegirEvaluacionQueRige`) |
+| ~~BCP · Kaffetal Club (del OCP hasta la V5.59)~~ OCP · Campañas de Subvención (V5.77) | ~~membresía (llega con el galardón), campañas de pasaporte~~ — el Club dejó de ser membresía en la V5.77; quedan los **códigos de subvención** (30–70 % sobre la tarifa de $200.000) que el productor canjea al solicitar | `subvencionesActions.ts`, `/ocp/subvenciones` |
 | LCP · Leads y CRM CaaS · BCP · CTC Tech / Varietales | respuestas a «Mis solicitudes» (CTC Tech · Varietales · CaaS) espejadas en el panel | `producer_comm_log.lead_id` |
 | BCP · Herramientas del Café | qué herramientas ve el productor y con qué nivel | charter `herramientas-cafe` |
 
@@ -103,16 +106,20 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 - ~~**⚠️ El OCP todavía dice «EVA» por el veredicto documental — dueño: `consolas`.**~~ — **cerrado en la V5.74** (`consolas`):
   columna «Visa», «Pasaporte EUDR», «Veredicto de Visa»; `qa-evaluaciones` (53) vigila las dos caras. La segunda tanda del brief
-  [`briefs/consolas-simplificar-ocp-al-circuito.md`](briefs/consolas-simplificar-ocp-al-circuito.md) (bandejas) sigue esperando al owner.
+  [`briefs/consolas-simplificar-ocp-al-circuito.md`](briefs/consolas-simplificar-ocp-al-circuito.md) (bandejas) ~~sigue esperando al owner~~
+  la absorbió el `PLAN_CIRCUITO_DEL_LOTE` (2026-09-24), ejecutado en código en la V5.76–V5.92.
 - **Las tres rutas del proveedor (owner, 2026-09-23; `briefs/consolas-rutas-del-proveedor.md`) — lo que le toca a KR**:
   **(a)** desde la V5.75 el equipo puede abrir KR **como un productor** (sesión asistida, `src/lib/asistencia/actions.ts`): nada
   cambia en el código de KR, pero el productor verá notas «Asistencia CTCx» en su feed y puede haber cuentas cuyo correo es una
   etiqueta `desacoplado-…@ctcexport.com` sin buzón (ningún correo sale hacia ellas). **(b) La Ficha retenida — dueño KR**: la Ficha
-  de un desacoplado NO se entrega hasta que, entregada la cuenta, pague la tarifa (respuesta 6 del owner: COP 80.000 «o tal vez
-  200.000», por decidir) — hoy `lot_fichas_select_own` la enseña en cuanto existe; hace falta una marca que KR respete.
+  de un desacoplado NO se entrega hasta que, entregada la cuenta, pague (respuesta 6 del owner: «COP 80.000 o tal vez
+  200.000», **cifra que el owner no ha cerrado para este caso** — no confundir con la tarifa de evaluación del circuito, que
+  desde la V5.80 es $200.000 en `terminos.ts`) — hoy `lot_fichas_select_own` la enseña en cuanto existe; hace falta una marca
+  que KR respete. Fila en `ALINEACION` §3b (nodo final, wrap V47).
   **(c) La Ficha descargable** (respuesta 5: la «Ficha automatizada (base info)» del paso 5 es la que se produce para descargar):
   no hay botón de descarga en B2/B3. **(d) El rechazo con interés** (Ruta CTCx Selection): que `respondToOffer("rechazar")` pueda
-  decir «me interesa la oferta directa de CTCx» — espera la 4b (`lot_offers.kind = directa`).
+  decir «me interesa la oferta directa de CTCx» — ~~espera la 4b (`lot_offers.kind = directa`)~~ ya no espera nada: la 4b la
+  sustituyó el `PLAN_CIRCUITO_DEL_LOTE` y la clase `directa` existe desde la V5.82. Sin construir; fila en `ALINEACION` §3b.
 - ~~**Fase 2 del `PLAN_CIRCUITO_DEL_LOTE` (V5.78) — lo que le toca a KR**~~ — **HECHO en la V5.79 desde la sesión `consolas`, con el sí
   del owner** («hazlo tú desde esta sesión», 2026-09-24; línea en §3): **(a)** A5 es el último paso del intake, B4 va antes
   (`FichaView`, `FichaNav`, `LotKanbanStepper`, `PASOS_DE_LA_FICHA`; el borrador que iba en `intake_step = 3` pasó a 2);
@@ -127,26 +134,32 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   **contra entrega** (instrucciones y confirmación); «en fila» y «en bache» hablan del Bache de Evaluación y del Centro de
   Calidad. La barra del lote lee el estado nuevo **`solicitada`** de `estadoDelCircuito()` (`qa-circuito` lo exige). La tarifa que
   muestra es `EVALUATION_FEE_COP` = $200.000 (`src/lib/trato/terminos.ts`). **Lo que sigue siendo de KR**: el copy «Cupping
-  Arena» y «No abrir antes de la Arena» de las instrucciones de envío y su etiqueta recortable; la caja «Cómo pagar · Nequi»
-  sigue esperando el número (lo escribe el owner).
+  Arena» y «No abrir antes de la Arena» de las instrucciones de envío y su etiqueta recortable (`shipmentInstructionsPrint.ts`); la caja «Cómo pagar · Nequi»
+  sigue esperando el número (lo escribe el owner). **Y desde la V5.89** (§3, «Para `kaffetal-regal`», sin código tocado; lo anota el
+  nodo final, wrap V47): esas instrucciones ya dicen 2 kg, bolsa zip-lock y solo el código del lote, pero deberían decir lo que
+  dibujó el owner — **2 kg de CPS representativos, de uso exclusivo de CTCx** (2 × 250 g evaluación del Q-Grader · 2 × 250 g
+  contramuestra de reserva · 1 kg de evaluación CTCx que se trilla para ensayos) — las muestras para compradores salen de otro stock (Sample Kits). Fuente fuera del repo:
+  `reference/muestras-y-sample-kits-2026-09-25/`.
 - **Fase 4 (V5.81) — una línea tocada y un pendiente con dueño aquí**: `LotKanbanStepper` conoce el estado **`evaluado`** del
   circuito en su ORDEN (`qa-circuito` lo exige). **Pendiente KR**: alimentar `evaluacionPendiente` a `estadoDelCircuito()` (hay
   una `lot_evaluations` `q_grader_batch` en `pending` para el lote — el productor ya la ve por `lot_evaluations_select_own_lot`)
-  para que la barra diga «evaluado» y no «en evaluación» mientras CTCx confirma; y decidir si «Lotes Galardonados» muestra la
-  **rueda** (`lot_evaluations.rueda`, etiquetas ES/EN en `src/lib/catacion/rueda.ts`) y la escala (SCA/CVA) de la evaluación.
+  para que la barra diga «evaluado» y no «en evaluación» mientras CTCx confirma (fila en `ALINEACION` §3b); y decidir si «Lotes Galardonados» muestra la
+  **rueda** (`lot_evaluations.rueda`, etiquetas ES/EN en `src/lib/catacion/rueda.ts`) y la escala (SCA/CVA) de la evaluación
+  (desde la V5.92 ya dice cuándo el Punto es homologado desde CVA: abajo).
 - **Fase 5 (V5.82) — lo que el productor recibe y lo que queda para la fase 6**: las ofertas llegan **ancladas al PVC** con
   `min_kg`, `compra_inicial_kg`, `terms_version`, `modificador_pct`, `expira_at` (directa) y dos clases nuevas, **`directa`**
   (CTCx Selection, PVC − 8 %, 30 días) y **`excepcion`**; `ProducerOffer.kind` ya las admite (una línea, V5.82) y se muestran
-  con las de temporada. **Pendiente KR (fase 6, exige `prueba-*`)**: enseñar el anclaje (PVC, banda, mínimo, compra inicial,
+  con las de temporada. ~~**Pendiente KR (fase 6, exige `prueba-*`)**: enseñar el anclaje (PVC, banda, mínimo, compra inicial,
   vencimiento) en `OfferCard`; la **calculadora** del trato (`src/lib/trato/simulador.ts` puro + componente); la **declaración**
-  al aceptar (`locked_kg` ≥ `min_kg`, `trimestre` | `30_dias`, `terms_version` aceptado); el contrato nace lleno; «Mi trato».
-  La nota del feed ya explica la oferta (tarifa, compra inicial, mínimo, ventana).
+  al aceptar (`locked_kg` ≥ `min_kg`, `trimestre` | `30_dias`, `terms_version` aceptado); el contrato nace lleno; «Mi trato».~~
+  **Hecho en la V5.83** (bullet siguiente). La nota del feed ya explica la oferta (tarifa, compra inicial, mínimo, ventana).
 - **Fase 6 (V5.83) — HECHA desde la sesión `consolas` con el «continúa» del owner, SIN conducirla en navegador**: `OfferCard`
   enseña el anclaje (PVC, %, mínimo, máximo, compra inicial, vencimiento, términos) y trae la **calculadora** (`simularTrato`:
   hoy, mes a mes, retiro libre, «retirar todo costaría»); el productor **declara** los kg (≥ mínimo, ≤ máximo de una directa),
   trimestre o 30 días, marca las condiciones y acepta; `respondToOffer` crea el contrato **lleno** y `signContract` solo firma.
   «Contratos de Temporada» es **«Mi trato»** (declarado, precio, compra inicial, tramos, términos). El copy del Kaffetal Club
-  salió de la pestaña (`gi` sigue en la firma por `AppDashboard`). **Pendiente (exige `prueba-*`)**: conducir aceptar → contrato →
+  salió de la pestaña (`gi` sigue en la firma por `AppDashboard`). **Pendiente (Etapa 2: se conduce con la sesión asistida o un
+  Proveedor Desacoplado — las cuentas `prueba-*` se eliminaron en la V5.89)**: conducir aceptar → contrato →
   firma en el OCP; afinar el copy de la calculadora con el owner; «Mi trato» crece con la fase 7 (pedidos, pagos, retiros, mora).
 - **Fase 7 (V5.84) — HECHA desde la sesión `consolas` con el «continúa» del owner, SIN conducirla en navegador**: «Mi trato»
   enseña los meses (`contract_months`: pidió · envió · pagó · retiró · situación), el resumen (comprometido · retirado · vigente ·
@@ -154,7 +167,7 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   `retirarDelTrato` la registra en el mes en curso); la **mora se deriva al cargar** (`loadData` con `mesAMes.ts`, la misma
   función que el OCP; nunca en el render, nunca guardada) y la barra del lote recibe `enMora` (CONT hecho «en mora»; la
   ruptura lo apaga); el banner de **cuenta congelada** (`gi.estadoCuenta`, lo escribe solo el owner por ruptura) y las puertas:
-  congelada no acepta ofertas (`respondToOffer`) ni retira. **Pendiente (exige `prueba-*`)**: conducir pedir → enviar → pagar →
+  congelada no acepta ofertas (`respondToOffer`) ni retira. **Pendiente (Etapa 2, sesión asistida o Desacoplado)**: conducir pedir → enviar → pagar →
   retirar; afinar el copy de la mora y de la ruptura con el owner. Los recordatorios de mora llegaron en la V5.86 (`consolas`):
   el productor recibe correo + nota en su feed, hasta 4 por mes, mientras el pedido siga sin envío.
 - **Fase 8 (V5.85) — una línea de KR**: `LotKanbanStepper` recibe `compradoEnFirme` (CONT hecho como «CTCx Selection») y `PerfilTab`
@@ -162,22 +175,31 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   — la misma regla que el OCP; `qa-compras` lo vigila. **Pendiente (dueño KR)**: desde la V5.85 un lote **Black** recibe oferta de
   temporada/directa/excepción como los demás grados (`kindAllowsGrade`), así que el copy «Red o superior» de «Ofertas de Temporada»
   en `ContratosTab` quedó viejo y la sección «Ofertas Black» solo enseña la clase histórica `black` (que ya nadie emite).
+- **V5.92 — el Punto homologado, una tanda tocada desde `consolas` con el sí del owner** (§3; no estaba anotada aquí, lo recoge el
+  nodo final, wrap V47, 2026-09-25): `Lot.officialPunto` (opcional, `data.ts`; lo llena `KaffetalExperience` desde
+  `lot_evaluations.punto`) y el rótulo de «Lotes Galardonados» (`EvaluacionesTab`): «Punto homologado (piso)» y «Homologado desde
+  CVA … · no catado en SCA · hasta X con una recata SCA» cuando la evaluación que rige fue CVA; las notas al productor dicen el
+  origen. `sca_total` ES el Punto (el piso si es homologado; nunca Tyrian homologado). **Pendiente KR**: el **dossier ES/EN**
+  (`LotDossierDoc`) todavía no dice el origen del Punto (fila en `ALINEACION` §3b, con la ficha pública de `cherry-picked`).
 - **La Arena y el Club cambiaron (V5.77, fase 1 del `PLAN_CIRCUITO_DEL_LOTE`) — copy de KR con dueño `kaffetal-regal`**: el
-  Club como membresía **ya no existe** (firmar y publicar no lo exigen; el galardón no lo reparte), así que `ContratosTab`
-  («Pasaporte del Club», `isClubMember`) y el gate visual de «Mis contratos» hablan de algo retirado; la Arena es una **sesión de
+  Club como membresía **ya no existe** (firmar y publicar no lo exigen; el galardón no lo reparte). ~~`ContratosTab`
+  («Pasaporte del Club», `isClubMember`) y el gate visual de «Mis contratos» hablan de algo retirado~~ — **retirado de
+  `ContratosTab` en la V5.83**; **sigue** en la landing: `PorQueSection.tsx` («la membresía del Kaffetal Club», ES · EN · DE) —
+  anotado por el nodo final, wrap V47. La Arena es una **sesión de
   segunda apreciación** (no una gala con vitrina), así que las líneas «Invitado a la vitrina… / Sesión de la vitrina confirmada /
   compitió en la vitrina» de `EvaluacionesTab`, «postular a la Arena →» de `PerfilTab` y `ArenaSection` de la landing hay que
   reescribirlos o retirarlos. **Y el oficial del lote lo rige UNA evaluación** (`rige_grado`; `officialAverages` ya lo devuelve así):
-  para honrar una elección explícita del owner, el `select` de `lot_evaluations` en `KaffetalExperience.tsx:401` debe pedir también
-  `rige_grado, source, created_at`.
-- **Tres restos del vocabulario viejo en el copy de KR — dueño: `kaffetal-regal`** (los vio la V5.74 al cerrar el OCP):
+  para honrar una elección explícita del owner, el `select` de `lot_evaluations` en `KaffetalExperience.tsx` (hoy hacia la línea
+  411; ya pide `source`, `created_at` y `punto`) debe pedir también `rige_grado`.
+- ~~**Tres restos del vocabulario viejo en el copy de KR — dueño: `kaffetal-regal`** (los vio la V5.74 al cerrar el OCP):
   `FichaView.tsx:496` dice que la Visa del lote «se hereda de la Visa de su finca» (es del **Pasaporte**); `:504` dice «Sello EUDR
   PENDIENTE hasta que su(s) finca(s) obtengan la Visa» (es **Visa** del lote y **Pasaporte** de la finca); `EvaluacionesTab.tsx:437`
-  dice «a la espera de la Visa de su finca» (Pasaporte). Copy, sin regla; `qa-evaluaciones` no los mira porque `FichaView` no
-  está en su lista.
-- **El «Centro de Calidad» del Q-Grader — dueño: `consolas` / `socios`** (owner, 2026-09-20): el Q-Grader entrega sus dos
-  informes **por un login propio** que recibe la lista de lotes y permite evaluarlos **en orden**. No existe. Cuando exista,
-  el chip **EVA** del panel podrá decir cuántos de los dos informes han llegado; hoy solo dice que el lote está en evaluación.
+  dice «a la espera de la Visa de su finca» (Pasaporte).~~ — **corregidos en la V5.79** (misma tanda que A5 al final del intake):
+  `FichaView` dice «la Visa del lote se hereda del Pasaporte de su finca» y `EvaluacionesTab` «a la espera del Pasaporte de su finca».
+- ~~**El «Centro de Calidad» del Q-Grader — dueño: `consolas` / `socios`** (owner, 2026-09-20): el Q-Grader entrega sus dos
+  informes **por un login propio** que recibe la lista de lotes y permite evaluarlos **en orden**. No existe.~~ — **existe desde la
+  V5.81** (`/socios/centro-calidad/panel/evaluacion`: baches anónimos, planilla dual SCA 2004 · CVA desde la V5.92; CTCx confirma en
+  el OCP). Lo que queda aquí: el chip **EVA** del panel podrá decir «evaluado» cuando KR alimente `evaluacionPendiente` (arriba).
 - ~~**El dato falso del 205 g — dueño: `consolas`**: `fichasActions.ts:108` dice «muestra de 205 g»~~ — **corregido en la
   V5.74** (250 g).
 - **Compañeros de finca — tanda propia** (brief escrito: [`briefs/kaffetal-regal-companeros-de-finca.md`](briefs/kaffetal-regal-companeros-de-finca.md), con cinco preguntas al owner). Pedido por el owner el 2026-09-20 y aplazado por él mismo: atar una finca (y
@@ -193,9 +215,12 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 - **El overhaul de las consolas en su fase 5** (`docs/OVERHAUL_CONSOLAS_PLAN.md`): **el paso 4 del intake está HECHO**
   (V5.64, 2026-09-20) — pasó de «Video» a **«Fotos y video»: 2 fotos obligatorias, video opcional**, validado en el
   servidor por el guard trigger `guard_lot_fotos_intake` (migración `lots_fotos_obligatorias`), no solo en el cliente.
-  **Sigue pendiente el resto de la fase 5**: «Evaluar mi Café» a **Por evaluar · En evaluación · Evaluados** (el Sondeo
-  desaparece como concepto — la barra del lote ya lo retiró en la V5.64, falta la pestaña), y que al aceptar una oferta
-  el productor acepte los términos y declare su **Initial Locked Availability**. Se verifica en vivo con `prueba-*`.
+  **Sigue pendiente el resto de la fase 5** (la fase la sustituyó el `PLAN_CIRCUITO_DEL_LOTE`; lo que queda es de KR):
+  «Evaluar mi Café» a **Por evaluar · En evaluación · Evaluados** (el Sondeo desaparece como concepto — la barra del lote ya lo
+  retiró en la V5.64; hoy las secciones son «Solicitudes de Evaluación · Evaluaciones en Fila · Lotes Galardonados»).
+  ~~Y que al aceptar una oferta el productor acepte los términos y declare su **Initial Locked Availability**~~ — **hecho en la
+  V5.83** (la declaración al aceptar). ~~Se verifica en vivo con `prueba-*`~~ — esas cuentas se eliminaron en la V5.89: se
+  conduce con la sesión asistida o un Proveedor Desacoplado (Etapa 2).
 
 - **Correcciones del owner al guion (2026-09-18, v0.9.1)** que alcanzan a otros: la evaluación deja de hablar de «descuento»
   —**CTCx coinvierte** del 30 % y hasta el 70 % del costo— y la compra inicial de **Gold en Cherry Picked es «hasta 100 kg»**,
@@ -213,8 +238,11 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   (copy de grados, en la misma tanda que CN-9). El rodaje del video (O-8) espera a KR-1 y KR-2.
 - **Tercera ronda de narrativa (2026-09-17, `PVC_BCP_PLAN.md` §14.7)**: el nombre del productor y su finca **van en la bolsa** de
   Papagayo Beans® si el lote va por Cherry Picked (sticker o escrito + QR/UID); el PVC de ene–mar 2027 se publica **antes del
-  15-oct** (como dice el guion); Black y Red 3–4 cargas según la mezcla (no fijos: **una carga por productor**, mezcla de
-  3 a 4; Black = blend de orígenes y/o variedades, Red = siempre una sola variedad, mezcla regional — owner, 2026-09-19).
+  15-oct** (como dice el guion); ~~Black y Red 3–4 cargas según la mezcla (no fijos: **una carga por productor**, mezcla de
+  3 a 4; Black = blend de orígenes y/o variedades, Red = siempre una sola variedad, mezcla regional — owner, 2026-09-19)~~ —
+  **superado el 2026-09-25 (V5.91, `PVC_BCP_PLAN` §14.8)**: la regla 3–4 se retiró de raíz; Black y Red son mezclas Single Origin
+  o Regional Blend de CTCx con un MOQ de compra de 3 cargas, y el mínimo que el productor declara por lote es otro:
+  **6 · 6 · 3 cargas · 200 kg** (Black · Red · Blue · Gold; `MINIMO_POR_GRADO` en `src/lib/trato/terminos.ts`, V5.80).
 - **Papagayo Beans® (owner, 2026-09-17, `PVC_BCP_PLAN.md` §14.6)**: el café del productor sale al mundo como **Papagayo
   Beans®**, la marca de CTCx, con el sello de su grado (loro y monograma PB) y, en Cherry Picked, con su nombre y su finca en
   la vitrina; falta decir la marca en la landing, el FAQ y «Su café en el mundo»;
@@ -222,9 +250,10 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   confirmado en la ronda 3 (§14.7).
 - **Decisiones de narrativa del owner (2026-09-17, `PVC_BCP_PLAN.md` §14)**: la prima del 8 % **está dentro del PVC**
   (Cherry Picked paga PVC × grado tal cual; CaaS la retira y luego multiplica) — **el guion ya está en v0.7 (2026-09-18)**;
-  faltan `TratoSection` y el FAQ; factor ≤ 94 confirmado; mínimo del lote de Cherry Picked por grado **3–4 según la mezcla · 2 ·
-  1 · ½ cargas** (§14.7 corrige el «4 · 3 · 2 · 1 · ½» del §14.4 — ~~**consolas reconcilia**~~ **reconciliado el 2026-09-19** en
-  el plan, los charters y `lectura.ts`, V5.53) y
+  faltan `TratoSection` y el FAQ; factor ≤ 94 confirmado; ~~mínimo del lote de Cherry Picked por grado **3–4 según la mezcla · 2 ·
+  1 · ½ cargas** (§14.7 corrige el «4 · 3 · 2 · 1 · ½» del §14.4 — reconciliado el 2026-09-19 en
+  el plan, los charters y `lectura.ts`, V5.53)~~ **superado**: el mínimo que el productor declara por lote es 6 · 6 · 3 cargas ·
+  200 kg (`terminos.ts`, V5.80) y el MOQ de compra de Black y Red es de 3 cargas (§14.8, V5.91) y
   entrada CaaS de 15–25 kg; el 80 % del alza Tyrian **solo en Cherry Picked**, convertido a COP el día del pago; CaaS vende
   como **CTCx Selection** (CTCx figura como productor, la finca queda en la documentación); marca CTCx en todo el copy (ya
   previsto). La regla interna del CaaS sin cooperación (§14 n.º 8) **no va en ninguna pantalla**. El documento:
@@ -237,8 +266,9 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   - **Dos oportunidades de oferta**: **CaaS** (CTC compra directo y asume el riesgo, al PVC vigente en el momento de la
     compra) y **Cherry Picked** (compromiso contractual de tres meses, cargas declaradas por mes, **escalera de
     desbloqueo en cuartos acumulados** —mes 2 un 25 %, mes 3 la mitad— y **penalización del 4 %** por carga retirada
-    por encima del tramo libre). La aritmética vive en `src/lib/pvc/compromiso.ts`; el productor debe **ver la tabla de
-    salida antes de firmar**.
+    por encima del tramo libre). La aritmética vive en `src/lib/pvc/compromiso.ts` (y la del trato real, desde la V5.82–V5.84,
+    en `src/lib/trato/terminos.ts` y `mesAMes.ts`); el productor debe **ver la tabla de salida antes de firmar** — ~~pendiente~~
+    **hecho en la V5.83**: la calculadora del trato (`simulador.ts`) en `OfferCard`.
   - **El calendario PVC es público**: trimestres exactos, publicado con dos meses de anticipación, y **aplica el PVC
     vigente en el momento de la compra**. Si el siguiente sube, la respuesta es la venta programada con compromiso.
   - **Tres niveles de acceso a herramientas**: **Default** (cualquier cuenta de KR o de Cherry Picked — la primera regla
@@ -257,27 +287,37 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   - **Tandas de este componente**:
     1. Copy:
        - CTCx;
-       - evaluación de $200.000 con envío incluido;
+       - evaluación de $200.000 con envío incluido — **la cara pública sigue diciendo $80.000** (pendiente de CÓDIGO, dueño KR;
+         lo anota el nodo final, wrap V47): `PorQueSection.tsx` en ES · EN · DE («la inscripción cuesta $80.000») y
+         `src/lib/kaffetal/faq.ts` (n.º 3 en los tres idiomas), **que alimenta el JSON-LD** de la landing; la tarifa es
+         `TARIFA_EVALUACION_COP` = $200.000 (`src/lib/trato/terminos.ts`, V5.80);
        - `TratoSection` con los dos caminos: Cherry Picked recomendado con prima del 8 %, compra inicial, escalera
          25 % + 25 % y 4 %; CaaS sin prima con 15–25 kg;
        - pago a 2 días hábiles y reporte de ventas en la primera semana del mes;
        - `faq.ts`, con preguntas nuevas de PVC, base física y Tríada;
        - `BienvenidosSection` con Perfil;
        - multiplicadores en `OportunidadSection`;
-       - la Arena abierta a Blue+.
+       - ~~la Arena abierta a Blue+~~ — **superado en la V5.77**: la Arena son sesiones de segunda apreciación sobre lotes galardonados, sin postulación.
     2. Panel:
        - perfil antes que finca;
-       - postulación a la Arena para todo lote Blue+, con su fila.
+       - ~~postulación a la Arena para todo lote Blue+, con su fila~~ — **superado en la V5.77** (igual).
     3. Grados: el Punto y la Tríada con la base física (factor ≤ 94, Black hasta 98), **en la misma tanda** en que
        consolas lleve la escala al veredicto (fase 2).
   - **Depende de consolas** (ALINEACIÓN §3b):
-    - el PVC de ene–mar 2027 **antes del 15-oct-2026**;
+    - el PVC de ene–mar 2027 **antes del 15-oct-2026** (dueño `herramientas-internas` desde el 2026-09-19);
     - base física y Tríada en el veredicto;
-    - ofertas con prima y compra inicial;
-    - `compromiso.ts` conectado a contratos;
+    - ~~ofertas con prima y compra inicial~~ — **hecho en la V5.82** (oferta anclada al PVC, compra inicial de una carga);
+    - ~~`compromiso.ts` conectado a contratos~~ — **hecho en la V5.82–V5.84** (el trato: `terminos.ts`, `simulador.ts`, `mesAMes.ts`);
     - reporte de ventas;
-    - fin del reembolso del 80 %;
-    - `showcaseGate` sin contrato.
+    - ~~fin del reembolso del 80 %~~ — **hecho en la V5.82** (el rechazo es gratis; el 80 % solo si una re-evaluación sube de grado);
+    - ~~`showcaseGate` sin contrato~~ — **superado en la V5.77** (la Arena dejó de ser vitrina).
+  - **Reconciliar el guion con el código antes de rodar** (pendiente KR, lo anota el nodo final, wrap V47, 2026-09-25): el
+    guion (`briefs/kaffetal-regal-guion-video-productor.md`) promete **pago a 2 días hábiles con una mora del 0,5 % por día
+    hábil** a cargo de CTCx (el OCP paga lo enviado del mes y avisa «en la primera semana del mes siguiente»; `terminos.ts` no
+    tiene esa mora de CTCx — su `MORA` es la del productor: dos semanas sin cargo y dos con el 5 %, luego ruptura potencial),
+    **reoferta −5 %** (el trato real tiene renovación a los 90 días y past crop −10 %),
+    **Black y Red 3–4 cargas** (superado por la V5.91) y **la Arena abierta a Blue+ con postulación** (bloque 11; superado por la
+    V5.77). Manda `src/lib/trato/terminos.ts`: el guion se corrige, o el owner decide cambiar los términos.
 - ⚠️ **Marca «Kaffetal»** (owner): existe una marca colombiana homónima (Kaffetal, Villavicencio, Meta). Consultar ante
   la **SIC** y actuar en consecuencia **antes de invertir más** en el nombre de este componente.
 
@@ -302,7 +342,8 @@ Trabajas SOLO en el componente «Kaffetal Regal» (clave: kaffetal-regal) de la 
 3. AGENTS.md                            ← la compuerta y las reglas de la casa
 El productor nunca escribe grado ni estado: si tu tarea necesita que el OCP haga algo distinto, se
 anota como pendiente con dueño «consolas» y una línea en el §3. Campos nuevos del datasheet con
-default seguro. Se verifica en vivo con las cuentas prueba-* (memoria ctc-qa-fleet). Al terminar:
+default seguro. Se verifica en vivo con la sesión asistida del OCP sobre un productor o un Proveedor
+Desacoplado (las cuentas prueba-* ya no existen desde la V5.89). Al terminar:
 compuerta completa (incl. qa-kr-panel, qa-kr-ficha), APP_VERSION + CHANGELOG, sello del sha, push,
 verificación en vivo, log de arquitectura, y «Pendientes» de este charter al día.
 Hoy: <la tarea>.

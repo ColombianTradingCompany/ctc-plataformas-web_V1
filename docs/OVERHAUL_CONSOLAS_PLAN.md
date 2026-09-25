@@ -4,7 +4,9 @@
 > completo del perfil al Catálogo Activo, con los once folios del owner). Las fases 0–4a y la V5.63 están hechas y este documento
 > queda como su historia. Los briefs de Muestras, Compras y Simplificar el OCP viven ahora dentro del plan nuevo.
 
-**Estado: PLAN, sin ejecutar** (2026-09-19, escrito sobre la V5.58). Lo pidió el owner con un cuadro de cuatro columnas
+**Estado: HISTORIA** (wrap V47, 2026-09-25) — ~~PLAN, sin ejecutar~~ (2026-09-19, escrito sobre la V5.58): la fase 0 (wrap V45) y
+las fases 1–4a (V5.59–V5.62, más la V5.63) se ejecutaron; la 4b, la 5 y la 6 las sustituyó `docs/PLAN_CIRCUITO_DEL_LOTE.md`, que las
+ejecutó en código en la V5.76–V5.92 (su Etapa 1). Lo que sigue se conserva como el razonamiento de su momento. Lo pidió el owner con un cuadro de cuatro columnas
 (BCP · ECP · OCP · LCP) y cinco notas sobre el OCP y Kaffetal Regal. Acordado con él: **plan primero, ejecución por fases**,
 una versión por fase. Este documento dice qué existe hoy, a dónde va cada cosa, qué hay que decidir y en qué orden se hace.
 
@@ -216,7 +218,9 @@ dejan su 308.
 > DDL de `lot_offers` y la escalera siguen siendo la 4b. Y el owner INVIRTIÓ la D9 para «Manejo de Stock Físico»: sus dos
 > entradas están en el rail, con página honesta («este módulo todavía no existe») y su brief pendiente de aprobar.
 >
-> **4b · todo lo demás — SIN EJECUTAR, y necesita dos cosas del owner antes:**
+> **4b · todo lo demás** — ⚠ **SUSTITUIDA el 2026-09-24 por `docs/PLAN_CIRCUITO_DEL_LOTE.md` y ejecutada allí** (V5.80–V5.84: los
+> baches van al Centro de Calidad, registrar ≠ confirmar, `lot_offers` con `terms_version` y la declaración, la escalera 25 + 25 y
+> 4 %, sin el 80 % al rechazado). Lo que sigue es el razonamiento de su momento: ~~SIN EJECUTAR, y necesita dos cosas del owner antes:~~
 > 1. **Un problema de ORDEN que este plan no vio.** El *guard* «no se acepta una oferta sin `locked_kg` ni términos» es de ESTA
 >    fase, pero la pantalla que los envía (el productor declara su Initial Locked Availability y acepta los términos) es de la
 >    **fase 5**, que está bloqueada por las cuentas `prueba-*`. Si el guard sale antes que la pantalla, **ningún productor puede
@@ -238,9 +242,11 @@ dejan su 308.
   sin ellos; la escalera de `contract_releases` corregida (D7). Nada se borra.
 - Se corrigen los textos que aún dicen que el grado viene de la Arena.
 - **Absorbe del plan de narrativa**: CN-3a/b (ofertas y contratos), CN-5 (evaluación: tarifa, sin reembolso del 80 %, avisos
-  al productor) y la mitad de CN-6. Se marcan en su tablero al cerrar.
+  al productor) y la mitad de CN-6. Se marcan en su tablero al cerrar. (⚠ Las absorbió el plan del circuito; quedaron marcadas en el
+  §8 de `PLAN_NARRATIVA_2026-09-17.md` en el wrap V47.)
 
-**Fase 5 · Kaffetal Regal** — *riesgo alto · lo ve el productor; se verifica EN VIVO con las cuentas `prueba-*`*
+**Fase 5 · Kaffetal Regal** — ⚠ **SUSTITUIDA por las fases 2, 6 y 7 de `PLAN_CIRCUITO_DEL_LOTE.md`** (V5.79, V5.83, V5.84; sin conducir
+en navegador — las cuentas `prueba-*` se eliminaron el 2026-09-25 y la conducción es la Etapa 2) — ~~*riesgo alto · lo ve el productor; se verifica EN VIVO con las cuentas `prueba-*`*~~
 - Intake: el paso 4 pasa a «Fotos y video» — **2 fotos obligatorias, video opcional**, validado en el servidor (D6); DDL:
   dónde viven las fotos del lote y el guard que las congela en `apto`, igual que hoy congela `video_asset_id`.
 - «Evaluar mi Café»: las secciones pasan a **Por evaluar · En evaluación · Evaluados**, con lo que falta en cada una (pago,
@@ -248,11 +254,13 @@ dejan su 308.
 - Aceptar una oferta: casilla de términos + **Initial Locked Availability** (D7), en los tres idiomas.
 - Exige las cuentas `prueba-*`, que esta vía no ha tenido en ninguna tanda: **sin ellas la fase no se cierra**.
 
-**Fase 6 · Stock físico y lo que falte** — *briefs primero* — 🟡 **BRIEFS ESCRITOS el 2026-09-19; esperan al owner**
+**Fase 6 · Stock físico y lo que falte** — *briefs primero* — ~~🟡 **BRIEFS ESCRITOS el 2026-09-19; esperan al owner**~~ ⚠ **SUSTITUIDA**:
+Gestión de Muestras y Compras se ejecutaron dentro de `PLAN_CIRCUITO_DEL_LOTE.md` (V5.80, V5.85, V5.87–V5.91); Plataformas de Pagos y
+Seguimiento de Temas siguen en scoping (sus briefs); el wrap V46 se hizo el 2026-09-23.
 
 > Las nueve entradas del cuadro sin módulo son **seis briefs** (`docs/componentes/briefs/`, índice en su README): Procesamiento y
 > Empacado son dos vistas del **Modelo de Producción**; los tres costos, tres vistas del **Modelo Logístico**. Se escribieron
-> ANTES de la 4b y la 5 —que están paradas— porque no dependen de ellas, salvo «Compras», que sí espera a la 4b. Cada brief
+> ANTES de la 4b y la 5 —~~que están paradas~~ hoy sustituidas— porque no dependen de ellas, salvo «Compras», que sí espera a la 4b. Cada brief
 > propone una primera tanda que no cambia ningún precio ni ninguna regla, y termina con las preguntas que la bloquean.
 - «Gestión de Muestras» (una tabla de muestras: qué llegó, cuánto, dónde está, a quién se mandó) y «CTCx Selection · Compras»
   (lo que CTCx compra en firme y lo que de ahí se ofrece) **no tienen nada debajo**: cada uno empieza por su brief. Igual

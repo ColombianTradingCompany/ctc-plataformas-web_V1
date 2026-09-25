@@ -49,7 +49,7 @@ sustituir por una política ancha sobre `lots`/`fincas`), `market_anchors`, `cof
 ## Guardianes
 
 `qa-sneak-peek-check.mjs` (194) · `qa-subastas-check.mjs` (30) · `qa-checkout-check.mjs` (`place_order`,
-con cuenta QA) · `qa-ficha-publica-check.mjs` (115, contra las 110 claves reales del datasheet; su §8 vigila las
+con cuenta QA — **hoy no corre**: las cuentas de prueba se eliminaron en la V5.89 y la V5.92; ver «Pendientes») · `qa-ficha-publica-check.mjs` (115, contra las 110 claves reales del datasheet; su §8 vigila las
 **tres** puertas al `datasheet` desde la V5.48) ·
 `qa-crm-interes-check.mjs` (fuentes de la lista de espera) · `qa-recuperacion-check.mjs` (puerta CP).
 
@@ -70,7 +70,7 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (115, contra las 110 claves reale
 
 | Quién | Qué | Dónde |
 |---|---|---|
-| OCP · Catálogo | **publicar** un lote (`publishLot`: contrato firmado + ≥1 liberación + Club), `lot_listings`, `total_kg` sincronizado de las liberaciones | `catalogActions` |
+| OCP · Catálogo | **publicar** un lote (`publishLot`: contrato vigente **o cumplido** —V5.85, lo comprado en firme— con ≥1 envío registrado; ~~+ Club~~ el gate del Club se retiró en la V5.77), `lot_listings`, `total_kg` sincronizado de las liberaciones (desde la V5.84, espejo al 100 % de cada envío del mes: la escalera 50/75/100 murió) | `catalogActions` |
 | OCP · Subastas | abrir · cerrar · adjudicar · cancelar la subasta Tyrian | `subastasActions` |
 | OCP · Oferta desde CTCx Selection / Compras (V5.85) | qué lote se muestra como **CTCx Selection** (hay filas en `compras`, cualquier grado menos Tyrian), el **perfil único** de la casa (nombre · lema · descripción · imagen: `platform_settings.ctcx_selection_perfil` → vista `public_ctcx_selection_perfil`) y la **imagen por lote** (`ctcx_selection_lotes` → `public_lot_catalog.ctcx_imagen_path`, bucket público `ctcx-selection`) | vistas `public_lot_catalog` · `public_ctcx_selection_perfil`; `src/lib/catalogo/perfilCtcx.ts` |
 | **LCP** · CRM CaaS / Green / Roast / X (del OCP hasta la V5.58) | respuestas a leads, etapa manual del comprador, contacto de la lista de espera | `/lcp/crm/*` (las `/ocp/crm/*` son talones 308) |
@@ -85,6 +85,26 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (115, contra las 110 claves reale
   **Queda con dueño aquí**: la tarjeta de la tienda (`LotCard`, tipo `Lot`) no tiene campo de imagen — decidir si la lleva; el copy
   EN · ES · DE alrededor del perfil («CTCx Selection» como rótulo se pinta tal cual); nada se condujo en navegador con un lote comprado
   (hay 0 compras). `qa-sneak-peek` ya vigila el rótulo nuevo.
+- **Las muestras para compradores son los Sample Kits (V5.88 → V5.90, `consolas`; sin código de este componente tocado)** — lo anota
+  el nodo final (wrap V47, 2026-09-25), porque ninguna de las tres tandas lo trajo aquí. Las decisiones 4 y 5 del brief de Muestras
+  (¿la muestra de UN lote?, ¿el pack de cosecha?) **ya no están abiertas**: el owner contestó el 2026-09-25 que las muestras para
+  compradores son los **Sample Kits** —CP (8 × 250 g de verde, ≈ US$65) · Plus (5 × 2 kg de verde) · Max (4 × 6 kg de CPS)—, que el
+  OCP surte desde «Adquisición de Stock Café (Selection/Sample Kits)» y no de los 2 kg del productor. **Queda con dueño aquí**:
+  **(a)** enseñarle al comprador el **estado de su pedido** —`sample_pack_orders.status` pedido · preparado · enviado, `guia`,
+  `enviado_at`; lo escriben `marcarPedidoEnviado` (V5.88) y `marcarKitEnviado` (V5.90) cuando el kit nació de un pedido de la
+  tienda; la tienda sigue insertando el pedido igual y su comprobación «ya pidió» no cambia—; **(b)** cuando la tienda venda kits
+  (UI/UX de Etapa 3; el folio 10 está transcrito en `PLAN_CIRCUITO_DEL_LOTE` §9), **leer los tres kits de
+  `src/lib/compras/sampleKits.ts` (`KITS`)** —lotes, pesos, para quién, precio de referencia—, nunca copiarlos; **(c)** reconciliar
+  el «pack» que vende hoy `MuestrasSection` (`PACK_PRICE = 300`, `data.ts`) con el Sample Kit (CP) ≈ US$65. Fila en `ALINEACION` §3b.
+- **El Punto homologado (V5.92, `consolas`; sin código de este componente tocado)**: `public_lot_catalog.official_score` sigue
+  leyendo `lot_evaluations.sca_total`, que desde la V5.92 **ES el Punto** — el piso del intervalo si la evaluación fue CVA
+  homologada, nunca Tyrian. **Queda con dueño aquí**: decir la procedencia (`rotuloDelPunto`, `src/lib/arena/homologacion.ts`) en
+  la tienda (`CherryPickedExperience` pinta `official_score` con un decimal y sin origen), la ficha pública y el portal. Y el
+  **dossier del lote ES/EN** (`/kaffetal-regal/dossier/[id]`, V5.79) es el documento que un comprador debería recibir del lote
+  (hoy solo lo ve el productor): decidir si la vitrina lo enlaza. Fila en `ALINEACION` §3b (nodo final, wrap V47).
+- **Las cuentas de prueba ya no existen** (V5.89: las cinco `prueba-*`; V5.92: las cuatro `@ctc-qa-test.co`): `qa-checkout-check`
+  (y el lado comprador de `qa-guard-check`) no pueden correr, y la sesión asistida del OCP solo abre cuentas de productor. Qué
+  cuenta de comprador de prueba vuelve lo decide el owner (`ALINEACION` §4.6).
 - **Guion del video del comprador** (`briefs/cherry-picked-guion-video-comprador.md`, **v0.1 · en revisión del owner**, 2026-09-18):
   gemelo del guion del productor, 694 palabras, ≈ 5:20, en «tú». Esperan respuesta cinco decisiones (§5 del brief): idioma de la
   locución, tratamiento, el matiz del 80 % del alza, el ejemplo de precio en pantalla y el QR de la bolsa. **No se rueda la versión
@@ -95,7 +115,8 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (115, contra las 110 claves reale
   UNA fuente, `src/lib/precios/moneda.ts`, y `eur()` pasó a `importe()`. Lo que queda con dueño aquí: **(a)** el flete
   (`shipping_zones.rate_per_kg`, 0,10–0,45) y el **pack de muestras** (`PACK_PRICE = 300`) se escribieron pensando en
   euros y ahora se leen en dólares con el mismo número — un **cambio de precio implícito de ~8 %** que el owner aceptó
-  con 0 pedidos de lote y 1 pack de prueba; si se prefiere convertir, es una tasa en ese archivo. **(b)** la **subasta
+  con 0 pedidos de lote y 1 pack de prueba; si se prefiere convertir, es una tasa en ese archivo (el pack, además, se reconcilia
+  con los Sample Kits: ver arriba). **(b)** la **subasta
   Tyrian sigue en EUR** y no puede moverse desde aquí: `lot_auctions` lleva la moneda en el nombre de sus columnas
   (`precio_salida_eur_kg`, `incremento_eur_kg`), así que es **CN-4** y lleva DDL. Guardián: `qa-moneda-check` (24).
 - **Unificar el código del lote sobre `lots.public_code`** (dueño: **cherry-picked**, nace en consolas V5.48,
@@ -118,21 +139,26 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (115, contra las 110 claves reale
 - **Tercera ronda de narrativa (2026-09-17, `PVC_BCP_PLAN.md` §14.7)**: Roast con etiquetas **Papagayo Beans por defecto · Co-Brand
   (productor y finca) · My Brand (diseño del comprador, que lo entrega o aprueba)**; ficha pública de un lote CTCx Selection con la
   finca **visible como dato, no protagonista**; tostado HORECA al **82 %**; los pines «MR coming soon» **también en la portada**;
-  Black y Red 3–4 cargas según la mezcla — **una carga por productor**, mezcla de 3 a 4; **Black** = blend de orígenes y/o
-  variedades, **Red** = siempre una sola variedad, mezcla regional (owner, 2026-09-19). Importa para la ficha y la vitrina:
-  un Red puede anunciar SU variedad; un Black, no necesariamente.
+  ~~Black y Red 3–4 cargas según la mezcla — **una carga por productor**, mezcla de 3 a 4; **Black** = blend de orígenes y/o
+  variedades, **Red** = siempre una sola variedad, mezcla regional (owner, 2026-09-19)~~ — **superado el 2026-09-25 (V5.91,
+  `PVC_BCP_PLAN` §14.8)**: Black y Red **3 cargas**, el MOQ de compra (una demanda de al menos tres cargas); la regla 3–4 se
+  retiró de raíz y cada mezcla es **Single Origin** (varios estates, misma variedad y proceso) o **Regional Blend** (varios
+  lotes de una región), derivado de la composición de sus lotes. Importa para la ficha y la vitrina: un Single Origin puede
+  anunciar SU variedad y proceso; un Regional Blend anuncia su región. Donde la tienda repita «3 o 4 cargas», ahora son 3
+  (nodo final, wrap V47, 2026-09-25).
 - **Papagayo Beans® (owner, 2026-09-17, `PVC_BCP_PLAN.md` §14.6)**: es la marca del café en los tres programas —Green lo
   vende en verde por grado, Roast tostado por el Master Roaster (etiqueta Papagayo Beans por defecto; My Brand · Co-Brand por
   confirmar) y **X es la cara al consumidor directo** (tostado y empacado, venta directa)—; la bolsa lleva Papagayo Beans® +
-  sello del grado + referencia a CTCx como motor. Hoy ninguna superficie de este componente dice «Papagayo Beans».
+  sello del grado + referencia a CTCx como motor. Hoy solo el scaffold de Roast dice «Papagayo Beans» (`RoastLanding.tsx`, el
+  roundel y `pbT`); Green, la cinta, la ficha y el portal no lo dicen.
 - **Decisiones de narrativa del owner (2026-09-17, `PVC_BCP_PLAN.md` §14)**: **US$ en toda la tienda y la subasta**
   (adiós EUR: `eur`, `price`, `FEE_EUR_KG`, `precio_salida_eur_kg`; supera el §12.7); portada con el **mapa de Enabled
   Regions** (Nueva York · Florida · California · Alemania · Japón con «MR · coming soon», Colombia con MR local, EE. UU. y
   Europa como cobertura potencial — el SVG está en `reference/narrativa-2026-09-17/img/mapa-regiones.svg`); Green hoy =
   **lista FOB** principal + lista CaaS en construcción (Cherry Picked consolidado cuando haya MR); Roast = tostado del MR de
-  la región + **tostado HORECA por CaaS** (MOQ de verde × 80 %); **CTCx Selection reemplaza el nombre de la finca** en la
-  vitrina (decidir si la ficha pública es documentación o vitrina); mínimos del comprador en unidades de 6 kg
-  (Black y Red **56 o 42** —mezcla de 4 o de 3 productores— · 26 · 13 · 6, tabla §14.4, reconciliada el 2026-09-19); **retirar Co-Create** (logos y copy aquí; la clave y la ruta con consolas); marca CTCx.
+  la región + **tostado HORECA por CaaS** (MOQ de verde × 80 %); ~~**CTCx Selection reemplaza el nombre de la finca** en la
+  vitrina~~ **hecho en la V5.85** (perfil único, `rotuloCtcx`; queda decidir si la ficha pública es documentación o vitrina); mínimos del comprador en unidades de 6 kg
+  (Black y Red ~~**56 o 42** —mezcla de 4 o de 3 productores—~~ **42** —3 cargas, el MOQ de compra, §14.8 (V5.91)— · 26 · 13 · 6); **retirar Co-Create** (logos y copy aquí; la clave y la ruta con consolas); marca CTCx.
 - **Decisiones del CEO del 2026-09-16** (`docs/PVC_BCP_PLAN.md` §12) que este componente tiene que ejecutar:
   - **Cherry Picked solo se entrega DDP.** Es consolidado a través del master roaster de la región: **no hay FOB ni
     entrega en puerto**. Si un comprador quiere su café en un envío propio, eso es **CaaS** (FOB · puerto de destino ·
@@ -143,7 +169,7 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (115, contra las 110 claves reale
   - **Tablas de precio por región de master roaster**: 5 grados × 4 precios (CP DDP · CaaS FOB · CaaS puerto · CaaS
     DDP) más el **precio aconsejado de tostado in situ** (verde CTC público + tarifa del master roaster en línea aparte +
     tarifa de conexión de CTC). Falta decidir si la tarifa de conexión es fija o porcentual.
-  - **Retirar `ASSOC_BLACK_MOQ = 350`**: el MOQ es uno solo, **en cargas** y por grado (Black y Red 3–4 · Blue 2 · Gold
+  - **Retirar `ASSOC_BLACK_MOQ = 350`**: el MOQ es uno solo, **en cargas** y por grado (Black y Red ~~3–4~~ **3**, el MOQ de compra de la V5.91 · Blue 2 · Gold
     y Tyrian 1 carga o menos según disponibilidad). El empaque se muestra como **presentación**, no como mínimo.
   - **Subasta Tyrian**: una sola por lote, en verde; **el bid es sobre FOB puerto Colombia** y el programa se elige al
     cerrar. **Las reglas de ajuste por programa se publican antes de abrir la puja**: el pujador ve su precio final
@@ -178,7 +204,8 @@ Trabajas SOLO en el componente «Cherry Picked» (clave: cherry-picked) de la pl
 Nada comercial sale por la cinta; la ficha pública es lista blanca; las lecturas públicas van por las
 vistas estrechas, nunca por una política ancha; la subasta es EUR/kg y adjudicar es del OCP. Si tu
 tarea necesita que el OCP publique, adjudique o responda distinto, es pendiente con dueño «consolas»
-y una línea en el §3. Se verifica con una cuenta de comprador QA. Al terminar: compuerta completa
+y una línea en el §3. Se verifica en la vitrina pública; no quedan cuentas de comprador de prueba
+(V5.92): si la tarea necesita una sesión de comprador, pídesela al owner. Al terminar: compuerta completa
 (incl. qa-sneak-peek, qa-subastas), APP_VERSION + CHANGELOG, sello, push, verificación en vivo, log
 de arquitectura, y «Pendientes» al día.
 Hoy: <la tarea>.

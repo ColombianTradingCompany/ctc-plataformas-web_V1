@@ -462,8 +462,8 @@ de la carga.
 
 | Grado | MOQ | Incremento |
 |---|---|---|
-| Black · Red, mezcla de 4 (o de 2) | 4 cargas | **2 cargas** |
-| Black · Red, mezcla de 3 | 3 cargas | **1,5 cargas** |
+| ~~Black · Red, mezcla de 4 (o de 2)~~ | ~~4 cargas~~ | ~~2 cargas~~ — ⚠ superado el 2026-09-25 (§14.8) |
+| Black · Red — el MOQ de compra (§14.8; ~~mezcla de 3~~) | 3 cargas | **1,5 cargas** |
 | Blue | 2 cargas | **1 carga** |
 | Gold | 1 carga | **½ carga** |
 
@@ -473,7 +473,9 @@ colocable, no un residuo. Todo limitado, siempre, a la disponibilidad real del l
 **Dónde vive esto.** Hoy `pvc_model_versions.params.moq` sigue con la tabla de la primera versión (228/150/60/30) y
 `params.proc` con un solo costo de empaque estimado: cambiarlos es la **versión v2.2.0 del modelo**, con acta (§10.4
 paso 2). Mientras tanto, la regla de arriba vive en `src/lib/pvc/lectura.ts` (`moqCargas`, `incrementoCargas`,
-`EMPAQUES`) y se **exhibe** en la pestaña Lectura, sin gobernar todavía ningún precio. `ASSOC_BLACK_MOQ = 350` se retira
+`EMPAQUES`) y se **exhibe** en la pestaña Lectura, sin gobernar todavía ningún precio (⚠ desde la V5.87 —reescrita en la V5.91—
+la composición de las mezclas SÍ la hace cumplir el OCP: `src/lib/compras/mezclas.ts` y el guard `guard_mezcla_cerrada`; el precio
+sigue sin leerla). `ASSOC_BLACK_MOQ = 350` se retira
 cuando la fase 2 llegue a Cherry Picked.
 
 ### 9.3 Moneda y la protección contra la TRM (decisión #3)
@@ -986,9 +988,9 @@ Precio aconsejado tostado in situ =
 ### 12.6 MOQ
 
 > ⚠️ **Precisado por el owner el 2026-09-17** (§14 n.º 10 y §14.4): el mínimo **no es igual para todo programa**. Cherry Picked
-> lleva el mínimo del lote en cargas por grado —~~**4 · 3 · 2 · 1 · ½**, fijos~~ **3–4 · 3–4 · 2 · 1 · ½**: Black y Red NO son fijos,
+> lleva el mínimo del lote en cargas por grado —~~**4 · 3 · 2 · 1 · ½**, fijos~~ ~~**3–4 · 3–4 · 2 · 1 · ½**: Black y Red NO son fijos,
 > son 3 o 4 según cuántos productores compongan la mezcla, a una carga por productor (§14.7 n.º 28, cerrado por el owner el
-> 2026-09-19)— más la compra inicial en firme; CaaS entra con 15–25 kg.
+> 2026-09-19)~~ (superado el 2026-09-25, abajo)— más la compra inicial en firme; CaaS entra con 15–25 kg.
 > El empaque como presentación se mantiene.
 > **Reescrito el 2026-09-25 (§14.8)**: Black y Red **3 cargas** — el MOQ de compra (una demanda de al menos tres cargas); la
 > mezcla ya no se cuenta por productores: es Single Origin o Regional Blend según la composición de sus lotes.
@@ -1007,6 +1009,12 @@ en verde empacado; la merma de trilla está considerada en los precios.
 | Tyrian | **1 carga o menos, según disponibilidad real** |
 
 Los MOQ son parte de **cómo se promocionan los lotes**, en escala descendente por grado.
+
+> **Dos mínimos distintos, que no se alinean** (nota del wrap V47, 2026-09-25; `PLAN_CIRCUITO_DEL_LOTE.md` §6 decisión 1 y fase 5):
+> el **mínimo declarado por lote** —lo que el productor compromete al aceptar una oferta de temporada— vive en
+> `src/lib/trato/terminos.ts` (`MINIMO_POR_GRADO`: Black y Red 6 cargas · Blue 3 cargas · Gold 200 kg; Tyrian va a subasta con
+> MOQ de 100 kg de CPS) ≠ el **MOQ de compra** de esta tabla, que vive en `src/lib/pvc/lectura.ts` (`moqCargas`: Black y Red 3
+> cargas desde la V5.91 · Blue 2 · Gold y Tyrian 1). Ninguno se deriva del otro.
 
 **Empaque: se mantiene, pero como presentación, no como mínimo.** Black y Red en GrainPro-type + yute de 35 kg; Blue, Gold
 y Tyrian en vacío de 3 · 6 · 12 kg. Esto **reemplaza** la lógica anterior de MOQ y precio atada a empaque
@@ -1165,10 +1173,14 @@ Guardianes del módulo y su línea base: `qa-pvc-vigencia` 28 · `qa-pvc-lectura
    MOQ en kg), **columna marítima** para el tramo «puerto» (hoy aproxima con n3 aéreo), **DDP consolidado (CP) vs
    dedicado (CaaS)**, **regiones y habilitaciones como dato** (tabla), tablas de precio por región del master roaster con
    tostado in situ (§12.5), prima explícita; después `definicion.ts` a la escala de puntos con la Base física (solo
-   con la escala validada). Con esto nace la oferta «PVC × grado», la compra directa CaaS y A13 (`ctc_selection` por
-   compra en firme de cualquier grado).
-3. **Compromiso Cherry Picked como dato**: hoy `compromiso.ts` es cálculo puro; falta que la oferta/contrato registre
-   cargas comprometidas, retiros por mes y la penalización (§12.9).
+   con la escala validada). ~~Con esto nace la oferta «PVC × grado», la compra directa CaaS y A13 (`ctc_selection` por
+   compra en firme de cualquier grado).~~ ⚠ **Hecho antes y por otra vía** (`PLAN_CIRCUITO_DEL_LOTE.md`, fases 5 y 8): la oferta
+   anclada al PVC con `pvcParaGrado` y la directa de CTCx Selection a −8 % en la V5.82; A13 (`ctc_selection` desde `compras`,
+   cualquier grado menos Tyrian) en la V5.85. Del ítem queda el modelo v2.2.0 en sí y la escala de puntos.
+3. ~~**Compromiso Cherry Picked como dato**: hoy `compromiso.ts` es cálculo puro; falta que la oferta/contrato registre
+   cargas comprometidas, retiros por mes y la penalización (§12.9).~~ ⚠ **Hecho en la V5.83–V5.84**: la declaración al aceptar
+   (`lot_offers.locked_kg`), el contrato que nace lleno y `contract_months` con pedido, envío, pago, retiro y penalidad del 4 %
+   (`src/lib/trato/`, que reproduce el §12.9).
 4. **Subasta Tyrian** sobre FOB puerto Colombia en **US$/kg** (§12.7 corregido por el §14 n.º 5) — alinear la tienda Green y el OCP;
    el 80 % del alza al productor solo en Cherry Picked, a COP el día del pago.
 5. **Calendario PVC por trimestres exactos**, público, publicado dos meses antes (§12.8) — depende de la pregunta 8 del §12.11.
@@ -1324,7 +1336,8 @@ cuarto documento de decisiones y pendientes) se regenera con `reference/narrativ
 ### 14.8 Cuarta ronda del owner (2026-09-25): composición por lote y MOQ de compra
 
 Contestada desde la sesión `consolas` (decisión 4 del brief de Compras, «¿la mezcla es un lote nuevo?»), con efecto sobre este
-plan: sustituye al n.º 28, al cuadro del §9.2 y a las filas Black/Red del §12.6 y del §9.3. En código desde la V5.91.
+plan: sustituye al n.º 28, al cuadro del §9.2 y a las filas Black/Red del §12.6 y del ~~§9.3~~ §9.6 (referencia corregida en el
+wrap V47: el §9.3 es Moneda y TRM; las filas Black/Red actualizadas son las de la matriz del §9.6). En código desde la V5.91.
 
 30. **La regla de «3 a 4 productores, una carga por productor» se retira de raíz** (owner: «Retiremos esta lógica de raíz»). En su
     lugar: **cada lote especifica su composición** —variedades y procesos utilizados, más su marcador de origen (la finca, que es
@@ -1336,6 +1349,8 @@ plan: sustituye al n.º 28, al cuadro del §9.2 y a las filas Black/Red del §12
     esperada de cara al productor): Black y Red **3 cargas**; Blue 2; Gold y Tyrian 1 (o menos, según disponibilidad real). El
     incremento sigue siendo la mitad del mínimo (1,5 cargas para Black y Red). Vale igual para Cherry Picked que para CaaS: es una
     restricción del origen, no del canal (§12.6).
+    *(Redacción por confirmar con el owner, wrap V47: «la compra mínima esperada de cara al productor» choca con el mínimo
+    declarado por lote de `src/lib/trato/terminos.ts` —Black y Red 6 cargas—; ver la nota «Dos mínimos distintos» del §12.6.)*
 32. **Para estas mezclas CTCx asegura un mínimo por temporada desde Adquisición de Stock** (`mezclas.temporada`,
     `mezclas.objetivo_temporada_kg`: informativo, no bloquea el cierre). En código: `src/lib/pvc/lectura.ts` (`MOQ_CARGAS_BLACK_RED`,
     `TIPOS_DE_MEZCLA`, `COMPOSICION_POR_GRADO`; `LOTES_EN_MEZCLA`, `CARGAS_POR_PRODUCTOR`, `MOQ_MEZCLA` y `COMPOSICION_MEZCLA` se

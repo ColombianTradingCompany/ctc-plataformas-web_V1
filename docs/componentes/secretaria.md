@@ -72,8 +72,15 @@ de Notion con `ctc_id` huérfano. En Notion no hay guardián: la disciplina es e
   Notion: Role · Key Contact Facts · notas · relaciones); llaves cruzadas en ambos lados; lo ajeno se
   reporta, no se propaga.
 - **Drive es el archivo de Notion; Storage el de la plataforma**: enlaces, no copias.
-- **Excluidos del espejo por regla**: cuentas `prueba-*`, fincas no aprobadas, lotes antes de
-  `galardonado` (salvo decisión del owner, plan §5.5).
+- **Excluidos del espejo por regla**: cuentas de prueba (las `prueba-*` y las `@ctc-qa-test.co` se
+  eliminaron en la V5.89 y la V5.92: hoy no queda ninguna), fincas no aprobadas, lotes antes de
+  `galardonado` (salvo decisión del owner, plan §5.5). **Un Proveedor Desacoplado SÍ se espeja** (es un
+  productor real), pero su correo es una etiqueta `desacoplado-<slug>@ctcexport.com` sin buzón
+  (`producer_profiles.gestion`, V5.75): **nunca se concilia por ese correo**; al entregarse la cuenta
+  (`gestion = entregado`) el correo real pasa a `profiles.email`.
+- **El catálogo de acciones de `audit_log` no se copia aquí**: vive en las filas «Para `secretaria`» de
+  `ALINEACION` §3, una por versión que añade o retira acciones. F1 y `espejo-reporte` lo leen de allí.
+  Leído y al día hasta la **V5.92** (nodo final, wrap V47, 2026-09-25).
 - **Presupuesto**: SQL sobre data sources para leer; escritura página a página; corridas de más de
   100 páginas se anuncian antes (el agente de Notion agotó un mes de tokens en una corrida, 11.07).
 - **Cada corrida deja una fila en la bitácora** (`SECRETARIA_PLAN.md` §6).
@@ -100,10 +107,26 @@ de Notion con `ctc_id` huérfano. En Notion no hay guardián: la disciplina es e
   elige Apps Script); después F2.
 - **F1** con dueño `consolas`: `notion_espejos`, seis eventos nuevos, manejadores `<entidad>.espejada`,
   ramas en el escenario 9621729, `espejo-reporte.mjs`. Una versión.
+- **Lo que el circuito del lote (V5.75–V5.92) le deja a este componente** — no estaba anotado aquí; lo recoge el nodo final
+  (wrap V47, 2026-09-25) desde las filas «Para `secretaria`» de `ALINEACION` §3. Antes de F1, decidir qué se espeja de:
+  **(a)** `producer_profiles.gestion` (V5.75: asistido · desacoplado → entregado; regla de arriba) y la sesión asistida
+  (`assisted_session_opened/closed`, con nota «Asistencia CTCx» en el feed del productor); **(b)** la **cuenta congelada**
+  (`producer_profiles.estado_cuenta`, V5.84: `cuenta_congelada` · `cuenta_descongelada`, `ruptura_declarada`); **(c)** lo que YA NO
+  existe y el espejo no debe esperar: los eventos del **Kaffetal Club** (V5.77: el Club dejó de ser membresía) y las acciones de
+  `black_negotiation` (`opened`, `stage_changed`, `target_updated`, `decided_buy`, `decided_release`; V5.85: tabla dormida);
+  **(d)** las entidades nuevas de `audit_log`: certificaciones y fichas (V5.78), solicitud · factura · baches · `muestra` (V5.80),
+  Centro de Calidad y `partner_account.modulos_set` (V5.81), ofertas ancladas y re-evaluación (V5.82), `offer_expired` y la
+  declaración en `offer_accepted` (V5.83), el trato mes a mes y el retiro (V5.84), `compra` · perfil de CTCx Selection (V5.85),
+  `mora_recordatorio_enviado` con `performed_by` nulo —es el cron— (V5.86), `mezcla` (V5.87, V5.91), `sample_pack_order` y
+  `revision_almacenaje` (V5.88), `bodega_muestras` y `trilla_verde` (V5.89), `sample_kit` y `compra_destinada` (V5.90); y las
+  notas de `evaluacion_registrada_centro`, `graded` y `apreciacion_registrada`, que desde la V5.92 llevan el rótulo del Punto
+  (nativo u homologado desde CVA). La lista exacta de cada versión está en su fila de §3; no se duplica aquí.
 - **F3**: Plataformas Web CTC con versión viva y charter; Reuniones ↔ `transcripts`; Objetivos y Tareas ↔
   «Pendientes» de los charters con propiedad `Componente`.
 - Datos de humo en producción (cuentas y fincas de prueba fuera de `prueba-*`): lista previa y limpieza
-  desde el BCP antes de conciliar (owner, plan §5.6).
+  desde el BCP antes de conciliar (owner, plan §5.6). **Hecho en parte** (nodo final, wrap V47): el juego de prueba del
+  circuito (contrato, oferta, listado y lote) se borró en la V5.76, las cinco `prueba-*` en la V5.89 y las cuatro
+  `@ctc-qa-test.co` con sus 5 leads en la V5.92. Queda revisar fincas y lotes de prueba sueltos antes de conciliar.
 
 ## Kick-off
 

@@ -52,7 +52,10 @@ viene). Se funden con la fase 2. La pestaña vacía «Modelo Económico» de Dir
   motores** — Python de referencia en `C:\dev\ctc-platforms\apps-internas\PVC - Modelo\v2.0`, Excel, `motor.ts` y el JS del
   tablero `docs/pvc/tablero/PVC_Tablero.html`), `servicio.ts` (`edicionVigente(fecha?)`: la edición cuya ventana contiene el día; **V5.82**: **`pvcParaGrado(grado, fecha?, {modificadorPct})`**, LA puerta al precio de un grado, sobre **`precio.ts`** —puro: `precioDeLaEscalera`, `bandaDeGrado`; nunca lee `rango`—),
   `actions.ts` (`crearVersionModeloAction`), `dossier.ts`, `tablero.ts`, `tipos.ts`, y los módulos PUROS que hoy se exhiben
-  y no gobiernan nada: `lectura.ts`, `escala.ts` («El Punto y la Tríada» y la Base física), `canales.ts`, `compromiso.ts`.
+  y no gobiernan nada: `escala.ts` («El Punto y la Tríada» y la Base física), `canales.ts`, `compromiso.ts` — **menos
+  `lectura.ts`, que GOBIERNA desde la V5.87**: `src/lib/compras/mezclas.ts` (OCP, `consolas`) lee de ahí `MOQ_CARGAS_BLACK_RED`,
+  `COMPOSICION_POR_GRADO` y `TIPOS_DE_MEZCLA` (V5.91) y los hace cumplir al armar y cerrar una mezcla, con `guard_mezcla_cerrada`
+  en la base (nodo final, wrap V47, 2026-09-25).
   Pantallas en `src/components/panel/pvc/`; `scripts/seed-pvc-f4-2026.mjs`. **Grados**: `src/lib/grados/definicion.ts`
   (`GRADOS`, `gradoPorPuntaje`, `redondeaPuntaje`) y `GradosBoard.tsx` — **contrato transversal de `ALINEACION` §1**: se
   cambia aquí y solo aquí, avisando a todos los que lo leen. **Anclas**: `src/lib/anclas/{actions,fnc,parseFnc,types}.ts`,
@@ -85,9 +88,11 @@ Solo lee: `lots`, `lot_offers`, `purchase_contracts`, `lot_listings` (para saber
 - **La cifra de un guardián sale de la FUENTE, nunca del módulo que vigila**: el plan del owner, la documentación, el
   tablero. `qa-pvc-escala` afirmó en verde la Base física invertida (V5.53) por copiarla del código.
 - **Desde la V5.82 el PVC GOBIERNA una oferta real**: `emitOffer` (OCP) pide el precio a `pvcParaGrado` y guarda `pvc_edition_id`, `pvc_cop_kg` y el % (línea en `ALINEACION` §3 del 2026-09-24). Publicar una edición ya mueve dinero: la ventana `valid_from`/`valid_to` y la banda de cada grado son lo que el productor ve en su oferta.
-- **Un modelo se EXHIBE antes de GOBERNAR.** `lectura`, `escala`, `canales` y `compromiso` son cálculo puro que hoy solo
+- **Un modelo se EXHIBE antes de GOBERNAR.** `escala`, `canales` y `compromiso` son cálculo puro que hoy solo
   se enseña en el ECP. El día que una oferta, un contrato o un listado los lea, es un cambio con alcance: línea en
-  `ALINEACION` §3 y aviso previo a la superficie.
+  `ALINEACION` §3 y aviso previo a la superficie. **`lectura` ya cruzó esa línea (V5.87, fila de §3)**: las mezclas del OCP
+  leen su MOQ de compra, la composición por grado y los tipos de mezcla — cambiar esas constantes cambia lo que el OCP admite,
+  y va con su línea en §3 y `qa-compras` (§10) además de `qa-pvc-lectura`.
 - **Un modelo nuevo empieza por un brief**, no por una pantalla (`docs/componentes/briefs/README.md`): Procesamiento y
   Logística no tienen módulo, y antes de dárselo hay que decidir qué es dato versionado, qué es parámetro y qué es cálculo.
 - **Las consolas no se conducen en un navegador** (OTP real): se verifica por `tsc`/`eslint`/guardianes + SQL.
@@ -113,6 +118,10 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
   `moqCargas(b)` ya no pide el número de lotes. Los dos tableros del PVC (Escala · Lectura) dicen «3 cargas · MOQ de compra · Single
   Origin o Regional Blend». `PVC_BCP_PLAN` gana el §14.8 (n.º 30–32) y deja tachados el §9.2, §9.3, §12.6, §14.4 y el n.º 28.
   `qa-pvc-lectura` reescrito (§3, §4, §7). Nada más de este componente cambió; quien arma las mezclas es `consolas`.
+  **Pendiente de CÓDIGO, dueño aquí** (lo anota el nodo final, wrap V47, 2026-09-25): la tarjeta «Mínimos y empaque por grado» de
+  `src/components/panel/pvc/LecturaBoard.tsx` (hacia las líneas 284-288) **sigue diciendo** «Black y Red son mezclas de 3 a 4
+  productores… una sola variedad… así que son 3 o 4 cargas» — la regla que la V5.91 retiró. Debe decir lo del §14.8: 3 cargas,
+  el MOQ de compra; Single Origin o Regional Blend. `qa-pvc-lectura` no mira ese párrafo.
 - **Cotizador Courier — ciclo 1 cerrado por el owner el 2026-09-23 (V5.73).** Lo que dejó para el ciclo 2: (1) ~~El combustible es semanal y se anotaba a mano~~ — **automático desde la V5.69**: cron de los jueves (`/api/cron/courier-combustible`) que deriva el % de la EIA (USGC jet fuel) + la tabla de escalones de FedEx (`courier_combustible_escalas`), porque fedex.com no responde a un servidor. **Queda**: cuando FedEx cambie su tabla de escalones (la vigente es del 2026-05-11), cargar la nueva — el cron lo avisa si un precio se sale de la tabla. Lo anotado a mano siempre manda. (2) **Confirmar con el ejecutivo de FedEx** que el descuento por zona, el adquirido y la bonificación **se suman** (así está cargado, `modo_suma = aditivo`) y si el acuerdo cubre la **caja FedEx 10/25 kg** (hoy se cotiza a lista: sale mucho más cara y quizá no lo es). (3) **Contrastar tres envíos reales** contra la factura o fedex.com. (3b) V5.70, tras el primer recorrido del owner: combustible provisional para envíos futuros, carga por medidas (no por volumétrico), gráfica del recargo, cotizaciones que se reabren. La consola no se puede conducir en un navegador (OTP): el diseño nuevo lo verifica el owner en su próxima visita. (4) El **periodo de gracia termina el 2026-11-24**: desde ahí el descuento adquirido depende del gasto anualizado, que la pantalla pide a mano; calcularlo de las facturas es otra tanda. (5) Segunda tanda: importación y terceros; la API de tarifas de FedEx como contraste (owner: «después»); y que la modalidad courier del cotizador logístico y la Gestión de Muestras lean este costo (línea en `ALINEACION` §3). (6) Cuando llegue la guía 2027: `parse-guia.py` + `seed-courier.mjs … guia` — las tarifas son versión, no se sobrescriben.
 - ~~**El overhaul de las consolas devuelve este grupo al ECP**~~ — **ejecutado en la V5.60** (fase 2 de
   `docs/OVERHAUL_CONSOLAS_PLAN.md`): el grupo vive en el ECP, agrupado por modelo como lo dibujó el owner — Definición de
@@ -151,18 +160,25 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
 - **Fase 2 del PVC** (`docs/PVC_BCP_PLAN.md` §7–§9): las cinco decisiones están **tomadas** (owner,
   2026-09-15). Toca ejecutarlas en una versión: `definicion.ts` pasa a la escala de puntos CTC (§9.1; toca el
   contrato de grados de `ALINEACION` §1 y a KR, CP, OCP, cotizadores y Notion), `moqPorGrado` desde la edición
-  (§9.2; `ASSOC_BLACK_MOQ` se retira), precios FOB en US$ y CIF/DDP por moneda de destino (§9.3), el ciclo
+  (~~§9.2~~ — el cuadro del §9.2 y las filas Black/Red del §9.3 los supera el **§14.8**, V5.91: 3 cargas, el MOQ de compra;
+  `ASSOC_BLACK_MOQ` se retira), precios FOB en US$ y CIF/DDP por moneda de destino (§9.3), el ciclo
   semanal como cron de Vercel (§5) y el dossier por GitHub Action. Antes de tocar `definicion.ts`, la escala
   del §9.1 debe validarla el owner con la calculadora (la del artefacto «PVC · Cinco decisiones»). La Ficha (KR)
   gana los tres físicos y la lista de reconocimientos verificables (§9.1.b); los multiplicadores PBC (§9.4) entran en
-  `pvc_model_versions.params`. **Auditoría del módulo (§10, verificada contra la base 2026-09-16)**: trece hallazgos —
+  `pvc_model_versions.params`. **Y consume el Punto (V5.92, `consolas`, sin código de este componente; lo anota el nodo
+  final, wrap V47)**: `PVC_BCP_PLAN` §9.1 ganó el recuadro «El Punto homologado» — la escala de puntos (`escala.ts`) leerá
+  `PuntoSca` de `src/lib/arena/homologacion.ts` y sumará el surplus (variedad · proceso · reconocimiento) **sobre el piso** del
+  Punto (R7), nunca sobre un CVA crudo; un Punto homologado no llega a Tyrian. Es la «fase 2 del informe» del Q-Grader
+  (`PLAN_CIRCUITO_DEL_LOTE` §10), junto con la calibración (≥ 30 lotes duales). **Auditoría del módulo (§10, verificada contra la base 2026-09-16)**: trece hallazgos —
   ~~**A1 primero y urgente**: `edicionVigente()` y `public_pvc_current` ignoran `valid_from/valid_to`~~ **A1 corregido en la
   V5.43** («vigente» = la edición cuya ventana contiene hoy; guardián `qa-pvc-vigencia`); siguen A2 (`pvc_anterior` lo teclea el usuario), A3
   (cinco parámetros fuera del control de deriva), el modelo v2.2.0, la espina (`pvc.*`, cron diario con TRM e ICE C,
   **ciclo semanal que LEE el mercado y no publica precio**: desviación contra el pronóstico, novedades y distancia al
   disparador) y el marco de mercado semestral como **documento D10 del dossier** (enero y julio, sin tabla ni pantalla).
-  La oferta en dos caminos (§9.5) exige `lot_offers` kind `directa` y abrir `ctc_selection` a cualquier grado (**A13**:
-  hoy solo lo enciende `black_negotiations`), además de la herramienta «PVC × grado».
+  ~~La oferta en dos caminos (§9.5) exige `lot_offers` kind `directa` y abrir `ctc_selection` a cualquier grado (**A13**:
+  hoy solo lo enciende `black_negotiations`)~~ — **hecho** desde `consolas`: `directa` en la V5.82 y `ctc_selection` desde
+  `compras` (todo grado menos Tyrian) en la V5.85; `black_negotiations` quedó dormida. Queda la herramienta «PVC × grado» **de
+  campo** (HI-1; la del OCP es la pestaña Grados y la del productor, la calculadora del trato de KR, V5.83).
 - **Refurbish del módulo a «Modelo Económico»** (`PVC_BCP_PLAN.md` §11, diseñado 2026-09-16) — **a medio construir**
   (corregido el 2026-09-19: este párrafo decía «sin construir»). **Hecho**: el rename en el rail (V5.45; la ruta sigue
   siendo `/ecp/pvc` a propósito), **Lectura** (V5.44) y **Grados** con su calculadora —la primera versión de la herramienta

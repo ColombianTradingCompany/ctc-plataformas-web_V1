@@ -44,7 +44,7 @@ versión, y el charter borra su pendiente. Si una tanda cambia de alcance, se co
 | 2 | CN-3 | consolas · OCP | **Ofertas y contratos según la narrativa** (prima dentro, `directa`, mínimos, escalera, reporte, pago) | L | CN-1 | KR-2, CP-3, HI-1 |
 | 2 | CN-4 | consolas · OCP | Subastas en US$; alza al productor solo en Cherry Picked, a COP el día del pago | M | CP-1 | CP-3 |
 | 2 | CN-5 | consolas · OCP | Evaluación: tarifa $200.000 con la **coinversión de CTCx** (30–70 %; no se dice «descuento», owner 2026-09-18), sin reembolso del 80 %, contra-catación con crédito, avisos | M | O-3 (cobro) | KR-2 |
-| 2 | CN-6 | consolas · OCP | Arena abierta a Blue+ sin contrato, postulación y fila | M | — | KR-2 |
+| 2 | ~~CN-6~~ | consolas · OCP | ~~Arena abierta a Blue+ sin contrato, postulación y fila~~ — ⚠ **retirada en la V5.77** (Arena rehecha) | M | — | KR-2 |
 | 2 | CN-7 | consolas · OCP | UID/QR del lote y sticker imprimible; ficha pública de CTCx Selection | M | CN-2, O-4 | CP-3 |
 | 2 | KR-2 | kaffetal-regal | Panel: perfil primero, tabla de salida antes de firmar, Arena, «su café en la bolsa», avisos | M | CN-3, CN-5, CN-6 | O-8 |
 | 2 | CP-3 | cherry-picked | Catálogo y ficha: mínimos desde la edición, lista FOB, Papagayo Beans®, CTCx Selection, puja en US$ | M | CN-3, CN-4, CN-7 | primer lote publicado |
@@ -87,8 +87,9 @@ versión, y el charter borra su pendiente. Si una tanda cambia de alcance, se co
 - **Alcance.** Nueva edición con `valid_from` 1-ene-2027 y `valid_to` 31-mar; F4-2026 según O-1; la regla pública
   de anticipación (primeras dos semanas del segundo mes del periodo anterior) en la pestaña Lectura y en
   `GET /api/pvc/current` + `public_pvc_next`; emitir `pvc.published`. Mínimos por grado en la edición con Black y Red
-  «3–4 según la mezcla» (tabla §14.4: mezcla de 3 a 4 productores, **una carga por productor**; Black = orígenes y/o
-  variedades, Red = siempre una sola variedad — owner, 2026-09-19) para que CN-3 y CP-3 los lean.
+  ~~«3–4 según la mezcla» (tabla §14.4: mezcla de 3 a 4 productores, **una carga por productor**; Black = orígenes y/o
+  variedades, Red = siempre una sola variedad — owner, 2026-09-19)~~ — ⚠ **superado (V5.91, `PVC_BCP_PLAN.md` §14.8)**: Black y
+  Red **3 cargas**, el MOQ de compra; la mezcla es Single Origin o Regional Blend — para que CN-3 y CP-3 los lean.
 - **Archivos.** `src/app/bcp/(app)/pvc/*`, `src/lib/pvc/{servicio,actions,lectura}.ts`, migración si cambia `pvc_editions`.
 - **Guardianes.** `qa-pvc-vigencia`, `qa-pvc-lectura`, `qa-pvc-motor`, `qa-pvc-tablero`.
 - **Backstage.** KR-1 cita el calendario (texto); CP-3 lee la edición. Línea en §3.
@@ -109,7 +110,8 @@ versión, y el charter borra su pendiente. Si una tanda cambia de alcance, se co
 ### CP-1 · cherry-picked · US$ y mínimos · M
 
 - **Alcance.** `data.ts`: `eur` → formato US$, `price` en US$/kg, retirar `ASSOC_BLACK_MOQ = 350`; `LotCard` con el
-  mínimo en unidades de 6 kg por grado (Black y Red 42 o 56 —mezcla de 3 o de 4 productores, una carga por productor— · Blue 26 · Gold 13 · Tyrian 6) y el empaque
+  mínimo en unidades de 6 kg por grado (Black y Red ~~42 o 56 —mezcla de 3 o de 4 productores, una carga por productor—~~ ⚠ superado
+  (V5.91, `PVC_BCP_PLAN.md` §14.8): 3 cargas, el MOQ de compra — recalcular las unidades desde `moqCargas` · Blue 26 · Gold 13 · Tyrian 6) y el empaque
   como presentación; `RoastLanding` (`FEE_EUR_KG` → US$); `TyrianSection` exhibe US$/kg (la puja real cambia con CN-4:
   o se hace en la misma tanda con línea en §3, o CP-1 solo cambia la exhibición).
 - **Guardianes.** `qa-sneak-peek-check`, `qa-subastas-check` (lado CP), `qa-checkout-check`.
@@ -128,14 +130,22 @@ versión, y el charter borra su pendiente. Si una tanda cambia de alcance, se co
 
 ### KR-1 · kaffetal-regal · el copy del guion (v0.6 + v0.7) · M
 
+- ⚠ **Reconciliar con `src/lib/trato/terminos.ts` y `PLAN_CIRCUITO_DEL_LOTE.md` antes de ejecutar (wrap V47)**: la tarifa ya es
+  $200.000 en código (`TARIFA_EVALUACION_COP`, V5.80; lo que falta es el copy público — `PorQueSection` y `faq.ts` siguen diciendo
+  $80.000); los mínimos son dos cosas distintas (mínimo declarado por lote 6 · 3 cargas · 200 kg; MOQ de compra 3 cargas para Black
+  y Red, V5.91); CTCx paga en la primera semana del mes y la mora es de 2 + 2 semanas al 5 % (V5.84); la Arena ya no es vitrina
+  (V5.77). Lo tachado abajo está superado.
 - **Alcance** (guion §6): CTCx y **Papagayo Beans®** («su café sale al mundo como…»); tarifa `ARENA_FEE_COP`
-  80.000 → 200.000 —**CTCx coinvierte** del 30 al 70 % del costo; no se dice «descuento» (owner, 2026-09-18, guion v0.9.1)— y envío incluido (la leen `nominadosActions`, `inscriptions`,
+  80.000 → 200.000 (⚠ ya en código desde la V5.80: falta solo el copy) —**CTCx coinvierte** del 30 al 70 % del costo; no se dice «descuento» (owner, 2026-09-18, guion v0.9.1)— y envío incluido (la leen `nominadosActions`, `inscriptions`,
   `producerActions`: línea en §3 a consolas; el cobro real espera O-3); `TratoSection` con los dos caminos (prima
-  dentro del PVC; CaaS sin prima; compra inicial por grado; mínimos 3–4 · 2 · 1 · ½; escalera 25 % + 25 % con el 4 %;
-  pago a 2 días; reporte en la primera semana del mes); `faq.ts` en tres idiomas; `BienvenidosSection` con Perfil ·
+  dentro del PVC; CaaS sin prima; compra inicial por grado; ~~mínimos 3–4 · 2 · 1 · ½~~ ⚠ mínimos según `terminos.ts`; escalera 25 % + 25 % con el 4 %;
+  ~~pago a 2 días~~ ⚠ pago en la primera semana del mes; reporte en la primera semana del mes); `faq.ts` en tres idiomas; `BienvenidosSection` con Perfil ·
   Finca · Lote · Evaluación · Oferta · Despacho; `OportunidadSection` con los multiplicadores reales en vez de índices
-  base 100; la Arena como herramienta abierta a Blue+; el calendario del PVC. **No toca el copy de grados** (ola 4).
+  base 100; ~~la Arena como herramienta abierta a Blue+~~ ⚠ superado (V5.77: la Arena es una sesión de segunda apreciación, fuera del
+  circuito); el calendario del PVC. **No toca el copy de grados** (ola 4).
 - **Guardianes.** `qa-kr-panel-check`, `qa-kr-ficha-check`, `qa-nav-check`.
+- ⚠ **Superado en parte (wrap V47)**: «Arena abierta a Blue+» ya no aplica (V5.77) y la tarifa ya está en código; pegar esta línea
+  solo con la reconciliación del primer punto de arriba.
 - **Hoy:** `Tanda KR-1 del plan de narrativa (§3): trasladar el guion v0.6/v0.7 a la landing y el FAQ —CTCx, Papagayo Beans®, tarifa de $200.000 con la coinversión de CTCx (30–70 %, nunca «descuento»), los dos caminos con la prima dentro del PVC, escalera 25 % + 25 % y 4 %, pasos con Perfil primero, multiplicadores reales, Arena abierta a Blue+—, sin tocar el copy de grados.`
 
 ### SO-1 · socios · la narrativa de los nodos · S
@@ -155,24 +165,32 @@ versión, y el charter borra su pendiente. Si una tanda cambia de alcance, se co
 
 ## 4 · Ola 2 · sobre la 1
 
+> ⚠ **Wrap V47 (2026-09-25)**: CN-3, CN-5, CN-6 y CN-7 las absorbió `docs/PLAN_CIRCUITO_DEL_LOTE.md` (Etapa 1, ejecutada en código
+> en la V5.76–V5.92). Lo que se hizo, lo que se retiró y lo que queda está en el tablero del §8; abajo, lo superado va tachado o
+> marcado con ⚠. **No pegue una línea «Hoy:» de estas cuatro tandas sin leer antes el tablero.**
+
 ### CN-3 · consolas · OCP · ofertas y contratos según la narrativa · L (dos sesiones: ofertas · contratos)
 
 - **Ofertas.** Precio de toda oferta desde la edición vigente: PVC × multiplicador del grado (la prima ya está dentro);
   `lot_offers.kind` gana `directa` = (PVC − prima) × mult; compra inicial en firme por programa y grado (Cherry Picked
   1 carga · 1 carga · 200 kg · **hasta 100 kg** · ajustada; CaaS 15–25 kg — el Gold entra con MENOS kilos, corregido el
   2026-09-18 con la v0.9.1 del guion); mínimos por programa leídos de la edición
-  (`moqPorGrado`; Black y Red 3–4 según la mezcla); reoferta por periodos (siguiente sin descuento, posterior −5 %);
+  (`moqPorGrado`; Black y Red ~~3–4 según la mezcla~~ ⚠ 3 cargas, el MOQ de compra — V5.91); reoferta por periodos (siguiente sin
+  descuento, posterior −5 %) (⚠ la V5.84 hizo en su lugar la **renovación** a los 90 días; la reoferta −5 % no está en código);
   oferta en 1–3 días tras el veredicto (aviso); `ctc_selection` encendido por cualquier compra en firme (A13), no
-  solo por `black_negotiations`.
+  solo por `black_negotiations` (✅ V5.85).
 - **Contratos.** `compromiso.ts` conectado a `purchase_contracts` (cargas comprometidas por mes, retiros, tramo libre
-  0/25/50 %, penalización del 4 %); la escalera 25 % + 25 % reemplaza 50/75/100; reporte de ventas en la primera
-  semana del mes; recibo y verificación el mismo día; pago por entrega a 2 días hábiles con mora del 0,5 %; el
-  productor ve la tabla de salida antes de firmar (KR-2 la muestra).
+  0/25/50 %, penalización del 4 %); la escalera 25 % + 25 % reemplaza 50/75/100 (✅ V5.83–V5.84: `terminos.ts`, `simulador.ts`,
+  `mesAMes.ts`); reporte de ventas en la primera semana del mes; recibo y verificación el mismo día; ~~pago por entrega a 2 días
+  hábiles con mora del 0,5 %~~ ⚠ superado por el folio 8 (V5.84): CTCx paga en la primera semana del mes y la mora es de 2 semanas
+  sin cargo + 2 con el 5 %; el productor ve la tabla de salida antes de firmar (✅ la calculadora, V5.83).
 - **Archivos.** `ofertasActions.ts`, `contractActions.ts`, `src/lib/ofertas/producerActions.ts`,
   `src/lib/pvc/{compromiso,lectura}.ts`, migraciones (`lot_offers.kind`, columnas de compromiso en `purchase_contracts`).
 - **Guardianes.** `qa-ofertas-check` (36), `qa-pvc-compromiso` (31), `qa-fichas-check`, `qa-sneak-peek-check`.
 - **Backstage.** KR-2 (`ContratosTab`, `respondToOffer`) y CP-3 (mínimos y CTCx Selection) en la misma tanda o como
   pendiente con dueño. Línea en §3.
+- ⚠ **Superadas (wrap V47)**: las dos líneas «Hoy:» de CN-3 describen lo que ejecutó el plan del circuito en la V5.82–V5.85; lo que
+  queda (reporte mensual de ventas, oferta en 1–3 días, reoferta −5 %, mínimos leídos de la edición) está en el tablero del §8.
 - **Hoy (ofertas):** `Tanda CN-3a del plan de narrativa (§4): las ofertas salen de la edición —PVC × grado con la prima dentro, kind directa = (PVC − prima) × grado, compra inicial y mínimos por programa, reoferta por periodos— y CTCx Selection se enciende con cualquier compra en firme.`
 - **Hoy (contratos):** `Tanda CN-3b del plan de narrativa (§4): compromiso.ts conectado al contrato —cargas por mes, escalera 25 % + 25 % con el 4 %—, reporte de ventas mensual, pago por entrega a 2 días hábiles con mora, y la tabla de salida visible para el productor antes de firmar.`
 
@@ -189,15 +207,20 @@ versión, y el charter borra su pendiente. Si una tanda cambia de alcance, se co
 ### CN-5 · consolas · OCP · la evaluación como la cuenta el guion · M
 
 - **Alcance.** Tarifa $200.000 con la **coinversión de CTCx** en 30/50/60/70 —vocabulario, no máquina: `arena_inscriptions.discount_pct` y las campañas no cambian— (desde `pvc_model_versions.params` o la constante
-  compartida con KR-1); envío incluido (guía prepagada); retirar el reembolso del 80 % al rechazado; contra-catación
+  compartida con KR-1); envío incluido (guía prepagada); retirar el reembolso del 80 % al rechazado; ~~contra-catación
   externa pedida en 5 días hábiles con **crédito a favor** (ledger que se liquida al cierre del mes y se hace efectivo
-  con un trato); avisos al productor que hoy faltan: finca aprobada (`approveFinca`), lote Apto, resultado. El cobro
+  con un trato)~~ ⚠ superado (V5.82): la **re-evaluación** a tarifa plena con reembolso del 80 % si sube de grado; avisos al productor que hoy faltan: finca aprobada (`approveFinca`), lote Apto, resultado. El cobro
   real llega con O-3.
-- **Guardianes.** `qa-evaluaciones-check` (42), `qa-jornada-check`, `qa-visa-check`.
+  ✅ **Ejecutada dentro del plan del circuito**: tarifa $200.000 (`terminos.ts`, V5.80), subvención 30–70 % (V5.77), envío contra
+  entrega (V5.80), sin el 80 % al rechazado (V5.82).
+- **Guardianes.** `qa-evaluaciones-check` (42), ~~`qa-jornada-check`~~ (retirado en la V5.77), `qa-visa-check`.
+- ⚠ **Superada (wrap V47)**: ver arriba; no pegar la línea siguiente.
 - **Hoy:** `Tanda CN-5 del plan de narrativa (§4): tarifa de evaluación de $200.000 con la coinversión de CTCx (30–70 %, nunca «descuento») y envío, sin reembolso del 80 %, contra-catación con crédito a favor, y avisos al productor al aprobar la finca, declarar Apto y publicar el resultado.`
 
-### CN-6 · consolas · OCP · la Arena abierta · M
+### ~~CN-6 · consolas · OCP · la Arena abierta · M~~ — ⚠ RETIRADA (V5.77)
 
+- ⚠ **Retirada**: la Arena se rehízo en la V5.77 como sesiones de segunda apreciación (BCP); `showcaseGate`, `inviteLotToArena`,
+  `assignLotToSession` y `qa-jornada-check` se retiraron. Lo de abajo es historia; no pegar su línea «Hoy:».
 - **Alcance.** `showcaseGate` sin exigir contrato para Blue+; el productor se postula desde KR (`arena_inscriptions`
   por el productor, `producerActions`) y ve su lugar en la fila de grabación; `inviteLotToArena` pasa a ser la
   aceptación. `nominadosActions.ts`, `arenaActions.ts`, `src/lib/arena/*`.
@@ -211,13 +234,16 @@ versión, y el charter borra su pendiente. Si una tanda cambia de alcance, se co
   `lots.public_code`; el alcance original decía `/docs/ficha/[lotId]`); sticker imprimible desde OCP · Fichas con nombre del productor y finca si el
   lote va por Cherry Picked, o «CTCx Selection» si `ctc_selection`; ficha pública con Papagayo Beans® y la finca como
   dato no protagonista en CTCx Selection (`fichaPublica.ts`, `docs/ficha/[lotId]/page.tsx`). Diseño físico: O-4.
+  ⚠ **En parte (wrap V47)**: el UID es `lots.public_code` (V5.48) y la vitrina, la cinta, el portal y la ficha enseñan el perfil
+  único de CTCx Selection con imagen por lote (V5.85); quedan el QR, el sticker (OCP · Fichas ya no está en el rail: la vista del
+  lote, V5.78) y Papagayo Beans® en la ficha.
 - **Guardianes.** `qa-ficha-publica-check` (115), `qa-catalogo-publico-check` (119), `qa-fichas-check` (31).
 - **Hoy:** `Tanda CN-7 del plan de narrativa (§4): QR/UID del lote hacia la ficha pública, sticker imprimible de productor y finca (o CTCx Selection) desde OCP · Fichas, y la ficha pública con Papagayo Beans® y la finca como dato en CTCx Selection.`
 
 ### KR-2 · kaffetal-regal · el panel · M
 
 - **Alcance.** Perfil antes que finca (`PerfilTab`); `ContratosTab` con la tabla de salida de la escalera antes de
-  firmar, el reporte de ventas y los pagos por entrega (CN-3); postulación a la Arena para Blue+ con su fila (CN-6);
+  firmar, el reporte de ventas y los pagos por entrega (CN-3) (⚠ la calculadora y «Mi trato» ya existen, V5.83–V5.84); ~~postulación a la Arena para Blue+ con su fila (CN-6)~~ (⚠ CN-6 retirada, V5.77);
   «Su café en el mundo»: cómo se ve la bolsa (Papagayo Beans®, sello, su nombre y su finca); avisos de finca, Apto y
   resultado (CN-5); vocabulario «Arena» en `LoginModal`, `FichaView`, `ShipmentInstructionsModal`.
 - **Guardianes.** `qa-kr-panel-check` (119), `qa-ofertas-check`, `qa-evaluaciones-check`.
@@ -293,6 +319,6 @@ Se marca en el mismo commit que cierra la tanda (con su versión).
 
 - [ ] O-1 · [ ] O-2 · [ ] O-3 · [ ] O-4 · [ ] O-5 · [ ] O-6 · [ ] O-7 · [ ] O-8
 - [ ] CN-1 · [ ] CN-2 · [ ] CP-1 (mitad hecha en V5.52, `7037ec4`: la moneda de la tienda; **faltan** los mínimos en unidades de 6 kg en `LotCard`, retirar `ASSOC_BLACK_MOQ = 350` y la constante muerta `FEE_EUR_KG` de `RoastLanding` — auditoría del 2026-09-19) · [ ] CP-2 · [ ] KR-1 · [ ] SO-1 · [ ] SE-1
-- [ ] CN-3a · [ ] CN-3b · [ ] CN-4 · [ ] CN-5 · [ ] CN-6 · [ ] CN-7 (mitad delantera hecha en V5.48: `lots.public_code` y el portal; faltan el QR y el sticker) · [ ] KR-2 · [ ] CP-3
+- [ ] CN-3a (**en su mayor parte hecha en el plan del circuito**: `directa`, precio desde la edición con `pvcParaGrado` y compra inicial en la V5.82; `ctc_selection` por cualquier compra en firme en la V5.85; **faltan** los mínimos leídos de la edición, la reoferta −5 % — la V5.84 hizo en su lugar la renovación a 90 días — y la oferta en 1–3 días con aviso) · [ ] CN-3b (**en su mayor parte hecha**: escalera 25 % + 25 % con el 4 %, la calculadora antes de firmar y el trato mes a mes en la V5.83–V5.84; el pago a 2 días con mora del 0,5 % lo **superó** el folio 8 — pago en la primera semana del mes, mora 2 + 2 semanas al 5 %; **falta** el reporte mensual de ventas) · [ ] CN-4 · [x] CN-5 (**absorbida y ejecutada en el plan del circuito**: subvención 30–70 % en la V5.77, tarifa $200.000 y envío contra entrega en la V5.80, sin el 80 % al rechazado en la V5.82; la contra-catación con crédito la sustituyó la re-evaluación con reembolso del 80 %; los avisos que falten van a la Etapa 2) · ~~[ ] CN-6~~ **retirada en la V5.77** (la Arena rehecha como sesiones de segunda apreciación; sin vitrina ni postulación) · [ ] CN-7 (mitad delantera hecha en V5.48: `lots.public_code` y el portal; el perfil de CTCx Selection en la vitrina y la ficha en la V5.85; faltan el QR y el sticker) · [ ] KR-2 · [ ] CP-3
 - [ ] CN-8 · [ ] CP-4 · [ ] SO-2 · [ ] CP-5 · [ ] HI-1
 - [ ] CN-9 · [ ] KR-3 · [ ] SE-2

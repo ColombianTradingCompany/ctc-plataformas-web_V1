@@ -4,6 +4,12 @@
 > simplify the OCP to match this process and the way to visualize the information to be checked and
 > accepted.»* Lo escribe la sesión de `kaffetal-regal` porque el cambio **nace** de allí (la V5.65
 > movió las palabras), pero **el código es de `consolas`** y no se toca desde fuera (`ALINEACION` §2).
+>
+> **Estado (wrap V47, 2026-09-25)**: la **primera tanda** (el vocabulario, §1) se **ejecutó en la V5.74**. El resto lo **absorbió
+> `docs/PLAN_CIRCUITO_DEL_LOTE.md`**: el rail de OCP · Catálogo es hoy el circuito en su orden (Solicitudes de Evaluación → Lotes a
+> Evaluar → Lotes en Evaluación → Lotes Evaluados → Pendiente Oferta → Ofertas CP Aceptadas · Oferta desde CTCx Selection → Catálogo
+> Activo, V5.80–V5.90), que es en la práctica la «bandeja por momento de decisión» del §2; y la decisión 3 (el Centro de Calidad
+> propio) se ejecutó en la V5.81. **Siguen abiertas para el owner**, para la Etapa 2, las decisiones 1, 2, 4 y 5.
 
 **Qué es** — Poner el OCP a decir lo mismo que el panel del productor, ahora que las palabras están
 asentadas, y **reorganizar lo que el operador ve alrededor de lo único que hace: revisar y aceptar**.
@@ -22,7 +28,8 @@ El owner lo cerró así (V5.65, escrito en la cabecera de `src/lib/eudr.ts`):
 | **Visa** | el **lote** | se hereda del Pasaporte; **primer entregable de CTCx, y gratis** — la documentación EUDR no necesita al Q-Grader, así que llega **antes** de la EVA |
 | **EVA** | el **lote** | **Evaluación de Muestras en Origen**: al Q-Grader y de vuelta con granulometría y perfil sensorial → el Punto y la Tríada → el Grado |
 
-**Lo que sigue diciendo el OCP y ya no cuadra:**
+**Lo que sigue diciendo el OCP y ya no cuadra:** *(⚠ cerrado en la V5.74: la columna es «Visa», la de la finca «Pasaporte EUDR» y
+el badge «Veredicto de Visa»; la lista queda como la foto del 2026-09-20)*
 
 - `src/app/ocp/(app)/kr/KrTabla.tsx:224` — la columna **«EVA»** nombra el **veredicto documental**.
   Con la definición nueva esa columna es la **Visa**. Hoy el OCP y el panel del productor **llaman EVA
@@ -65,7 +72,7 @@ Propuesta concreta, para discutir:
 
 - Tocar `lots.stage` ni el enum: el circuito **se deriva**, y así debe seguir.
 - Cambiar quién escribe el grado (`recordEvaluationVerdict`, «el puntaje manda»).
-- Nada de la fase 4b, que sigue parada esperando al owner.
+- Nada de la fase 4b, ~~que sigue parada esperando al owner~~ (⚠ superado: la sustituyó `PLAN_CIRCUITO_DEL_LOTE.md`, V5.80–V5.84).
 
 **Contratos que toca** — **Vocabulario congelado** (§1) y, si se reordena el rail,
 `src/lib/panel/consoles.ts` + `rutasMovidas.ts`. No toca grados, ni identidad, ni el patrón Supabase.
@@ -87,9 +94,10 @@ sola regla. La reorganización de bandejas va después, con el owner delante.
    conviven — la tabla es el mapa, las bandejas son el trabajo del día.
 2. **¿«Aceptar» es un botón por lote, o admite lote a lote en bloque?** Hay operaciones (confirmar
    pagos, confirmar muestras) donde el lote a lote es trabajo inútil.
-3. **El «Centro de Calidad» del Q-Grader** (owner, 2026-09-20): login propio que recibe la lista y
+3. ~~**El «Centro de Calidad» del Q-Grader** (owner, 2026-09-20): login propio que recibe la lista y
    deja evaluar **en orden**. ¿Entra en esta tanda o es su propio brief? Propuesta: **propio**, porque
-   es una superficie de socio con credenciales, no una pantalla del OCP.
+   es una superficie de socio con credenciales, no una pantalla del OCP.~~ ⚠ **Contestada y ejecutada**: fase 4 del plan del
+   circuito, V5.81 (`/socios/centro-calidad/panel/evaluacion`).
 4. **¿La Visa se emite a mano siempre, o se emite sola cuando la finca ya tiene Pasaporte?** Si es el
    productor quien nota que su Visa es «gratis y primero», una cola manual la vuelve lenta por diseño.
 5. **¿Qué se enseña de un lote NO apto?** Hoy es una salida lateral del circuito y en el rail no vive

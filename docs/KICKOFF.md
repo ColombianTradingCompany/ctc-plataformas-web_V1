@@ -169,7 +169,8 @@ Trabajas SOLO en el componente «Kaffetal Regal» (clave: kaffetal-regal) de la 
 3. AGENTS.md                            ← la compuerta y las reglas de la casa
 El productor nunca escribe grado ni estado: si tu tarea necesita que el OCP haga algo distinto, se
 anota como pendiente con dueño «consolas» y una línea en el §3. Campos nuevos del datasheet con
-default seguro. Se verifica en vivo con las cuentas prueba-* (memoria ctc-qa-fleet). Al terminar:
+default seguro. Se verifica en vivo con la sesión asistida del OCP sobre un productor o un Proveedor
+Desacoplado (las cuentas prueba-* ya no existen desde la V5.89). Al terminar:
 compuerta completa (incl. qa-kr-panel, qa-kr-ficha), APP_VERSION + CHANGELOG, sello del sha, push,
 verificación en vivo, log de arquitectura, y «Pendientes» de este charter al día.
 Hoy: <la tarea>.
@@ -190,7 +191,8 @@ Trabajas SOLO en el componente «Cherry Picked» (clave: cherry-picked) de la pl
 Nada comercial sale por la cinta; la ficha pública es lista blanca; las lecturas públicas van por las
 vistas estrechas, nunca por una política ancha; la subasta es EUR/kg y adjudicar es del OCP. Si tu
 tarea necesita que el OCP publique, adjudique o responda distinto, es pendiente con dueño «consolas»
-y una línea en el §3. Se verifica con una cuenta de comprador QA. Al terminar: compuerta completa
+y una línea en el §3. Se verifica en la vitrina pública; no quedan cuentas de comprador de prueba
+(V5.92): si la tarea necesita una sesión de comprador, pídesela al owner. Al terminar: compuerta completa
 (incl. qa-sneak-peek, qa-subastas), APP_VERSION + CHANGELOG, sello, push, verificación en vivo, log
 de arquitectura, y «Pendientes» al día.
 Hoy: <la tarea>.

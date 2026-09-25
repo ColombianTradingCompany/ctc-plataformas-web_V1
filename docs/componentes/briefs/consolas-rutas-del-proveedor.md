@@ -5,7 +5,16 @@
 > **Ruta Desacoplado**. Y pidió dos módulos nuevos en el OCP —**Proveedor Desacoplado** y **Asistencia a Proveedores**— que
 > «esencialmente me permiten entrar al perfil de un productor para ejecutar por él la creación de Fincas y Lotes y hacer el
 > proceso en su nombre». Este brief compara los tres diagramas con lo que hay, dice qué es evidente y se puede hacer ya, y
-> escribe las decisiones que bloquean lo demás. Estado: **en scoping — espera al owner.**
+> escribe las decisiones que bloquean lo demás. Estado: ~~**en scoping — espera al owner.**~~ **APROBADO en su primera tanda**
+> (respuestas del owner del 2026-09-23, al final) y **ejecutada en la V5.75** (Asistencia a Proveedores y Proveedor Desacoplado).
+>
+> ⚠ **Estado al wrap V47 (2026-09-25)**: el resto de las rutas lo absorbió `docs/PLAN_CIRCUITO_DEL_LOTE.md` (Etapa 1, ejecutada en
+> código en la V5.76–V5.92). Las columnas «Hoy existe» y «Hueco» de los §1–§3 son la foto del 2026-09-23: desde entonces existen
+> el Centro de Calidad con login y su módulo de Evaluación (V5.81), registrar ≠ confirmar (V5.81), los Baches de Evaluación
+> (V5.80), la oferta anclada al PVC y la `directa` (V5.82), la Ficha descargable = el dossier del lote (V5.79), `compras` y el
+> perfil único de CTCx Selection (V5.85); la 4b la sustituyó el plan del circuito. **Siguen pendientes** de este brief: la llamada
+> de bienvenida (tarea `bienvenida`), la **Ficha retenida** del desacoplado (`kaffetal-regal`) y la oferta al dueño del café
+> desacoplado registrada por CTCx (respuesta 4). Los tres se corren en la Etapa 2.
 
 **Qué es** — El proceso de CTCx con un proveedor de café tiene TRES rutas, no una: la Estándar (el productor coopera hasta
 llegar a los ciclos de venta trimestrales), la CTCx Selection (no participa en los ciclos, pero acepta precio y cantidad para
@@ -128,17 +137,23 @@ la insignia de `/ocp/kr` sale de la columna, no de una lista.
 
 **Primera tanda** — Asistencia a Proveedores (la sesión asistida con su rastro) + Proveedor Desacoplado (crear, insignia,
 entregar) + la evaluación asumida. **No toca ofertas, compras ni la vitrina**: eso viaja con la 4b y el brief de Compras.
-Verificable en vivo por SQL y con las cuentas `prueba-*` (la sesión asistida SÍ se puede conducir en navegador: es KR).
+Verificable en vivo por SQL y con las cuentas `prueba-*` (la sesión asistida SÍ se puede conducir en navegador: es KR). ⚠ Las
+cuentas `prueba-*` se eliminaron el 2026-09-25: la conducción es la Etapa 2, sobre productores desacoplados.
 
 ## 5 · Lo evidente que se puede hacer sin decisión (y sin este brief)
 
-- La tarea derivada **«llamada de bienvenida»** en el Tablero de Ejecución (paso 2 de la Ruta Estándar).
-- `createLot` todavía hace `throw` («Finca no encontrada», «No se pudo crear el lote»): tumba la página. Deuda (c) del charter.
-- Los comentarios de `src/lib/ocp/circuito.ts` aún dicen «la EVA documental» (es la Visa; no se pinta, pero se lee).
+- La tarea derivada **«llamada de bienvenida»** en el Tablero de Ejecución (paso 2 de la Ruta Estándar). *(Sigue sin hacer al
+  wrap V47: `TIPOS_DE_TAREA` no tiene `bienvenida`.)*
+- ~~`createLot` todavía hace `throw` («Finca no encontrada», «No se pudo crear el lote»): tumba la página. Deuda (c) del charter.~~
+  ⚠ Corregido en la V5.75 (`{ ok: false, error }`) y `createLot` retirado en la V5.76.
+- ~~Los comentarios de `src/lib/ocp/circuito.ts` aún dicen «la EVA documental» (es la Visa; no se pinta, pero se lee).~~ ⚠ Ya no
+  lo dicen (comprobado en el wrap V47).
 
 ## 6 · Lo que el diagrama YA contesta de lo que la 4b esperaba
 
-La 4b está parada por tres respuestas del owner (recuadro de la fase 4 del plan). Los diagramas dan dos:
+⚠ **Superado**: la 4b la sustituyó `PLAN_CIRCUITO_DEL_LOTE.md` (V5.80–V5.84); las cifras 25 + 25 y 4 % y el retiro del 80 % al
+rechazado están en código (`src/lib/trato/terminos.ts`). Lo que sigue es la foto del 2026-09-23.
+~~La 4b está parada por tres respuestas del owner (recuadro de la fase 4 del plan).~~ Los diagramas dan dos:
 - **D7 confirmada**: «el proveedor decide aceptar y, si sí, declara la cantidad disponible» → `lot_offers.locked_kg` y la
   pantalla de la fase 5 van juntas. La salida propuesta (DDL en 4b sin guard; guard con la fase 5 solo para ofertas con
   `terms_version`) sigue siendo la buena.
@@ -159,7 +174,7 @@ Faltan las mismas de siempre: **que el owner abra `/ocp/kr`**, y **las cifras** 
 5. **«Ficha Técnica automatizada (base info)»** del paso 5: ¿es lo que la plataforma ya sabe (finca, variedad, altitud,
    cosecha) volcado en la Ficha, o una ficha en `lot_fichas` que CTCx genera con el escáner? Cambia quién la escribe.
 6. **La Ficha retenida del desacoplado**: al entregarle la cuenta, ¿la Ficha se libera solo si paga la tarifa de evaluación
-   (la misma de COP 80.000) o sigue retenida? Es una marca en `lots`/`lot_fichas` que KR debe respetar (`kaffetal-regal`).
+   (la misma de ~~COP 80.000~~ — ⚠ hoy $200.000, `TARIFA_EVALUACION_COP`) o sigue retenida? Es una marca en `lots`/`lot_fichas` que KR debe respetar (`kaffetal-regal`).
 7. **El perfil de CTCx Selection** (nombre, imágenes, texto que reemplaza a la finca en la vitrina): ¿se crea desde «Oferta
    desde CTCx Selection», como dice el diagrama, uno por lote o uno solo para toda la casa? Va con el brief de Compras.
 
@@ -172,7 +187,9 @@ Faltan las mismas de siempre: **que el owner abra `/ocp/kr`**, y **las cifras** 
    su cuenta**. → La aceptación la registra CTCx desde el OCP; viaja con la 4b (`lot_offers.kind = directa`).
 5. **«Ficha automatizada (base info)»** = la Ficha que se produce **para ser descargada**. → Botón de descarga en KR (dueño
    `kaffetal-regal`).
-6. **Ficha retenida**: se libera al pagar — **COP 80.000 «o tal vez 200.000»** (cifra por decidir). Dueño `kaffetal-regal`.
+6. **Ficha retenida**: se libera al pagar — **COP 80.000 «o tal vez 200.000»** ~~(cifra por decidir)~~ — ⚠ la cifra la decidió el
+   owner el 2026-09-24: **$200.000 plana** (`TARIFA_EVALUACION_COP`, `src/lib/trato/terminos.ts`; `PLAN_CIRCUITO_DEL_LOTE.md` §6,
+   decisión 2). La marca sigue sin construir. Dueño `kaffetal-regal`.
 7. **Perfil de CTCx Selection**: **UNO para toda la casa, con opción de adjuntar una imagen por lote.** → Brief de Compras.
 
 **Ejecutado en la V5.75** (primera tanda): Asistencia a Proveedores (`/ocp/asistencia`), Proveedor Desacoplado

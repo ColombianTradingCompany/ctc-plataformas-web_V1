@@ -1,0 +1,132 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V47.0(322fc67).html
+(CTC Web Platform, desde 2026-09-25 · plataforma V5.92). Cada entrada se compila
+al próximo Version Wrap (V48).
+
+Formato:
+## [YYYY-MM-DD] V5.NN · Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pendiente">)
+
+════════════════════════════════════════════════════════════════════════════════
+QUIÉN ESCRIBE AQUÍ Y QUIÉN LLAMA AL WRAP (desde 2026-09-11, ALINEACION §5)
+════════════════════════════════════════════════════════════════════════════════
+
+· EL ASIENTO lo escribe LA SESIÓN DEL COMPONENTE que despliega, en el MISMO commit
+  que sube APP_VERSION — lo exige `scripts/qa-arqlog-check.mjs` (toda versión del
+  CHANGELOG posterior a «plataforma V5.92» tiene que aparecer aquí). Se añade al
+  final; nunca se toca un asiento ajeno. `git pull` antes de escribir.
+· EL WRAP lo llama SOLO la conversación «WRAP-COMMIT-PUSH (CTC Platforms)» (grupo CTC
+  Consolas internas, vía `plataforma`; existe desde el 2026-09-19 — antes la regla
+  nombraba una «Wraps del mapa» que nunca existió). Es el NODO FINAL: antes de compilar
+  audita que el maestro y los charters estén en el mismo punto (ALINEACION §5.3). Cadencia: ≥ 5 asientos, un hito de componente cerrado
+  o antes de una versión mayor — lo primero que ocurra.
+· La línea «plataforma V5.92» de la cabecera es la referencia del guardián: el wrap
+  siguiente la reescribe con la versión sobre la que cierra.
+
+════════════════════════════════════════════════════════════════════════════════
+CÓMO SE VALIDA UN WRAP — la lista que de verdad hay que correr
+════════════════════════════════════════════════════════════════════════════════
+
+✅ LA BATERÍA ES UN ARCHIVO: `docs/architecture/validate_snapshot.mjs`. Corre en
+NODE, no en la consola del navegador. Uso, desde `ctc-platform/`:
+
+    node docs/architecture/validate_snapshot.mjs docs/architecture/<nuevo>.html --prev docs/architecture/<anterior>.html [--dump]
+
+`--prev` imprime los contadores del snapshot anterior al lado de los del nuevo;
+`--dump` lista nodos, claves de DICT, ids de escenarios y CTX. Correrlo también
+contra el snapshot ANTERIOR como control: si pasa en los dos, no es permisivo.
+
+Las NUEVE comprobaciones, y las nueve tienen que volver VACÍAS:
+  1. pasos de traza (`q.n` y `q.from`) contra los `.node[id]` reales
+  2. `DICT[k].a[]` contra las claves de DICT
+  3. `WIRES` contra los nodos reales
+  4. `CTX` — nodo real Y claves reales
+  5. `ANN` huérfanas: rutas que ya no existen en el FILETREE recién regenerado
+  6. `ANN[...].info` contra las claves de DICT
+  7. `.ibtn[data-info]` del marcado contra DICT
+  8. `.chip[data-info]` — SOLO sobre el marcado ANTERIOR a `<script>`
+  9. claves REPETIDAS en el texto de DICT/CTX (JS se queda con la última en silencio)
+
+Y los contadores tienen que subir EXACTAMENTE lo esperado
+(V32: 95→99 · V33: 99→102 · V34: 102→104 · V35: 104→107 · V36: 107→113 ·
+V37: 113→121 · V38: 121→128 · V39: 128→133 · V40: 133→136 · V41: 136→137 ·
+V42: 137→139 · V43: 139→140 · V44: 140→146 · V45: 146→148 · V46: 148→155 · V47: 155→175).
+
+Además, después de `gen_filemap_tree.mjs`, un `node --check` del bloque `<script>`
+extraído (el validador evalúa los literales, no el resto del motor).
+
+⚠️ EL MAPA NODO→FICHAS SE LLAMA `CTX`, NO `NODEDICT` (V34). ⚠️ EL SELECTOR DE
+TRAZAS VA POR ÍNDICE (V33): la comprobación buena es
+`select.options.length === SCENARIOS.length`. ⚠️ EL DICT TIENE DOS ESTILOS DE
+ESCRITURA (V31): contar con `Object.keys(DICT).length` evaluado, nunca por regex —
+y OJO al anclar un parche: las entradas viejas van `clave: {` (con espacio) y las
+nuevas `clave:{`. ⚠️ UN BACKTICK EN UN CUERPO DE DICT ROMPE EL LITERAL ENTERO
+(V38): siempre `<code>…</code>`. ⚠️ EL SHA DEL NOMBRE ES EL DEL CONTENIDO (V35).
+⚠️ LA CADENA «Última actualización» DEBE NOMBRAR AL PROPIO SNAPSHOT (V38 olvidó la
+suya). ⚠️ UN PARCHE DE WRAP CAMBIA SUS PROPIAS ANCLAS (V40): cada replace lleva
+assert.
+
+════════════════════════════════════════════════════════════════════════════════
+LO QUE EL WRAP V47 ENSEÑÓ (léase antes del V48)
+════════════════════════════════════════════════════════════════════════════════
+
+· LO LLAMÓ UNA CONVERSACIÓN WRAP-COMMIT-PUSH NUEVA. La primera llegó al límite práctico de contexto y quedó archivada; el
+  owner abrió otra con el mismo nombre en el mismo grupo (sigue habiendo UNA activa). Para arrancar bastaron tres cosas: la
+  memoria del nodo final, la cabecera de este log y los parches del wrap anterior copiados al scratchpad nuevo (el de la
+  sesión vieja puede desaparecer). Si vuelve a pasar: lo mismo, y el prompt del nodo final (`docs/KICKOFF.md`), no el de
+  un componente.
+
+· VEINTIDÓS ASIENTOS, CASI TODOS DE UNA SESIÓN (V5.71–V5.92): tres de `herramientas-internas` (el ciclo 1 del Courier) y
+  diecinueve de `consolas` en tres días —la Etapa 1 entera del plan del circuito—, tocando con el sí del owner código de
+  cuatro componentes. Esas diecinueve versiones actualizaron TRES charters (`consolas`, `socios`, `herramientas-internas`):
+  la auditoría encontró unos sesenta desfases, casi todos en `secretaria`, `cherry-picked` y `kaffetal-regal` (los «Para
+  X» de §3 que no aterrizaron) y en AGENTS/HANDOFF/planes que seguían en la V5.63 o contaban con las cuentas `prueba-*`.
+  Se repartió entre dos agentes por ARCHIVOS, sin solaparse (maestro + charters / AGENTS + HANDOFF + planes + briefs), y
+  cada uno corrió los guardianes que leen sus documentos. Regla para el V48: cuanto más largo el tramo de una sola sesión,
+  más «Para X» sin aterrizar; auditar primero los charters que las filas de §3 nombran.
+
+· LO RETIRADO SE REPUNTA, TAMBIÉN EN TRAZAS Y FICHAS. Las ANN huérfanas fueron solo cinco (el Club y la Jornada), pero
+  la comprobación 5 no ve lo que sigue existiendo y MIENTE: catorce ANN decían «NO existe todavía», «4b parada» o hablaban
+  del Club. Receta: un grep sobre los `p:` de ANN con el vocabulario retirado del tramo (Club, jornada, 4b, sondeo,
+  escalera, black_negotiations, «sin módulo»). Las trazas de flujos muertos (`jornada`, `blacknego`, la escalera de
+  `contrato`, el Club de `publicar`…) se REESCRIBEN sobre su sucesor conservando el id —diez—; las fichas de conceptos
+  retirados cambian de título («RETIRADO en la V5.77») y ganan su párrafo, nunca se borran; un cable que ya no existe
+  (`n-club → n-third`: los correos del Club) SÍ se quita.
+
+· AYUDANTES NUEVOS (scratchpad `wrap_v47.py`): `set_ann` (reescribe ENTERA una ANN falsa y, con `nueva`, la repunta aunque
+  lleve `d:` con backticks), `ampliar_ann`, `ficha()` y `traza()` (construyen el literal y rechazan comillas y backticks) y
+  `rewrite_trace()` (reemplaza un escenario por id). Siguen valiendo los del V45–V46, todos con assert de «exactamente una vez».
+
+· SE VALIDÓ con la batería (9/9 vacías; el V46 como control), `node --check` del bloque `<script>` y en el navegador
+  (`docs-architecture`, 4300): 68 opciones en el desplegable = 68 escenarios, cero referencias colgantes recalculadas en
+  vivo, una traza nueva reproducida y una ficha nueva abierta desde su nodo. ⚠️ `serve` no resuelve la URL «limpia» con
+  paréntesis: se abre con `%28…%29.html`.
+
+════════════════════════════════════════════════════════════════════════════════
+
+Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
+
+- **Lo que V47 compiló**: V5.71–V5.92. Ningún nodo nuevo (el Centro de Calidad vive en `n-socios`; Compras, Muestras y
+  Kits son fichas del OCP) · 20 fichas nuevas (`plancircuito`, `sesionasistida`, `desacoplado`, `gradoquerige`,
+  `certificacionconestado`, `dossierlote`, `solicitudevaluacion`, `terminos`, `gestionmuestras`, `almacenaje`,
+  `modulosdelsocio`, `escala`, `homologacion`, `pvcparagrado`, `simulador`, `mesames`, `mora`, `compras`, `mezclas`,
+  `samplekits`) · 6 trazas nuevas (sesión asistida, desacoplado, recordatorios, mezcla, Sample Kit, almacenaje) y 10
+  reescritas sobre su sucesor · ~55 fichas actualizadas, 14 retituladas · 4 cables nuevos y 1 retirado · 13 entradas CTX
+  ampliadas · 54 ANN nuevas, 5 repuntadas, 13 reescritas y 8 ampliadas · el badge de Postgres a 128 tablas (SQL).
+  42 nodos · 175 fichas · 68 trazas · 108 wires · 38 CTX · 475 ANN.
+- **Deuda de compilación**: ninguna. La tarjeta `n-consoles` sigue siendo ECP + OCP en una (su `sub` lleva tres capas:
+  V47, V46 y la historia); si el OCP sigue creciendo, merece su propio nodo.
+- **Lo que viene**: la **Etapa 2** —conducir el proceso de punta a punta con Asistencia a Proveedores y Proveedor
+  Desacoplado hasta el Catálogo Activo— y, al cerrarla, **la V6.0** (el owner la declara en una conversación nueva). Las
+  decisiones del owner que dejó la auditoría están en la línea del wrap en ALINEACION §3.
+- **Lo que el mapa TODAVÍA no refleja, y es correcto** (no inventarlo): los modelos de Producción y Logística; las
+  plataformas de pago (Nequi y Zulu, sin configurar); la escala de puntos del PVC (fase 2, consumirá el `PuntoSca`); la
+  calibración con 30 lotes duales; la mezcla como lote de vitrina; la tienda vendiendo Sample Kits (Etapa 3).
+- **Guardianes sin correr**: `qa-guard-check` y `qa-checkout-check` (piden cuentas por argv y ya no hay cuentas de prueba:
+  decisión del owner); `qa-tools-puente-conformance` (next dev en 3210); y los dos que gastan dinero,
+  `qa-cromatografia-modelo` y `qa-transcripciones-nube`.
+- **Línea base de este wrap** (solo docs): validate_snapshot 9/9 vacías con el V46 como control · `node --check` ·
+  navegador sin errores · tsc limpio · eslint en 8 · 64 guardianes en verde.
+
+════════════════════════════════════════════════════════════════════════════════

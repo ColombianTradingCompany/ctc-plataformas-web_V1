@@ -1,7 +1,8 @@
 # Brief · Configuración de Plataformas de Pagos  (componente: consolas · slug: `plataformas-de-pagos` · 2026-09-19)
 
 > Fase 6 del overhaul (`docs/OVERHAUL_CONSOLAS_PLAN.md`, D9: «el rail no promete lo que no hay; cada entrada entra con su
-> brief»). En el cuadro del owner es la quinta entrada de **ECP · Herramientas Internas**. Estado: **en scoping — espera al owner.**
+> brief»). En el cuadro del owner es la quinta entrada de **ECP · Herramientas Internas**. Estado: **en scoping — espera al owner**
+> (al wrap V47, 2026-09-25: la decisión 3 está contestada; siguen abiertas la 1, 2, 4 y 5, y el brief no tiene entrada en el rail).
 > Dueño propuesto: `consolas` y no `herramientas-internas`, porque no es un modelo: es configuración que gobierna a tres
 > superficies (Kaffetal Regal, Cherry Picked, las consolas). Si el owner lo quiere en el otro charter, se cambia una línea.
 
@@ -57,8 +58,11 @@ Nequi en `/ecp/pagos` y **el bloque «Cómo pagar» de Kaffetal Regal se enciend
    pago que se pega? De eso depende si su carril es «instrucciones» (como Nequi) o «integración» (como Stripe).
 2. **¿Qué carril para cada uso?** Propuesta: evaluación y reembolso → Nequi · liberaciones al productor → Nequi/transferencia
    en COP · tienda y subasta → Zulu (y Stripe cuando haya entidad). ¿Correcto?
-3. **La tarifa de evaluación**: el código dice **$80.000**; la narrativa (CN-5) dice **$200.000 con coinversión de CTCx del
-   30–70 %**. ¿Cuál rige hoy? (No se cambia aquí: se anota para no configurar un cobro con la cifra equivocada.)
+3. ~~**La tarifa de evaluación**: el código dice **$80.000**; la narrativa (CN-5) dice **$200.000 con coinversión de CTCx del
+   30–70 %**. ¿Cuál rige hoy? (No se cambia aquí: se anota para no configurar un cobro con la cifra equivocada.)~~
+   → **CONTESTADA por el owner el 2026-09-24** (`PLAN_CIRCUITO_DEL_LOTE.md` §6, decisión 2): **$200.000 plana**, con subvención del
+   30–70 % decidida por CTCx; en código desde la V5.80 (`TARIFA_EVALUACION_COP`, `src/lib/trato/terminos.ts`). La factura
+   (`FE-AAAA-NNNNN`) y el pago sobre la factura existen desde la V5.80; el carril sigue siendo lo que decide este brief.
 4. **¿Quién confirma pagos?** Hoy cualquier `admin` del OCP. ¿Se queda así, o confirmar un pago pasa a ser solo del owner?
 5. **Entidad legal** (O-3): sin ella la tienda no cobra. ¿Hay fecha? Decide si la segunda tanda es «referencias de pago al
    productor» (no depende de la entidad) o «cobro en la tienda» (sí depende).

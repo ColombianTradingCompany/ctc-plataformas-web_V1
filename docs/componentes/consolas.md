@@ -111,7 +111,7 @@ owner desde `declararRuptura` · `descongelarCuenta`, V5.84), `buyer_profiles`,
 
 ## Guardianes
 
-`qa-rutas-consolas.mjs` (365 — rail, talones, sin rutas viejas, compuerta de SU consola en `src/app` Y, desde la V5.56, en `src/lib`: (f-bis)) ·
+`qa-rutas-consolas.mjs` (514 a la V5.92 — rail, talones, sin rutas viejas, compuerta de SU consola en `src/app` Y, desde la V5.56, en `src/lib`: (f-bis)) ·
 `qa-nav-check.mjs` · `qa-crm-interes-check.mjs` · `qa-crm-green-check.mjs` · `qa-boards-check.mjs` · `qa-docs-check.mjs` ·
 `qa-evaluaciones-check.mjs` (51 — el veredicto Q-Grader, el vocabulario Pasaporte · Visa · EVA por las dos caras y, desde la V5.77,
 que el Club no existe y la Arena no toca el circuito; `qa-jornada-check` se retiró con la jornada) · `qa-ofertas-check.mjs` (36) · `qa-fichas-check.mjs`
@@ -158,8 +158,8 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
 
 | Consola → | Gobierna | Superficie afectada |
 |---|---|---|
-| OCP | estado del lote (`stage`), EVA y sello EUDR, visa de la finca, veredicto y **grado**, galardón, Club | Kaffetal Regal |
-| OCP | **ofertas** (temporada · black · subasta) y contratos; publicación al catálogo; adjudicación de subastas | Kaffetal Regal, Cherry Picked |
+| OCP | estado del lote (`stage`), EVA y la Visa del lote, el **Pasaporte** de la finca (vocabulario de la V5.74), la solicitud y su factura, la muestra, el bache al Centro de Calidad, veredicto por **el Punto** (V5.92) y **grado**, galardón (~~Club~~: retirado en la V5.77; quedan las Campañas de Subvención) | Kaffetal Regal, Socios (Centro de Calidad) |
+| OCP | **ofertas** ancladas al PVC (temporada · directa · excepción; ~~black~~ la clase histórica, que ya nadie emite desde la V5.85; subasta) y el trato mes a mes; compras en firme, mezclas y Sample Kits; publicación al catálogo; adjudicación de subastas | Kaffetal Regal, Cherry Picked |
 | OCP | el **set de Fichas Técnicas** (escáner, oficial ★) | Kaffetal Regal (panes B2/B3) |
 | OCP | respuestas a leads y CRM de Cherry Picked | CTC Tech, Varietales, Cherry Picked |
 | ECP | registro de herramientas, versiones, permisos Plus, `soporta_memoria` | Herramientas del Café |
@@ -174,9 +174,31 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   V5.71–V5.92 (los 22 asientos del log V46) con la plataforma en **V5.92**. **La V6.0 NO se declara en ese wrap**: el owner la declarará
   al cerrar la **Etapa 2** (correr el circuito del lote de punta a punta con Asistencia a Proveedores y Proveedor Desacoplado, afinando el
   OCP hasta el Catálogo Activo), en una conversación nueva — el mismo patrón de la V5.0: el hito marca el corte estable y abre la etapa.
-  Las decisiones del owner del 2026-09-25 quedaron todas ejecutadas (V5.89–V5.92); no hay brief con decisión abierta.
-- **ETAPA 1 · EL CIRCUITO DEL LOTE, DEL PERFIL AL CATÁLOGO ACTIVO — `docs/PLAN_CIRCUITO_DEL_LOTE.md` (2026-09-24, PLAN sin
-  ejecutar, espera ocho decisiones del owner).** Sustituye a las fases 4b, 5 y 6 del overhaul y absorbe los briefs de Muestras,
+  Las decisiones del owner del 2026-09-25 quedaron todas ejecutadas (V5.89–V5.92); **ningún brief de la Etapa 1** (Muestras,
+  Compras, rutas del proveedor) tiene decisión abierta — los de **Plataformas de Pagos**, **Seguimiento de Temas** y
+  **Simplificar el OCP** (este absorbido en lo esencial por el plan del circuito) siguen con las suyas (nodo final, wrap V47).
+- **Lo que destapó la auditoría del nodo final antes del wrap V47 (2026-09-25) — de este charter, CÓDIGO o decisión, sin tocar**:
+  **(a) Permisos LCP → ECP (V5.73, «Para `consolas`» en §3; no estaba anotado aquí)**: el CRM CP CaaS (`LeadsBoard.tsx`) enseña
+  las cotizaciones courier de un item y enlaza a `/ecp/cotizador-courier`; un colaborador con grant de LCP y sin grant de ECP las ve
+  y no puede abrirlas. Decidir si el enlace se esconde sin grant de ECP o si se le da lectura. **(b) La revisión de almacenaje a
+  los 90 días se queda sin kilo**: la V5.88 la hace con la muestra de **testeo** (1 kg, `almacenajeCarga.ts` solo mira el testeo
+  con saldo) y desde la V5.89 ese kilo se **trilla entero** (`trillarMuestraCtcx`: salida `trilla_verde` de todo el saldo) — un lote
+  trillado no tendrá revisión. **Decide el owner** con qué se revisa: la contramuestra de reserva CPS, el verde al vacío (250 g)
+  o un kilo nuevo. **(c) Avisos al productor que faltan**: `signContract` no escribe nada en su feed ni le manda correo, y
+  `rejectFinca` tampoco (y conserva un `throw` si la finca no existe; ver `ALINEACION` §4.8). **(d) Comentarios caducos en el
+  código** (el siguiente barrido hace `grep`): `nominadosActions.ts` hacia la línea 568 («Rechazado ⇒ … cashback del 80 %», retirado
+  en la V5.82) y 571-573 («black abre su negociación (CRM de CTC)», retirado en la V5.85); `src/lib/arena/eudrGate.ts` líneas 9 y
+  74 (citan `clubActions.ts`, que ya no existe); `comprasActions.ts` hacia la línea 194 (la regla 3–4 de las mezclas, retirada en la
+  V5.91); `ocp/(app)/actions.ts` hacia la línea 361 («la inscripción de Arena (COP 80.000)», hoy la solicitud de evaluación de
+  $200.000). **(e) `/ocp/fichas`**: la V5.78 lo dejó como índice del set de fichas (que vive en la vista del lote); decidir si se
+  queda como índice o pasa a talón 308 hacia `/ocp/kr`. **(f) Sin construir del §3 del plan del circuito**: la **tarea
+  «bienvenida»** del Tablero de Ejecución (la llamada de bienvenida de la Ruta Estándar; `TIPOS_DE_TAREA` no la tiene) y
+  **`qa-evaluacion-check`** (el plan lo pedía; hoy vigilan `qa-evaluaciones-check` y `qa-centro-calidad-check`). **(g) Las cuentas de
+  prueba** para `qa-guard-check` y `qa-checkout-check` (ver «DOS GUARDIANES SIN CORRER», abajo): decisión del owner. **(h) El Mapa
+  de Trabajo** (`workmap/schema.ts`) sigue con la barra anterior a la V5.64: el circuito ya está fijado, redibujarlo toca.
+- **ETAPA 1 · EL CIRCUITO DEL LOTE, DEL PERFIL AL CATÁLOGO ACTIVO — `docs/PLAN_CIRCUITO_DEL_LOTE.md` (2026-09-24; ~~PLAN sin
+  ejecutar, espera ocho decisiones del owner~~ decisiones contestadas el 2026-09-24 y EJECUTADO en código en la V5.76–V5.92, sin
+  conducir en navegador).** Sustituye a las fases 4b, 5 y 6 del overhaul y absorbe los briefs de Muestras,
   Compras y Simplificar el OCP. Nueve fases (0–8), una versión cada una: retiros y mudanzas (Arena dormida; Club fuera; campañas
   → `/ocp/subvenciones`; temporadas → `/ocp/temporadas`; contratos dentro de Catálogo Activo) → el registro (revisión del lote,
   recordatorios, dossier ES/EN) → solicitud, factura y muestra → **Centro de Calidad · Evaluación de Lotes** (el Q-Grader, anónimo,
@@ -194,7 +216,8 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   fuera (gates de firma y publicación, membresía en el veredicto, `clubEmails`); **Campañas de Subvención** en
   `/ocp/subvenciones` (30–70 % sobre $200.000); reclamos de oficialización en la vista del lote; `ATRIBUTOS_SCA` única fuente.
   **Diferido de la fase 1** (con dueño aquí): mudar temporadas a `/ocp/temporadas`; renombrar `src/lib/arena/` → `evaluacion/` y
-  `trato/`; el cashback del 80 % y `RELEASE_STAIRCASE` (fase 5). **Fase 2 EJECUTADA en la V5.78 (lado OCP)**: certificaciones
+  `trato/`; ~~el cashback del 80 % y `RELEASE_STAIRCASE` (fase 5)~~ (hechos: el cashback del rechazado salió en la V5.82 y
+  `RELEASE_STAIRCASE` en la V5.84). **Fase 2 EJECUTADA en la V5.78 (lado OCP)**: certificaciones
   con estado y recordatorios semanales ×4 (`src/lib/registro/`, cron `/api/cron/recordatorios`), el chequeo EUDR de CTC en la
   finca (texto + adjuntos), y la transcripción de FT2 en la vista del lote (set de fichas + `crearFichaManual`). **Y en la V5.79, el lado de
   KR, desde esta sesión con el sí del owner**: A5 último paso, el dossier del lote ES/EN (`/kaffetal-regal/dossier/[id]`), el
@@ -204,22 +227,24 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   500/500/1000, saldo derivado, salidas, pedidos de muestra), los **Baches de Evaluación** (abierto → en_centro → cerrado; sin
   laboratorio ni prueba) y el circuito con «solicitada». ⚠️ **Hasta la fase 4** el Q-Grader se teclea al enviar el bache y CTCx registra
   el veredicto en «Lotes en Evaluación» (respuesta 5: con la credencial del Centro deja de teclearse). **Diferido de la fase 3** — la 2.ª
-  tanda de Muestras — **HECHO en la V5.88** (alerta de 90 días como tarea derivada; muestras «para comprador»; el pack de cosecha espera las decisiones 4 y 5). **Fase 4 EJECUTADA
+  tanda de Muestras — **HECHO en la V5.88** (alerta de 90 días como tarea derivada; muestras «para comprador»; ~~el pack de cosecha espera las decisiones 4 y 5~~ — las decisiones 4 y 5 las contestó el owner el
+  2026-09-25: las muestras para compradores son los **Sample Kits**, surtidos desde Adquisición de Stock, V5.90). **Fase 4 EJECUTADA
   en la V5.81**: el módulo **Evaluación de Lotes** del Centro de Calidad (`/socios/centro-calidad/panel/evaluacion`, código de
   `socios`): los baches van a UNA credencial con el módulo activo (`partner_accounts.modulos`, conmutado en `/bcp/socios/[nodo]`)
   y el Q-Grader es su contacto; evalúa lote a lote anónimo con la planilla SCA **o CVA** + rueda (`src/lib/catacion/rueda.ts`) y
   **da de alta** → `lot_evaluations` pendiente; en «Lotes en Evaluación» CTCx **confirma** (galardona con el grado derivado / no
   supera) o **devuelve**; el circuito gana «evaluado». Registrar a mano sigue como recurso plegado. **Diferido de la fase 4**: el
   «uso directo» de la credencial (Ficha sin bache), la variante interna de la Datasheet Tool (`herramientas-cafe`), y que KR
-  alimente `evaluacionPendiente` a la barra (hoy el productor ve «en evaluación» hasta que CTCx confirma). ⚠️ La fórmula del
-  CVA está en constantes con nombre (`CVA` en `labEvaluation.ts`): la valida el Q-Grader de la casa. **Fase 5 EJECUTADA en la
+  alimente `evaluacionPendiente` a la barra (hoy el productor ve «en evaluación» hasta que CTCx confirma). ~~⚠️ La fórmula del
+  CVA está en constantes con nombre (`CVA` en `labEvaluation.ts`): la valida el Q-Grader de la casa.~~ — **el Q-Grader la
+  corroboró y la corrigió; en código desde la V5.92** (abajo). **Fase 5 EJECUTADA en la
   V5.82**: la oferta **anclada al PVC** (`pvcParaGrado` — LA puerta al precio, `precio.ts` puro, `RANGOS` derivados de
   `definicion.ts`): en `/ocp/ofertas` CTCx decide «no ofertar» con motivo o emite Lote de Temporada (PVC × banda, mínimo del grado,
   compra inicial de una carga, términos `TERMINOS_VERSION`), **directa** (PVC − 8 %, 30 días, máx.) o **excepción** (a mano, con
   motivo); past crop −10 %; el rechazo bajo Black es gratis (sin cashback) y la **re-evaluación** (`reevaluar`, tarifa plena, 80 %
   si sube de grado, previa razón de CTCx) reinicia la solicitud; `terminos.ts` completo con `qa-trato-check`; el circuito gana
-  «no superó» y «sin oferta». **Diferido de la fase 5**: `moqCargas` (es el MOQ de mezcla de Cherry Picked, no el mínimo por lote);
-  los rótulos de rango en el motor Python y el tablero HTML (`herramientas-internas`). **Fase 6 EJECUTADA en la V5.83** (código de
+  «no superó» y «sin oferta». **Diferido de la fase 5**: ~~`moqCargas` (es el MOQ de mezcla de Cherry Picked, no el mínimo por lote)~~
+  (resuelto en la V5.91: `moqCargas` ya no pide lotes y el mínimo de Black y Red es el MOQ de compra de 3 cargas); los rótulos de rango en el motor Python y el tablero HTML (`herramientas-internas`). **Fase 6 EJECUTADA en la V5.83** (código de
   KR con el «continúa» del owner, **sin conducir en navegador**): la calculadora (`src/lib/trato/simulador.ts`, puro), la
   declaración al aceptar (`respondToOffer` exige `locked_kg` ≥ mínimo y ≤ máximo, trimestre/30 días, condiciones), el contrato
   **nace lleno** (`offer_id`, precio, cantidad, referencia, términos, compra inicial, anclaje) y `signContract` **solo firma**;
@@ -236,8 +261,8 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   un contrato cumplido), el **perfil único** de CTCx Selection + la **imagen por lote** (bucket público `ctcx-selection`), la vitrina
   con el perfil (`perfilCtcx.ts`), `public_lot_catalog.ctc_selection` desde `compras`, el CRM de `black_negotiations` retirado (un
   Black recibe temporada/directa como los demás), lateral «CTCx Selection» del circuito. `qa-compras-check` (51). **Con esto la
-  Etapa 1 queda ejecutada en código.** **Sigue**: conducir las fases 6–8 con `prueba-*` (Etapa 2: correr todo con Asistencia y
-  Desacoplado); el
+  Etapa 1 queda ejecutada en código.** **Sigue**: conducir las fases 6–8 ~~con `prueba-*`~~ (Etapa 2: correr todo con Asistencia y
+  Desacoplado — las cuentas `prueba-*` se eliminaron en la V5.89); el
   wrap V47 desde WRAP-COMMIT-PUSH. **Recordatorios de mora HECHOS en la V5.86** (fila «Recordatorios»
   del §4): el cron semanal recuerda al productor el pedido del mes sin envío mientras esté en mora —desde el recargo—, hasta 4 veces
   por mes, por correo (remitente único) y nota en su feed, con rastro; nunca cambia un estado (decisión 6). `src/lib/trato/mora.ts`
@@ -245,7 +270,9 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   `mezcla_componentes` (Black 3–4 orígenes y/o variedades · Red una sola variedad · una carga por productor; la regla LEÍDA de
   `lectura.ts` en `src/lib/compras/mezclas.ts` —al añadir y al cerrar— y repetida por `guard_mezcla_cerrada`; borrador → cerrada ·
   anulada, nada se borra; lo asignado descuenta de lo disponible), `compras.ubicacion` (decisión 2, texto libre), todo en kg de CPS
-  (decisión 5). Queda del owner la decisión 4 (¿la mezcla es un lote nuevo con código público y ficha?). `qa-compras` 51 → 73. **2.ª tanda de
+  (decisión 5). ~~Queda del owner la decisión 4 (¿la mezcla es un lote nuevo con código público y ficha?)~~ — **contestada el
+  2026-09-25 y ejecutada en la V5.91** (abajo; el brief de Compras ya no tiene decisiones abiertas; llevar una mezcla a la vitrina
+  es otra tanda). `qa-compras` 51 → 73. **2.ª tanda de
   Muestras HECHA en la V5.88**: la revisión de almacenaje a los 90 días (owner 2026-09-16: no se recata; 1 kg de testeo) DERIVADA de
   la evaluación que rige y de la última revisión anotada —tarea `muestra` del Tablero de Ejecución y pestaña de `/ocp/muestras`;
   `anotarRevisionDeAlmacenaje` es una salida más del testeo con su resultado— y los pedidos de pack de los compradores
@@ -265,7 +292,8 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   variedad y proceso) o **Regional Blend** (varios lotes de la misma región) y el tipo se DERIVA (`mezclas.tipo`; `tipoDeMezcla` en
   `src/lib/compras/mezclas.ts`; `guard_mezcla_cerrada` reescrito, acta `mezclas_composicion`); el mínimo es el **MOQ de compra** (≥ 3
   cargas — `lectura.ts` reescrito con el «continúa» del owner: `MOQ_CARGAS_BLACK_RED`, `TIPOS_DE_MEZCLA`, `COMPOSICION_POR_GRADO`;
-  `LOTES_EN_MEZCLA` · `CARGAS_POR_PRODUCTOR` · `MOQ_MEZCLA` · `COMPOSICION_MEZCLA` retirados; los dos tableros del PVC lo dicen) y CTCx
+  `LOTES_EN_MEZCLA` · `CARGAS_POR_PRODUCTOR` · `MOQ_MEZCLA` · `COMPOSICION_MEZCLA` retirados; los dos tableros del PVC lo dicen —salvo
+  la tarjeta «Mínimos y empaque por grado» de `LecturaBoard`, que sigue con «3 o 4 cargas»: pendiente de `herramientas-internas`) y CTCx
   asegura un mínimo por temporada (`mezclas.temporada`, `objetivo_temporada_kg`, `guardarObjetivoDeMezcla`: informativo); las mezclas se
   arman solo con compras destinadas a Selection. `PVC_BCP_PLAN` §14.8 (n.º 30–32) supera al §9.2, §9.3, §12.6, §14.4 y n.º 28.
   `qa-compras` 95 → 96; `qa-pvc-lectura` 67 → 60. **Con esto quedan ejecutadas las decisiones del owner del 2026-09-25**
@@ -285,13 +313,18 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   en `/ocp/kr?productor=`: la sesión asistida, `src/lib/asistencia/actions.ts`), **Proveedor Desacoplado** (`/ocp/desacoplado`:
   crear sin buzón, insignia, entregar) y «CTCx asume el costo» de una evaluación. Migración `producer_profiles_gestion_desacoplado` **aplicada** el
   2026-09-23 (acta en `docs/migraciones/`, carpeta nueva: el acta de cada DDL, porque la fuente de verdad es la base). **Nadie ha conducido la sesión asistida en vivo**
-  (exige un productor `prueba-*`): se verificó por `tsc`, build, `qa-asistencia` (57) y lectura del flujo de Auth. **Queda de las
-  rutas**: la Ruta Estándar solo espera la 4b (el owner la revisa «en el paso siguiente») y la llamada de bienvenida como tarea
-  derivada del Tablero (no hecha); la Ruta CTCx Selection = brief de Compras + el **perfil único de CTCx Selection con imagen por
-  lote** (respuesta 7) + el rechazo con interés (KR); la Desacoplada tiene cuenta y carga, y le faltan la oferta al dueño del café
+  (~~exige un productor `prueba-*`~~ — esas cuentas se eliminaron en la V5.89: se conduce sobre un productor real o un
+  desacoplado, Etapa 2): se verificó por `tsc`, build, `qa-asistencia` (57) y lectura del flujo de Auth. **Queda de las
+  rutas**: ~~la Ruta Estándar solo espera la 4b (el owner la revisa «en el paso siguiente»)~~ la Ruta Estándar es la Etapa 1 del
+  plan del circuito (la 4b la sustituyó; ejecutada en código V5.76–V5.92, falta conducirla) y la llamada de bienvenida como tarea
+  derivada del Tablero (no hecha); la Ruta CTCx Selection = ~~brief de Compras + el **perfil único de CTCx Selection con imagen por
+  lote** (respuesta 7)~~ (hechos: Compras V5.85–V5.91, perfil único + imagen por lote V5.85) + el rechazo con interés (KR, sin
+  construir); la Desacoplada tiene cuenta y carga, y le faltan la oferta al dueño del café
   registrada por CTCx (respuesta 4: la evidencia es la evaluación, que hace CTCx) y la **Ficha retenida** hasta pagar (respuesta 6:
-  80.000 o «tal vez 200.000», por decidir; dueño `kaffetal-regal`). La «Ficha automatizada (base info)» del paso 5 es la Ficha
-  descargable (respuesta 5): botón de descarga, dueño KR. Los comentarios de `circuito.ts` que dicen «EVA documental» siguen.
+  «80.000 o tal vez 200.000» — **la cifra de ese pago sigue sin decidir**; no es la tarifa de evaluación del circuito, que desde la
+  V5.80 es $200.000 en `terminos.ts`; dueño `kaffetal-regal`, fila en `ALINEACION` §3b). La «Ficha automatizada (base info)» del paso 5 es la Ficha
+  descargable (respuesta 5): ~~botón de descarga, dueño KR~~ — el dossier del lote ES/EN (V5.79). ~~Los comentarios de `circuito.ts`
+  que dicen «EVA documental» siguen.~~ — retirados en la V5.80; solo el Mapa de Trabajo (`workmap/schema.ts`) conserva la barra vieja.
 - **OVERHAUL DE LAS CONSOLAS — `docs/OVERHAUL_CONSOLAS_PLAN.md`**, aprobado por el owner el 2026-09-19 («todo lo
   recomendado», D1–D10), una versión por fase. **Fase 0** (Wrap V45), **fase 1** (V5.59: nace la LCP) y **fase 2** (V5.60: el
   reparto BCP ↔ ECP y el Tablero de Ejecución) y **fase 3** (V5.61: la tabla única «Productores, Fincas y Lotes») —
@@ -301,41 +334,49 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   Activo · Ofertas CP Aceptadas · Oferta desde CTCx Selection) · Manejo de Stock Físico (Gestión de Muestras · Compras)—;
   **sin «Panel»** en BCP, OCP y LCP (la página sigue siendo donde aterriza el conmutador) y **sin «Fichas Técnicas»** (se
   abre desde «Lotes en Evaluación»). **Se hizo SIN cambiar una regla**: las etiquetas son las del cuadro y las rutas las que
-  había; «Nominados» se partió en dos vistas de un mismo componente. ⚠️ **Los baches de sondeo siguen en «Lotes en
+  había; «Nominados» se partió en dos vistas de un mismo componente. ~~⚠️ **Los baches de sondeo siguen en «Lotes en
   Evaluación»**: `recordEvaluationVerdict` exige un bache en «registro», y quitarlos sin cambiar esa regla dejaría a la casa
-  sin poder evaluar — salen con la 4b. ⚠️ **La D9 («el rail no promete lo que no hay») quedó INVERTIDA por el owner para
-  Stock Físico**: sus dos entradas están en el rail con una página que dice que el módulo no existe y qué falta decidir.
+  sin poder evaluar — salen con la 4b.~~ — **resuelto en la V5.80** (el kanban de sondeo se retiró; el veredicto exige un Bache
+  de Evaluación `en_centro`). ~~⚠️ **La D9 («el rail no promete lo que no hay») quedó INVERTIDA por el owner para
+  Stock Físico**: sus dos entradas están en el rail con una página que dice que el módulo no existe y qué falta decidir.~~ —
+  **ya no**: Gestión de Muestras existe desde la V5.80 y Adquisición de Stock (Compras) desde la V5.85.
   Y un fallo mío de la V5.59, que vio el owner en una captura: **a la LCP le faltaba su layout raíz** (`src/app/lcp/layout.tsx`),
   el que pone `data-theme="bcp"`, el Tailwind del panel y el `noindex` — toda la consola salía lavada. `qa-rutas-consolas` (h)
   exige ahora uno por cada consola de `CONSOLE_ORDER`.
   **Fase 4a** (V5.62): el estado del circuito del lote, DERIVADO (`src/lib/ocp/circuito.ts` + `qa-circuito-check`), como
-  columna y filtro de `/ocp/kr` — **ejecutada**. **La 4b está PARADA a propósito** y espera al owner: ver el recuadro de la
+  columna y filtro de `/ocp/kr` — **ejecutada**. ~~**La 4b está PARADA a propósito** y espera al owner: ver el recuadro de la
   fase 4 en el plan (un guard que, por orden, dejaría a los productores sin poder aceptar ofertas; dos pantallas operativas
-  sin ver; y dinero sobre un contrato vivo).
+  sin ver; y dinero sobre un contrato vivo).~~ — **sustituida** el 2026-09-24 por el `PLAN_CIRCUITO_DEL_LOTE` (con las fases 5 y
+  6 del overhaul), ejecutado en código en la V5.76–V5.92 (nodo final, wrap V47).
   **LO QUE LE DEBÍAN A ESTE CHARTER DOS ASIENTOS DE KAFFETAL REGAL (V5.64–V5.65), anotado por el nodo final en el Wrap V46**:
   ~~**(1)** el OCP sigue diciendo «EVA» por el veredicto documental que desde la V5.65 se llama **Visa** y «Visa EUDR» por lo de
   la finca, que es el **Pasaporte**~~ — **cerrado en la V5.74** (columna «Visa», «Pasaporte EUDR», «Veredicto de Visa», mensajes
   de las acciones sin «Sello»; `qa-evaluaciones` 53 vigila las dos caras). Es la primera tanda del brief
-  `briefs/consolas-simplificar-ocp-al-circuito.md`; la segunda (bandejas derivadas del circuito) espera las cinco decisiones del
-  owner. Los identificadores (`EvaReviewCard`, `EVA_CHECKLIST_ITEMS`, `lots.eva_checklist`) se quedan con nota en el archivo. El
+  `briefs/consolas-simplificar-ocp-al-circuito.md`; la segunda (bandejas derivadas del circuito) ~~espera las cinco decisiones del
+  owner~~ la absorbió en lo esencial el `PLAN_CIRCUITO_DEL_LOTE` (el rail del OCP sigue hoy el orden del circuito); lo que el brief
+  deje sin contestar sigue siendo del owner. Los identificadores (`EvaReviewCard`, `EVA_CHECKLIST_ITEMS`, `lots.eva_checklist`) se quedan con nota en el archivo. El
   Mapa de Trabajo (`src/lib/workmap/schema.ts`) sigue dibujando la barra anterior a la V5.64 (VID · Sondeo · «EVA · veredicto
-  documental»): se redibuja cuando la 4b fije el circuito, no antes. ~~**(2)** `fichasActions.ts:108` dice «muestra de 205 g»~~ —
+  documental»): ~~se redibuja cuando la 4b fije el circuito, no antes~~ — el circuito ya está fijado (`circuito.ts`, V5.80–V5.85):
+  redibujarlo es ya pendiente de CÓDIGO de este charter. ~~**(2)** `fichasActions.ts:108` dice «muestra de 205 g»~~ —
   **corregido en la V5.74** (250 g). **(3)** la barra comercial del productor lee `estadoDelCircuito()` desde la V5.64 — un cambio
   en esa función es transversal a `kaffetal-regal` y pasa por `qa-evaluaciones`, que lo exige.
-  **Quedan**: **fase 4b** (el circuito del lote
+  ~~**Quedan**: **fase 4b** (el circuito del lote
   sin Sondeo: a evaluar → en evaluación → evaluado, pendiente de oferta → catálogo activo; DDL aditivo en `lot_offers`);
   **fase 5** (Kaffetal Regal — **exige las cuentas `prueba-*`, que esta sesión no tiene**); **fase 6** (stock físico y lo
-  que no existe, por briefs; Wrap V46).
-  **Lo que la fase 2 dejó abierto, con dueño**: **(a)** la página de la **Arena** vive en el BCP pero sigue usando tres
+  que no existe, por briefs; Wrap V46).~~ — las tres las sustituyó el `PLAN_CIRCUITO_DEL_LOTE` y están ejecutadas en código
+  (V5.76–V5.92); el Wrap V46 salió el 2026-09-23.
+  **Lo que la fase 2 dejó abierto, con dueño**: ~~**(a)** la página de la **Arena** vive en el BCP pero sigue usando tres
   acciones del circuito del lote (OCP): `assignLotToSession`, `inviteLotToArena`, `reviewEvaluationClaim` abren las DOS
   consolas (`["ocp","bcp"]`) y dos componentes se importan del árbol del OCP por ruta absoluta — **la fase 4 decide** si la
-  Arena sigue asignando lotes; **(b)** los KPI del Modelo Económico se quedaron en el Panel del BCP (son cifras del
+  Arena sigue asignando lotes~~ — **resuelto en la V5.77**: `assignLotToSession` e `inviteLotToArena` ya no existen (la Arena arma
+  su roster en `arena_session_lots`) y `reviewEvaluationClaim` es solo del OCP (`evaluationActions.ts`, vista del lote); **(b)** los KPI del Modelo Económico se quedaron en el Panel del BCP (son cifras del
   negocio) aunque el módulo viva en el ECP; **(c)** ~~«Seguimiento de Temas» y «Plataformas de Pagos» no tienen módulo ni brief~~ — **tienen brief desde el 2026-09-19**, igual
   que «Gestión de Muestras» y «CTCx Selection · Compras»: cuatro briefs de este charter en `docs/componentes/briefs/` (índice en su
-  README), **en scoping, a la espera del owner**. Cada uno termina con sus preguntas. De paso destaparon: **un pedido de pack de
-  muestras en producción que ninguna consola enseña** (`sample_pack_orders` no tiene lector); la regla del owner «a más de 90 días,
-  revisión de almacenaje con 1 kg», que no estaba en ninguna tanda, ya tiene sitio (Muestras); y la pestaña «Selección» de CTC
-  Selection (Red · Blue · Gold) tiene pantalla y **ningún escritor**.
+  README), **en scoping, a la espera del owner** (Muestras y Compras ya ejecutados: V5.80–V5.91). Cada uno termina con sus preguntas. De paso destaparon: ~~**un pedido de pack de
+  muestras en producción que ninguna consola enseña** (`sample_pack_orders` no tiene lector)~~ (lo lee la pestaña «Pedidos de
+  muestra» desde la V5.80 y lo despacha desde la V5.88); la regla del owner «a más de 90 días,
+  revisión de almacenaje con 1 kg», que no estaba en ninguna tanda, ~~ya tiene sitio (Muestras)~~ se ejecutó en la V5.88; y ~~la pestaña «Selección» de CTC
+  Selection (Red · Blue · Gold) tiene pantalla y **ningún escritor**~~ (retirada en la V5.85, talón 308).
   **Cerrado en la fase 2**: el diagrama de `/bcp/documentacion` ya no se dibuja a mano — se GENERA del rail.
   **Lo que la fase 3 dejó abierto, con dueño `consolas`**: **(d)** ⚠️ **NADIE HA VISTO `/ocp/kr` PINTADA.** Las consolas no
   se conducen en navegador (OTP real): se verificó por `tsc`, `eslint`, build, guardianes y SQL (las 41 columnas que piden
@@ -383,11 +424,13 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   **(d)** **Filas de §3b con dueño `consolas` que este charter no recogía** y siguen abiertas (el detalle vive allí, no
   se duplica): la **F1 del espejo** con Notion (`notion_espejos`, los seis eventos, `espejo-reporte.mjs` —
   `SECRETARIA_PLAN.md` §4); la **base física como puerta** del veredicto; la **segunda ronda del owner** (reoferta por
-  periodos PVC, reporte mensual de ventas, revisión de almacenaje con 1 kg —que no está en NINGUNA tanda del plan—,
-  crédito a favor, `showcaseGate` abierto a Blue+); **el trato real contra el §12.9** (`RELEASE_STAIRCASE` 50/75/100 en
-  `contractActions.ts`, el reembolso del 80 % al rechazado en `recordEvaluationVerdict`, los pasos que no avisan al
-  productor, los plazos de D2 §11.3); el **modelo v2.2.0** (columna marítima, DDP consolidado ≠ dedicado, regiones como
-  dato); y la **contraparte en el OCP de cada nodo socio** (`socios.md`, SO-2).
+  periodos PVC —en parte: renovación a 90 días y past crop, V5.84—, reporte mensual de ventas, ~~revisión de almacenaje con 1 kg —que no está en NINGUNA tanda del plan—~~ (hecha en la V5.88),
+  crédito a favor, ~~`showcaseGate` abierto a Blue+~~ (superado en la V5.77)); **el trato real contra el §12.9** (~~`RELEASE_STAIRCASE` 50/75/100 en
+  `contractActions.ts`~~ retirado en la V5.84, ~~el reembolso del 80 % al rechazado en `recordEvaluationVerdict`~~ retirado en la V5.82,
+  ~~los plazos de D2 §11.3~~ pago del mes y mora en la V5.84–V5.86; **quedan** los pasos que no avisan al productor —la finca
+  rechazada y la firma del contrato—, la oferta a 1–3 días y la compra de entrada CaaS); el **modelo v2.2.0** (columna marítima, DDP consolidado ≠ dedicado, regiones como
+  dato; de `herramientas-internas` desde la V5.55); y la **contraparte en el OCP de cada nodo socio** (`socios.md`, SO-2). Las
+  filas de §3b se pusieron al día en el wrap V47 (nodo final, 2026-09-25).
   **(e)** ~~**Dueño ambiguo del PVC**~~ — el owner lo decidió DOS veces el 2026-09-19: por la mañana «únicamente del BCP»
   (este charter, V5.53) y por la tarde, al redefinir Herramientas Internas, **de `herramientas-internas`** (V5.55). Vale la
   segunda. El módulo sigue viviendo en la consola BCP.
@@ -400,7 +443,11 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   piden las cuentas `prueba-*` por argv (memoria `ctc-qa-fleet`) y esta sesión no las tenía. Quedan **sin ejecutar** dos
   cosas de la V5.48–V5.52: la afirmación nueva «producer CANNOT set `public_code`» —que sí se verificó por SQL,
   simulando el rol `authenticated`, y devolvió «Estos campos solo puede actualizarlos CTC.»— y el circuito de
-  `place_order` con la moneda ya en US$. **Córranse en la próxima sesión que tenga las cuentas.**
+  `place_order` con la moneda ya en US$. ~~**Córranse en la próxima sesión que tenga las cuentas.**~~ **Ya no hay cuentas**: las
+  cinco `prueba-*` se eliminaron en la V5.89 y las cuatro `@ctc-qa-test.co` en la V5.92, así que los dos guardianes —y con ellos
+  la batería de Identidad y del patrón Supabase de `ALINEACION` §1— **no pueden correr** hasta que el owner decida qué cuentas de
+  prueba vuelven (un productor puede ser un desacoplado de prueba; el comprador no tiene sesión asistida). `ALINEACION` §4.6 y
+  §5.3 lo dicen (nodo final, wrap V47, 2026-09-25).
 - **CN-4 se vuelve urgente** (2026-09-18). La V5.52 pasó la tienda a US$, pero la **subasta Tyrian sigue en EUR**
   porque `lot_auctions` lleva la moneda en el NOMBRE de sus columnas (`precio_salida_eur_kg`, `incremento_eur_kg`).
   Hasta que CN-4 haga esa migración, la misma superficie muestra dos monedas — cada una con su fuente declarada
@@ -470,7 +517,8 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
 - **Métodos de pago: Nequi Y Zulu, los dos** (owner, 2026-09-19) — se configuran más adelante. De este componente: el
   número de Nequi real en `src/lib/arena/payment.ts` (la tarifa de evaluación no es cobrable hasta entonces) y, cuando
   toque, la integración de Zulu; Stripe sigue aplazado.
-- **La primera jornada-vitrina** como evento supervisado; **estrenar el escáner visual** con soportes reales.
+- ~~**La primera jornada-vitrina** como evento supervisado~~ (la jornada en vivo se retiró en la V5.77: la Arena son sesiones de
+  segunda apreciación); **estrenar el escáner visual** con soportes reales.
 - Hallazgos de la auditoría 2026-07-10 aún sin aplicar (HANDOFF §Audit findings): `search_path` en 4
   funciones, `revoke EXECUTE` en 4 funciones trigger, índices de FK, `(select auth.uid())` en ~20 políticas,
   y el toggle **leaked-password protection** en Supabase (Pro desde 2026-08-17).

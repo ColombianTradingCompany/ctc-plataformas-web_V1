@@ -21,6 +21,8 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ## [V5.92] — 2026-09-25 (commit 0f12bb1)
 
+> **Wrap V47** (2026-09-25): ciclo compilado en `Documentacion_Interactiva_V47.0(322fc67).html` — 42 nodos (=) · 175 fichas (+20: la Etapa 1 del circuito del lote —`plancircuito`, `sesionasistida`, `desacoplado`, `gradoquerige`, `certificacionconestado`, `dossierlote`, `solicitudevaluacion`, `terminos`, `gestionmuestras`, `almacenaje`, `modulosdelsocio`, `escala`, `homologacion`, `pvcparagrado`, `simulador`, `mesames`, `mora`, `compras`, `mezclas`, `samplekits`) · 68 trazas (+6, y 10 reescritas sobre su sucesor) · 108 wires (+4, −1) · 38 CTX (13 ampliadas) · 475 ANN (+54; 5 repuntadas, 13 reescritas, 8 ampliadas) · Postgres 128 tablas. Veintidós asientos (V5.71–V5.92); la auditoría previa reconcilió maestro, charters, AGENTS, HANDOFF, planes y briefs en el mismo commit.
+
 - **Corregido**: **la fórmula CVA**, tal como la corroboró el Q-Grader (informe del 2026-09-25, `PLAN_CIRCUITO_DEL_LOTE` §10): **ocho**
   secciones (Fragancia y Aroma aparte), la Impresión general cuenta **una** vez, redondeo al 0,25, cinco tazas registradas una a una con
   su tipo de defecto (una defectuosa es también no uniforme), una planilla incompleta no da puntaje y un valor fuera de 1–9 es un error.

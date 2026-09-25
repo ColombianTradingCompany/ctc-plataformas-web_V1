@@ -100,7 +100,9 @@ fórmula del CVA y la rueda única). Lo tocan también `qa-recuperacion-check.mj
 
 - **V5.77 (`consolas`, fase 1 del `PLAN_CIRCUITO_DEL_LOTE`) — dos cosas con dueño aquí**: (a) la Arena ya no es una gala con
   jornada en vivo sino una sesión de segunda apreciación, así que el sello del **Estudio de Contenido** «video de Arena + assets del
-  lote» (`partners.ts`) queda sin objeto en su primera mitad: pasa a «assets del lote»; (b) la fase 4 del plan construye el módulo
+  lote» (`partners.ts`) queda sin objeto en su primera mitad: pasa a «assets del lote» — y, en el mismo archivo, el `why` del
+  **Centro de Calidad** dice «aquí se defiende la calidad que **la Arena certificó**»: desde la V5.77 la Arena no certifica y desde
+  la V5.81 quien evalúa es el propio Centro (pendiente de CÓDIGO, copy; lo anota el nodo final, wrap V47); (b) la fase 4 del plan construye el módulo
   **Evaluación de Lotes** del Centro de Calidad sobre su credencial (hoy suspendida), con módulos activables (Evaluación ·
   Procesamiento) y uso directo (respuesta 5 del owner, 2026-09-24). **(c) V5.80 (fase 3)**: los baches ya LLEGAN al Centro —
   `sondeo_batches.status = en_centro`, con `centro_calidad_account_id` (= la credencial `centro-calidad` activa, si hay UNA) y
@@ -132,9 +134,12 @@ fórmula del CVA y la rueda única). Lo tocan también `qa-recuperacion-check.mj
   del **Centro de Calidad** (trilla y selección óptica) con el procesamiento propio de CTCx (§14.5); el **Master Roaster** se
   narra así: uno **local en Colombia** (activo) y «coming soon» en Nueva York, Florida, California, Alemania y Japón (mapa
   en `reference/narrativa-2026-09-17/img/mapa-regiones.svg`, fuera del repo). Marca **CTCx** en las landings.
-- **Cuatro paneles son scaffolds**: solo el Estudio de Contenido tiene módulo real. Cada nodo necesita su
+- ~~**Cuatro paneles son scaffolds**: solo el Estudio de Contenido tiene módulo real.~~ **Tres paneles son scaffolds**
+  (Agente de Carga, Agente de Nacionalización, Master Roaster): el Estudio de Contenido y, desde la V5.81, el **Centro de Calidad** (módulo
+  Evaluación de Lotes; Procesamiento es Etapa 3) tienen módulo real (nodo final, wrap V47, 2026-09-25). Cada nodo necesita su
   interfaz (las pantallas ya están declaradas en `partners.ts`) **y su contraparte en el OCP** que reciba
-  el sello en el pasaporte del lote — eso es lo que abre cada sesión de nodo.
+  el sello en el pasaporte del lote — eso es lo que abre cada sesión de nodo (la del Centro, para la evaluación, ya es «Lotes en
+  Evaluación»: CTCx confirma o devuelve el alta).
 - **Verificar los cinco subdominios** con `curl -I` (el doc de dominio deja el paso Vercel + Hostinger al
   owner).
 - **Guardián propio** (`qa-socios-check.mjs`): `PARTNERS` ↔ `SUBDOMAIN_ROUTES` ↔ `puertas.ts` en sincronía;

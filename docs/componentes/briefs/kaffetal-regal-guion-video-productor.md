@@ -2,6 +2,22 @@
 
 (componente: `kaffetal-regal` · slug: `guion-video-productor` · **v0.9.1 · la misma narrativa, contada de cerca**)
 
+> ⚠ **Reconciliar con `src/lib/trato/terminos.ts` y `docs/PLAN_CIRCUITO_DEL_LOTE.md` antes de rodar** (nota del wrap V47,
+> 2026-09-25; el guion no se reescribe aquí). La v0.9.1 es anterior al plan del circuito (V5.76–V5.92) y promete cosas que el
+> código ya dice distinto:
+> - **Pago**: «cada carga vendida se le paga completa en máximo dos días hábiles» y mora del 0,5 % por día hábil → el folio 8 y
+>   `terminos.ts`: CTCx pide la cantidad del mes y **paga en la primera semana del mes**; la mora es de **2 semanas sin cargo + 2
+>   con el 5 %**, y después la ruptura (que declara el owner).
+> - **Reoferta** «el periodo siguiente sin penalidad, el posterior con −5 %» → en código hay **renovación** a los 90 días al PVC
+>   vigente y **past crop** −10 % a los 9 meses; la reoferta −5 % no existe.
+> - **Mínimo del lote** «Black y Red 3–4 cargas según la mezcla» → dos mínimos distintos: el **declarado por lote** al aceptar
+>   (6 · 3 cargas · 200 kg, `MINIMO_POR_GRADO`) y el **MOQ de compra** (Black y Red 3 cargas, V5.91).
+> - **Evaluación**: $200.000 ya está en código (V5.80); la **contra-catación con crédito a favor** la sustituyó la
+>   **re-evaluación** a tarifa plena con reembolso del 80 % si sube de grado (V5.82); la muestra de 2 kg es de uso exclusivo de CTCx
+>   (V5.89) y el resultado lo da el **Punto** (homologado si viene de CVA, V5.92).
+> - **Arena**: ya no es vitrina ni postulación (V5.77): es una sesión de segunda apreciación de CTCx.
+> - «La oferta llega 1 a 3 días después de validar el grado»: no hay plazo en código (CTCx decide si oferta, paso 13 del plan).
+
 **Historial.**
 - v0.1: primer borrador.
 - v0.2: evaluación, reembolso, inversión inicial y plazos.

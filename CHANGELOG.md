@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.90] — 2026-09-25 (commit pendiente)
+## [V5.90] — 2026-09-25 (commit 8fb7c6f)
 
 - **Cambiado**: **«CTCx Selection · Compras» pasa a llamarse «Adquisición de Stock Café (Selection/Sample Kits)»** (owner, 2026-09-25;
   misma ruta `/ocp/compras`): CTCx adquiere con la misma herramienta el stock de la oferta y el de los kits para compradores. Cada compra

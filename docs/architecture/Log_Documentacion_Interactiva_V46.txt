@@ -485,3 +485,22 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
 - SIGUE (misma tanda del owner): V5.90 «Adquisición de Stock Café (Selection/Sample Kits)» + módulo de Sample Kits; V5.91 composición
   por lote y MOQ de 3 cargas (retirar la regla 3–4 de las mezclas); one-pager CVA; wrap V47.
 (commit: 2d0c8e2)
+
+## [2026-09-25] V5.90 · Consolas — «Adquisición de Stock Café (Selection/Sample Kits)» y el Stock de Sample Kits
+- RAIL (nodo OCP): la entrada `/ocp/compras` se llama «Adquisición de Stock Café (Selection/Sample Kits)» (misma ruta, sin talón; el
+  owner: CTCx adquiere con la misma herramienta el stock de la oferta y el de los kits) y «Catálogo» gana «Stock de Sample Kits»
+  (`/ocp/sample-kits` + `[id]`) tras «Oferta desde CTCx Selection».
+- DATOS: migración `adquisicion_stock_sample_kits` (acta): `compras.destino` (selection · sample_kits), `sample_kits` (SK-AAAA-NNN; tipo
+  cp · plus · max; destino libre; `pedido_id` → `sample_pack_orders`; armado → enviado · anulado), `sample_kit_items` (compra, kg_cps);
+  guards `guard_sample_kit_item` y `guard_sample_kit_stock`. Lo DISPONIBLE para kits no se guarda: comprado − asignado a kits no anulados.
+- REGLA (DICT `sampleKits`): `KITS` con los números del owner (CP 8 × 250 g verde ≈ 350 g CPS · Plus 5 × 2 kg verde · Max 4 × 6 kg CPS),
+  `VERDE_POR_CPS` = 90/125 (su nota), `kgCpsPorLote`, `validarItemDeKit` (cupo, lote/compra repetidos, disponible), `validarEnvioDeKit`
+  (completo), `disponibleParaKits`.
+- FLUJO: `destinarCompra` (emite: mueve kilos de la oferta; no si ya tiene kilos en kits) · `crearKit` · `agregarLoteAlKit` ·
+  `quitarItemDelKit` · `anularKit` (borrador) · `marcarKitEnviado` (emite: completo, guía; si nació de un pedido de la tienda, el pedido
+  pasa a enviado). «Oferta desde
+  CTCx Selection» filtra `destino = selection`; Adquisición muestra el destino por fila y lo pide en el alta a mano.
+- Guardianes: `qa-compras-check` 73 → 95 (§11: los kits contra la fila 8 del §5 del plan, los guards del acta, las clases, el rail).
+- DOCS: `docs/CVA_one-pager_para_el_Q-Grader.pdf` (la fórmula CVA de la V5.81 para que el Q-Grader la corrobore; el owner lo pidió).
+- SIGUE: V5.91 (Compras 4: composición por lote, MOQ de 3 cargas, la regla 3–4 de las mezclas se retira); wrap V47 desde WRAP-COMMIT-PUSH.
+(commit: pendiente)

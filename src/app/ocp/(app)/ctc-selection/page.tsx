@@ -49,6 +49,8 @@ export default async function OfertaDesdeCtcxSelectionPage() {
     service
       .from("compras")
       .select("id, lot_id, contract_id, mes, grado, kg, cop_kg, total_cop, precio_fuente, recibida_at, pagada_at, origen, lots(id, name, producer_id, public_code, fincas(name))")
+      // V5.90: solo lo comprado CON DESTINO CTCx Selection (lo de Sample Kits vive en /ocp/sample-kits).
+      .eq("destino", "selection")
       .order("pagada_at", { ascending: false, nullsFirst: false }),
     service.from("platform_settings").select("value").eq("key", CLAVE_PERFIL_CTCX).maybeSingle(),
   ]);
@@ -100,7 +102,7 @@ export default async function OfertaDesdeCtcxSelectionPage() {
     <div>
       <h1 className={styles.title}>Oferta desde CTCx Selection</h1>
       <p className={styles.subtitle}>
-        Lo que CTCx <b>compró en firme</b> —documentado en <Link href="/ocp/compras">Compras</Link>— y cuánto de eso pasa al{" "}
+        Lo que CTCx <b>compró en firme con destino CTCx Selection</b> —documentado en <Link href="/ocp/compras">Adquisición de Stock</Link>— y cuánto de eso pasa al{" "}
         <b>Catálogo Activo</b> como disponibilidad, en los mismos términos que cualquier productor. La vitrina enseña el perfil de CTCx
         Selection en vez de la finca; el registro (pasaporte, ficha, rastro EUDR) conserva la finca real.
       </p>

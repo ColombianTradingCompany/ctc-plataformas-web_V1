@@ -153,7 +153,11 @@ const plan = lee("docs/PLAN_CIRCUITO_DEL_LOTE.md");
   const catalogo = CONSOLES.ocp.nav.find((g) => g.label === "OCP · Catálogo");
   check("el rail del OCP tiene el grupo Catálogo", !!catalogo);
   const orden = ["/ocp/solicitudes", "/ocp/a-evaluar", "/ocp/en-evaluacion", "/ocp/ofertas", "/ocp/contratos", "/ocp/ctc-selection", "/ocp/catalogo"];
-  check("en el orden de la respuesta 7: Solicitudes · a Evaluar · en Evaluación · Pendiente Oferta · CP Aceptadas · CTCx Selection · Catálogo Activo", JSON.stringify((catalogo?.links ?? []).map((l) => l.href)) === JSON.stringify(orden), JSON.stringify((catalogo?.links ?? []).map((l) => l.href)));
+  // V5.90 (owner, 2026-09-25): «Stock de Sample Kits» vive en Catálogo tras la oferta de Selection, pero no es una etapa del circuito
+  // del lote: el orden de la respuesta 7 se comprueba sin él (y se exige que esté, entre CTCx Selection y Catálogo Activo).
+  const hrefs = (catalogo?.links ?? []).map((l) => l.href);
+  check("en el orden de la respuesta 7: Solicitudes · a Evaluar · en Evaluación · Pendiente Oferta · CP Aceptadas · CTCx Selection · Catálogo Activo", JSON.stringify(hrefs.filter((h) => h !== "/ocp/sample-kits")) === JSON.stringify(orden), JSON.stringify(hrefs));
+  check("«Stock de Sample Kits» (V5.90) entre la oferta de Selection y el Catálogo Activo", hrefs.indexOf("/ocp/sample-kits") === hrefs.indexOf("/ocp/ctc-selection") + 1 && hrefs.indexOf("/ocp/catalogo") === hrefs.indexOf("/ocp/sample-kits") + 1);
   check("«Solicitudes de Evaluación» es su etiqueta", catalogo?.links[0]?.label === "Solicitudes de Evaluación");
   check("y tiene página", existsSync(new URL("../src/app/ocp/(app)/solicitudes/page.tsx", import.meta.url)));
   const vista = lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx");

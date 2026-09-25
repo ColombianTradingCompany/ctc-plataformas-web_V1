@@ -244,6 +244,8 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           { href: "/ocp/contratos", label: "Ofertas CP Aceptadas" },
           // Decisión 7 (V5.85): la disponibilidad de lo comprado en firme (`compras`) — el staging del Catálogo Activo del lado Compras.
           { href: "/ocp/ctc-selection", label: "Oferta desde CTCx Selection" },
+          // V5.90 (owner, 2026-09-25): el café adquirido que NO va a CTCx Selection — el stock con que se arman los Sample Kits.
+          { href: "/ocp/sample-kits", label: "Stock de Sample Kits" },
           // Nota 5: lo publicado. Las subastas Tyrian son su pestaña (Tyrian no se oferta: se subasta).
           { href: "/ocp/catalogo", label: "Catálogo Activo" },
         ],
@@ -257,7 +259,8 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // V5.77 (owner): las campañas de descuento salen del Kaffetal Club y son «Campañas de Subvención»:
           // códigos con el 30–70 % de la tarifa de evaluación, que CTCx emite y decide en Gestión de Muestras.
           { href: "/ocp/subvenciones", label: "Campañas de Subvención" },
-          { href: "/ocp/compras", label: "CTCx Selection · Compras" },
+          // V5.90 (owner): el nombre dice para qué compra la casa — stock de CTCx Selection y stock de Sample Kits (`compras.destino`).
+          { href: "/ocp/compras", label: "Adquisición de Stock Café (Selection/Sample Kits)" },
         ],
       },
       // El grupo «OCP · Cherry Picked» (los cuatro CRM CP) se fue a «LCP · CRM» en la V5.59.

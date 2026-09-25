@@ -253,6 +253,10 @@ Toda acción del servidor declara su **clase** —qué HACE—, y la clase decid
 | `crearBodega` | OCP · Gestión de Muestras | una bodega de muestras nueva (responsable, dirección, capacidad, estado): configuración interna del estante, nadie de fuera la ve (V5.89) |
 | `guardarBodega` | OCP · Gestión de Muestras | lo mismo, sobre una bodega existente (V5.89) |
 | `trillarMuestraCtcx` | OCP · Gestión de Muestras | el kilo CTCx se trilla a verde: una salida y dos filas nuevas (verde al vacío, tostado de ensayo); cuaderno interno (V5.89) |
+| `crearKit` | OCP · Stock de Sample Kits | armar un Sample Kit (tipo, destino, pedido): nadie de fuera lo ve hasta `marcarKitEnviado` (emite) (V5.90) |
+| `agregarLoteAlKit` | OCP · Stock de Sample Kits | qué compra y cuántos kilos van en el kit armado (V5.90) |
+| `quitarItemDelKit` | OCP · Stock de Sample Kits | lo contrario, mientras el kit está armado (V5.90) |
+| `anularKit` | OCP · Stock de Sample Kits | anular un kit con motivo: sus kilos vuelven al stock; nada se borra (V5.90) |
 
 **Lo que parece un borrador y NO lo es** (para que nadie lo «arregle»): `logProducerComm` —la nota sobre un productor—
 **la ve el productor** en su panel; `guardarContexto` es la doctrina que lee la redacción asistida; `recordAnchor` alimenta

@@ -19,6 +19,24 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.90] — 2026-09-25 (commit pendiente)
+
+- **Cambiado**: **«CTCx Selection · Compras» pasa a llamarse «Adquisición de Stock Café (Selection/Sample Kits)»** (owner, 2026-09-25;
+  misma ruta `/ocp/compras`): CTCx adquiere con la misma herramienta el stock de la oferta y el de los kits para compradores. Cada compra
+  en firme dice **a qué stock va** (`compras.destino`: CTCx Selection · Sample Kits; se elige al registrar y se cambia por fila mientras no
+  tenga kilos en kits). «Oferta desde CTCx Selection» solo cuenta lo destinado a Selection.
+- **Añadido**: **«Stock de Sample Kits»** (`/ocp/sample-kits`, en OCP · Catálogo): el café adquirido que NO va a la oferta, gestionado en
+  kits — **Sample Kit (CP)** 8 lotes × 250 g de verde (solo donde hay un Master Roaster o partner CaaS; ≈ 65 € · US$65), **Plus** 5 lotes
+  × 2 kg de verde (FOB US$120–170), **Max** 4 lotes × 6 kg de CPS (FOB US$280–400). Un kit se arma lote a lote con compras destinadas a
+  Sample Kits (lo disponible se DERIVA: comprado − asignado a kits no anulados), sale **enviado** completo con su guía (si nació de un pedido
+  de la tienda, el pedido pasa a enviado) o se **anula** con motivo; nada se borra. La conversión CPS → verde es la de la nota del owner
+  (125 kg de CPS ≈ 90 kg de verde). Regla pura en `src/lib/compras/sampleKits.ts`.
+- **Datos**: migración `adquisicion_stock_sample_kits` (acta en `docs/migraciones/`): `compras.destino`, `sample_kits` (SK-AAAA-NNN),
+  `sample_kit_items`, guards `guard_sample_kit_item` (componentes solo con el kit armado) y `guard_sample_kit_stock` (lo asignado nunca
+  supera lo comprado). RLS, cero políticas.
+- **Docs**: `qa-compras-check` 73 → 95 (§11: los números de los kits se leen de la fila 8 del §5 del plan). El one-pager de la fórmula CVA
+  para el Q-Grader queda en `docs/CVA_one-pager_para_el_Q-Grader.pdf`.
+
 ## [V5.89] — 2026-09-25 (commit 2d0c8e2)
 
 - **Añadido**: **las bodegas de muestras** (owner, 2026-09-25; decisión 1 del brief → opción C): `bodegas_muestras` con responsable,

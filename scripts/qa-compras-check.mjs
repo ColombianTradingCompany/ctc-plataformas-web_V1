@@ -12,6 +12,9 @@
 //   tienda, portal, ficha— enseña el perfil con la razón social de `legal.ts` como respaldo; (8) el circuito y la barra del
 //   productor conocen «CTCx Selection» con la MISMA regla; (9) decisión 7: «Oferta desde CTCx Selection» = disponibilidad y se
 //   publica desde un contrato cumplido. Las cifras de la directa (30 días, −8 %) las vigila `qa-trato` desde el plan.
+//   (10) las mezclas (V5.87); (11) V5.90 — «Adquisición de Stock Café (Selection/Sample Kits)»: cada compra dice a qué stock va, los
+//   tres Sample Kits (CP · Plus · Max) con los NÚMEROS DEL OWNER leídos de la fila 8 del §5 del plan, lo disponible para kits
+//   derivado, los guards de la base, el kit sale completo y nada se borra, y el rail dice el nombre nuevo.
 
 import { readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
@@ -21,6 +24,7 @@ import { CTC_RAZON } from "../src/lib/legal.ts";
 import { estadoDelCircuito } from "../src/lib/ocp/circuito.ts";
 import { KG_MINIMOS_POR_COMPONENTE, MAX_COMPONENTES, MIN_COMPONENTES, unaSolaVariedad, validarCierre, validarComponente } from "../src/lib/compras/mezclas.ts";
 import { CARGAS_POR_PRODUCTOR, COMPOSICION_MEZCLA, LOTES_EN_MEZCLA } from "../src/lib/pvc/lectura.ts";
+import { DESTINO_LABEL, KITS, VERDE_POR_CPS, disponibleParaKits, kgCpsDelKit, kgCpsPorLote, validarEnvioDeKit, validarItemDeKit } from "../src/lib/compras/sampleKits.ts";
 
 let ok = 0;
 const fallos = [];
@@ -84,7 +88,10 @@ const compras = lee("src/app/ocp/(app)/comprasActions.ts");
   check("la imagen se sube con URL firmada al bucket público, desde el navegador", BUCKET_CTCX === "ctcx-selection" && compras.includes("createSignedUploadUrl(path)") && lee("src/app/ocp/(app)/ctc-selection/ImagenCtcxUploader.tsx").includes("uploadToSignedUrl("));
   check("la imagen por lote es de un lote COMPRADO", compras.includes("La imagen por lote es de un lote COMPRADO"));
   check("la ruta de la imagen se valida antes de fijarla", compras.includes('limpio.includes("..")') && compras.includes("limpio.startsWith(prefijo)"));
-  check("todas las acciones de Compras son `emite` (las lee el comprador)", (compras.match(/permisoDeEscritura\("ocp", "emite"\)/g) ?? []).length === (compras.match(/^export async function/gm) ?? []).length);
+  // V5.90: el ARMADO de un Sample Kit (crear · añadir · quitar · anular) es borrador (nadie de fuera lo ve hasta que sale enviado);
+  // todo lo demás —incluido destinar una compra, que mueve kilos de la oferta— sigue siendo emite.
+  const BORRADORES_DE_KITS = ["crearKit", "agregarLoteAlKit", "quitarItemDelKit", "anularKit"];
+  check("todas las acciones de Compras son `emite` (las lee el comprador), salvo el armado de kits (borrador)", (compras.match(/permisoDeEscritura\("ocp", "emite"\)/g) ?? []).length === (compras.match(/^export async function/gm) ?? []).length - BORRADORES_DE_KITS.length && (compras.match(/permisoDeEscritura\("ocp", "borrador"\)/g) ?? []).length === BORRADORES_DE_KITS.length);
 }
 
 // ── 7. La vitrina enseña el perfil; la razón social de legal.ts es el respaldo ──
@@ -163,6 +170,51 @@ const compras = lee("src/app/ocp/(app)/comprasActions.ts");
   check("«Oferta desde CTCx Selection» descuenta lo asignado a mezclas no anuladas", lee("src/app/ocp/(app)/ctc-selection/page.tsx").includes("asignadoKg") && lee("src/app/ocp/(app)/ctc-selection/page.tsx").includes('neq("mezclas.status", "anulada")'));
   check("la ubicación física existe (decisión 2, texto libre) y las dos pantallas de mezclas", compras.includes("export async function ubicarCompra") && acta.includes("add column ubicacion") && lee("src/app/ocp/(app)/compras/mezclas/page.tsx").includes("crearMezcla") && lee("src/app/ocp/(app)/compras/mezclas/[id]/page.tsx").includes("cerrarMezcla"));
   check("la pantalla habla en kg de CPS y no inventa un factor a verde (decisión 5)", lee("src/app/ocp/(app)/compras/page.tsx").includes("kg de CPS") && !/verde\s*[*×]|factor\s*=\s*0\./.test(lee("src/app/ocp/(app)/compras/page.tsx")));
+}
+
+// ── 11. Adquisición de Stock Café (Selection/Sample Kits) — V5.90, owner 2026-09-25 ─────────
+// La fuente es la fila 8 del §5 del plan (la 3.ª tanda): los tres kits con sus lotes y pesos, la conversión CPS → verde de la nota
+// del owner, y que los 2 kg de muestra NO surten kits. El código se contrasta contra ESA fila, no contra sí mismo.
+{
+  const fila8 = plan.match(/^\| \*\*8 · CTCx Selection y Compras\*\*.*$/m)?.[0] ?? "";
+  const cp = fila8.match(/\*\*CP\*\* = (\d+) lotes × (\d+) g de verde/);
+  const plus = fila8.match(/\*\*Plus\*\* = (\d+) lotes × (\d+) kg de verde/);
+  const max = fila8.match(/\*\*Max\*\* = (\d+) lotes × (\d+) kg de CPS/);
+  const conv = fila8.match(/(\d+) kg de CPS ≈ (\d+) kg de verde/);
+  const nota = fila8.match(/(\d+) g de verde ≈ (\d+) g de CPS/);
+  check("plan §5 fila 8: la 3.ª tanda nombra los tres kits, la conversión y el nombre nuevo de la entrada", !!(cp && plus && max && conv && nota) && fila8.includes("«Adquisición de Stock Café (Selection/Sample Kits)»") && fila8.includes("«Stock de Sample Kits»"));
+  check("KITS = los del owner: CP 8 × 250 g verde · Plus 5 × 2 kg verde · Max 4 × 6 kg CPS", !!cp && !!plus && !!max && KITS.cp.lotes === +cp[1] && KITS.cp.kgPorLote * 1000 === +cp[2] && KITS.cp.unidad === "verde" && KITS.plus.lotes === +plus[1] && KITS.plus.kgPorLote === +plus[2] && KITS.plus.unidad === "verde" && KITS.max.lotes === +max[1] && KITS.max.kgPorLote === +max[2] && KITS.max.unidad === "cps" && Object.keys(KITS).length === 3);
+  check("la conversión CPS → verde es la de la nota del owner (125 kg CPS ≈ 90 kg verde)", !!conv && Math.abs(VERDE_POR_CPS - +conv[2] / +conv[1]) < 1e-9);
+  check("250 g de verde salen de ≈ 350 g de CPS (± 10 g), y el Max se compra tal cual en CPS", !!nota && Math.abs(kgCpsPorLote("cp") * 1000 - +nota[2]) <= 10 && kgCpsPorLote("max") === KITS.max.kgPorLote && Math.abs(kgCpsDelKit("plus") - (KITS.plus.lotes * KITS.plus.kgPorLote) / VERDE_POR_CPS) < 0.01);
+  check("el precio de referencia del CP es el del owner (≈ 65 € · US$65) y solo donde hay un MR o partner CaaS", /65 €/.test(KITS.cp.precioRef) && /US\$65/.test(KITS.cp.precioRef) && /Master Roaster/.test(KITS.cp.para) && /CaaS/.test(KITS.cp.para));
+  const kitsSrc = lee("src/lib/compras/sampleKits.ts").replace(/\/\*[\s\S]*?\*\/|^\s*\/\/.*$/gm, "");
+  check("sampleKits.ts es puro (sin red, sin servidor)", !/supabase|server-only|fetch\(/.test(kitsSrc));
+  const it = (i, extra = {}) => ({ compraId: "c" + i, lotId: "l" + i, kgCps: kgCpsPorLote("cp"), disponibleKg: 10, ...extra });
+  const ocho = Array.from({ length: 8 }, (_, i) => it(i + 1));
+  check("al añadir: un noveno lote al CP, la misma compra, el mismo lote, cero kilos o más de lo disponible se rechazan; uno válido pasa", validarItemDeKit("cp", ocho, it(9)).length > 0 && validarItemDeKit("cp", [it(1)], it(2, { compraId: "c1" })).length > 0 && validarItemDeKit("cp", [it(1)], it(2, { lotId: "l1" })).length > 0 && validarItemDeKit("cp", [], it(1, { kgCps: 0 })).length > 0 && validarItemDeKit("cp", [], it(1, { kgCps: 11 })).length > 0 && validarItemDeKit("cp", [it(1)], it(2)).length === 0);
+  check("el kit sale ENVIADO solo completo (8 · 5 · 4 lotes)", validarEnvioDeKit("cp", ocho).length === 0 && validarEnvioDeKit("cp", ocho.slice(0, 7)).length > 0 && validarEnvioDeKit("plus", ocho.slice(0, 5)).length === 0 && validarEnvioDeKit("max", ocho.slice(0, 4)).length === 0 && validarEnvioDeKit("max", ocho.slice(0, 3)).length > 0);
+  check("lo disponible para kits = comprado − asignado, derivado y nunca negativo", disponibleParaKits({ compradoKg: 12.5, asignadoKg: 2.5 }) === 10 && disponibleParaKits({ compradoKg: 1, asignadoKg: 3 }) === 0);
+  check("dos destinos y solo dos: CTCx Selection · Sample Kits", Object.keys(DESTINO_LABEL).sort().join(",") === "sample_kits,selection");
+  const acta = lee("docs/migraciones/2026-09-25_adquisicion_stock_sample_kits.sql").replace(/^--.*$/gm, "");
+  check("la base: compras.destino con los dos valores, kits SK-AAAA-NNN armado → enviado · anulado, componentes con kg > 0", /add column destino text not null default 'selection' check \(destino in \('selection', 'sample_kits'\)\)/.test(acta) && /'SK-' \|\| to_char\(now\(\), 'YYYY'\)/.test(acta) && /status text not null default 'armado' check \(status in \('armado', 'enviado', 'anulado'\)\)/.test(acta) && /kg_cps numeric not null check \(kg_cps > 0\)/.test(acta) && /unique \(kit_id, compra_id\)/.test(acta));
+  check("los guards: componentes solo con el kit armado; lo asignado a kits no anulados nunca supera lo comprado con destino sample_kits", acta.includes("create trigger guard_sample_kit_item") && /v_status is distinct from 'armado'/.test(acta) && acta.includes("create trigger guard_sample_kit_stock") && /v_destino is distinct from 'sample_kits'/.test(acta) && /k\.status <> 'anulado'/.test(acta) && /if v_asignado \+ new\.kg_cps > v_kg/.test(acta));
+  check("RLS y cero políticas en sample_kits y sample_kit_items", acta.includes("alter table public.sample_kits enable row level security") && acta.includes("alter table public.sample_kit_items enable row level security") && !/create policy [^\n]* on public\.sample_kit/.test(acta));
+  check("las acciones pasan por la regla pura antes que por la base; un kit no se borra, se anula", compras.includes("validarItemDeKit(kit.tipo, kit.items, nuevo)") && compras.includes("validarEnvioDeKit(kit.tipo, kit.items)") && !/from\("sample_kits"\)\s*\.\s*delete/.test(compras) && compras.includes('update({ status: "anulado", anulado_motivo: motivo'));
+  check("una compra con kilos en kits no cambia de destino; una compra nueva elige su destino", /asignadoAKitsPorCompra\(service, \[compraId\]\)[\s\S]{0,200}anule esos kits antes de cambiarle el destino/.test(compras) && /const destino = texto\(formData\.get\("destino"\)\) \?\? "selection"/.test(compras));
+  const fnClase = (fn) => compras.match(new RegExp(`export async function ${fn}\\([^)]*\\)[^{]*\\{\\s*const permiso = await permisoDeEscritura\\("ocp", "(\\w+)"\\)`))?.[1];
+  check("las clases: destinar una compra y enviar el kit EMITEN (mueven la oferta · lo ve quien lo recibe); armar, añadir, quitar y anular son BORRADOR", fnClase("destinarCompra") === "emite" && fnClase("marcarKitEnviado") === "emite" && ["crearKit", "agregarLoteAlKit", "quitarItemDelKit", "anularKit"].every((f) => fnClase(f) === "borrador"));
+  check("el kit que nace de un pedido de la tienda lo deja enviado al salir (con la guía)", /if \(kit\.pedidoId\) \{\s*await service\.from\("sample_pack_orders"\)\.update\(\{ status: "enviado", enviado_at: now, enviado_por: adminId, guia, notas_ctc: notas \}\)/.test(compras));
+  const sinComentarios = (src) => src.replace(/\/\*[\s\S]*?\*\/|^\s*\/\/.*$/gm, "");
+  const rail = sinComentarios(lee("src/lib/panel/consoles.ts"));
+  check("el rail: «Adquisición de Stock Café (Selection/Sample Kits)» en /ocp/compras y «Stock de Sample Kits» en OCP · Catálogo; el nombre viejo no queda", /href: "\/ocp\/compras", label: "Adquisición de Stock Café \(Selection\/Sample Kits\)"/.test(rail) && /href: "\/ocp\/sample-kits", label: "Stock de Sample Kits"/.test(rail) && rail.indexOf('"/ocp/sample-kits"') < rail.indexOf('"/ocp/compras"') && !rail.includes("CTCx Selection · Compras") && !sinComentarios(lee("src/app/ocp/(app)/compras/page.tsx")).includes("CTCx Selection · Compras"));
+  const ctcSel = lee("src/app/ocp/(app)/ctc-selection/page.tsx");
+  check("«Oferta desde CTCx Selection» solo cuenta lo comprado con destino selection", ctcSel.includes('.eq("destino", "selection")'));
+  const pagCompras = lee("src/app/ocp/(app)/compras/page.tsx");
+  check("Adquisición: el destino por compra (columna + cambio) y en el alta a mano", pagCompras.includes("destinarCompra.bind(null, c.id)") && /<select id="compra-destino" name="destino"/.test(pagCompras) && pagCompras.includes("DESTINO_LABEL"));
+  const pagKits = lee("src/app/ocp/(app)/sample-kits/page.tsx");
+  const pagKit = lee("src/app/ocp/(app)/sample-kits/[id]/page.tsx");
+  check("las dos pantallas de Sample Kits: stock por lote (derivado) + armar; y el kit con añadir · enviar · anular", pagKits.includes("stockDeSampleKits") && pagKits.includes("crearKit") && pagKit.includes("agregarLoteAlKit") && pagKit.includes("marcarKitEnviado") && pagKit.includes("anularKit") && pagKit.includes("validarEnvioDeKit"));
+  check("los 2 kg de muestra del circuito NO surten kits (uso exclusivo de CTCx): el plan y la pantalla lo dicen", /Los 2 kg de muestra del circuito NO surten kits/.test(fila8) && /uso exclusivo de CTCx/.test(pagKits) && !/muestra_movimientos|from\("muestras"\)/.test(lee("src/lib/compras/sampleKitsServidor.ts")));
 }
 
 if (fallos.length) {

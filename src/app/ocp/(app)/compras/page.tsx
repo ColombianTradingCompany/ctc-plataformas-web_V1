@@ -5,7 +5,8 @@ import { ActionForm } from "@/components/panel/ActionForm";
 import { formatCop } from "@/lib/arena/inscriptions";
 import { GRADO_POR_ID } from "@/lib/grados/definicion";
 import { resumenDeCompras } from "@/lib/compras/reglas";
-import { registrarCompraManual, ubicarCompra } from "../comprasActions";
+import { DESTINO_LABEL } from "@/lib/compras/sampleKits";
+import { destinarCompra, registrarCompraManual, ubicarCompra } from "../comprasActions";
 import styles from "@/components/panel/shared.module.css";
 
 // ── OCP · Manejo de Stock Físico · CTCx Selection · Compras (V5.85 · 2.ª tanda V5.87) ──────────
@@ -37,6 +38,7 @@ type CompraRow = {
   origen: string;
   nota: string | null;
   ubicacion: string | null;
+  destino: "selection" | "sample_kits";
   lots: { id: string; name: string; producer_id: string; fincas: { name: string } | null } | null;
   pvc_editions: { code: string } | null;
   mezcla_componentes: { kg: number | string; mezclas: MezclaEmb | MezclaEmb[] | null }[];
@@ -53,7 +55,7 @@ export default async function ComprasPage() {
     service
       .from("compras")
       .select(
-        "id, lot_id, contract_id, mes, grado, kg, cop_kg, total_cop, precio_fuente, modificador_pct, acordada_at, recibida_at, pagada_at, pago_ref, origen, nota, ubicacion, lots(id, name, producer_id, fincas(name)), pvc_editions(code), mezcla_componentes(kg, mezclas(codigo, status))"
+        "id, lot_id, contract_id, mes, grado, kg, cop_kg, total_cop, precio_fuente, modificador_pct, acordada_at, recibida_at, pagada_at, pago_ref, origen, nota, ubicacion, destino, lots(id, name, producer_id, fincas(name)), pvc_editions(code), mezcla_componentes(kg, mezclas(codigo, status))"
       )
       .order("created_at", { ascending: false }),
     service.from("lots").select("id, name, grade, fincas(name)").eq("stage", "galardonado").neq("grade", "tyrian").order("name"),
@@ -70,6 +72,7 @@ export default async function ComprasPage() {
     { k: "Compras en firme", v: String(resumen.compras), sub: `${resumen.lotes} lote${resumen.lotes === 1 ? "" : "s"}` },
     { k: "Kg comprados (CPS)", v: String(resumen.kgComprados), sub: `${resumen.kgRecibidos} kg recibidos` },
     { k: "En mezclas", v: `${kgEnMezclas} kg`, sub: "asignado a mezclas no anuladas" },
+    { k: "Para Sample Kits", v: `${Math.round(compras.filter((c) => c.destino === "sample_kits").reduce((a, c) => a + Number(c.kg), 0) * 10) / 10} kg`, sub: "compras con destino Sample Kits" },
     { k: "Pagado", v: formatCop(resumen.copPagado), sub: "compras con pago registrado" },
     ...Object.entries(resumen.porGrado).map(([g, v]) => ({ k: `${GRADO_POR_ID[g as keyof typeof GRADO_POR_ID]?.nombre ?? g}`, v: `${v.kg} kg`, sub: `${v.compras} compra${v.compras === 1 ? "" : "s"}` })),
   ];
@@ -77,15 +80,22 @@ export default async function ComprasPage() {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
-        <h1 className={styles.title}>CTCx Selection · Compras</h1>
-        <Link href="/ocp/compras/mezclas" className={styles.backLink}>
-          Mezclas →
-        </Link>
+        <h1 className={styles.title}>Adquisición de Stock Café (Selection/Sample Kits)</h1>
+        <span style={{ display: "flex", gap: 14 }}>
+          <Link href="/ocp/compras/mezclas" className={styles.backLink}>
+            Mezclas →
+          </Link>
+          <Link href="/ocp/sample-kits" className={styles.backLink}>
+            Stock de Sample Kits →
+          </Link>
+        </span>
       </div>
       <p className={styles.subtitle}>
         El registro de cada compra <b>en firme</b> de CTCx: qué café, a quién, cuántos kilos, a qué precio (con su edición del PVC),
-        cuándo se pagó, cuándo llegó y dónde está. Lo comprado se ofrece como <b>CTCx Selection</b>; cómo se combina vive en{" "}
-        <Link href="/ocp/compras/mezclas">Mezclas</Link>; cuánto queda disponible lo dice <Link href="/ocp/ctc-selection">Oferta desde CTCx Selection</Link>.
+        cuándo se pagó, cuándo llegó, dónde está y <b>a qué stock va</b> (owner, 2026-09-25): <b>CTCx Selection</b> —lo que se ofrece en{" "}
+        <Link href="/ocp/ctc-selection">Oferta desde CTCx Selection</Link>— o <b>Sample Kits</b> —el stock con que se arman los kits para
+        compradores y Master Roasters en <Link href="/ocp/sample-kits">Stock de Sample Kits</Link>—. Cómo se combina lo de Selection vive en{" "}
+        <Link href="/ocp/compras/mezclas">Mezclas</Link>.
       </p>
       <p className={styles.meta} style={{ marginBottom: 18 }}>
         Una compra nace sola al <b>pagar el mes</b> de un contrato directa o Black (<Link href="/ocp/contratos">Ofertas CP Aceptadas</Link>). A mano,
@@ -125,6 +135,7 @@ export default async function ComprasPage() {
                   <th style={{ ...td, textAlign: "right" }}>Total</th>
                   <th style={td}>Precio</th>
                   <th style={td}>Recibida</th>
+                  <th style={td}>Destino</th>
                   <th style={td}>En mezcla</th>
                   <th style={td}>Ubicación</th>
                   <th style={td}>Origen</th>
@@ -158,6 +169,15 @@ export default async function ComprasPage() {
                         {c.modificador_pct != null && Number(c.modificador_pct) !== 0 && <> ({Number(c.modificador_pct) > 0 ? "+" : ""}{Number(c.modificador_pct)} %)</>}
                       </td>
                       <td style={td}>{fecha(c.recibida_at)}</td>
+                      <td style={td}>
+                        <ActionForm action={destinarCompra.bind(null, c.id)} submitLabel="Cambiar" pendingLabel="…" buttonClassName="btn btn-sm" style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                          <select name="destino" defaultValue={c.destino} style={{ fontSize: 12 }}>
+                            {(Object.keys(DESTINO_LABEL) as (keyof typeof DESTINO_LABEL)[]).map((d) => (
+                              <option key={d} value={d}>{DESTINO_LABEL[d]}</option>
+                            ))}
+                          </select>
+                        </ActionForm>
+                      </td>
                       <td style={td}>
                         {asignado > 0 ? (
                           <>
@@ -245,6 +265,14 @@ export default async function ComprasPage() {
             <div className={styles.field}>
               <label htmlFor="compra-ubicacion">Dónde está el café</label>
               <input id="compra-ubicacion" name="ubicacion" placeholder="finca · Centro de Calidad · bodega" />
+            </div>
+            <div className={styles.field}>
+              <label htmlFor="compra-destino">A qué stock va</label>
+              <select id="compra-destino" name="destino" defaultValue="selection">
+                {(Object.keys(DESTINO_LABEL) as (keyof typeof DESTINO_LABEL)[]).map((d) => (
+                  <option key={d} value={d}>{DESTINO_LABEL[d]}</option>
+                ))}
+              </select>
             </div>
             <div className={styles.field} style={{ gridColumn: "1 / -1" }}>
               <label htmlFor="compra-nota">Nota (obligatoria)</label>

@@ -9,6 +9,8 @@ import { BUCKET_CTCX, CLAVE_PERFIL_CTCX } from "@/lib/compras/reglas";
 import { formatCop } from "@/lib/arena/inscriptions";
 import { esGradoDeMezcla, resumenDeMezcla, validarCierre, validarComponente, type GradoDeMezcla } from "@/lib/compras/mezclas";
 import { cargarMezcla } from "@/lib/compras/mezclasServidor";
+import { KITS, validarEnvioDeKit, validarItemDeKit, type TipoDeKit } from "@/lib/compras/sampleKits";
+import { cargarKit, asignadoAKitsPorCompra } from "@/lib/compras/sampleKitsServidor";
 
 // ── CTCx Selection · Compras (fase 8 del PLAN_CIRCUITO_DEL_LOTE, V5.85) ──────────────────────
 // Folio 8, paso 19, y la decisión 7 del owner. Una compra en firme nace normalmente del PAGO de un mes de un contrato
@@ -39,6 +41,8 @@ export async function registrarCompraManual(formData: FormData): Promise<ActionR
   const recibidaAt = texto(formData.get("recibida_at"));
   const pagoRef = texto(formData.get("pago_ref"));
   const nota = texto(formData.get("nota"));
+  const destino = texto(formData.get("destino")) ?? "selection";
+  if (destino !== "selection" && destino !== "sample_kits") return { ok: false, error: "El destino es CTCx Selection o Sample Kits." };
   if (!lotId) return { ok: false, error: "Elija el lote." };
   if (!Number.isFinite(kg) || kg <= 0) return { ok: false, error: "Escriba los kilos de CPS comprados." };
   if (!Number.isFinite(copKg) || copKg <= 0) return { ok: false, error: "Escriba el precio pagado por kg (COP)." };
@@ -69,6 +73,7 @@ export async function registrarCompraManual(formData: FormData): Promise<ActionR
       pagada_at: pagadaAt,
       pago_ref: pagoRef,
       origen: "manual",
+      destino,
       nota,
       registrada_por: adminId,
     })
@@ -308,5 +313,142 @@ export async function anularMezcla(mezclaId: string, formData: FormData): Promis
   if (error) return { ok: false, error: "No se pudo anular: " + error.message };
   await service.from("audit_log").insert({ entity_type: "mezcla", entity_id: mezclaId, action: "mezcla_anulada", performed_by: adminId, previous_status: m.status, new_status: "anulada", notes: `${m.codigo} · ${motivo.slice(0, 300)}` });
   revalidaMezclas(mezclaId);
+  return { ok: true };
+}
+
+// ── V5.90 (owner, 2026-09-25): «Adquisición de Stock Café (Selection/Sample Kits)» ─────────────
+// Cada compra dice a qué stock va (`compras.destino`); el stock de Sample Kits se arma en kits (CP · Plus · Max) que salen a
+// un Master Roaster, un comprador o una región. La regla vive en `src/lib/compras/sampleKits.ts` (puro) y los guards de la
+// base repiten lo esencial (componentes solo con el kit armado; lo asignado nunca supera lo comprado).
+
+const revalidaKits = (id?: string) => {
+  revalida();
+  revalidatePath("/ocp/sample-kits");
+  if (id) revalidatePath(`/ocp/sample-kits/${id}`);
+};
+
+/** A qué stock va una compra: CTCx Selection (la oferta) o Sample Kits. Mueve kilos dentro o fuera de la oferta que lee el comprador: `emite`. */
+export async function destinarCompra(compraId: string, formData: FormData): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const destino = texto(formData.get("destino"));
+  if (destino !== "selection" && destino !== "sample_kits") return { ok: false, error: "El destino es CTCx Selection o Sample Kits." };
+  const { data: compra } = await service.from("compras").select("id, destino").eq("id", compraId).maybeSingle();
+  if (!compra) return { ok: false, error: "Compra no encontrada." };
+  if (compra.destino === destino) return { ok: true };
+  if (compra.destino === "sample_kits") {
+    const asignado = await asignadoAKitsPorCompra(service, [compraId]);
+    if ((asignado.get(compraId) ?? 0) > 0) return { ok: false, error: "Esa compra ya tiene kilos en Sample Kits: anule esos kits antes de cambiarle el destino." };
+  }
+  const { error } = await service.from("compras").update({ destino }).eq("id", compraId);
+  if (error) return { ok: false, error: "No se pudo cambiar el destino: " + error.message };
+  await service.from("audit_log").insert({ entity_type: "compra", entity_id: compraId, action: "compra_destinada", performed_by: adminId, previous_status: compra.destino, new_status: destino });
+  revalidaKits();
+  return { ok: true };
+}
+
+export async function crearKit(formData: FormData): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "borrador");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const tipo = texto(formData.get("tipo")) as TipoDeKit | null;
+  if (!tipo || !(tipo in KITS)) return { ok: false, error: "Elija el tipo de kit (CP · Plus · Max)." };
+  const destino = texto(formData.get("destino"));
+  const pedidoId = texto(formData.get("pedido_id"));
+  if (pedidoId) {
+    const { data: pedido } = await service.from("sample_pack_orders").select("id, status").eq("id", pedidoId).maybeSingle();
+    if (!pedido) return { ok: false, error: "Pedido no encontrado." };
+    if (pedido.status === "enviado") return { ok: false, error: "Ese pedido ya salió." };
+  }
+  const { data, error } = await service.from("sample_kits").insert({ tipo, destino, pedido_id: pedidoId, notas: texto(formData.get("notas")), created_by: adminId }).select("id, codigo").single();
+  if (error || !data) return { ok: false, error: "No se pudo crear el kit: " + (error?.message ?? "sin fila") };
+  await service.from("audit_log").insert({ entity_type: "sample_kit", entity_id: data.id, action: "kit_armado", performed_by: adminId, notes: `${data.codigo} · ${KITS[tipo].nombre}${destino ? ` · ${destino}` : ""}` });
+  revalidaKits(data.id);
+  return { ok: true };
+}
+
+export async function agregarLoteAlKit(kitId: string, formData: FormData): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "borrador");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const compraId = texto(formData.get("compra_id"));
+  const kgCps = kgDe(formData.get("kg_cps"));
+  if (!compraId) return { ok: false, error: "Elija la compra." };
+  if (!Number.isFinite(kgCps) || kgCps <= 0) return { ok: false, error: "Escriba los kilos de CPS que salen de la compra." };
+  const kit = await cargarKit(service, kitId);
+  if (!kit) return { ok: false, error: "Kit no encontrado." };
+  if (kit.status !== "armado") return { ok: false, error: "Los lotes de un kit solo cambian mientras está armado." };
+  const { data: compra } = await service.from("compras").select("id, kg, destino, lot_id").eq("id", compraId).maybeSingle();
+  if (!compra) return { ok: false, error: "Compra no encontrada." };
+  if (compra.destino !== "sample_kits") return { ok: false, error: "Esa compra no está destinada a Sample Kits (cámbiele el destino en Adquisición)." };
+  const asignado = await asignadoAKitsPorCompra(service, [compraId]);
+  const nuevo = { compraId, lotId: compra.lot_id, kgCps, disponibleKg: Math.max(0, Math.round((Number(compra.kg) - (asignado.get(compraId) ?? 0)) * 1000) / 1000) };
+  const errores = validarItemDeKit(kit.tipo, kit.items, nuevo);
+  if (errores.length) return { ok: false, error: errores.join(" ") };
+  const { error } = await service.from("sample_kit_items").insert({ kit_id: kitId, compra_id: compraId, kg_cps: kgCps });
+  if (error) return { ok: false, error: "No se pudo añadir el lote al kit: " + error.message };
+  await service.from("audit_log").insert({ entity_type: "sample_kit", entity_id: kitId, action: "kit_lote_anadido", performed_by: adminId, notes: `compra ${compraId.slice(0, 8)} · ${kgCps} kg CPS` });
+  revalidaKits(kitId);
+  return { ok: true };
+}
+
+export async function quitarItemDelKit(kitId: string, itemId: string): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "borrador");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const { data: k } = await service.from("sample_kits").select("status").eq("id", kitId).maybeSingle();
+  if (!k) return { ok: false, error: "Kit no encontrado." };
+  if (k.status !== "armado") return { ok: false, error: "Los lotes de un kit solo cambian mientras está armado." };
+  const { error } = await service.from("sample_kit_items").delete().eq("id", itemId).eq("kit_id", kitId);
+  if (error) return { ok: false, error: "No se pudo quitar el lote: " + error.message };
+  await service.from("audit_log").insert({ entity_type: "sample_kit", entity_id: kitId, action: "kit_lote_quitado", performed_by: adminId, notes: itemId.slice(0, 8) });
+  revalidaKits(kitId);
+  return { ok: true };
+}
+
+/** El kit sale de la casa (a un MR, un comprador o una región): completo, con guía. Si viene de un pedido de la tienda, el pedido queda enviado. `emite`. */
+export async function marcarKitEnviado(kitId: string, formData: FormData): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const kit = await cargarKit(service, kitId);
+  if (!kit) return { ok: false, error: "Kit no encontrado." };
+  if (kit.status !== "armado") return { ok: false, error: "Solo se envía un kit armado." };
+  const errores = validarEnvioDeKit(kit.tipo, kit.items);
+  if (errores.length) return { ok: false, error: errores.join(" ") };
+  const guia = texto(formData.get("guia"));
+  const notas = texto(formData.get("notas")) ?? kit.notas;
+  const now = new Date().toISOString();
+  const { error } = await service.from("sample_kits").update({ status: "enviado", enviado_at: now, guia, notas }).eq("id", kitId);
+  if (error) return { ok: false, error: "No se pudo marcar el envío: " + error.message };
+  if (kit.pedidoId) {
+    await service.from("sample_pack_orders").update({ status: "enviado", enviado_at: now, enviado_por: adminId, guia, notas_ctc: notas }).eq("id", kit.pedidoId).neq("status", "enviado");
+  }
+  await service.from("audit_log").insert({ entity_type: "sample_kit", entity_id: kitId, action: "kit_enviado", performed_by: adminId, notes: `${kit.codigo} · ${KITS[kit.tipo].nombre} · ${kit.items.length} lotes${kit.destino ? ` → ${kit.destino}` : ""}${guia ? ` · guía ${guia}` : ""}` });
+  revalidaKits(kitId);
+  revalidatePath("/ocp/muestras");
+  return { ok: true };
+}
+
+export async function anularKit(kitId: string, formData: FormData): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "borrador");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const motivo = texto(formData.get("motivo"));
+  if (!motivo) return { ok: false, error: "Anular lleva motivo." };
+  const { data: k } = await service.from("sample_kits").select("status, codigo").eq("id", kitId).maybeSingle();
+  if (!k) return { ok: false, error: "Kit no encontrado." };
+  if (k.status === "anulado") return { ok: false, error: "Ya estaba anulado." };
+  const { error } = await service.from("sample_kits").update({ status: "anulado", anulado_motivo: motivo, anulado_at: new Date().toISOString() }).eq("id", kitId);
+  if (error) return { ok: false, error: "No se pudo anular: " + error.message };
+  await service.from("audit_log").insert({ entity_type: "sample_kit", entity_id: kitId, action: "kit_anulado", performed_by: adminId, previous_status: k.status, new_status: "anulado", notes: `${k.codigo} · ${motivo.slice(0, 300)}` });
+  revalidaKits(kitId);
   return { ok: true };
 }

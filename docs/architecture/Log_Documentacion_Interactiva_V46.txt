@@ -445,3 +445,24 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
   3 contestada (8 %), 5 kg de CPS (la conversión es del Modelo de Producción); **la 4 (¿la mezcla es un lote nuevo?) sigue del owner**.
 - PENDIENTE: conducir con `prueba-*` (Etapa 2); llevar la mezcla a la vitrina cuando el owner conteste la 4; wrap V47 (17 asientos).
 (commit: 8a5e25a)
+
+## [2026-09-25] V5.88 · Consolas — 2.ª tanda de Gestión de Muestras: la revisión de almacenaje a los 90 días y los pedidos de muestra
+- REGLA NUEVA (DICT `almacenaje`): `src/lib/muestras/almacenaje.ts` (puro): `DIAS_REVISION_ALMACENAJE` = 90, `KG_REVISION_ALMACENAJE`
+  = la porción de testeo de `PARTICION_KG` (1 kg); `revisionDeAlmacenaje({evaluadaAt, ultimaRevisionAt}, ahora)` → debida a los 90 días
+  de la catación o de la última revisión (cada revisión reinicia el reloj). Sin campo en la base (guardián punto 4).
+- CARGA: `src/lib/muestras/almacenajeCarga.ts` (`revisionesDeAlmacenaje`): lotes galardonados con evaluación que rige (`rige_grado`),
+  sin contrato cerrado (completed · cancelled · ruptura), su testeo con saldo y su último movimiento `revision_almacenaje`; clave de
+  tarea `muestra:<lote>:<fecha del ciclo>`.
+- TABLERO DE EJECUCIÓN: tipo de tarea `muestra` (`TIPOS_DE_TAREA`, dueña OCP), tarea «Revisión de almacenaje — lote X (catado hace N
+  días)» → `/ocp/muestras?tab=almacenaje#lote-<id>`.
+- NODO OCP `/ocp/muestras`: pestaña «Revisión de almacenaje» (debidas con `anotarRevisionDeAlmacenaje`: kg usados del testeo +
+  resultado; próximas con su cuenta atrás) y pestaña «Pedidos de muestra» que ARMA (`agregarMuestraAlPedido`: muestra con saldo +
+  gramos → salida `a_comprador` con `pedido_id`; el pedido pasa a preparado) y DESPACHA (`marcarPedidoEnviado`: guía, notas →
+  enviado). El stock enseña el reloj de cada lote y las notas de cada salida.
+- DATOS: migración `muestras_pedidos_envio` (acta): `sample_pack_status` + preparado · enviado; `sample_pack_orders.preparado_at/
+  enviado_at/enviado_por/guia/notas_ctc`; `muestra_movimientos.pedido_id`.
+- Lista blanca: `anotarRevisionDeAlmacenaje`, `agregarMuestraAlPedido` (borrador); `marcarPedidoEnviado` emite.
+- Guardianes: `qa-muestras-check` 41 → 67 (la regla desde ALINEACION §3, el kilo desde el folio, la tarea, los pedidos).
+- PENDIENTE: decisiones 1, 4 y 5 del brief (ubicaciones fijas; muestra de UN lote desde la tienda; pack de cosecha); que el comprador
+  vea el estado de su pedido (cherry-picked); conducir con `prueba-*`; wrap V47 (18 asientos).
+(commit: pendiente)

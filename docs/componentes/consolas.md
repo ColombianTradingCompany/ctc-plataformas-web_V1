@@ -126,7 +126,7 @@ productores y siempre con rastro; la etiqueta del desacoplado no recibe correos;
 (67 — la regla de los recordatorios desde el folio 7, rastro en cada movimiento de una certificación, el cron con secreto, el
 chequeo EUDR y la transcripción de FT2 en la vista del lote; y el lado de KR) · **`qa-solicitud-evaluacion-check.mjs`** (78, V5.80 — la
 tarifa, los mínimos, la partición y «contra entrega» se leen DEL PLAN; el pago se confirma sobre la factura; los tres estados del bache;
-el rail en el orden de la respuesta 7; el lado de KR) · **`qa-muestras-check.mjs`** (41, V5.80 — los cinco puntos del brief: saldo derivado
+el rail en el orden de la respuesta 7; el lado de KR) · **`qa-muestras-check.mjs`** (67, V5.80 · 2.ª tanda V5.88 — los cinco puntos del brief: saldo derivado
 y nunca negativo, recibo = filas + marca o nada, toda muestra de un lote, la alerta de 90 días sin campo aparte, acciones en la lista
 blanca) · `qa-circuito-check.mjs` (41 — la tabla de verdad del circuito desde las notas y el folio, TOTAL y MONÓTONO; con
 «solicitada» y «evaluado») · **`qa-centro-calidad-check.mjs`** (65, V5.81 — el Centro de Calidad: anonimato, módulo por credencial,
@@ -198,8 +198,8 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   la factura, recibo con kilos), `terminos.ts` ($200.000, mínimos, 2 kg, contra entrega), Gestión de Muestras 1.ª tanda (partición
   500/500/1000, saldo derivado, salidas, pedidos de muestra), los **Baches de Evaluación** (abierto → en_centro → cerrado; sin
   laboratorio ni prueba) y el circuito con «solicitada». ⚠️ **Hasta la fase 4** el Q-Grader se teclea al enviar el bache y CTCx registra
-  el veredicto en «Lotes en Evaluación» (respuesta 5: con la credencial del Centro deja de teclearse). **Diferido de la fase 3**: la 2.ª
-  tanda de Muestras (alerta de 90 días como tarea derivada; muestras «para comprador» y el pack de cosecha). **Fase 4 EJECUTADA
+  el veredicto en «Lotes en Evaluación» (respuesta 5: con la credencial del Centro deja de teclearse). **Diferido de la fase 3** — la 2.ª
+  tanda de Muestras — **HECHO en la V5.88** (alerta de 90 días como tarea derivada; muestras «para comprador»; el pack de cosecha espera las decisiones 4 y 5). **Fase 4 EJECUTADA
   en la V5.81**: el módulo **Evaluación de Lotes** del Centro de Calidad (`/socios/centro-calidad/panel/evaluacion`, código de
   `socios`): los baches van a UNA credencial con el módulo activo (`partner_accounts.modulos`, conmutado en `/bcp/socios/[nodo]`)
   y el Q-Grader es su contacto; evalúa lote a lote anónimo con la planilla SCA **o CVA** + rueda (`src/lib/catacion/rueda.ts`) y
@@ -232,15 +232,20 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   con el perfil (`perfilCtcx.ts`), `public_lot_catalog.ctc_selection` desde `compras`, el CRM de `black_negotiations` retirado (un
   Black recibe temporada/directa como los demás), lateral «CTCx Selection» del circuito. `qa-compras-check` (51). **Con esto la
   Etapa 1 queda ejecutada en código.** **Sigue**: conducir las fases 6–8 con `prueba-*` (Etapa 2: correr todo con Asistencia y
-  Desacoplado); la
-  2.ª tanda de Muestras; el wrap V47 desde WRAP-COMMIT-PUSH. **Recordatorios de mora HECHOS en la V5.86** (fila «Recordatorios»
+  Desacoplado); el
+  wrap V47 desde WRAP-COMMIT-PUSH. **Recordatorios de mora HECHOS en la V5.86** (fila «Recordatorios»
   del §4): el cron semanal recuerda al productor el pedido del mes sin envío mientras esté en mora —desde el recargo—, hasta 4 veces
   por mes, por correo (remitente único) y nota en su feed, con rastro; nunca cambia un estado (decisión 6). `src/lib/trato/mora.ts`
   (puro) + `moraRecordatorios.ts`; `contract_months.recordatorios_mora`; `qa-trato` 90 → 106 (§7). **2.ª tanda de Compras HECHA en la V5.87**: `mezclas` +
   `mezcla_componentes` (Black 3–4 orígenes y/o variedades · Red una sola variedad · una carga por productor; la regla LEÍDA de
   `lectura.ts` en `src/lib/compras/mezclas.ts` —al añadir y al cerrar— y repetida por `guard_mezcla_cerrada`; borrador → cerrada ·
   anulada, nada se borra; lo asignado descuenta de lo disponible), `compras.ubicacion` (decisión 2, texto libre), todo en kg de CPS
-  (decisión 5). Queda del owner la decisión 4 (¿la mezcla es un lote nuevo con código público y ficha?). `qa-compras` 51 → 73.
+  (decisión 5). Queda del owner la decisión 4 (¿la mezcla es un lote nuevo con código público y ficha?). `qa-compras` 51 → 73. **2.ª tanda de
+  Muestras HECHA en la V5.88**: la revisión de almacenaje a los 90 días (owner 2026-09-16: no se recata; 1 kg de testeo) DERIVADA de
+  la evaluación que rige y de la última revisión anotada —tarea `muestra` del Tablero de Ejecución y pestaña de `/ocp/muestras`;
+  `anotarRevisionDeAlmacenaje` es una salida más del testeo con su resultado— y los pedidos de pack de los compradores
+  (`agregarMuestraAlPedido` → `marcarPedidoEnviado`; `sample_pack_orders` gana preparado/enviado y `muestra_movimientos.pedido_id`).
+  Quedan del owner las decisiones 1, 4 y 5 del brief. `qa-muestras` 41 → 67.
   También en la V5.76, las cuatro indicaciones del owner sobre `/ocp/kr`: sin «Nuevo lote», agrupada por productor, el mapa por
   elemento, y «Ver fincas» con el filtro de Pasaporte por etapa.
 - **LAS TRES RUTAS DEL PROVEEDOR (owner, 2026-09-23)** — brief `briefs/consolas-rutas-del-proveedor.md`, con las siete

@@ -19,6 +19,23 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.88] — 2026-09-25 (commit pendiente)
+
+- **Añadido**: **la revisión de almacenaje a los 90 días** (2.ª tanda de Gestión de Muestras; owner, 2026-09-16: «a más de 90 días
+  de la catación no se recata, se hace revisión de almacenaje con 1 kg»). Se DERIVA de la fecha de la evaluación que rige el grado y
+  de la última revisión anotada — sin campo aparte (`src/lib/muestras/almacenaje.ts`, puro; el kilo es la porción de testeo del
+  folio 7) — y sale como tarea `muestra` del Tablero de Ejecución y como pestaña de `/ocp/muestras`; anotarla es una salida más
+  de la muestra de testeo con su resultado. Un lote cuyo último contrato ya cerró no se revisa.
+- **Añadido**: **las muestras para comprador**: los pedidos de pack (`sample_pack_orders`) se arman con salidas «a un comprador»
+  ligadas al pedido (`agregarMuestraAlPedido`, borrador) y se marcan **enviados** con guía (`marcarPedidoEnviado`, emite); el
+  pedido pasa por pedido → en preparación → enviado. Qué lotes y cuántos gramos van los decide CTC (decisiones 4 y 5 del brief:
+  del owner).
+- **Datos**: migración `muestras_pedidos_envio` (acta en `docs/migraciones/`): `sample_pack_status` + `preparado` · `enviado`;
+  `sample_pack_orders.preparado_at/enviado_at/enviado_por/guia/notas_ctc`; `muestra_movimientos.pedido_id`. Ninguna columna para
+  la alerta de los 90 días.
+- **Docs**: `qa-muestras-check` 41 → 67 (la regla de los 90 días leída de `ALINEACION` §3; la tarea derivada; los pedidos).
+  La columna «laboratorio» del brief no vuelve: el Centro de Calidad la sustituyó (fase 4).
+
 ## [V5.87] — 2026-09-25 (commit 8a5e25a)
 
 - **Añadido**: **las mezclas de CTCx Selection** (2.ª tanda del brief de Compras): `/ocp/compras/mezclas` arma una mezcla como

@@ -64,3 +64,19 @@ export function salidaValida(saldo: number, kg: number): boolean {
   const k = Number(kg);
   return Number.isFinite(k) && k > 0 && round3(saldo - k) >= 0;
 }
+
+// ── Los pedidos de muestra de los compradores (2.ª tanda · V5.88) ─────────────────────────────
+// `sample_pack_orders` (tabla de cherry-picked: el comprador la inserta desde la tienda) pasa por tres estados desde la
+// V5.88: pedido → preparado (CTC le asignó muestras: salidas `a_comprador` con `pedido_id`) → enviado (con guía).
+export type EstadoDePedidoDeMuestra = "ordered" | "preparado" | "enviado";
+
+export const PEDIDO_STATUS_LABEL: Record<EstadoDePedidoDeMuestra, string> = {
+  ordered: "Pedido",
+  preparado: "En preparación",
+  enviado: "Enviado",
+};
+
+/** Lo que va en un pedido: la suma de sus salidas hacia el comprador. Se deriva de los movimientos, nunca se guarda. */
+export function kgDelPedido(salidas: readonly { kg: number | string }[]): number {
+  return round3(salidas.reduce((s, m) => s + (Number(m.kg) || 0), 0));
+}

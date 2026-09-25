@@ -25,8 +25,10 @@ export type TareaDeConsola = {
   consola: PanelConsoleKey;
 };
 
-/** Los tipos de tarea que existen. Uno nuevo se declara aquí o su casilla no se puede marcar. */
-export const TIPOS_DE_TAREA = ["lead", "finca", "comm", "humidity", "lot"] as const;
+/** Los tipos de tarea que existen. Uno nuevo se declara aquí o su casilla no se puede marcar.
+ *  `muestra` (V5.88): la revisión de almacenaje a los 90 días de la catación (Gestión de Muestras, 2.ª tanda); su clave lleva
+ *  el ciclo (`muestra:<lote>:<fecha>`) para que una casilla marcada no tape la revisión siguiente. */
+export const TIPOS_DE_TAREA = ["lead", "finca", "comm", "humidity", "lot", "muestra"] as const;
 export type TipoDeTarea = (typeof TIPOS_DE_TAREA)[number];
 
 export function tipoDeLaTarea(key: string): TipoDeTarea | null {

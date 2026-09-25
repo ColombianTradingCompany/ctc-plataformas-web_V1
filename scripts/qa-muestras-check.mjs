@@ -1,4 +1,4 @@
-// Guardián de GESTIÓN DE MUESTRAS (V5.80, 1.ª tanda del brief `docs/componentes/briefs/consolas-gestion-de-muestras.md`).
+// Guardián de GESTIÓN DE MUESTRAS (V5.80, 1.ª tanda · V5.88, 2.ª tanda del brief `docs/componentes/briefs/consolas-gestion-de-muestras.md`).
 //
 //   node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/qa-muestras-check.mjs
 //
@@ -15,8 +15,10 @@
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { particionDeMuestra, saldoDe, salidaValida, MOTIVO_LABEL, TIPO_LABEL } from "../src/lib/muestras/particion.ts";
+import { particionDeMuestra, saldoDe, salidaValida, kgDelPedido, MOTIVO_LABEL, TIPO_LABEL, PEDIDO_STATUS_LABEL } from "../src/lib/muestras/particion.ts";
+import { DIAS_REVISION_ALMACENAJE, KG_REVISION_ALMACENAJE, revisionDeAlmacenaje } from "../src/lib/muestras/almacenaje.ts";
 import { CONSOLES } from "../src/lib/panel/consoles.ts";
+import { TIPOS_DE_TAREA, consolasDeLaTarea } from "../src/lib/panel/tareas.ts";
 
 let ok = 0;
 const fallos = [];
@@ -82,23 +84,51 @@ const particion = lee("src/lib/muestras/particion.ts");
   check("las dos tablas tienen RLS y cero políticas (solo service role)", (migracion.match(/enable row level security/g) ?? []).length === 2 && !/create policy/.test(migracion));
 }
 
-// ── (4) La alerta de los 90 días se DERIVA (segunda tanda): sin campo aparte ──
+// ── (4) La alerta de los 90 días se DERIVA (2.ª tanda, V5.88): de la fecha de la evaluación, sin campo aparte ──
+// La regla del owner está escrita en ALINEACION §3 (2026-09-16): «llamado a más de 90 días de la catación: no se recata, se hace
+// revisión de almacenaje con 1 kg». Las cifras se leen de AHÍ, no del módulo.
 {
-  check("la base no tiene un campo de alerta ni de revisión programada", !/alerta|revision_at|dias_90|revisar_en/.test(migracion));
-  check("la página lo declara como segunda tanda derivada", /90 días como tarea derivada/.test(lee("src/app/ocp/(app)/muestras/page.tsx")));
+  const alineacion = lee("docs/ALINEACION.md");
+  const regla = alineacion.match(/llamado a más de (\d+) días de la catación: \*\*no se recata\*\*, se hace \*\*revisión de almacenaje con (\d+) kg\*\*/);
+  check("la regla del owner (ALINEACION §3, 2026-09-16) fija 90 días y 1 kg", !!regla && DIAS_REVISION_ALMACENAJE === Number(regla[1]) && KG_REVISION_ALMACENAJE === Number(regla[2]));
+  check("el kilo es la porción de testeo del folio 7 (no un peso inventado)", KG_REVISION_ALMACENAJE === particionDeMuestra(2).find((p) => p.tipo === "testeo").kg);
+  const acta88 = lee("docs/migraciones/2026-09-25_muestras_pedidos_envio.sql");
+  // (el DDL, no sus comentarios: el acta explica la alerta con esa palabra)
+  check("la base no tiene un campo de alerta ni de revisión programada", !/alerta|revision_at|dias_90|revisar_en/.test(migracion) && !/revision_at|proxima_revision|alerta/.test(acta88.replace(/^--.*$/gm, "")));
+  const HOY = new Date("2026-10-01T00:00:00Z");
+  const hace = (d) => new Date(HOY.getTime() - d * 86_400_000).toISOString();
+  check("sin evaluación que rija no hay reloj", !revisionDeAlmacenaje({ evaluadaAt: null, ultimaRevisionAt: null }, HOY).debida);
+  check("a los 89 días de la catación: nada", !revisionDeAlmacenaje({ evaluadaAt: hace(89), ultimaRevisionAt: null }, HOY).debida);
+  check("a los 90: toca revisar", revisionDeAlmacenaje({ evaluadaAt: hace(90), ultimaRevisionAt: null }, HOY).debida);
+  check("una revisión anotada reinicia el reloj", !revisionDeAlmacenaje({ evaluadaAt: hace(200), ultimaRevisionAt: hace(10) }, HOY).debida);
+  check("y a los 90 de esa revisión vuelve a tocar", revisionDeAlmacenaje({ evaluadaAt: hace(200), ultimaRevisionAt: hace(90) }, HOY).debida);
+  const almacenaje = lee("src/lib/muestras/almacenaje.ts").replace(/\/\*[\s\S]*?\*\/|^\s*\/\/.*$/gm, "");
+  check("almacenaje.ts es puro y lee el kilo de particion.ts", !/supabase|server-only/.test(almacenaje) && almacenaje.includes('from "./particion"'));
+  const carga = lee("src/lib/muestras/almacenajeCarga.ts");
+  check("la carga deriva de la evaluación que rige y del último movimiento revision_almacenaje", carga.includes('.eq("rige_grado", true)') && carga.includes('m.motivo === "revision_almacenaje"') && carga.includes("revisionDeAlmacenaje({ evaluadaAt, ultimaRevisionAt }, ahora)"));
+  check("un lote con el último contrato cerrado ya no se revisa", /CONTRATO_CERRADO = new Set\(\["completed", "cancelled", "ruptura"\]\)/.test(carga));
+  const tareas = lee("src/lib/panel/tareasCarga.ts");
+  check("el Tablero de Ejecución la enseña como tarea derivada `muestra` (dueña OCP)", TIPOS_DE_TAREA.includes("muestra") && consolasDeLaTarea("muestra:x:2026-10-01").includes("ocp") && tareas.includes("revisionesDeAlmacenaje(service)") && tareas.includes("key: r.claveDeTarea"));
+  check("la clave de la tarea lleva el ciclo, para que una casilla vieja no tape la siguiente", carga.includes("claveDeTarea: `muestra:${lot.id}:${(ultimaRevisionAt ?? evaluadaAt).slice(0, 10)}`"));
+  check("anotar la revisión es una salida de la muestra de testeo, con resultado, que cabe en el saldo", acciones.includes('motivo: "revision_almacenaje"') && acciones.includes("if (!resultado) return") && acciones.includes("salidaValida(conSaldo.saldo, usa)") && acciones.includes('.eq("tipo", "testeo")'));
+  check("y la página tiene la pestaña de almacenaje con la regla a la vista", lee("src/app/ocp/(app)/muestras/page.tsx").includes("DIAS_REVISION_ALMACENAJE") && lee("src/app/ocp/(app)/muestras/page.tsx").includes("anotarRevisionDeAlmacenaje.bind"));
 }
 
 // ── (5) Las acciones, en la lista blanca con su clase ───────────────────────
 {
   const plan = lee("docs/BCP_USER_ADMIN_PLAN.md");
   const blanca = plan.slice(plan.indexOf("**La lista blanca de borradores**"), plan.indexOf("**Lo que parece un borrador"));
-  for (const fn of ["ubicarMuestra", "anotarSalidaDeMuestra"]) {
+  for (const fn of ["ubicarMuestra", "anotarSalidaDeMuestra", "anotarRevisionDeAlmacenaje", "agregarMuestraAlPedido"]) {
     const i = acciones.indexOf(`export async function ${fn}(`);
     const cuerpo = i < 0 ? "" : acciones.slice(i, acciones.indexOf("\nexport async function ", i + 1) < 0 ? undefined : acciones.indexOf("\nexport async function ", i + 1));
     check(`${fn} es borrador en el código (cuaderno interno)`, cuerpo.includes('permisoDeEscritura("ocp", "borrador")'));
     check(`y está en la lista blanca del plan`, blanca.includes(`\`${fn}\``));
   }
   check("el recibo es emite (el productor lo ve)", lee("src/app/ocp/(app)/solicitudesActions.ts").includes('permisoDeEscritura("ocp", "emite")'));
+  {
+    const i = acciones.indexOf("export async function marcarPedidoEnviado(");
+    check("marcar un pedido enviado es emite (el comprador ve cambiar su pedido)", i > 0 && acciones.slice(i).includes('permisoDeEscritura("ocp", "emite")'));
+  }
   check("anotar una salida deja rastro", acciones.includes('entity_type: "muestra"') && acciones.includes('action: "salida"'));
 }
 
@@ -110,6 +140,20 @@ const particion = lee("src/lib/muestras/particion.ts");
   const stock = CONSOLES.ocp.nav.find((g) => g.label === "OCP · Manejo de Stock Físico");
   check("el rail sigue teniendo Gestión de Muestras en Stock Físico", !!stock?.links.some((l) => l.href === "/ocp/muestras" && l.label === "Gestión de Muestras"));
   check("enviar un bache al Centro anota la salida de la muestra de evaluación", /motivo: "a_centro"/.test(lee("src/app/ocp/(app)/nominadosActions.ts")));
+}
+
+// ── 7. Las muestras para comprador (2.ª tanda, V5.88): el pedido se arma con salidas y sale con guía ──
+{
+  const acta = lee("docs/migraciones/2026-09-25_muestras_pedidos_envio.sql");
+  check("el pedido de pack gana «preparado» y «enviado», y lo que CTC escribe al despachar", acta.includes("add value if not exists 'preparado'") && acta.includes("add value if not exists 'enviado'") && ["preparado_at", "enviado_at", "enviado_por", "guia", "notas_ctc"].every((c) => acta.includes(c)));
+  check("cada salida a un comprador se liga a su pedido (a quién se mandó, del mismo cuaderno que el saldo)", acta.includes("add column pedido_id uuid references public.sample_pack_orders(id)") && acciones.includes('motivo: "a_comprador"') && acciones.includes("pedido_id: pedidoId"));
+  check("los estados del módulo son los de la base", JSON.stringify(Object.keys(PEDIDO_STATUS_LABEL)) === JSON.stringify(["ordered", "preparado", "enviado"]));
+  check("lo que va en el pedido se deriva de sus salidas", kgDelPedido([{ kg: 0.125 }, { kg: "0.125" }]) === 0.25);
+  check("añadir al pedido respeta el saldo y no admite un pedido ya enviado", acciones.includes("salidaValida(saldo, kg)") && acciones.includes('pedido.status === "enviado"'));
+  check("marcar enviado exige al menos una muestra en el pedido", acciones.includes("if (!count) return"));
+  const pagina = lee("src/app/ocp/(app)/muestras/page.tsx");
+  check("la pestaña de pedidos arma y despacha", pagina.includes("agregarMuestraAlPedido.bind") && pagina.includes("marcarPedidoEnviado.bind") && pagina.includes("kgDelPedido("));
+  check("la tienda sigue sin tocar lo que CTC escribe (solo inserta el pedido)", !/preparado|enviado_at|guia/.test(lee("src/components/cherry-picked/CherryPickedExperience.tsx")));
 }
 
 if (fallos.length) {

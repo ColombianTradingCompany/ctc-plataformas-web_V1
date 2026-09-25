@@ -248,6 +248,8 @@ Toda acción del servidor declara su **clase** —qué HACE—, y la clase decid
 | `markInboundEmailRead` | LCP · Buzón | leído / no leído; si un viewer no pudiera, abrir su propio correo fallaría en silencio |
 | `ubicarMuestra` | OCP · Gestión de Muestras | dónde queda la muestra y quién la tiene: el cuaderno interno del estante; nadie de fuera lo ve (V5.80) |
 | `anotarSalidaDeMuestra` | OCP · Gestión de Muestras | cuántos gramos salieron y por qué (cata, análisis, al Centro…); se corrige con otra anotación y no avisa a nadie (V5.80) |
+| `anotarRevisionDeAlmacenaje` | OCP · Gestión de Muestras | la revisión de almacenaje a los 90 días con el kilo de testeo: una salida más con su resultado en notas; nadie de fuera la ve (V5.88) |
+| `agregarMuestraAlPedido` | OCP · Gestión de Muestras | qué muestra y cuántos gramos van a un pedido de pack: el comprador no ve nada hasta que `marcarPedidoEnviado` (emite) lo despacha (V5.88) |
 
 **Lo que parece un borrador y NO lo es** (para que nadie lo «arregle»): `logProducerComm` —la nota sobre un productor—
 **la ve el productor** en su panel; `guardarContexto` es la doctrina que lee la redacción asistida; `recordAnchor` alimenta

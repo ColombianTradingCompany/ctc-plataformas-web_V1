@@ -1,8 +1,12 @@
 # Brief · Gestión de Muestras  (componente: consolas · slug: `gestion-de-muestras` · 2026-09-19)
 
 > Fase 6 del overhaul (`docs/OVERHAUL_CONSOLAS_PLAN.md`, D9). Primera entrada del grupo nuevo **OCP · Manejo de Stock Físico**.
-> El plan la describe en una línea: «una tabla de muestras: qué llegó, cuánto, dónde está, a quién se mandó». Estado: **en
-> scoping — espera al owner.** No hay un solo dato que migrar: cero muestras enviadas, cero recibidas.
+> El plan la describe en una línea: «una tabla de muestras: qué llegó, cuánto, dónde está, a quién se mandó». Estado: **1.ª tanda EJECUTADA en la V5.80 (fase 3 del `PLAN_CIRCUITO_DEL_LOTE`) · 2.ª tanda EJECUTADA en la V5.88**: la alerta de los 90 días como tarea
+> derivada del Tablero (`src/lib/muestras/almacenaje.ts`, sin campo aparte) con su pestaña «Revisión de almacenaje», y las muestras para comprador (el pedido de
+> pack se arma con salidas `a_comprador` ligadas al pedido y sale con guía). La columna «laboratorio» no vuelve: el Centro de Calidad la sustituyó (fase 4).
+> Decisiones: la 2 la fijó el folio 7 (500/500/1000); la 3 se ejecutó como revisión INTERNA con el kilo de testeo, sin costo y sin bloquear la oferta (visible, no
+> automática) — el owner confirma; la 1 (ubicaciones y custodio) sigue en texto libre; la 4 y la 5 (muestra de UN lote desde la tienda; composición del pack de
+> cosecha) siguen del owner.** No hay un solo dato que migrar: cero muestras enviadas, cero recibidas.
 > **V5.63:** el owner pidió el cuadro completo en el rail, así que la entrada YA EXISTE (`/ocp/muestras`) con una página que dice que el
 > módulo no existe, qué será y qué falta decidir. Cuando este brief se apruebe y se construya, esa página se reemplaza entera.
 

@@ -523,4 +523,4 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
 - CIERRE DE LA TANDA DEL OWNER (2026-09-25): Muestras 1 (bodegas, V5.89) · 4 y 5 (2 kg exclusivos de CTCx + Sample Kits, V5.89/V5.90)
   · Compras 4 (esta) · cuentas `prueba-*` eliminadas · one-pager CVA entregado. Sigue el wrap V47 desde WRAP-COMMIT-PUSH y la Etapa 2
   (conducir el proceso con Asistencia a Proveedores y Proveedor Desacoplado hasta el Catálogo Activo).
-(commit: pendiente)
+(commit: 015e284)

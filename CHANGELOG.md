@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.91] — 2026-09-25 (commit pendiente)
+## [V5.91] — 2026-09-25 (commit 015e284)
 
 - **Cambiado**: **las mezclas de CTCx Selection por composición** (owner, 2026-09-25; decisión 4 del brief de Compras). **La regla
   «3 a 4 productores, una carga por productor, Red de una sola variedad» se retira de raíz.** Cada lote trae su composición en la

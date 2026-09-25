@@ -6,13 +6,14 @@ import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { ARENA_FEE_COP, MAX_BATCH_LOTS, avanzarAFilaSiCompleta, dueFor, formatCop, type InscriptionStatus } from "@/lib/arena/inscriptions";
 import { claimCampaignCode, insertEntryCode } from "@/lib/arena/entryCodes";
 import { generateMejorasDoc } from "@/lib/arena/mejoras";
-import { labEvaluationHasData, labEvaluationScaData, labEvaluationScore, toLabEvaluationList, computeFactor, type LabEvaluation } from "@/lib/arena/labEvaluation";
+import { labEvaluationHasData, labEvaluationScaData, protocoloDelPunto, puntoDeLaPlanilla, toLabEvaluationList, computeFactor, type LabEvaluation } from "@/lib/arena/labEvaluation";
+import { decidirPorPunto, puntoDeFila, puntoNativo, rotuloDelPunto, type PuntoSca } from "@/lib/arena/homologacion";
 import { currentSeason, lotSeasonCount, MAX_SEASONS_PER_LOT } from "@/lib/arena/seasons";
 import { saldoDe } from "@/lib/muestras/particion";
 import { anularRecibo } from "@/lib/muestras/recibo";
 import { normalizaRueda } from "@/lib/catacion/rueda";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
-import { GRADOS, gradoPorPuntaje, redondeaPuntaje } from "@/lib/grados/definicion";
+import { GRADOS, redondeaPuntaje } from "@/lib/grados/definicion";
 import { REEVALUACION, TARIFA_EVALUACION_COP } from "@/lib/trato/terminos";
 
 // ── El tramo pagado del lote, lado OCP (era «Nominados»; V5.80 = fase 3 del PLAN_CIRCUITO_DEL_LOTE) ──
@@ -617,17 +618,17 @@ export async function recordEvaluationVerdict(
 
   // V5.81 · el camino del Centro de Calidad: el Q-Grader ya dio de alta el lote (fila `pending`) y CTCx CONFIRMA.
   // Esa fila es la evaluación oficial; no se teclea otra planilla.
-  let centroRow: { id: string; sca_total: number | string | null } | null = null;
+  let centroRow: { id: string; sca_total: number | string | null; punto: unknown } | null = null;
   if (extras?.centroEvaluationId) {
     const { data: row } = await service
       .from("lot_evaluations")
-      .select("id, lot_id, status, source, sca_total")
+      .select("id, lot_id, status, source, sca_total, punto")
       .eq("id", extras.centroEvaluationId)
       .maybeSingle();
     if (!row || row.lot_id !== lotId || row.source !== "q_grader_batch" || row.status !== "pending") {
       return { ok: false, error: "Esa alta del Centro ya no está pendiente." };
     }
-    centroRow = { id: row.id, sca_total: row.sca_total };
+    centroRow = { id: row.id, sca_total: row.sca_total, punto: row.punto };
   }
 
   // Sin alta del Centro (hasta que lo tenga): si el veredicto llega con una planilla nueva, se AÑADE a la lista
@@ -638,7 +639,10 @@ export async function recordEvaluationVerdict(
     ...(newEval ? [{ ...newEval, registered_at: new Date().toISOString() }] : []),
   ];
   const lastEval = centroRow ? null : list.length ? list[list.length - 1] : null;
-  const effectiveScore = centroRow ? Number(centroRow.sca_total) : (score ?? (lastEval ? labEvaluationScore(lastEval) : null));
+  // V5.92: el PUNTO con su procedencia (nativo SCA 2004, u homologado desde CVA con intervalo); lo que se guarda como puntaje es su
+  // piso (R4 del informe del Q-Grader). Un puntaje tecleado a mano es un SCA 2004 nativo.
+  const puntoEfectivo: PuntoSca | null = centroRow ? puntoDeFila(centroRow) : score != null ? puntoNativo(score) : lastEval ? puntoDeLaPlanilla(lastEval) : null;
+  const effectiveScore = puntoEfectivo?.bajo ?? null;
   const resultCols = {
     sondeo_result_notes: cleanNotes,
     sondeo_score: effectiveScore,
@@ -651,14 +655,19 @@ export async function recordEvaluationVerdict(
     // ── El galardón nace aquí (V5.17) ────────────────────────────────────
     // El puntaje manda: el grado se deriva, jamás se digita. Sin puntaje no
     // hay galardón; con puntaje bajo el camino honesto es «rechazado».
-    if (effectiveScore == null) {
-      return { ok: false, error: "Registre una planilla con puntaje SCA (o digite el puntaje) antes de galardonar." };
+    if (effectiveScore == null || !puntoEfectivo) {
+      return { ok: false, error: "Registre una planilla con Punto (SCA 2004 completo, o CVA completo) o digite el puntaje SCA antes de galardonar." };
     }
     const puntaje = redondeaPuntaje(effectiveScore);
-    const grado = gradoPorPuntaje(puntaje);
-    if (!grado) {
+    // El puntaje manda: el grado FIRME se lee del piso del Punto; un homologado nunca da Tyrian; si el intervalo cruza los 80, recata.
+    const decision = decidirPorPunto(puntoEfectivo);
+    if (decision.tipo === "pendiente_recata") {
+      return { ok: false, error: `El Punto homologado ${puntoEfectivo.bajo}–${puntoEfectivo.alto} cruza los 80: ni galardón ni «No supera» hasta una recata SCA 2004 nativa (acuerde una re-evaluación).` };
+    }
+    if (decision.tipo !== "galardon") {
       return { ok: false, error: `Con puntaje ${puntaje} no hay galardón (mínimo 80). Registre el veredicto como «rechazado».` };
     }
+    const grado = decision.grado;
     if (!centroRow && !batch.q_grader_name?.trim()) {
       return { ok: false, error: "Defina el Q-Grader del bache (al enviarlo al Centro) — la planilla oficial lleva su nombre." };
     }
@@ -678,7 +687,9 @@ export async function recordEvaluationVerdict(
         sca_data: labEvaluationScaData(lastEval),
         factor_rendimiento: derived.yieldFactor,
         batch_id: ins.sondeo_batch_id,
-        escala: lastEval.escala,
+        escala: protocoloDelPunto(lastEval),
+        punto: puntoEfectivo,
+        cva_total: puntoEfectivo.cvaTotal,
         rueda: normalizaRueda(lastEval.rueda),
         uid_anonimo: ctcLotReferenceShort(lotId),
         physical_data: {
@@ -730,13 +741,13 @@ export async function recordEvaluationVerdict(
       previous_status: lot?.stage,
       new_status: "galardonado",
       performed_by: adminId,
-      notes: `Evaluación CTC por Q-Grader en bache. Puntaje ${puntaje} ⇒ Grado ${grado.nombre} (derivado). ${cleanNotes.slice(0, 220)}`,
+      notes: `Evaluación CTC por Q-Grader en bache. ${rotuloDelPunto(puntoEfectivo)} ⇒ Grado ${grado.nombre} (derivado${decision.techo ? `; hasta ${decision.techo.nombre} con recata SCA` : ""}). ${cleanNotes.slice(0, 220)}`,
     });
     await service.from("producer_comm_log").insert({
       producer_id: ins.producer_id,
       context_label: lot ? `Lote ${lot.name}` : null,
       lot_id: lotId,
-      note: `¡Su lote fue GALARDONADO! Puntaje SCA ${puntaje} — Grado CTC ${grado.nombre}. Encontrará los documentos y el resultado completo en «Evaluar mi Café» → Lotes Galardonados.`,
+      note: `¡Su lote fue GALARDONADO! ${puntoEfectivo.origen === "nativo" ? `Puntaje SCA ${puntaje}` : `Punto homologado desde CVA: ${puntaje} (hasta ${puntoEfectivo.alto} con una recata SCA)`} — Grado CTC ${grado.nombre}. Encontrará los documentos y el resultado completo en «Evaluar mi Café» → Lotes Galardonados.`,
       created_by: adminId,
     });
 
@@ -748,6 +759,10 @@ export async function recordEvaluationVerdict(
     // acepta y AHÍ nace el contrato — respondToOffer); Tyrian aparece en la cola de Subastas de la misma pantalla.
     // V5.85 (fase 8): el CRM de `black_negotiations` se retiró — la compra en firme de un Black es una oferta directa.
   } else {
+    // V5.92 (R5): un Punto homologado cuyo intervalo cruza los 80 no se rechaza: pendiente de recata SCA nativa.
+    if (puntoEfectivo && decidirPorPunto(puntoEfectivo).tipo === "pendiente_recata") {
+      return { ok: false, error: `El Punto homologado ${puntoEfectivo.bajo}–${puntoEfectivo.alto} cruza los 80: no se registra «No supera» sin una recata SCA 2004 nativa.` };
+    }
     // V5.82 · folio 12 / respuesta 2: el rechazo bajo Black es GRATIS para el productor —se lleva el reporte de
     // mejoras— y ya no hay cashback; el 80 % de reembolso existe solo en la re-evaluación que sube de grado.
     await service

@@ -85,7 +85,7 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
   (subvención, factura, recibo) y `muestrasActions.ts` (ubicar, salidas — `borrador`).
 - **`src/lib/catacion/rueda.ts`** (V5.81, puro): la taxonomía ÚNICA de la rueda de sabores (nueve familias SCA/WCR, ES/EN;
   `lot_evaluations.rueda` guarda solo ids). La planilla `src/components/bcp/LabEvalEditor.tsx` + `src/lib/arena/labEvaluation.ts`
-  (SCA o CVA con `computeCva`) la usan el Centro de Calidad (charter `socios`), el OCP y la Arena.
+  (SCA 2004 y/o CVA con `computeSca2004`/`computeCva`; desde la V5.92 dual, con `homologacion.ts` para el Punto) la usan el Centro de Calidad (charter `socios`), el OCP y la Arena.
 - **La oferta anclada al PVC** (V5.82): `ofertasActions.ts` (`emitOffer` temporada · directa · excepcion · black · subasta,
   `decidirNoOfertar`, `reabrirDecision`) pide el precio a `pvcParaGrado` (`src/lib/pvc/servicio.ts`, de `herramientas-internas`,
   sobre `src/lib/pvc/precio.ts` puro) y los términos a `src/lib/trato/terminos.ts`; `reevaluar` vive en `nominadosActions.ts`.
@@ -264,7 +264,15 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   asegura un mínimo por temporada (`mezclas.temporada`, `objetivo_temporada_kg`, `guardarObjetivoDeMezcla`: informativo); las mezclas se
   arman solo con compras destinadas a Selection. `PVC_BCP_PLAN` §14.8 (n.º 30–32) supera al §9.2, §9.3, §12.6, §14.4 y n.º 28.
   `qa-compras` 95 → 96; `qa-pvc-lectura` 67 → 60. **Con esto quedan ejecutadas las decisiones del owner del 2026-09-25**
-  (Muestras 1 · 4 · 5, Compras 4, cuentas, one-pager CVA); sigue el wrap V47 desde WRAP-COMMIT-PUSH y la Etapa 2.
+  (Muestras 1 · 4 · 5, Compras 4, cuentas, one-pager CVA); sigue el wrap V47 desde WRAP-COMMIT-PUSH y la Etapa 2. **V5.92 (owner,
+  2026-09-25, sobre el informe del Q-Grader — plan del circuito §10)**: **la fórmula CVA corregida** (ocho secciones, Impresión general
+  ×1, redondeo al 0,25, tazas con tipo de defecto, Incompleto sin puntaje; el 2004 con sus dominios), **la planilla DUAL** del Datasheet
+  Tool (vista SCA · CVA · Ambas —el banco comparativo—) y **el Punto homologado** (`src/lib/arena/homologacion.ts`: SCA 2004 nativo es
+  el protocolo primario; un CVA se homologa con la banda k 1–2 sin calibrar, rige el piso, nunca Tyrian, «pendiente de recata» si
+  cruza los 80; `lot_evaluations.punto` · `cva_total`; `sca_total` = EL PUNTO). El veredicto, «la que rige» y la apreciación de la
+  Arena deciden por el Punto; el Centro, el OCP y KR enseñan la procedencia. Las cuatro cuentas `@ctc-qa-test.co` que quedaban y sus
+  5 leads de prueba se eliminaron. `qa-centro-calidad` 65 → 95. **Sigue**: la fase 2 del informe (escala.ts consume `PuntoSca`,
+  con la PVC fase 2), la calibración (≥ 30 lotes duales) y la decisión 6 (reanclar El Punto en CVA).
   También en la V5.76, las cuatro indicaciones del owner sobre `/ocp/kr`: sin «Nuevo lote», agrupada por productor, el mapa por
   elemento, y «Ver fincas» con el filtro de Pasaporte por etapa.
 - **LAS TRES RUTAS DEL PROVEEDOR (owner, 2026-09-23)** — brief `briefs/consolas-rutas-del-proveedor.md`, con las siete

@@ -524,3 +524,21 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
   · Compras 4 (esta) · cuentas `prueba-*` eliminadas · one-pager CVA entregado. Sigue el wrap V47 desde WRAP-COMMIT-PUSH y la Etapa 2
   (conducir el proceso con Asistencia a Proveedores y Proveedor Desacoplado hasta el Catálogo Activo).
 (commit: 015e284)
+
+## [2026-09-25] V5.92 · Consolas — La fórmula CVA corroborada por el Q-Grader, la planilla dual y el Punto homologado
+- FUENTE: el informe «CTCx · Homologación SCA 2004 ↔ CVA» (2026-09-25; fuera del repo) y lo que el owner fijó: SCA 2004 nativo es la
+  evaluación por defecto y la que calibra la escala; el CVA se homologa (por lo general baja) de forma metódica y determinista; los
+  Q-Graders catarán en las dos escalas (banco comparativo) con un toggle en el Datasheet Tool. Transcrito en el plan del circuito §10.
+- REGLA (DICT `labEvaluation` · `homologacion`): ocho secciones CVA, general ×1, redondeo 0,25, tazas con tipo, Incompleto sin puntaje,
+  2004 con sus dominios; `puntoDeLaPlanilla` → `PuntoSca` {valor, bajo, alto, origen, protocoloFuente, modelo, cvaTotal}; banda k 1–2;
+  `gradoFirme` (piso; Tyrian → Gold si homologado), `techoDelPunto`, `decidirPorPunto` (galardón · sin grado · pendiente de recata).
+- DATOS: migración `evaluaciones_punto_homologado` (acta): `lot_evaluations.punto`, `cva_total`; `sca_total` = EL PUNTO (lo leen la vista
+  pública, las ofertas y KR sin cambios).
+- FLUJO: `registrarEvaluacion` (Centro) exige planilla completa y guarda la procedencia; `recordEvaluationVerdict` decide por el Punto
+  (R5 bloquea galardón y rechazo si cruza los 80); `elegirEvaluacionQueRige` y `registrarApreciacion` igual. Pantallas: el editor con el
+  conmutador de vista, el Centro, «Lotes en Evaluación», la Arena y KR con `rotuloDelPunto`.
+- CUENTAS: las cuatro `@ctc-qa-test.co` restantes (qa-ui-review, lead-cocreate-qa, dc-qa-uno/dos) y sus 5 leads, eliminadas (owner).
+- Guardianes: `qa-centro-calidad` 65 → 95 (§5 dual, §7 vectores del §10.2 y R1–R8). One-pager regenerado.
+- SIGUE: fase 2 del informe con la PVC fase 2 (`escala.ts` consume `PuntoSca`); calibración ≥ 30 lotes duales; decisión 6; origen del
+  Punto en la ficha pública y el dossier (cherry-picked · KR). Wrap V47 desde WRAP-COMMIT-PUSH.
+(commit: pendiente)

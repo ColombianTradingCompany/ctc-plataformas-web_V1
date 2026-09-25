@@ -154,6 +154,12 @@ el owner llama el **surplus**:
 | Proceso | **Lavado** | **Honey · Natural · infusiones** | **Experimental · fermentaciones · co-fermentaciones** |
 | Reconocimiento | ninguno | 1 a 3 | 4 o más — solo reconocimientos **relevantes y verificables** (no cualquier certificación menor; el OCP los verifica antes de contar) |
 
+> **El Punto homologado (2026-09-25, V5.92).** El Q-Grader corroboró la fórmula CVA y pidió una homologación: el Punto es el puntaje
+> **SCA 2004 nativo** (protocolo primario, el que calibra esta escala); un puntaje CVA no es un Punto y se **homologa** con un intervalo
+> (banda k 1–2 mientras no haya calibración), el grado firme se lee del piso y Tyrian exige un Punto nativo. Reglas R1–R8, vectores y
+> decisiones en `PLAN_CIRCUITO_DEL_LOTE.md` §10; código en `src/lib/arena/homologacion.ts`. Cuando `escala.ts` pase a `definicion.ts`
+> (fase 2 del PVC) consumirá `PuntoSca` y aplicará el surplus sobre el piso (R7).
+
 **Los nombres.** Al conjunto de las dos medidas se le llama **«El Punto y la Tríada»**: el Punto es el puntaje SCA;
 la Tríada son las tres letras (variedad · proceso · reconocimiento), *lo que el café tiene además de la taza*. Antes
 de las dos hay una condición previa —los tres físicos (§9.1.b)— que no da puntos: da el derecho a que el lote lleve un

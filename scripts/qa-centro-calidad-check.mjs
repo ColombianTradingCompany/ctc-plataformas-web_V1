@@ -9,10 +9,13 @@
 // ni la variedad (sesgo); da de alta cada lote individualmente». Y sus respuestas: la credencial `centro-calidad`
 // activa módulos (respuesta 5) y el nombre del Q-Grader deja de teclearse; registrar ≠ confirmar (§3); SCA y CVA se
 // distinguen en la información (folio 11); la rueda tiene UNA taxonomía. Cada bloque cita de dónde sale.
+// V5.92 (owner, 2026-09-25 — plan §10): la planilla es DUAL (vista SCA · CVA · Ambas), la fórmula CVA es la que corroboró el
+// Q-Grader (los vectores se LEEN de la tabla del §10.2) y el Punto homologado obedece R1–R8 (banda k 1–2, piso, Tyrian nativo).
 
 import { readFileSync } from "node:fs";
 import { RUEDA, DESCRIPTORES, normalizaRueda, descriptorLabel } from "../src/lib/catacion/rueda.ts";
-import { CVA, CVA_SECCIONES, computeCva, EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, toLabEvaluation } from "../src/lib/arena/labEvaluation.ts";
+import { CVA, CVA_SECCIONES, SCA2004, computeCva, computeSca2004, EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, protocoloDelPunto, puntoDeLaPlanilla, toLabEvaluation } from "../src/lib/arena/labEvaluation.ts";
+import { BANDA_SIN_CALIBRAR, CVA_PROPOSITO, LOTES_PARA_CALIBRAR, admiteTyrian, decidirPorPunto, gradoFirme, homologarCva, puntoDeFila, puntoHomologado, puntoNativo, techoDelPunto } from "../src/lib/arena/homologacion.ts";
 import { estadoDelCircuito } from "../src/lib/ocp/circuito.ts";
 
 let ok = 0;
@@ -72,7 +75,7 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("dar de alta inserta una lot_evaluations PENDIENTE con procedencia q_grader_batch", reg.includes('source: "q_grader_batch"') && reg.includes('status: "pending"'));
   check("solo de un bache en_centro asignado a ESA credencial", reg.includes('batch.status !== "en_centro"') && reg.includes("batch.centro_calidad_account_id !== identity.userId"));
   check("una sola alta pendiente por lote y bache", reg.includes("Este lote ya está dado de alta"));
-  check("sin puntaje no hay alta", reg.includes("if (puntaje == null) return"));
+  check("sin Punto (planilla completa) no hay alta (V5.92)", reg.includes("if (!punto) return"));
   check("con rastro", reg.includes('action: "evaluacion_registrada_centro"'));
   check("el Q-Grader puede anular su alta mientras esté pendiente", cuerpoDe(acciones, "anularRegistro").includes('row.status !== "pending"') && cuerpoDe(acciones, "anularRegistro").includes("row.submitted_by !== auth.identity.userId"));
   check("el alta NO escribe el grado ni el stage del lote", !reg.includes("grade:") && !reg.includes("stage:"));
@@ -96,23 +99,19 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("la tabla del OCP alimenta el dato", lee("src/app/ocp/(app)/kr/carga.ts").includes("evaluacionPendiente: pendientesDelCentro.has(l.id)"));
 }
 
-// ── 5. SCA y CVA se distinguen en la información (folio 11) ─────────────────
+// ── 5. La planilla DUAL: SCA 2004 y/o CVA, distinguidos en la información (folio 11 · owner 2026-09-25) ──
 {
   check("el plan pide distinguir SCA y CVA en la información", /distinguir SCA y CVA/.test(plan));
-  check("la planilla lleva su escala y el vacío es SCA", EMPTY_LAB_EVALUATION.escala === "sca" && toLabEvaluation({ escala: "cva" }).escala === "cva" && toLabEvaluation({ escala: "otra" }).escala === "sca");
-  check("la escala no cuenta como dato (una planilla vacía sigue vacía)", !labEvaluationHasData(EMPTY_LAB_EVALUATION) && !labEvaluationHasData({ ...EMPTY_LAB_EVALUATION, escala: "cva" }));
-  check("el CVA tiene las siete secciones del formulario afectivo", CVA_SECCIONES.length === 7 && CVA_SECCIONES.map(([k]) => k).join(",") === "fragrance,flavor,aftertaste,acidity,sweetness,mouthfeel,overall");
-  const todo = (n) => Object.fromEntries(CVA_SECCIONES.map(([k]) => [`cva_${k}`, String(n)]));
-  const nueves = { ...EMPTY_LAB_EVALUATION, escala: "cva", ...todo(9), cva_nonuniform: "", cva_defective: "" };
-  const unos = { ...EMPTY_LAB_EVALUATION, escala: "cva", ...todo(1) };
-  check("todo en 9 da 100 (la fórmula del SCA con la impresión general doble)", computeCva(nueves).total === 100);
-  check("todo en 1 da 58, el mínimo del CVA", computeCva(unos).total === 58);
-  check("cada taza no uniforme resta 2 y cada defectuosa 4", computeCva({ ...nueves, cva_nonuniform: "1" }).total === 98 && computeCva({ ...nueves, cva_defective: "1" }).total === 96);
-  check("las constantes están nombradas para cambiarlas en UN sitio", CVA.coeficiente === 0.65625 && CVA.base === 52.75 && CVA.pesoImpresionGeneral === 2);
-  check("labEvaluationScore usa la escala elegida", labEvaluationScore(nueves) === 100 && labEvaluationScore({ ...EMPTY_LAB_EVALUATION, ...todo(9) }) === null);
-  check("el CVA no se guarda como total tecleado: sale de las secciones", !acciones.includes("cva_total"));
+  check("el plan §10 transcribe lo que el owner fijó: SCA nativo por defecto, CVA homologado, banco comparativo con toggle", /SCA nativo significa que es la evaluación que se busca hacer por defecto/.test(plan) && /banco comparativo/.test(plan) && /toggle/.test(plan));
+  check("la planilla lleva vista y escala; el vacío es SCA; la escala vieja se respeta", EMPTY_LAB_EVALUATION.escala === "sca" && EMPTY_LAB_EVALUATION.vista === "sca" && toLabEvaluation({ escala: "cva" }).escala === "cva" && toLabEvaluation({ escala: "cva" }).vista === "cva" && toLabEvaluation({ vista: "ambas" }).vista === "ambas" && toLabEvaluation({ escala: "otra" }).escala === "sca");
+  check("ni la escala ni la vista cuentan como dato (una planilla vacía sigue vacía)", !labEvaluationHasData(EMPTY_LAB_EVALUATION) && !labEvaluationHasData({ ...EMPTY_LAB_EVALUATION, escala: "cva", vista: "ambas" }));
+  check("el CVA tiene las OCHO secciones del SCA-104, Fragancia y Aroma aparte, en su orden", CVA_SECCIONES.length === 8 && CVA_SECCIONES.map(([k]) => k).join(",") === "fragrance,aroma,flavor,aftertaste,acidity,sweetness,mouthfeel,overall");
+  check("las constantes están nombradas para cambiarlas en UN sitio, y la general ya no pesa doble", CVA.coeficiente === 0.65625 && CVA.base === 52.75 && CVA.castigoNoUniforme === 2 && CVA.castigoDefectuosa === 4 && CVA.paso === 0.25 && CVA.tazas === 5 && !("pesoImpresionGeneral" in CVA));
+  check("los dos contadores de la V5.81 se reparten taza a taza al leer datos viejos", toLabEvaluation({ cva_nonuniform: "2", cva_defective: "1" }).cva_tazas.filter((t) => t.noUniforme).length === 2 && toLabEvaluation({ cva_nonuniform: "2", cva_defective: "1" }).cva_tazas.filter((t) => t.defectuosa).length === 1);
+  check("el CVA no se guarda como total tecleado: sale de las secciones (cva_total = el del Punto)", !/cva_total:\s*(raw|Number\(|formData)/.test(acciones) && acciones.includes("cva_total: punto.cvaTotal"));
+  check("dar de alta exige un Punto (planilla completa) y guarda su procedencia y el protocolo que rige", acciones.includes("const punto = puntoDeLaPlanilla(ev);") && acciones.includes("erroresDePlanilla(ev)") && acciones.includes("escala: protocoloDelPunto(ev),") && /^\s*punto,$/m.test(acciones) && acciones.includes("vista: ev.vista"));
   const editor = lee("src/components/bcp/LabEvalEditor.tsx");
-  check("el editor enseña la escala como información (radio SCA / CVA) y la fórmula", editor.includes('type="radio" name="escala"') && editor.includes("CVA.coeficiente"));
+  check("el editor tiene el conmutador de VISTA (SCA · CVA · Ambas), la fórmula y el propósito de la casa", editor.includes('type="radio" name="vista"') && editor.includes("CVA.coeficiente") && editor.includes("CVA_PROPOSITO") && editor.includes("rotuloDelPunto(punto)"));
   check("y enlaza (no embebe) Defectos y el Varieties Map (folio 11)", /defectos-cafe/.test(editor) && /mapa-variedades/.test(editor) && !/<iframe/.test(editor));
 }
 
@@ -125,6 +124,59 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("la rueda se guarda normalizada (solo ids)", acciones.includes("rueda: normalizaRueda(ev.rueda)") && nominados.includes("rueda: normalizaRueda(lastEval.rueda)"));
   const rueda = lee("src/lib/catacion/rueda.ts").replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
   check("rueda.ts es pura (no importa nada)", !/^\s*import\s/m.test(rueda));
+}
+
+// ── 7. El veredicto del Q-Grader (2026-09-25, plan §10): la fórmula CVA, el SCA 2004 y el Punto homologado ──
+// Los vectores se LEEN de la tabla del §10.2 del plan; el código se contrasta contra ella, no contra sí mismo.
+{
+  const s10 = plan.slice(plan.indexOf("## 10 · El Q-Grader corrobora"));
+  check("el plan tiene el §10 con las seis respuestas, los vectores, R1–R8 y las seis decisiones", s10.length > 0 && /### 10\.1/.test(s10) && /### 10\.2/.test(s10) && /R1 · Origen/.test(s10) && /### 10\.4/.test(s10));
+  const secciones = (vals) => Object.fromEntries(CVA_SECCIONES.map(([k], i) => [`cva_${k}`, String(vals[i])]));
+  const cva = (vals, tazas = []) => {
+    const ev = toLabEvaluation({ vista: "cva", escala: "cva", ...secciones(vals) });
+    tazas.forEach((t, i) => (ev.cva_tazas[i] = { ...ev.cva_tazas[i], ...t }));
+    return ev;
+  };
+  const todo = (n) => Array(8).fill(n);
+  const conGeneral = (n, g) => [...Array(7).fill(n), g];
+  const CASOS = {
+    "Todo 9": cva(todo(9)), "Todo 8": cva(todo(8)), "Todo 7": cva(todo(7)), "Todo 6": cva(todo(6)), "Todo 5": cva(todo(5)), "Todo 1": cva(todo(1)),
+    "Todo 7, una taza no uniforme": cva(todo(7), [{ noUniforme: true }]),
+    "Siete 7 e Impresión general 8": cva(conGeneral(7, 8)),
+    "Todo 7, una taza defectuosa": cva(todo(7), [{ defectuosa: true, defecto: "moho" }]),
+    "Todo 6 e Impresión general 8": cva(conGeneral(6, 8)),
+    "Todo 7 e Impresión general 5": cva(conGeneral(7, 5)),
+    "Fragancia 8, Aroma 6, resto 7": cva([8, 6, 7, 7, 7, 7, 7, 7]),
+  };
+  const filas = [...s10.matchAll(/^\| (.+?) \| (\d) · (\d) \| [^|]+ \| ([\d.]+) \|$/gm)];
+  check("el §10.2 trae los doce vectores del informe", filas.length === 12 && filas.every((f) => f[1] in CASOS));
+  for (const [, caso, u, d, oficial] of filas) {
+    const ev = CASOS[caso];
+    if (!ev) continue;
+    const r = computeCva(ev);
+    check(`CVA «${caso}» = ${oficial} (u ${u} · d ${d})`, r.total === Number(oficial) && r.u === Number(u) && r.d === Number(d), `dio ${r.total} (u ${r.u} · d ${r.d})`);
+  }
+  check("menos de ocho secciones → Incompleto, sin puntaje", computeCva(cva([7, 7, 7, 7, 7, 7, 7, ""])).total === null && computeCva(cva([7, 7, 7, 7, 7, 7, 7, ""])).errores.some((e) => /incompleto/i.test(e)));
+  check("un 10 o un 7,5 es un error, no se recorta", computeCva(cva(conGeneral(7, 10))).total === null && computeCva(cva(conGeneral(7, "7.5"))).total === null);
+  check("una taza defectuosa sin tipo no vale; cinco defectuosas por igual no son «no uniformes»", computeCva(cva(todo(7), [{ defectuosa: true }])).total === null && computeCva(cva(todo(7), Array(5).fill({ defectuosa: true, defecto: "papa" }))).u === 0 && computeCva(cva(todo(7), Array(5).fill({ defectuosa: true, defecto: "papa" }))).d === 5);
+  const sca = (extra = {}) => toLabEvaluation({ vista: "sca", sca_fragrance: "8", sca_flavor: "8", sca_aftertaste: "8", sca_acidity: "8", sca_body: "8", sca_balance: "8", sca_uniformity: "10", sca_clean_cup: "10", sca_sweetness: "10", sca_cuppers: "8", ...extra });
+  check("SCA 2004: diez atributos completos dan el total; taint −2 y fault −4 por taza", computeSca2004(sca()).total === 86 && computeSca2004(sca({ sca_taint_cups: "1" })).total === 84 && computeSca2004(sca({ sca_fault_cups: "1" })).total === 82 && SCA2004.min === 6 && SCA2004.paso === 0.25);
+  check("SCA 2004: incompleto sin Punto; 5,5 en un escalado y 7 en Uniformidad son errores", computeSca2004(sca({ sca_body: "" })).total === null && computeSca2004(sca({ sca_flavor: "5.5" })).total === null && computeSca2004(sca({ sca_uniformity: "7" })).total === null);
+  const homolog = [...s10.matchAll(/CVA ([\d,]+) → (?:Punto )?([\d,]+)–([\d,]+)/g)].map((m) => m.slice(1).map((x) => Number(x.replace(",", "."))));
+  check("la banda sin calibrar es la del plan (79 + (CVA − 79) / k, k de 1 a 2) y reproduce sus ejemplos", homolog.length >= 2 && BANDA_SIN_CALIBRAR.pivote === 79 && BANDA_SIN_CALIBRAR.kMin === 1 && BANDA_SIN_CALIBRAR.kMax === 2 && homolog.every(([c, b, a]) => homologarCva(c).bajo === b && homologarCva(c).alto === a));
+  check("R2: con las dos planillas completas rige el SCA nativo y el CVA queda registrado (banco comparativo)", (() => { const ev = toLabEvaluation({ ...sca(), ...secciones(todo(7)), vista: "ambas" }); const p = puntoDeLaPlanilla(ev); return p?.origen === "nativo" && p.valor === 86 && p.cvaTotal === 89.5 && protocoloDelPunto(ev) === "sca" && labEvaluationScore(ev) === 86; })());
+  check("con «Ambas», si falta una de las dos no hay Punto; con «cva» el SCA viejo no cuenta", puntoDeLaPlanilla(toLabEvaluation({ ...sca(), vista: "ambas" })) === null && puntoDeLaPlanilla(toLabEvaluation({ ...sca(), vista: "cva" })) === null);
+  check("solo CVA → Punto homologado con intervalo; rige el piso", (() => { const p = puntoDeLaPlanilla(cva(todo(7))); return p?.origen === "homologado" && p.bajo === 84.25 && p.alto === 89.5 && p.cvaTotal === 89.5 && p.modelo === "banda-k1-2" && labEvaluationScore(cva(todo(7))) === 84.25 && protocoloDelPunto(cva(todo(7))) === "cva"; })());
+  check("R4/R6: el grado firme se lee del piso y un homologado nunca da Tyrian (tope Gold); el techo se enseña", gradoFirme(puntoHomologado(89.5))?.id === "blue" && techoDelPunto(puntoHomologado(89.5))?.id === "tyrian" && gradoFirme(puntoHomologado(99))?.id === "gold" && !admiteTyrian(puntoHomologado(99)) && gradoFirme(puntoNativo(89))?.id === "tyrian" && admiteTyrian(puntoNativo(89)) && techoDelPunto(puntoNativo(89)) === null);
+  check("R5: si el intervalo cruza los 80, pendiente de recata; si el techo no llega, sin grado", decidirPorPunto(puntoHomologado(80.5)).tipo === "pendiente_recata" && decidirPorPunto(puntoHomologado(78)).tipo === "sin_grado" && decidirPorPunto(puntoNativo(79.75)).tipo === "sin_grado" && decidirPorPunto(puntoNativo(80)).tipo === "galardon");
+  check("las filas viejas de lot_evaluations son nativas; las nuevas traen su procedencia", puntoDeFila({ sca_total: 86 })?.origen === "nativo" && puntoDeFila({ sca_total: 84.25, punto: puntoHomologado(89.5) })?.origen === "homologado" && puntoDeFila({ sca_total: null }) === null);
+  check("el veredicto decide por el Punto: grado firme, y «pendiente de recata» bloquea galardón y rechazo", nominados.includes("decidirPorPunto(puntoEfectivo)") && (nominados.match(/pendiente_recata/g) ?? []).length >= 2 && nominados.includes("punto: puntoEfectivo,"));
+  const arena = lee("src/app/bcp/(app)/arenaActions.ts");
+  check("la apreciación de la Arena y «la que rige» pasan por la misma decisión", arena.includes("puntoDeLaPlanilla(evaluation)") && arena.includes("decidirPorPunto(punto)") && arena.includes("puntoDeFila(ev)"));
+  check("las pantallas enseñan la procedencia (nunca un homologado como un SCA catado)", pagina.includes("rotuloDelPunto") && lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").includes("rotuloDelPunto") && lee("src/components/kaffetal-regal/panel/EvaluacionesTab.tsx").includes("Homologado desde CVA"));
+  const acta = lee("docs/migraciones/2026-09-25_evaluaciones_punto_homologado.sql").replace(/^--.*$/gm, "");
+  check("la base guarda la procedencia y el CVA (banco comparativo); sca_total sigue siendo lo que leen todos", /add column if not exists punto jsonb/.test(acta) && /add column if not exists cva_total numeric/.test(acta) && !/drop column sca_total/.test(acta));
+  check("el propósito CVA de la casa y el presupuesto de calibración son los del plan §10.4", CVA_PROPOSITO.length > 10 && s10.includes(`«${CVA_PROPOSITO}»`) && new RegExp(`\\*\\*${LOTES_PARA_CALIBRAR} lotes catados en las dos escalas\\*\\*`).test(s10));
 }
 
 if (fallos.length) {

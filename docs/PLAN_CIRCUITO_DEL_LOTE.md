@@ -199,7 +199,7 @@ final lo que solo importa cuando haya un trato vivo. **Ninguna fase toca dinero 
 | **1 · Retiros y mudanzas** — ✅ **EJECUTADA en la V5.77** | V5.77 | **Hecho**: la Arena REHECHA (sesiones de segunda apreciación, `rige_grado`; la jornada, la vitrina y los reclamos fuera de allí); Club fuera (gates de firma y publicación, membresía en el veredicto); campañas → `/ocp/subvenciones` (30–70 % sobre $200.000); reclamos → vista del lote; los diez atributos SCA en una fuente; KPI y tareas de Arena fuera. **Diferido**: temporadas → `/ocp/temporadas`; `src/lib/arena` → `evaluacion`/`trato`; `/ocp/fichas` fundido (fase 2); `RANGOS` ↔ `definicion.ts` (fase 5, con `pvcParaGrado`); contratos NO se funden (decisión 7: son el staging); copy de KR (su charter) | consolas (+ kaffetal-regal copy, herramientas-internas `RANGOS`, socios sello) | — |
 | **2 · El registro** — ✅ **EJECUTADA (lado OCP) en la V5.78** | V5.78 | **Hecho**: la vista completa del lote monta el set de Fichas (escáner IA, compilar reporte, **transcribir a mano** = fuente «ctc») junto a la checklist de Visa; la finca gana el **chequeo contra bases EUDR** (texto + adjuntos); **estado por certificación** + **recordatorios semanales ×4** y retiro (cron `/api/cron/recordatorios`, `src/lib/registro/`). **Y en la V5.79 (con el sí del owner, en código de KR)**: A5 al final del intake; el dossier del lote ES/EN (`LotDossierDoc`) = la Ficha descargable; el estado de las certificaciones en la finca del productor y fuera del Pasaporte impreso las retiradas. Queda en ES el Pasaporte de la finca. La Datasheet interna embebida (variante `interna`) sigue en la fase 4 | consolas · kaffetal-regal | — |
 | **3 · Solicitud, factura, muestra** — ✅ **EJECUTADA en la V5.80** | V5.80 | **Hecho**: «Solicitudes de Evaluación» (`/ocp/solicitudes`) con la nota de descuento, la subvención decidida por CTCx (emite y canjea el KRX-), la factura de cobro (`FE-AAAA-NNNNN`, imprimible en las dos caras), el pago SOBRE la factura y el recibo con kilos reales; `terminos.ts` (tarifa $200.000, mínimos, 2 kg, contra entrega); Gestión de Muestras 1.ª tanda (partición 500/500/1000, saldo derivado, salidas, pedidos de muestra); **Baches de Evaluación** abierto → en_centro → cerrado (sin laboratorio ni prueba); el circuito gana «solicitada». **Hasta la fase 4** el Q-Grader se teclea al enviar el bache y CTCx registra el veredicto en «Lotes en Evaluación». **Diferido**: la 2.ª tanda de Muestras (alerta de 90 días derivada, muestras para comprador) | consolas · kaffetal-regal | — |
-| **4 · Centro de Calidad · Evaluación de Lotes** — ✅ **EJECUTADA en la V5.81** | V5.81 | **Hecho**: `panel/evaluacion` del socio (baches `en_centro` a su nombre, lote a lote anónimo, planilla SCA **o CVA** + factor + mallas + rueda, dar de alta → `lot_evaluations` pendiente con `batch_id`/`escala`/`rueda`/`uid_anonimo`); `partner_accounts.modulos` conmutado en BCP; el Q-Grader es el contacto de la credencial; CTCx confirma o devuelve en «Lotes en Evaluación» (registrar ≠ confirmar); el circuito gana «evaluado»; la taxonomía de la rueda quedó en `src/lib/catacion/rueda.ts` (no en `tools/`: es de `consolas` y el taller la importará). **Diferido**: `green-datasheet` variante interna (herramientas-cafe), el «uso directo» sin bache, `evaluacionPendiente` en la barra de KR; la fórmula del CVA la valida el Q-Grader | socios · consolas · herramientas-cafe | — |
+| **4 · Centro de Calidad · Evaluación de Lotes** — ✅ **EJECUTADA en la V5.81** | V5.81 | **Hecho**: `panel/evaluacion` del socio (baches `en_centro` a su nombre, lote a lote anónimo, planilla SCA **o CVA** + factor + mallas + rueda, dar de alta → `lot_evaluations` pendiente con `batch_id`/`escala`/`rueda`/`uid_anonimo`); `partner_accounts.modulos` conmutado en BCP; el Q-Grader es el contacto de la credencial; CTCx confirma o devuelve en «Lotes en Evaluación» (registrar ≠ confirmar); el circuito gana «evaluado»; la taxonomía de la rueda quedó en `src/lib/catacion/rueda.ts` (no en `tools/`: es de `consolas` y el taller la importará). **Diferido**: `green-datasheet` variante interna (herramientas-cafe), el «uso directo» sin bache, `evaluacionPendiente` en la barra de KR; ~~la fórmula del CVA la valida el Q-Grader~~ → **validada y corregida en la V5.92** (§10: ocho secciones, Impresión general ×1, redondeo al 0,25, tazas con tipo de defecto, incompleto sin puntaje; la planilla es DUAL con vista SCA · CVA · Ambas; el Punto homologado desde CVA lleva intervalo, rige el piso y nunca da Tyrian) | socios · consolas · herramientas-cafe | — |
 | **5 · Confirmar y ofertar** — ✅ **EJECUTADA en la V5.82** | V5.82 | **Hecho**: `pvcParaGrado(grado, fecha?, {modificadorPct})` en `servicio.ts` sobre `precio.ts` (puro; `RANGOS` del motor derivados de `definicion.ts` — conflicto n.º 1 cerrado); la **oferta anclada** en `/ocp/ofertas` (temporada: PVC × banda, mínimo del grado, compra inicial de una carga, términos versionados; **`directa`** PVC − 8 % con ventana de 30 días y máx.; **`excepcion`** a mano con motivo; past crop −10 %), con `pvc_edition_id`/`pvc_cop_kg`/`modificador_pct` y `reference_price_*` por fin escritos; la **decisión comercial** «no ofertar» con motivo (paso 13); el **rechazo bajo Black gratis** (sin cashback) y la **re-evaluación** a tarifa plena con 80 % si sube de grado (`reevaluar`, previa razón de CTCx); `terminos.ts` completo (compra inicial, tramos 25/25, 4 %, mora 2+2/5 %, renovación 90 d, past crop 9 m/−10 %, ventana 30 d/−8 %) con `qa-trato-check` leyendo el §0; el circuito gana «no superó» y «sin oferta». La confirmación del grado quedó en la fase 4 (`recordEvaluationVerdict` con el alta del Centro): el folio separa confirmar (12), decidir (13) y ofertar (14), y así quedó — no hay `confirmarGradoYOfertar` en una sola acción. **Diferido**: `moqCargas` de `lectura.ts` (es el MOQ de la mezcla de Cherry Picked, §14.4, no el mínimo por lote); los rótulos `RANGOS` del motor Python y del tablero HTML (herramientas-internas) | consolas · herramientas-internas | — |
 | **6 · Aceptar con claridad** — ✅ **EJECUTADA en la V5.83 (código de KR con el «continúa» del owner; NO conducida en navegador)** | V5.83 | **Hecho**: la **calculadora** (`src/lib/trato/simulador.ts`, puro: compra inicial, pedido y pago por mes, tramo libre 25/25, «retirar todo costaría» al 4 % — reproduce el ejemplo del §12.9) dentro de `OfferCard`; la **declaración** al aceptar (`respondToOffer(…, {lockedKg ≥ min_kg y ≤ max_kg, trimestre \| 30_dias, aceptaTerminos})` → `lot_offers.locked_kg/declaracion/terms_accepted_at`); el **contrato nace LLENO** (`offer_id`, precio de la oferta, cantidad declarada, `reference_price_*`, `freeze_months` 3 \| 1, `terms_version`, `declaracion`, `compra_inicial_kg`, anclaje) y **`signContract` solo firma**; «Mi trato» en Contratos de Temporada; la directa vencida queda `expirada`; el copy del Club salió de la pestaña. **Pendiente**: conducirla con `prueba-*` (aceptar, ver el contrato, firmar en el OCP) | kaffetal-regal · consolas | cuentas `prueba-*` para verla en vivo |
 | **7 · El trato mes a mes** — ✅ **EJECUTADA en la V5.84 (código de KR con el «continúa» del owner; NO conducida en navegador)** | V5.84 | **Hecho**: `contract_months` (pedido · envío · pago · retiro por mes; RLS select-own; **sin `mora_estado`**: la mora se deriva) y `src/lib/trato/mesAMes.ts` (puro: mora 2+2/5 % → ruptura POTENCIAL, mes en curso en tramos de 30 días, tramo libre, `retiro()` al 4 % — reproduce el §12.9 —, past crop 9 m, renovación 90 d); en `/ocp/contratos/[id]` `pedirDelMes` → `registrarEnvioDelMes` (espejo en `contract_releases` al 100 %: el stock del catálogo sigue leyendo lo mismo) → `registrarPagoDelMes` (solo lo enviado) y el cierre solo a `completed`; **la ruptura la declara el owner** (`declararRuptura`, motivo → `status: ruptura` + cuenta **congelada** en `producer_profiles.estado_cuenta`; `descongelarCuenta`) — decisión 6: la mora y la ruptura potencial se DERIVAN y se pintan en el OCP y en KR con la misma función, nada se persiste; **renovación** (`ofrecerRenovacion`: cumplido + 90 d → oferta nueva al PVC vigente con `renewal_of_contract_id`; el contrato viejo queda `renovado`); **past crop** también desde `harvest_to` + 9 m; en KR «Mi trato» con los meses, la mora, el **retiro** (`previsualizarRetiro` → `retirarDelTrato`) y el banner de cuenta congelada; una cuenta congelada no acepta ofertas, no retira y no recibe ofertas; `RELEASE_STAIRCASE`/`recordContractRelease` retirados; el circuito gana «en mora» y «ruptura». **No hecho aquí**: «publicación sin Club» ya estaba (V5.77); los **recordatorios** de mora por correo son la fila «Recordatorios» del §4 (sin ejecutar). **Pendiente**: conducirla con `prueba-*` | consolas · kaffetal-regal | decisión 6 ✔ (Identidad tocada: `producer_profiles.estado_cuenta`, con línea en `ALINEACION` §3) |
@@ -276,3 +276,108 @@ Shipment (500–800 kg verde, cualquier mezcla, MOQ por grado, US$5.900–8.400 
 US$65–220; Max US$120–350; Champion para el shipment: zona B 1.750–2.500, F 1.900–2.700, G 3.100–4.900). Referencias por kg de
 verde: Black 11 · Red 13 · Blue 16 · Gold 20 US$/kg; mínimo 60 % Black + 40 % Red; ~máximo 80 % Blue + 20 % Gold. Se afinan en
 tándem con el PVC. Vive aquí hasta que la Etapa 3 tenga su plan.
+
+## 10 · El Q-Grader corrobora la fórmula CVA y pide una homologación (2026-09-25) — EJECUTADO en la V5.92
+
+**La fuente.** El informe «CTCx · Homologación SCA 2004 ↔ CVA · Consultant report · 25 Sept 2026» (9 páginas, en inglés; copia en
+`reference/homologacion-sca-cva-2026-09-25/`, fuera del repo), escrito sobre el one-pager de la V5.81 (`docs/CVA_one-pager_para_el_Q-Grader.pdf`) y
+sobre «El Punto y la Tríada» (`PVC_BCP_PLAN` §9.1). El autor advierte que no pudo descargar el PDF oficial del SCA-104 y que el Q-Grader
+debe refrendar contra el formulario impreso: las correcciones 1–4 coinciden con el sistema publicado por el SCA (junio de 2024) y se
+adoptan; la homologación es una propuesta de diseño y se adopta con las decisiones del owner de abajo.
+
+**Lo que el owner fijó al leerlo (2026-09-25).** «SCA nativo significa que es la evaluación que se busca hacer por defecto y que se usa en
+la calibración de la escala de grados. El puntaje CVA de una evaluación debe ser homologado (generalmente se reduce) para evitar
+desbalances, con la claridad de que se hace de manera metódica y determinística para hacer la transformación de manera concienzuda y
+justa. Además, se le solicitará a los Q-Grader del Centro de Calidad que hagan la evaluación en ambos sistemas de manera paralela, de tal
+manera que podamos recoger también ese banco comparativo (la herramienta "CTCx Coffee Datasheet Tool" debe entonces permitir esta
+valoración dual con un toggle que hace una, otra o ambas visibles en el formato de evaluación).»
+
+### 10.1 Las seis respuestas al one-pager de la V5.81
+
+| # | Pregunta | Veredicto | Corrección (en código desde la V5.92) |
+|---|---|---|---|
+| 1 | Constantes 0,65625 · 52,75 · −2 por taza no uniforme · −4 por defectuosa | Sí | Correctas (pendiente 21/32 entre 79 con todo 5 y 100 con todo 9). Redondeo oficial **al 0,25 más cercano**; se retira el redondeo a dos decimales. |
+| 2 | Impresión general ×2 (ocho términos) | No | Ocho términos, pero el octavo es **Aroma**. La Impresión general cuenta **una** vez. |
+| 3 | Siete secciones en ese orden | No | **Ocho**: Fragancia · Aroma · Sabor · Sabor residual · Acidez · Dulzor · Sensación en boca · Impresión general (la fragancia del molido en seco y el aroma de la bebida son percepciones distintas). |
+| 4 | u y d sobre cinco tazas, −2 / −4, sin tope | Sí, con reglas | Cinco tazas obligatorias (cada contador 0–5). **Toda taza defectuosa es también no uniforme** (una defectuosa resta 6), salvo que las cinco sean defectuosas por igual. Un defecto cuenta solo con su **tipo** (moho, fenólico, papa). Las diferencias de intensidad no son falta de uniformidad. |
+| 5 | ¿Los mismos umbrales 80/82/84/86/88 para el CVA? | No | El CVA es otra escala: hace falta un **Punto homologado** (§10.3). |
+| 6 | ¿Cuál escala rige cuando hay las dos? | El protocolo primario nativo | Rige la catada NATIVA (SCA 2004); un equivalente estimado nunca fija un grado; el protocolo primario se fija por programa o temporada, nunca por lote. |
+
+**Otras correcciones adoptadas**: una planilla con menos de ocho secciones es **Incompleto** (sin puntaje, sin grado) en vez de sumar lo
+calificado; los valores fuera de 1–9 o con decimales se **rechazan**, no se recortan; las tazas se guardan una a una con su tipo de
+defecto (auditable); y el lado **SCA 2004** aplica sus dominios —los siete atributos escalados van de 6,00 a 10,00 en pasos de 0,25;
+Uniformidad, Taza limpia y Dulzor son 2 puntos por taza; los defectos son tazas × intensidad (taint 2, fault 4)—, porque el 2004 ES el
+Punto y tampoco admite sumas parciales.
+
+### 10.2 Los ejemplos recalculados (los vectores de prueba de `qa-centro-calidad-check`)
+
+Cada fila es una planilla CVA; «u · d» son las tazas no uniformes y defectuosas. La columna oficial es la que el código tiene que dar.
+
+| Caso | u · d | V5.81 (siete secciones, general ×2) | Oficial SCA-104 (ocho secciones, general ×1) |
+|---|---|---|---|
+| Todo 9 | 0 · 0 | 100 | 100 |
+| Todo 8 | 0 · 0 | 94.75 | 94.75 |
+| Todo 7 | 0 · 0 | 89.5 | 89.5 |
+| Todo 6 | 0 · 0 | 84.25 | 84.25 |
+| Todo 5 | 0 · 0 | 79 | 79 |
+| Todo 1 | 0 · 0 | 58 | 58 |
+| Todo 7, una taza no uniforme | 1 · 0 | 87.5 | 87.5 |
+| Siete 7 e Impresión general 8 | 0 · 0 | 90.81 | 90.25 |
+| Todo 7, una taza defectuosa | 1 · 1 | 85.5 | 83.5 |
+| Todo 6 e Impresión general 8 | 0 · 0 | 86.88 | 85.5 |
+| Todo 7 e Impresión general 5 | 0 · 0 | 86.88 | 88.25 |
+| Fragancia 8, Aroma 6, resto 7 | 0 · 0 | — | 89.5 |
+
+Con todas las secciones iguales los dos métodos coinciden; el sesgo de la V5.81 era 0,65625 × (Impresión general − Fragancia/Aroma) y
+bastaba para cambiar de grado («Todo 6 e Impresión general 8»: Gold en la V5.81, Blue en el oficial). No había evaluaciones CVA en la
+base (las dos que existen son SCA), así que no hubo nada que recalcular.
+
+### 10.3 El Punto homologado (la propuesta del informe, adoptada)
+
+Un CVA no es un SCA 2004: con todas las secciones en 7 el CVA da 89,5 y el formulario 2004 da 79; el SCA no espera una correlación
+lineal y no hay conversión publicada. Como El Punto está anclado en el SCA 2004 y el programa Q Grader, la FNC y la BSCA ya se pasaron
+al CVA, hace falta una homologación que proteja el significado del grado. Reglas (R1–R8 del informe):
+
+- **R1 · Origen.** Todo Punto viaja con `origen` ∈ {nativo SCA 2004, homologado desde CVA}, su modelo y su panel. **R2 · Lo nativo manda**:
+  si hay una catada 2004, ES el Punto; el CVA se guarda y se enseña, nunca se mezcla. **R3 · Intervalo**: un homologado es una terna
+  [bajo, valor, alto] en la rejilla de 0,25. **R4 · Grado firme sobre el piso** (`bajo`); si el techo da un grado mayor, se enseña «hasta
+  X con recata SCA». **R5 · Compuertas conservadoras**: bajo 80 se rechaza solo si `alto` < 80; si el intervalo cruza los 80, el lote queda
+  **pendiente de recata** (ni galardón ni rechazo). **R6 · Tyrian es nativo**: un homologado tope en Gold. **R7** el surplus (la Tríada)
+  se aplica al piso, no a la estimación. **R8** se promedia dentro del protocolo y luego se homologa; nunca un 2004 con un CVA convertido.
+- **La banda sin calibrar** (mientras no haya datos): SCA ≈ 79 + (CVA − 79) / k, con k de 1 a 2, bordes redondeados hacia afuera en la
+  rejilla de 0,25 y el valor con k = 1,5. Ejemplos: CVA 89,5 → Punto 84,25–89,50; CVA 84,25 → 81,50–84,25. Es una heurística transparente
+  y ancha a propósito: empuja las decisiones al límite a una recata nativa. Modelo: `banda-k1-2` (sin calibrar).
+- **Catación a ciegas en los dos protocolos**: la Tríada es información extrínseca y se oculta al catador hasta enviar la planilla (ya era
+  así en el Centro: solo el UID).
+
+### 10.4 Las decisiones del informe, contestadas
+
+| # | Decisión | Lo adoptado (owner 2026-09-25 + recomendación del informe) |
+|---|---|---|
+| 1 | Protocolo primario de El Punto en la transición | **SCA 2004 nativo**: la evaluación por defecto y la que calibra la escala de grados (owner). Panel de 3 o más cuando lo haya. |
+| 2 | ¿Graduar los homologados sobre el piso del intervalo? | **Sí** (R4, R7). |
+| 3 | ¿Tyrian desde un Punto homologado? | **No**: solo nativo (R6). |
+| 4 | Frase de propósito CVA de la casa | **«Evaluación de lotes de especialidad para comercialización CTCx»** (`CVA_PROPOSITO`), en la planilla. |
+| 5 | Presupuesto de calibración | **30 lotes catados en las dos escalas** antes de estrechar la banda (`LOTES_PARA_CALIBRAR`); 100 en dos cosechas. El banco lo alimenta la planilla dual: `lot_evaluations` con `escala = 'sca'` y `cva_total` no nulo. |
+| 6 | Ancla de largo plazo (¿reanclar El Punto en CVA?) | **Diferida** a después de la calibración. |
+
+### 10.5 Lo que quedó en código (V5.92) y lo que sigue
+
+- `src/lib/arena/labEvaluation.ts`: planilla DUAL con `vista` (sca · cva · ambas); ocho secciones CVA con enteros 1–9; `cva_tazas` (cinco
+  tazas: no uniforme · defectuosa · tipo); `computeCva` con la fórmula oficial, redondeo al 0,25, Incompleto sin puntaje, errores en vez de
+  recortes; `computeSca2004` con los dominios del formulario y los defectos por taza (`sca_taint_cups` · `sca_fault_cups`);
+  `puntoDeLaPlanilla` (nativo si el SCA está completo, homologado si solo hay CVA, con «Ambas» las dos completas); `escala` derivada.
+- `src/lib/arena/homologacion.ts` (puro): `PuntoSca`, `homologarCva` (la banda k 1–2), `puntoNativo` · `puntoHomologado` · `puntoDeFila`,
+  `gradoFirme` (piso; Tyrian → Gold si homologado), `techoDelPunto`, `decidirPorPunto` (galardón · sin grado · pendiente de recata),
+  `rotuloDelPunto` (nunca un homologado se lee como un SCA catado), `CVA_PROPOSITO`, `LOTES_PARA_CALIBRAR`.
+- Base: `lot_evaluations.punto` (jsonb con la procedencia), `cva_total`; `sca_total` sigue siendo la columna que leen todos y desde ahora
+  es EL PUNTO (nativo, o el piso del homologado). Acta `docs/migraciones/2026-09-25_evaluaciones_punto_homologado.sql`.
+- Pantallas: el Datasheet Tool (`LabEvalEditor`) con el conmutador de vista, los dos bloques con sus dominios, las tazas y el Punto con su
+  rótulo; el Centro, «Lotes en Evaluación», la Arena y KR enseñan la procedencia («Punto homologado desde CVA … hasta X con recata SCA»).
+  El veredicto: galardón con el grado firme; «pendiente de recata» bloquea galardón y rechazo (R5); una apreciación de la Arena y «la que
+  rige» pasan por la misma decisión.
+- **Sigue**: (a) la fase 2 del informe —cuando `escala.ts` pase a `definicion.ts` (PVC fase 2, herramientas-internas) consume `PuntoSca`
+  y aplica R1–R8 sobre los puntos CTC—; (b) la calibración (≥ 30 lotes duales; regresión de Deming / equipercentil por letra de proceso;
+  intervalo de predicción del 80 %; versionar el modelo, p. ej. `calib-v1-2027A`) y el monitoreo (1 de cada 10 lotes duales para siempre);
+  (c) la decisión 6; (d) la ficha pública y el dossier dicen el protocolo de la ficha, no aún el origen del Punto — con dueño en
+  `cherry-picked` y `kaffetal-regal`.

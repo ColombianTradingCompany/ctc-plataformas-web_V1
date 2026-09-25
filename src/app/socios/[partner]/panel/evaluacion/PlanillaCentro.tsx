@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { LabEvalEditor } from "@/components/bcp/LabEvalEditor";
-import { EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, type LabEvaluation } from "@/lib/arena/labEvaluation";
+import { EMPTY_LAB_EVALUATION, labEvaluationHasData, puntoDeLaPlanilla, type LabEvaluation } from "@/lib/arena/labEvaluation";
+import { rotuloDelPunto } from "@/lib/arena/homologacion";
 import { anularRegistro, registrarEvaluacion } from "../evaluacionActions";
 import styles from "../../socios.module.css";
 
@@ -33,7 +34,8 @@ export function DarDeAltaButton({ lotId, uid }: { lotId: string; uid: string }) 
   const [open, setOpen] = useState(false);
   const [ev, setEv] = useState<LabEvaluation>(EMPTY_LAB_EVALUATION);
   const [notas, setNotas] = useState("");
-  const puntaje = labEvaluationHasData(ev) ? labEvaluationScore(ev) : null;
+  const punto = labEvaluationHasData(ev) ? puntoDeLaPlanilla(ev) : null;
+  const puntaje = punto?.bajo ?? null;
 
   return (
     <div>
@@ -58,7 +60,7 @@ export function DarDeAltaButton({ lotId, uid }: { lotId: string; uid: string }) 
               <textarea rows={2} value={notas} onChange={(e) => setNotas(e.target.value)} placeholder="Observaciones del Q-Grader…" style={{ width: "100%" }} />
             </div>
             <p style={{ fontSize: 13, margin: "8px 0 6px" }}>
-              {puntaje == null ? "Califique la escala elegida para poder dar de alta." : <>Puntaje <b>{puntaje.toFixed(2)}</b> ({ev.escala.toUpperCase()}). CTC deriva el grado al confirmar.</>}
+              {!punto ? "Complete la planilla de la vista elegida para poder dar de alta." : <>{rotuloDelPunto(punto)}. CTC deriva el grado al confirmar.</>}
             </p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button

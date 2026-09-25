@@ -41,9 +41,9 @@ check("el veredicto existe (recordEvaluationVerdict)", nominados.includes("expor
   const firma = nominados.match(/export async function recordEvaluationVerdict\(([\s\S]*?)\): Promise/)?.[1] ?? "";
   check("la firma del veredicto NO acepta un grado", !/\bgrade\b|\bgrado\b\s*:/.test(firma));
 }
-check("el grado sale de gradoPorPuntaje", nominados.includes("gradoPorPuntaje(puntaje)"));
+check("el grado sale del Punto (V5.92: decidirPorPunto — el grado firme se lee del piso; nadie lo digita)", nominados.includes("decidirPorPunto(puntoEfectivo)"));
 check("el puntaje pasa por redondeaPuntaje", nominados.includes("redondeaPuntaje(effectiveScore)"));
-check("sin puntaje no hay galardón", nominados.includes("Registre una planilla con puntaje SCA"));
+check("sin Punto no hay galardón (V5.92: planilla completa, SCA 2004 o CVA)", nominados.includes("Registre una planilla con Punto"));
 check("bajo 80 el camino honesto es «rechazado»", nominados.includes("no hay galardón (mínimo 80)"));
 check("el veredicto escribe grade + stage galardonado", nominados.includes('update({ grade: grado.id, stage: "galardonado" })'));
 check("la inscripción termina en fase galardonado", nominados.includes('phase: "galardonado", sondeo_result: "aprobado"'));
@@ -148,7 +148,8 @@ check("la vitrina (invitar · bloquear en sesión) ya no existe", !nominados.inc
 check("la Arena no crea contratos ni negociaciones", !arena.includes('from("purchase_contracts")') && !arena.includes('from("black_negotiations")'));
 check("ni toca la inscripción ni el stage del lote", !arena.includes('from("arena_inscriptions")') && !arena.includes("stage:"));
 check("una apreciación es una lot_evaluations bcp_arena aceptada que NO rige", arena.includes('source: "bcp_arena"') && arena.includes('status: "accepted"') && arena.includes("rige_grado: false"));
-check("elegir la que rige es lo ÚNICO que reescribe el grado fuera del veredicto", arena.includes("export async function elegirEvaluacionQueRige(") && arena.includes("gradoPorPuntaje(redondeaPuntaje(") && (arena.match(/update\(\{ grade: /g) ?? []).length === 1);
+// V5.92: el grado firme lo decide el Punto (piso; Tyrian nativo; pendiente de recata), no un gradoPorPuntaje suelto.
+check("elegir la que rige es lo ÚNICO que reescribe el grado fuera del veredicto", arena.includes("export async function elegirEvaluacionQueRige(") && arena.includes("decidirPorPunto(punto)") && (arena.match(/update\(\{ grade: /g) ?? []).length === 1);
 check("y lo hace exclusivo por lote (todas a false, una a true)", arena.includes('.eq("rige_grado", true)') && arena.includes("rige_grado: true"));
 check("el oficial del lote sale de la que rige, no de un promedio", evaluations.includes("export function evaluacionQueRige") && !evaluations.includes("function average("));
 check("por defecto rige la inicial del Q-Grader", evaluations.includes('e.source === "q_grader_batch"'));

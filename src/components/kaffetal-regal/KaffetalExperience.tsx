@@ -10,7 +10,8 @@ import { ordenaFichas, rowToLotFicha, type LotFicha } from "@/lib/fichas/tipos";
 // A 0..1 progress reporter threaded from a child input's useUpload() ring down
 // into these upload handlers, so the byte-level % shows next to the input.
 type ProgressFn = (fraction: number) => void;
-import { officialAverages, type EvaluationRow } from "@/lib/evaluations";
+import { evaluacionQueRige, officialAverages, type EvaluationRow } from "@/lib/evaluations";
+import { puntoDeFila, type PuntoSca } from "@/lib/arena/homologacion";
 import { moraDelMes, resumenDelTrato } from "@/lib/trato/mesAMes";
 import { Landing } from "./Landing";
 import { LoginModal } from "./LoginModal";
@@ -262,7 +263,7 @@ function dbLotToLot(
   fincaNameById: Map<string, string>,
   completionHistory: CompletionPoint[] = [],
   videoUrl: string | null = null,
-  evalSummary: { scaAverage: number | null; factorAverage: number | null; acceptedCount: number; hasPendingClaim: boolean; scorings: ScaScoring[] } = EMPTY_EVAL_SUMMARY,
+  evalSummary: { scaAverage: number | null; factorAverage: number | null; acceptedCount: number; hasPendingClaim: boolean; scorings: ScaScoring[]; punto?: PuntoSca | null } = EMPTY_EVAL_SUMMARY,
   inscription: Lot["inscription"] = null
 ): Lot {
   const stage = STAGE_DB.indexOf(row.stage as (typeof STAGE_DB)[number]);
@@ -315,6 +316,7 @@ function dbLotToLot(
     eudrMitigationEffective: row.eudr_mitigation_effective,
     eudrMitigationResponsible: row.eudr_mitigation_responsible || "",
     officialScaAverage: evalSummary.scaAverage,
+    officialPunto: evalSummary.punto ?? null,
     officialFactorAverage: evalSummary.factorAverage,
     officialEvalCount: evalSummary.acceptedCount,
     hasPendingOfficializationClaim: evalSummary.hasPendingClaim,
@@ -407,7 +409,7 @@ function Experience() {
           // (verificado por CTC vs declarado por el productor).
           supabase
             .from("lot_evaluations")
-            .select("id, lot_id, source, status, sca_total, sca_data, factor_rendimiento, q_grader_reference, created_at")
+            .select("id, lot_id, source, status, sca_total, punto, sca_data, factor_rendimiento, q_grader_reference, created_at")
             .order("created_at", { ascending: true }),
           // RLS (producer_comm_log_select_own) scopes this to the producer's own notes.
           supabase.from("producer_comm_log").select("id, context_label, finca_id, lot_id, note, created_at, author_role, parent_id, lead_id").order("created_at", { ascending: false }),
@@ -519,6 +521,9 @@ function Experience() {
         lotRowList.map((r) => {
           const rows = evalsByLotId.get(r.id) ?? [];
           const avg = officialAverages(rows);
+          // V5.92: el Punto que rige, con su procedencia (nativo SCA 2004 u homologado desde CVA).
+          const rige = evaluacionQueRige(rows);
+          const punto = rige ? puntoDeFila(rige as { sca_total: number | string | null; punto?: unknown }) : null;
           const hasPendingClaim = rows.some((e) => e.source === "producer_claim" && e.status === "pending");
           return dbLotToLot(
             r,
@@ -530,6 +535,7 @@ function Experience() {
               factorAverage: avg.factorAverage,
               acceptedCount: avg.acceptedCount,
               hasPendingClaim,
+              punto,
               // Cada puntaje con su procedencia, para la Ficha (vista final).
               scorings: rows.map((e) => ({
                 id: e.id,

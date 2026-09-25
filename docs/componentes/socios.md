@@ -106,9 +106,14 @@ fórmula del CVA y la rueda única). Lo tocan también `qa-recuperacion-check.mj
   `sondeo_batches.status = en_centro`, con `centro_calidad_account_id` (= la credencial `centro-calidad` activa, si hay UNA) y
   `q_grader_name` tecleado por CTCx al enviarlos; cada lote trae su muestra de evaluación (`muestra_movimientos` `a_centro`).
   **(d) V5.81 (fase 4) — HECHO**: `panel/evaluacion` construido; el bache va a UNA credencial con Evaluación activa y el
-  Q-Grader es su contacto (nadie lo teclea); dar de alta → `lot_evaluations` pendiente; CTCx confirma o devuelve. ⚠️ **La fórmula
-  del CVA** (`src/lib/arena/labEvaluation.ts`, `CVA`: 0,65625 × Σ + 52,75 − 2u − 4d con la impresión general doble) la debe
-  validar el Q-Grader de la casa: está en constantes con nombre y `qa-centro-calidad` la lee de ahí. **Queda**: el «uso
+  Q-Grader es su contacto (nadie lo teclea); dar de alta → `lot_evaluations` pendiente; CTCx confirma o devuelve. ~~⚠️ La fórmula
+  del CVA la debe validar el Q-Grader~~ **(e) V5.92 — el Q-Grader la corroboró y la corrigió (informe del 2026-09-25, plan del circuito
+  §10)**: ocho secciones (Fragancia y Aroma aparte), Impresión general ×1, redondeo al 0,25, cinco tazas con tipo de defecto (una
+  defectuosa es también no uniforme), Incompleto sin puntaje, el formulario 2004 con sus dominios. **La planilla del Centro es DUAL**
+  (owner: vista SCA · CVA · Ambas; el SCA 2004 nativo es el protocolo primario y calibra la escala; un CVA solo se homologa —por lo
+  general baja— con intervalo y rige el piso, nunca Tyrian; «Ambas» alimenta el banco comparativo que el owner pedirá a los Q-Graders).
+  `src/lib/arena/homologacion.ts` (de `consolas`); `lot_evaluations.punto` · `cva_total`; el Centro enseña el Punto con su procedencia
+  (`rotuloDelPunto`). `qa-centro-calidad` §5 y §7 (los vectores del informe se leen del plan). **Queda**: el «uso
   directo» (emitir una Ficha Técnica o un reporte sin bache — respuesta 5), `Procesamiento de Lotes` (Etapa 3), la variante
   interna de la Datasheet Tool (charter `herramientas-cafe`), y **nadie ha conducido el módulo en vivo** con la credencial
   (se verificó por `tsc`, build y guardianes; la credencial interna existe y tiene Evaluación activa).

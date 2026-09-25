@@ -8,6 +8,7 @@ import { NEQUI, PAYMENT_EMAIL } from "@/lib/arena/payment";
 import type { FacturaData } from "@/lib/arena/factura";
 import { TIPO_LABEL, type TipoDeMuestra } from "@/lib/muestras/particion";
 import { descriptorLabel } from "@/lib/catacion/rueda";
+import { puntoDeFila, rotuloDelPunto } from "@/lib/arena/homologacion";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { centrosConEvaluacion, createSondeoBatch } from "../nominadosActions";
 import {
@@ -58,7 +59,12 @@ type BatchRow = {
   centro_calidad_account_id: string | null;
 };
 type MuestraRow = { id: string; lot_id: string; tipo: TipoDeMuestra; kg: number; ubicacion: string | null };
-type AltaRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; escala: string; rueda: unknown; q_grader_reference: string | null; notes: string | null; created_at: string };
+type AltaRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; escala: string; rueda: unknown; q_grader_reference: string | null; notes: string | null; created_at: string };
+// V5.92: el alta se enseña con su Punto y su procedencia (nunca un homologado como un SCA catado).
+const rotuloDeAlta = (a: AltaRow) => {
+  const p = puntoDeFila(a);
+  return p ? rotuloDelPunto(p) : "—";
+};
 
 const fecha = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString("es-CO") : "—");
 
@@ -107,7 +113,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
     // V5.81: las altas del Centro de Calidad (pendientes o devueltas) de los lotes en bache.
     service
       .from("lot_evaluations")
-      .select("id, lot_id, batch_id, status, sca_total, escala, rueda, q_grader_reference, notes, created_at")
+      .select("id, lot_id, batch_id, status, sca_total, punto, escala, rueda, q_grader_reference, notes, created_at")
       .eq("source", "q_grader_batch")
       .in("status", ["pending", "rejected"])
       .in("lot_id", enBache.map((i) => i.lot_id))
@@ -376,8 +382,8 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
                       // V5.81: el Q-Grader ya lo dio de alta — CTCx confirma o devuelve; no teclea otra planilla.
                       <>
                         <p className={styles.meta} style={{ margin: "4px 0 0" }}>
-                          <span className={`${styles.badge} ${styles.badgeWarn}`}>Alta del Centro pendiente</span> {pendiente.escala.toUpperCase()}{" "}
-                          <b>{pendiente.sca_total != null ? Number(pendiente.sca_total).toFixed(2) : "—"}</b> · {pendiente.q_grader_reference ?? "—"} · {fecha(pendiente.created_at)}
+                          <span className={`${styles.badge} ${styles.badgeWarn}`}>Alta del Centro pendiente</span> <b>{rotuloDeAlta(pendiente)}</b> ·{" "}
+                          {pendiente.q_grader_reference ?? "—"} · {fecha(pendiente.created_at)}
                         </p>
                         <ConfirmarCentroControls
                           lotId={i.lot_id}
@@ -386,6 +392,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
                             id: pendiente.id,
                             escala: pendiente.escala,
                             puntaje: pendiente.sca_total != null ? Number(pendiente.sca_total) : null,
+                            punto: puntoDeFila(pendiente),
                             qGrader: pendiente.q_grader_reference,
                             fecha: fecha(pendiente.created_at),
                             rueda: Array.isArray(pendiente.rueda) ? (pendiente.rueda as string[]).map((id) => descriptorLabel(id)) : [],

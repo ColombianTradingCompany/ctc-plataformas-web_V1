@@ -5,9 +5,9 @@ import { redirect } from "next/navigation";
 import type { ActionResult } from "@/components/panel/ActionForm";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
-import { computeFactor, labEvaluationHasData, labEvaluationScore, type LabEvaluation } from "@/lib/arena/labEvaluation";
+import { computeFactor, labEvaluationHasData, protocoloDelPunto, puntoDeLaPlanilla, type LabEvaluation } from "@/lib/arena/labEvaluation";
+import { decidirPorPunto, puntoDeFila } from "@/lib/arena/homologacion";
 import { ATRIBUTOS_SCA } from "@/lib/fichas/tipos";
-import { gradoPorPuntaje, redondeaPuntaje } from "@/lib/grados/definicion";
 
 // ── Kaffetal Regal Arena · sesiones de SEGUNDA APRECIACIÓN (V5.77, owner 2026-09-24) ──
 // La Arena se queda en «BCP · Ecosistema de Valor» y se rehace para su nueva función
@@ -158,7 +158,8 @@ export async function registrarApreciacion(sessionId: string, lotId: string, eva
   if (!roster?.length || !lot) return { ok: false, error: "Ese café no está en esta sesión." };
   if (!labEvaluationHasData(evaluation)) return { ok: false, error: "La planilla está vacía — digite al menos un dato." };
 
-  const puntaje = labEvaluationScore(evaluation);
+  const punto = puntoDeLaPlanilla(evaluation);
+  const puntaje = punto?.bajo ?? null;
   const scaData: Record<string, number> = {};
   for (const key of ATRIBUTOS_SCA) scaData[key] = Number(evaluation[`sca_${key}` as keyof LabEvaluation]) || 0;
   const fisico: Record<string, unknown> = { tipo: "apreciacion_arena", session_id: sessionId, session_name: sess.name };
@@ -171,6 +172,9 @@ export async function registrarApreciacion(sessionId: string, lotId: string, eva
       source: "bcp_arena",
       status: "accepted",
       sca_total: puntaje,
+      punto,
+      cva_total: punto?.cvaTotal ?? null,
+      escala: protocoloDelPunto(evaluation),
       sca_data: scaData,
       factor_rendimiento: computeFactor(evaluation).yieldFactor,
       physical_data: fisico,
@@ -213,14 +217,17 @@ export async function elegirEvaluacionQueRige(lotId: string, evaluationId: strin
   const service = createServiceRoleClient();
 
   const [{ data: ev }, { data: lot }] = await Promise.all([
-    service.from("lot_evaluations").select("id, lot_id, status, sca_total, source").eq("id", evaluationId).maybeSingle(),
+    service.from("lot_evaluations").select("id, lot_id, status, sca_total, punto, source").eq("id", evaluationId).maybeSingle(),
     service.from("lots").select("id, name, stage, grade").eq("id", lotId).maybeSingle(),
   ]);
   if (!ev || ev.lot_id !== lotId) return { ok: false, error: "Esa evaluación no es de este lote." };
   if (ev.status !== "accepted" || ev.sca_total == null) return { ok: false, error: "Solo rige una evaluación aceptada con puntaje." };
   if (!lot || lot.stage !== "galardonado") return { ok: false, error: "Solo se elige la evaluación que rige de un lote galardonado." };
-  const grado = gradoPorPuntaje(redondeaPuntaje(Number(ev.sca_total)));
-  if (!grado) return { ok: false, error: `Con SCA ${ev.sca_total} el lote quedaría por debajo de Black: esa evaluación no puede regir.` };
+  // V5.92: el grado firme lo decide el Punto (piso; un homologado nunca da Tyrian; si cruza los 80, pendiente de recata).
+  const punto = puntoDeFila(ev);
+  const decision = punto ? decidirPorPunto(punto) : null;
+  if (!decision || decision.tipo !== "galardon") return { ok: false, error: `Con Punto ${ev.sca_total} el lote quedaría por debajo de Black (o pendiente de recata SCA): esa evaluación no puede regir.` };
+  const grado = decision.grado;
 
   await service.from("lot_evaluations").update({ rige_grado: false }).eq("lot_id", lotId).eq("rige_grado", true);
   const { error } = await service.from("lot_evaluations").update({ rige_grado: true }).eq("id", evaluationId);

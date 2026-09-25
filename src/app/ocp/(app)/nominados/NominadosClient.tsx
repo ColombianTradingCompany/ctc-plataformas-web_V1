@@ -25,6 +25,7 @@ import {
 } from "../nominadosActions";
 import { decidirSubvencion, emitirFactura, recibirMuestraAction } from "../solicitudesActions";
 import { LabEvalEditor } from "@/components/bcp/LabEvalEditor";
+import { decidirPorPunto, rotuloDelPunto, type PuntoSca } from "@/lib/arena/homologacion";
 import { EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, computeSca, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import { gradoPorPuntaje, redondeaPuntaje } from "@/lib/grados/definicion";
 import { openFactura, type FacturaData } from "@/lib/arena/factura";
@@ -427,14 +428,17 @@ export function ConfirmarCentroControls({
 }: {
   lotId: string;
   lotName: string;
-  alta: { id: string; escala: string; puntaje: number | null; qGrader: string | null; fecha: string; rueda: string[]; notas: string | null };
+  alta: { id: string; escala: string; puntaje: number | null; punto: PuntoSca | null; qGrader: string | null; fecha: string; rueda: string[]; notas: string | null };
 }) {
   const { pending, error, run } = useAction();
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [motivo, setMotivo] = useState("");
   const puntaje = alta.puntaje != null ? redondeaPuntaje(alta.puntaje) : null;
-  const grado = puntaje != null ? gradoPorPuntaje(puntaje) : null;
+  // V5.92: el grado FIRME sale del Punto (piso; un homologado nunca da Tyrian); si el intervalo cruza los 80, recata.
+  const decision = alta.punto ? decidirPorPunto(alta.punto) : null;
+  const grado = decision?.tipo === "galardon" ? decision.grado : null;
+  const pendienteRecata = decision?.tipo === "pendiente_recata";
   return (
     <div style={{ marginTop: 6 }}>
       <button className="btn btn-sm btn-solid" onClick={() => setOpen(true)}>
@@ -448,7 +452,7 @@ export function ConfirmarCentroControls({
             </button>
             <h3>Alta del Centro de Calidad · {lotName}</h3>
             <p className={styles.meta} style={{ marginTop: 2 }}>
-              Q-Grader <b>{alta.qGrader ?? "—"}</b> · {alta.escala.toUpperCase()} <b>{alta.puntaje != null ? alta.puntaje.toFixed(2) : "—"}</b> · dada de alta el {alta.fecha}
+              Q-Grader <b>{alta.qGrader ?? "—"}</b> · <b>{alta.punto ? rotuloDelPunto(alta.punto) : "—"}</b> · dada de alta el {alta.fecha}
               {alta.rueda.length > 0 && <> · rueda: {alta.rueda.join(", ")}</>}
             </p>
             {alta.notas && <p className={styles.meta}>Notas del Q-Grader: {alta.notas}</p>}
@@ -460,9 +464,11 @@ export function ConfirmarCentroControls({
             <p className={styles.meta} style={{ margin: "8px 0 6px" }}>
               {puntaje == null
                 ? "El alta no trae puntaje — devuélvala al Centro."
-                : grado
-                  ? <>Puntaje <b>{puntaje}</b> → Grado <b style={{ color: grado.hex }}>{grado.nombre}</b> (derivado — el puntaje manda).</>
-                  : <>Puntaje <b>{puntaje}</b>: por debajo de 80 no hay galardón — registre «No supera».</>}
+                : pendienteRecata
+                  ? <>El Punto homologado cruza los 80 ({alta.punto?.bajo}–{alta.punto?.alto}): ni galardón ni «No supera» — acuerde una recata SCA 2004 nativa.</>
+                  : grado
+                    ? <>Punto <b>{puntaje}</b> → Grado firme <b style={{ color: grado.hex }}>{grado.nombre}</b> (derivado — el puntaje manda{decision?.tipo === "galardon" && decision.techo ? <>; hasta {decision.techo.nombre} con recata SCA</> : null}).</>
+                    : <>Punto <b>{puntaje}</b>: por debajo de 80 no hay galardón — registre «No supera».</>}
             </p>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               <button

@@ -1,4 +1,5 @@
 import type { FichaFormData } from "./ficha/fichaData";
+import type { PuntoSca } from "@/lib/arena/homologacion";
 import type { EstadoDeMora } from "@/lib/trato/mesAMes";
 
 export type Finca = {
@@ -253,6 +254,8 @@ export type Lot = {
   // self-report (ficha_puntaje_estimado / this.score) is never official on
   // its own. See src/lib/evaluations.ts.
   officialScaAverage: number | null;
+  /** V5.92: el Punto que rige con su procedencia (nativo SCA 2004 u homologado desde CVA); opcional para no romper a quien arma un Lot a mano. */
+  officialPunto?: PuntoSca | null;
   officialFactorAverage: number | null;
   officialEvalCount: number;
   hasPendingOfficializationClaim: boolean;

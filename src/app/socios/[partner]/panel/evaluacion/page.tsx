@@ -7,6 +7,7 @@ import { PARTNERS } from "@/lib/partners/partners";
 import { requirePartner } from "@/lib/partners/requirePartner";
 import { descriptorLabel } from "@/lib/catacion/rueda";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
+import { puntoDeFila, rotuloDelPunto } from "@/lib/arena/homologacion";
 import { BUILD_SHA, VERSION_LABEL } from "@/lib/version";
 import { AnularAltaButton, DarDeAltaButton } from "./PlanillaCentro";
 import styles from "../../socios.module.css";
@@ -23,7 +24,12 @@ export const dynamic = "force-dynamic";
 
 type BatchRow = { id: string; label: string; shipped_at: string | null; q_grader_name: string | null };
 type InsRow = { lot_id: string; sondeo_batch_id: string | null; phase: string };
-type EvalRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; escala: string; rueda: unknown; created_at: string; reviewed_at: string | null; notes: string | null; submitted_by: string | null };
+type EvalRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; cva_total: number | string | null; escala: string; rueda: unknown; created_at: string; reviewed_at: string | null; notes: string | null; submitted_by: string | null };
+// V5.92: nunca un homologado se lee como un SCA catado.
+const rotulo = (e: EvalRow) => {
+  const p = puntoDeFila(e);
+  return p ? rotuloDelPunto(p) : "—";
+};
 type MovRow = { batch_id: string | null; kg: number | string; muestras: { lot_id: string } | { lot_id: string }[] | null };
 
 const fecha = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString("es-CO") : "—");
@@ -50,7 +56,7 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
         service.from("arena_inscriptions").select("lot_id, sondeo_batch_id, phase").in("sondeo_batch_id", batchIds),
         service
           .from("lot_evaluations")
-          .select("id, lot_id, batch_id, status, sca_total, escala, rueda, created_at, reviewed_at, notes, submitted_by")
+          .select("id, lot_id, batch_id, status, sca_total, punto, cva_total, escala, rueda, created_at, reviewed_at, notes, submitted_by")
           .in("batch_id", batchIds)
           .eq("source", "q_grader_batch")
           .order("created_at", { ascending: false }),
@@ -121,7 +127,7 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
                         ) : pendiente ? (
                           <>
                             <span className={styles.orgLine}>
-                              Dado de alta el {fecha(pendiente.created_at)} · {String(pendiente.escala).toUpperCase()} {pendiente.sca_total != null ? Number(pendiente.sca_total).toFixed(2) : "—"} · esperando a CTC
+                              Dado de alta el {fecha(pendiente.created_at)} · {rotulo(pendiente)} · esperando a CTC
                             </span>
                             <AnularAltaButton evaluationId={pendiente.id} />
                           </>

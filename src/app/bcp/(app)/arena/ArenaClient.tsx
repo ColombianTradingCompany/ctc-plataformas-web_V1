@@ -3,8 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { LabEvalEditor } from "@/components/bcp/LabEvalEditor";
-import { EMPTY_LAB_EVALUATION, labEvaluationScore, type LabEvaluation } from "@/lib/arena/labEvaluation";
-import { gradoPorPuntaje, redondeaPuntaje } from "@/lib/grados/definicion";
+import { EMPTY_LAB_EVALUATION, puntoDeLaPlanilla, type LabEvaluation } from "@/lib/arena/labEvaluation";
+import { gradoFirme } from "@/lib/arena/homologacion";
 import { deleteArenaSession, elegirEvaluacionQueRige, registrarApreciacion, removeLotFromSession } from "../arenaActions";
 import styles from "@/components/panel/shared.module.css";
 
@@ -92,8 +92,9 @@ export function ApreciacionForm({ sessionId, lotId, lotName }: { sessionId: stri
   const { pending, error, run } = useAction();
   const [open, setOpen] = useState(false);
   const [ev, setEv] = useState<LabEvaluation>(EMPTY_LAB_EVALUATION);
-  const puntaje = labEvaluationScore(ev);
-  const grado = puntaje != null ? gradoPorPuntaje(redondeaPuntaje(puntaje)) : null;
+  const punto = puntoDeLaPlanilla(ev);
+  const puntaje = punto?.bajo ?? null;
+  const grado = punto ? gradoFirme(punto) : null;
 
   return (
     <span>

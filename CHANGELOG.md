@@ -19,6 +19,27 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.92] — 2026-09-25 (commit pendiente)
+
+- **Corregido**: **la fórmula CVA**, tal como la corroboró el Q-Grader (informe del 2026-09-25, `PLAN_CIRCUITO_DEL_LOTE` §10): **ocho**
+  secciones (Fragancia y Aroma aparte), la Impresión general cuenta **una** vez, redondeo al 0,25, cinco tazas registradas una a una con
+  su tipo de defecto (una defectuosa es también no uniforme), una planilla incompleta no da puntaje y un valor fuera de 1–9 es un error.
+  El formulario SCA 2004 aplica sus dominios (atributos 6,00–10,00 en pasos de 0,25; uniformidad · taza limpia · dulzor 2 puntos por
+  taza; defectos por taza ×2 · ×4) y exige los diez atributos. No había evaluaciones CVA en la base.
+- **Añadido**: **la planilla dual** del CTCx Coffee Datasheet Tool (owner): un conmutador de vista SCA 2004 · CVA · Ambas. El SCA 2004
+  nativo es el protocolo primario (rige y calibra la escala de grados); «Ambas» registra las dos y alimenta el **banco comparativo** que
+  se pedirá a los Q-Graders del Centro de Calidad.
+- **Añadido**: **el Punto homologado** (`src/lib/arena/homologacion.ts`): un puntaje CVA no es un Punto y se homologa de forma
+  determinista con un intervalo (banda 79 + (CVA − 79)/k, k de 1 a 2, mientras no haya calibración); el grado firme se lee del piso,
+  Tyrian exige un Punto nativo y un intervalo que cruce los 80 queda «pendiente de recata» (ni galardón ni rechazo). El veredicto, «la
+  evaluación que rige» y la apreciación de la Arena deciden por el Punto; el Centro, «Lotes en Evaluación» y KR enseñan su procedencia
+  («Punto homologado desde CVA … hasta X con recata SCA»). `sca_total` sigue siendo la columna que leen todos y ahora ES el Punto.
+- **Datos**: migración `evaluaciones_punto_homologado` (acta): `lot_evaluations.punto`, `cva_total`. Las cuatro cuentas de prueba
+  `@ctc-qa-test.co` que quedaban y sus 5 leads se eliminaron (owner).
+- **Docs**: plan del circuito §10 (las seis respuestas, los vectores, R1–R8, las seis decisiones contestadas, lo que sigue);
+  `qa-centro-calidad` 65 → 95 (los vectores se leen del §10.2); `PVC_BCP_PLAN` §9.1 recuadro; charters `consolas` y `socios`; HANDOFF;
+  ALINEACION §3. El one-pager del Q-Grader se regeneró con la lógica corregida.
+
 ## [V5.91] — 2026-09-25 (commit 015e284)
 
 - **Cambiado**: **las mezclas de CTCx Selection por composición** (owner, 2026-09-25; decisión 4 del brief de Compras). **La regla

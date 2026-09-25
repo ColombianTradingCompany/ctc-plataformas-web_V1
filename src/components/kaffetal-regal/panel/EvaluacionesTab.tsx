@@ -470,7 +470,13 @@ function GalardonCard({ lot, fincas }: { lot: Lot; fincas: Finca[] }) {
             </span>
             {puntaje != null && (
               <span className="mono" style={{ fontSize: 11.5, border: "1px solid var(--line)", borderRadius: 999, padding: "2px 10px" }}>
-                Puntaje SCA: {puntaje}
+                {lot.officialPunto?.origen === "homologado" ? "Punto homologado (piso)" : "Puntaje SCA"}: {puntaje}
+              </span>
+            )}
+            {/* V5.92: un Punto homologado desde CVA se dice como tal — nunca como un SCA catado; el techo, con recata. */}
+            {lot.officialPunto?.origen === "homologado" && (
+              <span style={{ fontSize: 11.5, color: "var(--muted)" }}>
+                Homologado desde CVA {lot.officialPunto.cvaTotal ?? ""} · no catado en SCA · hasta {lot.officialPunto.alto} con una recata SCA
               </span>
             )}
           </div>

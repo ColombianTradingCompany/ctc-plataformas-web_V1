@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { getPartnerIdentity } from "@/lib/partners/requirePartner";
-import { labEvaluationHasData, labEvaluationScaData, labEvaluationScore, computeFactor, toLabEvaluation, type LabEvaluation } from "@/lib/arena/labEvaluation";
+import { erroresDePlanilla, labEvaluationHasData, labEvaluationScaData, protocoloDelPunto, puntoDeLaPlanilla, computeFactor, toLabEvaluation, type LabEvaluation } from "@/lib/arena/labEvaluation";
+import { rotuloDelPunto } from "@/lib/arena/homologacion";
 import { normalizaRueda } from "@/lib/catacion/rueda";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 
@@ -42,8 +43,10 @@ export async function registrarEvaluacion(lotId: string, raw: LabEvaluation, not
 
   const ev = toLabEvaluation(raw);
   if (!labEvaluationHasData(ev)) return { ok: false, error: "La planilla está vacía — califique al menos una sección." };
-  const puntaje = labEvaluationScore(ev);
-  if (puntaje == null) return { ok: false, error: `Califique la escala elegida (${ev.escala.toUpperCase()}) para dar de alta el lote.` };
+  // V5.92: el PUNTO con su procedencia — nativo SCA 2004 si la planilla lo trae completo; homologado desde CVA si solo hay CVA.
+  const punto = puntoDeLaPlanilla(ev);
+  if (!punto) return { ok: false, error: "La planilla no está completa: " + erroresDePlanilla(ev).join(" ") };
+  const puntaje = punto.bajo;
 
   // Solo un lote de un bache EN el Centro y asignado a ESTA credencial. Nada más se lee del lote.
   const { data: ins } = await service.from("arena_inscriptions").select("id, phase, sondeo_batch_id").eq("lot_id", lotId).maybeSingle();
@@ -71,7 +74,8 @@ export async function registrarEvaluacion(lotId: string, raw: LabEvaluation, not
     factor_rendimiento: factor.yieldFactor,
     physical_data: {
       tipo: "centro_calidad",
-      escala: ev.escala,
+      escala: protocoloDelPunto(ev),
+      vista: ev.vista,
       fa_start: ev.fa_start,
       fa_green_remainder: ev.fa_green_remainder,
       fa_primary_defect: ev.fa_primary_defect,
@@ -88,7 +92,9 @@ export async function registrarEvaluacion(lotId: string, raw: LabEvaluation, not
       planilla: ev,
     },
     batch_id: batch.id,
-    escala: ev.escala,
+    escala: protocoloDelPunto(ev),
+    punto,
+    cva_total: punto.cvaTotal,
     rueda: normalizaRueda(ev.rueda),
     uid_anonimo: ctcLotReferenceShort(lotId),
     q_grader_reference: identity.contactName?.trim() || identity.orgName,
@@ -102,7 +108,7 @@ export async function registrarEvaluacion(lotId: string, raw: LabEvaluation, not
     entity_id: lotId,
     action: "evaluacion_registrada_centro",
     performed_by: identity.userId,
-    notes: `Centro de Calidad · ${identity.orgName} · ${ev.escala.toUpperCase()} ${puntaje} · bache ${batch.id.slice(0, 8)}`,
+    notes: `Centro de Calidad · ${identity.orgName} · ${rotuloDelPunto(punto)} · bache ${batch.id.slice(0, 8)}`,
   });
   revalidar();
   return { ok: true };

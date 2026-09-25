@@ -3,12 +3,13 @@ import { notFound } from "next/navigation";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { ActionForm } from "@/components/panel/ActionForm";
 import { GRADO_POR_ID } from "@/lib/grados/definicion";
-import { KG_MINIMOS_POR_COMPONENTE, MAX_COMPONENTES, MIN_COMPONENTES, resumenDeMezcla, unaSolaVariedad, validarCierre } from "@/lib/compras/mezclas";
+import { MIN_COMPONENTES, MOQ_KG_MEZCLA, TIPO_MEZCLA_LABEL, resumenDeMezcla, tipoDeMezcla, validarCierre, validarComponente } from "@/lib/compras/mezclas";
+import { CARGA_KG } from "@/lib/trato/terminos";
 import { cargarMezcla, comprasDisponiblesPara } from "@/lib/compras/mezclasServidor";
-import { agregarComponente, anularMezcla, cerrarMezcla, quitarComponente } from "../../../comprasActions";
+import { agregarComponente, anularMezcla, cerrarMezcla, guardarObjetivoDeMezcla, quitarComponente } from "../../../comprasActions";
 import styles from "@/components/panel/shared.module.css";
 
-// ── Una mezcla (V5.87): sus componentes, lo que falta para cumplir la regla, cerrar o anular ──
+// ── Una mezcla (V5.87 · composición V5.91): sus lotes, el tipo que se deriva, lo que falta para cerrar, cerrar o anular ──
 
 export const dynamic = "force-dynamic";
 
@@ -22,12 +23,14 @@ export default async function MezclaPage({ params }: { params: Promise<{ id: str
   const mezcla = await cargarMezcla(service, id);
   if (!mezcla) notFound();
   const borrador = mezcla.status === "borrador";
-  const candidatas = borrador && mezcla.componentes.length < MAX_COMPONENTES ? await comprasDisponiblesPara(service, mezcla.grado, id) : [];
+  const candidatas = borrador ? await comprasDisponiblesPara(service, mezcla.grado, id) : [];
   const resumen = resumenDeMezcla(mezcla.componentes);
+  const derivado = tipoDeMezcla(mezcla.componentes);
   const faltas = validarCierre(mezcla.grado, mezcla.componentes);
-  const yaProductores = new Set(mezcla.componentes.map((c) => c.producerId));
-  const variedadDeLaMezcla = unaSolaVariedad(mezcla.grado) ? mezcla.componentes[0]?.variedad?.trim().toLowerCase() : undefined;
-  const elegibles = candidatas.filter((c) => !yaProductores.has(c.producerId) && (variedadDeLaMezcla == null || (c.variedad ?? "").trim().toLowerCase() === variedadDeLaMezcla));
+  // Elegibles: las que, añadidas con cualquier kilaje, dejan a la mezcla con un tipo (la regla pura decide; los kilos se validan al añadir).
+  const elegibles = candidatas.filter((c) => validarComponente(mezcla.grado, mezcla.componentes, { ...c, kg: Math.min(c.disponibleKg, 1) }).length === 0);
+  const tipoMostrado = mezcla.tipo ?? derivado.tipo;
+  const objetivo = mezcla.objetivoTemporadaKg;
 
   return (
     <div>
@@ -38,33 +41,63 @@ export default async function MezclaPage({ params }: { params: Promise<{ id: str
         <code style={{ fontWeight: 400, marginRight: 8 }}>{mezcla.codigo}</code>
         {mezcla.nombre}{" "}
         <span className={styles.badge}>{GRADO_POR_ID[mezcla.grado]?.nombre ?? mezcla.grado}</span>{" "}
+        {tipoMostrado && <span className={styles.badge}>{TIPO_MEZCLA_LABEL[tipoMostrado]}</span>}{" "}
         <span className={mezcla.status === "cerrada" ? styles.badgeGood : mezcla.status === "anulada" ? styles.badgeBad : styles.badge}>{STATUS_LABEL[mezcla.status]}</span>
       </h1>
       <p className={styles.subtitle}>
-        {unaSolaVariedad(mezcla.grado) ? "Una sola variedad, mezcla regional" : "Blend de orígenes y/o variedades"} de {MIN_COMPONENTES} a {MAX_COMPONENTES} orígenes · una carga ({KG_MINIMOS_POR_COMPONENTE} kg de CPS) por productor.
+        {tipoMostrado === "single_origin" && <>Single Origin: varios estates con la misma variedad y proceso ({derivado.motivo}).</>}
+        {tipoMostrado === "regional_blend" && <>Regional Blend: varios lotes de la misma región ({derivado.motivo}).</>}
+        {!tipoMostrado && <>Sin tipo todavía: será {TIPO_MEZCLA_LABEL.single_origin} (varios estates, misma variedad y proceso) o {TIPO_MEZCLA_LABEL.regional_blend} (misma región) según sus lotes.</>}
         {mezcla.nota && <> · {mezcla.nota}</>}
       </p>
       <p className={styles.meta} style={{ marginBottom: 16 }}>
-        <b>{resumen.kgTotal} kg de CPS</b> ({resumen.cargas} cargas) · {resumen.componentes} componente{resumen.componentes === 1 ? "" : "s"} · {resumen.productores} productor{resumen.productores === 1 ? "" : "es"}
-        {resumen.variedades.length > 0 && <> · {resumen.variedades.join(" · ")}</>} · creada el {fecha(mezcla.createdAt)}
+        <b>{resumen.kgTotal} kg de CPS</b> ({resumen.cargas} cargas{resumen.cubreMoq ? "" : ` — bajo el MOQ de compra de ${MOQ_KG_MEZCLA} kg`}) · {resumen.componentes} lote{resumen.componentes === 1 ? "" : "s"} ·{" "}
+        {resumen.estates} estate{resumen.estates === 1 ? "" : "s"} · {resumen.productores} productor{resumen.productores === 1 ? "" : "es"}
+        {resumen.variedades.length > 0 && <> · {resumen.variedades.join(" · ")}</>}
+        {resumen.procesos.length > 0 && <> · {resumen.procesos.join(" · ")}</>}
+        {resumen.regiones.length > 0 && <> · {resumen.regiones.join(" · ")}</>} · creada el {fecha(mezcla.createdAt)}
         {mezcla.cerradaAt && <> · cerrada el {fecha(mezcla.cerradaAt)}</>}
         {mezcla.status === "anulada" && <> · anulada el {fecha(mezcla.anuladaAt)}: {mezcla.anuladaMotivo}</>}
       </p>
 
+      {mezcla.status !== "anulada" && (
+        <section style={{ marginBottom: 28, maxWidth: 560 }}>
+          <div className={styles.card} style={{ flexDirection: "column", alignItems: "stretch" }}>
+            <h3 style={{ margin: 0 }}>Mínimo que CTCx asegura por temporada</h3>
+            <p className={styles.meta}>
+              {objetivo != null ? (
+                <>
+                  Objetivo {mezcla.temporada ?? "de temporada"}: <b>{objetivo} kg de CPS</b> —{" "}
+                  {resumen.kgTotal + 1e-9 >= objetivo ? <b>cubierto</b> : <>faltan <b>{Math.round((objetivo - resumen.kgTotal) * 10) / 10} kg</b> desde Adquisición</>}.
+                </>
+              ) : (
+                <>Sin objetivo: escriba la temporada y los kilos que CTCx asegura para esta mezcla (informa, no bloquea el cierre).</>
+              )}
+            </p>
+            <ActionForm action={guardarObjetivoDeMezcla.bind(null, id)} submitLabel="Guardar" pendingLabel="Guardando…" buttonClassName="btn btn-sm" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <input name="temporada" placeholder="Temporada (2026-B)" defaultValue={mezcla.temporada ?? ""} style={{ flex: "1 1 140px" }} />
+              <input name="objetivo_temporada_kg" inputMode="decimal" placeholder={`kg de CPS (p. ej. ${MOQ_KG_MEZCLA})`} defaultValue={objetivo ?? ""} style={{ flex: "1 1 160px" }} />
+            </ActionForm>
+          </div>
+        </section>
+      )}
+
       <section style={{ marginBottom: 28 }}>
         <div className={styles.sectionHead}>
-          <h2>Componentes ({mezcla.componentes.length})</h2>
+          <h2>Lotes de la mezcla ({mezcla.componentes.length})</h2>
         </div>
         {mezcla.componentes.length === 0 ? (
-          <p className={styles.empty}>Sin componentes todavía. Añada compras del grado {GRADO_POR_ID[mezcla.grado]?.nombre ?? mezcla.grado} abajo.</p>
+          <p className={styles.empty}>Sin lotes todavía. Añada compras {GRADO_POR_ID[mezcla.grado]?.nombre ?? mezcla.grado} destinadas a CTCx Selection abajo.</p>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
               <thead>
                 <tr style={{ color: "var(--muted)", textAlign: "left" }}>
                   <th style={td}>Lote</th>
-                  <th style={td}>Productor · finca</th>
+                  <th style={td}>Productor · estate</th>
+                  <th style={td}>Región</th>
                   <th style={td}>Variedad</th>
+                  <th style={td}>Proceso</th>
                   <th style={{ ...td, textAlign: "right" }}>kg en la mezcla</th>
                   <th style={{ ...td, textAlign: "right" }}>Compra (kg)</th>
                   <th style={{ ...td, textAlign: "right" }}>Sin asignar en otras</th>
@@ -74,12 +107,16 @@ export default async function MezclaPage({ params }: { params: Promise<{ id: str
               <tbody>
                 {mezcla.componentes.map((c) => (
                   <tr key={c.id} style={{ borderTop: "1px solid var(--line)" }}>
-                    <td style={td}>{c.lotName}</td>
+                    <td style={td}>
+                      <Link href={`/ocp/kr?lote=${c.lotId}`}>{c.lotName}</Link>
+                    </td>
                     <td style={td}>
                       {c.producerName}
-                      <div className={styles.meta}>{c.fincaName ?? "—"}</div>
+                      <div className={styles.meta}>{c.fincaName ?? <span className={styles.warn}>sin finca</span>}</div>
                     </td>
+                    <td style={td}>{c.departamento ?? <span className={styles.warn}>sin departamento</span>}</td>
                     <td style={td}>{c.variedad ?? <span className={styles.warn}>sin variedad</span>}</td>
+                    <td style={td}>{c.proceso ?? <span className={styles.warn}>sin proceso</span>}</td>
                     <td style={{ ...td, textAlign: "right" }}>
                       <b>{c.kg}</b>
                     </td>
@@ -100,49 +137,51 @@ export default async function MezclaPage({ params }: { params: Promise<{ id: str
 
       {borrador && (
         <>
-          {mezcla.componentes.length < MAX_COMPONENTES && (
-            <section style={{ marginBottom: 28 }}>
-              <div className={styles.sectionHead}>
-                <h2>Añadir un componente</h2>
-              </div>
-              {elegibles.length === 0 ? (
-                <p className={styles.empty}>
-                  No hay compras {GRADO_POR_ID[mezcla.grado]?.nombre ?? mezcla.grado} elegibles: hace falta una compra en firme de otro productor
-                  {variedadDeLaMezcla ? ` de la variedad de la mezcla` : ""} con al menos {KG_MINIMOS_POR_COMPONENTE} kg sin asignar. Se registran en{" "}
-                  <Link href="/ocp/compras">Compras</Link>.
-                </p>
-              ) : (
-                <ActionForm action={agregarComponente.bind(null, id)} submitLabel="Añadir" pendingLabel="Añadiendo…" buttonClassName="btn btn-sm btn-solid" className={styles.card} style={{ display: "block" }}>
-                  <div className={styles.formGrid}>
-                    <div className={styles.field} style={{ gridColumn: "1 / -1" }}>
-                      <label htmlFor="mz-compra">Compra</label>
-                      <select id="mz-compra" name="compra_id" required defaultValue="">
-                        <option value="" disabled>
-                          Elija la compra…
+          <section style={{ marginBottom: 28 }}>
+            <div className={styles.sectionHead}>
+              <h2>Añadir un lote</h2>
+            </div>
+            {elegibles.length === 0 ? (
+              <p className={styles.empty}>
+                No hay compras {GRADO_POR_ID[mezcla.grado]?.nombre ?? mezcla.grado} elegibles: hace falta una compra en firme destinada a CTCx Selection, con kilos sin
+                asignar, que deje a la mezcla con un tipo ({TIPO_MEZCLA_LABEL.single_origin}: misma variedad y proceso; {TIPO_MEZCLA_LABEL.regional_blend}: misma
+                región). Se registran en <Link href="/ocp/compras">Adquisición de Stock Café</Link>; la composición del lote se corrige en su ficha.
+              </p>
+            ) : (
+              <ActionForm action={agregarComponente.bind(null, id)} submitLabel="Añadir" pendingLabel="Añadiendo…" buttonClassName="btn btn-sm btn-solid" className={styles.card} style={{ display: "block" }}>
+                <div className={styles.formGrid}>
+                  <div className={styles.field} style={{ gridColumn: "1 / -1" }}>
+                    <label htmlFor="mz-compra">Compra</label>
+                    <select id="mz-compra" name="compra_id" required defaultValue="">
+                      <option value="" disabled>
+                        Elija la compra…
+                      </option>
+                      {elegibles.map((c) => (
+                        <option key={c.compraId} value={c.compraId}>
+                          {c.lotName} · {c.producerName} · {c.fincaName ?? "sin finca"} · {c.departamento ?? "sin región"} · {c.variedad ?? "sin variedad"} · {c.proceso ?? "sin proceso"} ·{" "}
+                          {c.disponibleKg} kg sin asignar
                         </option>
-                        {elegibles.map((c) => (
-                          <option key={c.compraId} value={c.compraId}>
-                            {c.lotName} · {c.producerName} · {c.fincaName ?? "—"} · {c.variedad ?? "sin variedad"} · {c.disponibleKg} kg sin asignar
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className={styles.field}>
-                      <label htmlFor="mz-kg">Kilos de CPS (≥ {KG_MINIMOS_POR_COMPONENTE})</label>
-                      <input id="mz-kg" name="kg" inputMode="decimal" defaultValue={KG_MINIMOS_POR_COMPONENTE} required />
-                    </div>
+                      ))}
+                    </select>
                   </div>
-                </ActionForm>
-              )}
-            </section>
-          )}
+                  <div className={styles.field}>
+                    <label htmlFor="mz-kg">Kilos de CPS</label>
+                    <input id="mz-kg" name="kg" inputMode="decimal" defaultValue={CARGA_KG} required />
+                  </div>
+                </div>
+              </ActionForm>
+            )}
+          </section>
 
           <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12 }}>
             <div className={styles.card} style={{ flexDirection: "column", alignItems: "stretch" }}>
               <h3 style={{ margin: 0 }}>Cerrar la mezcla</h3>
               {faltas.length === 0 ? (
                 <>
-                  <p className={styles.meta}>Cumple la regla. Al cerrar, los componentes quedan fijos y lo asignado deja de estar disponible para ofrecer por lote.</p>
+                  <p className={styles.meta}>
+                    Es {tipoMostrado ? TIPO_MEZCLA_LABEL[tipoMostrado] : "—"}. Al cerrar, los lotes quedan fijos, el tipo se guarda (la base lo vuelve a derivar) y lo
+                    asignado deja de estar disponible para ofrecer por lote.{!resumen.cubreMoq && <> Está bajo el MOQ de compra ({MOQ_KG_MEZCLA} kg): se puede cerrar, pero no cubre un pedido mínimo.</>}
+                  </p>
                   <ActionForm action={cerrarMezcla.bind(null, id)} submitLabel="Cerrar la mezcla" pendingLabel="Cerrando…" buttonClassName="btn btn-sm btn-solid" />
                 </>
               ) : (
@@ -150,6 +189,7 @@ export default async function MezclaPage({ params }: { params: Promise<{ id: str
                   {faltas.map((f) => (
                     <li key={f}>{f}</li>
                   ))}
+                  {mezcla.componentes.length < MIN_COMPONENTES && <li>Una mezcla es de varios lotes.</li>}
                 </ul>
               )}
             </div>

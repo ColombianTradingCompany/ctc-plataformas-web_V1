@@ -19,6 +19,23 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.91] — 2026-09-25 (commit pendiente)
+
+- **Cambiado**: **las mezclas de CTCx Selection por composición** (owner, 2026-09-25; decisión 4 del brief de Compras). **La regla
+  «3 a 4 productores, una carga por productor, Red de una sola variedad» se retira de raíz.** Cada lote trae su composición en la
+  ficha (variedad, proceso, la finca —el estate— y su región); una mezcla Black o Red es **Single Origin** (varios estates con la misma
+  variedad y proceso) o **Regional Blend** (varios lotes de la misma región) y el tipo **se deriva** de sus lotes al añadir y al
+  cerrar (la base lo vuelve a derivar). Blue, Gold y Tyrian son casi siempre Single Estate.
+- **Cambiado**: **el mínimo es el MOQ de compra** —una demanda de al menos **3 cargas** para Black y Red (`lectura.ts`; los dos tableros
+  del Modelo Económico lo dicen; el incremento sigue siendo la mitad, 1,5 cargas)—, y **CTCx asegura un mínimo por temporada** desde
+  Adquisición para cada mezcla (temporada + kilos objetivo: informa cuánto falta, no bloquea el cierre). Las mezclas se arman solo con
+  compras destinadas a CTCx Selection. `PVC_BCP_PLAN` gana el §14.8 (n.º 30–32) y deja tachada la regla vieja.
+- **Datos**: migración `mezclas_composicion` (acta en `docs/migraciones/`): `mezclas.tipo` (single_origin · regional_blend),
+  `temporada`, `objetivo_temporada_kg`; `guard_mezcla_cerrada` reescrito (varios lotes, un grado, el tipo derivado, dentro de lo
+  disponible). `LOTES_EN_MEZCLA`, `CARGAS_POR_PRODUCTOR`, `MOQ_MEZCLA` y `COMPOSICION_MEZCLA` ya no existen.
+- **Docs**: `qa-compras-check` 95 → 96 (§10 reescrito: lee el §14.8 del plan del PVC), `qa-pvc-lectura` 67 → 60; charters de
+  `consolas` y `herramientas-internas`, brief de Compras (sin decisiones abiertas), HANDOFF, ALINEACION §3.
+
 ## [V5.90] — 2026-09-25 (commit 8fb7c6f)
 
 - **Cambiado**: **«CTCx Selection · Compras» pasa a llamarse «Adquisición de Stock Café (Selection/Sample Kits)»** (owner, 2026-09-25;

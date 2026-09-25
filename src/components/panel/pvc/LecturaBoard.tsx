@@ -315,12 +315,12 @@ export function LecturaBoard({
                     <td>{emp.nombre}</td>
                     <td>{emp.formatosKg.map((f) => `${f} kg`).join(" · ")}</td>
                     <td style={{ textAlign: "right" }}>
-                      {esMezcla ? "3 o 4 cargas" : `${moq} carga${moq === 1 ? "" : "s"}`}
-                      {esMezcla && <div className={styles.kpiSub}>1 carga por productor · 3 productores → 3 · 4 → 4</div>}
+                      {`${moq} carga${moq === 1 ? "" : "s"}`}
+                      {esMezcla && <div className={styles.kpiSub}>MOQ de compra (demanda ≥ {moq} cargas) · Single Origin o Regional Blend</div>}
                       {admiteSaco(b) && <div className={styles.kpiSub}>excepción: 1 saco ({SACO_KG_CPS} kg CPS)</div>}
                     </td>
                     <td style={{ textAlign: "right" }}>
-                      {esMezcla ? "1,5 o 2 cargas" : `${num(incrementoCargas(moq), incrementoCargas(moq) % 1 ? 1 : 0)} carga${incrementoCargas(moq) === 1 ? "" : "s"}`}
+                      {`${num(incrementoCargas(moq), incrementoCargas(moq) % 1 ? 1 : 0)} carga${incrementoCargas(moq) === 1 ? "" : "s"}`}
                     </td>
                     <td style={{ textAlign: "right" }}>{cop0(fila?.copc ?? null)}</td>
                     <td style={{ textAlign: "right" }}>{fila ? num(fila.n2, 2) : "—"}</td>

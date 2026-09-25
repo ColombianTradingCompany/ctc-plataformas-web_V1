@@ -99,7 +99,7 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 `muestras` · `muestra_movimientos` (V5.80) ·
 `arena_entry_codes` · `arena_sessions` · `arena_session_lots` · `arena_scores` · `lot_evaluations`
 (filas `q_grader_batch` y `bcp_arena`) · `lot_offers` (emisión) · `lot_fichas` (escáner y set) ·
-`lot_auctions` (administración) · `black_negotiations` (DORMIDA desde la V5.85: sin lector ni escritor) · **`compras`** (+ `destino` V5.90) · **`ctcx_selection_lotes`** (V5.85) · **`mezclas`** · **`mezcla_componentes`** (V5.87) · **`sample_kits`** · **`sample_kit_items`** (V5.90) · `purchase_contracts` · `contract_months` (V5.84, el trato mes a mes) ·
+`lot_auctions` (administración) · `black_negotiations` (DORMIDA desde la V5.85: sin lector ni escritor) · **`compras`** (+ `destino` V5.90) · **`ctcx_selection_lotes`** (V5.85) · **`mezclas`** (+ `tipo`, `temporada`, `objetivo_temporada_kg` V5.91) · **`mezcla_componentes`** (V5.87) · **`sample_kits`** · **`sample_kit_items`** (V5.90) · `purchase_contracts` · `contract_months` (V5.84, el trato mes a mes) ·
 `contract_releases` (desde la V5.84, espejo de cada envío registrado) ·
 `humidity_readings` · `lot_listings` (publicación) · `club_campaigns` · `ai_usage` · `transcripts` ·
 `transcript_workers` (+ RPC `claim_transcript_job`).
@@ -133,7 +133,7 @@ blanca) · `qa-circuito-check.mjs` (41 — la tabla de verdad del circuito desde
 registrar ≠ confirmar, CVA, rueda; charter `socios`, guardián de `consolas` porque vigila el circuito) · **`qa-trato-check.mjs`** (35, V5.82 —
 cada cifra de `terminos.ts` contra el §0/§6 del plan; rechazo gratis; re-evaluación; «sin oferta»; los laterales del circuito) ·
 **`qa-pvc-precio.mjs`** (52, V5.82 — la escalera publicada grado por grado, `RANGOS` = `definicion.ts`, nadie lee `rango`, las
-ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-internas`) · **`qa-compras-check.mjs`** (95, V5.85 · mezclas V5.87 · Sample Kits V5.90 — lo disponible derivado y nunca negativo, `ctc_selection` desde `compras` sin Tyrian y con la finca anulada en SQL, el precio cita el PVC, la compra nace del pago de una oferta de compra en firme, el CRM sin escritor, el perfil único y la imagen por lote, la vitrina con el perfil, el circuito y la barra con la misma regla, decisión 7) · `qa-ofertas-check.mjs` (37). Los siete `qa-pvc-*`, `qa-grados`, `qa-definicion`,
+ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-internas`) · **`qa-compras-check.mjs`** (96, V5.85 · mezclas V5.87 · Sample Kits V5.90 · composición V5.91 — lo disponible derivado y nunca negativo, `ctc_selection` desde `compras` sin Tyrian y con la finca anulada en SQL, el precio cita el PVC, la compra nace del pago de una oferta de compra en firme, el CRM sin escritor, el perfil único y la imagen por lote, la vitrina con el perfil, el circuito y la barra con la misma regla, decisión 7) · `qa-ofertas-check.mjs` (37). Los siete `qa-pvc-*`, `qa-grados`, `qa-definicion`,
 `qa-direccionamiento` y `qa-anclas` pasaron a `herramientas-internas` el 2026-09-19.
 
 ## Reglas propias
@@ -255,7 +255,16 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   destinado a `selection`— y el módulo **«Stock de Sample Kits»** (`/ocp/sample-kits`, OCP · Catálogo): el café adquirido que no va a la
   oferta, en kits CP (8 × 250 g verde) · Plus (5 × 2 kg verde) · Max (4 × 6 kg CPS) armado → enviado · anulado (`sample_kits` ·
   `sample_kit_items`; disponible derivado; guards en la base; la regla y los números del owner en `src/lib/compras/sampleKits.ts`).
-  `qa-compras` 73 → 95. **Sigue**: V5.91 (Compras 4: composición por lote, MOQ de 3 cargas, la regla 3–4 de las mezclas se retira).
+  `qa-compras` 73 → 95. **V5.91 (owner, 2026-09-25 — decisión 4 de Compras): la regla 3–4 se retiró de raíz**: cada lote trae su
+  composición (variedad, proceso, finca —el estate— y región); una mezcla Black/Red es **Single Origin** (varios estates, misma
+  variedad y proceso) o **Regional Blend** (varios lotes de la misma región) y el tipo se DERIVA (`mezclas.tipo`; `tipoDeMezcla` en
+  `src/lib/compras/mezclas.ts`; `guard_mezcla_cerrada` reescrito, acta `mezclas_composicion`); el mínimo es el **MOQ de compra** (≥ 3
+  cargas — `lectura.ts` reescrito con el «continúa» del owner: `MOQ_CARGAS_BLACK_RED`, `TIPOS_DE_MEZCLA`, `COMPOSICION_POR_GRADO`;
+  `LOTES_EN_MEZCLA` · `CARGAS_POR_PRODUCTOR` · `MOQ_MEZCLA` · `COMPOSICION_MEZCLA` retirados; los dos tableros del PVC lo dicen) y CTCx
+  asegura un mínimo por temporada (`mezclas.temporada`, `objetivo_temporada_kg`, `guardarObjetivoDeMezcla`: informativo); las mezclas se
+  arman solo con compras destinadas a Selection. `PVC_BCP_PLAN` §14.8 (n.º 30–32) supera al §9.2, §9.3, §12.6, §14.4 y n.º 28.
+  `qa-compras` 95 → 96; `qa-pvc-lectura` 67 → 60. **Con esto quedan ejecutadas las decisiones del owner del 2026-09-25**
+  (Muestras 1 · 4 · 5, Compras 4, cuentas, one-pager CVA); sigue el wrap V47 desde WRAP-COMMIT-PUSH y la Etapa 2.
   También en la V5.76, las cuatro indicaciones del owner sobre `/ocp/kr`: sin «Nuevo lote», agrupada por productor, el mapa por
   elemento, y «Ver fincas» con el filtro de Pasaporte por etapa.
 - **LAS TRES RUTAS DEL PROVEEDOR (owner, 2026-09-23)** — brief `briefs/consolas-rutas-del-proveedor.md`, con las siete
@@ -432,7 +441,8 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   Trading Company SAS**; **UID/QR del lote** para la bolsa (enlaza ficha pública, Visa EUDR y trazabilidad); publicar el PVC de
   ene–mar 2027 **antes del 15-oct-2026**; mínimos con Black y Red **3–4 según la mezcla** — **cerrado el 2026-09-19 y en
   código desde la V5.53**: mezcla de 3 a 4 productores, **una carga por productor**; Black = blend de orígenes y/o
-  variedades, Red = siempre una sola variedad (mezcla regional); la mezcla de dos ya no existe (`lectura.ts`). No queda ninguna pregunta de narrativa
+  variedades, Red = siempre una sola variedad (mezcla regional); la mezcla de dos ya no existe (`lectura.ts`) — **superado el 2026-09-25
+  (V5.91, §14.8): 3 cargas, el MOQ de compra; Single Origin o Regional Blend por composición**. No queda ninguna pregunta de narrativa
   abierta; el cuarto documento («Decisiones y pendientes», fuera del repo) consolida lo que falta ejecutar.
 - **Papagayo Beans® (owner, 2026-09-17, `PVC_BCP_PLAN.md` §14.6)**: entra al vocabulario congelado; donde este componente
   nombra el café (catálogo publicado, fichas técnicas y ficha pública, Open Graph/JSON-LD del lote, CTCx Selection) debe

@@ -11,11 +11,12 @@
 //    Si alguien «arregla» una de las tres, el número que el owner enseña en una
 //    finca cambia sin que nadie avise.
 //
-// 2. EL MOQ Y EL EMPAQUE (§9.2, addendum del owner del 2026-09-16). Black y Red
-//    son mezclas y su mínimo sale de cuántos lotes las componen — una regla que
-//    no se adivina leyendo el código y que es fácil de aplanar a «4 cargas
-//    siempre». El incremento es la mitad del mínimo. Una mezcla de cinco no
-//    existe.
+// 2. EL MOQ Y EL EMPAQUE (§9.2 y §14.8). Desde el 2026-09-25 (owner) Black y Red
+//    NO se cuentan por productores: su mínimo es el MOQ DE COMPRA (una demanda de
+//    al menos tres cargas, leída del §14.8 del plan) y la mezcla es Single Origin
+//    o Regional Blend según la composición de sus lotes. Los nombres de la regla
+//    vieja (LOTES_EN_MEZCLA, MOQ_MEZCLA, CARGAS_POR_PRODUCTOR, COMPOSICION_MEZCLA)
+//    tienen que seguir retirados. El incremento es la mitad del mínimo.
 //
 // La pestaña EXHIBE estas reglas; todavía no gobiernan precio (los parámetros
 // del modelo vigente siguen con la tabla vieja hasta la versión v2.2.0). El
@@ -23,10 +24,11 @@
 
 import { readFileSync } from "node:fs";
 import {
-  CARGA_KG_CPS, SACO_KG_CPS, EMPAQUES, LOTES_EN_MEZCLA, MOQ_MEZCLA, CARGAS_POR_PRODUCTOR, COMPOSICION_MEZCLA,
+  CARGA_KG_CPS, SACO_KG_CPS, EMPAQUES, MOQ_CARGAS_BLACK_RED, TIPOS_DE_MEZCLA, COMPOSICION_POR_GRADO,
   admiteSaco, desviacionDeMercado, embudoDeCarga, empaqueDe, holguraDisparador,
   incrementoCargas, moqCargas, primaMinima, sobreBasePergamino, verdeFobCop,
 } from "../src/lib/pvc/lectura.ts";
+import * as lectura from "../src/lib/pvc/lectura.ts";
 
 const raiz = new URL("../", import.meta.url);
 const lee = (r) => readFileSync(new URL(r, raiz), "utf8");
@@ -68,18 +70,14 @@ check("el vacío admite 3, 6 y 12 kg", JSON.stringify(vacio.formatosKg) === JSON
 check("el GrainPro es de 35 kg", JSON.stringify(grain.formatosKg) === JSON.stringify([35]));
 check("Black y Red YA NO van en bolsa de 6 kg", !grain.formatosKg.includes(6));
 
-// ── 3 · el MOQ de las mezclas ─────────────────────────────────────────────
-check("una mezcla de DOS no existe (owner, 2026-09-19: el blend es de 3 a 4)", !LOTES_EN_MEZCLA.includes(2) && MOQ_MEZCLA[2] === undefined);
-check("mezcla de 3 lotes → 3 cargas", moqCargas("Black", 3) === 3);
-check("mezcla de 4 lotes → 4 cargas", moqCargas("Black", 4) === 4);
-check("Red sigue la misma regla de cargas que Black", [3, 4].every((n) => moqCargas("Red", n) === moqCargas("Black", n)));
-check("el mínimo está anclado a UNA carga por productor", CARGAS_POR_PRODUCTOR === 1 && LOTES_EN_MEZCLA.every((n) => MOQ_MEZCLA[n] === n * CARGAS_POR_PRODUCTOR));
-check("Black mezcla orígenes y/o variedades", COMPOSICION_MEZCLA.Black.variedades === "varias");
-check("Red es SIEMPRE de una sola variedad (mezcla regional)", COMPOSICION_MEZCLA.Red.variedades === "una");
-check("sin el dato de la mezcla se devuelve el caso mayor (4)", moqCargas("Black") === 4 && moqCargas("Red") === 4);
-check("una mezcla de cinco no existe", !LOTES_EN_MEZCLA.includes(5) && MOQ_MEZCLA[5] === undefined);
-check("cada lote de la mezcla aporta al menos una carga", LOTES_EN_MEZCLA.every((n) => MOQ_MEZCLA[n] / n >= 1));
-check("la mezcla nunca baja de tres cargas", LOTES_EN_MEZCLA.every((n) => MOQ_MEZCLA[n] >= 3));
+// ── 3 · el MOQ de compra (owner, 2026-09-25: la regla 3–4 se retiró de raíz) ──
+const plan14_8 = (lee("docs/PVC_BCP_PLAN.md").match(/### 14\.8[\s\S]*$/) ?? [""])[0];
+const moqPlan = Number(plan14_8.match(/una demanda de al menos (\d+) cargas/)?.[1]);
+check("el plan (§14.8) fija el MOQ de compra de Black y Red y el código lo lee igual", moqPlan === MOQ_CARGAS_BLACK_RED && moqCargas("Black") === moqPlan && moqCargas("Red") === moqPlan);
+check("Black y Red ya no se cuentan por productores: los nombres de la regla vieja se retiraron", ["LOTES_EN_MEZCLA", "MOQ_MEZCLA", "CARGAS_POR_PRODUCTOR", "COMPOSICION_MEZCLA"].every((n) => !(n in lectura)) && moqCargas.length === 1);
+check("los dos tipos de mezcla son los del owner y en su orden: Single Origin · Regional Blend", JSON.stringify(TIPOS_DE_MEZCLA) === JSON.stringify(["Single Origin", "Regional Blend"]) && /\*\*Single Origin\*\*/.test(plan14_8) && /\*\*Regional Blend\*\*/.test(plan14_8));
+check("Black y Red admiten los dos tipos; Blue, Gold y Tyrian son Single Estate", COMPOSICION_POR_GRADO.Black.tipos === TIPOS_DE_MEZCLA && COMPOSICION_POR_GRADO.Red.tipos === TIPOS_DE_MEZCLA && ["Blue", "Gold", "Tyrian"].every((b) => JSON.stringify(COMPOSICION_POR_GRADO[b].tipos) === JSON.stringify(["Single Estate"])));
+check("la mezcla nunca baja de tres cargas (el MOQ de compra)", MOQ_CARGAS_BLACK_RED >= 3);
 
 check("Blue son 2 cargas", moqCargas("Blue") === 2);
 check("Gold estándar es 1 carga", moqCargas("Gold") === 1);
@@ -90,8 +88,7 @@ check("Black NO admite el piso de saco", !admiteSaco("Black"));
 check("el saco son 70 kg de pergamino", SACO_KG_CPS === 70);
 
 // ── 4 · el incremento es la mitad del mínimo ──────────────────────────────
-check("mezcla de 4 → incremento de 2 cargas", incrementoCargas(moqCargas("Black", 4)) === 2);
-check("mezcla de 3 → incremento de 1,5 cargas", incrementoCargas(moqCargas("Black", 3)) === 1.5);
+check("Black y Red → incremento de 1,5 cargas (la mitad de 3)", incrementoCargas(moqCargas("Black")) === 1.5 && incrementoCargas(moqCargas("Red")) === 1.5);
 check("Blue → incremento de 1 carga", incrementoCargas(moqCargas("Blue")) === 1);
 check("Gold → incremento de media carga", incrementoCargas(moqCargas("Gold")) === 0.5);
 
@@ -117,12 +114,12 @@ check("la página lee el mercado de market_anchors", lee("src/lib/pvc/servicio.t
 // ── 7 · la doctrina está escrita ──────────────────────────────────────────
 const plan = lee("docs/PVC_BCP_PLAN.md");
 check("el plan declara los dos estándares de empaque", /GrainPro-type \+ yute/.test(plan));
-// La mezcla, tal como la cerró el owner el 2026-09-19 (§9.2 y §14.4): 3 o 4 productores,
-// una carga de cada uno; Black mezcla orígenes y/o variedades, Red es de una sola variedad.
-check("el plan declara la regla de la mezcla (3 → 3 · 4 → 4)", /\| \*\*3\*\* \| \*\*3 cargas\*\* \|/.test(plan) && /\| \*\*4\*\* \| \*\*4 cargas\*\* \|/.test(plan));
-check("el plan ancla el mínimo a una carga por productor", /una\s+carga\*{0,2} por productor|cada productor involucrado: una\s+carga/.test(plan));
+// La mezcla, tal como la reescribió el owner el 2026-09-25 (§14.8): composición por lote, Single Origin o Regional Blend,
+// el mínimo es el MOQ de compra. La regla del 2026-09-19 (3 a 4 productores, una carga cada uno) queda tachada en el §9.2.
+check("el plan tiene la cuarta ronda del owner (§14.8) y retira la regla 3–4 de raíz", /### 14\.8 .*composición por lote y MOQ de compra/.test(plan) && /se retira de raíz\*\*/.test(plan14_8));
+check("el §9.2 ya no trae viva la tabla «3 → 3 · 4 → 4»", !/\| \*\*3\*\* \| \*\*3 cargas\*\* \|/.test(plan) && /Superado el 2026-09-25/.test(plan));
 check("el plan ya NO trae la mezcla de dos lotes", !/\*\*2 lotes\*\* \| \*\*4 cargas\*\*/.test(plan));
-check("el plan distingue Black (orígenes y/o variedades) de Red (una sola variedad)", /orígenes y\/o variedades/.test(plan) && /siempre de una sola\s+variedad/.test(plan));
+check("el plan dice que CTCx asegura un mínimo por temporada desde Adquisición", /asegura un mínimo por temporada desde Adquisición/.test(plan14_8));
 check("el §14.4 ya no dice que Black 4 y Red 3 son fijos sin tacharlo", !/(?<!~~)Black 4 y Red 3\s+son fijos/.test(plan));
 check("el plan declara el piso de saco", /70 kg de CPS/.test(plan));
 check("el plan declara que el incremento es la mitad", /mitad del mínimo/.test(plan));

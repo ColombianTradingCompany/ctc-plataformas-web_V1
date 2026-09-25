@@ -7,8 +7,8 @@ import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { edicionVigente } from "@/lib/pvc/servicio";
 import { BUCKET_CTCX, CLAVE_PERFIL_CTCX } from "@/lib/compras/reglas";
 import { formatCop } from "@/lib/arena/inscriptions";
-import { esGradoDeMezcla, resumenDeMezcla, validarCierre, validarComponente, type GradoDeMezcla } from "@/lib/compras/mezclas";
-import { cargarMezcla } from "@/lib/compras/mezclasServidor";
+import { TIPO_MEZCLA_LABEL, esGradoDeMezcla, resumenDeMezcla, tipoDeMezcla, validarCierre, validarComponente, type GradoDeMezcla } from "@/lib/compras/mezclas";
+import { SELECT_LOTE_PARA_MEZCLA, cargarMezcla, composicionDelLote } from "@/lib/compras/mezclasServidor";
 import { KITS, validarEnvioDeKit, validarItemDeKit, type TipoDeKit } from "@/lib/compras/sampleKits";
 import { cargarKit, asignadoAKitsPorCompra } from "@/lib/compras/sampleKitsServidor";
 
@@ -223,8 +223,14 @@ export async function crearMezcla(formData: FormData): Promise<ActionResult> {
   const nombre = texto(formData.get("nombre"));
   const grado = texto(formData.get("grado"));
   if (!nombre) return { ok: false, error: "Póngale nombre a la mezcla." };
-  if (!esGradoDeMezcla(grado)) return { ok: false, error: "Solo Black y Red se mezclan (Blue, Gold y Tyrian son lote único)." };
-  const { data, error } = await service.from("mezclas").insert({ nombre, grado, nota: texto(formData.get("nota")), created_by: adminId }).select("id, codigo").single();
+  if (!esGradoDeMezcla(grado)) return { ok: false, error: "Solo Black y Red se mezclan (Blue, Gold y Tyrian son casi siempre Single Estate)." };
+  const objetivo = objetivoDe(formData);
+  if (objetivo === false) return { ok: false, error: "El objetivo de temporada son kilos de CPS mayores que cero (o vacío)." };
+  const { data, error } = await service
+    .from("mezclas")
+    .insert({ nombre, grado, nota: texto(formData.get("nota")), temporada: texto(formData.get("temporada")), objetivo_temporada_kg: objetivo, created_by: adminId })
+    .select("id, codigo")
+    .single();
   if (error || !data) return { ok: false, error: "No se pudo crear la mezcla: " + (error?.message ?? "sin fila") };
   await service.from("audit_log").insert({ entity_type: "mezcla", entity_id: data.id, action: "mezcla_creada", performed_by: adminId, notes: `${data.codigo} · ${nombre} · ${grado}` });
   revalidaMezclas(data.id);
@@ -243,16 +249,20 @@ export async function agregarComponente(mezclaId: string, formData: FormData): P
   const mezcla = await cargarMezcla(service, mezclaId);
   if (!mezcla) return { ok: false, error: "Mezcla no encontrada." };
   if (mezcla.status !== "borrador") return { ok: false, error: "Los componentes solo cambian mientras la mezcla es un borrador." };
-  const { data: compra } = await service.from("compras").select("id, kg, grado, lots(producer_id, ficha_variedad)").eq("id", compraId).maybeSingle();
+  const { data: compra } = await service.from("compras").select(`id, kg, grado, destino, ${SELECT_LOTE_PARA_MEZCLA}`).eq("id", compraId).maybeSingle();
   if (!compra) return { ok: false, error: "Compra no encontrada." };
-  const lot = (Array.isArray(compra.lots) ? compra.lots[0] : compra.lots) as { producer_id: string; ficha_variedad: string | null } | null;
+  if (compra.destino !== "selection") return { ok: false, error: "Esa compra está destinada a Sample Kits: las mezclas de CTCx Selection se arman con compras destinadas a Selection." };
+  const comp = composicionDelLote(compra.lots as Parameters<typeof composicionDelLote>[0]);
   const { data: asignadoRaw } = await service.from("mezcla_componentes").select("kg, mezclas!inner(status)").eq("compra_id", compraId).neq("mezclas.status", "anulada");
   const asignado = ((asignadoRaw as { kg: number | string }[] | null) ?? []).reduce((a, r) => a + Number(r.kg), 0);
   const nuevo = {
     compraId,
     kg,
-    producerId: lot?.producer_id ?? "",
-    variedad: lot?.ficha_variedad ?? null,
+    producerId: comp.producerId,
+    fincaId: comp.fincaId,
+    departamento: comp.departamento,
+    variedad: comp.variedad,
+    proceso: comp.proceso,
     grado: compra.grado,
     disponibleKg: Math.max(0, Math.round((Number(compra.kg) - asignado) * 10) / 10),
   };
@@ -291,10 +301,39 @@ export async function cerrarMezcla(mezclaId: string): Promise<ActionResult> {
   if (mezcla.status !== "borrador") return { ok: false, error: "Solo se cierra un borrador." };
   const errores = validarCierre(mezcla.grado, mezcla.componentes);
   if (errores.length) return { ok: false, error: errores.join(" ") };
-  const { error } = await service.from("mezclas").update({ status: "cerrada" }).eq("id", mezclaId);
+  // El TIPO se deriva de la composición (owner, 2026-09-25); la base lo vuelve a derivar y no deja cerrar si no coincide.
+  const tipo = tipoDeMezcla(mezcla.componentes).tipo;
+  const { error } = await service.from("mezclas").update({ status: "cerrada", tipo }).eq("id", mezclaId);
   if (error) return { ok: false, error: "La base no dejó cerrar la mezcla: " + error.message };
   const r = resumenDeMezcla(mezcla.componentes);
-  await service.from("audit_log").insert({ entity_type: "mezcla", entity_id: mezclaId, action: "mezcla_cerrada", performed_by: adminId, notes: `${mezcla.codigo} · ${r.componentes} componentes · ${r.productores} productores · ${r.kgTotal} kg (${r.cargas} cargas)${r.variedades.length ? ` · ${r.variedades.join(", ")}` : ""}` });
+  await service.from("audit_log").insert({ entity_type: "mezcla", entity_id: mezclaId, action: "mezcla_cerrada", performed_by: adminId, notes: `${mezcla.codigo} · ${tipo ? TIPO_MEZCLA_LABEL[tipo] : "sin tipo"} · ${r.componentes} lotes · ${r.estates} estates · ${r.kgTotal} kg (${r.cargas} cargas${r.cubreMoq ? "" : ", bajo el MOQ"})${r.variedades.length ? ` · ${r.variedades.join(", ")}` : ""}${r.regiones.length ? ` · ${r.regiones.join(", ")}` : ""}` });
+  revalidaMezclas(mezclaId);
+  return { ok: true };
+}
+
+/** El objetivo de temporada: `null` si viene vacío, `false` si no es un número mayor que cero. */
+const objetivoDe = (formData: FormData): number | null | false => {
+  const crudo = texto(formData.get("objetivo_temporada_kg"));
+  if (!crudo) return null;
+  const n = kgDe(crudo);
+  return Number.isFinite(n) && n > 0 ? n : false;
+};
+
+/** V5.91 (owner, 2026-09-25): «para estas mezclas CTCx asegura un mínimo por temporada desde Adquisición». Informativo. `emite`. */
+export async function guardarObjetivoDeMezcla(mezclaId: string, formData: FormData): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const { data: m } = await service.from("mezclas").select("status, codigo").eq("id", mezclaId).maybeSingle();
+  if (!m) return { ok: false, error: "Mezcla no encontrada." };
+  if (m.status === "anulada") return { ok: false, error: "Una mezcla anulada no lleva objetivo." };
+  const objetivo = objetivoDe(formData);
+  if (objetivo === false) return { ok: false, error: "El objetivo de temporada son kilos de CPS mayores que cero (o vacío)." };
+  const temporada = texto(formData.get("temporada"));
+  const { error } = await service.from("mezclas").update({ temporada, objetivo_temporada_kg: objetivo }).eq("id", mezclaId);
+  if (error) return { ok: false, error: "No se pudo guardar el objetivo: " + error.message };
+  await service.from("audit_log").insert({ entity_type: "mezcla", entity_id: mezclaId, action: "mezcla_objetivo", performed_by: adminId, notes: `${m.codigo} · ${temporada ?? "sin temporada"} · ${objetivo ?? "sin objetivo"} kg` });
   revalidaMezclas(mezclaId);
   return { ok: true };
 }

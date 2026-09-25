@@ -218,12 +218,10 @@ export function EscalaBoard({
             {emp && (
               <>
                 Se entrega en <strong>{emp.nombre.toLowerCase()}</strong> de {emp.formatosKg.map((f) => `${f} kg`).join(" · ")}.{" "}
-                MOQ{" "}
-                {esMezcla
-                  ? "3 o 4 cargas: una por cada productor de la mezcla (que es de 3 o de 4)"
-                  : `${moqCargas(bandaComoBanda5)} carga${moqCargas(bandaComoBanda5) === 1 ? "" : "s"}`}
+                MOQ {moqCargas(bandaComoBanda5)} carga{moqCargas(bandaComoBanda5) === 1 ? "" : "s"}
+                {esMezcla && " (el MOQ de compra: una demanda de al menos tres cargas; la mezcla es Single Origin o Regional Blend — owner, 2026-09-25)"}
                 {admiteSaco(bandaComoBanda5) && ", con piso excepcional de un saco (70 kg CPS)"}; el incremento siguiente es{" "}
-                {esMezcla ? "1,5 o 2 cargas" : `${num(incrementoCargas(moqCargas(bandaComoBanda5)), 1)} carga(s)`}.
+                {num(incrementoCargas(moqCargas(bandaComoBanda5)), 1)} carga(s).
               </>
             )}
           </p>

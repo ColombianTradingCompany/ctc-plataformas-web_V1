@@ -433,21 +433,20 @@ Eso cambia la unidad de venta de Black y Red: el saco de 35 kg, no la bolsa de 6
 (§11.5): el costo de empaque deja de ser un número por grado y pasa a ser **dos** parámetros del modelo, uno por
 estándar, traídos del Cotizador de Empaque del ECP.
 
-**El mínimo de Black y Red sale de la mezcla, no del kilaje.** Los dos son **combinaciones de lotes de 3 a 4
-productores**, y el mínimo está **anclado a la compra mínima que se le puede hacer a cada productor involucrado: una
-carga** (precisado por el owner el 2026-09-19; hasta entonces esta tabla traía una fila «2 lotes → 4 cargas, 2 de cada
-uno», que **ya no existe**: el blend es de 3 a 4):
+> ⚠️ **Superado el 2026-09-25 (owner, §14.8 n.º 30–32).** Lo que sigue tachado fue la regla del 2026-09-19 y se conserva para
+> el registro: la mezcla ya NO se cuenta por productores ni por cargas de cada uno.
 
-| Productores en la mezcla | MOQ | Reparto |
-|---|---|---|
-| **3** | **3 cargas** | 1 de cada uno |
-| **4** | **4 cargas** | 1 de cada uno |
+~~**El mínimo de Black y Red sale de la mezcla, no del kilaje.** Los dos son combinaciones de lotes de 3 a 4 productores, y el
+mínimo está anclado a la compra mínima que se le puede hacer a cada productor involucrado: una carga (3 productores → 3
+cargas · 4 → 4). Black es un blend de 3 a 4 orígenes y/o variedades; Red es siempre de una sola variedad, mezcla regional de
+3 a 4 orígenes. Una mezcla de dos no existe, y una de cinco tampoco.~~
 
-**No son la misma mezcla.** **Black** es un blend de 3 a 4 **orígenes y/o variedades**. **Red** es **siempre de una sola
-variedad**: una **mezcla regional** de 3 a 4 orígenes. La regla de cargas es la misma para los dos.
-
-**Una mezcla de dos no existe, y una de cinco tampoco**: con seis productores se hacen dos mezclas de tres. En código:
-`src/lib/pvc/lectura.ts` (`LOTES_EN_MEZCLA`, `CARGAS_POR_PRODUCTOR`, `COMPOSICION_MEZCLA`), guardián `qa-pvc-lectura`.
+**La regla vigente (2026-09-25):** cada lote especifica su **composición** (variedades, procesos y marcador de origen: la finca
+—el estate— y su región); **Black y Red** son **Single Origin** (varios estates con la misma variedad y proceso) o **Regional
+Blend** (varios lotes de la misma región); el mínimo lo pone el **MOQ de compra: 3 cargas** para Black y Red (una demanda de al
+menos tres cargas), y CTCx asegura un mínimo por temporada desde Adquisición. En código: `src/lib/pvc/lectura.ts`
+(`MOQ_CARGAS_BLACK_RED`, `TIPOS_DE_MEZCLA`, `COMPOSICION_POR_GRADO`), `src/lib/compras/mezclas.ts` (el tipo se deriva), guardián
+`qa-pvc-lectura`.
 
 **Lote único: el mínimo es del lote.** **Blue: 2 cargas.** **Gold: 1 carga** como estándar. **Gold y Tyrian** admiten,
 en casos particulares, bajar hasta **un saco — 70 kg de CPS, ≈ 50 kg de verde, ≈ 40 kg de tostado** — incluso al borde
@@ -561,7 +560,7 @@ casillas se pueden cotizar.
 
 | | **FOB / FCA** | **CIF / CIP** | **DDP** | **MOQ** |
 |---|---|---|---|---|
-| **Cherry Picked** | US$/kg | US$/kg — *solo con **Master Roaster** regional* | US$/kg — *solo con **Master Roaster** regional* | Black y Red **3 o 4 cargas** equivalentes · Blue **2** · Gold **1** · Tyrian **½** |
+| **Cherry Picked** | US$/kg | US$/kg — *solo con **Master Roaster** regional* | US$/kg — *solo con **Master Roaster** regional* | Black y Red **3 cargas** (el MOQ de compra, §14.8; ~~3 o 4 según la mezcla~~) · Blue **2** · Gold **1** · Tyrian **½** |
 | **CaaS** | US$/kg | US$/kg — *solo con **Regional Operation Enablement*** | US$/kg — *solo con **Regional Operation Enablement*** | Black y Red **1000 kg** · Blue **500 kg** · Gold y Tyrian **100 kg** — el mínimo puede componerse de **fracciones de varios cafés**, no de uno solo |
 
 **El tramo base es FOB/FCA**, y su precio **no depende del destino — depende del MOQ**. Eso no es una frase: el motor ya
@@ -985,6 +984,8 @@ Precio aconsejado tostado in situ =
 > son 3 o 4 según cuántos productores compongan la mezcla, a una carga por productor (§14.7 n.º 28, cerrado por el owner el
 > 2026-09-19)— más la compra inicial en firme; CaaS entra con 15–25 kg.
 > El empaque como presentación se mantiene.
+> **Reescrito el 2026-09-25 (§14.8)**: Black y Red **3 cargas** — el MOQ de compra (una demanda de al menos tres cargas); la
+> mezcla ya no se cuenta por productores: es Single Origin o Regional Blend según la composición de sus lotes.
 
 **Fundamento.** El MOQ sale de **la cantidad de café que se puede comprar y procesar de forma significativa e individual
 en Colombia**. Por eso se expresa **en cargas** (1 carga = 125 kg de pergamino) y no en kilos de empaque, y por eso es
@@ -993,8 +994,8 @@ en verde empacado; la merma de trilla está considerada en los precios.
 
 | Grado | MOQ |
 |---|---|
-| Black | 3 a 4 cargas, según el componente de café de la mezcla |
-| Red | 3 a 4 cargas, según el componente de café de la mezcla |
+| Black | **3 cargas** — el MOQ de compra (§14.8; ~~3 a 4 según el componente de café de la mezcla~~) |
+| Red | **3 cargas** — el MOQ de compra (§14.8; ~~3 a 4 según el componente de café de la mezcla~~) |
 | Blue | 2 cargas |
 | Gold | **1 carga o menos, según disponibilidad real** |
 | Tyrian | **1 carga o menos, según disponibilidad real** |
@@ -1267,7 +1268,8 @@ son fijos~~ — **reconciliado el 2026-09-19 (owner)**: la tabla original traía
 corrigió a «3–4 según la mezcla» sin tocar esta sección. La regla, ya en todos lados: **Black y Red son mezclas de 3 a 4
 productores y el mínimo es una carga por productor** —3 o 4 cargas, las dos filas de arriba valen para los dos grados—;
 **Black** mezcla orígenes y/o variedades, **Red** es siempre de una sola variedad (mezcla regional). Estos mínimos son los de
-Cherry Picked (n.º 10).
+Cherry Picked (n.º 10). **Superado el 2026-09-25 (§14.8)**: Black y Red = **3 cargas**, el MOQ de compra; la mezcla es Single
+Origin o Regional Blend y ya no se cuenta por productores.
 
 ### 14.5 Queda por confirmar (owner)
 
@@ -1304,11 +1306,32 @@ y las etiquetas de Roast. No queda ninguna pregunta de narrativa abierta; lo que
 26. **Merma verde → tostado: 82 %** de remanente, argumentado por la búsqueda del mejor grano y la pérdida que implica
     (reemplaza el 80 % del n.º 14 y el 85 % de la tabla; el mapa V43 decía ~80 %).
 27. **El PVC de ene–mar 2027 se publica antes del 15-oct-2026** (la regla general del n.º 6 sigue).
-28. **Black y Red: 3–4 cargas según la mezcla** (no fijos — **precisado el 2026-09-19**: la mezcla es de 3 a 4 productores y el
-    mínimo es **una carga por productor**; Black = blend de orígenes y/o variedades, Red = siempre una sola variedad, mezcla
-    regional); la tabla del §14.4 muestra los dos casos (3 cargas → 42 unidades ·
-    252 kg; 4 → 56 · 336 kg).
+28. ~~**Black y Red: 3–4 cargas según la mezcla**~~ — **superado el 2026-09-25 por los n.º 30–31 (§14.8): 3 cargas, el MOQ de
+    compra.** Lo del 2026-09-19, para el registro: no fijos — precisado: la mezcla era de 3 a 4 productores y el mínimo una carga
+    por productor; Black = blend de orígenes y/o variedades, Red = siempre una sola variedad, mezcla regional; la tabla del §14.4
+    mostraba los dos casos (3 cargas → 42 unidades · 252 kg; 4 → 56 · 336 kg).
 29. **Los pines «MR coming soon» van en todo**: portada pública y material comercial.
 
 **Al cierre del 2026-09-17 no queda ninguna pregunta de narrativa abierta.** El material (tres documentos con anexo interno y un
 cuarto documento de decisiones y pendientes) se regenera con `reference/narrativa-2026-09-17/build.py`, fuera del repo.
+
+### 14.8 Cuarta ronda del owner (2026-09-25): composición por lote y MOQ de compra
+
+Contestada desde la sesión `consolas` (decisión 4 del brief de Compras, «¿la mezcla es un lote nuevo?»), con efecto sobre este
+plan: sustituye al n.º 28, al cuadro del §9.2 y a las filas Black/Red del §12.6 y del §9.3. En código desde la V5.91.
+
+30. **La regla de «3 a 4 productores, una carga por productor» se retira de raíz** (owner: «Retiremos esta lógica de raíz»). En su
+    lugar: **cada lote especifica su composición** —variedades y procesos utilizados, más su marcador de origen (la finca, que es
+    el estate, y su región)—. **Blue, Gold y Tyrian son casi exclusivamente Single Estate** (pueden combinar variedades y procesos
+    del mismo terroir). **Black y Red los usa CTCx de manera estratégica**: como **Single Origin** de varios estates (misma
+    variedad y proceso) o como **Regional Blend** de varios lotes de la región (Santander, Huila, Boyacá…). El tipo de una mezcla
+    se DERIVA de sus lotes; ni Red «una sola variedad» ni tope de cinco ni piso de tres productores.
+31. **El mínimo lo pone el MOQ de compra**, que en todo caso busca requerir **una demanda de al menos 3 cargas** (la compra mínima
+    esperada de cara al productor): Black y Red **3 cargas**; Blue 2; Gold y Tyrian 1 (o menos, según disponibilidad real). El
+    incremento sigue siendo la mitad del mínimo (1,5 cargas para Black y Red). Vale igual para Cherry Picked que para CaaS: es una
+    restricción del origen, no del canal (§12.6).
+32. **Para estas mezclas CTCx asegura un mínimo por temporada desde Adquisición de Stock** (`mezclas.temporada`,
+    `mezclas.objetivo_temporada_kg`: informativo, no bloquea el cierre). En código: `src/lib/pvc/lectura.ts` (`MOQ_CARGAS_BLACK_RED`,
+    `TIPOS_DE_MEZCLA`, `COMPOSICION_POR_GRADO`; `LOTES_EN_MEZCLA`, `CARGAS_POR_PRODUCTOR`, `MOQ_MEZCLA` y `COMPOSICION_MEZCLA` se
+    retiraron), `src/lib/compras/mezclas.ts` (`tipoDeMezcla`, `validarComponente`, `validarCierre`), guard `guard_mezcla_cerrada`
+    reescrito (acta `docs/migraciones/2026-09-25_mezclas_composicion.sql`); guardianes `qa-pvc-lectura` (§3, §7) y `qa-compras` (§10).

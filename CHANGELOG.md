@@ -19,6 +19,22 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.89] — 2026-09-25 (commit pendiente)
+
+- **Añadido**: **las bodegas de muestras** (owner, 2026-09-25; decisión 1 del brief → opción C): `bodegas_muestras` con responsable,
+  dirección, capacidad en muestras de 1 kg y estado, y las cuatro sedes de arranque (Planta de Empaque Santillana 400 · Oficina CCB
+  100 · CIR Bucaramanga y Manuel Specialty Roasters pendientes). La ocupación se deriva de las muestras con saldo. Pestaña «Bodegas»
+  en `/ocp/muestras`; la bodega se elige al recibir la muestra y al ubicarla.
+- **Cambiado**: **la partición real de los 2 kg**, tal como la dibujó el owner: 2 × 250 g «Evaluación Inicial Q-Grader», 2 × 250 g
+  «Contramuestras de Reserva CPS» y 1 kg «Muestra de Evaluación CTCx» que se **trilla** por completo (~750 g de verde: 400 g de
+  tostado para ensayos piloto + 250 g de verde al vacío). `trillarMuestraCtcx` anota la salida del kilo y crea las dos muestras
+  derivadas; los kilos 500/500/1000 del folio 7 no cambian. Los 2 kg son de uso exclusivo de CTCx: las muestras para compradores
+  (Sample Kits) salen de Adquisición de Stock.
+- **Datos**: migración `bodegas_muestras` (acta en `docs/migraciones/`): la tabla y sus cuatro filas, `muestras.bodega_id`,
+  `muestras.origen_muestra_id`, tipos `verde_vacio` · `tostado_ensayo`, motivo `trilla_verde`. Las cinco cuentas `prueba-*` se
+  eliminaron a pedido del owner (las pruebas se harán con Asistencia a Proveedores y Proveedor Desacoplado).
+- **Docs**: `qa-muestras-check` 67 → 85 (las bodegas, las cuatro sedes, el kilo CTCx contra los números del diagrama).
+
 ## [V5.88] — 2026-09-25 (commit fff34d8)
 
 - **Añadido**: **la revisión de almacenaje a los 90 días** (2.ª tanda de Gestión de Muestras; owner, 2026-09-16: «a más de 90 días

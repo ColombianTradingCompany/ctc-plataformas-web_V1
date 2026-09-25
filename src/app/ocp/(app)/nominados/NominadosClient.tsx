@@ -229,10 +229,11 @@ export function PaymentControls({
   );
 }
 
-/** El recibo físico: los kilos que llegaron y dónde quedan. Crea las filas de `muestras` Y la marca (una acción). */
-export function ReciboForm({ lotId, shipped }: { lotId: string; shipped: boolean }) {
+/** El recibo físico: los kilos que llegaron y dónde quedan (V5.89: en qué BODEGA). Crea las filas de `muestras` Y la marca (una acción). */
+export function ReciboForm({ lotId, shipped, bodegas = [] }: { lotId: string; shipped: boolean; bodegas?: { id: string; nombre: string }[] }) {
   const { pending, error, run } = useAction();
   const [kg, setKg] = useState(String(MUESTRA_EVALUACION_KG));
+  const [bodegaId, setBodegaId] = useState(bodegas[0]?.id ?? "");
   const [ubicacion, setUbicacion] = useState("");
   const [custodio, setCustodio] = useState("");
   if (!shipped) {
@@ -247,7 +248,16 @@ export function ReciboForm({ lotId, shipped }: { lotId: string; shipped: boolean
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
         <input value={kg} onChange={(e) => setKg(e.target.value)} inputMode="decimal" style={{ width: 80 }} aria-label="Kilos recibidos" />
         <span className={styles.meta}>kg</span>
-        <input placeholder="Ubicación (estante, oficina…)" value={ubicacion} onChange={(e) => setUbicacion(e.target.value)} style={{ maxWidth: 200 }} />
+        {bodegas.length > 0 && (
+          <select value={bodegaId} onChange={(e) => setBodegaId(e.target.value)} aria-label="Bodega" style={{ maxWidth: 220 }}>
+            {bodegas.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.nombre}
+              </option>
+            ))}
+          </select>
+        )}
+        <input placeholder="Detalle (estante, caja…)" value={ubicacion} onChange={(e) => setUbicacion(e.target.value)} style={{ maxWidth: 160 }} />
         <input placeholder="Custodio" value={custodio} onChange={(e) => setCustodio(e.target.value)} style={{ maxWidth: 160 }} />
         <button
           className="btn btn-sm btn-solid"
@@ -257,6 +267,7 @@ export function ReciboForm({ lotId, shipped }: { lotId: string; shipped: boolean
             fd.set("kg", kg);
             fd.set("ubicacion", ubicacion);
             fd.set("custodio", custodio);
+            fd.set("bodega_id", bodegaId);
             run(() => recibirMuestraAction(lotId, fd));
           }}
         >
@@ -264,7 +275,8 @@ export function ReciboForm({ lotId, shipped }: { lotId: string; shipped: boolean
         </button>
       </div>
       <p className={styles.meta} style={{ margin: 0 }}>
-        Se parte en 500 g evaluación · 500 g contramuestra · el resto testeo in-house (folio 7).
+        Se parte en 2 × 250 g para el Q-Grader · 2 × 250 g de reserva CPS · el resto, el kilo CTCx que se trilla (~750 g de verde: 400 g de tostado para
+        ensayos + 250 g de verde al vacío).
       </p>
       <ErrorLine error={error} />
     </div>

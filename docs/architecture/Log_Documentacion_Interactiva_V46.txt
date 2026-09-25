@@ -466,3 +466,22 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
 - PENDIENTE: decisiones 1, 4 y 5 del brief (ubicaciones fijas; muestra de UN lote desde la tienda; pack de cosecha); que el comprador
   vea el estado de su pedido (cherry-picked); conducir con `prueba-*`; wrap V47 (18 asientos).
 (commit: fff34d8)
+
+## [2026-09-25] V5.89 · Consolas — Muestras según el owner: las bodegas y el kilo CTCx trillado
+- DATOS: migración `bodegas_muestras` (acta): `bodegas_muestras` (nombre, responsable, dirección, capacidad_muestras en muestras de 1 kg,
+  estado activa · pendiente · inactiva; cuatro sedes: Santillana 400, Oficina CCB 100, CIR Bucaramanga y Manuel Specialty Roasters
+  pendientes), `muestras.bodega_id`, `muestras.origen_muestra_id`, tipos `verde_vacio` · `tostado_ensayo`, motivo `trilla_verde`.
+- REGLA (DICT `particion`): `TipoDeParticion` (evaluacion · contramuestra · testeo) y los rótulos del owner (Q-Grader 2 × 250 g · reserva
+  CPS 2 × 250 g · Evaluación CTCx 1 kg); `KILO_CTCX` (rendimiento 75 %, 250 g al vacío, merma de tostión 20 %) y `trillaDelKilo(kg)`:
+  1 kg → 750 g verde = 250 g vacío + 500 g a tostar → 400 g tostado (los números del diagrama).
+- FLUJO: `trillarMuestraCtcx` (borrador): salida `trilla_verde` de TODO el saldo del kilo + filas `verde_vacio` y `tostado_ensayo` con
+  `origen_muestra_id` (kilos propuestos, corregibles); `crearBodega`/`guardarBodega` (borrador); `ubicarMuestra` con `bodega_id`; el recibo
+  (`recibirMuestra`, `ReciboForm` en la vista del circuito) elige la bodega activa.
+- NODO OCP `/ocp/muestras`: pestaña «Bodegas» (ocupación derivada contra la capacidad, edición, alta), la bodega en «Qué hay y dónde»,
+  «Trillar el kilo CTCx…» en la fila del testeo; el copy dice que los 2 kg son de uso exclusivo de CTCx.
+- CUENTAS: las cinco `prueba-*@ctc-qa-test.co` eliminadas (owner: las pruebas van por Asistencia y Desacoplado); quedan `qa-ui-review`,
+  `lead-cocreate-qa`, `dc-qa-uno/dos` (¿fixtures de guardianes? sin referencia en scripts; el owner decide).
+- Guardianes: `qa-muestras-check` 67 → 85 (§8). Fuente del owner: `reference/muestras-y-sample-kits-2026-09-25/`.
+- SIGUE (misma tanda del owner): V5.90 «Adquisición de Stock Café (Selection/Sample Kits)» + módulo de Sample Kits; V5.91 composición
+  por lote y MOQ de 3 cargas (retirar la regla 3–4 de las mezclas); one-pager CVA; wrap V47.
+(commit: pendiente)

@@ -80,7 +80,7 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
   `entryCodes.ts`, `mejoras.ts`, `payment.ts`, `subvencion.ts`, **`factura.ts`** (V5.80: la factura de cobro, una plantilla para las dos
   caras), `producerActions.ts` (lo que el productor ejecuta; dueño KR).
 - **`src/lib/trato/terminos.ts`** (V5.80, puro, versionado): la tarifa de evaluación ($200.000), los mínimos por grado, la muestra de
-  2 kg y «contra entrega». **`src/lib/muestras/`** (V5.80): `particion.ts` (puro: la partición 500/500/1000 y el saldo derivado) y
+  2 kg y «contra entrega». **`src/lib/muestras/`** (V5.80): `particion.ts` (puro: la partición 500/500/1000 —desde la V5.89 con el detalle del owner: Q-Grader 2 × 250 g · reserva CPS 2 × 250 g · el kilo CTCx trillado, `trillaDelKilo`—, el saldo derivado, los pedidos), `almacenaje.ts` + `almacenajeCarga.ts` (V5.88, la revisión de los 90 días) y
   `recibo.ts` (el recibo: filas + marca en una acción; el ÚNICO escritor de `sample_2kg_confirmed_at`). Acciones: `solicitudesActions.ts`
   (subvención, factura, recibo) y `muestrasActions.ts` (ubicar, salidas — `borrador`).
 - **`src/lib/catacion/rueda.ts`** (V5.81, puro): la taxonomía ÚNICA de la rueda de sabores (nueve familias SCA/WCR, ES/EN;
@@ -126,7 +126,7 @@ productores y siempre con rastro; la etiqueta del desacoplado no recibe correos;
 (67 — la regla de los recordatorios desde el folio 7, rastro en cada movimiento de una certificación, el cron con secreto, el
 chequeo EUDR y la transcripción de FT2 en la vista del lote; y el lado de KR) · **`qa-solicitud-evaluacion-check.mjs`** (78, V5.80 — la
 tarifa, los mínimos, la partición y «contra entrega» se leen DEL PLAN; el pago se confirma sobre la factura; los tres estados del bache;
-el rail en el orden de la respuesta 7; el lado de KR) · **`qa-muestras-check.mjs`** (67, V5.80 · 2.ª tanda V5.88 — los cinco puntos del brief: saldo derivado
+el rail en el orden de la respuesta 7; el lado de KR) · **`qa-muestras-check.mjs`** (85, V5.80 · V5.88 · bodegas y kilo CTCx V5.89 — los cinco puntos del brief: saldo derivado
 y nunca negativo, recibo = filas + marca o nada, toda muestra de un lote, la alerta de 90 días sin campo aparte, acciones en la lista
 blanca) · `qa-circuito-check.mjs` (41 — la tabla de verdad del circuito desde las notas y el folio, TOTAL y MONÓTONO; con
 «solicitada» y «evaluado») · **`qa-centro-calidad-check.mjs`** (65, V5.81 — el Centro de Calidad: anonimato, módulo por credencial,
@@ -245,7 +245,11 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   la evaluación que rige y de la última revisión anotada —tarea `muestra` del Tablero de Ejecución y pestaña de `/ocp/muestras`;
   `anotarRevisionDeAlmacenaje` es una salida más del testeo con su resultado— y los pedidos de pack de los compradores
   (`agregarMuestraAlPedido` → `marcarPedidoEnviado`; `sample_pack_orders` gana preparado/enviado y `muestra_movimientos.pedido_id`).
-  Quedan del owner las decisiones 1, 4 y 5 del brief. `qa-muestras` 41 → 67.
+  `qa-muestras` 41 → 67. **V5.89 (owner, 2026-09-25)**: las **bodegas de muestras** (`bodegas_muestras`: responsable, dirección,
+  capacidad en muestras de 1 kg, estado; cuatro sedes; ocupación derivada; pestaña «Bodegas» y `muestras.bodega_id` en el recibo y al
+  ubicar) y la **partición real de los 2 kg** (uso exclusivo de CTCx: Q-Grader 2 × 250 g · reserva CPS 2 × 250 g · el kilo CTCx que se
+  TRILLA — `trillarMuestraCtcx`: salida `trilla_verde` + filas `verde_vacio` y `tostado_ensayo` con `origen_muestra_id`). Las muestras
+  para compradores son los Sample Kits, surtidos desde Adquisición de Stock (V5.90). `qa-muestras` 67 → 85.
   También en la V5.76, las cuatro indicaciones del owner sobre `/ocp/kr`: sin «Nuevo lote», agrupada por productor, el mapa por
   elemento, y «Ver fincas» con el filtro de Pasaporte por etapa.
 - **LAS TRES RUTAS DEL PROVEEDOR (owner, 2026-09-23)** — brief `briefs/consolas-rutas-del-proveedor.md`, con las siete

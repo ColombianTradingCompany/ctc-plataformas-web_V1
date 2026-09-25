@@ -97,7 +97,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
   const noSuperaron = inscriptions.filter((i) => i.phase === "retirado" && i.sondeo_result === "rechazado" && i.lot);
   const reembolsosPend = inscriptions.filter((i) => i.cashback_status === "pendiente" && i.lot);
 
-  const [producers, { data: muestrasRaw }, centros, { data: altasRaw }] = await Promise.all([
+  const [producers, { data: muestrasRaw }, centros, { data: altasRaw }, { data: bodegasRaw }] = await Promise.all([
     fetchProducerContacts(service, inscriptions.map((i) => i.producer_id)),
     service
       .from("muestras")
@@ -112,7 +112,10 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
       .in("status", ["pending", "rejected"])
       .in("lot_id", enBache.map((i) => i.lot_id))
       .order("created_at", { ascending: false }),
+    // V5.89: las bodegas de muestras activas, para que el recibo diga en cuál queda.
+    service.from("bodegas_muestras").select("id, nombre").eq("estado", "activa").order("nombre"),
   ]);
+  const bodegas = (bodegasRaw as { id: string; nombre: string }[] | null) ?? [];
   const altasPorLote = new Map<string, AltaRow[]>();
   for (const a of (altasRaw as AltaRow[] | null) ?? []) altasPorLote.set(a.lot_id, [...(altasPorLote.get(a.lot_id) ?? []), a]);
   const centrosParaElegir = centros.map((c) => ({ id: c.profile_id, nombre: c.org_name, qGrader: c.contact_name?.trim() || c.org_name }));
@@ -200,7 +203,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
         {recibida ? (
           <p className={styles.meta} style={{ margin: "4px 0 0" }}>Recibida el {fecha(i.lot!.sample_2kg_confirmed_at)}{muestraLinea(i.lot_id) ? ` · ${muestraLinea(i.lot_id)}` : ""}</p>
         ) : (
-          <ReciboForm lotId={i.lot_id} shipped={Boolean(i.lot!.sample_shipped_at) || i.lot!.source === "bcp_manual_entry"} />
+          <ReciboForm lotId={i.lot_id} shipped={Boolean(i.lot!.sample_shipped_at) || i.lot!.source === "bcp_manual_entry"} bodegas={bodegas} />
         )}
       </div>
     );

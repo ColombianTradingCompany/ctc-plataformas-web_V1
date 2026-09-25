@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
-import { MOTIVO_LABEL, saldoDe, salidaValida, type MotivoDeSalida } from "@/lib/muestras/particion";
+import { MOTIVO_LABEL, saldoDe, salidaValida, trillaDelKilo, type MotivoDeSalida } from "@/lib/muestras/particion";
 import { KG_REVISION_ALMACENAJE } from "@/lib/muestras/almacenaje";
 
 // ── OCP · Manejo de Stock Físico · Gestión de Muestras (1.ª tanda, V5.80) ────────────────────
@@ -25,8 +25,15 @@ export async function ubicarMuestra(muestraId: string, formData: FormData): Prom
   const service = createServiceRoleClient();
   const ubicacion = String(formData.get("ubicacion") ?? "").trim();
   const custodio = String(formData.get("custodio") ?? "").trim();
-  if (!ubicacion && !custodio) return { ok: false, error: "Escriba dónde queda la muestra o quién la tiene." };
-  const { error } = await service.from("muestras").update({ ubicacion: ubicacion || null, custodio: custodio || null }).eq("id", muestraId);
+  // V5.89: la bodega (`bodegas_muestras`) es la ubicación principal; `ubicacion` queda para el detalle (estante, caja).
+  const bodegaId = String(formData.get("bodega_id") ?? "").trim() || null;
+  if (!ubicacion && !custodio && !bodegaId) return { ok: false, error: "Elija la bodega, o escriba dónde queda la muestra o quién la tiene." };
+  if (bodegaId) {
+    const { data: bodega } = await service.from("bodegas_muestras").select("id, estado").eq("id", bodegaId).maybeSingle();
+    if (!bodega) return { ok: false, error: "Bodega no encontrada." };
+    if (bodega.estado === "inactiva") return { ok: false, error: "Esa bodega está inactiva." };
+  }
+  const { error } = await service.from("muestras").update({ ubicacion: ubicacion || null, custodio: custodio || null, bodega_id: bodegaId }).eq("id", muestraId);
   if (error) return { ok: false, error: "No se pudo ubicar la muestra: " + error.message };
   revalidar();
   return { ok: true };
@@ -180,5 +187,116 @@ export async function marcarPedidoEnviado(pedidoId: string, formData: FormData):
   if (error) return { ok: false, error: "No se pudo marcar el envío: " + error.message };
   await service.from("audit_log").insert({ entity_type: "sample_pack_order", entity_id: pedidoId, action: "pedido_muestra_enviado", performed_by: adminId, notes: `${count} muestra(s)${guia ? ` · guía ${guia}` : ""}` });
   revalidarPedidos();
+  return { ok: true };
+}
+
+// ── V5.89 (owner, 2026-09-25): las bodegas de muestras y el kilo CTCx trillado ──────────────────
+
+const ESTADOS_BODEGA = ["activa", "pendiente", "inactiva"] as const;
+
+function bodegaDe(formData: FormData): { nombre: string | null; responsable: string | null; direccion: string | null; capacidad_muestras: number | null; estado: string; notas: string | null } {
+  const t = (k: string) => String(formData.get(k) ?? "").trim() || null;
+  const cap = String(formData.get("capacidad_muestras") ?? "").trim();
+  const estado = t("estado") ?? "activa";
+  return { nombre: t("nombre"), responsable: t("responsable"), direccion: t("direccion"), capacidad_muestras: cap ? Number(cap) : null, estado, notas: t("notas") };
+}
+
+/** Una bodega de muestras nueva (responsable, dirección, capacidad en muestras de 1 kg, estado). Configuración interna: `borrador`. */
+export async function crearBodega(formData: FormData): Promise<Result> {
+  const permiso = await permisoDeEscritura("ocp", "borrador");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const b = bodegaDe(formData);
+  if (!b.nombre) return { ok: false, error: "Póngale nombre a la bodega." };
+  if (!(ESTADOS_BODEGA as readonly string[]).includes(b.estado)) return { ok: false, error: "Estado inválido." };
+  if (b.capacidad_muestras != null && (!Number.isInteger(b.capacidad_muestras) || b.capacidad_muestras < 0)) return { ok: false, error: "La capacidad se cuenta en muestras de 1 kg (entero)." };
+  const { data, error } = await service.from("bodegas_muestras").insert({ ...b, updated_by: adminId }).select("id").single();
+  if (error || !data) return { ok: false, error: "No se pudo crear la bodega: " + (error?.message ?? "sin fila") };
+  await service.from("audit_log").insert({ entity_type: "bodega_muestras", entity_id: data.id, action: "bodega_creada", performed_by: adminId, notes: b.nombre });
+  revalidar();
+  return { ok: true };
+}
+
+export async function guardarBodega(bodegaId: string, formData: FormData): Promise<Result> {
+  const permiso = await permisoDeEscritura("ocp", "borrador");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const b = bodegaDe(formData);
+  if (!b.nombre) return { ok: false, error: "La bodega necesita nombre." };
+  if (!(ESTADOS_BODEGA as readonly string[]).includes(b.estado)) return { ok: false, error: "Estado inválido." };
+  if (b.capacidad_muestras != null && (!Number.isInteger(b.capacidad_muestras) || b.capacidad_muestras < 0)) return { ok: false, error: "La capacidad se cuenta en muestras de 1 kg (entero)." };
+  const { error } = await service.from("bodegas_muestras").update({ ...b, updated_at: new Date().toISOString(), updated_by: adminId }).eq("id", bodegaId);
+  if (error) return { ok: false, error: "No se pudo guardar la bodega: " + error.message };
+  await service.from("audit_log").insert({ entity_type: "bodega_muestras", entity_id: bodegaId, action: "bodega_guardada", performed_by: adminId, notes: `${b.nombre} · ${b.estado}${b.capacidad_muestras != null ? ` · ${b.capacidad_muestras} muestras` : ""}` });
+  revalidar();
+  return { ok: true };
+}
+
+/**
+ * El kilo CTCx se trilla por completo (owner, 2026-09-25): sale TODO el saldo del kilo (motivo `trilla_verde`) y nacen dos
+ * muestras nuevas con `origen_muestra_id`: el verde al vacío (contramuestra, 250 g) y el tostado de ensayo (400 g de los
+ * ~500 g de verde que se tuestan). Los kilos se proponen con `trillaDelKilo` y se pueden corregir con lo que de verdad pesó.
+ */
+export async function trillarMuestraCtcx(muestraId: string, formData: FormData): Promise<Result> {
+  const permiso = await permisoDeEscritura("ocp", "borrador");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const [{ data: muestra }, { data: salidas }] = await Promise.all([
+    service.from("muestras").select("id, lot_id, kg, tipo, bodega_id, custodio, ubicacion").eq("id", muestraId).maybeSingle(),
+    service.from("muestra_movimientos").select("kg").eq("muestra_id", muestraId),
+  ]);
+  if (!muestra) return { ok: false, error: "Muestra no encontrada." };
+  if (muestra.tipo !== "testeo") return { ok: false, error: "Solo se trilla el kilo de evaluación CTCx." };
+  const saldo = saldoDe(Number(muestra.kg), (salidas as { kg: number }[] | null) ?? []);
+  if (saldo <= 0) return { ok: false, error: "Ese kilo ya no tiene saldo." };
+  const propuesta = trillaDelKilo(saldo);
+  const num = (k: string, def: number) => {
+    const raw = String(formData.get(k) ?? "").replace(",", ".").trim();
+    if (!raw) return def;
+    const n = Number(raw);
+    return Number.isFinite(n) && n >= 0 ? Math.round(n * 1000) / 1000 : NaN;
+  };
+  const verdeVacioKg = num("verde_vacio_kg", propuesta.verdeVacioKg);
+  const tostadoKg = num("tostado_kg", propuesta.tostadoKg);
+  if (Number.isNaN(verdeVacioKg) || Number.isNaN(tostadoKg)) return { ok: false, error: "Los kilos deben ser números (0 o más)." };
+  if (verdeVacioKg + tostadoKg > saldo + 1e-9) return { ok: false, error: `Del kilo (${saldo} kg de CPS) no pueden salir ${verdeVacioKg + tostadoKg} kg: la trilla merma.` };
+  const notas = String(formData.get("notas") ?? "").trim() || null;
+  const now = new Date().toISOString();
+
+  const { error: e1 } = await service.from("muestra_movimientos").insert({
+    muestra_id: muestraId,
+    kg: saldo,
+    motivo: "trilla_verde",
+    destino: `→ ${verdeVacioKg} kg verde al vacío · ${tostadoKg} kg tostado de ensayo`,
+    notas,
+    por: adminId,
+  });
+  if (e1) return { ok: false, error: "No se pudo anotar la trilla: " + e1.message };
+  const nuevas = [
+    verdeVacioKg > 0 ? { tipo: "verde_vacio", kg: verdeVacioKg, notas: "del kilo CTCx, al vacío" } : null,
+    tostadoKg > 0 ? { tipo: "tostado_ensayo", kg: tostadoKg, notas: "del kilo CTCx, para ensayos piloto" } : null,
+  ].filter((n): n is { tipo: string; kg: number; notas: string } => n !== null);
+  if (nuevas.length) {
+    const { error: e2 } = await service.from("muestras").insert(
+      nuevas.map((n) => ({
+        lot_id: muestra.lot_id,
+        tipo: n.tipo,
+        kg: n.kg,
+        recibida_at: now,
+        bodega_id: muestra.bodega_id,
+        ubicacion: muestra.ubicacion,
+        custodio: muestra.custodio,
+        notas: n.notas,
+        recibida_por: adminId,
+        origen_muestra_id: muestraId,
+      }))
+    );
+    if (e2) return { ok: false, error: "La trilla quedó anotada pero no se pudieron crear las muestras derivadas: " + e2.message };
+  }
+  await service.from("audit_log").insert({ entity_type: "muestra", entity_id: muestraId, action: "trilla_verde", performed_by: adminId, notes: `${saldo} kg CPS → ${verdeVacioKg} kg verde al vacío + ${tostadoKg} kg tostado` });
+  revalidar();
   return { ok: true };
 }

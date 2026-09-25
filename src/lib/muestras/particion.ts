@@ -9,23 +9,31 @@
 // EL SALDO NO SE GUARDA: se deriva (kg recibidos − Σ salidas), igual que la etapa del comprador, las tareas del
 // Tablero y el circuito del lote. Un saldo guardado es un número que alguien olvida actualizar.
 
-export type TipoDeMuestra = "evaluacion" | "contramuestra" | "testeo" | "comprador";
+// V5.89 (owner, 2026-09-25, diagrama «Envío de Muestras para Evaluación de Lotes» en reference/muestras-y-sample-kits-2026-09-25):
+// los 2 kg de CPS son de uso EXCLUSIVO de CTCx: 2 × 250 g «Evaluación Inicial Q-Grader», 2 × 250 g «Contramuestras de Reserva
+// CPS» y 1 kg «Muestra de Evaluación CTCx» que se TRILLA por completo (~750 g de verde: ~500 g se tuestan → 400 g de tostado
+// para ensayos piloto; 250 g quedan como contramuestra de verde al vacío). Los kilos 500/500/1000 del folio 7 no cambian.
+export type TipoDeMuestra = "evaluacion" | "contramuestra" | "testeo" | "comprador" | "verde_vacio" | "tostado_ensayo";
+/** Los tres tipos en que se parte lo que llega (los otros tres nacen después: del kilo CTCx o de Adquisición). */
+export type TipoDeParticion = "evaluacion" | "contramuestra" | "testeo";
 
 export const TIPO_LABEL: Record<TipoDeMuestra, string> = {
-  evaluacion: "Evaluación",
-  contramuestra: "Contramuestra",
-  testeo: "Testeo in-house",
+  evaluacion: "Evaluación Q-Grader (2 × 250 g CPS)",
+  contramuestra: "Reserva CPS (2 × 250 g)",
+  testeo: "Evaluación CTCx (1 kg CPS)",
   comprador: "Para comprador",
+  verde_vacio: "Verde al vacío (contramuestra)",
+  tostado_ensayo: "Tostado · ensayo interno",
 };
 
 /** La partición fija del folio 7, en el orden en que se sirve. */
-export const PARTICION_KG: readonly { tipo: Exclude<TipoDeMuestra, "comprador">; kg: number }[] = [
+export const PARTICION_KG: readonly { tipo: TipoDeParticion; kg: number }[] = [
   { tipo: "evaluacion", kg: 0.5 },
   { tipo: "contramuestra", kg: 0.5 },
   { tipo: "testeo", kg: 1 },
 ];
 
-export type MotivoDeSalida = "analisis_fisico" | "cata" | "a_centro" | "a_comprador" | "revision_almacenaje" | "descarte";
+export type MotivoDeSalida = "analisis_fisico" | "cata" | "a_centro" | "a_comprador" | "revision_almacenaje" | "descarte" | "trilla_verde";
 
 export const MOTIVO_LABEL: Record<MotivoDeSalida, string> = {
   analisis_fisico: "Análisis físico",
@@ -34,7 +42,19 @@ export const MOTIVO_LABEL: Record<MotivoDeSalida, string> = {
   a_comprador: "A un comprador",
   revision_almacenaje: "Revisión de almacenaje",
   descarte: "Descarte",
+  trilla_verde: "Trillado a verde (evaluación CTCx)",
 };
+
+/** El kilo CTCx (owner, 2026-09-25): rendimiento de trilla ~75 %, 250 g de verde al vacío, y el resto se tuesta con ~20 % de merma
+ *  (500 g de verde → 400 g de tostado). Con 1 kg: 750 g de verde = 250 g al vacío + 500 g a tostar → 400 g de tostado. */
+export const KILO_CTCX = { rendimientoTrilla: 0.75, verdeVacioKg: 0.25, mermaTostion: 0.2 } as const;
+
+export function trillaDelKilo(kgCps: number): { verdeKg: number; verdeVacioKg: number; aTostarKg: number; tostadoKg: number } {
+  const verde = round3(Math.max(0, Number(kgCps) || 0) * KILO_CTCX.rendimientoTrilla);
+  const vacio = round3(Math.min(KILO_CTCX.verdeVacioKg, verde));
+  const aTostar = round3(verde - vacio);
+  return { verdeKg: verde, verdeVacioKg: vacio, aTostarKg: aTostar, tostadoKg: round3(aTostar * (1 - KILO_CTCX.mermaTostion)) };
+}
 
 const round3 = (n: number) => Math.round(n * 1000) / 1000;
 
@@ -42,9 +62,9 @@ const round3 = (n: number) => Math.round(n * 1000) / 1000;
  * Cómo se parte lo que de verdad llegó. Evaluación y contramuestra toman hasta su porción; el testeo se lleva
  * el resto. Una porción en cero no se crea (no hay muestra de 0 g).
  */
-export function particionDeMuestra(kgRecibidos: number): { tipo: Exclude<TipoDeMuestra, "comprador">; kg: number }[] {
+export function particionDeMuestra(kgRecibidos: number): { tipo: TipoDeParticion; kg: number }[] {
   let resto = round3(Number(kgRecibidos) || 0);
-  const partes: { tipo: Exclude<TipoDeMuestra, "comprador">; kg: number }[] = [];
+  const partes: { tipo: TipoDeParticion; kg: number }[] = [];
   for (const p of PARTICION_KG) {
     if (resto <= 0) break;
     const kg = p.tipo === "testeo" ? resto : Math.min(p.kg, resto);

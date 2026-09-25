@@ -250,6 +250,9 @@ Toda acción del servidor declara su **clase** —qué HACE—, y la clase decid
 | `anotarSalidaDeMuestra` | OCP · Gestión de Muestras | cuántos gramos salieron y por qué (cata, análisis, al Centro…); se corrige con otra anotación y no avisa a nadie (V5.80) |
 | `anotarRevisionDeAlmacenaje` | OCP · Gestión de Muestras | la revisión de almacenaje a los 90 días con el kilo de testeo: una salida más con su resultado en notas; nadie de fuera la ve (V5.88) |
 | `agregarMuestraAlPedido` | OCP · Gestión de Muestras | qué muestra y cuántos gramos van a un pedido de pack: el comprador no ve nada hasta que `marcarPedidoEnviado` (emite) lo despacha (V5.88) |
+| `crearBodega` | OCP · Gestión de Muestras | una bodega de muestras nueva (responsable, dirección, capacidad, estado): configuración interna del estante, nadie de fuera la ve (V5.89) |
+| `guardarBodega` | OCP · Gestión de Muestras | lo mismo, sobre una bodega existente (V5.89) |
+| `trillarMuestraCtcx` | OCP · Gestión de Muestras | el kilo CTCx se trilla a verde: una salida y dos filas nuevas (verde al vacío, tostado de ensayo); cuaderno interno (V5.89) |
 
 **Lo que parece un borrador y NO lo es** (para que nadie lo «arregle»): `logProducerComm` —la nota sobre un productor—
 **la ve el productor** en su panel; `guardarContexto` es la doctrina que lee la redacción asistida; `recordAnchor` alimenta

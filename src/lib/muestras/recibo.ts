@@ -19,6 +19,8 @@ export type ReciboDeMuestra = {
   kgRecibidos?: number | null;
   ubicacion?: string | null;
   custodio?: string | null;
+  /** V5.89: la bodega de muestras donde queda (`bodegas_muestras`). */
+  bodegaId?: string | null;
   notas?: string | null;
   adminId: string;
 };
@@ -55,6 +57,7 @@ export async function recibirMuestra(service: SupabaseClient, r: ReciboDeMuestra
         recibida_at: now,
         ubicacion: r.ubicacion?.trim() || null,
         custodio: r.custodio?.trim() || null,
+        bodega_id: r.bodegaId?.trim() || null,
         notas: r.notas?.trim() || null,
         recibida_por: r.adminId,
       }))

@@ -15,7 +15,7 @@
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { particionDeMuestra, saldoDe, salidaValida, kgDelPedido, MOTIVO_LABEL, TIPO_LABEL, PEDIDO_STATUS_LABEL } from "../src/lib/muestras/particion.ts";
+import { particionDeMuestra, saldoDe, salidaValida, kgDelPedido, trillaDelKilo, KILO_CTCX, MOTIVO_LABEL, TIPO_LABEL, PEDIDO_STATUS_LABEL } from "../src/lib/muestras/particion.ts";
 import { DIAS_REVISION_ALMACENAJE, KG_REVISION_ALMACENAJE, revisionDeAlmacenaje } from "../src/lib/muestras/almacenaje.ts";
 import { CONSOLES } from "../src/lib/panel/consoles.ts";
 import { TIPOS_DE_TAREA, consolasDeLaTarea } from "../src/lib/panel/tareas.ts";
@@ -30,6 +30,8 @@ const migracion = lee("docs/migraciones/2026-09-24_solicitudes_muestras_baches.s
 const recibo = lee("src/lib/muestras/recibo.ts");
 const acciones = lee("src/app/ocp/(app)/muestrasActions.ts");
 const particion = lee("src/lib/muestras/particion.ts");
+// V5.89: los tipos y motivos viven ahora en el CHECK más reciente (el acta de las bodegas los reescribió).
+const acta89 = lee("docs/migraciones/2026-09-25_bodegas_muestras.sql");
 
 // ── (1) El saldo es derivado y nunca negativo ───────────────────────────────
 {
@@ -76,10 +78,10 @@ const particion = lee("src/lib/muestras/particion.ts");
 {
   check("lot_id es NOT NULL con FK a lots", migracion.includes("lot_id uuid not null references public.lots(id) on delete cascade"));
   check("los kilos son positivos", migracion.includes("kg numeric(8,3) not null check (kg > 0)"));
-  const tipos = migracion.match(/tipo text not null check \(tipo in \(([^)]+)\)\)/)?.[1].replace(/'/g, "").split(", ") ?? [];
-  check("los tipos de la base son los de TIPO_LABEL", JSON.stringify(tipos) === JSON.stringify(Object.keys(TIPO_LABEL)), tipos.join(","));
-  const motivos = migracion.match(/motivo text not null check \(motivo in \(([^)]+)\)\)/)?.[1].replace(/'/g, "").split(", ") ?? [];
-  check("los motivos de salida de la base son los de MOTIVO_LABEL", JSON.stringify(motivos) === JSON.stringify(Object.keys(MOTIVO_LABEL)), motivos.join(","));
+  const tipos = acta89.match(/add constraint muestras_tipo_check check \(tipo in \(([^)]+)\)\)/)?.[1].replace(/'/g, "").split(", ") ?? [];
+  check("los tipos de la base (CHECK vigente, V5.89) son los de TIPO_LABEL", JSON.stringify(tipos) === JSON.stringify(Object.keys(TIPO_LABEL)), tipos.join(","));
+  const motivos = acta89.match(/add constraint muestra_movimientos_motivo_check check \(motivo in \(([^)]+)\)\)/)?.[1].replace(/'/g, "").split(", ") ?? [];
+  check("los motivos de salida de la base (CHECK vigente, V5.89) son los de MOTIVO_LABEL", JSON.stringify(motivos) === JSON.stringify(Object.keys(MOTIVO_LABEL)), motivos.join(","));
   check("cada movimiento pertenece a una muestra", migracion.includes("muestra_id uuid not null references public.muestras(id) on delete cascade"));
   check("las dos tablas tienen RLS y cero políticas (solo service role)", (migracion.match(/enable row level security/g) ?? []).length === 2 && !/create policy/.test(migracion));
 }
@@ -118,7 +120,7 @@ const particion = lee("src/lib/muestras/particion.ts");
 {
   const plan = lee("docs/BCP_USER_ADMIN_PLAN.md");
   const blanca = plan.slice(plan.indexOf("**La lista blanca de borradores**"), plan.indexOf("**Lo que parece un borrador"));
-  for (const fn of ["ubicarMuestra", "anotarSalidaDeMuestra", "anotarRevisionDeAlmacenaje", "agregarMuestraAlPedido"]) {
+  for (const fn of ["ubicarMuestra", "anotarSalidaDeMuestra", "anotarRevisionDeAlmacenaje", "agregarMuestraAlPedido", "crearBodega", "guardarBodega", "trillarMuestraCtcx"]) {
     const i = acciones.indexOf(`export async function ${fn}(`);
     const cuerpo = i < 0 ? "" : acciones.slice(i, acciones.indexOf("\nexport async function ", i + 1) < 0 ? undefined : acciones.indexOf("\nexport async function ", i + 1));
     check(`${fn} es borrador en el código (cuaderno interno)`, cuerpo.includes('permisoDeEscritura("ocp", "borrador")'));
@@ -154,6 +156,25 @@ const particion = lee("src/lib/muestras/particion.ts");
   const pagina = lee("src/app/ocp/(app)/muestras/page.tsx");
   check("la pestaña de pedidos arma y despacha", pagina.includes("agregarMuestraAlPedido.bind") && pagina.includes("marcarPedidoEnviado.bind") && pagina.includes("kgDelPedido("));
   check("la tienda sigue sin tocar lo que CTC escribe (solo inserta el pedido)", !/preparado|enviado_at|guia/.test(lee("src/components/cherry-picked/CherryPickedExperience.tsx")));
+}
+
+// ── 8. Las bodegas y el kilo CTCx (V5.89, owner 2026-09-25: diagrama en reference/muestras-y-sample-kits-2026-09-25) ──
+{
+  check("la tabla de bodegas: responsable, dirección, capacidad en muestras de 1 kg, estado; RLS y cero políticas", ["responsable text", "direccion text", "capacidad_muestras integer", "estado text not null default 'activa' check (estado in ('activa', 'pendiente', 'inactiva'))"].every((c) => acta89.includes(c)) && acta89.includes("alter table public.bodegas_muestras enable row level security") && !/create policy/.test(acta89));
+  check("las cuatro sedes del owner", ["CTCx Planta de Empaque Santillana", "CTCx Oficina CCB", "CIR Bucaramanga", "Manuel Specialty Roasters"].every((n) => acta89.includes(`('${n}'`)) && /Santillana', 'GVB', '[^']+', 400, 'activa'/.test(acta89) && /Oficina CCB', 'GVB', '[^']+', 100, 'activa'/.test(acta89) && /CIR Bucaramanga', null, '[^']+', null, 'pendiente'/.test(acta89));
+  check("la ocupación no se guarda (se deriva de las muestras con saldo)", !/ocupacion|ocupadas/.test(acta89.replace(/^--.*$/gm, "")));
+  check("la muestra apunta a su bodega y el recibo la lleva", acta89.includes("add column bodega_id uuid references public.bodegas_muestras(id)") && recibo.includes("bodega_id: r.bodegaId") && lee("src/app/ocp/(app)/solicitudesActions.ts").includes('bodegaId: String(formData.get("bodega_id")') && lee("src/app/ocp/(app)/nominados/NominadosClient.tsx").includes('fd.set("bodega_id", bodegaId)'));
+  // El kilo CTCx: 1 kg CPS → ~750 g verde = 250 g al vacío + 500 g a tostar → 400 g tostado (los números del diagrama).
+  const t = trillaDelKilo(1);
+  check("el kilo CTCx: 1 kg CPS → 750 g de verde", t.verdeKg === 0.75 && KILO_CTCX.rendimientoTrilla === 0.75);
+  check("250 g de verde al vacío y 500 g a tostar", t.verdeVacioKg === 0.25 && t.aTostarKg === 0.5);
+  check("400 g de tostado (merma del 20 %)", t.tostadoKg === 0.4 && KILO_CTCX.mermaTostion === 0.2);
+  check("con menos de un kilo el vacío es lo que cabe y el resto se tuesta", trillaDelKilo(0.2).verdeVacioKg === 0.15 && trillaDelKilo(0.2).aTostarKg === 0);
+  check("los tipos nuevos nacen del kilo (origen_muestra_id) y la salida es trilla_verde", acta89.includes("add column origen_muestra_id uuid references public.muestras(id)") && acciones.includes('motivo: "trilla_verde"') && acciones.includes('tipo: "verde_vacio"') && acciones.includes('tipo: "tostado_ensayo"') && acciones.includes("origen_muestra_id: muestraId"));
+  check("trillar es solo del kilo CTCx, sale todo el saldo y lo derivado no puede pesar más que el kilo", acciones.includes('muestra.tipo !== "testeo"') && acciones.includes("kg: saldo,") && acciones.includes("verdeVacioKg + tostadoKg > saldo"));
+  const pagina = lee("src/app/ocp/(app)/muestras/page.tsx");
+  check("la página tiene la pestaña de bodegas con ocupación derivada y el trillado del kilo", pagina.includes("crearBodega") && pagina.includes("guardarBodega") && pagina.includes("trillarMuestraCtcx.bind") && pagina.includes("capacidad_muestras"));
+  check("los dos kilos son de uso exclusivo de CTCx (el copy lo dice)", /uso exclusivo de CTCx/i.test(pagina));
 }
 
 if (fallos.length) {

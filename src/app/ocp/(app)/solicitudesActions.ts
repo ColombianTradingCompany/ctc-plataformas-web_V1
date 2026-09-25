@@ -176,6 +176,7 @@ export async function recibirMuestraAction(lotId: string, formData: FormData): P
     kgRecibidos: kgRaw ? Number(kgRaw) : null,
     ubicacion: String(formData.get("ubicacion") ?? ""),
     custodio: String(formData.get("custodio") ?? ""),
+    bodegaId: String(formData.get("bodega_id") ?? "") || null,
     notas: String(formData.get("notas") ?? ""),
     adminId: permiso.userId,
   });

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.92] — 2026-09-25 (commit pendiente)
+## [V5.92] — 2026-09-25 (commit 0f12bb1)
 
 - **Corregido**: **la fórmula CVA**, tal como la corroboró el Q-Grader (informe del 2026-09-25, `PLAN_CIRCUITO_DEL_LOTE` §10): **ocho**
   secciones (Fragancia y Aroma aparte), la Impresión general cuenta **una** vez, redondeo al 0,25, cinco tazas registradas una a una con

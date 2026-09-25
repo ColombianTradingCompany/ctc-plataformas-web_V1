@@ -170,6 +170,11 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
 
 ## Pendientes
 
+- **El wrap V47 y el hito V6.0 (owner, 2026-09-25, al cerrar esta sesión).** El wrap V47 del mapa lo llama WRAP-COMMIT-PUSH y compila
+  V5.71–V5.92 (los 22 asientos del log V46) con la plataforma en **V5.92**. **La V6.0 NO se declara en ese wrap**: el owner la declarará
+  al cerrar la **Etapa 2** (correr el circuito del lote de punta a punta con Asistencia a Proveedores y Proveedor Desacoplado, afinando el
+  OCP hasta el Catálogo Activo), en una conversación nueva — el mismo patrón de la V5.0: el hito marca el corte estable y abre la etapa.
+  Las decisiones del owner del 2026-09-25 quedaron todas ejecutadas (V5.89–V5.92); no hay brief con decisión abierta.
 - **ETAPA 1 · EL CIRCUITO DEL LOTE, DEL PERFIL AL CATÁLOGO ACTIVO — `docs/PLAN_CIRCUITO_DEL_LOTE.md` (2026-09-24, PLAN sin
   ejecutar, espera ocho decisiones del owner).** Sustituye a las fases 4b, 5 y 6 del overhaul y absorbe los briefs de Muestras,
   Compras y Simplificar el OCP. Nueve fases (0–8), una versión cada una: retiros y mudanzas (Arena dormida; Club fuera; campañas

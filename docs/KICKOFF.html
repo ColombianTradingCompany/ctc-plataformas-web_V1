@@ -312,14 +312,16 @@ empujar. No construyes funcionalidades. Antes de tocar nada lee, en este orden:
 LA AUDITORÍA, en este orden:
 (1) git fetch + status: árbol limpio y a la par de origin/main; ninguna otra sesión corriendo.
 (2) APP_VERSION ↔ CHANGELOG ↔ asientos del log ↔ insignia en vivo (curl -L a www: «V5.NN · build &lt;sha&gt;»).
-(3) Cada fila de §3b reflejada en «Pendientes» del charter de su dueño, y al revés.
+(3) Cada fila de §3b reflejada en «Pendientes» del charter de su dueño, y al revés; y cada «Para X» de §3 desde el
+    último wrap aterrizado en «Pendientes» del charter de X (si la sesión que lo escribió no pudo, lo haces tú).
 (4) Lo que un documento da por pendiente y otro —o el CHANGELOG, o el código— da por hecho.
 (5) Cifras y reglas que se contradicen entre documentos.
 (6) El tablero del plan contra el código.
-(7) tsc · eslint (línea base 8) · los scripts/qa-*.mjs, con CUATRO excepciones que NO entran en un bucle:
+(7) tsc · eslint (línea base 8) · los scripts/qa-*.mjs, con CINCO excepciones que NO entran en un bucle:
     · qa-cromatografia-modelo y qa-transcripciones-nube GASTAN DINERO (API de Anthropic, AssemblyAI): solo a mano,
       cuando la tanda toca su módulo, y diciéndome el costo antes;
-    · qa-guard y qa-checkout piden las cuentas prueba-* por argv: pídemelas;
+    · qa-guard y qa-checkout piden cuentas de prueba por argv, y hoy no hay ninguna (V5.89, V5.92): no corren
+      hasta que yo decida qué cuentas vuelven (ALINEACION §4.6);
     · qa-tools-puente-conformance exige un next dev en el puerto 3210 (y borra .next/dev antes del build siguiente).
     Lee la cabecera de un guardián antes de meterlo en una batería. Y un guardián no verifica nada si copia la
     regla del código: la regla sale del plan.

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.88] — 2026-09-25 (commit pendiente)
+## [V5.88] — 2026-09-25 (commit fff34d8)
 
 - **Añadido**: **la revisión de almacenaje a los 90 días** (2.ª tanda de Gestión de Muestras; owner, 2026-09-16: «a más de 90 días
   de la catación no se recata, se hace revisión de almacenaje con 1 kg»). Se DERIVA de la fecha de la evaluación que rige el grado y

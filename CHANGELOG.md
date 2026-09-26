@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.93] — 2026-09-26 (commit pendiente)
+## [V5.93] — 2026-09-26 (commit a37bc60)
 
 - **Cambiado**: **el Disco Agtron V8** (`public/tools/agtron/agtron-dial.html`; la fuente del owner, `reference/html_tools/agtron/agtron_dial_metre-V8.html`).
   **La lectura por foto sale de la luminosidad (L\*)**, lo más cercano en luz visible a lo que mide un Agtron. La V7 buscaba a la vez

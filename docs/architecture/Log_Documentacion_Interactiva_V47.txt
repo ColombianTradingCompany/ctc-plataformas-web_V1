@@ -142,4 +142,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   `usarResumen`, esquema `agtron-dial/1`); `qa-tools-puente-conformance` gana SONDAS para esquemas propios.
 - Para el mapa: la ficha del taller/puente puede decir que dos herramientas guardan esquema propio (cromatografía y Agtron) y
   que la conformidad las sondea; ningún nodo nuevo. `tools.guia` de `agtron` reescrita (dato, sin migración).
-(commit: pendiente)
+(commit: a37bc60)

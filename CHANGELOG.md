@@ -19,6 +19,33 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.93] — 2026-09-26 (commit pendiente)
+
+- **Cambiado**: **el Disco Agtron V8** (`public/tools/agtron/agtron-dial.html`; la fuente del owner, `reference/html_tools/agtron/agtron_dial_metre-V8.html`).
+  **La lectura por foto sale de la luminosidad (L\*)**, lo más cercano en luz visible a lo que mide un Agtron. La V7 buscaba a la vez
+  el número, el matiz y el brillo: podía «pagar» puntos Agtron con un escalón de brillo, y una dominante de color moderada movía la
+  lectura entre 56 y 76 sobre una muestra de 63 (una foto más oscura llegaba a leer más clara). Ahora el matiz y el brillo son solo
+  de visualización.
+- **Añadido**: **blanco de referencia** opcional (se toca el papel bajo la muestra): corrige la exposición y la dominante de la luz
+  antes de leer, y avisa si el blanco está quemado o no es más claro que el café. Probado con fotos sintéticas: una subexpuesta ×0,7
+  con dominante cálida leía 62 sobre un 70 real; con blanco lee 70.
+- **Añadido** (feedback del owner): **7 puntos o áreas arrastradas, con el % del área marcada en vivo y un mínimo del 10 %** de la
+  foto para aplicar (siete puntos bien repartidos ≈ 10,5 %; se promedia la unión en luz lineal). Las instrucciones piden **luz de día
+  o luz blanca, a unos 12 cm de la superficie**, sin flash y con papel blanco en el encuadre.
+- **Añadido**: **la ventana de tueste de catación SCA** (≈ 58 en grano entero y 63 en molido, escala Gourmet, ±1) como banda en el
+  dial y estado en la lectura, con un conmutador Grano entero · Molido.
+- **Añadido**: **alemán** (la herramienta ya traía inglés y español) y apertura en el idioma de quien la usa: `?lang=` → el idioma
+  que la superficie guardó en ese origen (`ctc-lang`, `cp-lang`, `kr-lang`) → el navegador → inglés.
+- **Corregido**: **la memoria**. El puente por defecto solo guardaba el matiz y el zoom de la foto (el único trabajo guardado era
+  `{hueSlider:"0", zoomSelect:"1"}`, resumen «1 · 0»); ahora la herramienta entrega su propio esquema (`agtron-dial/1`: número,
+  escala, forma, matiz, brillo y de dónde salió la lectura) y el resumen «Agtron 58 · Gourmet · Medium Dark». Los trabajos de la V7
+  se siguen abriendo.
+- **Corregido**: el aplicado automático a los 10 s dispara **una vez** por muestra nueva; en la V7 era un intervalo que sobrescribía
+  para siempre cualquier movimiento manual del dial.
+- **Añadido**: `qa-tools-puente-conformance` gana **sondas** para herramientas con esquema propio: el Agtron deja de pasar como
+  «SIN-CAMPOS» y se le exige que el número llegue al estado y vuelva (13/13).
+- **Datos**: `tools.guia` de `agtron` reescrita con el método nuevo.
+
 ## [V5.92] — 2026-09-25 (commit 0f12bb1)
 
 > **Wrap V47** (2026-09-25): ciclo compilado en `Documentacion_Interactiva_V47.0(322fc67).html` — 42 nodos (=) · 175 fichas (+20: la Etapa 1 del circuito del lote —`plancircuito`, `sesionasistida`, `desacoplado`, `gradoquerige`, `certificacionconestado`, `dossierlote`, `solicitudevaluacion`, `terminos`, `gestionmuestras`, `almacenaje`, `modulosdelsocio`, `escala`, `homologacion`, `pvcparagrado`, `simulador`, `mesames`, `mora`, `compras`, `mezclas`, `samplekits`) · 68 trazas (+6, y 10 reescritas sobre su sucesor) · 108 wires (+4, −1) · 38 CTX (13 ampliadas) · 475 ANN (+54; 5 repuntadas, 13 reescritas, 8 ampliadas) · Postgres 128 tablas. Veintidós asientos (V5.71–V5.92); la auditoría previa reconcilió maestro, charters, AGENTS, HANDOFF, planes y briefs en el mismo commit.

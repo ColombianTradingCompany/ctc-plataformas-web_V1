@@ -40,6 +40,22 @@ const HERRAMIENTAS = {
 // que llegue al estado sería exigir que se salte la privacidad.
 const CAMPO = { "cromatografia-suelo": "#municipio" };
 
+// Las herramientas con ESQUEMA PROPIO (CTC.usarEstado) no guardan sus campos:
+// guardan lo que importa. Para ellas no vale el centinela en un campo — la
+// sonda actúa como una persona y exige que el dato llegue al estado y vuelva.
+// Disco Agtron (V5.93): hasta la V7 el puente por defecto solo guardaba el
+// matiz y el zoom de la foto, nunca el número; SIN-CAMPOS lo dejaba pasar.
+const SONDA = {
+  agtron: {
+    actuar: async (marco) => {
+      await marco.locator("#dialThumb").focus();
+      await marco.locator("#dialThumb").press("PageDown"); // 63 → 53
+    },
+    capturado: (estado) => !!estado && estado.valor === 53,
+    restaurado: async (marco) => (await marco.locator("#readingNumber").innerText()).trim() === "53",
+  },
+};
+
 const CENTINELA = "QA-PUENTE-77";
 // Un <input type=number> SANEA lo no numérico a "": el centinela de texto
 // desaparecía sin fallar nada y la primera corrida culpó a las dos calculadoras
@@ -90,6 +106,33 @@ for (const [id, ruta] of Object.entries(HERRAMIENTAS)) {
     fila.campos = await marco
       .locator("input:not([type=hidden]):not([type=file]):not([type=password]), select, textarea")
       .count();
+
+    const sonda = SONDA[id];
+    if (sonda) {
+      await pagina.evaluate(() => {
+        document.getElementById("f").contentWindow.postMessage({ ctc: "init", nombre: "qa", estado: {} }, "*");
+      });
+      await sonda.actuar(marco);
+      await pagina.waitForTimeout(1600); // debounce 900 + margen
+      const r = await pagina.evaluate(() => window.__r);
+      const enEstado = sonda.capturado(r.estado);
+      fila.captura = enEstado ? (r.resumen ? "✓+resumen" : "✓") : "✗";
+      if (enEstado) {
+        await pagina.setContent(ARNES(BASE + ruta), { waitUntil: "load", timeout: 40000 });
+        await pagina.waitForTimeout(2000);
+        await pagina.evaluate((e) => {
+          document.getElementById("f").contentWindow.postMessage({ ctc: "init", nombre: "qa", estado: e }, "*");
+        }, r.estado);
+        await pagina.waitForTimeout(900);
+        fila.restaura = (await sonda.restaurado(pagina.mainFrame().childFrames()[0])) ? "✓" : "✗";
+      }
+      fila.nota = "ESQUEMA PROPIO (sonda)";
+      filas.push(fila);
+      console.log(
+        `${fila.id.padEnd(17)} ready:${fila.ready ? "✓" : "✗"}  campos:${String(fila.campos).padStart(3)}  captura:${fila.captura.padEnd(10)} restaura:${fila.restaura}  ${fila.nota}`
+      );
+      continue;
+    }
 
     // Primero un campo de TEXTO; si la herramienta solo tiene números (las
     // calculadoras de mermas), un numérico con centinela numérico.

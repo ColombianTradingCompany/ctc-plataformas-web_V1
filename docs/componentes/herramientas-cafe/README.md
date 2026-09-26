@@ -28,7 +28,7 @@
 |---|---|---|---|---|---|---|---|
 | [`catacion`](catacion/README.md) | Rueda del Café (rueda de catación / rueda del sabor) | Viva | default | es | KR | sí (puente) | 4 |
 | [`defectos-cafe`](defectos-cafe/README.md) | Defectos del Café | Viva | default | es | web | **no** | 0 |
-| [`agtron`](agtron/README.md) | Disco Agtron (Agtron Dial) | Viva | default | en | KR · CP · web | sí (puente) | 1 |
+| [`agtron`](agtron/README.md) | Disco Agtron (Agtron Dial) | Viva · **V8** (V5.93) | default | en (+ es, de) | KR · CP · web | sí (esquema propio) | 1 |
 | [`green-datasheet`](green-datasheet/README.md) | Ficha de café verde (Green Coffee Datasheet) | Viva | default | es | KR | sí (puente) | 0 |
 | [`mermas-ctc`](mermas-ctc/README.md) | Calculadora de mermas · Detallada | Viva | default | es | KR | sí (puente) | 5 |
 | [`mermas-rapida`](mermas-rapida/README.md) | Calculadora de mermas · Rápida | Viva · `noindex` a propósito | default | es | KR | sí (puente) | 0 |
@@ -80,6 +80,7 @@ línea en `docs/ALINEACION.md` §3.
 3. **`mermas-ctc` + `cogs-verde`** — deshacer las dos copias de `public/ocp-apps/` con `herramientas-internas`.
 4. **`green-datasheet`** — dos fichas del café verde.
 5. **`mapa-variedades`**, **`agtron`**, **`qr`**, **`cool-pdf`** — idiomas (tres están solo en inglés) y fuente única.
+   `agtron` hecha en la V5.93 (V8: ES · EN · DE, lectura por luminosidad, memoria propia); le quedan decisiones del owner (ficha).
 6. **`formula-calidad`**, **`viaje-cafe`** — alinear con Grados CTC y la narrativa v3.
 7. **`atlas-cafetero`** — alta.
 8. **`mermas-rapida`** — decisión del owner (el modo cacao). (`mermas-detallada` quedó resuelta: borrada el 2026-09-22.)

@@ -130,3 +130,16 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   navegador sin errores · tsc limpio · eslint en 8 · 64 guardianes en verde.
 
 ════════════════════════════════════════════════════════════════════════════════
+
+## [2026-09-26] V5.93 · Disco Agtron V8: la foto se lee por luminosidad
+- `public/tools/agtron/agtron-dial.html` pasa a la V8 (fuente del owner en `reference/html_tools/agtron/agtron_dial_metre-V8.html`;
+  la copia servida solo difiere en el `<head>` vendorizado y la línea del puente). La lectura por foto toma el número Agtron de
+  L* (la V7 buscaba número + matiz + brillo a la vez y el balance de blancos movía la lectura ~20 puntos); blanco de referencia
+  opcional que corrige exposición y dominante; 7 puntos o áreas con el % del área en vivo y un mínimo del 10 % (feedback del
+  owner, con las instrucciones de luz de día o blanca a 12 cm); aplicado automático UNA vez; ventana de catación SCA (58 grano /
+  63 molido, Gourmet ±1) en el dial; ES · EN · DE abriendo en el idioma de la superficie (`ctc-lang`/`cp-lang`/`kr-lang`).
+- Memoria: primera herramienta del taller con esquema propio además del Lector de Cromatografía (`CTC.usarEstado` +
+  `usarResumen`, esquema `agtron-dial/1`); `qa-tools-puente-conformance` gana SONDAS para esquemas propios.
+- Para el mapa: la ficha del taller/puente puede decir que dos herramientas guardan esquema propio (cromatografía y Agtron) y
+  que la conformidad las sondea; ningún nodo nuevo. `tools.guia` de `agtron` reescrita (dato, sin migración).
+(commit: pendiente)

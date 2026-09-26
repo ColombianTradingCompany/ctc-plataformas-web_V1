@@ -26,7 +26,7 @@ cuenta de KR, CP o Directorio), el **Taller** (Cover Flow en dos estantes: abier
 
 | id | Nombre | Nivel | Idioma | Memoria | Archivo en `public/tools/<id>/` |
 |---|---|---|---|---|---|
-| `agtron` | Disco Agtron | default | en | sí | `agtron-dial.html` |
+| `agtron` | Disco Agtron | default | en (+ es, de en la propia herramienta, V5.93) | sí (esquema propio, V5.93) | `agtron-dial.html` (**V8**; fuente `reference/html_tools/agtron/agtron_dial_metre-V8.html`) |
 | `catacion` | Rueda de catación (rueda del sabor) | default | es | sí | `rueda-catacion.html` (+ `rueda-del-cafe-v23.html`) |
 | `cogs-verde` | Calculadora CoGS · Café verde | **plus** | es | sí | `cogs-cafe-verde.html` (copia **V19** en `public/ocp-apps/`) |
 | `cool-pdf` | Cool PDF · dale cuerpo a un PDF | default | en | sí | `cool-pdf.html` |
@@ -121,6 +121,14 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 
 ## Pendientes
 
+- **V5.93 · Disco Agtron V8** (owner, 2026-09-26; ficha `herramientas-cafe/agtron/README.md`). Hecho: lectura por foto por
+  luminosidad, blanco de referencia, 7 puntos o áreas con % en vivo y mínimo del 10 %, instrucciones de luz de día o blanca a 12 cm,
+  aplicado único a los 10 s, ventana de catación SCA, alemán, apertura en el idioma de la superficie y memoria con esquema propio.
+  Abierto, **con decisión del owner**: (a) tres nombres de tramo no coinciden con los discos SCAA (#55 Medium, #65 Light Medium,
+  #75 Moderately Light; la herramienta dice Medium Dark, Medium, Medium Light) y el tramo más claro se rotula «Light City»; (b) el
+  alemán lo escribió la IA (revisión de un hablante nativo); (c) calibrar la lectura con fotos REALES de móvil contra un Agtron o un
+  kit de discos (hoy está probada con fotos sintéticas); (d) los anclajes L\*a\*b\* no tienen fuente citada. Cuando el Centro de
+  Calidad o el Master Roaster la consuman, el modelo se extrae a `src/lib/tools/agtron/`.
 - **V5.81 (`consolas`, fase 4 del `PLAN_CIRCUITO_DEL_LOTE`) — con dueño aquí**: la **rueda de sabores tiene UNA taxonomía**
   en `src/lib/catacion/rueda.ts` (nueve familias SCA/WCR, ES/EN, solo ids en la base): la Rueda del Café del taller debería
   leer de ahí cuando se rehaga (el owner la quiere en el Centro de Calidad). Y la **variante interna de la Datasheet Tool**
@@ -133,7 +141,7 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
   primera conversación, porque el owner la quiere en el **Centro de Calidad**; **(b)** `mermas-ctc` y `cogs-verde`
   tienen **copias** en `public/ocp-apps/` para los cotizadores (CoGS ya va en V19 contra V18 pública) — se
   resuelve con `herramientas-internas`; **(c)** dos fichas del café verde (la herramienta y `/docs/ficha/[lotId]`);
-  **(d)** cuatro herramientas solo en inglés (`agtron`, `mapa-variedades`, `qr`, `cool-pdf`); **(e)** candidata
+  **(d)** cuatro herramientas solo en inglés (`agtron`, `mapa-variedades`, `qr`, `cool-pdf`) — `agtron` resuelta en la V5.93 (ES · EN · DE); **(e)** candidata
   sin alta: Atlas cafetero. **Pendiente de operación**: los recursos del Lector de Cromatografía siguen en
   `assets/` (moverlos toca el cuerpo y cinco scripts: de su conversación) y su `reglas.json` cita la ruta vieja de
   las fuentes en el texto de procedencia.

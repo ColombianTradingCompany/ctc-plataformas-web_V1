@@ -1211,6 +1211,140 @@
   }
   .modal-close:hover{color:var(--text); background:var(--panel-2);}
 
+  /* ---------- V8: top toggles (scale + sample form) ---------- */
+  .top-toggles{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .top-toggles .toggle-btn{padding:7px 13px;}
+
+  /* ---------- V8: sampling tools, coverage, white reference ---------- */
+  .pick-tools{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:8px;
+  }
+  .pick-tools[hidden]{display:none;}
+  .pick-tool-hint{
+    font-size:9.5px;
+    color:var(--text-faint);
+    line-height:1.4;
+    margin:0 0 8px;
+  }
+  .pick-tool-hint[hidden]{display:none;}
+  .coverage{
+    margin-top:10px;
+  }
+  .coverage[hidden]{display:none;}
+  .coverage-row{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:8px;
+    font-size:10px;
+    color:var(--text-dim);
+  }
+  .coverage-row strong{color:var(--text); font-weight:600;}
+  .coverage-bar{
+    position:relative;
+    height:6px;
+    border-radius:999px;
+    background:var(--line);
+    margin-top:5px;
+    overflow:hidden;
+  }
+  .coverage-fill{
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:0;
+    background:var(--warn);
+    border-radius:999px;
+    transition:width .12s linear, background .12s linear;
+  }
+  .coverage-fill.ok{background:var(--ink);}
+  .coverage-min{
+    position:absolute;
+    top:-2px; bottom:-2px;
+    width:2px;
+    background:var(--text);
+    opacity:.55;
+  }
+  .pick-actions{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-left:auto;
+    flex-wrap:wrap;
+  }
+  .pick-clear-btn:disabled{opacity:.4; cursor:default;}
+  .pick-white-status{
+    font-size:9.5px;
+    color:var(--text-dim);
+  }
+  .pick-white-status.ok{color:var(--ink-bright); font-weight:600;}
+  .pick-warn{
+    font-size:9.5px;
+    color:var(--warn);
+    line-height:1.45;
+    margin:8px 0 0;
+  }
+  .pick-warn[hidden]{display:none;}
+
+  /* ---------- V8: SCA cupping window on the dial and in the readout ---------- */
+  .sca-band{
+    position:absolute;
+    right:-9px;
+    width:5px;
+    border-radius:2px;
+    background:var(--ink-bright);
+    pointer-events:none;
+  }
+  .sca-band::after{
+    content:"SCA";
+    position:absolute;
+    left:8px;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:7.5px;
+    letter-spacing:.06em;
+    color:var(--ink-bright);
+    font-weight:600;
+  }
+  .cup-window{
+    border-top:1px solid var(--line-soft);
+    padding-top:12px;
+  }
+  .cup-eyebrow{
+    font-size:9.5px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+    margin-bottom:4px;
+  }
+  .cup-target{
+    font-size:11px;
+    color:var(--text-dim);
+    line-height:1.45;
+  }
+  .cup-status{
+    font-size:11px;
+    font-weight:600;
+    margin-top:3px;
+    color:var(--warn);
+  }
+  .cup-status.in{color:var(--ink-bright);}
+  .photo-line{
+    font-size:9.5px;
+    color:var(--text-faint);
+    margin-top:6px;
+    line-height:1.4;
+  }
+  .photo-line[hidden]{display:none;}
+
   @media (min-width:460px){
     body{padding-top:50px;}
   }
@@ -1230,15 +1364,22 @@
       <h1 data-i18n="title">Agtron Dial</h1>
       <div class="sub" data-i18n="subtitle">Drag to set a reading and preview the approximate roast color across three swatch types.</div>
     </div>
-    <div class="lang-toggle" role="group" aria-label="Language / Idioma">
-      <button class="lang-btn active" id="btnLangEn" data-lang="en">EN</button>
+    <div class="lang-toggle" role="group" aria-label="Language / Idioma / Sprache">
       <button class="lang-btn" id="btnLangEs" data-lang="es">ES</button>
+      <button class="lang-btn active" id="btnLangEn" data-lang="en">EN</button>
+      <button class="lang-btn" id="btnLangDe" data-lang="de">DE</button>
     </div>
   </div>
 
-  <div class="scale-toggle" role="group" aria-label="Agtron scale">
-    <button class="toggle-btn active" data-scale="gourmet" id="btnGourmet" data-i18n="scaleGourmet">Gourmet</button>
-    <button class="toggle-btn" data-scale="commercial" id="btnCommercial" data-i18n="scaleCommercial">Commercial</button>
+  <div class="top-toggles">
+    <div class="scale-toggle" role="group" aria-label="Agtron scale" data-i18n-aria="scaleAria">
+      <button class="toggle-btn active" data-scale="gourmet" id="btnGourmet" data-i18n="scaleGourmet">Gourmet</button>
+      <button class="toggle-btn" data-scale="commercial" id="btnCommercial" data-i18n="scaleCommercial">Commercial</button>
+    </div>
+    <div class="scale-toggle" role="group" aria-label="Sample form" data-i18n-aria="formaAria">
+      <button class="toggle-btn active" id="btnWhole" data-i18n="formaWhole">Whole bean</button>
+      <button class="toggle-btn" id="btnGround" data-i18n="formaGround">Ground</button>
+    </div>
   </div>
 
   <details class="tips" id="pickPanel" open>
@@ -1248,11 +1389,12 @@
       <span class="tip-caret">▸</span>
     </summary>
     <div class="tips-body">
-      <ul class="pick-steps">
-        <li data-i18n="pickStep1">Upload a photo of your roasted sample.</li>
-        <li data-i18n="pickStep2">Zoom in if needed, then tap 1–3 spots to sample their color.</li>
-        <li data-i18n="pickStep3">Tap the shutter — or wait 10s — to apply the closest match to the dial.</li>
-      </ul>
+      <ol class="pick-steps">
+        <li data-i18n="pickStep1">Put the sample on white paper and take the photo in daylight or white light, about 12 cm from the surface, without flash. Leave some paper in the frame.</li>
+        <li data-i18n="pickStep2">Upload it and, with White, tap the paper: it corrects exposure and colour cast.</li>
+        <li data-i18n="pickStep3">Mark the coffee with 7 Points or drag Areas until you cover at least 10 % of the photo.</li>
+        <li data-i18n="pickStep4">Tap the shutter — or wait 10 s — to apply the reading to the dial.</li>
+      </ol>
 
       <button type="button" class="tips-trigger-btn" id="tipsModalBtn">
         <span class="tip-icon">i</span>
@@ -1262,10 +1404,16 @@
       <div class="pick-upload-row">
         <label class="pick-upload-btn" for="pickFileInput" id="pickUploadLabel" data-i18n="pickUpload">Upload photo</label>
         <input type="file" id="pickFileInput" accept="image/*" hidden>
-        <span class="pick-points-count" id="pickPointsCount">0/3</span>
+        <span class="pick-points-count" id="pickPointsCount"></span>
       </div>
 
-      <div class="zoom-controls" id="zoomControls" hidden>
+      <div class="pick-tools" id="pickTools" hidden>
+        <div class="mode-toggle" role="group" aria-label="Sampling tool" data-i18n-aria="toolAria">
+          <button type="button" class="mode-btn active" id="toolPointsBtn" data-tool="points" data-i18n="toolPoints">Points</button>
+          <button type="button" class="mode-btn" id="toolAreaBtn" data-tool="area" data-i18n="toolArea">Area</button>
+          <button type="button" class="mode-btn" id="toolWhiteBtn" data-tool="white" data-i18n="toolWhite">White</button>
+          <button type="button" class="mode-btn" id="toolPanBtn" data-tool="pan" data-i18n="modePan" disabled>Pan</button>
+        </div>
         <label class="zoom-select-wrap">
           <span data-i18n="zoomLabel">Zoom</span>
           <select id="zoomSelect">
@@ -1277,34 +1425,46 @@
             <option value="0.25">25%</option>
           </select>
         </label>
-        <div class="mode-toggle" role="group" aria-label="Interaction mode">
-          <button type="button" class="mode-btn active" id="modeSelectBtn" data-i18n="modeSelect">Select</button>
-          <button type="button" class="mode-btn" id="modePanBtn" data-i18n="modePan" disabled>Pan</button>
-        </div>
       </div>
+      <p class="pick-tool-hint" id="pickToolHint" hidden></p>
 
       <div class="pick-canvas-wrap" id="pickCanvasWrap">
         <canvas id="pickCanvas" class="hidden"></canvas>
         <div class="pick-empty-msg" id="pickEmptyMsg" data-i18n="pickNoImage">No photo yet — upload one to begin.</div>
       </div>
-      <p class="zoom-hint" id="zoomHint" data-i18n="zoomHint" hidden>Zoomed in — switch to Pan to move around, or Select to place points.</p>
+
+      <div class="coverage" id="coverage" hidden>
+        <div class="coverage-row">
+          <span data-i18n="coverageLabel">Marked area</span>
+          <span><strong id="coverageValue">0 %</strong> <span id="coverageOf">of the photo · minimum 10 %</span></span>
+        </div>
+        <div class="coverage-bar" aria-hidden="true">
+          <div class="coverage-fill" id="coverageFill"></div>
+          <div class="coverage-min" id="coverageMin"></div>
+        </div>
+      </div>
 
       <div class="pick-result-row" id="pickResultRow" hidden>
         <div class="pick-avg-swatch" id="pickAvgSwatch"></div>
         <div class="pick-result-text">
           <span class="pick-avg-label" data-i18n="pickAvgLabel">Sampled average</span>
           <span class="pick-avg-hex" id="pickAvgHex">#000000</span>
+          <span class="pick-white-status" id="pickWhiteStatus"></span>
         </div>
-        <button type="button" class="shutter-btn" id="shutterBtn" disabled data-i18n-aria="shutterAria" aria-label="Set dial to sampled average">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-            <circle cx="12" cy="13" r="4"></circle>
-          </svg>
-          <span data-i18n="pickApply">Apply</span>
-        </button>
-        <button class="pick-clear-btn" id="pickClearBtn" data-i18n="pickClear">Clear points</button>
+        <div class="pick-actions">
+          <button type="button" class="shutter-btn" id="shutterBtn" disabled data-i18n-aria="shutterAria" aria-label="Set dial to sampled average">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+            <span data-i18n="pickApply">Apply</span>
+          </button>
+          <button type="button" class="pick-clear-btn" id="pickUndoBtn" data-i18n="pickUndo">Undo</button>
+          <button type="button" class="pick-clear-btn" id="pickClearBtn" data-i18n="pickClear">Clear</button>
+        </div>
       </div>
-      <p class="pick-auto-note" id="pickAutoNote" data-i18n="pickAutoNote" hidden>Tap the shutter to apply now, or it applies automatically every 10 seconds.</p>
+      <p class="pick-warn" id="pickWarn" hidden></p>
+      <p class="pick-auto-note" id="pickAutoNote" hidden></p>
     </div>
   </details>
 
@@ -1314,6 +1474,7 @@
       <div class="dial-track-wrap">
         <div class="dial-ticks" id="dialTicks"></div>
         <div class="dial-track" id="dialTrack">
+          <div class="sca-band" id="scaBand" aria-hidden="true"></div>
           <div class="dial-thumb" id="dialThumb" tabindex="0" role="slider"
                aria-valuemin="0" aria-valuemax="100" aria-valuenow="63" data-i18n-aria="dialAria" aria-label="Agtron dial value">
             <span class="thumb-value" id="thumbValue">63</span>
@@ -1367,6 +1528,13 @@
           <div class="reading-warning" id="readingWarning">beyond Commercial's typical 0–75 range</div>
         </div>
       </div>
+      <div class="photo-line" id="photoLine" hidden></div>
+
+      <div class="cup-window">
+        <div class="cup-eyebrow" data-i18n="cupEyebrow">SCA cupping roast</div>
+        <div class="cup-target" id="cupTarget"></div>
+        <div class="cup-status" id="cupStatus"></div>
+      </div>
 
       <div class="concept">
         <div class="concept-eyebrow" data-i18n="conceptEyebrow">Concept definition</div>
@@ -1415,7 +1583,9 @@
     <ul>
       <li data-i18n="modalBullet1">Eight reference points (Agtron #25, #35, #45, #55, #65, #75, #85, #95 — the numbers on the physical SCA disk set) were assigned CIE L*a*b* values from published Agtron-to-L*a*b* correlations. Every other dial position is interpolated between those anchors in L*a*b* space, then converted to sRGB.</li>
       <li data-i18n="modalBullet2">The Commercial scale is estimated by rescaling the Gourmet curve to its roughly 0–75 usable range (Commercial ≈ Gourmet × 0.75), since Agtron hasn't published a direct formula between the two.</li>
-      <li data-i18n="modalBullet3">The Tint slider and Brightness stepper nudge the color sideways (CIE a*) and up/down (CIE L*), independently of the dial — real beans at the same roast level can still look more red, ashy, light, or dark. Pick a photo's shutter searches all three together for the closest overall match.</li>
+      <li data-i18n="modalBullet3">The Tint slider and Brightness stepper nudge the color sideways (CIE a*) and up/down (CIE L*) for display only — real beans at the same roast level can still look more red, ashy, light, or dark. They never change the Agtron number.</li>
+      <li data-i18n="modalBullet5">A photo reading takes the Agtron number from lightness (CIE L*), the closest visible-light stand-in for what an Agtron instrument measures (near-infrared reflectance). The marked pixels — at least 10 % of the photo — are averaged in linear light; the Tint is then set from the colour left over. With a white reference, exposure and colour cast are corrected first, taking the paper as white (L* 95).</li>
+      <li data-i18n="modalBullet6">The cupping window marks the roast the SCA cupping protocol asks for: about 58 on whole bean and 63 on ground coffee, on the Agtron Gourmet scale, ±1 point.</li>
       <li data-i18n="modalBullet4">The RGB figure shown is the exact sRGB channel values used to render the color on screen — not an approximation, unlike a CMYK print value would require.</li>
     </ul>
 
@@ -1430,6 +1600,7 @@
       <li><a href="https://www.coffeereview.com/agtron-numerology/" target="_blank" rel="noopener">Coffee Review — Agtron Numerology</a></li>
       <li><a href="https://www.hunterlab.com/blog/what-are-the-scaa-roast-coffee-standards/" target="_blank" rel="noopener">HunterLab — What Are the SCAA Roast Coffee Standards?</a></li>
       <li><a href="https://artisan-roasterscope.blogspot.com/2023/03/understanding-roast-color.html" target="_blank" rel="noopener">Artisan — Understanding Roast Color (scale ranges: Agtron, Tonino, Colorette, ColorTrack)</a></li>
+      <li><a href="https://atlanticspecialtycoffee.com/wp-content/uploads/SCAA-Cupping-Protocols-2005.pdf" target="_blank" rel="noopener">SCAA — Cupping Protocols (roast for cupping: Agtron Gourmet ≈ 58 whole bean / 63 ground, ±1)</a></li>
     </ul>
 
     <div class="modal-disclaimer" data-i18n="modalDisclaimer">
@@ -1447,13 +1618,33 @@
       <li data-i18n-html="tip1"><strong>Grind, don't compare whole beans.</strong> This is why the real SCA/Agtron kit is always read on ground coffee, not whole beans — a curved, oily surface will glare at some angle no matter what. Ground coffee is matte and reads true.</li>
       <li data-i18n-html="tip2"><strong>If comparing whole beans:</strong> tilt the bean about 30–45° so the hot spot slides off, and judge color from the shaded flank — not the glare, and not the dark shadow edge.</li>
       <li data-i18n-html="tip3"><strong>Use diffuse light.</strong> A single bright point (window, lamp, a very bright screen) is what causes the glare. Cloudy daylight or a bounced lamp gives a far more even read; try dimming your screen a notch too.</li>
+      <li data-i18n-html="tip4"><strong>For the photo:</strong> daylight or white light whenever possible (avoid warm yellow bulbs and flash), about 12 cm from the surface, on white paper that also shows in the frame — then mark it with White.</li>
     </ul>
-    <p data-i18n-html="tipBest"><strong>Most reliable:</strong> don't eyeball it. Use the shutter button on your uploaded photo to sample real pixels instead of judging by eye.</p>
+    <p data-i18n-html="tipBest"><strong>Most reliable:</strong> don't eyeball it. Upload a photo, mark at least 10 % of it, and tap the shutter to sample real pixels instead of judging by eye.</p>
   </div>
 </div>
 
 <script>
 (function(){
+
+  /* ======================================================================
+     Agtron Dial · V8 (2026-09-26)
+     What changed from V7, in one place:
+       · A photo reading takes the Agtron number from LIGHTNESS (L*) only.
+         V7 searched dial + tint + brightness together, so the number could
+         be bought with a brightness step and a white-balance cast moved it
+         ~20 points. Tint and brightness are now display-only.
+       · Pixels are averaged in linear light over at least 10 % of the photo
+         (7 points or dragged areas, the % shown live while marking).
+       · Optional white reference (the paper under the sample) corrects
+         exposure and colour cast before reading.
+       · The 10 s auto-apply fires ONCE per new sample (V7's interval kept
+         overwriting manual dial moves forever).
+       · SCA cupping window (58 whole bean / 63 ground, Gourmet, ±1).
+       · ES · EN · DE; opens in the visitor's language.
+       · Memory through the CTC bridge with its own schema (V7 only saved
+         the tint and the photo zoom).
+     ====================================================================== */
 
   /* ---------------- color model ---------------- */
 
@@ -1513,49 +1704,64 @@
     return '#' + [r,g,b].map(c=>c.toString(16).padStart(2,'0')).join('').toUpperCase();
   }
 
-  function rgbToLab(r,g,b){
-    const inv = c => { c/=255; return c>0.04045 ? Math.pow((c+0.055)/1.055,2.4) : c/12.92; };
-    const rl=inv(r), gl=inv(g), bl=inv(b);
+  // sRGB byte → linear light, as a lookup table. Photo pixels are averaged in
+  // LINEAR light (the way an instrument integrates reflectance over its
+  // window), not in gamma-encoded sRGB.
+  const LIN = new Float32Array(256);
+  for(let i=0;i<256;i++){
+    const c = i/255;
+    LIN[i] = c > 0.04045 ? Math.pow((c+0.055)/1.055, 2.4) : c/12.92;
+  }
+  function linToByte(v){
+    v = Math.max(0, Math.min(1, v));
+    const g = v > 0.0031308 ? 1.055*Math.pow(v, 1/2.4) - 0.055 : 12.92*v;
+    return Math.round(g*255);
+  }
+  function labFromLinear(rl, gl, bl){
     let x = rl*0.4124 + gl*0.3576 + bl*0.1805;
     let y = rl*0.2126 + gl*0.7152 + bl*0.0722;
     let z = rl*0.0193 + gl*0.1192 + bl*0.9505;
-    x/=0.95047; y/=1.0; z/=1.08883;
+    x/=0.95047; z/=1.08883;
     const f = t => t>0.008856 ? Math.cbrt(t) : (7.787*t + 16/116);
     const fx=f(x), fy=f(y), fz=f(z);
     return { L: 116*fy - 16, a: 500*(fx-fy), b: 200*(fy-fz) };
   }
 
-  // Tint: shifts color sideways along the CIE a*/b* (red-green / yellow-blue)
-  // plane, independent of the dial's lightness-driven path. Models natural
-  // bean-to-bean hue variation at a given roast level. Fine continuous range.
+  // Tint: shifts color sideways along the CIE a*/b* plane, independent of the
+  // dial's lightness-driven path. Display only: it never changes the number.
   const HUE_MAX = 3;
   const HUE_STEP_A = 2.6;   // per unit: + redder, - more ashy/green
   const HUE_STEP_B = -1.3;  // per unit: slight compensating shift
   let hueStep = 0;
 
-  // Brightness: shifts lightness (L*) independently of the dial and the
-  // tint — five discrete levels, for correcting exposure/lighting bias in
-  // a photo without changing which roast level or tint is selected.
+  // Brightness: shifts lightness (L*) of the swatches, five discrete levels.
+  // Display only: it never changes the number.
   const BRIGHT_MAX = 2;
   const BRIGHT_STEP_L = 5.5; // per level
   let brightStep = 0;
 
-  function nearestMatchForLab(lab, scale){
-    let best = { v: 0, h: 0, br: 0 }, bestDist = Infinity;
-    for(let br=-BRIGHT_MAX; br<=BRIGHT_MAX; br++){
-      for(let h=-HUE_MAX; h<=HUE_MAX; h+=0.2){
-        for(let v=0; v<=100; v+=1){
-          const base = scale === 'commercial' ? labAtCommercial(v) : labAtGourmet(v);
-          const L = Math.max(2, Math.min(97, base.L + br*BRIGHT_STEP_L));
-          const a = base.a + h*HUE_STEP_A;
-          const b = base.b + h*HUE_STEP_B;
-          const dL=lab.L-L, da=lab.a-a, db=lab.b-b;
-          const dist = dL*dL + da*da + db*db;
-          if(dist < bestDist){ bestDist = dist; best = { v: Math.round(v), h: Math.round(h*10)/10, br }; }
-        }
-      }
+  // Photo → reading. The Agtron number comes from L* alone: the anchor curve
+  // is monotonic in L*, so it is inverted piecewise. Chroma (a*/b*) is the
+  // channel a phone camera distorts most (white balance), so it only sets the
+  // Tint, from what is left over once the number is fixed.
+  function gourmetFromL(L){
+    const first = ANCHORS[0], last = ANCHORS[ANCHORS.length-1];
+    if(L <= first.L) return first.v;
+    if(L >= last.L) return last.v;
+    for(let i=0;i<ANCHORS.length-1;i++){
+      const lo = ANCHORS[i], hi = ANCHORS[i+1];
+      if(L >= lo.L && L <= hi.L) return lo.v + (L - lo.L) / (hi.L - lo.L) * (hi.v - lo.v);
     }
-    return best;
+    return last.v;
+  }
+  function readingFromLab(lab, sc){
+    const g = gourmetFromL(lab.L);
+    const v = Math.max(0, Math.min(100, Math.round(sc === 'commercial' ? g * COMMERCIAL_RATIO : g)));
+    const base = sc === 'commercial' ? labAtCommercial(v) : labAtGourmet(v);
+    const da = lab.a - base.a, db = lab.b - base.b;
+    let h = (da*HUE_STEP_A + db*HUE_STEP_B) / (HUE_STEP_A*HUE_STEP_A + HUE_STEP_B*HUE_STEP_B);
+    h = Math.max(-HUE_MAX, Math.min(HUE_MAX, Math.round(h*10)/10)) || 0;
+    return { v, h };
   }
 
   function colorFor(v, scale){
@@ -1575,6 +1781,18 @@
     const gEquiv = scale === 'commercial' ? Math.min(100, v / COMMERCIAL_RATIO) : v;
     for(let i=0;i<CONCEPT_BINS.length;i++){ if(gEquiv <= CONCEPT_BINS[i]) return i; }
     return CONCEPT_BINS.length - 1;
+  }
+
+  /* ---------------- SCA cupping window ---------------- */
+
+  // SCA cupping protocol: roast measured on the Agtron Gourmet scale at about
+  // 58 on whole bean and 63 on ground coffee, ±1 point.
+  const CUP_TARGET = { whole: 58, ground: 63 };
+  const CUP_TOL = 1;
+  let forma = 'whole';
+
+  function cupInScale(sc){
+    return CUP_TARGET[forma] * (sc === 'commercial' ? COMMERCIAL_RATIO : 1);
   }
 
   /* ---------------- other reference scales ---------------- */
@@ -1621,6 +1839,16 @@
       {name:'Medio Claro',       sub:'City',                     desc:'Acidez brillante con dulzor en desarrollo. El carácter de origen se vuelve más evidente.'},
       {name:'Claro',             sub:'Tueste Canela',            desc:'Tostado, similar al té, acidez pronunciada. Notas florales o frutales son comunes.'},
       {name:'Muy Claro',         sub:'Light City',               desc:'Cerca del primer crack. Alta acidez, cuerpo delicado, muy sensible a la técnica de preparación.'}
+    ],
+    de: [
+      {name:'Sehr dunkel',       sub:'Italienisch · Espresso-Röstung', desc:'Ölige Oberfläche, verkohlte Zucker dominieren. Säure und Sortencharakter der Herkunft sind fast verschwunden.'},
+      {name:'Dunkel',            sub:'Französische Röstung',     desc:'Schwer, rauchig, bittersüß. Dichter Körper, die Süße neigt zu verbranntem Zucker.'},
+      {name:'Mäßig dunkel',      sub:'Full City+ · Wiener Röstung', desc:'Erste Spuren von Öl auf der Oberfläche. Schokoladig, wenig Säure, noch etwas Herkunftscharakter.'},
+      {name:'Mitteldunkel',      sub:'Full City',                desc:'Kurz nach dem zweiten Crack. Ausgewogene Süße und Röstgeschmack, beliebt für Espresso-Mischungen.'},
+      {name:'Mittel',            sub:'City+ · American',         desc:'Abgerundete Säure, Noten von Karamell und Nuss. Ein üblicher Standard für Filterkaffee.'},
+      {name:'Mittelhell',        sub:'City',                     desc:'Lebendige Säure mit sich entwickelnder Süße. Der Herkunftscharakter wird deutlicher.'},
+      {name:'Hell',              sub:'Zimt-Röstung (Cinnamon)',  desc:'Geröstet, teeartig, ausgeprägte Säure. Blumige oder fruchtige Noten sind häufig.'},
+      {name:'Sehr hell',         sub:'Light City',               desc:'Nahe am ersten Crack. Hohe Säure, zarter Körper, sehr empfindlich für die Zubereitung.'}
     ]
   };
 
@@ -1635,29 +1863,54 @@
       tip1: "<strong>Grind, don't compare whole beans.</strong> This is why the real SCA/Agtron kit is always read on ground coffee, not whole beans — a curved, oily surface will glare at some angle no matter what. Ground coffee is matte and reads true.",
       tip2: "<strong>If comparing whole beans:</strong> tilt the bean about 30–45° so the hot spot slides off, and judge color from the shaded flank — not the glare, and not the dark shadow edge.",
       tip3: "<strong>Use diffuse light.</strong> A single bright point (window, lamp, a very bright screen) is what causes the glare. Cloudy daylight or a bounced lamp gives a far more even read; try dimming your screen a notch too.",
-      tipBest: "<strong>Most reliable:</strong> don't eyeball it. Upload a photo above and tap the shutter button to sample real pixels instead of judging by eye.",
+      tip4: "<strong>For the photo:</strong> daylight or white light whenever possible (avoid warm yellow bulbs and flash), about 12 cm from the surface, on white paper that also shows in the frame — then mark it with White.",
+      tipBest: "<strong>Most reliable:</strong> don't eyeball it. Upload a photo, mark at least 10 % of it, and tap the shutter to sample real pixels instead of judging by eye.",
 
       pickTitle: "Pick a photo",
-      pickStep1: "Upload a photo of your roasted sample.",
-      pickStep2: "Zoom in if needed, then tap 1–3 spots to sample their color.",
-      pickStep3: "Tap the shutter — or wait 10s — to apply the closest match to the dial.",
+      pickStep1: "Put the sample on white paper and take the photo in daylight or white light, about 12 cm from the surface, without flash. Leave some paper in the frame.",
+      pickStep2: "Upload it and, with White, tap the paper: it corrects exposure and colour cast.",
+      pickStep3: "Mark the coffee with 7 Points or drag Areas until you cover at least 10 % of the photo.",
+      pickStep4: "Tap the shutter — or wait 10 s — to apply the reading to the dial.",
       tipsButton: "Reading tips",
       pickUpload: "Upload photo",
       pickReplace: "Replace photo",
       pickNoImage: "No photo yet — upload one to begin.",
       pickAvgLabel: "Sampled average",
-      pickClear: "Clear points",
-      pickAutoNote: "Tap the shutter to apply now, or it applies automatically every 10 seconds.",
+      pickUndo: "Undo",
+      pickClear: "Clear",
       shutterAria: "Set dial to sampled average",
       pickApply: "Apply",
       zoomLabel: "Zoom",
-      modeSelect: "Select",
+      toolAria: "Sampling tool",
+      toolPoints: "Points",
+      toolArea: "Area",
+      toolWhite: "White",
       modePan: "Pan",
-      zoomHint: "Zoomed in — switch to Pan to move around, or Select to place points.",
-      pickPointsOf: n => `${n}/3`,
+      hintPoints: n => `Tap the coffee: up to 7 points (${n}/7). Seven well-spread points cover about 10 %.`,
+      hintArea: "Drag over the coffee to mark a rectangle. Add as many as you need.",
+      hintWhite: "Tap the white paper to set the white reference. Tap again to move it.",
+      hintPan: "Drag to move around the zoomed photo.",
+      pointsOf: n => `${n}/7 pts`,
+      coverageLabel: "Marked area",
+      coverageOf: "of the photo · minimum 10 %",
+      whiteOk: "White reference ✓ — corrected",
+      whiteNone: "No white reference",
+      whiteMark: "W",
+      warnNoWhite: "Without a white reference the phone's automatic exposure can move the reading several points. Tap the paper with White.",
+      warnWhiteClipped: "The white is overexposed: the reading may come out too dark. Retake it with softer light.",
+      warnWhiteDark: "The white reference is not lighter than the coffee — check where you tapped.",
+      noteNeedMore: "Mark at least 10 % of the photo to apply the reading.",
+      noteReady: "Tap the shutter to apply — or wait 10 s and it applies once.",
+      noteManual: "Tap the shutter to apply the reading.",
+      photoLine: (pct, blanco) => `Read from photo · ${pct} of the area · ${blanco ? 'with white reference' : 'without white reference'}`,
+      fromPhotoShort: "from photo",
 
+      scaleAria: "Agtron scale",
       scaleGourmet: "Gourmet",
       scaleCommercial: "Commercial",
+      formaAria: "Sample form",
+      formaWhole: "Whole bean",
+      formaGround: "Ground",
       readingLabelGourmet: "Gourmet reading",
       readingLabelCommercial: "Commercial reading",
       plain: "plain",
@@ -1665,6 +1918,11 @@
       refEyebrow: "Other reference scales",
       refCaveat: "Estimated by scaling published range boundaries against the Agtron reading — not manufacturer-calibrated. See the info panel for details.",
       warnCommercial: "beyond Commercial's typical 0–75 range",
+      cupEyebrow: "SCA cupping roast",
+      cupTarget: (t, formaName, g) => g === null ? `Target ${t} ± 1 · ${formaName}` : `Target ≈ ${t} ± 1 · ${formaName} (${g} Gourmet)`,
+      cupIn: "Within the window ✓",
+      cupLighter: n => `${n} pts lighter than the target`,
+      cupDarker: n => `${n} pts darker than the target`,
       footnote: "Approximate colors — not a replacement for instrument readings.",
       infoAria: "About these colors",
       dialAria: "Agtron dial value",
@@ -1686,7 +1944,9 @@
       modalChartCaption: "A commonly used Agtron reference chart (Claro/Medio/Oscuro = Light/Medium/Dark) shown here for orientation. Image credit: beber-cafe.com.",
       modalBullet1: "Eight reference points (Agtron #25, #35, #45, #55, #65, #75, #85, #95 — the numbers on the physical SCA disk set) were assigned CIE L*a*b* values from published Agtron-to-L*a*b* correlations. Every other dial position is interpolated between those anchors in L*a*b* space, then converted to sRGB.",
       modalBullet2: "The Commercial scale is estimated by rescaling the Gourmet curve to its roughly 0–75 usable range (Commercial ≈ Gourmet × 0.75), since Agtron hasn't published a direct formula between the two.",
-      modalBullet3: "The Tint slider and Brightness stepper nudge the color sideways (CIE a*) and up/down (CIE L*), independently of the dial — real beans at the same roast level can still look more red, ashy, light, or dark. Pick a photo's shutter searches all three together for the closest overall match.",
+      modalBullet3: "The Tint slider and Brightness stepper nudge the color sideways (CIE a*) and up/down (CIE L*) for display only — real beans at the same roast level can still look more red, ashy, light, or dark. They never change the Agtron number.",
+      modalBullet5: "A photo reading takes the Agtron number from lightness (CIE L*), the closest visible-light stand-in for what an Agtron instrument measures (near-infrared reflectance). The marked pixels — at least 10 % of the photo — are averaged in linear light; the Tint is then set from the colour left over. With a white reference, exposure and colour cast are corrected first, taking the paper as white (L* 95).",
+      modalBullet6: "The cupping window marks the roast the SCA cupping protocol asks for: about 58 on whole bean and 63 on ground coffee, on the Agtron Gourmet scale, ±1 point.",
       modalBullet4: "The RGB figure shown is the exact sRGB channel values used to render the color on screen — not an approximation, unlike a CMYK print value would require.",
       modalSourcesHeading: "Sources",
       modalDisclaimer: "This dial is an accessibility aid for visualizing roast color trends, not a certified color reference. It does not replace an Agtron spectrophotometer or a genuine SCA/Agtron disk kit for quality control, grading, or purchasing specifications. © Colombian Trading Company SAS — all rights reserved.",
@@ -1703,29 +1963,54 @@
       tip1: "<strong>Muele el café, no compares granos enteros.</strong> Por eso el kit real SCA/Agtron siempre se lee sobre café molido, no en grano — una superficie curva y aceitosa brillará en algún ángulo sin importar qué hagas. El café molido es mate y refleja el color real.",
       tip2: "<strong>Si comparas granos enteros:</strong> inclina el grano unos 30–45° para que el brillo se desplace, y evalúa el color en el lado sombreado — ni en el brillo, ni en el borde oscuro de la sombra.",
       tip3: "<strong>Usa luz difusa.</strong> Una única fuente de luz puntual (ventana, lámpara, una pantalla muy brillante) es lo que causa el brillo. La luz de día nublado o una lámpara rebotada en la pared da una lectura mucho más pareja; prueba también bajar el brillo de tu pantalla.",
-      tipBest: "<strong>Lo más confiable:</strong> no lo evalúes a ojo. Sube una foto arriba y toca el botón de obturador para muestrear píxeles reales en lugar de juzgar a ojo.",
+      tip4: "<strong>Para la foto:</strong> luz de día o luz blanca siempre que se pueda (evita las bombillas amarillas y el flash), a unos 12 cm de la superficie, sobre papel blanco que también salga en el encuadre — y márcalo con Blanco.",
+      tipBest: "<strong>Lo más confiable:</strong> no lo evalúes a ojo. Sube una foto, marca al menos el 10 % y toca el obturador para muestrear píxeles reales en lugar de juzgar a ojo.",
 
       pickTitle: "Elegir una foto",
-      pickStep1: "Sube una foto de tu muestra tostada.",
-      pickStep2: "Si hace falta, acerca el zoom y toca de 1 a 3 puntos para muestrear su color.",
-      pickStep3: "Toca el obturador — o espera 10 s — para aplicar la coincidencia más cercana al dial.",
+      pickStep1: "Pon la muestra sobre papel blanco y toma la foto con luz de día o luz blanca, a unos 12 cm de la superficie y sin flash. Deja algo de papel en el encuadre.",
+      pickStep2: "Súbela y, con Blanco, toca el papel: corrige la exposición y el tinte de la luz.",
+      pickStep3: "Marca el café con 7 Puntos o arrastra Áreas hasta cubrir al menos el 10 % de la foto.",
+      pickStep4: "Toca el obturador — o espera 10 s — para aplicar la lectura al dial.",
       tipsButton: "Consejos de lectura",
       pickUpload: "Subir foto",
       pickReplace: "Cambiar foto",
       pickNoImage: "Aún no hay foto — sube una para comenzar.",
       pickAvgLabel: "Promedio muestreado",
-      pickClear: "Borrar puntos",
-      pickAutoNote: "Toca el obturador para aplicarlo ahora, o se aplicará automáticamente cada 10 segundos.",
+      pickUndo: "Deshacer",
+      pickClear: "Borrar",
       shutterAria: "Fijar el dial en el promedio muestreado",
       pickApply: "Aplicar",
       zoomLabel: "Zoom",
-      modeSelect: "Seleccionar",
+      toolAria: "Herramienta de muestreo",
+      toolPoints: "Puntos",
+      toolArea: "Área",
+      toolWhite: "Blanco",
       modePan: "Mover",
-      zoomHint: "Con zoom — cambia a Mover para desplazarte, o a Seleccionar para marcar puntos.",
-      pickPointsOf: n => `${n}/3`,
+      hintPoints: n => `Toca el café: hasta 7 puntos (${n}/7). Siete puntos bien repartidos cubren cerca del 10 %.`,
+      hintArea: "Arrastra sobre el café para marcar un rectángulo. Añade los que necesites.",
+      hintWhite: "Toca el papel blanco para fijar la referencia. Tócalo de nuevo para moverla.",
+      hintPan: "Arrastra para moverte por la foto ampliada.",
+      pointsOf: n => `${n}/7 ptos`,
+      coverageLabel: "Área marcada",
+      coverageOf: "de la foto · mínimo 10 %",
+      whiteOk: "Blanco de referencia ✓ — corregido",
+      whiteNone: "Sin blanco de referencia",
+      whiteMark: "B",
+      warnNoWhite: "Sin blanco de referencia, la exposición automática del móvil puede mover la lectura varios puntos. Toca el papel con Blanco.",
+      warnWhiteClipped: "El blanco está sobreexpuesto: la lectura puede salir más oscura. Repite la foto con una luz más suave.",
+      warnWhiteDark: "El blanco de referencia no es más claro que el café — revisa dónde tocaste.",
+      noteNeedMore: "Marca al menos el 10 % de la foto para aplicar la lectura.",
+      noteReady: "Toca el obturador para aplicar — o espera 10 s y se aplica una vez.",
+      noteManual: "Toca el obturador para aplicar la lectura.",
+      photoLine: (pct, blanco) => `Leída de foto · ${pct} del área · ${blanco ? 'con blanco de referencia' : 'sin blanco de referencia'}`,
+      fromPhotoShort: "desde foto",
 
+      scaleAria: "Escala Agtron",
       scaleGourmet: "Gourmet",
       scaleCommercial: "Comercial",
+      formaAria: "Forma de la muestra",
+      formaWhole: "Grano entero",
+      formaGround: "Molido",
       readingLabelGourmet: "Lectura Gourmet",
       readingLabelCommercial: "Lectura Comercial",
       plain: "plano",
@@ -1733,6 +2018,11 @@
       refEyebrow: "Otras escalas de referencia",
       refCaveat: "Estimado escalando los límites publicados de cada escala contra la lectura Agtron — no está calibrado por el fabricante. Ver el panel de información para más detalles.",
       warnCommercial: "fuera del rango típico 0–75 de la escala Comercial",
+      cupEyebrow: "Tueste de catación SCA",
+      cupTarget: (t, formaName, g) => g === null ? `Objetivo ${t} ± 1 · ${formaName}` : `Objetivo ≈ ${t} ± 1 · ${formaName} (${g} Gourmet)`,
+      cupIn: "Dentro de la ventana ✓",
+      cupLighter: n => `${n} ptos más claro que el objetivo`,
+      cupDarker: n => `${n} ptos más oscuro que el objetivo`,
       footnote: "Colores aproximados — no reemplazan una lectura de instrumento.",
       infoAria: "Acerca de estos colores",
       dialAria: "Valor del dial Agtron",
@@ -1754,82 +2044,231 @@
       modalChartCaption: "Una tabla de referencia Agtron de uso común (Claro/Medio/Oscuro), aquí a modo de orientación. Crédito de imagen: beber-cafe.com.",
       modalBullet1: "Se asignaron valores CIE L*a*b* a ocho puntos de referencia (Agtron #25, #35, #45, #55, #65, #75, #85, #95 — los números del set físico de discos SCA), basados en correlaciones publicadas entre Agtron y L*a*b*. Cualquier otra posición del dial se interpola entre esos puntos en el espacio L*a*b*, y luego se convierte a sRGB.",
       modalBullet2: "La escala Comercial se estima reescalando la curva Gourmet a su rango utilizable de aproximadamente 0–75 (Comercial ≈ Gourmet × 0.75), ya que Agtron no ha publicado una fórmula directa entre ambas.",
-      modalBullet3: "El deslizador de Matiz y el selector de Brillo desplazan el color lateralmente (CIE a*) y verticalmente (CIE L*), de forma independiente al dial — granos reales con el mismo nivel de tueste pueden verse más rojos, cenizos, claros u oscuros. El obturador de Elegir una foto busca los tres a la vez para la mejor coincidencia general.",
+      modalBullet3: "El deslizador de Matiz y el selector de Brillo desplazan el color lateralmente (CIE a*) y verticalmente (CIE L*) solo para visualizar — granos reales con el mismo nivel de tueste pueden verse más rojos, cenizos, claros u oscuros. Nunca cambian el número Agtron.",
+      modalBullet5: "La lectura desde foto toma el número Agtron de la luminosidad (CIE L*), lo más cercano en luz visible a lo que mide un instrumento Agtron (reflectancia en el infrarrojo cercano). Los píxeles marcados —al menos el 10 % de la foto— se promedian en luz lineal; el Matiz sale después del color que sobra. Con blanco de referencia, primero se corrigen la exposición y el tinte de la luz, tomando el papel como blanco (L* 95).",
+      modalBullet6: "La ventana de catación marca el tueste que pide el protocolo de catación SCA: cerca de 58 en grano entero y 63 en café molido, en la escala Agtron Gourmet, ±1 punto.",
       modalBullet4: "El valor RGB mostrado corresponde a los canales sRGB exactos usados para renderizar el color en pantalla — no es una aproximación, a diferencia de lo que requeriría un valor CMYK de impresión.",
       modalSourcesHeading: "Fuentes",
       modalDisclaimer: "Este dial es una ayuda de accesibilidad para visualizar tendencias de color de tueste, no una referencia de color certificada. No reemplaza un espectrofotómetro Agtron ni un kit de discos SCA/Agtron genuino para control de calidad, clasificación o especificaciones de compra. © Colombian Trading Company SAS — todos los derechos reservados.",
 
       concepts: CONCEPT_NAMES.es
+    },
+    de: {
+      eyebrow: "Referenz für Kaffee-Röstfarben",
+      title: "Agtron-Scheibe",
+      subtitle: "Ziehen, um einen Wert einzustellen, und die ungefähre Röstfarbe in drei Musterarten ansehen.",
+
+      tipsSummary: "Für einen genaueren Vergleich",
+      tipsIntro: "Der helle Fleck auf einer ganzen Bohne ist nicht die Röstfarbe — er ist die Spiegelung des Lichts über dir.",
+      tip1: "<strong>Mahlen statt ganze Bohnen vergleichen.</strong> Deshalb wird das echte SCA/Agtron-Set immer an gemahlenem Kaffee abgelesen, nie an ganzen Bohnen — eine gewölbte, ölige Oberfläche glänzt in irgendeinem Winkel immer. Gemahlener Kaffee ist matt und zeigt die echte Farbe.",
+      tip2: "<strong>Wenn du ganze Bohnen vergleichst:</strong> kippe die Bohne um etwa 30–45°, damit der Glanzpunkt wegwandert, und beurteile die Farbe an der schattigen Flanke — nicht am Glanz und nicht an der dunklen Schattenkante.",
+      tip3: "<strong>Diffuses Licht verwenden.</strong> Eine einzelne helle Lichtquelle (Fenster, Lampe, ein sehr heller Bildschirm) erzeugt den Glanz. Bewölktes Tageslicht oder eine indirekte Lampe ergeben ein viel gleichmäßigeres Bild; dimme auch den Bildschirm etwas.",
+      tip4: "<strong>Für das Foto:</strong> möglichst Tageslicht oder weißes Licht (keine warmgelben Lampen, kein Blitz), etwa 12 cm Abstand zur Oberfläche, auf weißem Papier, das auch im Bild zu sehen ist — und es mit Weiß markieren.",
+      tipBest: "<strong>Am zuverlässigsten:</strong> nicht nach Augenmaß. Lade ein Foto hoch, markiere mindestens 10 % davon und tippe auf den Auslöser, um echte Pixel zu messen.",
+
+      pickTitle: "Foto auswählen",
+      pickStep1: "Lege die Probe auf weißes Papier und fotografiere bei Tageslicht oder weißem Licht, etwa 12 cm von der Oberfläche, ohne Blitz. Lass etwas Papier im Bild.",
+      pickStep2: "Lade es hoch und tippe mit Weiß auf das Papier: das korrigiert Belichtung und Farbstich.",
+      pickStep3: "Markiere den Kaffee mit 7 Punkten oder ziehe Flächen auf, bis mindestens 10 % des Fotos abgedeckt sind.",
+      pickStep4: "Tippe auf den Auslöser — oder warte 10 s —, um den Wert auf die Scheibe zu übertragen.",
+      tipsButton: "Tipps zum Ablesen",
+      pickUpload: "Foto hochladen",
+      pickReplace: "Foto ersetzen",
+      pickNoImage: "Noch kein Foto — lade eines hoch, um zu beginnen.",
+      pickAvgLabel: "Gemessener Durchschnitt",
+      pickUndo: "Rückgängig",
+      pickClear: "Löschen",
+      shutterAria: "Scheibe auf den gemessenen Durchschnitt setzen",
+      pickApply: "Übernehmen",
+      zoomLabel: "Zoom",
+      toolAria: "Messwerkzeug",
+      toolPoints: "Punkte",
+      toolArea: "Fläche",
+      toolWhite: "Weiß",
+      modePan: "Verschieben",
+      hintPoints: n => `Tippe auf den Kaffee: bis zu 7 Punkte (${n}/7). Sieben gut verteilte Punkte decken etwa 10 % ab.`,
+      hintArea: "Ziehe über den Kaffee, um ein Rechteck zu markieren. Füge so viele hinzu, wie du brauchst.",
+      hintWhite: "Tippe auf das weiße Papier, um die Weißreferenz zu setzen. Erneut tippen, um sie zu verschieben.",
+      hintPan: "Ziehen, um sich im vergrößerten Foto zu bewegen.",
+      pointsOf: n => `${n}/7 Pkt.`,
+      coverageLabel: "Markierte Fläche",
+      coverageOf: "des Fotos · mindestens 10 %",
+      whiteOk: "Weißreferenz ✓ — korrigiert",
+      whiteNone: "Keine Weißreferenz",
+      whiteMark: "W",
+      warnNoWhite: "Ohne Weißreferenz kann die automatische Belichtung des Handys den Wert um mehrere Punkte verschieben. Tippe mit Weiß auf das Papier.",
+      warnWhiteClipped: "Das Weiß ist überbelichtet: der Wert kann zu dunkel ausfallen. Mit weicherem Licht neu fotografieren.",
+      warnWhiteDark: "Die Weißreferenz ist nicht heller als der Kaffee — prüfe, wo du getippt hast.",
+      noteNeedMore: "Markiere mindestens 10 % des Fotos, um den Wert zu übernehmen.",
+      noteReady: "Tippe auf den Auslöser — oder warte 10 s, dann wird einmal übernommen.",
+      noteManual: "Tippe auf den Auslöser, um den Wert zu übernehmen.",
+      photoLine: (pct, blanco) => `Aus Foto gelesen · ${pct} der Fläche · ${blanco ? 'mit Weißreferenz' : 'ohne Weißreferenz'}`,
+      fromPhotoShort: "aus Foto",
+
+      scaleAria: "Agtron-Skala",
+      scaleGourmet: "Gourmet",
+      scaleCommercial: "Commercial",
+      formaAria: "Probenform",
+      formaWhole: "Ganze Bohne",
+      formaGround: "Gemahlen",
+      readingLabelGourmet: "Gourmet-Wert",
+      readingLabelCommercial: "Commercial-Wert",
+      plain: "einfarbig",
+      conceptEyebrow: "Begriffsdefinition",
+      refEyebrow: "Andere Referenzskalen",
+      refCaveat: "Geschätzt durch Skalierung veröffentlichter Bereichsgrenzen gegen den Agtron-Wert — nicht vom Hersteller kalibriert. Details im Info-Fenster.",
+      warnCommercial: "außerhalb des typischen Commercial-Bereichs 0–75",
+      cupEyebrow: "SCA-Cupping-Röstung",
+      cupTarget: (t, formaName, g) => g === null ? `Ziel ${t} ± 1 · ${formaName}` : `Ziel ≈ ${t} ± 1 · ${formaName} (${g} Gourmet)`,
+      cupIn: "Im Fenster ✓",
+      cupLighter: n => `${n} Pkt. heller als das Ziel`,
+      cupDarker: n => `${n} Pkt. dunkler als das Ziel`,
+      footnote: "Ungefähre Farben — kein Ersatz für Messgeräte.",
+      infoAria: "Über diese Farben",
+      dialAria: "Agtron-Wert",
+      hueCaption: "Farbton",
+      hueSliderAria: "Farbton, von aschig-grün bis rot-warm",
+      tintMinLabel: "Aschig / Grün",
+      tintMaxLabel: "Rot / Warm",
+      brightCaption: "Helligkeit",
+      brightMinusAria: "Helligkeit verringern",
+      brightPlusAria: "Helligkeit erhöhen",
+      beanSingleAria: "Einzelne geröstete Kaffeebohne, eingefärbt nach dem aktuellen Wert",
+      beanMultiAria: "Gruppe gerösteter Kaffeebohnen, eingefärbt nach dem aktuellen Wert",
+      ownerText: "Dieses Werkzeug und seine Röstfarben-Methodik sind Eigentum der Colombian Trading Company SAS. Alle Rechte vorbehalten. © 2026. Nur zu Referenzzwecken — Genauigkeitsgrenzen siehe Info-Fenster. Vervielfältigung oder Weitergabe ohne Genehmigung ist untersagt.",
+
+      modalTitle: "Wie diese Farben bestimmt werden",
+      modalClose: "Schließen",
+      modalP1: "Die echten Agtron/SCA-Röstfarbscheiben sind physische, einzeln kalibrierte Kacheln — Agtron Inc. und die SCA haben nie eine offizielle CMYK- oder RGB-Formel dafür veröffentlicht. Dieses Werkzeug baut stattdessen eine Annäherung, damit es ohne ein Scheiben-Set für über 300 $ oder ein Spektralfotometer nutzbar ist.",
+      modalFigCaption: "Das echte Referenzmaterial: einzeln kalibrierte Farbscheiben (hell bis dunkel) im Vergleich mit einer Probe gemahlenen Röstkaffees. Für diese Art von physischem Set steht unsere Annäherung.",
+      modalChartCaption: "Eine verbreitete Agtron-Referenztabelle (Claro/Medio/Oscuro = Hell/Mittel/Dunkel), hier zur Orientierung. Bildnachweis: beber-cafe.com.",
+      modalBullet1: "Acht Referenzpunkten (Agtron #25, #35, #45, #55, #65, #75, #85, #95 — die Nummern des physischen SCA-Scheibensets) wurden CIE-L*a*b*-Werte aus veröffentlichten Agtron-zu-L*a*b*-Korrelationen zugewiesen. Jede andere Position der Scheibe wird zwischen diesen Ankern im L*a*b*-Raum interpoliert und dann in sRGB umgerechnet.",
+      modalBullet2: "Die Commercial-Skala wird geschätzt, indem die Gourmet-Kurve auf ihren nutzbaren Bereich von etwa 0–75 umskaliert wird (Commercial ≈ Gourmet × 0,75), da Agtron keine direkte Formel zwischen beiden veröffentlicht hat.",
+      modalBullet3: "Der Farbton-Regler und die Helligkeitsstufen verschieben die Farbe seitlich (CIE a*) und nach oben/unten (CIE L*) nur zur Anzeige — echte Bohnen desselben Röstgrads können röter, aschiger, heller oder dunkler aussehen. Sie ändern nie die Agtron-Zahl.",
+      modalBullet5: "Ein Foto-Wert nimmt die Agtron-Zahl aus der Helligkeit (CIE L*), dem nächsten Gegenstück im sichtbaren Licht zu dem, was ein Agtron-Gerät misst (Reflexion im nahen Infrarot). Die markierten Pixel — mindestens 10 % des Fotos — werden in linearem Licht gemittelt; der Farbton ergibt sich danach aus der verbleibenden Farbe. Mit Weißreferenz werden zuerst Belichtung und Farbstich korrigiert, wobei das Papier als Weiß gilt (L* 95).",
+      modalBullet6: "Das Cupping-Fenster markiert die Röstung, die das SCA-Cupping-Protokoll verlangt: etwa 58 bei ganzer Bohne und 63 bei gemahlenem Kaffee, auf der Agtron-Gourmet-Skala, ±1 Punkt.",
+      modalBullet4: "Der angezeigte RGB-Wert sind die exakten sRGB-Kanalwerte, mit denen die Farbe auf dem Bildschirm dargestellt wird — keine Annäherung, anders als es ein CMYK-Druckwert erfordern würde.",
+      modalSourcesHeading: "Quellen",
+      modalDisclaimer: "Diese Scheibe ist eine Zugangshilfe, um Tendenzen der Röstfarbe sichtbar zu machen, keine zertifizierte Farbreferenz. Sie ersetzt weder ein Agtron-Spektralfotometer noch ein echtes SCA/Agtron-Scheibenset für Qualitätskontrolle, Klassifizierung oder Einkaufsspezifikationen. © Colombian Trading Company SAS — alle Rechte vorbehalten.",
+
+      concepts: CONCEPT_NAMES.de
     }
   };
 
+  const LANGS = ['es', 'en', 'de'];
   let currentLang = 'en';
+
+  // Opens in the visitor's language: ?lang= → the language the surface that
+  // embeds the tool already stored on this origin (Herramientas/Home, Cherry
+  // Picked, Kaffetal Regal) → the browser → English.
+  function idiomaInicial(){
+    try {
+      const q = new URLSearchParams(window.location.search).get('lang');
+      if(LANGS.includes(q)) return q;
+    } catch(e){}
+    try {
+      for(const k of ['ctc-lang', 'cp-lang', 'kr-lang']){
+        const s = window.localStorage.getItem(k);
+        if(LANGS.includes(s)) return s;
+      }
+    } catch(e){}
+    try {
+      const prefs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language];
+      for(const l of prefs){
+        const c = String(l || '').slice(0, 2).toLowerCase();
+        if(LANGS.includes(c)) return c;
+      }
+    } catch(e){}
+    return 'en';
+  }
+
+  function fmtPct(p){
+    const n = Math.round(p * 10) / 10;
+    let s;
+    try { s = n.toLocaleString(currentLang, { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
+    catch(e){ s = n.toFixed(1); }
+    return s + ' %';
+  }
 
   /* ---------------- DOM refs ---------------- */
 
-  const dialTrack   = document.getElementById('dialTrack');
-  const dialThumb   = document.getElementById('dialThumb');
-  const thumbValue  = document.getElementById('thumbValue');
-  const dialTicks   = document.getElementById('dialTicks');
+  const $ = id => document.getElementById(id);
 
-  const hueSlider    = document.getElementById('hueSlider');
-  const hueValueLabel= document.getElementById('hueValueLabel');
+  const dialTrack   = $('dialTrack');
+  const dialThumb   = $('dialThumb');
+  const thumbValue  = $('thumbValue');
+  const dialTicks   = $('dialTicks');
+  const scaBand     = $('scaBand');
 
-  const brightMinus     = document.getElementById('brightMinus');
-  const brightPlus      = document.getElementById('brightPlus');
-  const brightDots      = document.getElementById('brightDots');
-  const brightValueLabel= document.getElementById('brightValueLabel');
+  const hueSlider    = $('hueSlider');
+  const hueValueLabel= $('hueValueLabel');
 
-  const swatchBox   = document.getElementById('swatchBox');
-  const swatchBoxLabel = document.getElementById('swatchBoxLabel');
-  const canvasSingle = document.getElementById('beanSingle');
-  const canvasMulti  = document.getElementById('beanMulti');
+  const brightMinus     = $('brightMinus');
+  const brightPlus      = $('brightPlus');
+  const brightDots      = $('brightDots');
+  const brightValueLabel= $('brightValueLabel');
 
-  const scaleLabel   = document.getElementById('scaleLabel');
-  const readingNumber= document.getElementById('readingNumber');
-  const readingCode  = document.getElementById('readingCode');
-  const readingRgb   = document.getElementById('readingRgb');
-  const readingWarn  = document.getElementById('readingWarning');
+  const swatchBox   = $('swatchBox');
+  const canvasSingle = $('beanSingle');
+  const canvasMulti  = $('beanMulti');
 
-  const conceptName = document.getElementById('conceptName');
-  const conceptSub  = document.getElementById('conceptSub');
-  const conceptDesc = document.getElementById('conceptDesc');
+  const scaleLabel   = $('scaleLabel');
+  const readingNumber= $('readingNumber');
+  const readingCode  = $('readingCode');
+  const readingRgb   = $('readingRgb');
+  const readingWarn  = $('readingWarning');
+  const photoLine    = $('photoLine');
 
-  const probatValue = document.getElementById('probatValue');
-  const toninoValue = document.getElementById('toninoValue');
+  const cupTarget = $('cupTarget');
+  const cupStatus = $('cupStatus');
 
-  const btnGourmet   = document.getElementById('btnGourmet');
-  const btnCommercial= document.getElementById('btnCommercial');
+  const conceptName = $('conceptName');
+  const conceptSub  = $('conceptSub');
+  const conceptDesc = $('conceptDesc');
 
-  const btnLangEn = document.getElementById('btnLangEn');
-  const btnLangEs = document.getElementById('btnLangEs');
+  const probatValue = $('probatValue');
+  const toninoValue = $('toninoValue');
 
-  const infoBtn = document.getElementById('infoBtn');
-  const modalOverlay = document.getElementById('modalOverlay');
-  const modalClose = document.getElementById('modalClose');
+  const btnGourmet   = $('btnGourmet');
+  const btnCommercial= $('btnCommercial');
+  const btnWhole     = $('btnWhole');
+  const btnGround    = $('btnGround');
 
-  const tipsModalBtn     = document.getElementById('tipsModalBtn');
-  const tipsModalOverlay = document.getElementById('tipsModalOverlay');
-  const tipsModalClose   = document.getElementById('tipsModalClose');
+  const langButtons = { es: $('btnLangEs'), en: $('btnLangEn'), de: $('btnLangDe') };
 
-  const pickFileInput  = document.getElementById('pickFileInput');
-  const pickUploadLabel= document.getElementById('pickUploadLabel');
-  const pickPointsCount= document.getElementById('pickPointsCount');
-  const pickCanvas     = document.getElementById('pickCanvas');
-  const pickCanvasWrap = document.getElementById('pickCanvasWrap');
-  const pickEmptyMsg   = document.getElementById('pickEmptyMsg');
-  const pickResultRow  = document.getElementById('pickResultRow');
-  const pickAvgSwatch  = document.getElementById('pickAvgSwatch');
-  const pickAvgHex     = document.getElementById('pickAvgHex');
-  const pickClearBtn   = document.getElementById('pickClearBtn');
-  const pickAutoNote   = document.getElementById('pickAutoNote');
-  const shutterBtn     = document.getElementById('shutterBtn');
+  const infoBtn = $('infoBtn');
+  const modalOverlay = $('modalOverlay');
+  const modalClose = $('modalClose');
 
-  const zoomControls  = document.getElementById('zoomControls');
-  const zoomSelect    = document.getElementById('zoomSelect');
-  const modeSelectBtn = document.getElementById('modeSelectBtn');
-  const modePanBtn    = document.getElementById('modePanBtn');
-  const zoomHint      = document.getElementById('zoomHint');
+  const tipsModalBtn     = $('tipsModalBtn');
+  const tipsModalOverlay = $('tipsModalOverlay');
+  const tipsModalClose   = $('tipsModalClose');
+
+  const pickFileInput  = $('pickFileInput');
+  const pickUploadLabel= $('pickUploadLabel');
+  const pickPointsCount= $('pickPointsCount');
+  const pickTools      = $('pickTools');
+  const pickToolHint   = $('pickToolHint');
+  const pickCanvas     = $('pickCanvas');
+  const pickEmptyMsg   = $('pickEmptyMsg');
+  const coverageEl     = $('coverage');
+  const coverageValue  = $('coverageValue');
+  const coverageOf     = $('coverageOf');
+  const coverageFill   = $('coverageFill');
+  const coverageMin    = $('coverageMin');
+  const pickResultRow  = $('pickResultRow');
+  const pickAvgSwatch  = $('pickAvgSwatch');
+  const pickAvgHex     = $('pickAvgHex');
+  const pickWhiteStatus= $('pickWhiteStatus');
+  const pickUndoBtn    = $('pickUndoBtn');
+  const pickClearBtn   = $('pickClearBtn');
+  const pickWarn       = $('pickWarn');
+  const pickAutoNote   = $('pickAutoNote');
+  const shutterBtn     = $('shutterBtn');
+
+  const zoomSelect    = $('zoomSelect');
+  const toolButtons   = [ $('toolPointsBtn'), $('toolAreaBtn'), $('toolWhiteBtn'), $('toolPanBtn') ];
+  const toolPanBtn    = $('toolPanBtn');
 
   /* ---------------- ticks ---------------- */
 
@@ -1843,6 +2282,12 @@
     tick.className = 'tick-mark';
     tick.style.top = (100 - v) + '%';
     dialTrack.appendChild(tick);
+  }
+
+  /* ---------------- memory hook (the CTC bridge loads after this script) ---------------- */
+
+  function tocar(){
+    if(window.CTC && typeof window.CTC.tocado === 'function') window.CTC.tocado();
   }
 
   /* ---------------- tint slider ---------------- */
@@ -1866,6 +2311,7 @@
     hueSlider.style.background = gradient;
   }
 
+  // The slider is an <input>: the bridge hears its 'input' event by itself.
   hueSlider.addEventListener('input', () => {
     hueStep = parseFloat(hueSlider.value);
     updateHueSliderUI();
@@ -1893,11 +2339,13 @@
     brightStep = Math.max(-BRIGHT_MAX, brightStep - 1);
     updateBrightUI();
     render();
+    tocar();
   });
   brightPlus.addEventListener('click', () => {
     brightStep = Math.min(BRIGHT_MAX, brightStep + 1);
     updateBrightUI();
     render();
+    tocar();
   });
 
   /* ---------------- bean canvas assets (fill + line masks) ---------------- */
@@ -1937,11 +2385,15 @@
 
   let value = 63;
   let scale = 'gourmet';
+  // Where the current number came from, when it came from a photo:
+  // { pct, blanco, hex, lab }. Cleared as soon as the dial is moved by hand.
+  let fotoLectura = null;
 
   function render(){
+    const t = I18N[currentLang];
     const c = colorFor(value, scale);
     const conceptIdx = conceptIndexFor(value, scale);
-    const concept = I18N[currentLang].concepts[conceptIdx];
+    const concept = t.concepts[conceptIdx];
 
     dialTrack.style.background = buildGradient(scale);
     dialThumb.style.top = (100 - value) + '%';
@@ -1953,16 +2405,41 @@
     if(assets.singleFill) paintBean(canvasSingle, assets.singleFill, assets.singleLine, c.hex);
     if(assets.multiFill)  paintBean(canvasMulti,  assets.multiFill,  assets.multiLine,  c.hex);
 
-    scaleLabel.textContent = I18N[currentLang][scale === 'gourmet' ? 'readingLabelGourmet' : 'readingLabelCommercial'];
+    scaleLabel.textContent = t[scale === 'gourmet' ? 'readingLabelGourmet' : 'readingLabelCommercial'];
     readingNumber.textContent = value;
     readingCode.textContent = c.hex;
     readingRgb.textContent = `R${c.r} G${c.g} B${c.b}`;
-    readingWarn.textContent = I18N[currentLang].warnCommercial;
+    readingWarn.textContent = t.warnCommercial;
 
     if(scale === 'commercial' && value > 75){
       readingWarn.classList.add('show');
     } else {
       readingWarn.classList.remove('show');
+    }
+
+    if(fotoLectura){
+      photoLine.hidden = false;
+      photoLine.textContent = t.photoLine(fmtPct(fotoLectura.pct), fotoLectura.blanco);
+    } else {
+      photoLine.hidden = true;
+    }
+
+    // SCA cupping window: band on the dial + status in the readout.
+    const tc = cupInScale(scale);
+    scaBand.style.top = (100 - (tc + CUP_TOL)) + '%';
+    scaBand.style.height = (2 * CUP_TOL) + '%';
+    const formaName = forma === 'whole' ? t.formaWhole : t.formaGround;
+    cupTarget.textContent = scale === 'gourmet'
+      ? t.cupTarget(String(tc), formaName, null)
+      : t.cupTarget(String(Math.round(tc)), formaName, CUP_TARGET[forma]);
+    const diff = value - tc;
+    if(Math.abs(diff) <= CUP_TOL){
+      cupStatus.textContent = t.cupIn;
+      cupStatus.classList.add('in');
+    } else {
+      const n = Math.max(1, Math.abs(value - Math.round(tc)));
+      cupStatus.textContent = diff > 0 ? t.cupLighter(n) : t.cupDarker(n);
+      cupStatus.classList.remove('in');
     }
 
     conceptName.textContent = concept.name;
@@ -1979,38 +2456,41 @@
   /* ---------------- language toggle ---------------- */
 
   function applyLanguage(lang){
-    currentLang = lang;
-    document.documentElement.lang = lang;
+    currentLang = LANGS.includes(lang) ? lang : 'en';
+    const t = I18N[currentLang];
+    document.documentElement.lang = currentLang;
 
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.getAttribute('data-i18n');
-      if(I18N[lang][key] !== undefined) el.textContent = I18N[lang][key];
+      if(typeof t[key] === 'string') el.textContent = t[key];
     });
     document.querySelectorAll('[data-i18n-html]').forEach(el => {
       const key = el.getAttribute('data-i18n-html');
-      if(I18N[lang][key] !== undefined) el.innerHTML = I18N[lang][key];
+      if(typeof t[key] === 'string') el.innerHTML = t[key];
     });
     document.querySelectorAll('[data-i18n-aria]').forEach(el => {
       const key = el.getAttribute('data-i18n-aria');
-      if(I18N[lang][key] !== undefined) el.setAttribute('aria-label', I18N[lang][key]);
+      if(typeof t[key] === 'string') el.setAttribute('aria-label', t[key]);
     });
 
-    btnLangEn.classList.toggle('active', lang === 'en');
-    btnLangEs.classList.toggle('active', lang === 'es');
+    Object.keys(langButtons).forEach(l => langButtons[l].classList.toggle('active', l === currentLang));
 
     updateUploadLabel();
-    updatePointsCount();
+    refreshPickUI();
     render();
-
-    // if a photo color has already been sampled, re-snap the dial under the
-    // (possibly) new language's concept labels — the color model itself
-    // doesn't change with language, only its names, so this just re-renders.
   }
 
-  btnLangEn.addEventListener('click', () => applyLanguage('en'));
-  btnLangEs.addEventListener('click', () => applyLanguage('es'));
+  Object.keys(langButtons).forEach(l => langButtons[l].addEventListener('click', () => applyLanguage(l)));
 
   /* ---------------- dial interaction ---------------- */
+
+  // A hand on the dial takes over: the number no longer comes from the photo,
+  // and a pending auto-apply must not overwrite it.
+  function manual(){
+    fotoLectura = null;
+    if(autoTimer){ cancelAuto(); refreshPickUI(); }
+    tocar();
+  }
 
   function valueFromClientY(clientY){
     const rect = dialTrack.getBoundingClientRect();
@@ -2025,13 +2505,17 @@
     dragging = true;
     dialTrack.setPointerCapture && dialTrack.setPointerCapture(e.pointerId);
     value = valueFromClientY(e.clientY);
+    manual();
     render();
     dialThumb.focus();
     e.preventDefault();
   }
   function pointerMove(e){
     if(!dragging) return;
-    value = valueFromClientY(e.clientY);
+    const next = valueFromClientY(e.clientY);
+    if(next === value) return;
+    value = next;
+    manual();
     render();
   }
   function pointerUp(){ dragging = false; }
@@ -2042,34 +2526,56 @@
   window.addEventListener('pointercancel', pointerUp);
 
   dialThumb.addEventListener('keydown', function(e){
-    let delta = 0;
-    if(e.key === 'ArrowUp' || e.key === 'ArrowRight') delta = 1;
-    else if(e.key === 'ArrowDown' || e.key === 'ArrowLeft') delta = -1;
-    else if(e.key === 'PageUp') delta = 10;
-    else if(e.key === 'PageDown') delta = -10;
-    else if(e.key === 'Home'){ value = 0; render(); e.preventDefault(); return; }
-    else if(e.key === 'End'){ value = 100; render(); e.preventDefault(); return; }
-    if(delta !== 0){
-      value = Math.max(0, Math.min(100, value + delta));
-      render();
-      e.preventDefault();
-    }
+    let next = null;
+    if(e.key === 'ArrowUp' || e.key === 'ArrowRight') next = value + 1;
+    else if(e.key === 'ArrowDown' || e.key === 'ArrowLeft') next = value - 1;
+    else if(e.key === 'PageUp') next = value + 10;
+    else if(e.key === 'PageDown') next = value - 10;
+    else if(e.key === 'Home') next = 0;
+    else if(e.key === 'End') next = 100;
+    if(next === null) return;
+    value = Math.max(0, Math.min(100, next));
+    manual();
+    render();
+    e.preventDefault();
   });
 
-  /* ---------------- scale toggle ---------------- */
+  /* ---------------- scale + sample form toggles ---------------- */
 
-  function setScale(next){
-    scale = next;
+  function syncToggles(){
     btnGourmet.classList.toggle('active', scale === 'gourmet');
     btnCommercial.classList.toggle('active', scale === 'commercial');
-    if(pickedAvgRgb){
-      commitToDial(pickedAvgRgb);
-    } else {
-      render();
+    btnWhole.classList.toggle('active', forma === 'whole');
+    btnGround.classList.toggle('active', forma === 'ground');
+  }
+
+  function setScale(next){
+    if(next === scale) return;
+    scale = next;
+    // A number read from a photo is re-read on the new scale from the same
+    // colour; a number set by hand keeps its value (as in V7).
+    if(fotoLectura && fotoLectura.lab){
+      const m = readingFromLab(fotoLectura.lab, scale);
+      value = m.v;
+      hueStep = m.h;
+      updateHueSliderUI();
     }
+    syncToggles();
+    render();
+    tocar();
   }
   btnGourmet.addEventListener('click', () => setScale('gourmet'));
   btnCommercial.addEventListener('click', () => setScale('commercial'));
+
+  function setForma(next){
+    if(next === forma) return;
+    forma = next;
+    syncToggles();
+    render();
+    tocar();
+  }
+  btnWhole.addEventListener('click', () => setForma('whole'));
+  btnGround.addEventListener('click', () => setForma('ground'));
 
   /* ---------------- info modal ---------------- */
 
@@ -2089,64 +2595,247 @@
   /* ---------------- pick-a-photo ---------------- */
 
   const MAX_DIM = 640;
+  const MIN_COVERAGE = 10;        // % of the photo that must be averaged
+  const MAX_POINTS = 7;
+  const POINT_FRACTION = 0.015;   // each point samples ~1.5 % → 7 spread points ≈ 10.5 %
+  const WHITE_FRACTION = 0.004;   // the white-reference disc, ~0.4 % of the photo
+  const PAPER_L = 95;             // white paper, CIE L*
+  const PAPER_Y = Math.pow((PAPER_L + 16) / 116, 3);
+  const AUTO_DELAY_MS = 10000;
   const MARKER_RADIUS = 12;
-  const AUTO_INTERVAL_MS = 10000;
+
   let baseImageData = null;
-  let sourceCanvas = null;  // static full-resolution source, used for zoomed/panned drawing
+  let sourceCanvas = null;   // static full-resolution source, used for zoomed/panned drawing
   let hasPhoto = false;
-  let points = [];          // {x,y} in SOURCE pixel space (stable across zoom/pan)
-  let pickedAvgRgb = null;  // last computed average, or null
+  let marks = [];            // {t:'p', x, y} | {t:'r', x0, y0, x1, y1}, SOURCE pixel space
+  let draftRect = null;      // the rectangle being dragged
+  let whiteRef = null;       // {x, y}
+  let mask = null;           // Uint8Array, 1 = sampled pixel
+  let coverage = 0;          // % of the photo covered by the union of marks
+  let sampleLin = null;      // linear-light average of the marked pixels
+  let whiteInfo = null;      // linear-light average of the white disc + clipped share
+  let dirtySample = false;   // the sample changed since it was last applied
   let autoTimer = null;
 
-  let zoomLevel = 1;        // fraction of the source image visible (1 = 100%, no zoom)
-  let panX = 0, panY = 0;   // top-left of the visible crop, in source pixel space
-  let interactionMode = 'select'; // 'select' | 'pan'
+  let zoomLevel = 1;         // fraction of the source image visible (1 = 100%, no zoom)
+  let panX = 0, panY = 0;    // top-left of the visible crop, in source pixel space
+  let tool = 'points';       // 'points' | 'area' | 'white' | 'pan'
+  let lastTool = 'points';
   let isPanning = false;
   let panStart = null;
+  let tap = null;
+
+  function W(){ return pickCanvas.width; }
+  function H(){ return pickCanvas.height; }
+  function pointRadius(){ return Math.sqrt(POINT_FRACTION * W() * H() / Math.PI); }
+  function whiteRadius(){ return Math.sqrt(WHITE_FRACTION * W() * H() / Math.PI); }
 
   function updateUploadLabel(){
     pickUploadLabel.textContent = I18N[currentLang][hasPhoto ? 'pickReplace' : 'pickUpload'];
   }
-  function updatePointsCount(){
-    pickPointsCount.textContent = I18N[currentLang].pickPointsOf(points.length);
+
+  function paintDisc(m, cx, cy, r){
+    const w = W(), h = H();
+    const x0 = Math.max(0, Math.floor(cx - r)), x1 = Math.min(w - 1, Math.ceil(cx + r));
+    const y0 = Math.max(0, Math.floor(cy - r)), y1 = Math.min(h - 1, Math.ceil(cy + r));
+    const r2 = r * r;
+    for(let y=y0; y<=y1; y++){
+      const dy = y + 0.5 - cy;
+      for(let x=x0; x<=x1; x++){
+        const dx = x + 0.5 - cx;
+        if(dx*dx + dy*dy <= r2) m[y*w + x] = 1;
+      }
+    }
+  }
+  function paintRect(m, a){
+    const w = W(), h = H();
+    const x0 = Math.max(0, Math.floor(Math.min(a.x0, a.x1))), x1 = Math.min(w - 1, Math.floor(Math.max(a.x0, a.x1)));
+    const y0 = Math.max(0, Math.floor(Math.min(a.y0, a.y1))), y1 = Math.min(h - 1, Math.floor(Math.max(a.y0, a.y1)));
+    if(x1 < x0 || y1 < y0) return;
+    for(let y=y0; y<=y1; y++) m.fill(1, y*w + x0, y*w + x1 + 1);
+  }
+  // The union of every mark: overlapping marks are counted once.
+  function buildMask(){
+    const n = W() * H();
+    if(!mask || mask.length !== n) mask = new Uint8Array(n); else mask.fill(0);
+    const r = pointRadius();
+    marks.forEach(mk => { if(mk.t === 'p') paintDisc(mask, mk.x, mk.y, r); else paintRect(mask, mk); });
+    if(draftRect) paintRect(mask, draftRect);
+    let c = 0;
+    for(let i=0; i<n; i++) c += mask[i];
+    coverage = n ? c * 100 / n : 0;
+  }
+  function averageMask(){
+    const d = baseImageData.data;
+    let r=0, g=0, b=0, n=0;
+    for(let i=0; i<mask.length; i++){
+      if(!mask[i]) continue;
+      const k = i * 4;
+      r += LIN[d[k]]; g += LIN[d[k+1]]; b += LIN[d[k+2]]; n++;
+    }
+    return n ? { r: r/n, g: g/n, b: b/n } : null;
+  }
+  function averageWhite(){
+    if(!whiteRef) return null;
+    const w = W(), h = H(), d = baseImageData.data, rad = whiteRadius(), r2 = rad * rad;
+    const x0 = Math.max(0, Math.floor(whiteRef.x - rad)), x1 = Math.min(w - 1, Math.ceil(whiteRef.x + rad));
+    const y0 = Math.max(0, Math.floor(whiteRef.y - rad)), y1 = Math.min(h - 1, Math.ceil(whiteRef.y + rad));
+    let r=0, g=0, b=0, n=0, clip=0;
+    for(let y=y0; y<=y1; y++){
+      for(let x=x0; x<=x1; x++){
+        const dx = x + 0.5 - whiteRef.x, dy = y + 0.5 - whiteRef.y;
+        if(dx*dx + dy*dy > r2) continue;
+        const k = (y*w + x) * 4;
+        r += LIN[d[k]]; g += LIN[d[k+1]]; b += LIN[d[k+2]]; n++;
+        if(Math.max(d[k], d[k+1], d[k+2]) >= 250) clip++;
+      }
+    }
+    return n ? { r: r/n, g: g/n, b: b/n, clip: clip/n } : null;
+  }
+  // The sample in linear light, white-balanced against the paper when there
+  // is a white reference (each channel scaled so the paper reads L* 95, neutral).
+  function correctedLinear(){
+    if(!sampleLin) return null;
+    let { r, g, b } = sampleLin;
+    if(whiteInfo){
+      r *= PAPER_Y / Math.max(whiteInfo.r, 1e-4);
+      g *= PAPER_Y / Math.max(whiteInfo.g, 1e-4);
+      b *= PAPER_Y / Math.max(whiteInfo.b, 1e-4);
+    }
+    return { r, g, b };
+  }
+  function sampleLab(){
+    const c = correctedLinear();
+    return c ? labFromLinear(c.r, c.g, c.b) : null;
+  }
+  function sampleHex(){
+    const c = correctedLinear();
+    return c ? rgbToHex(linToByte(c.r), linToByte(c.g), linToByte(c.b)) : '';
   }
 
-  function stopAutoTimer(){
-    if(autoTimer){ clearInterval(autoTimer); autoTimer = null; }
+  function cancelAuto(){
+    if(autoTimer){ clearTimeout(autoTimer); autoTimer = null; }
     shutterBtn.classList.remove('pulsing');
   }
-  function startAutoTimer(){
-    stopAutoTimer();
-    autoTimer = setInterval(() => {
-      if(pickedAvgRgb) commitToDial(pickedAvgRgb);
-    }, AUTO_INTERVAL_MS);
+  // ONE auto-apply per new sample, 10 s after the last change.
+  function scheduleAuto(){
+    cancelAuto();
+    if(!dirtySample || coverage < MIN_COVERAGE) return;
+    autoTimer = setTimeout(() => {
+      autoTimer = null;
+      shutterBtn.classList.remove('pulsing');
+      if(dirtySample && coverage >= MIN_COVERAGE) applyPhoto();
+      else refreshPickUI();
+    }, AUTO_DELAY_MS);
     shutterBtn.classList.add('pulsing');
   }
 
-  function commitToDial(rgb){
-    const lab = rgbToLab(rgb.r, rgb.g, rgb.b);
-    const match = nearestMatchForLab(lab, scale);
-    value = match.v;
-    hueStep = match.h;
-    brightStep = match.br;
+  function applyPhoto(){
+    const lab = sampleLab();
+    if(!lab || coverage < MIN_COVERAGE) return;
+    const m = readingFromLab(lab, scale);
+    value = m.v;
+    hueStep = m.h;
+    brightStep = 0;
+    const r2 = x => Math.round(x * 100) / 100;
+    fotoLectura = {
+      pct: Math.round(coverage * 10) / 10,
+      blanco: !!whiteInfo,
+      hex: sampleHex(),
+      lab: { L: r2(lab.L), a: r2(lab.a), b: r2(lab.b) }
+    };
+    dirtySample = false;
+    cancelAuto();
     updateHueSliderUI();
     updateBrightUI();
     render();
+    refreshPickUI();
+    tocar();
   }
 
-  function setMode(mode){
-    if(mode === 'pan' && modePanBtn.disabled) return;
-    interactionMode = mode;
-    modeSelectBtn.classList.toggle('active', mode === 'select');
-    modePanBtn.classList.toggle('active', mode === 'pan');
-    pickCanvas.classList.toggle('pan-cursor', mode === 'pan');
+  function onSampleChanged(){
+    buildMask();
+    sampleLin = coverage > 0 ? averageMask() : null;
+    whiteInfo = whiteRef ? averageWhite() : null;
+    dirtySample = !!sampleLin;
+    scheduleAuto();
+    redrawPickCanvas();
+    refreshPickUI();
+  }
+
+  function refreshPickUI(){
+    const t = I18N[currentLang];
+    if(!hasPhoto){
+      pickTools.hidden = true;
+      pickToolHint.hidden = true;
+      coverageEl.hidden = true;
+      pickResultRow.hidden = true;
+      pickWarn.hidden = true;
+      pickAutoNote.hidden = true;
+      pickPointsCount.textContent = '';
+      return;
+    }
+    const nPts = marks.filter(m => m.t === 'p').length;
+    pickTools.hidden = false;
+    pickPointsCount.textContent = t.pointsOf(nPts);
+    pickToolHint.hidden = false;
+    pickToolHint.textContent = tool === 'points' ? t.hintPoints(nPts)
+      : tool === 'area' ? t.hintArea
+      : tool === 'white' ? t.hintWhite
+      : t.hintPan;
+
+    // Coverage: the bar is full at 2× the minimum, so the minimum sits in the middle.
+    coverageEl.hidden = false;
+    coverageValue.textContent = fmtPct(coverage);
+    coverageOf.textContent = t.coverageOf;
+    coverageFill.style.width = Math.min(100, coverage / (MIN_COVERAGE * 2) * 100) + '%';
+    coverageMin.style.left = 'calc(50% - 1px)';
+    coverageFill.classList.toggle('ok', coverage >= MIN_COVERAGE);
+
+    pickResultRow.hidden = !(marks.length || whiteRef);
+    if(sampleLin){
+      const hex = sampleHex();
+      pickAvgSwatch.style.backgroundColor = hex;
+      pickAvgHex.textContent = hex;
+    } else {
+      pickAvgSwatch.style.backgroundColor = 'transparent';
+      pickAvgHex.textContent = '—';
+    }
+    pickWhiteStatus.textContent = whiteInfo ? t.whiteOk : t.whiteNone;
+    pickWhiteStatus.classList.toggle('ok', !!whiteInfo);
+
+    const ready = !!sampleLin && coverage >= MIN_COVERAGE;
+    shutterBtn.disabled = !ready;
+    pickUndoBtn.disabled = marks.length === 0;
+
+    let warn = '';
+    if(whiteInfo && whiteInfo.clip > 0.25) warn = t.warnWhiteClipped;
+    else if(whiteInfo && sampleLin &&
+            labFromLinear(whiteInfo.r, whiteInfo.g, whiteInfo.b).L < labFromLinear(sampleLin.r, sampleLin.g, sampleLin.b).L + 5) warn = t.warnWhiteDark;
+    else if(!whiteInfo && ready) warn = t.warnNoWhite;
+    pickWarn.hidden = !warn;
+    pickWarn.textContent = warn;
+
+    let note = '';
+    if(marks.length && !ready) note = t.noteNeedMore;
+    else if(ready && dirtySample) note = autoTimer ? t.noteReady : t.noteManual;
+    pickAutoNote.hidden = !note;
+    pickAutoNote.textContent = note;
+  }
+
+  function setTool(next){
+    if(next === 'pan' && toolPanBtn.disabled) return;
+    if(next !== 'pan') lastTool = next;
+    tool = next;
+    toolButtons.forEach(b => b.classList.toggle('active', b.getAttribute('data-tool') === tool));
+    pickCanvas.classList.toggle('pan-cursor', tool === 'pan');
+    refreshPickUI();
   }
 
   function updateModeAvailability(){
     const atFullView = zoomLevel >= 1;
-    modePanBtn.disabled = atFullView;
-    zoomHint.hidden = atFullView;
-    if(atFullView && interactionMode === 'pan') setMode('select');
+    toolPanBtn.disabled = atFullView;
+    if(atFullView && tool === 'pan') setTool(lastTool);
   }
 
   function drawUploadedImage(img){
@@ -2164,106 +2853,137 @@
     sctx.drawImage(img, 0, 0, w, h);
     baseImageData = sctx.getImageData(0, 0, w, h);
 
-    points = [];
-    pickedAvgRgb = null;
+    marks = [];
+    draftRect = null;
+    whiteRef = null;
+    mask = null;
+    coverage = 0;
+    sampleLin = null;
+    whiteInfo = null;
+    dirtySample = false;
+    cancelAuto();
     hasPhoto = true;
     zoomLevel = 1;
     panX = 0; panY = 0;
     zoomSelect.value = '1';
-    setMode('select');
+    setTool('points');
     updateModeAvailability();
 
     pickCanvas.classList.remove('hidden');
     pickEmptyMsg.style.display = 'none';
-    zoomControls.hidden = false;
     updateUploadLabel();
     redrawPickCanvas();
-    updatePointsCount();
-    pickResultRow.hidden = true;
-    pickAutoNote.hidden = true;
-    shutterBtn.disabled = true;
-    stopAutoTimer();
-  }
-
-  function sampleAt(x, y){
-    const { data, width, height } = baseImageData;
-    const rad = 2;
-    let rSum=0, gSum=0, bSum=0, n=0;
-    for(let dy=-rad; dy<=rad; dy++){
-      for(let dx=-rad; dx<=rad; dx++){
-        const px = Math.round(x+dx), py = Math.round(y+dy);
-        if(px<0 || py<0 || px>=width || py>=height) continue;
-        const idx = (py*width + px) * 4;
-        rSum += data[idx]; gSum += data[idx+1]; bSum += data[idx+2]; n++;
-      }
-    }
-    return n ? { r: rSum/n, g: gSum/n, b: bSum/n } : { r:0, g:0, b:0 };
+    refreshPickUI();
   }
 
   // Returns the current crop window {sx, sy, sw, sh} in source pixel space,
   // clamping and re-storing panX/panY so they never drift out of bounds.
   function currentCrop(){
-    const sw = pickCanvas.width * zoomLevel;
-    const sh = pickCanvas.height * zoomLevel;
-    panX = Math.max(0, Math.min(panX, pickCanvas.width - sw));
-    panY = Math.max(0, Math.min(panY, pickCanvas.height - sh));
+    const sw = W() * zoomLevel;
+    const sh = H() * zoomLevel;
+    panX = Math.max(0, Math.min(panX, W() - sw));
+    panY = Math.max(0, Math.min(panY, H() - sh));
     return { sx: panX, sy: panY, sw, sh };
+  }
+
+  function sourcePoint(e){
+    const rect = pickCanvas.getBoundingClientRect();
+    const kx = W() / rect.width, ky = H() / rect.height;
+    const { sx, sy } = currentCrop();
+    return {
+      x: Math.max(0, Math.min(W() - 0.01, sx + (e.clientX - rect.left) * kx * zoomLevel)),
+      y: Math.max(0, Math.min(H() - 0.01, sy + (e.clientY - rect.top) * ky * zoomLevel))
+    };
   }
 
   function redrawPickCanvas(){
     if(!baseImageData || !sourceCanvas) return;
     const { sx, sy, sw, sh } = currentCrop();
+    const z = zoomLevel;
     const ctx = pickCanvas.getContext('2d');
     ctx.imageSmoothingEnabled = true;
-    ctx.clearRect(0, 0, pickCanvas.width, pickCanvas.height);
-    ctx.drawImage(sourceCanvas, sx, sy, sw, sh, 0, 0, pickCanvas.width, pickCanvas.height);
+    ctx.clearRect(0, 0, W(), H());
+    ctx.drawImage(sourceCanvas, sx, sy, sw, sh, 0, 0, W(), H());
 
-    points.forEach((p, i) => {
-      const dx = (p.x - sx) / zoomLevel;
-      const dy = (p.y - sy) / zoomLevel;
-      if(dx < -MARKER_RADIUS || dy < -MARKER_RADIUS || dx > pickCanvas.width+MARKER_RADIUS || dy > pickCanvas.height+MARKER_RADIUS) return;
+    const lw = Math.max(1.5, W() / 320);
+    ctx.save();
+    ctx.lineWidth = lw;
+    ctx.strokeStyle = '#ffffff';
+    ctx.fillStyle = 'rgba(28,122,113,0.30)';
+
+    const rectOf = m => [
+      (Math.min(m.x0, m.x1) - sx) / z, (Math.min(m.y0, m.y1) - sy) / z,
+      Math.abs(m.x1 - m.x0) / z, Math.abs(m.y1 - m.y0) / z
+    ];
+    marks.forEach(m => {
+      if(m.t !== 'r') return;
+      const [x, y, w, h] = rectOf(m);
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeRect(x, y, w, h);
+    });
+    if(draftRect){
+      const [x, y, w, h] = rectOf(draftRect);
+      ctx.setLineDash([6, 4]);
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeRect(x, y, w, h);
+      ctx.setLineDash([]);
+    }
+
+    const pr = pointRadius() / z;
+    let n = 0;
+    marks.forEach(m => {
+      if(m.t !== 'p') return;
+      n++;
+      const dx = (m.x - sx) / z, dy = (m.y - sy) / z;
+      if(dx < -pr || dy < -pr || dx > W() + pr || dy > H() + pr) return;
       ctx.beginPath();
-      ctx.arc(dx, dy, MARKER_RADIUS, 0, Math.PI*2);
-      ctx.fillStyle = 'rgba(18,85,78,0.85)';
+      ctx.arc(dx, dy, pr, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(28,122,113,0.30)';
       ctx.fill();
-      ctx.lineWidth = 2;
+      ctx.lineWidth = lw;
       ctx.strokeStyle = '#ffffff';
       ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(dx, dy, MARKER_RADIUS, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(18,85,78,0.9)';
+      ctx.fill();
       ctx.fillStyle = '#ffffff';
       ctx.font = '600 13px IBM Plex Mono, monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(String(i+1), dx, dy+1);
+      ctx.fillText(String(n), dx, dy + 1);
     });
+
+    if(whiteRef){
+      const dx = (whiteRef.x - sx) / z, dy = (whiteRef.y - sy) / z, wr = whiteRadius() / z;
+      ctx.beginPath();
+      ctx.arc(dx, dy, wr, 0, Math.PI*2);
+      ctx.lineWidth = lw * 2.4;
+      ctx.strokeStyle = '#211a12';
+      ctx.stroke();
+      ctx.lineWidth = lw;
+      ctx.strokeStyle = '#ffffff';
+      ctx.stroke();
+      const ly = dy - wr - MARKER_RADIUS - 2;
+      ctx.beginPath();
+      ctx.arc(dx, ly, MARKER_RADIUS, 0, Math.PI*2);
+      ctx.fillStyle = '#211a12';
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '600 13px IBM Plex Mono, monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(I18N[currentLang].whiteMark, dx, ly + 1);
+    }
+    ctx.restore();
   }
 
-  // Recomputes the sampled-average preview only — does NOT touch the dial.
-  // The dial is only updated by an explicit shutter tap, or by the 10s
-  // auto-fire timer if the shutter hasn't been used.
-  function recomputeAverage(){
-    if(points.length === 0){
-      pickedAvgRgb = null;
-      pickResultRow.hidden = true;
-      pickAutoNote.hidden = true;
-      shutterBtn.disabled = true;
-      stopAutoTimer();
-      return;
+  function addPoint(p){
+    if(marks.filter(m => m.t === 'p').length >= MAX_POINTS){
+      marks.splice(marks.findIndex(m => m.t === 'p'), 1); // the 8th point replaces the oldest
     }
-    let rSum=0, gSum=0, bSum=0;
-    points.forEach(p => {
-      const s = sampleAt(p.x, p.y);
-      rSum += s.r; gSum += s.g; bSum += s.b;
-    });
-    const n = points.length;
-    const avg = { r: Math.round(rSum/n), g: Math.round(gSum/n), b: Math.round(bSum/n) };
-    pickedAvgRgb = avg;
-    const hex = rgbToHex(avg.r, avg.g, avg.b);
-    pickAvgSwatch.style.backgroundColor = hex;
-    pickAvgHex.textContent = hex;
-    pickResultRow.hidden = false;
-    pickAutoNote.hidden = false;
-    shutterBtn.disabled = false;
-    startAutoTimer(); // fresh 10s window each time the sample changes
+    marks.push({ t: 'p', x: p.x, y: p.y });
+    onSampleChanged();
   }
 
   pickFileInput.addEventListener('change', (e) => {
@@ -2279,52 +2999,69 @@
     e.target.value = '';
   });
 
-  // Tap-to-select a point (only acts in 'select' mode).
-  pickCanvas.addEventListener('click', (e) => {
-    if(interactionMode !== 'select' || !baseImageData) return;
-    const rect = pickCanvas.getBoundingClientRect();
-    const scaleX = pickCanvas.width / rect.width;
-    const scaleY = pickCanvas.height / rect.height;
-    const dx = (e.clientX - rect.left) * scaleX;
-    const dy = (e.clientY - rect.top) * scaleY;
-    const { sx, sy } = currentCrop();
-    const x = sx + dx * zoomLevel;
-    const y = sy + dy * zoomLevel;
-    if(points.length >= 3) points.shift();
-    points.push({ x, y });
-    redrawPickCanvas();
-    updatePointsCount();
-    recomputeAverage();
-  });
-
-  // Drag-to-pan (only acts in 'pan' mode).
   pickCanvas.addEventListener('pointerdown', (e) => {
-    if(interactionMode !== 'pan' || !baseImageData) return;
-    isPanning = true;
-    pickCanvas.classList.add('grabbing');
+    if(!baseImageData) return;
     pickCanvas.setPointerCapture && pickCanvas.setPointerCapture(e.pointerId);
-    panStart = { clientX: e.clientX, clientY: e.clientY, panX0: panX, panY0: panY };
+    if(tool === 'pan'){
+      isPanning = true;
+      pickCanvas.classList.add('grabbing');
+      panStart = { clientX: e.clientX, clientY: e.clientY, panX0: panX, panY0: panY };
+    } else if(tool === 'area'){
+      const p = sourcePoint(e);
+      draftRect = { x0: p.x, y0: p.y, x1: p.x, y1: p.y };
+    } else {
+      tap = { clientX: e.clientX, clientY: e.clientY };
+    }
     e.preventDefault();
   });
   pickCanvas.addEventListener('pointermove', (e) => {
-    if(!isPanning || !panStart) return;
-    const rect = pickCanvas.getBoundingClientRect();
-    const scaleX = pickCanvas.width / rect.width;
-    const scaleY = pickCanvas.height / rect.height;
-    const dDisplayX = (e.clientX - panStart.clientX) * scaleX;
-    const dDisplayY = (e.clientY - panStart.clientY) * scaleY;
-    panX = panStart.panX0 - dDisplayX * zoomLevel;
-    panY = panStart.panY0 - dDisplayY * zoomLevel;
-    redrawPickCanvas();
+    if(isPanning && panStart){
+      const rect = pickCanvas.getBoundingClientRect();
+      const kx = W() / rect.width, ky = H() / rect.height;
+      panX = panStart.panX0 - (e.clientX - panStart.clientX) * kx * zoomLevel;
+      panY = panStart.panY0 - (e.clientY - panStart.clientY) * ky * zoomLevel;
+      redrawPickCanvas();
+    } else if(draftRect){
+      const p = sourcePoint(e);
+      draftRect.x1 = p.x;
+      draftRect.y1 = p.y;
+      // The % grows live while the area is being drawn.
+      buildMask();
+      redrawPickCanvas();
+      refreshPickUI();
+    }
   });
   function endPan(){
     isPanning = false;
     panStart = null;
     pickCanvas.classList.remove('grabbing');
   }
-  pickCanvas.addEventListener('pointerup', endPan);
-  pickCanvas.addEventListener('pointercancel', endPan);
-  window.addEventListener('pointerup', endPan);
+  pickCanvas.addEventListener('pointerup', (e) => {
+    if(isPanning){ endPan(); return; }
+    if(draftRect){
+      const r = draftRect;
+      draftRect = null;
+      if(Math.abs(r.x1 - r.x0) >= 3 && Math.abs(r.y1 - r.y0) >= 3){
+        marks.push({ t: 'r', x0: Math.min(r.x0, r.x1), y0: Math.min(r.y0, r.y1), x1: Math.max(r.x0, r.x1), y1: Math.max(r.y0, r.y1) });
+      }
+      onSampleChanged();
+      return;
+    }
+    if(tap){
+      const moved = Math.hypot(e.clientX - tap.clientX, e.clientY - tap.clientY);
+      tap = null;
+      if(moved > 10) return;
+      const p = sourcePoint(e);
+      if(tool === 'points') addPoint(p);
+      else if(tool === 'white'){ whiteRef = { x: p.x, y: p.y }; onSampleChanged(); }
+    }
+  });
+  pickCanvas.addEventListener('pointercancel', () => {
+    endPan();
+    tap = null;
+    if(draftRect){ draftRect = null; buildMask(); redrawPickCanvas(); refreshPickUI(); }
+  });
+  window.addEventListener('pointerup', () => { if(isPanning) endPan(); });
 
   zoomSelect.addEventListener('change', () => {
     if(!baseImageData) return;
@@ -2332,41 +3069,98 @@
     const { sx, sy, sw, sh } = currentCrop();
     const centerX = sx + sw/2, centerY = sy + sh/2;
     zoomLevel = newZoom;
-    const newSw = pickCanvas.width * zoomLevel;
-    const newSh = pickCanvas.height * zoomLevel;
-    panX = centerX - newSw/2;
-    panY = centerY - newSh/2;
+    panX = centerX - W() * zoomLevel / 2;
+    panY = centerY - H() * zoomLevel / 2;
     updateModeAvailability();
     redrawPickCanvas();
   });
 
-  modeSelectBtn.addEventListener('click', () => setMode('select'));
-  modePanBtn.addEventListener('click', () => setMode('pan'));
+  toolButtons.forEach(b => b.addEventListener('click', () => setTool(b.getAttribute('data-tool'))));
+
+  pickUndoBtn.addEventListener('click', () => {
+    if(!marks.length) return;
+    marks.pop();
+    onSampleChanged();
+  });
 
   pickClearBtn.addEventListener('click', () => {
-    points = [];
-    pickedAvgRgb = null;
-    redrawPickCanvas();
-    updatePointsCount();
-    pickResultRow.hidden = true;
-    pickAutoNote.hidden = true;
-    shutterBtn.disabled = true;
-    stopAutoTimer();
+    marks = [];
+    draftRect = null;
+    whiteRef = null;
+    onSampleChanged();
   });
 
-  shutterBtn.addEventListener('click', () => {
-    if(!pickedAvgRgb) return;
-    commitToDial(pickedAvgRgb);
-    startAutoTimer(); // reset the 10s window after a manual capture
-  });
+  shutterBtn.addEventListener('click', applyPhoto);
+
+  /* ---------------- memory (CTC bridge, own schema) ---------------- */
+
+  // The bridge's default serialisation only sees <input>/<select>: in V7 that
+  // was the tint and the photo zoom, never the reading. The tool now hands
+  // over its own state. The photo itself is never saved — only what was read.
+  const ESQUEMA = 'agtron-dial/1';
+
+  function estadoParaGuardar(){
+    return {
+      esquema: ESQUEMA,
+      valor: value,
+      escala: scale,
+      forma: forma,
+      matiz: hueStep,
+      brillo: brightStep,
+      foto: fotoLectura
+    };
+  }
+
+  function restaurar(e){
+    if(!e || typeof e !== 'object') return;
+    const num = (x, lo, hi, def) => { const n = Number(x); return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : def; };
+    if(e.esquema === ESQUEMA){
+      scale = e.escala === 'commercial' ? 'commercial' : 'gourmet';
+      forma = e.forma === 'ground' ? 'ground' : 'whole';
+      value = Math.round(num(e.valor, 0, 100, 63));
+      hueStep = Math.round(num(e.matiz, -HUE_MAX, HUE_MAX, 0) * 10) / 10;
+      brightStep = Math.round(num(e.brillo, -BRIGHT_MAX, BRIGHT_MAX, 0));
+      const f = e.foto;
+      fotoLectura = (f && typeof f === 'object' && f.lab && typeof f.lab === 'object') ? {
+        pct: num(f.pct, 0, 100, 0),
+        blanco: !!f.blanco,
+        hex: /^#[0-9A-F]{6}$/i.test(String(f.hex)) ? String(f.hex).toUpperCase() : '',
+        lab: { L: num(f.lab.L, 0, 100, 0), a: num(f.lab.a, -128, 128, 0), b: num(f.lab.b, -128, 128, 0) }
+      } : null;
+    } else if('i:hueSlider' in e){
+      // A work saved by V7: the default bridge kept only the tint.
+      hueStep = Math.round(num(e['i:hueSlider'], -HUE_MAX, HUE_MAX, 0) * 10) / 10;
+    }
+    syncToggles();
+    updateHueSliderUI();
+    updateBrightUI();
+    render();
+  }
+
+  function resumenTrabajo(){
+    const t = I18N[currentLang];
+    const concept = t.concepts[conceptIndexFor(value, scale)].name;
+    return `Agtron ${value} · ${scale === 'gourmet' ? t.scaleGourmet : t.scaleCommercial} · ${concept}` +
+      (fotoLectura ? ` · ${t.fromPhotoShort}` : '');
+  }
+
+  function registrarPuente(){
+    if(!window.CTC || typeof window.CTC.usarEstado !== 'function') return;
+    window.CTC.usarEstado(estadoParaGuardar, restaurar);
+    window.CTC.usarResumen(resumenTrabajo);
+    // The bridge loads AFTER this script and may have announced itself before
+    // the tool registered its state: announce again so the shell repeats the
+    // init with the saved work (same fix as the soil chromatography reader).
+    if(window.parent !== window) window.parent.postMessage({ ctc: 'ready', v: 1 }, window.location.origin);
+  }
+  document.addEventListener('DOMContentLoaded', registrarPuente);
 
   /* ---------------- init ---------------- */
 
-  updateUploadLabel();
-  updatePointsCount();
+  syncToggles();
   updateHueSliderUI();
   updateBrightUI();
-  applyLanguage('en'); // paints dial/readout immediately with English text
+  applyLanguage(idiomaInicial());
   assetsReady.then(render);
 
 })();
@@ -2377,5 +3171,6 @@
      Abierta suelta (sin concha), el puente queda inerte y la herramienta sigue
      funcionando sola y sin internet, como siempre. -->
 <script src="/tools/ctc-bridge.js"></script>
+
 </body>
 </html>

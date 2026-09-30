@@ -175,6 +175,14 @@ const plan = lee("docs/PLAN_CIRCUITO_DEL_LOTE.md");
   check("en un bache → en evaluación", estadoDelCircuito({ ...base, pagoConfirmado: true, muestraRecibida: true, enBache: true }).estado === "en_evaluacion");
 }
 
+// ── V5.116 (owner, 2026-09-30) · el aviso «Ficha completa» dice lo que ya está (Visa EUDR) y lo que implica seguir a la muestra ──
+{
+  const aviso = lee("src/components/kaffetal-regal/ficha/ShipmentInstructionsModal.tsx");
+  check("el aviso separa «lo que ya está» de «lo que sigue», y la Visa según el Pasaporte de la finca", aviso.includes("Lo que ya está") && aviso.includes("Lo que sigue, solo si quiere que CTC evalúe") && aviso.includes('visa === "lista"') && lee("src/components/kaffetal-regal/FichaView.tsx").includes('visa={lotIsEudrReady ? "lista" : "pendiente_finca"}'));
+  check("las cifras del aviso salen de la fuente (tarifa, subvención KR y máxima), no tecleadas", aviso.includes("formatCop(ARENA_FEE_COP)") && aviso.includes("dueFor(SUBVENCION_KR_PCT)") && aviso.includes("dueFor(SUBVENCION_MAX_PCT)") && !/\$\s?\d{2,3}\.\d{3}/.test(aviso));
+  check("y dice contra entrega, 2 kg y que enviar la muestra no es obligatorio", aviso.includes("contra entrega") && aviso.includes("2 kg de café pergamino seco") && aviso.includes("no lo compromete a nada más"));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-solicitud-evaluacion: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("  - " + f);

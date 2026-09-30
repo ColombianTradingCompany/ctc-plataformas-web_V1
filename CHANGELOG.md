@@ -19,6 +19,15 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.116] — 2026-09-30 (commit pendiente)
+
+- **Cambiado**: el aviso **«¡Ficha completa!»** al cerrar la Ficha del lote (owner, 2026-09-30) ahora separa **lo que ya está** —la
+  Ficha enviada a revisión y la **Visa EUDR** (lista si el Pasaporte de la finca está vigente; pendiente del Pasaporte si no)— de
+  **lo que sigue solo si quiere evaluarlo**: la solicitud desde «Evaluar mi Café», la factura, la tarifa con la subvención de KR (cifras
+  desde la fuente: tarifa, 30 % por defecto, hasta 70 %), los 2 kg de pergamino contra entrega marcados con el código, y el camino
+  Q-Grader → grado → oferta. Deja claro que enviar la muestra no es obligatorio.
+- **Docs**: `qa-solicitud-evaluacion` 81 → 84.
+
 ## [V5.115] — 2026-09-30 (commit 040f6e8)
 
 - **Cambiado**: en la Ficha del lote, con **«No lo sé»** marcado en B2 (o «No lo sé / solo información básica» en B3) **los soportes

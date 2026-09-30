@@ -277,3 +277,8 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-09-30] V5.115 · Kaffetal Regal — B2 y B3: con «No lo sé», sin adjuntos
 - ANN `ficha/panes/PaneB2.tsx`, `PaneB3.tsx` (ReportFiles solo sin «No lo sé»). Guardián: `qa-reportado-productor` +1.
 (commit: 040f6e8)
+
+## [2026-09-30] V5.116 · Kaffetal Regal — el aviso «Ficha completa»: lo que ya está (Visa EUDR) y lo que implica seguir a la muestra
+- ANN `ficha/ShipmentInstructionsModal.tsx` (prop `visa`; cifras de `inscriptions.ts` y `subvencion.ts`), `FichaView.tsx`.
+  Guardián: `qa-solicitud-evaluacion` +3.
+(commit: pendiente)

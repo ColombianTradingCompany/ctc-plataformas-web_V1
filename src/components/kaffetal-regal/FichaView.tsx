@@ -800,6 +800,7 @@ export function FichaView({
         }}
         lotCode={ctcLotReference(lot.id)}
         shortRef={ctcLotReferenceShort(lot.id)}
+        visa={lotIsEudrReady ? "lista" : "pendiente_finca"}
       />
     </div>
   );

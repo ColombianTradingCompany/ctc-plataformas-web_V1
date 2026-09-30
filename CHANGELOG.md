@@ -19,6 +19,13 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.104] — 2026-09-30 (commit pendiente)
+
+- **Corregido**: «Borrar cuenta» fallaba con `producer_profiles_avatar_asset_id_fkey` (el owner lo topó limpiando cuentas): las fotos
+  del productor no se pueden borrar ANTES del perfil porque `producer_profiles.avatar_asset_id` / `video_asset_id` (y `fincas` / `lots`)
+  apuntan a `media_assets` sin cascada. `borrarCuenta.ts` ahora suelta `uploaded_by`, borra el usuario (la cascada se lleva las
+  referencias) y al final borra las filas de `media_assets` y sus objetos de Storage. `qa-inactividad` 26 → 27 (vigila el orden).
+
 ## [V5.103] — 2026-09-30 (commit 4eb1f9e)
 
 - **Añadido**: **la inactividad de las cuentas «Marchitando»** (owner, 2026-09-30) — tercer barrido del cron semanal

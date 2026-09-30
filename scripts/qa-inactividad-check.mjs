@@ -41,6 +41,8 @@ check("protegida no tiene próximo paso", proximoPaso({ ...base, protegida: true
   const borrar = lee("src/lib/inactividad/borrarCuenta.ts");
   check("la rutina vuelve a comprobar cero fincas, cero lotes y no protegida con datos frescos", borrar.includes('(fincas ?? 0) > 0 || (lotes ?? 0) > 0') && borrar.includes("estado?.protegida"));
   check("limpia lo que no cae en cascada (comm_log, comm_ack, media_assets) y conserva audit_log sin autor", borrar.includes('from("producer_comm_log").delete()') && borrar.includes('from("producer_comm_ack").delete()') && borrar.includes('from("media_assets").delete()') && borrar.includes('from("audit_log").update({ performed_by: null })') && borrar.includes("auth.admin.deleteUser(profileId)"));
+  // V5.104: producer_profiles.avatar_asset_id / video_asset_id apuntan a media_assets sin cascada → las fotos se SUELTAN antes y se borran DESPUÉS del usuario.
+  check("el orden: soltar uploaded_by → borrar el usuario → borrar las fotos", borrar.indexOf("update({ uploaded_by: null })") < borrar.indexOf("auth.admin.deleteUser(profileId)") && borrar.indexOf("auth.admin.deleteUser(profileId)") < borrar.indexOf('from("media_assets").delete()'));
 }
 
 // ── 3. El cron semanal corre TRES barridos; el OCP protege y borra con clase emite ──

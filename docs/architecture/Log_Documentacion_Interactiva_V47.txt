@@ -218,3 +218,7 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - DICT `producer_inactividad` (service-role-only: protegida, recordatorio_at, aviso_at). Acta 2026-09-30_inactividad_marchitando.sql.
 - Guardián nuevo: `qa-inactividad` (26). `qa-trato`: tres barridos.
 (commit: 4eb1f9e)
+
+## [2026-09-30] V5.104 · Consolas — borrar cuenta: las fotos se sueltan antes y se borran después del usuario
+- ANN `src/lib/inactividad/borrarCuenta.ts`: orden soltar uploaded_by → deleteUser → media_assets + Storage (FK sin cascada desde producer_profiles).
+(commit: pendiente)

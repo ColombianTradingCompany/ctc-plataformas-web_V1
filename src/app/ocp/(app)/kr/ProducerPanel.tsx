@@ -7,6 +7,7 @@ import { ActionForm } from "@/components/panel/ActionForm";
 import { GESTION_LABEL, type Gestion } from "@/lib/asistencia/desacoplado";
 import { SesionAsistidaBoton } from "../asistencia/SesionAsistidaBoton";
 import { InactividadPanel, type InactividadData } from "./InactividadPanel";
+import { GRADO_HEX, PASOS_DE_LA_FICHA } from "@/lib/ocp/etapas";
 import styles from "@/components/panel/shared.module.css";
 
 // ── Panel del productor con pestañas (2026-07-23, pedido del owner) ──────────
@@ -18,10 +19,59 @@ import styles from "@/components/panel/shared.module.css";
 // la nota de comunicación se envía con el Server Action logProducerComm.
 
 export type ProducerMedia = { avatarUrl: string | null; videoUrl: string | null; galleryUrls: string[] };
-export type ProducerFinca = { id: string; name: string; municipio: string | null; statusLabel: string };
-export type ProducerLote = { id: string; name: string; stageLabel: string };
-export type ProducerArena = { lotId: string; lotName: string; phaseLabel: string; sondeoAprobado: boolean };
-export type ProducerContrato = { id: string; lotName: string; status: string };
+// V5.106 (owner, 2026-09-30): «trae de una vez información relevante de cada entrada — no toda, pero suficiente para un buen
+// vistazo». Lo derivado (Pasaporte, etapa, circuito, muestra, oferta, trato) viene de `cargarKr`, la misma fuente que la tabla.
+export type Insignia = { label: string; tono: "good" | "bad" | "warn" | "muted" };
+export type ProducerFinca = {
+  id: string;
+  name: string;
+  codigo: string;
+  lugar: string;
+  hectareas: number | null;
+  altitud: number | null;
+  statusLabel: string;
+  pasaporte: Insignia | null;
+  lotes: number;
+  certificaciones: number;
+  certificacionesCorroboradas: number;
+  alta: string;
+};
+export type ProducerLote = {
+  id: string;
+  name: string;
+  ref: string;
+  fincaNombre: string | null;
+  stageLabel: string;
+  ficha: boolean[] | null;
+  circuito: Insignia | null;
+  grado: string | null;
+  gradoLabel: string | null;
+  temporadaLabel: string | null;
+  muestra: Insignia | null;
+  oferta: Insignia | null;
+  trato: (Insignia & { contratoId: string }) | null;
+};
+export type ProducerArena = {
+  lotId: string;
+  lotName: string;
+  phaseLabel: string;
+  sondeoAprobado: boolean;
+  pago: string;
+  montoCop: number | null;
+  puntaje: number | null;
+  decision: string | null;
+  desde: string;
+};
+export type ProducerContrato = {
+  id: string;
+  lotName: string;
+  status: string;
+  tono: Insignia["tono"];
+  firmado: string | null;
+  kg: number | null;
+  copKg: number | null;
+  meses: number | null;
+};
 export type ProducerComm = { id: string; authorRole: string; createdAt: string; contextLabel: string | null; note: string };
 
 // Estado por módulo para la tira de la tarjeta: contador + ✓ (en orden) / ✗
@@ -79,6 +129,12 @@ export function ModuleIcon({ k, size = 15 }: { k: ModuleKey; size?: number }) {
 }
 
 const fecha = (iso: string) => new Date(iso).toLocaleDateString("es-CO");
+const TONO: Record<Insignia["tono"], string> = { good: "badgeGood", bad: "badgeBad", warn: "badgeWarn", muted: "" };
+const Chip = ({ v, prefijo }: { v: Insignia | null; prefijo?: string }) =>
+  v ? <span className={`${styles.badge} ${TONO[v.tono] ? styles[TONO[v.tono]] : ""}`}>{prefijo ? `${prefijo} · ` : ""}{v.label}</span> : null;
+const cop = (n: number) => `$${Math.round(n).toLocaleString("es-CO")}`;
+const PAGO_LABEL: Record<string, string> = { pendiente: "Pago pendiente", pagado: "Pagado", exento: "Exento" };
+const DECISION_LABEL: Record<string, string> = { sin_oferta: "Sin oferta", oferta: "Con oferta" };
 
 export function ProducerPanel({ data }: { data: ProducerData }) {
   const [tab, setTab] = useState<TabKey>("general");
@@ -195,46 +251,114 @@ export function ProducerPanel({ data }: { data: ProducerData }) {
         </div>
       )}
 
+      {/* V5.106: tarjetas con un buen vistazo de cada entrada (no toda la información: para eso está la vista completa). */}
       {tab === "fincas" && (
-        <ListOrEmpty empty="Sin fincas.">
+        <Tarjetas empty="Sin fincas.">
           {data.fincas.map((f) => (
-            <li key={f.id}>
-              <Link href={`/ocp/kr?finca=${f.id}`}>{f.name}</Link>
-              {f.municipio ? ` · ${f.municipio}` : ""} <span className={styles.badge}>{f.statusLabel}</span>
+            <li key={f.id} style={tarjeta}>
+              <div style={cabeceraTarjeta}>
+                <Link href={`/ocp/kr?finca=${f.id}`} style={enlace}>{f.name}</Link>
+                <span className="mono" style={{ fontSize: 11, color: "var(--muted)" }}>{f.codigo}</span>
+                <span className={styles.badge}>{f.statusLabel}</span>
+                <Chip v={f.pasaporte} prefijo="Pasaporte" />
+              </div>
+              <p style={linea}>
+                {[f.lugar || null, f.hectareas != null ? `${f.hectareas} ha` : null, f.altitud != null ? `${f.altitud} msnm` : null].filter(Boolean).join(" · ") || "Sin ubicación declarada"}
+              </p>
+              <p style={linea}>
+                {f.lotes} lote{f.lotes === 1 ? "" : "s"} · {f.certificaciones} certificación{f.certificaciones === 1 ? "" : "es"}
+                {f.certificaciones > 0 ? ` (${f.certificacionesCorroboradas} corroborada${f.certificacionesCorroboradas === 1 ? "" : "s"})` : ""} · registrada {fecha(f.alta)}
+              </p>
             </li>
           ))}
-        </ListOrEmpty>
+        </Tarjetas>
       )}
 
       {tab === "lotes" && (
-        <ListOrEmpty empty="Sin lotes.">
+        <Tarjetas empty="Sin lotes.">
           {data.lotes.map((l) => (
-            <li key={l.id}>
-              <Link href={`/ocp/kr?lote=${l.id}`}>{l.name}</Link> <span className={styles.badge}>{l.stageLabel}</span>
+            <li key={l.id} style={tarjeta}>
+              <div style={cabeceraTarjeta}>
+                <Link href={`/ocp/kr?lote=${l.id}`} style={enlace}>{l.name}</Link>
+                <span className="mono" style={{ fontSize: 11, color: "var(--muted)" }}>{l.ref}</span>
+                <span className={styles.badge}>{l.stageLabel}</span>
+                <Chip v={l.circuito} />
+                {l.gradoLabel && (
+                  <span className={styles.badge} style={{ background: GRADO_HEX[l.grado ?? ""] ?? undefined, color: l.grado ? "#fff" : undefined }}>{l.gradoLabel}</span>
+                )}
+              </div>
+              <p style={{ ...linea, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                <span>{l.fincaNombre ? `Finca ${l.fincaNombre}` : "Sin finca"}{l.temporadaLabel ? ` · ${l.temporadaLabel}` : ""}</span>
+                {l.ficha && (
+                  <span style={{ display: "inline-flex", gap: 4 }} title={PASOS_DE_LA_FICHA.map((p, i) => `${p} ${l.ficha![i] ? "✓" : "—"}`).join(" · ")}>
+                    {PASOS_DE_LA_FICHA.map((p, i) => (
+                      <span key={p} style={{ fontSize: 10, fontWeight: 700, padding: "1px 5px", borderRadius: 4, background: l.ficha![i] ? "#DCFCE7" : "var(--line)", color: l.ficha![i] ? "#166534" : "var(--muted)" }}>{p}</span>
+                    ))}
+                  </span>
+                )}
+              </p>
+              {(l.muestra || l.oferta || l.trato) && (
+                <p style={{ ...linea, display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  <Chip v={l.muestra} prefijo="Muestra" />
+                  <Chip v={l.oferta} prefijo="Oferta" />
+                  {l.trato && (
+                    <Link href={`/ocp/contratos/${l.trato.contratoId}`} style={{ textDecoration: "none" }}>
+                      <Chip v={l.trato} prefijo="Trato" />
+                    </Link>
+                  )}
+                </p>
+              )}
             </li>
           ))}
-        </ListOrEmpty>
+        </Tarjetas>
       )}
 
       {tab === "arena" && (
-        <ListOrEmpty empty="Sin participaciones en la Arena.">
+        <Tarjetas empty="Sin participaciones en la Arena.">
           {data.arena.map((a) => (
-            <li key={a.lotId}>
-              <Link href="/ocp/a-evaluar">{a.lotName}</Link> <span className={styles.badge}>{a.phaseLabel}</span>
-              {a.sondeoAprobado && <span className={styles.badgeGood}> Sondeo ✓</span>}
+            <li key={a.lotId} style={tarjeta}>
+              <div style={cabeceraTarjeta}>
+                <Link href={`/ocp/kr?lote=${a.lotId}`} style={enlace}>{a.lotName}</Link>
+                <span className={styles.badge}>{a.phaseLabel}</span>
+                <span className={`${styles.badge} ${a.pago === "pagado" || a.pago === "exento" ? styles.badgeGood : styles.badgeWarn}`}>{PAGO_LABEL[a.pago] ?? a.pago}</span>
+                {a.sondeoAprobado && <span className={`${styles.badge} ${styles.badgeGood}`}>Sondeo ✓</span>}
+              </div>
+              <p style={linea}>
+                {[
+                  a.montoCop != null ? `Tarifa ${cop(a.montoCop)}` : null,
+                  a.puntaje != null ? `Puntaje ${a.puntaje}` : null,
+                  a.decision ? (DECISION_LABEL[a.decision] ?? a.decision) : null,
+                  `solicitada ${fecha(a.desde)}`,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
             </li>
           ))}
-        </ListOrEmpty>
+        </Tarjetas>
       )}
 
       {tab === "contratos" && (
-        <ListOrEmpty empty="Sin contratos.">
+        <Tarjetas empty="Sin contratos.">
           {data.contratos.map((c) => (
-            <li key={c.id}>
-              <Link href="/ocp/contratos">{c.lotName}</Link> <span className={styles.badge}>{c.status}</span>
+            <li key={c.id} style={tarjeta}>
+              <div style={cabeceraTarjeta}>
+                <Link href={`/ocp/contratos/${c.id}`} style={enlace}>{c.lotName}</Link>
+                <Chip v={{ label: c.status, tono: c.tono }} />
+              </div>
+              <p style={linea}>
+                {[
+                  c.kg != null ? `${c.kg} kg` : null,
+                  c.copKg != null ? `${cop(c.copKg)}/kg` : null,
+                  c.meses != null ? `${c.meses} mes${c.meses === 1 ? "" : "es"}` : null,
+                  c.firmado ? `firmado ${fecha(c.firmado)}` : "sin firmar",
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
             </li>
           ))}
-        </ListOrEmpty>
+        </Tarjetas>
       )}
 
       {tab === "comm" && (
@@ -267,7 +391,11 @@ export function ProducerPanel({ data }: { data: ProducerData }) {
   );
 }
 
-function ListOrEmpty({ children, empty }: { children: React.ReactNode[]; empty: string }) {
+function Tarjetas({ children, empty }: { children: React.ReactNode[]; empty: string }) {
   if (!children.length) return <p className={styles.meta}>{empty}</p>;
-  return <ul style={{ margin: "2px 0 0", paddingLeft: 16, fontSize: 13, display: "grid", gap: 4 }}>{children}</ul>;
+  return <ul style={{ margin: "2px 0 0", padding: 0, listStyle: "none", display: "grid", gap: 8 }}>{children}</ul>;
 }
+const tarjeta: React.CSSProperties = { border: "1px solid var(--line)", borderRadius: 10, padding: "9px 12px", background: "var(--card)" };
+const cabeceraTarjeta: React.CSSProperties = { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" };
+const enlace: React.CSSProperties = { fontWeight: 600, fontSize: 13.5, color: "var(--ink)", textDecoration: "none" };
+const linea: React.CSSProperties = { fontSize: 12.5, color: "var(--muted)", margin: "4px 0 0" };

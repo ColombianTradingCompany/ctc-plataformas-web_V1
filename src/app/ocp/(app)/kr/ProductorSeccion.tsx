@@ -1,10 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { supplierCode, ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
+import { supplierCode, ctcLotReferenceShort, fincaCode } from "@/components/kaffetal-regal/data";
 import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { PHASE_LABEL, type InscriptionPhase } from "@/lib/arena/inscriptions";
 import { infoGeneralComplete, PRODUCER_SEGMENTS, segmentProducer } from "@/lib/bcp/producerSegments";
-import { estadoDeFinca, etapaDelLote } from "@/lib/ocp/etapas";
+import { estadoDeFinca, etapaDelLote, ESTADO_DE_CONTRATO } from "@/lib/ocp/etapas";
 import { ProducerPanel, type ProducerData, type ModuleStat } from "./ProducerPanel";
+import { cargarKr } from "./carga";
 import type { Gestion } from "@/lib/asistencia/desacoplado";
 import { esCorreoDePrueba } from "@/lib/email/cuentasDePrueba";
 import { proximoPaso } from "@/lib/inactividad/reglas";
@@ -35,25 +36,26 @@ type PPRow = {
   club_member_since: string | null;
   gestion: Gestion | null;
 };
-type FincaRow = { id: string; name: string; status: string; municipio: string | null };
+type FincaRow = { id: string; name: string; status: string; vereda: string | null; municipio: string | null; departamento: string | null; hectares: number | string | null; altitude_m: number | string | null; created_at: string };
 type LotRow = { id: string; name: string; stage: string; intake_step: number };
-type InsRow = { lot_id: string; phase: string; sondeo_result: string | null };
-type ContractRow = { id: string; lot_id: string; status: string };
+type InsRow = { lot_id: string; phase: string; status: string; sondeo_result: string | null; sondeo_score: number | string | null; decision_comercial: string | null; amount_due_cop: number | string | null; created_at: string };
+type CertRow = { finca_id: string; status: string; scheme: string };
+type ContractRow = { id: string; lot_id: string; status: string; signed_at: string | null; quantity_frozen_kg: number | string | null; price_per_kg_locked: number | string | null; freeze_months: number | null };
 type CommRow = { id: string; context_label: string | null; note: string; created_at: string; author_role: string };
 
 const FASES_ACTIVAS = new Set(["postulacion", "sondeo", "fila", "arena", "sesion"]);
 
 export async function ProductorSeccion({ service, productorId }: { service: SupabaseClient; productorId: string }) {
-  const [{ data: pRaw }, { data: ppRaw }, { data: fRaw }, { data: lRaw }, { data: iRaw }, { data: mRaw }, { data: inRaw }] = await Promise.all([
+  const [{ data: pRaw }, { data: ppRaw }, { data: fRaw }, { data: lRaw }, { data: iRaw }, { data: mRaw }, { data: inRaw }, { data: ctRaw }, kr] = await Promise.all([
     service.from("profiles").select("id, full_name, email, phone, created_at, role").eq("id", productorId).maybeSingle(),
     service
       .from("producer_profiles")
       .select("profile_id, company_name, tax_id, cedula_cafetera, avatar_asset_id, video_asset_id, gallery_asset_ids, country, department, whatsapp_confirmed, club_member_since, gestion")
       .eq("profile_id", productorId)
       .maybeSingle(),
-    service.from("fincas").select("id, name, status, municipio").eq("producer_id", productorId).order("created_at", { ascending: true }),
+    service.from("fincas").select("id, name, status, vereda, municipio, departamento, hectares, altitude_m, created_at").eq("producer_id", productorId).order("created_at", { ascending: true }),
     service.from("lots").select("id, name, stage, intake_step").eq("producer_id", productorId).order("created_at", { ascending: false }),
-    service.from("arena_inscriptions").select("lot_id, phase, sondeo_result").eq("producer_id", productorId),
+    service.from("arena_inscriptions").select("lot_id, phase, status, sondeo_result, sondeo_score, decision_comercial, amount_due_cop, created_at").eq("producer_id", productorId).order("created_at", { ascending: false }),
     service
       .from("producer_comm_log")
       .select("id, context_label, note, created_at, author_role")
@@ -61,6 +63,10 @@ export async function ProductorSeccion({ service, productorId }: { service: Supa
       .order("created_at", { ascending: false }),
     // V5.103: el estado del barrido de inactividad y la protección del owner.
     service.from("producer_inactividad").select("protegida, protegida_motivo, recordatorio_at, aviso_at, ultimo_error").eq("profile_id", productorId).maybeSingle(),
+    // V5.106: las certificaciones de sus fincas (para el vistazo de cada finca)…
+    service.from("finca_certificates").select("finca_id, status, scheme"),
+    // …y la MISMA derivación de /ocp/kr (etapa, circuito, Pasaporte, muestra, oferta, trato), solo de este productor.
+    cargarKr(service, { productorId }),
   ]);
 
   const p = pRaw as ProfileRow | null;
@@ -70,11 +76,19 @@ export async function ProductorSeccion({ service, productorId }: { service: Supa
   const lotes = (lRaw as LotRow[] | null) ?? [];
   const arena = ((iRaw as InsRow[] | null) ?? []).filter((i) => FASES_ACTIVAS.has(i.phase));
   const comms = (mRaw as CommRow[] | null) ?? []; // de más nueva a más vieja → comms[0] es la última nota
+  const fincaIds = new Set(((fRaw as FincaRow[] | null) ?? []).map((f) => f.id));
+  const certsDe = new Map<string, CertRow[]>();
+  for (const ct of ((ctRaw as CertRow[] | null) ?? []).filter((x) => fincaIds.has(x.finca_id))) certsDe.set(ct.finca_id, [...(certsDe.get(ct.finca_id) ?? []), ct]);
+  const filaDeFinca = new Map(kr.filas.filter((f) => f.fincaId).map((f) => [f.fincaId!, f]));
+  const filaDeLote = new Map(kr.filas.filter((f) => f.loteId).map((f) => [f.loteId!, f]));
+  const lotesDeFinca = new Map<string, number>();
+  for (const f of kr.filas) if (f.fincaId && f.loteId) lotesDeFinca.set(f.fincaId, (lotesDeFinca.get(f.fincaId) ?? 0) + 1);
+  const num = (v: number | string | null | undefined) => (v == null || v === "" ? null : Number(v));
   const inact = inRaw as { protegida: boolean; protegida_motivo: string | null; recordatorio_at: string | null; aviso_at: string | null; ultimo_error: string | null } | null;
 
   // Los contratos no tienen FK al productor: se llega por sus lotes.
   const { data: cRaw } = lotes.length
-    ? await service.from("purchase_contracts").select("id, lot_id, status").in("lot_id", lotes.map((l) => l.id))
+    ? await service.from("purchase_contracts").select("id, lot_id, status, signed_at, quantity_frozen_kg, price_per_kg_locked, freeze_months").in("lot_id", lotes.map((l) => l.id))
     : { data: [] as ContractRow[] };
   const contratos = (cRaw as ContractRow[] | null) ?? [];
   const lotePorId = new Map(lotes.map((l) => [l.id, l]));
@@ -155,15 +169,67 @@ export async function ProductorSeccion({ service, productorId }: { service: Supa
       contratos: mod(contratos.length, false),
       comm: mod(comms.length, comms[0]?.author_role === "producer"),
     },
-    fincas: fincas.map((f) => ({ id: f.id, name: f.name, municipio: f.municipio, statusLabel: estadoDeFinca(f.status) })),
-    lotes: lotes.map((l) => ({ id: l.id, name: l.name, stageLabel: etapaDelLote(l.stage) })),
+    // V5.106 (owner, 2026-09-30): cada entrada trae un buen vistazo — lo derivado sale de `cargarKr`, la misma fuente de la tabla.
+    fincas: fincas.map((f) => {
+      const fila = filaDeFinca.get(f.id);
+      const certs = certsDe.get(f.id) ?? [];
+      return {
+        id: f.id,
+        name: f.name,
+        codigo: fincaCode(f.id),
+        lugar: [f.vereda, f.municipio, f.departamento].filter(Boolean).join(" · "),
+        hectareas: num(f.hectares),
+        altitud: num(f.altitude_m),
+        statusLabel: estadoDeFinca(f.status),
+        pasaporte: fila?.visa ?? null,
+        lotes: lotesDeFinca.get(f.id) ?? 0,
+        certificaciones: certs.length,
+        certificacionesCorroboradas: certs.filter((ct) => ct.status === "corroborada").length,
+        alta: f.created_at,
+      };
+    }),
+    lotes: lotes.map((l) => {
+      const fila = filaDeLote.get(l.id);
+      return {
+        id: l.id,
+        name: l.name,
+        ref: ctcLotReferenceShort(l.id),
+        fincaNombre: fila?.fincaNombre ?? null,
+        stageLabel: etapaDelLote(l.stage),
+        ficha: fila?.ficha ?? null,
+        circuito: fila?.circuito ? { label: fila.circuito.label, tono: fila.circuito.tono } : null,
+        gradoLabel: fila?.gradoLabel ?? null,
+        grado: fila?.grado ?? null,
+        temporadaLabel: fila?.temporadaLabel ?? null,
+        muestra: fila?.muestra ?? null,
+        oferta: fila?.oferta ?? null,
+        trato: fila?.trato ?? null,
+      };
+    }),
     arena: arena.map((i) => ({
       lotId: i.lot_id,
       lotName: lotePorId.get(i.lot_id)?.name ?? ctcLotReferenceShort(i.lot_id),
       phaseLabel: PHASE_LABEL[i.phase as InscriptionPhase] ?? i.phase,
       sondeoAprobado: i.sondeo_result === "aprobado",
+      pago: i.status,
+      montoCop: num(i.amount_due_cop),
+      puntaje: num(i.sondeo_score),
+      decision: i.decision_comercial,
+      desde: i.created_at,
     })),
-    contratos: contratos.map((c) => ({ id: c.id, lotName: lotePorId.get(c.lot_id)?.name ?? "Contrato", status: c.status })),
+    contratos: contratos.map((c) => {
+      const fila = filaDeLote.get(c.lot_id);
+      return {
+        id: c.id,
+        lotName: lotePorId.get(c.lot_id)?.name ?? "Contrato",
+        status: fila?.trato?.contratoId === c.id ? fila.trato.label : (ESTADO_DE_CONTRATO[c.status] ?? c.status),
+        tono: fila?.trato?.contratoId === c.id ? fila.trato.tono : "muted",
+        firmado: c.signed_at,
+        kg: num(c.quantity_frozen_kg),
+        copKg: num(c.price_per_kg_locked),
+        meses: c.freeze_months,
+      };
+    }),
     comms: comms.map((cm) => ({ id: cm.id, authorRole: cm.author_role, createdAt: cm.created_at, contextLabel: cm.context_label, note: cm.note })),
   };
 

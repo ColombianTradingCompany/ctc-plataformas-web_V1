@@ -19,6 +19,17 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.106] — 2026-09-30 (commit pendiente)
+
+- **Cambiado**: en la vista completa del productor (`/ocp/kr?productor=`), las pestañas **Fincas · Lotes · Arena · Contratos** dejan
+  de ser una línea por entrada y traen **un buen vistazo** (owner, 2026-09-30: «no toda la info, pero suficiente»): la finca con código,
+  Pasaporte, ubicación, hectáreas, altitud, lotes, certificaciones y fecha de registro; el lote con código, etapa, estado del circuito,
+  los cuatro pasos de la Ficha, grado, temporada, muestra, oferta y trato (con enlace al contrato); la Arena con fase, pago, puntaje
+  y decisión; el contrato con estado, kg, $/kg, meses y firma. Cada tarjeta enlaza a la vista completa de lo que nombra.
+- **Cambiado**: `cargarKr(service, { productorId })` sabe cargar UN productor (filtra perfiles, fincas, lotes, inscripciones y ofertas):
+  la vista del productor deriva Pasaporte, circuito, muestra, oferta y trato con la misma función que la tabla, no a mano.
+- **Docs**: charter `consolas`. `qa-asistencia` 62 → 65.
+
 ## [V5.105] — 2026-09-30 (commit 4f1a12f)
 
 - **Añadido**: en **Asistencia a Proveedores** (`/ocp/asistencia`), filtros y buscador (owner, 2026-09-30): el buscador mira al

@@ -122,6 +122,16 @@ const lee = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
   check("el panel del productor pinta la insignia y el botón de sesión asistida", panel.includes("GESTION_LABEL[data.gestion]") && panel.includes("<SesionAsistidaBoton producerId={data.id}"));
 }
 
+// ── 5a. V5.106 (owner, 2026-09-30) · las pestañas del productor traen un buen vistazo, de la MISMA fuente que la tabla ──
+{
+  const carga = lee("src/app/ocp/(app)/kr/carga.ts");
+  const seccion = lee("src/app/ocp/(app)/kr/ProductorSeccion.tsx");
+  const panel = lee("src/app/ocp/(app)/kr/ProducerPanel.tsx");
+  check("cargarKr carga UN productor (filtra perfiles, fincas, lotes, inscripciones y ofertas)", carga.includes("opciones: { productorId?: string } = {}") && (carga.match(/soloDe\(/g) ?? []).length >= 6);
+  check("la vista del productor deriva Pasaporte, circuito, muestra, oferta y trato con cargarKr, no a mano", seccion.includes("cargarKr(service, { productorId })") && seccion.includes("pasaporte: fila?.visa ?? null") && seccion.includes("circuito: fila?.circuito") && seccion.includes("trato: fila?.trato ?? null"));
+  check("las tarjetas: finca con ubicación, ha, lotes y certificaciones; lote con ficha, grado, muestra, oferta y trato; arena con pago; contrato con kg y precio", panel.includes("certificacionesCorroboradas") && panel.includes("PASOS_DE_LA_FICHA.map((p, i)") && panel.includes('prefijo="Muestra"') && panel.includes("PAGO_LABEL[a.pago]") && panel.includes("`${cop(c.copKg)}/kg`"));
+}
+
 // ── 5b. V5.105 (owner, 2026-09-30) · Asistencia a Proveedores: filtros y buscador con búsqueda profunda en fincas y lotes ──
 {
   const pagina = lee("src/app/ocp/(app)/asistencia/page.tsx");

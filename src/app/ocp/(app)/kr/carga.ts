@@ -110,26 +110,27 @@ const FASES_ACTIVAS = new Set(["postulacion", "sondeo", "fila", "arena", "sesion
 // El tono ya lo decide `src/lib/eudr.ts` (ok · pend · stop); aquí solo se traduce al de las insignias.
 const tonoDeLaVisa = (tone: string): Tono => (tone === "ok" ? "good" : tone === "stop" ? "bad" : "warn");
 
-export async function cargarKr(service: SupabaseClient): Promise<{
+// V5.106: con `productorId`, la MISMA derivación (etapa, circuito, Pasaporte, muestra, oferta, trato) para un solo productor —
+// lo que la vista completa del productor pinta en sus pestañas—, leyendo solo sus filas de las tablas grandes.
+export async function cargarKr(service: SupabaseClient, opciones: { productorId?: string } = {}): Promise<{
   filas: KrFila[];
   temporadas: { id: string; label: string }[];
 }> {
+  const { productorId } = opciones;
+  // `.match({})` no añade filtro alguno: así la misma consulta sirve para todos y para uno (sin genéricos sobre el builder).
+  const soloDe = (columna: string): Record<string, string> => (productorId ? { [columna]: productorId } : {});
   const [{ data: pRaw }, { data: ppRaw }, { data: fRaw }, { data: lRaw }, { data: iRaw }, { data: oRaw }, { data: cRaw }, { data: sRaw }, { data: aRaw }, { data: evRaw }, { data: cmRaw }, { data: coRaw }] =
     await Promise.all([
-      service.from("profiles").select("id, full_name, email, phone, created_at, role").order("created_at", { ascending: true }),
-      service.from("producer_profiles").select("profile_id, company_name, tax_id, cedula_cafetera, avatar_asset_id, country, department, gestion"),
+      service.from("profiles").select("id, full_name, email, phone, created_at, role").match(soloDe("id")).order("created_at", { ascending: true }),
+      service.from("producer_profiles").select("profile_id, company_name, tax_id, cedula_cafetera, avatar_asset_id, country, department, gestion").match(soloDe("profile_id")),
       service
-        .from("fincas")
-        .select(
-          "id, producer_id, name, status, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_polygon_geojson, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, eudr_cert_shared"
-        )
-        .order("created_at", { ascending: true }),
-      service
-        .from("lots")
-        .select("id, name, producer_id, finca_id, stage, intake_step, grade, source, season_id, sample_shipped_at, sample_2kg_confirmed_at")
-        .order("created_at", { ascending: false }),
-      service.from("arena_inscriptions").select("lot_id, producer_id, phase, status, sondeo_batch_id, sondeo_result, decision_comercial"),
-      service.from("lot_offers").select("lot_id, status, emitted_at").order("emitted_at", { ascending: false }),
+          .from("fincas")
+          .select(
+            "id, producer_id, name, status, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_polygon_geojson, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, eudr_cert_shared"
+          ).match(soloDe("producer_id")).order("created_at", { ascending: true }),
+      service.from("lots").select("id, name, producer_id, finca_id, stage, intake_step, grade, source, season_id, sample_shipped_at, sample_2kg_confirmed_at").match(soloDe("producer_id")).order("created_at", { ascending: false }),
+      service.from("arena_inscriptions").select("lot_id, producer_id, phase, status, sondeo_batch_id, sondeo_result, decision_comercial").match(soloDe("producer_id")),
+      service.from("lot_offers").select("lot_id, status, emitted_at").match(soloDe("producer_id")).order("emitted_at", { ascending: false }),
       service.from("purchase_contracts").select("id, lot_id, status"),
       service.from("harvest_seasons").select("id, kind, year, arena_starts_at, arena_ends_at").order("year", { ascending: false }),
       service.from("lot_contributions").select("lot_id, finca_id"),

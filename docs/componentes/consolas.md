@@ -317,7 +317,11 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
   para la Etapa 2)**: los filtros rápidos **«Finca ✅» y «Lote ✅»** junto a «Sin finca» y «Sin lote»; **el correo del productor** bajo su
   código y su estado; y **el estado del productor como filtro de casillas** (Marchitando · Nuevos · Primíparos · Establecidos · Activos,
   uno o varios; `?segmento=a,b`), que hasta entonces solo se leía en la fila. `KrFila` lleva `segmentoId` y `productorEmail`;
-  `qa-boards` lo vigila.
+  `qa-boards` lo vigila. **V5.106** (owner, al abrir un productor): las pestañas Fincas · Lotes · Arena · Contratos de la vista
+  completa traen un buen vistazo de cada entrada (finca: código, Pasaporte, ubicación, ha, msnm, lotes, certificaciones; lote: código,
+  etapa, circuito, pasos de la Ficha, grado, temporada, muestra, oferta, trato; Arena: fase, pago, puntaje, decisión; contrato: estado,
+  kg, $/kg, meses, firma). Lo derivado sale de `cargarKr(service, { productorId })`, la misma fuente que la tabla, que desde esta
+  versión sabe cargar un solo productor. `qa-asistencia` +3.
 - **LA INACTIVIDAD DE LAS CUENTAS «MARCHITANDO» (owner, 2026-09-30) — EJECUTADA en la V5.103.** «Los productores Marchitando sin
   finca ni lote reciben un correo recordándoles la cuenta y cómo acceder; un mes después otro avisando que la inactividad borrará la
   cuenta automáticamente en un mes (SOLO si no tiene lote ni finca); y un botón para eliminar una cuenta de este tipo». Es el TERCER

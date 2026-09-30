@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.102] — 2026-09-30 (commit pendiente)
+## [V5.102] — 2026-09-30 (commit ec96ce6)
 
 - **Añadido**: en Kaffetal Regal, **«Borrar» dentro de la pantalla de edición del lote y de la finca**, con un pop-up en el que el
   productor **escribe «Borrar Lote» o «Borrar Finca»** para confirmar (`ConfirmarBorradoModal`; owner, 2026-09-30). Las tarjetas de

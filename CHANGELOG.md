@@ -19,6 +19,16 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.117] — 2026-09-30 (commit pendiente)
+
+- **Añadido**: en Kaffetal Regal, la tarjeta del lote (carrusel y lista completa) tiene **«¿Qué sigue?»** cuando la Ficha está
+  completa: abre el mismo aviso «Ficha completa» (lo que ya está · lo que sigue si quiere evaluarlo) con la Visa según el Pasaporte
+  de la finca (owner, 2026-09-30).
+- **Añadido**: en **Solicitudes de Evaluación** (OCP), la **Ficha del lote se despliega en acordeón** dentro de cada solicitud: los
+  cuatro pasos, la finca y su Pasaporte, variedades, proceso, altitud, lo reportado en B2 y B3 (o «No lo sé»), las fotos, y el enlace
+  a la vista completa. La consulta de la solicitud trae el `datasheet` y la finca.
+- **Docs**: `qa-solicitud-evaluacion` 84 → 85, `qa-kr-panel` 122 → 123.
+
 ## [V5.116] — 2026-09-30 (commit 8faa9bc)
 
 - **Cambiado**: el aviso **«¡Ficha completa!»** al cerrar la Ficha del lote (owner, 2026-09-30) ahora separa **lo que ya está** —la

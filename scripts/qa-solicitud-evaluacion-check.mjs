@@ -165,6 +165,8 @@ const plan = lee("docs/PLAN_CIRCUITO_DEL_LOTE.md");
   const vista = lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx");
   check("las tres vistas salen de UN componente", vista.includes('"solicitudes" | "a-evaluar" | "en-evaluacion"'));
   check("la vista de solicitudes enseña la nota del productor", vista.includes("i.nota_solicitud"));
+  // V5.117 (owner): la Ficha del lote se despliega en acordeón dentro de la solicitud, con lo reportado en B2/B3 y el enlace a la vista completa.
+  check("la solicitud trae la Ficha del lote (datasheet + finca) y la despliega en acordeón", vista.includes("datasheet, fincas(name, municipio, departamento, status, eudr_cert_shared)") && vista.includes("<details") && vista.includes("Ficha del lote · ") && vista.includes("{fichaDelLote(i.lot!)}") && vista.includes("Abrir la vista completa del lote"));
 }
 
 // ── 8. El circuito conoce la solicitud ──────────────────────────────────────

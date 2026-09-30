@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { GRADES, STAGES, fincaCode, fincaSelfDeletable, isLotCommitted, type Finca, type GeneralInfo, type Lot, type Parcela, type ProducerContract, type ProducerOffer } from "../data";
+import { GRADES, STAGES, ctcLotReference, ctcLotReferenceShort, fincaCode, fincaSelfDeletable, isLotCommitted, type Finca, type GeneralInfo, type Lot, type Parcela, type ProducerContract, type ProducerOffer } from "../data";
+import { ShipmentInstructionsModal } from "../ficha/ShipmentInstructionsModal";
 import { mapPreviewUrl, fincaEudrStatus, lotEudrStatus, type EudrStatus, type ParcelaGeoFields } from "@/lib/eudr";
 import { EudrStatusBadge } from "../EudrStatusBadge";
 import { FieldInfo } from "../ficha/panes/FieldInfo";
@@ -61,6 +62,8 @@ export function PerfilTab({
 }) {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  // V5.117 (owner): el aviso «Ficha completa» (lo que ya está · lo que sigue) también se abre desde la tarjeta del lote.
+  const [avisoLote, setAvisoLote] = useState<Lot | null>(null);
   const [filtroFinca, setFiltroFinca] = useState<string>("todas");
   const [filtroLote, setFiltroLote] = useState<string>("todos");
 
@@ -187,6 +190,23 @@ export function PerfilTab({
     const otorgada = l.stage >= 2 && l.stage !== 3;
     return { otorgada, documento };
   };
+  const fichaCompleta = (l: Lot) => l.intakeStep >= 4 || l.stage >= 1;
+  const avisoDelLote = (l: Lot) =>
+    avisoLote?.id === l.id ? (
+      <ShipmentInstructionsModal
+        open
+        onClose={() => setAvisoLote(null)}
+        lotCode={ctcLotReference(l.id)}
+        shortRef={ctcLotReferenceShort(l.id)}
+        visa={visaDelLote(l).documento ? "lista" : "pendiente_finca"}
+      />
+    ) : null;
+  const botonQueSigue = (l: Lot) =>
+    fichaCompleta(l) ? (
+      <button className="btn btn-sm" onClick={() => setAvisoLote(l)} title="Lo que ya está y lo que sigue si quiere que CTC evalúe este café">
+        ¿Qué sigue?
+      </button>
+    ) : null;
   const visaRow = (l: Lot) => {
     const v = visaDelLote(l);
     if (!v.otorgada) return null;
@@ -258,6 +278,8 @@ export function PerfilTab({
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "stretch" }}>
           <button className="btn btn-sm" onClick={() => onOpenFicha(l.id)}>{l.stage === 0 ? "Completar ficha" : "Ver ficha"}</button>
+          {botonQueSigue(l)}
+          {avisoDelLote(l)}
           {/* Deletable any time before the paid pipeline takes the lot (sin
               inscripción y antes del legado fila_arena — isLotCommitted), unless
               BCP already has the physical sample in hand (bcp_manual_entry). */}
@@ -288,9 +310,11 @@ export function PerfilTab({
         {barraDelLote(l)}
         <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginTop: "auto" }}>
           <button className="btn btn-sm" onClick={() => onOpenFicha(l.id)}>{l.stage === 0 ? "Completar ficha" : "Ver ficha"}</button>
+          {botonQueSigue(l)}
           <span className={styles.state} style={{ ["--lc" as string]: col } as React.CSSProperties}>{STAGES[l.stage]}</span>
         </div>
         {visaRow(l)}
+        {avisoDelLote(l)}
       </div>
     );
   };

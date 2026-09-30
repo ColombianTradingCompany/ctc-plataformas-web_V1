@@ -282,3 +282,8 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `ficha/ShipmentInstructionsModal.tsx` (prop `visa`; cifras de `inscriptions.ts` y `subvencion.ts`), `FichaView.tsx`.
   Guardián: `qa-solicitud-evaluacion` +3.
 (commit: 8faa9bc)
+
+## [2026-09-30] V5.117 · KR: «¿Qué sigue?» en la tarjeta del lote · OCP: la Ficha del lote en acordeón en Solicitudes
+- ANN `panel/PerfilTab.tsx` (`botonQueSigue` · `avisoDelLote`), `nominados/CircuitoVista.tsx` (`fichaDelLote`, join con datasheet y finca).
+  Guardianes: `qa-kr-panel` +1, `qa-solicitud-evaluacion` +1.
+(commit: pendiente)

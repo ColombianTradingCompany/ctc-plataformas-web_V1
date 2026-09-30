@@ -116,6 +116,12 @@ for (const archivo of TSX) {
   check("el botón es como el del Pasaporte: certDownload hacia /certificacion-lote, y con Visa sin documento lo DICE", perfil.includes("⬇ Descargar Visa EUDR de {l.name}") && perfil.includes("`/kaffetal-regal/certificacion-lote/${l.id}`") && perfil.includes("Visa EUDR otorgada · el documento se habilita"));
 }
 
+// ── V5.117 (owner, 2026-09-30) · el aviso «Ficha completa» también desde la tarjeta del lote ──
+{
+  const perfil = lee("src/components/kaffetal-regal/panel/PerfilTab.tsx");
+  check("«¿Qué sigue?» en las dos tarjetas del lote con la Ficha completa, y abre el MISMO aviso de la Ficha", (perfil.match(/\{botonQueSigue\(l\)\}/g) ?? []).length === 2 && perfil.includes("<ShipmentInstructionsModal") && perfil.includes('visa={visaDelLote(l).documento ? "lista" : "pendiente_finca"}'));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-kr-panel: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("   " + f);

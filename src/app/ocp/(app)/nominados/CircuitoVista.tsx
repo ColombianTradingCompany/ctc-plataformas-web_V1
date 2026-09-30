@@ -10,6 +10,8 @@ import { TIPO_LABEL, type TipoDeMuestra } from "@/lib/muestras/particion";
 import { descriptorLabel } from "@/lib/catacion/rueda";
 import { puntoDeFila, rotuloDelPunto } from "@/lib/arena/homologacion";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
+import type { FichaFormData } from "@/components/kaffetal-regal/ficha/fichaData";
+import { estadoDeFinca, fichaHecha, PASOS_DE_LA_FICHA } from "@/lib/ocp/etapas";
 import { centrosConEvaluacion, createSondeoBatch } from "../nominadosActions";
 import {
   BatchPicker,
@@ -47,7 +49,25 @@ import styles from "@/components/panel/shared.module.css";
 
 export type VistaDelCircuito = "solicitudes" | "a-evaluar" | "en-evaluacion";
 
-type LotJoin = { id: string; name: string; producer_id: string; stage: string; source: string; sample_shipped_at: string | null; sample_2kg_confirmed_at: string | null };
+type FincaJoin = { name: string; municipio: string | null; departamento: string | null; status: string; eudr_cert_shared: boolean | null };
+// V5.117: la solicitud trae la Ficha del lote (resumen + datasheet) para desplegarla en acordeón sin salir de la tabla.
+type LotJoin = {
+  id: string;
+  name: string;
+  producer_id: string;
+  stage: string;
+  intake_step: number;
+  source: string;
+  sample_shipped_at: string | null;
+  sample_2kg_confirmed_at: string | null;
+  ficha_variedad: string | null;
+  ficha_proceso: string | null;
+  ficha_altitud_m: number | null;
+  ficha_puntaje_estimado: number | string | null;
+  ficha_notas_cata: string | null;
+  datasheet: Partial<FichaFormData> | null;
+  fincas: FincaJoin | FincaJoin[] | null;
+};
 type BatchRow = {
   id: string;
   label: string;
@@ -74,7 +94,9 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
   const [{ data: insRaw }, { data: batchesRaw }, { data: campaignsRaw }, { data: centrosRaw }] = await Promise.all([
     service
       .from("arena_inscriptions")
-      .select("*, lots(id, name, producer_id, stage, source, sample_shipped_at, sample_2kg_confirmed_at)")
+      .select(
+        "*, lots(id, name, producer_id, stage, intake_step, source, sample_shipped_at, sample_2kg_confirmed_at, ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_puntaje_estimado, ficha_notas_cata, datasheet, fincas(name, municipio, departamento, status, eudr_cert_shared))"
+      )
       // Los galardonados solo se cargan por sus reembolsos pendientes (re-evaluación que subió de grado, V5.82).
       .in("phase", ["postulacion", "sondeo", "fila", "retirado", "galardonado"]),
     service
@@ -154,6 +176,52 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
       : null;
 
   // ── La tarjeta de una solicitud: subvención → factura → pago → recibo ──
+  // ── V5.117 (owner, 2026-09-30): la Ficha del lote, desplegable dentro de la solicitud ──────────────────────────────
+  // Un vistazo, no la Ficha entera (para eso está la vista completa): origen y Pasaporte de la finca, variedades y proceso,
+  // los cuatro pasos, lo reportado en B2/B3 (o «No lo sé»), las fotos, y el enlace a `/ocp/kr?lote=`.
+  const fichaDelLote = (l: LotJoin) => {
+    const ds = l.datasheet ?? {};
+    const finca = Array.isArray(l.fincas) ? l.fincas[0] : l.fincas;
+    const variedades = (ds.varieties ?? []).filter((v) => v.name?.trim()).map((v) => `${v.name}${v.pct ? ` ${v.pct} %` : ""}`);
+    const pasos = fichaHecha(l.stage, l.intake_step);
+    const b2 = ds.ft2_b2_na
+      ? "«No lo sé» (sin perfil reportado)"
+      : [ds.b2_score ? `${ds.b2_score} ${ds.b2_scale ? ds.b2_scale.toUpperCase() : ""}`.trim() : null, ds.b2_tiene_reporte ? `reporte de ${ds.b2_reporte_ref || "(sin nombre)"}` : null, `${(ds.b2_files_pdf?.length ?? 0) + (ds.b2_files_foto?.length ?? 0)} soporte(s)`]
+          .filter(Boolean)
+          .join(" · ");
+    const b3 = ds.b3_solo_basica
+      ? `«No lo sé / solo básica»${ds.yield_factor_producer ? ` · factor ${ds.yield_factor_producer}` : ""}${ds.b3_almendra_total ? ` · almendra ${ds.b3_almendra_total} g` : ""}`
+      : [ds.yield_factor_producer ? `factor ${ds.yield_factor_producer}` : null, ds.b3_almendra_total ? `almendra ${ds.b3_almendra_total} g` : null, ds.b3_tiene_reporte ? `reporte de ${ds.b3_reporte_ref || "(sin nombre)"}` : null, `${(ds.b3_files_pdf?.length ?? 0) + (ds.b3_files_foto?.length ?? 0)} soporte(s)`]
+          .filter(Boolean)
+          .join(" · ");
+    const fila = (k: string, v: string | null | undefined) =>
+      v ? (
+        <p className={styles.meta} style={{ margin: "2px 0" }}>
+          <b style={{ color: "var(--ink)" }}>{k}:</b> {v}
+        </p>
+      ) : null;
+    return (
+      <details style={{ marginTop: 10, border: "1px solid var(--line)", borderRadius: 8, padding: "6px 10px", background: "var(--paper)" }}>
+        <summary style={{ cursor: "pointer", fontSize: 12.5, fontWeight: 600 }}>
+          Ficha del lote · {PASOS_DE_LA_FICHA.map((p, k) => `${p} ${pasos[k] ? "✓" : "—"}`).join(" · ")}
+        </summary>
+        <div style={{ marginTop: 6 }}>
+          {fila("Finca", finca ? `${finca.name}${[finca.municipio, finca.departamento].filter(Boolean).length ? ` · ${[finca.municipio, finca.departamento].filter(Boolean).join(", ")}` : ""} · Pasaporte: ${estadoDeFinca(finca.status)}${finca.eudr_cert_shared ? " (compartido)" : ""}` : "sin finca declarada")}
+          {fila("Variedades", variedades.length ? variedades.join(", ") : l.ficha_variedad)}
+          {fila("Proceso", l.ficha_proceso)}
+          {fila("Altitud", l.ficha_altitud_m != null ? `${l.ficha_altitud_m} msnm` : null)}
+          {fila("B2 · Perfil de Taza", b2)}
+          {fila("Perfil", ds.cupping_profile || l.ficha_notas_cata)}
+          {fila("B3 · Física", b3)}
+          {fila("Fotos del lote", `${ds.b4_files_foto?.length ?? 0}`)}
+          <p className={styles.meta} style={{ margin: "6px 0 0" }}>
+            <Link href={`/ocp/kr?lote=${l.id}`}>Abrir la vista completa del lote →</Link>
+          </p>
+        </div>
+      </details>
+    );
+  };
+
   const solicitudCard = (i: (typeof solicitadas)[number]) => {
     const pendiente = i.status === "pendiente";
     const factura = facturaDe(i);
@@ -171,7 +239,8 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
             <b>Pide descuento:</b> «{i.nota_solicitud}»
           </p>
         )}
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        {fichaDelLote(i.lot!)}
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
           <span className={`${styles.badge} ${i.discount_pct > 0 ? styles.badgeGood : ""}`}>
             {i.discount_pct > 0 ? `Subvención ${i.discount_pct} %${subvencion ? ` · ${subvencion.name}` : ""}` : "Sin subvención"}
           </span>

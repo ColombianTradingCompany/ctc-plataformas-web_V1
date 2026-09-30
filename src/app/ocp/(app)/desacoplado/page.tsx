@@ -5,6 +5,7 @@ import { ActionForm } from "@/components/panel/ActionForm";
 import { crearProveedorDesacoplado, entregarCuentaDesacoplada } from "@/lib/asistencia/actions";
 import { GESTION_LABEL, type Gestion } from "@/lib/asistencia/desacoplado";
 import { SesionAsistidaBoton } from "../asistencia/SesionAsistidaBoton";
+import { SelectorDepartamento } from "./SelectorDepartamento";
 import styles from "@/components/panel/shared.module.css";
 
 export const dynamic = "force-dynamic";
@@ -55,10 +56,8 @@ export default async function DesacopladoPage() {
               <label htmlFor="company_name">Finca o razón social (opcional)</label>
               <input id="company_name" name="company_name" />
             </div>
-            <div className={styles.field}>
-              <label htmlFor="department">Departamento (opcional)</label>
-              <input id="department" name="department" placeholder="Ej. Santander" />
-            </div>
+            {/* V5.111 (owner): selector con la misma lista que Kaffetal Regal, y «Otro…» para escribir uno. */}
+            <SelectorDepartamento />
             <div className={styles.field}>
               <label htmlFor="phone">Teléfono / WhatsApp (opcional)</label>
               <input id="phone" name="phone" />

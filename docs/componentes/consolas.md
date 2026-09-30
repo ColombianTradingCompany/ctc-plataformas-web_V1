@@ -341,7 +341,7 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
   en `/ocp/kr?productor=`: la sesión asistida, `src/lib/asistencia/actions.ts`; **V5.105**, owner 2026-09-30: filtros —cuenta, estado del
   productor por casillas, departamento, con/sin finca y lote— y buscador con **búsqueda profunda** (toggle) que también mira nombres y códigos
   de fincas y lotes y dice dónde coincidió; `AsistenciaTabla.tsx`, `qa-asistencia` +3), **Proveedor Desacoplado** (`/ocp/desacoplado`:
-  crear sin buzón, insignia, entregar) y «CTCx asume el costo» de una evaluación. Migración `producer_profiles_gestion_desacoplado` **aplicada** el
+  crear sin buzón, insignia, entregar; **V5.111**: el departamento se elige de un selector con la lista de KR y «Otro…» libre) y «CTCx asume el costo» de una evaluación. Migración `producer_profiles_gestion_desacoplado` **aplicada** el
   2026-09-23 (acta en `docs/migraciones/`, carpeta nueva: el acta de cada DDL, porque la fuente de verdad es la base). **Nadie ha conducido la sesión asistida en vivo**
   (~~exige un productor `prueba-*`~~ — esas cuentas se eliminaron en la V5.89: se conduce sobre un productor real o un
   desacoplado, Etapa 2): se verificó por `tsc`, build, `qa-asistencia` (57) y lectura del flujo de Auth. **Queda de las

@@ -127,7 +127,9 @@ export async function crearProveedorDesacoplado(formData: FormData): Promise<Act
   const fullName = String(formData.get("full_name") ?? "").trim();
   if (fullName.length < 3) return { ok: false, error: "Escriba el nombre del dueño del café (mínimo 3 caracteres)." };
   const companyName = String(formData.get("company_name") ?? "").trim() || null;
-  const department = String(formData.get("department") ?? "").trim() || null;
+  // V5.111: el departamento viene del selector (`department`) o, con «Otro…», del campo libre (`department_otro`).
+  const departmentSel = String(formData.get("department") ?? "").trim();
+  const department = (departmentSel === "__otro__" ? String(formData.get("department_otro") ?? "").trim() : departmentSel) || null;
   const phone = String(formData.get("phone") ?? "").trim() || null;
 
   const email = correoEtiquetaDesacoplado(slugDesacoplado());

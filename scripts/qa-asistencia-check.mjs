@@ -132,6 +132,15 @@ const lee = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
   check("las tarjetas: finca con ubicación, ha, lotes y certificaciones; lote con ficha, grado, muestra, oferta y trato; arena con pago; contrato con kg y precio", panel.includes("certificacionesCorroboradas") && panel.includes("PASOS_DE_LA_FICHA.map((p, i)") && panel.includes('prefijo="Muestra"') && panel.includes("PAGO_LABEL[a.pago]") && panel.includes("`${cop(c.copKg)}/kg`"));
 }
 
+// ── 5c. V5.111 (owner, 2026-09-30) · Proveedor Desacoplado: el departamento de un selector (la lista de KR) con «Otro…» ──
+{
+  const selector = lee("src/app/ocp/(app)/desacoplado/SelectorDepartamento.tsx");
+  const pagina = lee("src/app/ocp/(app)/desacoplado/page.tsx");
+  const acciones = lee("src/lib/asistencia/actions.ts");
+  check("el selector usa la lista de Kaffetal Regal (DEP_MUNI sin Multi-Origin) y ofrece «Otro…» con campo libre", selector.includes("Object.keys(DEP_MUNI)") && selector.includes('d !== "Multi-Origin"') && selector.includes("<option value={OTRO}>Otro…</option>") && selector.includes('name="department_otro"'));
+  check("el formulario lo monta y la acción resuelve selector u «Otro»", pagina.includes("<SelectorDepartamento />") && acciones.includes('departmentSel === "__otro__" ? String(formData.get("department_otro")'));
+}
+
 // ── 5b. V5.105 (owner, 2026-09-30) · Asistencia a Proveedores: filtros y buscador con búsqueda profunda en fincas y lotes ──
 {
   const pagina = lee("src/app/ocp/(app)/asistencia/page.tsx");

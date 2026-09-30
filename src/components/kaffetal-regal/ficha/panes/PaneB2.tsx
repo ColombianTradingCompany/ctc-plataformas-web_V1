@@ -156,6 +156,14 @@ export function PaneB2({
         </div>
       )}
 
+      {/* V5.115 (owner, 2026-09-30): con «No lo sé» marcado no hay nada que adjuntar — los soportes desaparecen. Si ya había
+          archivos subidos, se dicen en una línea (siguen guardados en la Ficha) para que nadie crea que se perdieron. */}
+      {data.ft2_b2_na && data.b2_files_pdf.length + data.b2_files_foto.length > 0 && (
+        <p className={styles.fexample}>
+          Con «No lo sé» no se piden soportes; los {data.b2_files_pdf.length + data.b2_files_foto.length} archivo(s) que ya subió siguen guardados en la Ficha.
+        </p>
+      )}
+      {!data.ft2_b2_na && (
       <ReportFiles
         titulo={conReporte ? "Soportes del reporte · hoja de catación, radar, rueda — al menos un PDF o una foto (obligatorio)" : "Soportes del Perfil de Taza · hoja de catación, radar, rueda (hasta 7 PDFs y 7 fotos)"}
         pdfs={data.b2_files_pdf}
@@ -171,6 +179,7 @@ export function PaneB2({
         onUploadFile={onUploadFile}
         onGetFileUrl={onGetFileUrl}
       />
+      )}
       {faltaSoporte && <p className={styles.fexample} style={{ color: "var(--red, #C4402F)" }}>Con «Tengo un reporte» hace falta al menos un soporte: el PDF o una foto de la hoja de catación.</p>}
 
       {/* El bloque «Notas de Análisis & Referencia Q-Grader» salió de B2

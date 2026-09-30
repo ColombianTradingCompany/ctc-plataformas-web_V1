@@ -19,6 +19,12 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.115] — 2026-09-30 (commit pendiente)
+
+- **Cambiado**: en la Ficha del lote, con **«No lo sé»** marcado en B2 (o «No lo sé / solo información básica» en B3) **los soportes
+  desaparecen** (owner, 2026-09-30): no hay nada que adjuntar. Si ya había archivos subidos, una línea dice que siguen guardados en
+  la Ficha. `qa-reportado-productor` 55 → 56.
+
 ## [V5.114] — 2026-09-30 (commit 9b3c8cb)
 
 - **Cambiado**: en Kaffetal Regal, el **documento de respaldo de la finca es solo el SICA** (Registro SICA / cédula cafetera de la

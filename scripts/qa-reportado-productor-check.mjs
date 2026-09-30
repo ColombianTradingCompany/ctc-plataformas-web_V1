@@ -74,6 +74,8 @@ check("la descarga es un ANCLA (sobrevive al fieldset disabled)", /<a\s[\s\S]*?D
 check("y lo dice en el propio componente", files.includes("fieldset disabled"));
 check("B2 monta los soportes", b2.includes("<ReportFiles") && b2.includes("b2_files_pdf"));
 check("B3 también", b3.includes("<ReportFiles") && b3.includes("b3_files_pdf"));
+// V5.115 (owner): con «No lo sé» marcado los adjuntos desaparecen (y si ya había archivos, se dice que siguen guardados).
+check("con «No lo sé», B2 y B3 esconden los soportes", b2.includes("{!data.ft2_b2_na && (\n      <ReportFiles") && b3.includes("{!data.b3_solo_basica && (\n      <ReportFiles") && b2.includes("siguen guardados en la Ficha") && b3.includes("siguen guardados en la Ficha"));
 
 // ── 4. La pantalla explica y bosqueja ─────────────────────────────────────
 check("B2 lleva la explicación grande", b2.includes("introBig"));

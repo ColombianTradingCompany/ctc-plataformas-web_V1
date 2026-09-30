@@ -177,6 +177,13 @@ export function PaneB3({
         </div>
       )}
 
+      {/* V5.115 (owner, 2026-09-30): con «No lo sé / solo información básica» no hay nada que adjuntar — los soportes desaparecen. */}
+      {data.b3_solo_basica && data.b3_files_pdf.length + data.b3_files_foto.length > 0 && (
+        <p className={styles.fexample}>
+          Con «No lo sé» no se piden soportes; los {data.b3_files_pdf.length + data.b3_files_foto.length} archivo(s) que ya subió siguen guardados en la Ficha.
+        </p>
+      )}
+      {!data.b3_solo_basica && (
       <ReportFiles
         titulo={conReporte ? "Soportes del reporte · granulometría, factor, densidad — al menos un PDF o una foto (obligatorio)" : "Soportes del análisis físico · granulometría, factor, densidad (hasta 7 PDFs y 7 fotos)"}
         pdfs={data.b3_files_pdf}
@@ -192,6 +199,7 @@ export function PaneB3({
         onUploadFile={onUploadFile}
         onGetFileUrl={onGetFileUrl}
       />
+      )}
       {faltaSoporte && <p className={bstyles.rangoError}>Con «Tengo un reporte» hace falta al menos un soporte: el PDF o una foto de la hoja de análisis.</p>}
 
       <div className={bstyles.opcionalBox}>

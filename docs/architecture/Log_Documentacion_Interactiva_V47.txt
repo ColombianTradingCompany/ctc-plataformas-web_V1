@@ -273,3 +273,7 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `FincaModal.tsx` (`SUPPORT_DOC_SICA`, sin selector), `src/components/bcp/GeoMap.tsx` (`polygon` + `PolygonF`), `kr/KrTabla.tsx`
   (pines = fincas siempre), `kr/carga.ts` (`KrFila.poligono`). Guardianes: `qa-visa` +2, `qa-boards` +2.
 (commit: 9b3c8cb)
+
+## [2026-09-30] V5.115 · Kaffetal Regal — B2 y B3: con «No lo sé», sin adjuntos
+- ANN `ficha/panes/PaneB2.tsx`, `PaneB3.tsx` (ReportFiles solo sin «No lo sé»). Guardián: `qa-reportado-productor` +1.
+(commit: pendiente)

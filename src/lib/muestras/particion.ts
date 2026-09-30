@@ -10,26 +10,31 @@
 // Tablero y el circuito del lote. Un saldo guardado es un número que alguien olvida actualizar.
 
 // V5.89 (owner, 2026-09-25, diagrama «Envío de Muestras para Evaluación de Lotes» en reference/muestras-y-sample-kits-2026-09-25):
-// los 2 kg de CPS son de uso EXCLUSIVO de CTCx: 2 × 250 g «Evaluación Inicial Q-Grader», 2 × 250 g «Contramuestras de Reserva
-// CPS» y 1 kg «Muestra de Evaluación CTCx» que se TRILLA por completo (~750 g de verde: ~500 g se tuestan → 400 g de tostado
-// para ensayos piloto; 250 g quedan como contramuestra de verde al vacío). Los kilos 500/500/1000 del folio 7 no cambian.
+// los 2 kg de CPS son de uso EXCLUSIVO de CTCx. V5.94 (owner, 2026-09-30, sobre el mismo diagrama): el PRIMER kilo se parte en
+// CUATRO porciones de 250 g de CPS — UNA va al Q-Grader de inmediato (evaluación) y las otras TRES quedan de reserva
+// (contramuestras): de ahí sale la revisión de almacenaje de los 90 días (una porción cada vez). El SEGUNDO kilo («Evaluación
+// CTCx») se TRILLA por completo: ~750 g de verde = 2 × 125 g de verde al vacío + ~500 g que se tuestan → ~400 g de tostado para
+// ensayos internos. Los 250/750/1000 sustituyen a los 500/500/1000 del folio 7.
 export type TipoDeMuestra = "evaluacion" | "contramuestra" | "testeo" | "comprador" | "verde_vacio" | "tostado_ensayo";
 /** Los tres tipos en que se parte lo que llega (los otros tres nacen después: del kilo CTCx o de Adquisición). */
 export type TipoDeParticion = "evaluacion" | "contramuestra" | "testeo";
 
+/** La porción de CPS del owner: 250 g. El primer kilo son cuatro; la revisión de almacenaje gasta una. */
+export const PORCION_CPS_KG = 0.25;
+
 export const TIPO_LABEL: Record<TipoDeMuestra, string> = {
-  evaluacion: "Evaluación Q-Grader (2 × 250 g CPS)",
-  contramuestra: "Reserva CPS (2 × 250 g)",
+  evaluacion: "Evaluación Q-Grader (1 × 250 g CPS)",
+  contramuestra: "Reserva CPS (3 × 250 g)",
   testeo: "Evaluación CTCx (1 kg CPS)",
   comprador: "Para comprador",
-  verde_vacio: "Verde al vacío (contramuestra)",
+  verde_vacio: "Verde al vacío (2 × 125 g)",
   tostado_ensayo: "Tostado · ensayo interno",
 };
 
-/** La partición fija del folio 7, en el orden en que se sirve. */
+/** La partición fija (owner, 2026-09-30), en el orden en que se sirve: 1 × 250 g al Q-Grader · 3 × 250 g de reserva · 1 kg CTCx. */
 export const PARTICION_KG: readonly { tipo: TipoDeParticion; kg: number }[] = [
-  { tipo: "evaluacion", kg: 0.5 },
-  { tipo: "contramuestra", kg: 0.5 },
+  { tipo: "evaluacion", kg: PORCION_CPS_KG },
+  { tipo: "contramuestra", kg: 3 * PORCION_CPS_KG },
   { tipo: "testeo", kg: 1 },
 ];
 
@@ -45,8 +50,8 @@ export const MOTIVO_LABEL: Record<MotivoDeSalida, string> = {
   trilla_verde: "Trillado a verde (evaluación CTCx)",
 };
 
-/** El kilo CTCx (owner, 2026-09-25): rendimiento de trilla ~75 %, 250 g de verde al vacío, y el resto se tuesta con ~20 % de merma
- *  (500 g de verde → 400 g de tostado). Con 1 kg: 750 g de verde = 250 g al vacío + 500 g a tostar → 400 g de tostado. */
+/** El kilo CTCx (owner, 2026-09-25 y 2026-09-30): rendimiento de trilla ~75 %, 250 g de verde al vacío (en DOS bolsas de 125 g), y el
+ *  resto se tuesta con ~20 % de merma (500 g de verde → 400 g de tostado). Con 1 kg: 750 g de verde = 2 × 125 g al vacío + 500 g a tostar → 400 g. */
 export const KILO_CTCX = { rendimientoTrilla: 0.75, verdeVacioKg: 0.25, mermaTostion: 0.2 } as const;
 
 export function trillaDelKilo(kgCps: number): { verdeKg: number; verdeVacioKg: number; aTostarKg: number; tostadoKg: number } {

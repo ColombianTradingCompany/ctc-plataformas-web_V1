@@ -180,11 +180,10 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
 - **Lo que destapó la auditoría del nodo final antes del wrap V47 (2026-09-25) — de este charter, CÓDIGO o decisión, sin tocar**:
   **(a) Permisos LCP → ECP (V5.73, «Para `consolas`» en §3; no estaba anotado aquí)**: el CRM CP CaaS (`LeadsBoard.tsx`) enseña
   las cotizaciones courier de un item y enlaza a `/ecp/cotizador-courier`; un colaborador con grant de LCP y sin grant de ECP las ve
-  y no puede abrirlas. Decidir si el enlace se esconde sin grant de ECP o si se le da lectura. **(b) La revisión de almacenaje a
-  los 90 días se queda sin kilo**: la V5.88 la hace con la muestra de **testeo** (1 kg, `almacenajeCarga.ts` solo mira el testeo
-  con saldo) y desde la V5.89 ese kilo se **trilla entero** (`trillarMuestraCtcx`: salida `trilla_verde` de todo el saldo) — un lote
-  trillado no tendrá revisión. **Decide el owner** con qué se revisa: la contramuestra de reserva CPS, el verde al vacío (250 g)
-  o un kilo nuevo. **(c) Avisos al productor que faltan**: `signContract` no escribe nada en su feed ni le manda correo, y
+  y no puede abrirlas. Decidir si el enlace se esconde sin grant de ECP o si se le da lectura. ~~**(b) La revisión de almacenaje a
+  los 90 días se queda sin kilo**~~ — **HECHO en la V5.94** (owner, 2026-09-30): el primer kilo son 4 × 250 g de CPS (una al
+  Q-Grader, tres de reserva) y la revisión toma una contramuestra de reserva; `almacenajeCarga.ts` y `anotarRevisionDeAlmacenaje`
+  miran la reserva, no el testeo. **(c) Avisos al productor que faltan**: `signContract` no escribe nada en su feed ni le manda correo, y
   `rejectFinca` tampoco (y conserva un `throw` si la finca no existe; ver `ALINEACION` §4.8). **(d) Comentarios caducos en el
   código** (el siguiente barrido hace `grep`): `nominadosActions.ts` hacia la línea 568 («Rechazado ⇒ … cashback del 80 %», retirado
   en la V5.82) y 571-573 («black abre su negociación (CRM de CTC)», retirado en la V5.85); `src/lib/arena/eudrGate.ts` líneas 9 y

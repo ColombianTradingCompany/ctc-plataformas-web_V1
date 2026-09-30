@@ -15,7 +15,7 @@
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { particionDeMuestra, saldoDe, salidaValida, kgDelPedido, trillaDelKilo, KILO_CTCX, MOTIVO_LABEL, TIPO_LABEL, PEDIDO_STATUS_LABEL } from "../src/lib/muestras/particion.ts";
+import { particionDeMuestra, saldoDe, salidaValida, kgDelPedido, trillaDelKilo, KILO_CTCX, MOTIVO_LABEL, TIPO_LABEL, PEDIDO_STATUS_LABEL, PORCION_CPS_KG } from "../src/lib/muestras/particion.ts";
 import { DIAS_REVISION_ALMACENAJE, KG_REVISION_ALMACENAJE, revisionDeAlmacenaje } from "../src/lib/muestras/almacenaje.ts";
 import { CONSOLES } from "../src/lib/panel/consoles.ts";
 import { TIPOS_DE_TAREA, consolasDeLaTarea } from "../src/lib/panel/tareas.ts";
@@ -38,8 +38,10 @@ const acta89 = lee("docs/migraciones/2026-09-25_bodegas_muestras.sql");
   check("la base NO guarda un saldo", !/saldo/.test(migracion));
   const suma = (kg) => particionDeMuestra(kg).reduce((s, p) => s + p.kg, 0);
   for (const kg of [2, 1.2, 0.4, 2.35, 0.5]) check(`la partición de ${kg} kg suma lo recibido`, Math.abs(suma(kg) - kg) < 1e-9, `${suma(kg)}`);
-  check("con menos de 2 kg el testeo es el que se encoge", JSON.stringify(particionDeMuestra(1.2)) === JSON.stringify([{ tipo: "evaluacion", kg: 0.5 }, { tipo: "contramuestra", kg: 0.5 }, { tipo: "testeo", kg: 0.2 }]));
-  check("con 400 g solo hay evaluación (no hay porciones de 0 g)", JSON.stringify(particionDeMuestra(0.4)) === JSON.stringify([{ tipo: "evaluacion", kg: 0.4 }]));
+  check("con menos de 2 kg el testeo es el que se encoge", JSON.stringify(particionDeMuestra(1.2)) === JSON.stringify([{ tipo: "evaluacion", kg: 0.25 }, { tipo: "contramuestra", kg: 0.75 }, { tipo: "testeo", kg: 0.2 }]));
+  check("con 400 g hay evaluación y 150 g de reserva (no hay porciones de 0 g)", JSON.stringify(particionDeMuestra(0.4)) === JSON.stringify([{ tipo: "evaluacion", kg: 0.25 }, { tipo: "contramuestra", kg: 0.15 }]));
+  check("con 200 g solo hay evaluación", JSON.stringify(particionDeMuestra(0.2)) === JSON.stringify([{ tipo: "evaluacion", kg: 0.2 }]));
+  check("el primer kilo son cuatro porciones de 250 g: una al Q-Grader, tres de reserva (owner, 2026-09-30)", PORCION_CPS_KG === 0.25 && particionDeMuestra(2)[0].kg === PORCION_CPS_KG && particionDeMuestra(2)[1].kg === 3 * PORCION_CPS_KG && particionDeMuestra(2)[2].kg === 1);
   check("con cero no hay muestra", particionDeMuestra(0).length === 0 && particionDeMuestra(-1).length === 0);
   check("saldo = recibido − Σ salidas", saldoDe(0.5, [{ kg: 0.2 }, { kg: "0.1" }]) === 0.2);
   check("una salida que cabe vale", salidaValida(0.3, 0.3) && salidaValida(0.5, 0.2));
@@ -87,13 +89,13 @@ const acta89 = lee("docs/migraciones/2026-09-25_bodegas_muestras.sql");
 }
 
 // ── (4) La alerta de los 90 días se DERIVA (2.ª tanda, V5.88): de la fecha de la evaluación, sin campo aparte ──
-// La regla del owner está escrita en ALINEACION §3 (2026-09-16): «llamado a más de 90 días de la catación: no se recata, se hace
-// revisión de almacenaje con 1 kg». Las cifras se leen de AHÍ, no del módulo.
+// La regla del owner está escrita en ALINEACION §3: los 90 días (2026-09-16) y, desde la V5.94 (2026-09-30), CON QUÉ se revisa — una
+// contramuestra de reserva CPS de 250 g. Las cifras se leen de AHÍ, no del módulo.
 {
   const alineacion = lee("docs/ALINEACION.md");
-  const regla = alineacion.match(/llamado a más de (\d+) días de la catación: \*\*no se recata\*\*, se hace \*\*revisión de almacenaje con (\d+) kg\*\*/);
-  check("la regla del owner (ALINEACION §3, 2026-09-16) fija 90 días y 1 kg", !!regla && DIAS_REVISION_ALMACENAJE === Number(regla[1]) && KG_REVISION_ALMACENAJE === Number(regla[2]));
-  check("el kilo es la porción de testeo del folio 7 (no un peso inventado)", KG_REVISION_ALMACENAJE === particionDeMuestra(2).find((p) => p.tipo === "testeo").kg);
+  const regla = alineacion.match(/revisión de almacenaje con \*\*una contramuestra de reserva CPS de (\d+) g\*\* \(a más de \*\*(\d+) días\*\* de la catación/);
+  check("la regla del owner (ALINEACION §3, 2026-09-30) fija 90 días y una contramuestra de 250 g", !!regla && DIAS_REVISION_ALMACENAJE === Number(regla[2]) && KG_REVISION_ALMACENAJE === Number(regla[1]) / 1000);
+  check("la porción es la del primer kilo (no un peso inventado) y cabe tres veces en la reserva", KG_REVISION_ALMACENAJE === PORCION_CPS_KG && particionDeMuestra(2).find((p) => p.tipo === "contramuestra").kg === 3 * KG_REVISION_ALMACENAJE);
   const acta88 = lee("docs/migraciones/2026-09-25_muestras_pedidos_envio.sql");
   // (el DDL, no sus comentarios: el acta explica la alerta con esa palabra)
   check("la base no tiene un campo de alerta ni de revisión programada", !/alerta|revision_at|dias_90|revisar_en/.test(migracion) && !/revision_at|proxima_revision|alerta/.test(acta88.replace(/^--.*$/gm, "")));
@@ -112,7 +114,7 @@ const acta89 = lee("docs/migraciones/2026-09-25_bodegas_muestras.sql");
   const tareas = lee("src/lib/panel/tareasCarga.ts");
   check("el Tablero de Ejecución la enseña como tarea derivada `muestra` (dueña OCP)", TIPOS_DE_TAREA.includes("muestra") && consolasDeLaTarea("muestra:x:2026-10-01").includes("ocp") && tareas.includes("revisionesDeAlmacenaje(service)") && tareas.includes("key: r.claveDeTarea"));
   check("la clave de la tarea lleva el ciclo, para que una casilla vieja no tape la siguiente", carga.includes("claveDeTarea: `muestra:${lot.id}:${(ultimaRevisionAt ?? evaluadaAt).slice(0, 10)}`"));
-  check("anotar la revisión es una salida de la muestra de testeo, con resultado, que cabe en el saldo", acciones.includes('motivo: "revision_almacenaje"') && acciones.includes("if (!resultado) return") && acciones.includes("salidaValida(conSaldo.saldo, usa)") && acciones.includes('.eq("tipo", "testeo")'));
+  check("anotar la revisión es una salida de la contramuestra de reserva, con resultado, que cabe en el saldo", acciones.includes('motivo: "revision_almacenaje"') && acciones.includes("if (!resultado) return") && acciones.includes("salidaValida(conSaldo.saldo, usa)") && acciones.includes('.eq("tipo", "contramuestra").order("recibida_at"') && carga.includes('.eq("tipo", "contramuestra")'));
   check("y la página tiene la pestaña de almacenaje con la regla a la vista", lee("src/app/ocp/(app)/muestras/page.tsx").includes("DIAS_REVISION_ALMACENAJE") && lee("src/app/ocp/(app)/muestras/page.tsx").includes("anotarRevisionDeAlmacenaje.bind"));
 }
 
@@ -167,7 +169,7 @@ const acta89 = lee("docs/migraciones/2026-09-25_bodegas_muestras.sql");
   // El kilo CTCx: 1 kg CPS → ~750 g verde = 250 g al vacío + 500 g a tostar → 400 g tostado (los números del diagrama).
   const t = trillaDelKilo(1);
   check("el kilo CTCx: 1 kg CPS → 750 g de verde", t.verdeKg === 0.75 && KILO_CTCX.rendimientoTrilla === 0.75);
-  check("250 g de verde al vacío y 500 g a tostar", t.verdeVacioKg === 0.25 && t.aTostarKg === 0.5);
+  check("250 g de verde al vacío (2 × 125 g) y 500 g a tostar", t.verdeVacioKg === 0.25 && t.aTostarKg === 0.5 && TIPO_LABEL.verde_vacio.includes("2 × 125 g"));
   check("400 g de tostado (merma del 20 %)", t.tostadoKg === 0.4 && KILO_CTCX.mermaTostion === 0.2);
   check("con menos de un kilo el vacío es lo que cabe y el resto se tuesta", trillaDelKilo(0.2).verdeVacioKg === 0.15 && trillaDelKilo(0.2).aTostarKg === 0);
   check("los tipos nuevos nacen del kilo (origen_muestra_id) y la salida es trilla_verde", acta89.includes("add column origen_muestra_id uuid references public.muestras(id)") && acciones.includes('motivo: "trilla_verde"') && acciones.includes('tipo: "verde_vacio"') && acciones.includes('tipo: "tostado_ensayo"') && acciones.includes("origen_muestra_id: muestraId"));

@@ -143,3 +143,14 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - Para el mapa: la ficha del taller/puente puede decir que dos herramientas guardan esquema propio (cromatografía y Agtron) y
   que la conformidad las sondea; ningún nodo nuevo. `tools.guia` de `agtron` reescrita (dato, sin migración).
 (commit: a37bc60)
+
+## [2026-09-30] V5.94 · Consolas — la muestra de 2 kg según el owner: 4 × 250 g de CPS y la revisión con una contramuestra
+- DICT `gestionmuestras` · `almacenaje`: la partición es 250 g evaluación (una porción al Q-Grader) · 750 g reserva (tres
+  contramuestras) · 1 kg CTCx que se trilla (2 × 125 g de verde al vacío + ~500 g a tostar → ~400 g); la revisión de los 90 días
+  gasta UNA contramuestra de reserva (`KG_REVISION_ALMACENAJE = PORCION_CPS_KG`), no el kilo de testeo. Decisión (b) del owner del
+  wrap V47, contestada el 2026-09-30.
+- Traza `almacenaje`: el paso «anotarRevisionDeAlmacenaje()» sale de la contramuestra de reserva, no del kilo de testeo. Traza
+  `envio`: el recibo crea 250/750/1000.
+- ANN: `src/lib/muestras/particion.ts` (porción de 250 g) y `almacenaje.ts` (la reserva). KR: `shipmentInstructionsPrint.ts` ya
+  no nombra la Arena.
+(commit: pendiente)

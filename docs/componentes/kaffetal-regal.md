@@ -136,9 +136,10 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   muestra es `EVALUATION_FEE_COP` = $200.000 (`src/lib/trato/terminos.ts`). **Lo que sigue siendo de KR**: el copy «Cupping
   Arena» y «No abrir antes de la Arena» de las instrucciones de envío y su etiqueta recortable (`shipmentInstructionsPrint.ts`); la caja «Cómo pagar · Nequi»
   sigue esperando el número (lo escribe el owner). **Y desde la V5.89** (§3, «Para `kaffetal-regal`», sin código tocado; lo anota el
-  nodo final, wrap V47): esas instrucciones ya dicen 2 kg, bolsa zip-lock y solo el código del lote, pero deberían decir lo que
-  dibujó el owner — **2 kg de CPS representativos, de uso exclusivo de CTCx** (2 × 250 g evaluación del Q-Grader · 2 × 250 g
-  contramuestra de reserva · 1 kg de evaluación CTCx que se trilla para ensayos) — las muestras para compradores salen de otro stock (Sample Kits). Fuente fuera del repo:
+  nodo final, wrap V47): ~~esas instrucciones ya dicen 2 kg, bolsa zip-lock y solo el código del lote, pero deberían decir lo que
+  dibujó el owner~~ — **HECHO en la V5.94** (código de KR tocado por `consolas` con el «organiza todo» del owner, línea en §3): las
+  instrucciones y la etiqueta dicen **2 kg de CPS representativos, de uso exclusivo de CTCx** (1 × 250 g al Q-Grader · 3 × 250 g de
+  reserva · 1 kg que se trilla para ensayos), y ya no nombran la «Cupping Arena» ni «No abrir antes de la Arena». Fuente fuera del repo:
   `reference/muestras-y-sample-kits-2026-09-25/`.
 - **Fase 4 (V5.81) — una línea tocada y un pendiente con dueño aquí**: `LotKanbanStepper` conoce el estado **`evaluado`** del
   circuito en su ORDEN (`qa-circuito` lo exige). **Pendiente KR**: alimentar `evaluacionPendiente` a `estadoDelCircuito()` (hay

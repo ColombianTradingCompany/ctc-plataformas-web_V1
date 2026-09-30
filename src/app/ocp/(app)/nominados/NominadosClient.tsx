@@ -276,8 +276,8 @@ export function ReciboForm({ lotId, shipped, bodegas = [] }: { lotId: string; sh
         </button>
       </div>
       <p className={styles.meta} style={{ margin: 0 }}>
-        Se parte en 2 × 250 g para el Q-Grader · 2 × 250 g de reserva CPS · el resto, el kilo CTCx que se trilla (~750 g de verde: 400 g de tostado para
-        ensayos + 250 g de verde al vacío).
+        Se parte en 1 × 250 g para el Q-Grader · 3 × 250 g de reserva CPS (de ahí sale la revisión de los 90 días) · el resto, el kilo CTCx que se trilla
+        (~750 g de verde: 400 g de tostado para ensayos + 2 × 125 g de verde al vacío).
       </p>
       <ErrorLine error={error} />
     </div>

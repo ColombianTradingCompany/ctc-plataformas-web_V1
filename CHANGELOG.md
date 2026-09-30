@@ -19,6 +19,20 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.94] — 2026-09-30 (commit pendiente)
+
+- **Cambiado**: **la muestra de 2 kg se parte como la dibujó el owner** (feedback del 2026-09-30): el primer kilo de CPS son **cuatro
+  porciones de 250 g** — una la cata el Q-Grader de inmediato (`evaluacion`, 250 g) y **tres quedan de reserva** (`contramuestra`, 750 g) —
+  y el segundo es el kilo CTCx que se trilla entero (~750 g de verde = **2 × 125 g al vacío** + ~500 g a tostar → ~400 g). `PARTICION_KG`
+  pasa de 500/500/1000 a 250/750/1000 (`PORCION_CPS_KG = 0.25`); lo que ya estaba recibido no cambia (el saldo se deriva).
+- **Cambiado**: **la revisión de almacenaje a los 90 días toma UNA contramuestra de reserva CPS (250 g)**, no el kilo de testeo que
+  desde la V5.89 se trilla entero: `KG_REVISION_ALMACENAJE = PORCION_CPS_KG`; `almacenajeCarga.ts`, `anotarRevisionDeAlmacenaje`, la
+  pestaña de `/ocp/muestras` y la tarea `muestra` del Tablero miran la reserva (`saldoReservaKg`). Cierra la decisión (b) del charter.
+- **Cambiado** (código de `kaffetal-regal`, con el «organiza todo» del owner; ALINEACION §3): las instrucciones de envío y su etiqueta
+  recortable dicen que los 2 kg son representativos y de uso exclusivo de CTCx, con las porciones, y ya no nombran la «Cupping Arena».
+- **Docs**: `PLAN_CIRCUITO_DEL_LOTE` §0 paso 10 y «Pendiente de la Etapa 1»; brief de Muestras; charters `consolas` y `kaffetal-regal`;
+  HANDOFF. `qa-muestras` lee ahora la regla de la fila V5.94 de ALINEACION §3 (porción y días) y prueba la partición nueva.
+
 ## [V5.93] — 2026-09-26 (commit a37bc60)
 
 - **Cambiado**: **el Disco Agtron V8** (`public/tools/agtron/agtron-dial.html`; la fuente del owner, `reference/html_tools/agtron/agtron_dial_metre-V8.html`).

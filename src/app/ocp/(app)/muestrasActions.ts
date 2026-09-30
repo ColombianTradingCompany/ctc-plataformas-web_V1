@@ -82,8 +82,8 @@ export async function anotarSalidaDeMuestra(muestraId: string, formData: FormDat
 // ── 2.ª tanda (V5.88): la revisión de almacenaje y las muestras para comprador ──────────────────
 
 /**
- * La revisión de almacenaje a los 90 días (owner, 2026-09-16: «no se recata; se revisa el almacenaje con 1 kg»). Es un
- * movimiento más de la muestra de TESTEO (motivo `revision_almacenaje`) con el resultado en las notas; la alerta se deriva
+ * La revisión de almacenaje a los 90 días (owner, 2026-09-16: «no se recata; se revisa el almacenaje»; 2026-09-30: con UNA de las
+ * contramuestras de reserva CPS de 250 g). Es un movimiento más de la muestra de RESERVA (motivo `revision_almacenaje`) con el resultado en las notas; la alerta se deriva
  * de este movimiento y de la fecha de la catación (`src/lib/muestras/almacenaje.ts`). Cuaderno interno: `borrador`.
  */
 export async function anotarRevisionDeAlmacenaje(lotId: string, formData: FormData): Promise<Result> {
@@ -95,15 +95,15 @@ export async function anotarRevisionDeAlmacenaje(lotId: string, formData: FormDa
   const kg = kgPedidos ? Number(kgPedidos.replace(",", ".")) : KG_REVISION_ALMACENAJE;
   const resultado = String(formData.get("resultado") ?? "").trim();
   if (!resultado) return { ok: false, error: "Anote el resultado de la revisión (humedad, olor, estado del grano…)." };
-  const { data: testeos } = await service.from("muestras").select("id, kg").eq("lot_id", lotId).eq("tipo", "testeo").order("recibida_at", { ascending: false });
-  const filas = (testeos as { id: string; kg: number | string }[] | null) ?? [];
-  if (!filas.length) return { ok: false, error: "Este lote no tiene muestra de testeo en la casa: pídala antes de revisar." };
+  const { data: reservas } = await service.from("muestras").select("id, kg").eq("lot_id", lotId).eq("tipo", "contramuestra").order("recibida_at", { ascending: false });
+  const filas = (reservas as { id: string; kg: number | string }[] | null) ?? [];
+  if (!filas.length) return { ok: false, error: "Este lote no tiene contramuestra de reserva CPS en la casa: pídala antes de revisar." };
   const { data: salidasRaw } = await service.from("muestra_movimientos").select("muestra_id, kg").in("muestra_id", filas.map((f) => f.id));
   const salidas = (salidasRaw as { muestra_id: string; kg: number | string }[] | null) ?? [];
   const conSaldo = filas.map((f) => ({ id: f.id, saldo: saldoDe(Number(f.kg), salidas.filter((x) => x.muestra_id === f.id)) })).find((f) => f.saldo > 0);
-  if (!conSaldo) return { ok: false, error: "La muestra de testeo de este lote ya no tiene saldo: pida una nueva." };
+  if (!conSaldo) return { ok: false, error: "La reserva CPS de este lote ya no tiene saldo: pida una contramuestra nueva." };
   const usa = Math.min(Number.isFinite(kg) && kg > 0 ? kg : KG_REVISION_ALMACENAJE, conSaldo.saldo);
-  if (!salidaValida(conSaldo.saldo, usa)) return { ok: false, error: `Esa cantidad no cabe: quedan ${conSaldo.saldo} kg de testeo.` };
+  if (!salidaValida(conSaldo.saldo, usa)) return { ok: false, error: `Esa cantidad no cabe: quedan ${conSaldo.saldo} kg de reserva CPS.` };
   const { error } = await service.from("muestra_movimientos").insert({
     muestra_id: conSaldo.id,
     kg: usa,
@@ -236,7 +236,7 @@ export async function guardarBodega(bodegaId: string, formData: FormData): Promi
 
 /**
  * El kilo CTCx se trilla por completo (owner, 2026-09-25): sale TODO el saldo del kilo (motivo `trilla_verde`) y nacen dos
- * muestras nuevas con `origen_muestra_id`: el verde al vacío (contramuestra, 250 g) y el tostado de ensayo (400 g de los
+ * muestras nuevas con `origen_muestra_id`: el verde al vacío (2 × 125 g) y el tostado de ensayo (400 g de los
  * ~500 g de verde que se tuestan). Los kilos se proponen con `trillaDelKilo` y se pueden corregir con lo que de verdad pesó.
  */
 export async function trillarMuestraCtcx(muestraId: string, formData: FormData): Promise<Result> {

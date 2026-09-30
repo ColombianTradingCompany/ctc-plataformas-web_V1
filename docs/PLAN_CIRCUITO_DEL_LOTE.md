@@ -33,7 +33,7 @@ Q = Q-Grader del Centro de Calidad). Lo que sigue es la transcripción; entre co
 | 7 | **Solicita la evaluación** (Solicitudes de Evaluación); puede pedir un **descuento** por nota → «Kaffetal Club» sale del BCP y pasa a **OCP · Manejo de Stock Físico** como **«Campañas de Subvención»** | P | [7] |
 | 8 | Corrobora la solicitud y **emite una factura de cobro**; la subvención se decide en Gestión de Muestras | C | [7] |
 | 9 | Paga y envía **2 kg de CPS**, **contra entrega** (gratis para él) | P | [7] |
-| 10 | Recibe café Y pago → **Lotes a Evaluar**. El café se parte en **500 g evaluación · 500 g contramuestra · 1 kg testeo in-house**. Los lotes se apilan en **Baches de Evaluación** que van al Q-Grader | C | [7] |
+| 10 | Recibe café Y pago → **Lotes a Evaluar**. El café se parte en **250 g evaluación · 750 g contramuestra · 1 kg testeo in-house** (owner, 2026-09-30: el primer kilo son 4 × 250 g de CPS —una al Q-Grader, tres de reserva—; el segundo se trilla entero: 2 × 125 g de verde al vacío + ~500 g a tostar → ~400 g; antes 500/500/1000). Los lotes se apilan en **Baches de Evaluación** que van al Q-Grader | C | [7] |
 | 11 | En el **Centro de Calidad** (login propio) hay dos módulos: **Evaluación de Lotes** (ahora) y **Procesamiento de Lotes** (trilla, monitoreo, seleccionadora → mermas; después). Recibe baches; evalúa lote a lote, **anónimos (solo UID)**, física y sensorialmente con la **Datasheet Tool**, **sin «01 Extrínsecos» ni la variedad** (sesgo). **Da de alta cada lote individualmente** | Q | [6][7] |
 | 12 | Cada alta entra a **«Evaluados → Pendiente de Oferta»** (OCP) y a **«Lotes Galardonados»** (KR) con la **Ficha completa**; el galardón sale del puntaje y los factores de grado. Costo para el productor: 2 kg + **~$100.000 COP** [7]. **Bajo los mínimos de Black: rechazo automático con reporte de feedback gratis**; **re-evaluación a tarifa plena ($200.000)**, con **80 % de reembolso si sube un grado** — y antes CTCx analiza que esa mejora aseguraría la oferta [6] | C | ⚠ La cifra del folio 7 (~$100.000) la superó la decisión 2 (§6): tarifa plana de $200.000 |
 | 13 | CTCx decide si **tiene sentido comercial** ofertar (por defecto **sí**; puede no ofertar, sin devolución). Idealmente **5–6 semanas antes de los volúmenes** de cosecha | C | [8] |
@@ -166,7 +166,7 @@ destructivo sin necesidad; **las URLs viejas nunca mueren**: 308).
 | **Recordatorios** | consolas | `/api/cron/recordatorios` semanal: certificaciones con evidencia pedida (×4 → retirar), mora; correo al productor (con el remitente único, que ya filtra etiquetas) + nota en su feed. `finca_certificates.status` (`declarada` · `corroborada` · `evidencia_pedida` · `retirada`) + `recordatorios`, `ultimo_recordatorio_at`. ✅ Certificaciones en la V5.78; **mora en la V5.86** (`contract_months.recordatorios_mora` + `ultimo_recordatorio_mora_at`; regla pura `src/lib/trato/mora.ts`: desde que corre el recargo, semanal, tope ×4, nada automático; el mismo cron) |
 | **El chequeo externo EUDR** | consolas | `fincas.eudr_chequeo_notas` + `eudr_chequeo_files` (jsonb): el cuadro de texto y el adjunto del folio 7 |
 | **Dossier del café ES/EN** | kaffetal-regal (documento) + consolas (datos) | UN documento imprimible: identidad y trazabilidad + Pasaporte/Visa + caracterización (si hay evaluación o FT2 transcrita), en español e inglés. Sustituye a los cuatro documentos sueltos en la cara del productor |
-| **Gestión de Muestras** (1.ª tanda) | consolas | Su brief, con la partición fija 500 / 500 / 1000 g |
+| **Gestión de Muestras** (1.ª tanda) | consolas | Su brief, con la partición fija 500 / 500 / 1000 g (desde la V5.94: 250 / 750 / 1000 g) |
 | **Compras + perfil de CTCx Selection** | consolas + cherry-picked | Su brief, con las respuestas del 23-sep (perfil único, imagen por lote); `ctc_selection` se deriva de `compras` |
 | **Ficha retenida** del desacoplado | kaffetal-regal | `lots.ficha_retenida_hasta_pago` y KR la respeta |
 | **Llamada de bienvenida** | consolas | Tarea derivada `bienvenida` en el Tablero de Ejecución |
@@ -219,9 +219,9 @@ y la 7 son las que el productor ve: es donde la Etapa 2 hará su trabajo.
 - **`qa-evaluacion-check`** (§3 CREAR, Guardianes) no existe: vigilan `qa-evaluaciones-check` y `qa-centro-calidad-check`. Decidir si se
   renombra o se retira la línea. Dueño `consolas`.
 - **`/ocp/fichas`**: el §3 (RETIRAR) pedía un 308; la V5.78 lo dejó como índice fuera del rail. Decidir 308 o índice. Dueño `consolas`.
-- **La revisión de almacenaje a los 90 días y el kilo CTCx** (V5.88 contra V5.89): la revisión se hace «con 1 kg» de la porción de
-  testeo (`src/lib/muestras/almacenaje.ts`), y desde la V5.89 ese kilo se trilla entero (`trillarMuestraCtcx`); sin saldo, la
-  pantalla pide un kilo nuevo al productor. **Decisión del owner**: ¿con qué se revisa (reserva CPS, verde al vacío o un kilo nuevo)?
+- ~~**La revisión de almacenaje a los 90 días y el kilo CTCx** (V5.88 contra V5.89): ¿con qué se revisa?~~ **Decidido por el owner el
+  2026-09-30 y ejecutado en la V5.94**: el primer kilo son cuatro porciones de 250 g de CPS (una al Q-Grader, tres de reserva) y la
+  revisión de los 90 días toma UNA contramuestra de reserva (`KG_REVISION_ALMACENAJE = PORCION_CPS_KG`); el kilo CTCx se trilla entero.
 - **El QR y el sticker del lote** (CN-7, absorbida arriba): sin fase; esperan el diseño de la bolsa (O-4 del plan de narrativa).
 - **Arrastrado de las fases 1, 4 y 5** (diferido, con dueño): temporadas → `/ocp/temporadas` (siguen en `/bcp/arena/temporadas`);
   `src/lib/arena` → `evaluacion`/`trato`; la variante interna de `green-datasheet` (`herramientas-cafe`); el «uso directo» del Centro;

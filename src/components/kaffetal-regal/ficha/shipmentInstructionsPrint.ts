@@ -97,17 +97,18 @@ export function shipmentInstructionsHtml(lotCode: string, shortRef: string): str
 <body>
   <header class="brand">
     <h1>COLOMBIAN TRADING COMPANY</h1>
-    <span>Kaffetal Regal · Cupping Arena</span>
+    <span>Kaffetal Regal · Evaluación de Lotes</span>
   </header>
 
-  <h2>Envío de muestra · 2 kg pergamino · sistema de dos capas</h2>
+  <h2>Envío de muestra · 2 kg de café pergamino seco · sistema de dos capas</h2>
   <div class="code">${markedCode}</div>
   <p class="codeNote">Los <b>7 caracteres en negrita</b> son su código de muestra.</p>
 
   <div class="layers">
     <div class="layer">
       <h3>Capa 1 · El empaque interior (el anónimo)</h3>
-      <p><b>El empaque:</b> una bolsa plástica tipo <b>Ziploc gruesa</b> o de polietileno sellada al calor, completamente limpia (el café verde absorbe olores). Adentro: los 2 kg de pergamino seco.</p>
+      <p><b>El empaque:</b> una bolsa plástica tipo <b>Ziploc gruesa</b> o de polietileno sellada al calor, completamente limpia (el café verde absorbe olores). Adentro: los 2 kg de pergamino seco, <b>representativos del lote entero</b> (no los seleccione).</p>
+      <p><b>Para qué los usa CTCx (uso exclusivo):</b> 1 kg en cuatro porciones de 250 g —una la cata el Q-Grader de inmediato y tres quedan de reserva para revisiones—, y 1 kg que se trilla para ensayos internos (verde al vacío y tostado). Las muestras para compradores no salen de aquí.</p>
       <p><b>La identificación:</b> péguele la etiqueta recortable de abajo — <b>solo el código del lote</b>. Sin logos, sin su nombre real.</p>
     </div>
     <div class="layer">
@@ -126,10 +127,10 @@ export function shipmentInstructionsHtml(lotCode: string, shortRef: string): str
     <p class="cutHint">Recorte esta etiqueta por la línea punteada y péguela con cinta transparente sobre la bolsa interior (Capa 1):</p>
     <div class="cutLabel">
       <span class="scissors" aria-hidden="true">✂</span>
-      <span class="tag">Muestra · Kaffetal Regal Cupping Arena</span>
+      <span class="tag">Muestra · Kaffetal Regal · Evaluación de Lotes</span>
       <span class="bigcode">${markedCode}</span>
       <span class="sub">2 kg café pergamino seco</span>
-      <span class="blindTag">Evaluación a ciegas · No abrir antes de la Arena</span>
+      <span class="blindTag">Evaluación anónima · Solo el código del lote</span>
     </div>
   </div>
 

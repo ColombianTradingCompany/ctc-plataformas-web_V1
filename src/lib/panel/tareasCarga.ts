@@ -114,14 +114,14 @@ export async function cargarTareas(service: SupabaseClient): Promise<{
     });
   }
   // V5.77: «lote en fila para Arena» se retiró — la Arena ya no es parte del circuito (PLAN_CIRCUITO_DEL_LOTE).
-  // V5.88 (Gestión de Muestras, 2.ª tanda): a más de 90 días de la catación NO se recata — se revisa el almacenaje con el kilo
-  // de testeo. Derivada de la fecha de la evaluación que rige y de la última revisión anotada; sin campo aparte.
+  // V5.88 (Gestión de Muestras, 2.ª tanda): a más de 90 días de la catación NO se recata — se revisa el almacenaje con una
+  // contramuestra de reserva CPS de 250 g (V5.94; antes, el kilo de testeo, que hoy se trilla entero). Derivada de la fecha de la evaluación que rige y de la última revisión anotada; sin campo aparte.
   for (const r of (await revisionesDeAlmacenaje(service)).filter((x) => x.lectura.debida)) {
     pon({
       key: r.claveDeTarea,
       icon: "🧪",
       label: `Revisión de almacenaje — lote ${r.lotName} (catado hace ${r.lectura.diasDesdeCatacion} días)`,
-      sublabel: r.saldoTesteoKg > 0 ? `${r.saldoTesteoKg} kg de testeo en la casa` : "sin muestra de testeo con saldo: pedir una",
+      sublabel: r.saldoReservaKg > 0 ? `${r.saldoReservaKg} kg de reserva CPS en la casa` : "sin contramuestra de reserva con saldo: pedir una",
       href: `/ocp/muestras?tab=almacenaje#lote-${r.lotId}`,
       consola: "ocp",
     });

@@ -13,8 +13,8 @@ export const dynamic = "force-dynamic";
 // ── OCP · Manejo de Stock Físico · Gestión de Muestras — V5.80 · V5.88 · V5.89 ────────────────
 // El registro de cada muestra física que pasa por las manos de CTC (brief `consolas-gestion-de-muestras.md`). Los 2 kg de CPS
 // del productor son de uso EXCLUSIVO de CTCx (owner, 2026-09-25; diagrama en `reference/muestras-y-sample-kits-2026-09-25/`):
-// 2 × 250 g para el Q-Grader · 2 × 250 g de reserva CPS · 1 kg «Evaluación CTCx» que se TRILLA por completo (~750 g de verde:
-// 400 g de tostado para ensayos piloto + 250 g de verde al vacío). Las muestras para compradores NO salen de aquí: salen de
+// 1 × 250 g para el Q-Grader · 3 × 250 g de reserva CPS (V5.94: la revisión de los 90 días gasta una) · 1 kg «Evaluación CTCx»
+// que se TRILLA por completo (~750 g de verde: 400 g de tostado para ensayos piloto + 2 × 125 g de verde al vacío). Las muestras para compradores NO salen de aquí: salen de
 // Adquisición de Stock. EL SALDO SE DERIVA (`saldoDe`): recibido − Σ salidas. El recibo vive en Solicitudes de Evaluación.
 // Pestañas: qué hay y dónde (por lote, con su bodega) · bodegas (V5.89: responsable, dirección, capacidad en muestras de 1 kg,
 // estado; la ocupación se deriva) · revisión de almacenaje a los 90 días (V5.88, derivada) · pedidos de muestra (V5.88).
@@ -206,9 +206,9 @@ export default async function GestionDeMuestrasPage({ searchParams }: { searchPa
         <div style={{ display: "grid", gap: 12 }}>
           <p className={styles.meta}>
             Regla del owner (2026-09-16): a más de <b>{DIAS_REVISION_ALMACENAJE} días de la catación</b> no se recata — se hace una <b>revisión de almacenaje con{" "}
-            {KG_REVISION_ALMACENAJE} kg</b>. El reloj se deriva de la fecha de la evaluación que rige el grado y se reinicia con cada revisión anotada; no hay ningún
-            campo que actualizar. Las debidas salen también como tarea en el <Link href="/ecp">Tablero de Ejecución</Link>. Si el kilo CTCx ya se trilló, se le pide
-            al productor un kilo nuevo para la revisión.
+            {KG_REVISION_ALMACENAJE * 1000} g</b>: una de las tres contramuestras de reserva CPS (owner, 2026-09-30). El reloj se deriva de la fecha de la evaluación
+            que rige el grado y se reinicia con cada revisión anotada; no hay ningún campo que actualizar. Las debidas salen también como tarea en el{" "}
+            <Link href="/ecp">Tablero de Ejecución</Link>. Si la reserva se agotó, se le pide al productor una contramuestra nueva.
           </p>
           {debidas.length === 0 && <p className={styles.empty}>Ninguna revisión debida hoy.</p>}
           {debidas.map((r) => (
@@ -221,15 +221,15 @@ export default async function GestionDeMuestrasPage({ searchParams }: { searchPa
                 <span className={styles.badgeWarn}>debida</span>
                 <span className={styles.meta}>
                   catado el {fecha(r.evaluadaAt)} · hace {r.lectura.diasDesdeCatacion} días
-                  {r.ultimaRevisionAt && <> · última revisión el {fecha(r.ultimaRevisionAt)} ({r.lectura.diasDesdeReferencia} días)</>} · kilo CTCx en la casa:{" "}
-                  <b>{r.saldoTesteoKg} kg</b>
+                  {r.ultimaRevisionAt && <> · última revisión el {fecha(r.ultimaRevisionAt)} ({r.lectura.diasDesdeReferencia} días)</>} · reserva CPS en la casa:{" "}
+                  <b>{r.saldoReservaKg} kg</b>
                 </span>
               </div>
-              {r.muestraTesteoId ? (
+              {r.muestraReservaId ? (
                 <ActionForm action={anotarRevisionDeAlmacenaje.bind(null, r.lotId)} submitLabel="Anotar la revisión" pendingLabel="Anotando…" buttonClassName="btn btn-sm btn-solid" style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "end", marginTop: 8 }}>
                   <label className={styles.meta} style={{ display: "grid", gap: 2 }}>
                     kg usados
-                    <input name="kg" inputMode="decimal" defaultValue={Math.min(KG_REVISION_ALMACENAJE, r.saldoTesteoKg)} style={{ width: 80 }} />
+                    <input name="kg" inputMode="decimal" defaultValue={Math.min(KG_REVISION_ALMACENAJE, r.saldoReservaKg)} style={{ width: 80 }} />
                   </label>
                   <label className={styles.meta} style={{ display: "grid", gap: 2, flex: 1, minWidth: 260 }}>
                     resultado (humedad, olor, estado del grano…)
@@ -237,7 +237,7 @@ export default async function GestionDeMuestrasPage({ searchParams }: { searchPa
                   </label>
                 </ActionForm>
               ) : (
-                <p className={styles.warn} style={{ marginTop: 6 }}>Sin kilo CTCx con saldo: pida al productor un kilo nuevo antes de revisar.</p>
+                <p className={styles.warn} style={{ marginTop: 6 }}>Sin contramuestra de reserva con saldo: pida al productor una nueva antes de revisar.</p>
               )}
             </div>
           ))}
@@ -248,7 +248,7 @@ export default async function GestionDeMuestrasPage({ searchParams }: { searchPa
                 {proximas.map((r) => (
                   <div key={r.lotId} className={styles.meta}>
                     <Link href={`/ocp/kr?lote=${r.lotId}`}>{r.lotName}</Link> · catado hace {r.lectura.diasDesdeCatacion} días · toca en{" "}
-                    {Math.max(0, DIAS_REVISION_ALMACENAJE - r.lectura.diasDesdeReferencia)} días · kilo CTCx {r.saldoTesteoKg} kg
+                    {Math.max(0, DIAS_REVISION_ALMACENAJE - r.lectura.diasDesdeReferencia)} días · reserva CPS {r.saldoReservaKg} kg
                   </div>
                 ))}
               </div>
@@ -409,7 +409,7 @@ export default async function GestionDeMuestrasPage({ searchParams }: { searchPa
                               <details>
                                 <summary className={styles.meta} style={{ cursor: "pointer" }}>Trillar el kilo CTCx…</summary>
                                 <p className={styles.meta} style={{ margin: "4px 0" }}>
-                                  Sale todo el saldo ({g(saldo)} g de CPS) → ~{g(propuesta.verdeKg)} g de verde: {g(propuesta.verdeVacioKg)} g al vacío y {g(propuesta.aTostarKg)} g a tostar → ~
+                                  Sale todo el saldo ({g(saldo)} g de CPS) → ~{g(propuesta.verdeKg)} g de verde: {g(propuesta.verdeVacioKg)} g al vacío (2 × 125 g) y {g(propuesta.aTostarKg)} g a tostar → ~
                                   {g(propuesta.tostadoKg)} g de tostado (rendimiento {Math.round(KILO_CTCX.rendimientoTrilla * 100)} %, merma de tostión {Math.round(KILO_CTCX.mermaTostion * 100)} %). Corrija con lo que pesó.
                                 </p>
                                 <ActionForm action={trillarMuestraCtcx.bind(null, m.id)} submitLabel="Anotar la trilla" buttonClassName="btn btn-sm btn-solid" style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "end" }}>

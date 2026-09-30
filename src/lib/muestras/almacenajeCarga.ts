@@ -16,8 +16,8 @@ export type RevisionDeAlmacenajeDeLote = {
   ultimaRevisionAt: string | null;
   lectura: LecturaDeAlmacenaje;
   /** La muestra de testeo con saldo (la que se usa para revisar), si la hay. */
-  muestraTesteoId: string | null;
-  saldoTesteoKg: number;
+  muestraReservaId: string | null;
+  saldoReservaKg: number;
   /** La clave de la tarea derivada: cambia con cada ciclo (catación o última revisión), para que una casilla vieja no la tape. */
   claveDeTarea: string;
 };
@@ -30,7 +30,7 @@ export async function revisionesDeAlmacenaje(service: SupabaseClient, ahora = ne
     service.from("lots").select("id, name, producer_id").eq("stage", "galardonado"),
     service.from("lot_evaluations").select("lot_id, reviewed_at, created_at").eq("rige_grado", true).eq("status", "accepted"),
     service.from("purchase_contracts").select("lot_id, status, created_at").order("created_at", { ascending: false }),
-    service.from("muestras").select("id, lot_id, kg").eq("tipo", "testeo"),
+    service.from("muestras").select("id, lot_id, kg").eq("tipo", "contramuestra"),
     service.from("muestra_movimientos").select("muestra_id, kg, motivo, fecha"),
   ]);
   const evalDe = new Map<string, string>();
@@ -41,7 +41,7 @@ export async function revisionesDeAlmacenaje(service: SupabaseClient, ahora = ne
   for (const c of (contratos as { lot_id: string; status: string }[] | null) ?? []) {
     if (!ultimoContrato.has(c.lot_id)) ultimoContrato.set(c.lot_id, c.status);
   }
-  const testeos = (muestras as { id: string; lot_id: string; kg: number | string }[] | null) ?? [];
+  const reservas = (muestras as { id: string; lot_id: string; kg: number | string }[] | null) ?? [];
   const movimientos = (movs as { muestra_id: string; kg: number | string; motivo: string; fecha: string }[] | null) ?? [];
 
   const salida: RevisionDeAlmacenajeDeLote[] = [];
@@ -49,7 +49,7 @@ export async function revisionesDeAlmacenaje(service: SupabaseClient, ahora = ne
     const evaluadaAt = evalDe.get(lot.id);
     if (!evaluadaAt) continue;
     if (CONTRATO_CERRADO.has(ultimoContrato.get(lot.id) ?? "")) continue;
-    const mias = testeos.filter((m) => m.lot_id === lot.id);
+    const mias = reservas.filter((m) => m.lot_id === lot.id);
     const ids = new Set(mias.map((m) => m.id));
     const revisiones = movimientos.filter((m) => ids.has(m.muestra_id) && m.motivo === "revision_almacenaje").map((m) => m.fecha).sort();
     const ultimaRevisionAt = revisiones.length ? revisiones[revisiones.length - 1] : null;
@@ -62,8 +62,8 @@ export async function revisionesDeAlmacenaje(service: SupabaseClient, ahora = ne
       evaluadaAt,
       ultimaRevisionAt,
       lectura,
-      muestraTesteoId: conSaldo[0]?.id ?? null,
-      saldoTesteoKg: Math.round(conSaldo.reduce((a, m) => a + m.saldo, 0) * 1000) / 1000,
+      muestraReservaId: conSaldo[0]?.id ?? null,
+      saldoReservaKg: Math.round(conSaldo.reduce((a, m) => a + m.saldo, 0) * 1000) / 1000,
       claveDeTarea: `muestra:${lot.id}:${(ultimaRevisionAt ?? evaluadaAt).slice(0, 10)}`,
     });
   }

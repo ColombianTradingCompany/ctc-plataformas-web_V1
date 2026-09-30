@@ -231,4 +231,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-09-30] V5.106 · Consolas — la vista del productor: tarjetas con un buen vistazo en Fincas · Lotes · Arena · Contratos
 - ANN `src/app/ocp/(app)/kr/ProducerPanel.tsx` (tarjetas), `ProductorSeccion.tsx` (deriva con `cargarKr`), `carga.ts` (`cargarKr` con
   `productorId`: carga un solo productor). Guardián: `qa-asistencia` +3.
-(commit: pendiente)
+(commit: c83554c)

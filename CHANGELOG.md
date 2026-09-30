@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.106] — 2026-09-30 (commit pendiente)
+## [V5.106] — 2026-09-30 (commit c83554c)
 
 - **Cambiado**: en la vista completa del productor (`/ocp/kr?productor=`), las pestañas **Fincas · Lotes · Arena · Contratos** dejan
   de ser una línea por entrada y traen **un buen vistazo** (owner, 2026-09-30: «no toda la info, pero suficiente»): la finca con código,

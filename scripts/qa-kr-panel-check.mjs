@@ -108,6 +108,14 @@ for (const archivo of TSX) {
   }
 }
 
+// ── V5.113 (owner, 2026-09-30) · la Visa del lote se descarga desde la tarjeta, como el Pasaporte de la finca ──
+{
+  const perfil = lee("src/components/kaffetal-regal/panel/PerfilTab.tsx");
+  check("la Visa otorgada = veredicto documental (apto o posterior, nunca no_apto) Y el documento = lotEudrStatus eudr_ready", perfil.includes("const otorgada = l.stage >= 2 && l.stage !== 3;") && perfil.includes(').code === "eudr_ready";'));
+  check("las DOS tarjetas del lote (carrusel y drill) montan la fila de la Visa", (perfil.match(/\{visaRow\(l\)\}/g) ?? []).length === 2);
+  check("el botón es como el del Pasaporte: certDownload hacia /certificacion-lote, y con Visa sin documento lo DICE", perfil.includes("⬇ Descargar Visa EUDR de {l.name}") && perfil.includes("`/kaffetal-regal/certificacion-lote/${l.id}`") && perfil.includes("Visa EUDR otorgada · el documento se habilita"));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-kr-panel: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("   " + f);

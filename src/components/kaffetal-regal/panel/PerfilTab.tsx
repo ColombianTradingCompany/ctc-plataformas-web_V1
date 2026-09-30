@@ -171,15 +171,44 @@ export function PerfilTab({
     );
   };
 
-  const lotRow = (l: Lot) => {
-    const col = l.grade ? GRADES[l.grade] : "var(--accent)";
-    const state = STAGES[l.stage];
+  // ── La VISA del lote, descargable (V5.113, owner 2026-09-30) ─────────────────
+  // «Cuando un lote tiene Visa completada, un botón similar al de descargar Pasaporte EUDR debe ser habilitado.»
+  // Dos cosas tienen que ser verdad: (1) CTCx OTORGÓ la Visa (el veredicto documental: etapa `apto` o cualquier
+  // etapa posterior; `no_apto` no) — es el paso VISA en verde de la barra del lote; y (2) el documento EXISTE: la
+  // certificación del lote se hereda del Pasaporte de la finca, así que `/certificacion-lote/[id]` solo se sirve con
+  // `lotEudrStatus` = «Visa lista» (Pasaporte vigente). Con (1) y sin (2), la tarjeta lo dice en vez de esconderlo.
+  const visaDelLote = (l: Lot) => {
     const sourceFinca = fincas.find((f) => f.id === l.fincaId);
-    const lotEudrReady =
+    const documento =
       lotEudrStatus(
         { eudr_risk_level: l.eudrRiskLevel, eudr_mitigation_effective: l.eudrMitigationEffective },
         sourceFinca ? [sourceFinca] : []
       ).code === "eudr_ready";
+    const otorgada = l.stage >= 2 && l.stage !== 3;
+    return { otorgada, documento };
+  };
+  const visaRow = (l: Lot) => {
+    const v = visaDelLote(l);
+    if (!v.otorgada) return null;
+    return (
+      <div className={styles.certRow}>
+        {v.documento ? (
+          <a className={styles.certDownload} href={`/kaffetal-regal/certificacion-lote/${l.id}`} target="_blank" rel="noopener noreferrer">
+            ⬇ Descargar Visa EUDR de {l.name}
+          </a>
+        ) : (
+          <span className={styles.certPending}>
+            Visa EUDR otorgada · el documento se habilita cuando el Pasaporte EUDR de la finca esté vigente
+            <FieldInfo text="CTC ya declaró apto este lote (su Visa). El documento descargable de la Visa se hereda del Pasaporte EUDR de la finca de origen: en cuanto CTC lo otorgue y lo comparta, aquí aparecerá el botón de descarga." />
+          </span>
+        )}
+      </div>
+    );
+  };
+
+  const lotRow = (l: Lot) => {
+    const col = l.grade ? GRADES[l.grade] : "var(--accent)";
+    const state = STAGES[l.stage];
     return (
       <div className={styles.lotrow} style={{ ["--lc" as string]: col } as React.CSSProperties} key={l.id}>
         <div>
@@ -215,6 +244,7 @@ export function PerfilTab({
             </button>
           )}
           {barraDelLote(l)}
+          {visaRow(l)}
         </div>
         <div className={styles.metrics}>
           <div className={styles.chips}>
@@ -228,11 +258,6 @@ export function PerfilTab({
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "stretch" }}>
           <button className="btn btn-sm" onClick={() => onOpenFicha(l.id)}>{l.stage === 0 ? "Completar ficha" : "Ver ficha"}</button>
-          {lotEudrReady && (
-            <a className="btn btn-sm btn-solid" href={`/kaffetal-regal/certificacion-lote/${l.id}`} target="_blank" rel="noopener noreferrer" style={{ textAlign: "center" }}>
-              Visa EUDR ↗
-            </a>
-          )}
           {/* Deletable any time before the paid pipeline takes the lot (sin
               inscripción y antes del legado fila_arena — isLotCommitted), unless
               BCP already has the physical sample in hand (bcp_manual_entry). */}
@@ -265,6 +290,7 @@ export function PerfilTab({
           <button className="btn btn-sm" onClick={() => onOpenFicha(l.id)}>{l.stage === 0 ? "Completar ficha" : "Ver ficha"}</button>
           <span className={styles.state} style={{ ["--lc" as string]: col } as React.CSSProperties}>{STAGES[l.stage]}</span>
         </div>
+        {visaRow(l)}
       </div>
     );
   };

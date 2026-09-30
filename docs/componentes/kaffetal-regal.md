@@ -21,7 +21,7 @@ salieron de la barra. El vocabulario lo asentó el owner el 2026-09-20 y vive es
 | Ruta | Qué |
 |---|---|
 | `/kaffetal-regal` | landing + app (`KaffetalExperience.tsx`: landing · panel · Ficha; `?m=` legado → pestaña/drill) |
-| `/kaffetal-regal/certificacion/[id]` · `/certificacion-lote/[id]` | Pasaporte EUDR de la finca y Visa del lote (vocabulario de la V5.65) |
+| `/kaffetal-regal/certificacion/[id]` · `/certificacion-lote/[id]` | Pasaporte EUDR de la finca y Visa del lote (vocabulario de la V5.65). V5.113: la Visa se descarga desde la tarjeta del lote («⬇ Descargar Visa EUDR», como el Pasaporte) cuando CTCx la otorgó (`apto` o posterior) Y el Pasaporte de la finca está vigente (`lotEudrStatus` = «Visa lista»); con Visa y sin Pasaporte vigente, la tarjeta lo dice |
 | `/kaffetal-regal/dossier/[id]?lang=es\|en` | el **dossier del lote** ES/EN (`LotDossierDoc`, V5.79): la Ficha descargable |
 | `/kaffetal-regal/herramientas/[slug]` | la concha de Herramientas del Café en esta superficie (charter `herramientas-cafe`) |
 | `/api/kaffetal-regal/next-step` | el asesor «¿Y ahora qué?» (plumbing conservado a propósito) |

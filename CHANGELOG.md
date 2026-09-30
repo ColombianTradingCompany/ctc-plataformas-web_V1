@@ -19,6 +19,15 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.113] — 2026-09-30 (commit pendiente)
+
+- **Añadido**: en Kaffetal Regal, **«⬇ Descargar Visa EUDR de <lote>»** en la tarjeta del lote (el carrusel de «Mis Lotes» y la lista
+  completa), con el mismo estilo del botón del Pasaporte de la finca (owner, 2026-09-30). Aparece cuando CTCx otorgó la Visa
+  (veredicto documental `apto` o etapa posterior; `no_apto` no) y el documento existe (el Pasaporte EUDR de la finca de origen
+  vigente, `lotEudrStatus` = «Visa lista»). Con la Visa otorgada y el Pasaporte aún sin compartir, la tarjeta lo dice en vez de
+  esconder el botón. El viejo «Visa EUDR ↗» de la lista completa queda absorbido.
+- **Docs**: charter `kaffetal-regal`. `qa-kr-panel` 119 → 122.
+
 ## [V5.112] — 2026-09-30 (commit db5a437)
 
 - **Cambiado**: en Kaffetal Regal, **registrar una finca nueva también es una página completa** (`FincaView` con `finca = null`; owner,

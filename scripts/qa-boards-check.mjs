@@ -97,5 +97,10 @@ check("«Por revisar»: el Pasaporte en_revision y el lote en las etapas de Visa
 check("el correo va bajo el código y el estado del productor (las dos celdas)", (krTabla.match(/\{f\.productorEmail && <span style=\{sub\}>\{f\.productorEmail\}<\/span>\}/g) ?? []).length, 2);
 check("la URL siembra `?segmento=` con ids de la fuente", krPage.includes("PRODUCER_SEGMENTS.some((sg) => sg.id === x)") && krPage.includes("segmentosIniciales={segmentosIniciales}"), true);
 
+// ── V5.114 (owner, 2026-09-30) · el mapa de /ocp/kr pinta SIEMPRE fincas (nunca lotes) y su polígono ──
+const geoMap = readFileSync("src/components/bcp/GeoMap.tsx", "utf8");
+check("el mapa no pinta lotes: un pin por finca con su polígono", !krTabla.includes('id: `lote:${f.loteId}`') && krTabla.includes("polygon: f.poligono") && krCarga.includes("poligono: (f.eudr_polygon_geojson?.length ?? 0) >= 3 ? f.eudr_polygon_geojson : null"), true);
+check("GeoMap dibuja los polígonos declarados y los incluye en el encuadre", geoMap.includes("<PolygonF") && geoMap.includes("for (const v of m.polygon ?? []) bounds.extend(v);"), true);
+
 console.log(`${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

@@ -321,7 +321,9 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
   (una casilla filtra; ninguna o las dos = todas) y llegó **«Por revisar»**: «Pasaporte listo» = declaración EUDR aparentemente completa
   esperando a CTCx (`en_revision`), «Ficha lista» = Ficha completa esperando la Visa documental (`ficha_completa` · `videos_ok` ·
   `muestra_transito`); la tabla lo DICE bajo el Pasaporte («Declaración completa · esperando a CTCx» / «Declaración incompleta») y bajo la
-  Ficha. `?filtro=pasaporte-por-revisar|lote-por-revisar`. **V5.106** (owner, al abrir un productor): las pestañas Fincas · Lotes · Arena · Contratos de la vista
+  Ficha. `?filtro=pasaporte-por-revisar|lote-por-revisar`. **V5.114** (owner): el mapa pinta **siempre las fincas** (nunca lotes; con
+  «Ver lotes», las fincas de los lotes filtrados) y **el polígono** de la que lo declaró (`GeoMap` con `PolygonF`; `KrFila.poligono`);
+  la indicación (3) de la V5.76 queda superada. **V5.106** (owner, al abrir un productor): las pestañas Fincas · Lotes · Arena · Contratos de la vista
   completa traen un buen vistazo de cada entrada (finca: código, Pasaporte, ubicación, ha, msnm, lotes, certificaciones; lote: código,
   etapa, circuito, pasos de la Ficha, grado, temporada, muestra, oferta, trato; Arena: fase, pago, puntaje, decisión; contrato: estado,
   kg, $/kg, meses, firma). Lo derivado sale de `cargarKr(service, { productorId })`, la misma fuente que la tabla, que desde esta

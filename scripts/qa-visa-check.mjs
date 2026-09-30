@@ -209,6 +209,13 @@ const completa = (extra = {}) => ({
   check("el acta deja la columna real (drop expression) y explica el fallo", acta.includes("alter column requires_polygon drop expression") && acta.includes("columna generada"));
 }
 
+// ── V5.114 (owner, 2026-09-30) · el documento de respaldo de la finca es SOLO el SICA ──
+{
+  const modal = lee("src/components/kaffetal-regal/FincaModal.tsx");
+  check("no hay selector de tipo de documento: el que se sube es el SICA y el tipo se fija al subirlo", !modal.includes("SUPPORT_DOC_TYPES.map(") && modal.includes('export const SUPPORT_DOC_SICA = "sica"') && modal.includes("patchEudr({ eudrSupportDocType: SUPPORT_DOC_SICA });") && modal.includes("eudrSupportDocType: SUPPORT_DOC_SICA,"));
+  check("una finca con un tipo viejo lo conserva y la pantalla lo dice", modal.includes("SUPPORT_DOC_LABEL[eudr.eudrSupportDocType]"));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-visa: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("   " + f);

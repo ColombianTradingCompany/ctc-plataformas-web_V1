@@ -10,7 +10,7 @@
 // idénticos: dos configs distintas del script de Google chocan entre sí).
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { GoogleMap, MarkerClustererF, MarkerF, InfoWindowF, useJsApiLoader } from "@react-google-maps/api";
+import { GoogleMap, MarkerClustererF, MarkerF, InfoWindowF, PolygonF, useJsApiLoader } from "@react-google-maps/api";
 
 export type GeoMarker = {
   id: string;
@@ -22,6 +22,8 @@ export type GeoMarker = {
   /** Renglones de la tarjeta (etiqueta · valor ya formateados). */
   lines: string[];
   link?: { label: string; href: string };
+  /** V5.114: el polígono de la finca (los vértices del Pasaporte EUDR), si lo declaró; se pinta con el color del pin. */
+  polygon?: { lat: number; lng: number }[] | null;
 };
 
 const DEFAULT_CENTER = { lat: 4.6, lng: -74.1 };
@@ -62,7 +64,10 @@ export function GeoMap({ markers, height = 480 }: { markers: GeoMarker[]; height
       mapRef.current = map;
       if (!placed.length) return;
       const bounds = new google.maps.LatLngBounds();
-      for (const m of placed) bounds.extend({ lat: m.plat, lng: m.plng });
+      for (const m of placed) {
+        bounds.extend({ lat: m.plat, lng: m.plng });
+        for (const v of m.polygon ?? []) bounds.extend(v);
+      }
       map.fitBounds(bounds, 60);
       // Un solo pin: fitBounds acerca demasiado (zoom ~21) — se limita. El
       // listenerOnce se limpia solo tras el primer disparo.
@@ -87,6 +92,17 @@ export function GeoMap({ markers, height = 480 }: { markers: GeoMarker[]; height
         onLoad={onLoad}
         options={{ mapTypeId: "hybrid", streetViewControl: false, fullscreenControl: true }}
       >
+        {/* V5.114: los polígonos declarados, debajo de los pines y tocables (abren la misma tarjeta). */}
+        {placed
+          .filter((m) => (m.polygon?.length ?? 0) >= 3)
+          .map((m) => (
+            <PolygonF
+              key={`poly:${m.id}`}
+              paths={m.polygon!}
+              onClick={() => setOpenId(m.id)}
+              options={{ fillColor: m.color, fillOpacity: 0.22, strokeColor: m.color, strokeOpacity: 0.95, strokeWeight: 2, clickable: true }}
+            />
+          ))}
         <MarkerClustererF>
           {(clusterer) => (
             <>

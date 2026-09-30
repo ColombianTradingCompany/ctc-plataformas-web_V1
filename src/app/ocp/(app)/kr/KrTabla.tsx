@@ -62,7 +62,8 @@ export const ETAPAS_LOTE_POR_REVISAR = new Set(["ficha_completa", "videos_ok", "
 // ── V5.76 · las cuatro indicaciones del owner al ver la tabla (2026-09-24) ───
 // (1) «Nuevo lote (en nombre del productor)» se retiró: eso se hace con la sesión asistida.
 // (2) La agrupación por productor es la tabla por defecto.
-// (3) El mapa pinta los pines del ELEMENTO principal: fincas o lotes, no los dos a la vez.
+// (3) El mapa pinta los pines del ELEMENTO principal: fincas o lotes, no los dos a la vez. — V5.114 (owner, 2026-09-30): el mapa
+//     pinta SIEMPRE las fincas (nunca lotes), y la que declaró polígono lo enseña; el elemento y los filtros deciden QUÉ fincas.
 // (4) Un filtro principal —el ELEMENTO— deja ver las FINCAS como protagonista (una fila por finca,
 //     con cuántos lotes tiene) y filtrarlas por si tienen Pasaporte y en qué etapa va.
 export type Elemento = "lotes" | "fincas";
@@ -183,41 +184,29 @@ export function KrTabla({
     return orden.map((fila, i) => ({ fila, cabecera: i === 0 || grupoDe(orden[i - 1]) !== grupoDe(fila) ? grupoDe(fila) : null }));
   }, [visibles, agrupar]);
 
-  // El mapa pinta el ELEMENTO principal (V5.76): con Fincas, un pin por finca (color = su Pasaporte); con Lotes, un pin
-  // por lote (color = su grado) sobre las coordenadas de su finca. `GeoMap` abre en círculo los que comparten coordenada.
+  // V5.114 (owner, 2026-09-30): el mapa pinta SIEMPRE las fincas —nunca los lotes—, un pin por finca (color = su Pasaporte) y
+  // su polígono si lo declaró. Con «Ver lotes», las fincas de los lotes filtrados (una vez cada una); con «Ver fincas», las
+  // fincas filtradas. `GeoMap` abre en círculo los pines que comparten coordenada.
   const pines = useMemo((): GeoMarker[] => {
     const vistos = new Set<string>();
     const out: GeoMarker[] = [];
     for (const f of visibles) {
       if (f.lat == null || f.lng == null || !f.fincaId) continue;
-      if (elemento === "fincas") {
-        if (vistos.has(f.fincaId)) continue;
-        vistos.add(f.fincaId);
-        out.push({
-          id: `finca:${f.fincaId}`,
-          lat: f.lat,
-          lng: f.lng,
-          color: f.visa?.tono === "good" ? "#166534" : f.visa?.tono === "bad" ? "#991B1B" : "#B45309",
-          title: f.fincaNombre ?? "Finca",
-          lines: [f.fincaCodigo ?? "", f.visa?.label ?? "", f.fincaLugar, f.productorNombre, `${lotesPorFinca.get(f.fincaId) ?? 0} lote(s)`].filter(Boolean),
-          link: { label: "Abrir la finca", href: `/ocp/kr?finca=${f.fincaId}` },
-        });
-        continue;
-      }
-      if (f.loteId) {
-        out.push({
-          id: `lote:${f.loteId}`,
-          lat: f.lat,
-          lng: f.lng,
-          color: f.grado ? GRADO_HEX[f.grado] ?? "#1A1C1E" : "#1A1C1E",
-          title: f.loteNombre ?? "Lote",
-          lines: [f.loteRef ?? "", f.gradoLabel ?? "Sin grado", f.etapaLabel ?? "", f.fincaNombre ?? ""].filter(Boolean),
-          link: { label: "Abrir el lote", href: `/ocp/kr?lote=${f.loteId}` },
-        });
-      }
+      if (vistos.has(f.fincaId)) continue;
+      vistos.add(f.fincaId);
+      out.push({
+        id: `finca:${f.fincaId}`,
+        lat: f.lat,
+        lng: f.lng,
+        color: f.visa?.tono === "good" ? "#166534" : f.visa?.tono === "bad" ? "#991B1B" : "#B45309",
+        title: f.fincaNombre ?? "Finca",
+        lines: [f.fincaCodigo ?? "", f.visa?.label ?? "", f.fincaLugar, f.productorNombre, `${lotesPorFinca.get(f.fincaId) ?? 0} lote(s)`, f.poligono ? `Polígono declarado · ${f.poligono.length} vértices` : "Sin polígono (solo punto)"].filter(Boolean),
+        link: { label: "Abrir la finca", href: `/ocp/kr?finca=${f.fincaId}` },
+        polygon: f.poligono,
+      });
     }
     return out;
-  }, [visibles, elemento, lotesPorFinca]);
+  }, [visibles, lotesPorFinca]);
 
   const cuenta = {
     productores: new Set(visibles.map((f) => f.productorId)).size,
@@ -378,10 +367,9 @@ export function KrTabla({
           <>
             <GeoMap markers={pines} height={520} />
             <p className={styles.meta}>
-              {elemento === "fincas"
-                ? "Un pin por finca: verde = Pasaporte vigente o aprobado · ámbar = en trámite · rojo = rechazado o no apta."
-                : "Un pin por lote, sobre su finca: el color de su grado; negro, sin grado todavía."}{" "}
-              Lo que no tiene coordenadas no sale en el mapa — sí en la tabla.
+              Un pin por finca{elemento === "lotes" ? " (las de los lotes filtrados)" : ""}: verde = Pasaporte vigente o aprobado · ámbar = en trámite · rojo =
+              rechazado o no apta. La finca que declaró polígono lo enseña con el mismo color. Lo que no tiene coordenadas no sale en el mapa — sí en
+              la tabla.
             </p>
           </>
         ) : (

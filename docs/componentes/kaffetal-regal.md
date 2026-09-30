@@ -73,6 +73,8 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   «Borrar» de su pantalla de edición (y desde la tarjeta de «Mis Fincas»); nunca con `window.confirm`. La regla de qué se puede borrar
   sigue en `isLotCommitted` / `fincaSelfDeletable` (`data.ts`, espejo de las RLS `lots_delete_own_before_mue` y
   `fincas_delete_own_not_committed`); los DELETE piden `.select("id")` porque una RLS que filtra devuelve cero filas, no error.
+- **El documento de respaldo de la finca es SOLO el SICA** (owner, 2026-09-30, V5.114): sin selector de tipo; al subir el PDF,
+  `eudr_support_doc_type` pasa a `sica`. Las fincas con un tipo viejo lo conservan y la pantalla lo dice. `qa-visa` lo vigila.
 - **Editar Y registrar una finca son una página completa** (`FincaView`, V5.102 · V5.112), como la Ficha del lote; desde «+ Agregar
   finca» y desde A2 de la Ficha (que vuelve a la Ficha al guardar). **Y la Información general también** (`InfoView`, V5.107). Los
   pop-ups `FincaModal` e `InfoModal` no existen: sus archivos conservan el nombre y solo exportan el cuerpo del editor. En KR solo quedan

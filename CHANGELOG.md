@@ -19,6 +19,16 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.114] — 2026-09-30 (commit pendiente)
+
+- **Cambiado**: en Kaffetal Regal, el **documento de respaldo de la finca es solo el SICA** (Registro SICA / cédula cafetera de la
+  FNC; owner, 2026-09-30): desapareció el selector de tipo (escritura, tradición y libertad, arrendamiento, acta, otro); al subir el
+  PDF el tipo queda en `sica`. Las fincas guardadas con un tipo viejo lo conservan y la pantalla lo dice.
+- **Cambiado**: en **Productores, Fincas y Lotes**, la vista de **Mapa pinta siempre las fincas** (nunca los lotes; con «Ver lotes»,
+  las fincas de los lotes filtrados) y **dibuja el polígono** de la finca que lo declaró, con el color de su Pasaporte y tocable
+  (`GeoMap` con `PolygonF`; el encuadre incluye los vértices).
+- **Docs**: charters `consolas` y `kaffetal-regal`, ALINEACION §3. `qa-visa` 39 → 41, `qa-boards` 33 → 35.
+
 ## [V5.113] — 2026-09-30 (commit 2149582)
 
 - **Añadido**: en Kaffetal Regal, **«⬇ Descargar Visa EUDR de <lote>»** en la tarjeta del lote (el carrusel de «Mis Lotes» y la lista

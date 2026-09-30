@@ -53,6 +53,8 @@ export type KrFila = {
   pasaporte: EudrStatus["code"] | null;
   lat: number | null;
   lng: number | null;
+  /** V5.114: el polígono declarado de la finca (para el mapa de `/ocp/kr`). */
+  poligono: { lat: number; lng: number }[] | null;
   // lote
   loteId: string | null;
   loteNombre: string | null;
@@ -234,7 +236,7 @@ export async function cargarKr(service: SupabaseClient, opciones: { productorId?
       departamento: perfil?.department ?? "",
       gestion: perfil?.gestion ?? null,
     };
-    const sinFinca = { fincaId: null, fincaNombre: null, fincaCodigo: null, fincaLugar: "", visa: null, pasaporte: null, lat: null, lng: null };
+    const sinFinca = { fincaId: null, fincaNombre: null, fincaCodigo: null, fincaLugar: "", visa: null, pasaporte: null, lat: null, lng: null, poligono: null };
     const sinLote = {
       loteId: null, loteNombre: null, loteRef: null, etapa: null, etapaLabel: null, ficha: null, eva: null, circuito: null, muestra: null,
       grado: null, gradoLabel: null, temporadaId: null, temporadaLabel: null, oferta: null, trato: null,
@@ -252,6 +254,7 @@ export async function cargarKr(service: SupabaseClient, opciones: { productorId?
         pasaporte: estado.code,
         lat: centro?.la ?? null,
         lng: centro?.ln ?? null,
+        poligono: (f.eudr_polygon_geojson?.length ?? 0) >= 3 ? f.eudr_polygon_geojson : null,
       };
     };
 

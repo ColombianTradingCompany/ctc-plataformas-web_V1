@@ -36,16 +36,19 @@ const TENURE_OPTIONS: [Finca["eudrTenure"], string][] = [
   ["asociacion", "Asociación"],
 ];
 
-// Documento de respaldo: tipos admitidos, incluida la documentación SICA
-// (Sistema de Información Cafetera / cédula cafetera de la FNC) pedida por el owner.
-const SUPPORT_DOC_TYPES: [string, string][] = [
-  ["escritura", "Escritura pública"],
-  ["tradicion_libertad", "Certificado de tradición y libertad"],
-  ["arrendamiento", "Contrato de arrendamiento"],
-  ["acta_asociacion", "Acta / certificación de la asociación"],
-  ["sica", "Registro SICA / cédula cafetera (FNC)"],
-  ["otro", "Otro documento de respaldo"],
-];
+// Documento de respaldo: V5.114 (owner, 2026-09-30) — SOLO el SICA (Sistema de Información Cafetera / cédula cafetera de la
+// FNC). Hasta la V5.113 había un selector con escritura, tradición y libertad, arrendamiento, acta de la asociación y «otro»;
+// las fincas guardadas con uno de esos valores lo conservan en la base (`eudr_support_doc_type`), pero la pantalla ya no lo
+// ofrece: al subir el documento, el tipo pasa a `sica`.
+export const SUPPORT_DOC_SICA = "sica";
+export const SUPPORT_DOC_LABEL: Record<string, string> = {
+  sica: "Registro SICA / cédula cafetera (FNC)",
+  escritura: "Escritura pública",
+  tradicion_libertad: "Certificado de tradición y libertad",
+  arrendamiento: "Contrato de arrendamiento",
+  acta_asociacion: "Acta / certificación de la asociación",
+  otro: "Otro documento de respaldo",
+};
 
 // Etapas físicas por las que pasa el café entre la finca y la exportación —
 // alimentan la complejidad de la cadena (deriveChainComplexity). Trasladadas
@@ -169,7 +172,7 @@ const EMPTY_EUDR_DRAFT: EudrDraft = {
   eudrLocalInfra: [],
   eudrLegalDocsAssetId: null,
   eudrLegalDocsFilename: null,
-  eudrSupportDocType: "",
+  eudrSupportDocType: SUPPORT_DOC_SICA,
   eudrCustodyStages: [],
   eudrCustodyMethod: "",
   eudrCustodyNotes: "",
@@ -673,6 +676,8 @@ export function FincaEditorBody({
       showToast(`El documento pesa ${mb.toFixed(1)} MB — el máximo es 10 MB.`);
       return;
     }
+    // V5.114: el documento que se sube ES el SICA; el tipo se fija al subirlo.
+    patchEudr({ eudrSupportDocType: SUPPORT_DOC_SICA });
     void docUp.run(() => onUploadLegalDoc(file, docUp.progress));
   }
 
@@ -786,18 +791,14 @@ export function FincaEditorBody({
             </div>
             <div className={styles.wide}>
               <label>
-                Tipo de documento de respaldo
-                <FieldInfo text="El documento que respalda la tenencia declarada arriba. Admite escritura, certificado de tradición y libertad, contrato de arrendamiento, acta de la asociación, o la documentación SICA (Registro SICA / cédula cafetera de la FNC). No es obligatorio para guardar la finca." />
+                Documento de respaldo: Registro SICA / cédula cafetera (FNC) <small>(PDF, máx. 10 MB)</small>
+                <FieldInfo text="El único documento de respaldo que se sube es el SICA (Sistema de Información Cafetera de la FNC): su registro o cédula cafetera respalda la tenencia declarada arriba. No es obligatorio para guardar la finca." />
               </label>
-              <select value={eudr.eudrSupportDocType} onChange={(e) => patchEudr({ eudrSupportDocType: e.target.value })}>
-                <option value="">Seleccione…</option>
-                {SUPPORT_DOC_TYPES.map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
-                ))}
-              </select>
-            </div>
-            <div className={styles.wide}>
-              <label>Documento de respaldo <small>(PDF, máx. 10 MB)</small></label>
+              {eudr.eudrSupportDocType && eudr.eudrSupportDocType !== SUPPORT_DOC_SICA && (
+                <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 6px" }}>
+                  Esta finca guardó antes «{SUPPORT_DOC_LABEL[eudr.eudrSupportDocType] ?? eudr.eudrSupportDocType}»; al subir el SICA lo reemplaza.
+                </p>
+              )}
               {finca ? (
                 <>
                   <FileDrop onFile={(f) => handleDocFile(f)}>

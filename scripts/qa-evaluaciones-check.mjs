@@ -157,6 +157,13 @@ check("confirmar el recibo no escribe fila_arena", !acciones.includes('stage: "f
 // V5.80: el recibo pasa por `src/lib/muestras/recibo.ts` (filas de muestras + marca, una acción), que es quien avanza la solicitud a la fila.
 check("y avanza la inscripción a la fila", acciones.includes("recibirMuestra(service, { lotId, adminId })") && lee("src/lib/muestras/recibo.ts").includes("avanzarAFilaSiCompleta(service, r.lotId)"));
 
+// V5.100 (owner, 2026-09-30): el código del lote es CTC-L-XXXXXXXX en todas partes — una sola fuente y ningún resto de «7 caracteres».
+{
+  const data = lee("src/components/kaffetal-regal/data.ts");
+  check("el código del lote es CTC-L- + 8 hex del uuid, en una sola fuente (la corta devuelve lo mismo)", data.includes('return "CTC-L-" + id.replace(/-/g, "").slice(0, 8).toUpperCase();') && data.includes("return ctcLotReference(id);") && !data.includes('"CTC_"'));
+  check("ni la Ficha ni las instrucciones de envío hablan ya de «7 caracteres»", !/7 (dígitos|caracteres)/.test(lee("src/components/kaffetal-regal/ficha/panes/PaneA1.tsx")) && !/7 caracteres/.test(lee("src/components/kaffetal-regal/ficha/shipmentInstructionsPrint.ts")));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-evaluaciones: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("   " + f);

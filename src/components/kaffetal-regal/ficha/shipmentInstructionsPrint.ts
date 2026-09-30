@@ -102,7 +102,7 @@ export function shipmentInstructionsHtml(lotCode: string, shortRef: string): str
 
   <h2>Envío de muestra · 2 kg de café pergamino seco · sistema de dos capas</h2>
   <div class="code">${markedCode}</div>
-  <p class="codeNote">Los <b>7 caracteres en negrita</b> son su código de muestra.</p>
+  <p class="codeNote">El código en negrita (<b>CTC-L-…</b>) es su código de muestra: escríbalo tal cual, sin su nombre.</p>
 
   <div class="layers">
     <div class="layer">

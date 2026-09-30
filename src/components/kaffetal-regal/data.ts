@@ -479,17 +479,17 @@ export const GRADE_TO_DB: Record<NonNullable<Lot["grade"]>, string> = {
   Tyrian: "tyrian",
 };
 
-// The long reference stamped on shipping/sample packages -- the only lot
-// reference used anywhere in the system (a shorter L-XXXXXX form existed
-// briefly but was removed in favor of always using this one).
+// V5.100 (owner, 2026-09-30): el código del lote es `CTC-L-XXXXXXXX` en TODAS partes — la misma forma que el del productor
+// (`CTC-P-…`) y el de la finca (`CTC-F-…`), derivado igual de su uuid, sin columna. Sustituye al `CTC_` + 32 hex «largo» y a los 7
+// hex «cortos» que iban en el paquete y en el UID anónimo del Q-Grader. Las dos funciones devuelven lo mismo: se conservan los
+// dos nombres porque decenas de sitios los llaman; la «corta» es la que va impresa y la «larga» la que se guarda en la Ficha.
 export function ctcLotReference(id: string) {
-  return "CTC_" + id.replace(/-/g, "").toUpperCase();
+  return "CTC-L-" + id.replace(/-/g, "").slice(0, 8).toUpperCase();
 }
 
-// The first 7 characters after "CTC_" are what actually needs to go on the
-// physical package label -- short enough to write by hand, long enough to be unique.
+/** El mismo código (`CTC-L-XXXXXXXX`): es lo que va en el paquete de muestra y en la planilla anónima del Q-Grader. */
 export function ctcLotReferenceShort(id: string) {
-  return id.replace(/-/g, "").toUpperCase().slice(0, 7);
+  return ctcLotReference(id);
 }
 
 export function supplierCode(id: string) {

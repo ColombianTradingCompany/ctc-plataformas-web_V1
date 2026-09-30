@@ -194,3 +194,9 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - Traza `mezcla`: el paso «tipoDeMezcla()» mira la unión de variedades/procesos/fincas; el cierre exige varios productores.
 - ANN: `src/lib/lotComposition.ts` (composición), `docs/migraciones/2026-09-30_mezclas_como_tipo_de_lote.sql`.
 (commit: cf3155e)
+
+## [2026-09-30] V5.100 · Consolas → Kaffetal Regal — el código del lote es CTC-L-XXXXXXXX en todas partes
+- DICT `codigopublico` (y la ficha de la Ficha/intake): el código INTERNO del lote es `CTC-L-` + 8 hex del uuid (como `CTC-P-` y
+  `CTC-F-`), una sola fuente en `data.ts`; sustituye al `CTC_` largo y a los 7 hex cortos. El `CTCX-XXXX-XXXX` público no cambia.
+- Datos: 13 fichas reescritas por SQL (`datasheet.ctc_uid`).
+(commit: pendiente)

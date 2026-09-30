@@ -1,5 +1,5 @@
 import { HS_CODES } from "../fichaData";
-import { ctcLotReferenceShort } from "../../data";
+import { ctcLotReference } from "../../data";
 import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
 
@@ -12,8 +12,8 @@ export function PaneA1({ data, onChange, lot }: PaneProps) {
     onChange({ product_type: value, hs_code: match ? match[1] : "" });
   }
 
-  const shortRef = ctcLotReferenceShort(lot.id);
-  const refIdx = data.ctc_uid.indexOf(shortRef);
+  // V5.100: el código se deriva del lote (CTC-L-XXXXXXXX); `data.ctc_uid` lo guarda igual al salvar.
+  const ref = ctcLotReference(lot.id);
 
   return (
     <div className={styles.fsec}>
@@ -26,12 +26,9 @@ export function PaneA1({ data, onChange, lot }: PaneProps) {
         <div className={`${styles.ff} ${styles.fw}`}>
           <label>Nombre del Producto</label>
           <input value={data.product_name} onChange={(e) => onChange({ product_name: e.target.value })} placeholder="Ej. Colombia Santander Gesha Natural" />
-          {refIdx >= 0 && (
-            <p className={styles.fexample} style={{ marginTop: 4 }}>
-              Lote <span className="mono">{data.ctc_uid.slice(0, refIdx)}<b>{shortRef}</b>{data.ctc_uid.slice(refIdx + shortRef.length)}</span>
-              {" "}— los <b>7 dígitos en negrita</b> son lo que va marcado en el paquete de muestra.
-            </p>
-          )}
+          <p className={styles.fexample} style={{ marginTop: 4 }}>
+            Lote <span className="mono"><b>{ref}</b></span> — es el código del lote: va marcado en el paquete de muestra y en la planilla anónima del Q-Grader.
+          </p>
         </div>
         <div className={styles.ff}>
           <label>Proveedor <small>(desde su perfil)</small></label>

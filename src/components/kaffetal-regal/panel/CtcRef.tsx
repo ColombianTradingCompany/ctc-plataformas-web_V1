@@ -1,7 +1,6 @@
 import { ctcLotReference, ctcLotReferenceShort } from "../data";
 
-// The reference is long, so only the 7 characters that actually go on the
-// physical sample package are bolded -- same convention used in the Ficha.
+// V5.100: el código es CTC-L-XXXXXXXX entero (ya no hay parte «larga»); se sigue resaltando lo que va en el paquete, que es todo.
 // (Movida de AppDashboard a esta carpeta en V5.16: la usan varias pestañas.)
 export function CtcRef({ id }: { id: string }) {
   const ref = ctcLotReference(id);

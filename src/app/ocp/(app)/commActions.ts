@@ -10,7 +10,7 @@ import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 // (service-role only, no client insert policy), reads are open to the
 // producer themselves via producer_comm_log_select_own so it doubles as their
 // "Retroalimentación y ayuda" feed. contextLabel is a plain-text snapshot
-// ("Finca La Primavera", "Lote CTC_...") for grouping/display; fincaId/lotId
+// ("Finca La Primavera", "Lote CTC-L-…") for grouping/display; fincaId/lotId
 // are the real FKs the producer-side UI uses to link the note back to that
 // finca/lote (two fincas or lots can share a name across producers, so the
 // label alone is never enough to resolve a link).

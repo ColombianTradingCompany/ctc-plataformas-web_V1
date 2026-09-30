@@ -66,6 +66,11 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Reglas propias
 
+- **El código del lote es `CTC-L-XXXXXXXX`** (owner, 2026-09-30, V5.100): la misma forma que `CTC-P-` (productor) y `CTC-F-` (finca),
+  derivado del uuid en `src/components/kaffetal-regal/data.ts` (`ctcLotReference` = `ctcLotReferenceShort`); es lo que va en el
+  paquete de muestra, en la factura, en el UID anónimo del Q-Grader y en `datasheet.ctc_uid`. El `CTCX-XXXX-XXXX` público del catálogo
+  (`lots.public_code`) es OTRO código y no cambió. Las 13 fichas guardadas con el `CTC_` viejo se reescribieron por SQL.
+
 - **El productor nunca escribe un grado ni un estado más allá de `ficha_completa`**: lo hace el OCP.
 - **La barra del lote son DOS líneas y su segunda línea NO se calcula aquí**: `estadoDelCircuito()`
   (`src/lib/ocp/circuito.ts`) es la fuente única del tramo comercial, y el panel la IMPORTA (V5.62 → V5.64).

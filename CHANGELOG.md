@@ -19,6 +19,16 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.100] — 2026-09-30 (commit pendiente)
+
+- **Cambiado**: **el código del lote es `CTC-L-XXXXXXXX` en todas partes** (owner, 2026-09-30) — la misma forma que `CTC-P-` y
+  `CTC-F-`, derivado del uuid en una sola fuente (`ctcLotReference` = `ctcLotReferenceShort`, `src/components/kaffetal-regal/data.ts`).
+  Sustituye al `CTC_` + 32 hex y a los 7 hex sueltos que iban en el paquete de muestra, la factura, la Ficha (A1, `datasheet.ctc_uid`, la
+  vista previa), el dossier, la certificación EUDR, el UID anónimo del Q-Grader y todo el OCP. El `CTCX-XXXX-XXXX` público del catálogo
+  no cambió. (Código de `kaffetal-regal` con el «organiza todo» del owner; ALINEACION §3.)
+- **Datos**: las 13 fichas guardadas con el formato viejo (`datasheet.ctc_uid`) se reescribieron por SQL.
+- **Docs**: charter `kaffetal-regal`, ALINEACION §3. `qa-evaluaciones` 51 → 53.
+
 ## [V5.99] — 2026-09-30 (commit cf3155e)
 
 - **Cambiado**: **las mezclas son un tipo de lote** (owner, 2026-09-30). El arquetipo de la Ficha cruza el conjunto de fincas (A2) con la

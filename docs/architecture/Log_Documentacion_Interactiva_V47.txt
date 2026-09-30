@@ -211,3 +211,10 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   `FincaView.tsx` (nuevo: la página de la finca, cabecera de la Ficha, cuerpo `FincaEditorBody`); `KaffetalExperience.tsx` sin
   `window.confirm`, DELETE con `.select("id")`. Guardián: `qa-kr-ficha` +6.
 (commit: ec96ce6)
+
+## [2026-09-30] V5.103 · Consolas — la inactividad de las cuentas «Marchitando» (recordatorio · aviso · borrado automático)
+- ANN `src/lib/inactividad/` (nuevo: `reglas.ts` pura, `barrido.ts` = tercer barrido de `/api/cron/recordatorios`, `correos.ts`,
+  `borrarCuenta.ts` = la única rutina de borrado) y `src/app/ocp/(app)/kr/{inactividadActions.ts,InactividadPanel.tsx}`.
+- DICT `producer_inactividad` (service-role-only: protegida, recordatorio_at, aviso_at). Acta 2026-09-30_inactividad_marchitando.sql.
+- Guardián nuevo: `qa-inactividad` (26). `qa-trato`: tres barridos.
+(commit: pendiente)

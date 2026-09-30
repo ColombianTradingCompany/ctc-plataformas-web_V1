@@ -19,6 +19,23 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.103] — 2026-09-30 (commit pendiente)
+
+- **Añadido**: **la inactividad de las cuentas «Marchitando»** (owner, 2026-09-30) — tercer barrido del cron semanal
+  `/api/cron/recordatorios` (`src/lib/inactividad/`: regla pura `reglas.ts`, `barrido.ts`, `correos.ts`): un productor Marchitando sin
+  finca ni lote recibe un correo recordándole la cuenta y cómo entrar; 30 días después, el aviso de que se borrará en un mes; 30 días
+  después la cuenta se borra sola (solo si sigue sin finca ni lote). Nunca las cuentas **protegidas**, las de prueba ni las que lleva
+  CTCx; una finca o un lote reinician el reloj. Cada paso deja rastro en `audit_log` y en el feed del productor; el sello se escribe
+  solo si el correo salió.
+- **Añadido**: en `/ocp/kr?productor=`, el bloque **Inactividad de la cuenta**: en qué va el barrido y el próximo paso, **«Proteger
+  cuenta»** (no se borra nunca) y **«Borrar cuenta»** con la frase escrita «Borrar Cuenta» para una cuenta sin finca ni lote
+  (`inactividadActions.ts`, clase `emite`). Una sola rutina de borrado (`borrarCuenta.ts`) para el botón y el barrido: limpia lo que no
+  cae en cascada (`producer_comm_log`, `producer_comm_ack`, `media_assets`; `audit_log` conserva el rastro sin autor) y vuelve a
+  comprobar la regla con datos frescos.
+- **Datos**: tabla `producer_inactividad` (service-role-only; acta `docs/migraciones/2026-09-30_inactividad_marchitando.sql`); quedaron
+  protegidas las tres cuentas de amigos y familia y CTC Redes.
+- **Docs**: charters `consolas` y `kaffetal-regal`, HANDOFF (crons), ALINEACION §3. Nuevo `qa-inactividad` (26); `qa-trato` cuenta tres barridos.
+
 ## [V5.102] — 2026-09-30 (commit ec96ce6)
 
 - **Añadido**: en Kaffetal Regal, **«Borrar» dentro de la pantalla de edición del lote y de la finca**, con un pop-up en el que el

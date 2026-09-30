@@ -6,6 +6,8 @@ import { infoGeneralComplete, PRODUCER_SEGMENTS, segmentProducer } from "@/lib/b
 import { estadoDeFinca, etapaDelLote } from "@/lib/ocp/etapas";
 import { ProducerPanel, type ProducerData, type ModuleStat } from "./ProducerPanel";
 import type { Gestion } from "@/lib/asistencia/desacoplado";
+import { esCorreoDePrueba } from "@/lib/email/cuentasDePrueba";
+import { proximoPaso } from "@/lib/inactividad/reglas";
 import styles from "@/components/panel/shared.module.css";
 
 // ── Vista completa · la sección del PRODUCTOR (V5.61) ────────────────────────
@@ -42,7 +44,7 @@ type CommRow = { id: string; context_label: string | null; note: string; created
 const FASES_ACTIVAS = new Set(["postulacion", "sondeo", "fila", "arena", "sesion"]);
 
 export async function ProductorSeccion({ service, productorId }: { service: SupabaseClient; productorId: string }) {
-  const [{ data: pRaw }, { data: ppRaw }, { data: fRaw }, { data: lRaw }, { data: iRaw }, { data: mRaw }] = await Promise.all([
+  const [{ data: pRaw }, { data: ppRaw }, { data: fRaw }, { data: lRaw }, { data: iRaw }, { data: mRaw }, { data: inRaw }] = await Promise.all([
     service.from("profiles").select("id, full_name, email, phone, created_at, role").eq("id", productorId).maybeSingle(),
     service
       .from("producer_profiles")
@@ -57,6 +59,8 @@ export async function ProductorSeccion({ service, productorId }: { service: Supa
       .select("id, context_label, note, created_at, author_role")
       .eq("producer_id", productorId)
       .order("created_at", { ascending: false }),
+    // V5.103: el estado del barrido de inactividad y la protección del owner.
+    service.from("producer_inactividad").select("protegida, protegida_motivo, recordatorio_at, aviso_at, ultimo_error").eq("profile_id", productorId).maybeSingle(),
   ]);
 
   const p = pRaw as ProfileRow | null;
@@ -66,6 +70,7 @@ export async function ProductorSeccion({ service, productorId }: { service: Supa
   const lotes = (lRaw as LotRow[] | null) ?? [];
   const arena = ((iRaw as InsRow[] | null) ?? []).filter((i) => FASES_ACTIVAS.has(i.phase));
   const comms = (mRaw as CommRow[] | null) ?? []; // de más nueva a más vieja → comms[0] es la última nota
+  const inact = inRaw as { protegida: boolean; protegida_motivo: string | null; recordatorio_at: string | null; aviso_at: string | null; ultimo_error: string | null } | null;
 
   // Los contratos no tienen FK al productor: se llega por sus lotes.
   const { data: cRaw } = lotes.length
@@ -95,6 +100,18 @@ export async function ProductorSeccion({ service, productorId }: { service: Supa
     activeArena: arena.length > 0,
   });
 
+  // V5.103: qué le espera a la cuenta en el barrido de inactividad (la misma regla pura del cron).
+  const proximo = proximoPaso({
+    segmento,
+    tieneFincas: fincas.length > 0,
+    tieneLotes: lotes.length > 0,
+    protegida: !!inact?.protegida,
+    esPrueba: esCorreoDePrueba(p.email),
+    laLlevaCtcx: !!pp?.gestion,
+    recordatorioAt: inact?.recordatorio_at ?? null,
+    avisoAt: inact?.aviso_at ?? null,
+  });
+
   // ✓ en orden · ✗ algo requiere atención · — sin registros. Reglas de «algo mal»: Fincas = una finca
   // rechazada; Lotes = un lote No Apto; Comunicación = la última nota la escribió el productor (CTC aún
   // no responde). Arena y Contratos no tienen regla de error por ahora.
@@ -116,6 +133,15 @@ export async function ProductorSeccion({ service, productorId }: { service: Supa
     clubMemberSince: pp?.club_member_since ?? null,
     gestion: pp?.gestion ?? null,
     segmentLabel: PRODUCER_SEGMENTS.find((s) => s.id === segmento)?.label ?? "",
+    inactividad: {
+      protegida: !!inact?.protegida,
+      protegidaMotivo: inact?.protegida_motivo ?? null,
+      recordatorioAt: inact?.recordatorio_at ?? null,
+      avisoAt: inact?.aviso_at ?? null,
+      ultimoError: inact?.ultimo_error ?? null,
+      borrable: !inact?.protegida && fincas.length === 0 && lotes.length === 0,
+      proximo: proximo ? { paso: proximo.paso, en: proximo.en.toISOString() } : null,
+    },
     media: {
       avatarUrl: pp?.avatar_asset_id ? firmadas.get(pp.avatar_asset_id) ?? null : null,
       videoUrl: pp?.video_asset_id ? firmadas.get(pp.video_asset_id) ?? null : null,

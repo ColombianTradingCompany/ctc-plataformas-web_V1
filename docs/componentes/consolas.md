@@ -135,6 +135,8 @@ registrar ≠ confirmar, CVA, rueda; charter `socios`, guardián de `consolas` p
 cada cifra de `terminos.ts` contra el §0/§6 del plan; rechazo gratis; re-evaluación; «sin oferta»; los laterales del circuito) ·
 **`qa-pvc-precio.mjs`** (52, V5.82 — la escalera publicada grado por grado, `RANGOS` = `definicion.ts`, nadie lee `rango`, las
 ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-internas`) · **`qa-compras-check.mjs`** (96, V5.85 · mezclas V5.87 · Sample Kits V5.90 · composición V5.91 — lo disponible derivado y nunca negativo, `ctc_selection` desde `compras` sin Tyrian y con la finca anulada en SQL, el precio cita el PVC, la compra nace del pago de una oferta de compra en firme, el CRM sin escritor, el perfil único y la imagen por lote, la vitrina con el perfil, el circuito y la barra con la misma regla, decisión 7) · `qa-ofertas-check.mjs` (37). Los siete `qa-pvc-*`, `qa-grados`, `qa-definicion`,
+**`qa-inactividad-check.mjs`** (26, V5.103 — la regla pura del barrido de inactividad contra el código; el sello solo si el correo salió;
+la única rutina de borrado; el cron con tres barridos; las acciones del OCP con clase `emite`; las cuentas protegidas del owner en el acta).
 `qa-direccionamiento` y `qa-anclas` pasaron a `herramientas-internas` el 2026-09-19.
 
 ## Reglas propias
@@ -316,6 +318,16 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   código y su estado; y **el estado del productor como filtro de casillas** (Marchitando · Nuevos · Primíparos · Establecidos · Activos,
   uno o varios; `?segmento=a,b`), que hasta entonces solo se leía en la fila. `KrFila` lleva `segmentoId` y `productorEmail`;
   `qa-boards` lo vigila.
+- **LA INACTIVIDAD DE LAS CUENTAS «MARCHITANDO» (owner, 2026-09-30) — EJECUTADA en la V5.103.** «Los productores Marchitando sin
+  finca ni lote reciben un correo recordándoles la cuenta y cómo acceder; un mes después otro avisando que la inactividad borrará la
+  cuenta automáticamente en un mes (SOLO si no tiene lote ni finca); y un botón para eliminar una cuenta de este tipo». Es el TERCER
+  barrido del cron semanal `/api/cron/recordatorios` (`src/lib/inactividad/`: `reglas.ts` pura · `barrido.ts` · `borrarCuenta.ts`, la
+  ÚNICA rutina de borrado, que limpia lo que no cae en cascada y vuelve a comprobar cero fincas y cero lotes). Nunca entran las cuentas
+  **protegidas** (`producer_inactividad.protegida`, service-role-only; el owner la enciende en `/ocp/kr?productor=` → «Proteger cuenta»),
+  las de prueba ni las que lleva CTCx; una finca o un lote reinician el reloj. El botón «Borrar cuenta» del OCP pide escribir «Borrar
+  Cuenta». Al aplicarse quedaron protegidas las tres cuentas de amigos y familia y CTC Redes (`20A85D62` · `57EB7B93` · `4AF96C32` ·
+  `067907FB`); las demás Marchitando sin finca ni lote (6 el 2026-09-30, comprobado por SQL) reciben el recordatorio el primer lunes (2026-10-05). Acta
+  `docs/migraciones/2026-09-30_inactividad_marchitando.sql`; `qa-inactividad` (26) y `qa-trato` (tres barridos).
 - **LAS TRES RUTAS DEL PROVEEDOR (owner, 2026-09-23)** — brief `briefs/consolas-rutas-del-proveedor.md`, con las siete
   respuestas del owner al final. **Primera tanda EJECUTADA en la V5.75**: **Asistencia a Proveedores** (`/ocp/asistencia` + botón
   en `/ocp/kr?productor=`: la sesión asistida, `src/lib/asistencia/actions.ts`), **Proveedor Desacoplado** (`/ocp/desacoplado`:

@@ -240,7 +240,8 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   check("recuerda por correo (el remitente único) y en el feed, con rastro en audit_log", runner.includes("sendTransactionalEmail(") && runner.includes('from("producer_comm_log")') && runner.includes('action: "mora_recordatorio_enviado"'));
   check("y NO cambia el estado de nada", !/update\(\{[^}]*\bstatus\b/.test(sinComentarios(runner)) && !/estado_cuenta/.test(runner) && !/from\("purchase_contracts"\)/.test(runner) && (runner.match(/\.update\(/g) ?? []).length === 1);
   const cron = lee("src/app/api/cron/recordatorios/route.ts");
-  check("el cron semanal corre los dos barridos y solo esos dos", cron.includes("correrRecordatorios(") && cron.includes("correrRecordatoriosDeMora(") && (cron.match(/await correr/g) ?? []).length === 2);
+  // V5.103: el tercer barrido es el de la inactividad (owner, 2026-09-30); `qa-inactividad` lo vigila por dentro.
+  check("el cron semanal corre los tres barridos y solo esos tres", cron.includes("correrRecordatorios(") && cron.includes("correrRecordatoriosDeMora(") && cron.includes("correrBarridoDeInactividad(") && (cron.match(/await correr/g) ?? []).length === 3);
   check("el OCP enseña cuántos recordatorios van", lee("src/app/ocp/(app)/contratos/[id]/page.tsx").includes("MAX_RECORDATORIOS_MORA"));
 }
 

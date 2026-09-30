@@ -6,6 +6,7 @@ import { logProducerComm } from "../commActions";
 import { ActionForm } from "@/components/panel/ActionForm";
 import { GESTION_LABEL, type Gestion } from "@/lib/asistencia/desacoplado";
 import { SesionAsistidaBoton } from "../asistencia/SesionAsistidaBoton";
+import { InactividadPanel, type InactividadData } from "./InactividadPanel";
 import styles from "@/components/panel/shared.module.css";
 
 // ── Panel del productor con pestañas (2026-07-23, pedido del owner) ──────────
@@ -46,6 +47,8 @@ export type ProducerData = {
   /** V5.75: la cuenta la lleva CTCx (desacoplado) o ya se entregó; null = propia. */
   gestion: Gestion | null;
   segmentLabel: string;
+  /** V5.103: el barrido de inactividad (recordatorio → aviso → borrado) y la protección del owner. */
+  inactividad: InactividadData;
   media: ProducerMedia;
   modules: Record<ModuleKey, ModuleStat>;
   fincas: ProducerFinca[];
@@ -153,6 +156,8 @@ export function ProducerPanel({ data }: { data: ProducerData }) {
               .join(" · ") || "Sin datos de contacto"}
             {` · alta ${fecha(data.createdAt)}`}
           </p>
+
+          <InactividadPanel producerId={data.id} data={data.inactividad} />
 
           <p className={styles.digestK} style={{ marginTop: 16 }}>Material de Información general</p>
           {!hasMedia ? (

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.114] — 2026-09-30 (commit pendiente)
+## [V5.114] — 2026-09-30 (commit 9b3c8cb)
 
 - **Cambiado**: en Kaffetal Regal, el **documento de respaldo de la finca es solo el SICA** (Registro SICA / cédula cafetera de la
   FNC; owner, 2026-09-30): desapareció el selector de tipo (escritura, tradición y libertad, arrendamiento, acta, otro); al subir el

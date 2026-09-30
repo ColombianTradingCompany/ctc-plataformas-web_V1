@@ -272,4 +272,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-09-30] V5.114 · KR: solo el SICA como documento de respaldo · OCP: el mapa pinta siempre fincas, con polígono
 - ANN `FincaModal.tsx` (`SUPPORT_DOC_SICA`, sin selector), `src/components/bcp/GeoMap.tsx` (`polygon` + `PolygonF`), `kr/KrTabla.tsx`
   (pines = fincas siempre), `kr/carga.ts` (`KrFila.poligono`). Guardianes: `qa-visa` +2, `qa-boards` +2.
-(commit: pendiente)
+(commit: 9b3c8cb)

@@ -10,10 +10,12 @@ import styles from "./FichaView.module.css";
 // EUDR dentro de una caja con media pantalla vacía a los lados. El lote, en cambio, tiene su página (`FichaView`).
 // Esta es la página de la finca: la MISMA cabecera y el mismo lienzo que la Ficha, con el cuerpo del editor
 // (`FincaEditorBody`, que no cambió) dentro. Se abre desde «Mis Fincas · Editar» (y desde el hilo de una finca en
-// Retroalimentación). El pop-up sigue existiendo para UNA cosa: registrar una finca NUEVA desde dentro de la Ficha del
-// lote (A2) o desde «+ Agregar finca», donde salirse de la página perdería el hilo.
+// Retroalimentación).
+// V5.112 (owner, el mismo día): REGISTRAR una finca nueva también es esta página (`finca = null`), desde «+ Agregar
+// finca» y desde A2 de la Ficha del lote; al guardar o volver se regresa a donde se abrió (el panel o la Ficha). El
+// pop-up `FincaModal` ya no existe: `FincaModal.tsx` conserva el nombre y solo exporta el cuerpo del editor.
 
-export function FincaView({ finca, onBack, ...editor }: { finca: Finca; onBack: () => void } & Omit<FincaEditorProps, "finca">) {
+export function FincaView({ finca, onBack, ...editor }: { finca: Finca | null; onBack: () => void } & Omit<FincaEditorProps, "finca">) {
   return (
     <div>
       <div className={styles.appTop}>
@@ -28,19 +30,19 @@ export function FincaView({ finca, onBack, ...editor }: { finca: Finca; onBack: 
           >
             <Image className={styles.krl} src="/images/shared/kaffetal-regal-logo.png" alt="Kaffetal Regal" width={1254} height={1254} />
             <span>
-              <span className={styles.name}>Mi Finca</span>
-              <span className={styles.by}>CTC · Pasaporte EUDR del predio · {fincaCode(finca.id)}</span>
+              <span className={styles.name}>{finca ? "Mi Finca" : "Finca nueva"}</span>
+              <span className={styles.by}>CTC · Pasaporte EUDR del predio{finca ? ` · ${fincaCode(finca.id)}` : ""}</span>
             </span>
           </a>
           <button className="btn btn-sm" style={{ marginLeft: "auto" }} onClick={onBack}>
-            ← Volver al panel
+            ← Volver
           </button>
         </div>
       </div>
 
       <div className={`wrap ${styles.fichaMain}`}>
         <div style={{ maxWidth: 980 }}>
-          <FincaEditorBody key={finca.id} finca={finca} {...editor} />
+          <FincaEditorBody key={finca?.id ?? "new"} finca={finca} {...editor} />
         </div>
       </div>
     </div>

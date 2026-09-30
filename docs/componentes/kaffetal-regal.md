@@ -73,9 +73,10 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   «Borrar» de su pantalla de edición (y desde la tarjeta de «Mis Fincas»); nunca con `window.confirm`. La regla de qué se puede borrar
   sigue en `isLotCommitted` / `fincaSelfDeletable` (`data.ts`, espejo de las RLS `lots_delete_own_before_mue` y
   `fincas_delete_own_not_committed`); los DELETE piden `.select("id")` porque una RLS que filtra devuelve cero filas, no error.
-- **Editar una finca es una página completa** (`FincaView`, V5.102), como la Ficha del lote; el pop-up `FincaModal` queda solo para
-  REGISTRAR una finca nueva (desde «+ Agregar finca» y desde A2 de la Ficha). **Y la Información general también** (`InfoView`, V5.107;
-  `InfoModal.tsx` conserva el nombre pero solo exporta el cuerpo del editor). `qa-kr-ficha` vigila las tres reglas.
+- **Editar Y registrar una finca son una página completa** (`FincaView`, V5.102 · V5.112), como la Ficha del lote; desde «+ Agregar
+  finca» y desde A2 de la Ficha (que vuelve a la Ficha al guardar). **Y la Información general también** (`InfoView`, V5.107). Los
+  pop-ups `FincaModal` e `InfoModal` no existen: sus archivos conservan el nombre y solo exportan el cuerpo del editor. En KR solo quedan
+  pop-ups para entrar, confirmar un borrado, pedir revisión de datos y las instrucciones de envío. `qa-kr-ficha` vigila las tres reglas.
 
 - **El código del lote es `CTC-L-XXXXXXXX`** (owner, 2026-09-30, V5.100): la misma forma que `CTC-P-` (productor) y `CTC-F-` (finca),
   derivado del uuid en `src/components/kaffetal-regal/data.ts` (`ctcLotReference` = `ctcLotReferenceShort`); es lo que va en el

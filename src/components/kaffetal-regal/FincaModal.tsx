@@ -7,7 +7,6 @@ import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import { FileDrop } from "./FileDrop";
 import { fincaReferencePoint, lookupElevation } from "@/lib/geo/elevation";
 import { polygonAreaHa } from "@/lib/geo/area";
-import { Modal } from "@/components/Modal";
 import { checkFileSizeMb } from "@/lib/fileSize";
 import { fincaEudrStatus, deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, PRODUCT_RISK_AFFIRMATIONS, type ParcelaGeoFields } from "@/lib/eudr";
 import { fincaLevelSchemes, CERT_REGISTRY } from "@/lib/certRegistry";
@@ -227,49 +226,8 @@ type FincaModalExtras = {
   onUploadCertSupport: (certId: string, fincaId: string, file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
 };
 
-export function FincaModal({
-  open,
-  onClose,
-  finca,
-  gi,
-  onSave,
-  onRequestHelp,
-  onUploadPhoto,
-  onUploadVideo,
-  onUploadLegalDoc,
-  ...extras
-}: {
-  open: boolean;
-  onClose: () => void;
-  finca: Finca | null; // null = creating new
-  gi: GeneralInfo;
-  onSave: (f: Finca) => Promise<boolean>;
-  onRequestHelp: (f: Finca, text: string) => Promise<boolean>;
-  onUploadPhoto: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
-  onUploadVideo: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
-  onUploadLegalDoc: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
-} & FincaModalExtras) {
-  return (
-    <Modal open={open} onClose={onClose} ariaLabel="Identidad de la finca">
-      {/* Keyed on the finca id (or "new") so switching what's being edited remounts
-          this body with fresh initial state, instead of an effect that resets state
-          imperatively on every open -- Modal itself never unmounts its children. */}
-      {open && (
-        <FincaEditorBody
-          key={finca?.id ?? "new"}
-          finca={finca}
-          gi={gi}
-          onSave={onSave}
-          onRequestHelp={onRequestHelp}
-          onUploadPhoto={onUploadPhoto}
-          onUploadVideo={onUploadVideo}
-          onUploadLegalDoc={onUploadLegalDoc}
-          {...extras}
-        />
-      )}
-    </Modal>
-  );
-}
+// V5.112 (owner): el pop-up `FincaModal` ya no existe — editar Y registrar una finca son la página `FincaView`. Este
+// archivo conserva el nombre por su historia y por los guardianes que lo leen; exporta el cuerpo del editor y nada más.
 
 export function FincaEditorBody({
   finca,

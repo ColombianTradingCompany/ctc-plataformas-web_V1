@@ -258,3 +258,8 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `src/app/ocp/(app)/desacoplado/SelectorDepartamento.tsx` (nuevo; lista `DEP_MUNI`), `page.tsx`, `src/lib/asistencia/actions.ts`.
   Guardián: `qa-asistencia` +2.
 (commit: 6420251)
+
+## [2026-09-30] V5.112 · Kaffetal Regal — registrar una finca nueva también a pantalla completa (adiós FincaModal)
+- ANN `FincaView.tsx` (`finca: Finca | null`), `KaffetalExperience.tsx` (`fincaOrigen`: vuelve al panel o a la Ficha), `FincaModal.tsx`
+  sin pop-up. Guardián: `qa-kr-ficha` (comprobación reescrita).
+(commit: pendiente)

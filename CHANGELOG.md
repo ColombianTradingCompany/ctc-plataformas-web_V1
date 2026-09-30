@@ -19,6 +19,13 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.112] — 2026-09-30 (commit pendiente)
+
+- **Cambiado**: en Kaffetal Regal, **registrar una finca nueva también es una página completa** (`FincaView` con `finca = null`; owner,
+  2026-09-30), desde «+ Agregar finca» y desde A2 de la Ficha del lote — en este caso, al guardar o volver se regresa a la Ficha. El
+  pop-up `FincaModal` desaparece. Con esto ningún alta ni edición de KR (Información general, finca, lote) abre un pop-up.
+- **Docs**: charter `kaffetal-regal`. `qa-kr-ficha` 230 (una comprobación reescrita).
+
 ## [V5.111] — 2026-09-30 (commit 6420251)
 
 - **Cambiado**: en **Proveedor Desacoplado** (`/ocp/desacoplado`), el departamento se elige de un **selector** con la misma lista que

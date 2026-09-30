@@ -18,7 +18,6 @@ import { LoginModal } from "./LoginModal";
 import { AppDashboard } from "./AppDashboard";
 import { LEGACY_MODULE_TO_DRILL, LEGACY_MODULE_TO_TAB, esModuloLegado, type PanelDrill, type PanelTab } from "./panel/panelTabs";
 import { FichaView, type FichaSaveUpdate } from "./FichaView";
-import { FincaModal } from "./FincaModal";
 import { FincaView } from "./FincaView";
 import { ConfirmarBorradoModal, type BorradoPendiente } from "./ConfirmarBorradoModal";
 import { InfoView } from "./InfoView";
@@ -350,7 +349,8 @@ function Experience() {
   const [feedback, setFeedback] = useState<FeedbackNote[]>([]);
   const [curLotId, setCurLotId] = useState<string | null>(null);
 
-  const [fincaModalOpen, setFincaModalOpen] = useState(false);
+  // V5.112: desde dónde se abrió la página de la finca (el panel o la Ficha del lote, al registrar una nueva desde A2).
+  const [fincaOrigen, setFincaOrigen] = useState<"app" | "ficha">("app");
   const [editingFincaIdx, setEditingFincaIdx] = useState(-1);
   // V5.102 (owner): lo que está por borrarse mientras el productor escribe «Borrar Lote» / «Borrar Finca».
   const [borrado, setBorrado] = useState<BorradoPendiente | null>(null);
@@ -1135,7 +1135,7 @@ function Experience() {
     }
     setFincas((prev) => [...prev, dbFincaToFinca(data as FincaRow)]);
     void mirrorParcelaUno((data as FincaRow).id, f);
-    setFincaModalOpen(false);
+    setView(fincaOrigen);
     showToast(`Finca "${f.name}" guardada ✓ · ya puede asociarle cafés`);
     return true;
   }
@@ -1868,7 +1868,6 @@ function Experience() {
   // la entrada correspondiente para que el conteo no se desalinee.
   const backLayerCount =
     (loginOpen ? 1 : 0) +
-    (fincaModalOpen ? 1 : 0) +
     (borrado ? 1 : 0) +
     (view === "info" ? 1 : 0) +
     (view === "ficha" ? 1 : 0) +
@@ -1882,11 +1881,11 @@ function Experience() {
     // cualquier app con barra inferior.
     if (loginOpen) setLoginOpen(false);
     else if (borrado) setBorrado(null);
-    else if (fincaModalOpen) setFincaModalOpen(false);
     else if (view === "ficha") setView(userId ? "app" : "landing");
-    else if (view === "finca" || view === "info") setView("app");
+    else if (view === "finca") setView(fincaOrigen);
+    else if (view === "info") setView("app");
     else if (drill) setDrill(null);
-  }, [loginOpen, borrado, fincaModalOpen, view, userId, drill]);
+  }, [loginOpen, borrado, view, fincaOrigen, userId, drill]);
 
   const backDepth = useRef(0);
   const backFromPop = useRef(false);
@@ -1957,9 +1956,9 @@ function Experience() {
           onConfirmSampleShipped={confirmSampleShipped}
           onOpenFincaModal={(i) => {
             setEditingFincaIdx(i);
-            // V5.102 (owner): EDITAR una finca es una página completa, como la Ficha del lote; REGISTRAR una nueva sigue en el pop-up.
-            if (i >= 0) setView("finca");
-            else setFincaModalOpen(true);
+            // V5.102/V5.112 (owner): editar Y registrar una finca son la página completa, como la Ficha del lote.
+            setFincaOrigen("app");
+            setView("finca");
           }}
           onDeleteFinca={deleteFinca}
           onRequestFincaRevision={requestFincaRevision}
@@ -1982,8 +1981,10 @@ function Experience() {
           onDelete={!isLotCommitted(curLot) && curLot.source !== "bcp_manual_entry" ? () => deleteLot(curLot.id) : undefined}
           onSave={saveFicha}
           onOpenNewFinca={() => {
+            // V5.112: registrar una finca desde A2 abre la página de la finca y vuelve a la Ficha al guardar o al volver.
             setEditingFincaIdx(-1);
-            setFincaModalOpen(true);
+            setFincaOrigen("ficha");
+            setView("finca");
           }}
           onUploadFile={uploadFile}
           onGetFileUrl={getFileUrl}
@@ -1995,58 +1996,31 @@ function Experience() {
         />
       )}
 
-      {view === "finca" && fincaEnEdicion && (
+      {view === "finca" && (
         <FincaView
-          key={fincaEnEdicion.id}
+          key={fincaEnEdicion?.id ?? "new"}
           finca={fincaEnEdicion}
           gi={gi}
-          onBack={() => setView("app")}
+          onBack={() => setView(fincaOrigen)}
           onSave={saveFinca}
           onRequestHelp={requestFincaHelp}
-          onUploadPhoto={(file, onProgress) => uploadFincaPhoto(fincaEnEdicion.id, file, onProgress)}
-          onUploadVideo={(file, onProgress) => uploadFincaVideo(fincaEnEdicion.id, file, onProgress)}
-          onUploadLegalDoc={(file, onProgress) => uploadFincaLegalDoc(fincaEnEdicion.id, file, onProgress)}
-          parcelas={parcelas.filter((p) => p.fincaId === fincaEnEdicion.id)}
-          certificates={fincaCerts.filter((c) => c.fincaId === fincaEnEdicion.id)}
+          onUploadPhoto={(file, onProgress) => (fincaEnEdicion ? uploadFincaPhoto(fincaEnEdicion.id, file, onProgress) : Promise.resolve(false))}
+          onUploadVideo={(file, onProgress) => (fincaEnEdicion ? uploadFincaVideo(fincaEnEdicion.id, file, onProgress) : Promise.resolve(false))}
+          onUploadLegalDoc={(file, onProgress) => (fincaEnEdicion ? uploadFincaLegalDoc(fincaEnEdicion.id, file, onProgress) : Promise.resolve(false))}
+          parcelas={fincaEnEdicion ? parcelas.filter((p) => p.fincaId === fincaEnEdicion.id) : []}
+          certificates={fincaEnEdicion ? fincaCerts.filter((c) => c.fincaId === fincaEnEdicion.id) : []}
           onSaveParcela={saveParcela}
           onDeleteParcela={deleteParcela}
           onSaveCert={saveFincaCert}
           onDeleteCert={deleteFincaCert}
           onUploadCertSupport={uploadCertSupport}
-          onDelete={fincaSelfDeletable(fincaEnEdicion, lots) ? () => deleteFinca(fincaEnEdicion.id) : undefined}
+          onDelete={fincaEnEdicion && fincaSelfDeletable(fincaEnEdicion, lots) ? () => deleteFinca(fincaEnEdicion.id) : undefined}
         />
       )}
 
       <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
       <ConfirmarBorradoModal pendiente={borrado} onClose={() => setBorrado(null)} onConfirm={ejecutarBorrado} />
       <SolicitudRevisionModal finca={revisionFinca} onClose={() => setRevisionFinca(null)} onSend={enviarRevisionFinca} />
-      <FincaModal
-        open={fincaModalOpen}
-        onClose={() => setFincaModalOpen(false)}
-        finca={editingFincaIdx >= 0 ? fincas[editingFincaIdx] : null}
-        gi={gi}
-        onSave={saveFinca}
-        onRequestHelp={requestFincaHelp}
-        onUploadPhoto={(file, onProgress) => {
-          const editing = editingFincaIdx >= 0 ? fincas[editingFincaIdx] : null;
-          return editing ? uploadFincaPhoto(editing.id, file, onProgress) : Promise.resolve(false);
-        }}
-        onUploadVideo={(file, onProgress) => {
-          const editing = editingFincaIdx >= 0 ? fincas[editingFincaIdx] : null;
-          return editing ? uploadFincaVideo(editing.id, file, onProgress) : Promise.resolve(false);
-        }}
-        onUploadLegalDoc={(file, onProgress) => {
-          const editing = editingFincaIdx >= 0 ? fincas[editingFincaIdx] : null;
-          return editing ? uploadFincaLegalDoc(editing.id, file, onProgress) : Promise.resolve(false);
-        }}
-        parcelas={editingFincaIdx >= 0 ? parcelas.filter((p) => p.fincaId === fincas[editingFincaIdx].id) : []}
-        certificates={editingFincaIdx >= 0 ? fincaCerts.filter((c) => c.fincaId === fincas[editingFincaIdx].id) : []}
-        onSaveParcela={saveParcela}
-        onDeleteParcela={deleteParcela}
-        onSaveCert={saveFincaCert}
-        onDeleteCert={deleteFincaCert}
-        onUploadCertSupport={uploadCertSupport}
-      />
       {/* V5.107 (owner): la Información general también es una página completa, como la Ficha y la finca. */}
       {view === "info" && (
         <InfoView

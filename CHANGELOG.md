@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.101] — 2026-09-30 (commit pendiente)
+## [V5.101] — 2026-09-30 (commit 0654a1f)
 
 - **Añadido**: en **Productores, Fincas y Lotes** (`/ocp/kr`), tres cosas que el owner pidió al empezar a cargar productores para la
   Etapa 2 (2026-09-30): los filtros rápidos **«Finca ✅» y «Lote ✅»** junto a «Sin finca» y «Sin lote» (`?filtro=con-finca|con-lote`);

@@ -204,4 +204,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-09-30] V5.101 · Consolas — /ocp/kr: «Finca ✅» · «Lote ✅», el correo del productor y el estado como filtro de casillas
 - ANN `src/app/ocp/(app)/kr/KrTabla.tsx` y `carga.ts`: `KrFila.segmentoId` + `productorEmail`; filtros `con-finca` · `con-lote`;
   casillas de `PRODUCER_SEGMENTS` (varios a la vez, `?segmento=`). Guardián: `qa-boards` +5.
-(commit: pendiente)
+(commit: 0654a1f)

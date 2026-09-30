@@ -41,7 +41,7 @@ const MODEL = "claude-sonnet-5";
 
 type Result = { ok: true } | { ok: false; error: string };
 
-const PATHS = ["/ocp/fichas", "/ocp/kr", "/kaffetal-regal"];
+const PATHS = ["/ocp/kr", "/kaffetal-regal"];
 function revalidateAll() {
   for (const p of PATHS) revalidatePath(p);
 }
@@ -64,7 +64,7 @@ function soportesDelDatasheet(ds: Partial<FichaFormData> | null | undefined): So
   return out;
 }
 
-/** URL firmada bajo demanda para que CTCx VEA un soporte desde /ocp/fichas. */
+/** URL firmada bajo demanda para que CTCx VEA un soporte desde /ocp/kr?lote= (la vista del lote). */
 export async function signSoporteUrl(assetId: string): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
   await requireActiveAdmin();
   const service = createServiceRoleClient();
@@ -183,7 +183,7 @@ function saneaExtraccion(raw: Record<string, unknown>): { data: FichaTecnicaData
 /**
  * El escáner visual: descarga los soportes B2/B3 del lote, se los muestra al
  * modelo y guarda lo extraído como una ficha `escaneo` del set. OPT-IN: solo
- * corre cuando CTCx pulsa el botón en /ocp/fichas.
+ * corre cuando CTCx pulsa el botón en /ocp/kr?lote= (la vista del lote).
  */
 export async function scanFichaSoportes(lotId: string): Promise<Result> {
   const permiso = await permisoDeEscritura("ocp", "emite");

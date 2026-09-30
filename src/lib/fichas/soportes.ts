@@ -1,5 +1,5 @@
 // ── Qué material tiene un lote para su Ficha Técnica (V5.78) ─────────────────
-// Puro. Lo leen `/ocp/fichas` (el índice) y la vista completa del lote (`LoteSeccion`), donde desde
+// Puro. Lo leen `/ocp/kr?lote= (la vista del lote)` (el índice) y la vista completa del lote (`LoteSeccion`), donde desde
 // la fase 2 del plan se transcribe FT2: los soportes que el productor adjuntó en B2/B3, si reportó
 // algo compilable, y el set de fichas que resulta.
 import type { FichaFormData } from "@/components/kaffetal-regal/ficha/fichaData";

@@ -19,6 +19,23 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.97] — 2026-09-30 (commit pendiente)
+
+- **Cambiado**: la checklist de la Visa dice **«EUDR · Pasaporte de la finca»** y **«Fotos y video (B4)»** (`evaChecklist.ts`); la
+  vista del lote firma y enseña las fotos B4 junto al video (antes solo el video).
+- **Retirado**: el índice **`/ocp/fichas`** (owner, 2026-09-30: «lo puedo ver en Productores, Fincas y Lotes»): 308 a `/ocp/kr`
+  (talón fuera de `(app)`, `rutasMovidas.ts` con 57 rutas); `FichasClient.tsx` vive en `kr/`. `qa-fichas` y `qa-registro` leen la vista del lote.
+- **Añadido**: **lectura de una cotización courier desde la LCP** (`/lcp/crm/caas/cotizacion/[id]`, compuerta del layout de la LCP;
+  `src/lib/courier/lectura.ts`): piezas, opciones y desglose por concepto del acta congelada, sin los % del acuerdo con FedEx. La
+  tarjeta del CRM CaaS enlaza «Ver desglose» y «Abrir en el cotizador (ECP)». Cierra la decisión (a) del charter.
+- **Añadido**: **la firma del contrato avisa al productor** (`signContract`): nota en su feed y correo por el remitente único; el
+  resultado del envío queda en el rastro (`audit_log.notes`). Cierra la decisión (c) para la firma.
+- **Cambiado** (código de CTC Home, `plataforma`, con el «organiza todo» del owner): `EcosystemSection` (ES · EN · DE) deja de hablar
+  del Kaffetal Club, de la Cupping Arena como competencia y de la escalera de entregas — dice Q-Grader certificado, precio anclado
+  al PVC, trato mes a mes y evaluación subvencionada; `Hero`, `MomentSection` y `pageIndex` dicen «temporadas de evaluación» y «puntaje
+  del Q-Grader». Cierra la fila de §3b del wrap V47.
+- **Docs**: charter `consolas` (a · c · e), plan §«Pendiente de la Etapa 1», ALINEACION §3 y §3b, AGENTS (57 rutas).
+
 ## [V5.96] — 2026-09-30 (commit 203ec44)
 
 - **Cambiado**: **los mínimos que el productor declara por lote, confirmados por el owner** (2026-09-30): Black y Red 6 cargas ·

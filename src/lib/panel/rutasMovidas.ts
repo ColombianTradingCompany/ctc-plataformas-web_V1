@@ -171,6 +171,11 @@ export const RUTAS_MOVIDAS: RutaMovida[] = [
   // «Nominados» se parte en DOS entradas —«Lotes a Evaluar» y «Lotes en Evaluación»— y su URL vieja
   // aterriza en la primera, que es por donde entra un lote. Es «una a muchas»: la inversa de la V5.61.
   { de: "/ocp/nominados", a: "/ocp/a-evaluar", desde: "V5.63" },
+
+  // ── V5.97 (2026-09-30) · el índice de Fichas Técnicas se retira ───────────────────────────
+  // El owner: «no es necesario tener este UI de esta manera, lo puedo ver en Productores, Fincas y Lotes». El set de
+  // fichas de cada lote se trabaja en la vista completa (`?lote=`) desde la V5.78; el índice sobraba.
+  { de: "/ocp/fichas", a: "/ocp/kr", desde: "V5.97" },
 ];
 
 /**

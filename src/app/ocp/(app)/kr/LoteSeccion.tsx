@@ -7,7 +7,7 @@ import { RegisterDdsButton, RevertNoAptoButton } from "./LotePiezas";
 import { PostularOnBehalfButton } from "../nominados/NominadosClient";
 import { ActionForm } from "@/components/panel/ActionForm";
 import { reviewEvaluationClaim } from "../evaluationActions";
-import { LotFichasCard } from "../fichas/FichasClient";
+import { LotFichasCard } from "./FichasClient";
 import { soportesDe, tieneReporte } from "@/lib/fichas/soportes";
 import { ordenaFichas, rowToLotFicha, type LotFicha } from "@/lib/fichas/tipos";
 import { EvaReviewCard, type CertItem, type EvaEudrFields, type FileLink, type FisicoPanel, type Row } from "./EvaReviewCard";
@@ -145,6 +145,7 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
   for (const lot of lotRows) {
     assetIds.push(lot.video_asset_id);
     for (const v of lot.datasheet?.extra_video_assets ?? []) assetIds.push(v.assetId);
+    for (const f of lot.datasheet?.b4_files_foto ?? []) assetIds.push(f.assetId);
     for (const a of Object.values(lot.datasheet?.cert_attachments ?? {})) assetIds.push(a.assetId);
   }
 
@@ -221,7 +222,7 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
   const claimsByLot = new Map<string, ClaimRow[]>();
   for (const c of (claimRows as ClaimRow[] | null) ?? []) claimsByLot.set(c.lot_id, [...(claimsByLot.get(c.lot_id) ?? []), c]);
   // V5.78: el set de Fichas Técnicas del lote (escáner, compilada del reporte, transcrita a mano) se trabaja AQUÍ,
-  // en la revisión del registro; `/ocp/fichas` queda como índice.
+  // en la revisión del registro (el índice de Fichas Técnicas se retiró en la V5.97: 308 a esta tabla).
   const { data: fichaRows } = await service
     .from("lot_fichas")
     .select("id, lot_id, source, title, data, source_files, model, confianza, observaciones, is_official, created_at")
@@ -455,7 +456,9 @@ function LotCard({
     notas: lot.ficha_notas_cata || ds.analysis_notes || "",
   };
 
+  // V5.97: B4 son fotos (obligatorias desde la V5.64) y video; la checklist las revisa juntas.
   const videoLinks: FileLink[] = [
+    ...(ds.b4_files_foto ?? []).map((f) => ({ label: `Foto del lote — ${f.fileName}`, url: signedUrls.get(f.assetId) ?? null })),
     ...(lot.video_asset_id
       ? [{ label: "Video principal del lote (B4)", url: signedUrls.get(lot.video_asset_id) ?? null }]
       : []),

@@ -455,8 +455,8 @@ export function EvaReviewCard({
 
           {openPanel === "video" && (
             <>
-              <h4 style={{ margin: "0 0 8px", fontSize: 13.5 }}>Video (B4)</h4>
-              {fileList(videoLinks, "El productor todavía no sube el video del lote.")}
+              <h4 style={{ margin: "0 0 8px", fontSize: 13.5 }}>Fotos y video (B4)</h4>
+              {fileList(videoLinks, "El productor todavía no sube las fotos del lote (dos como mínimo; el video es opcional).")}
             </>
           )}
 

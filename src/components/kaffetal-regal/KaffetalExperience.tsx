@@ -342,7 +342,7 @@ function Experience() {
   const [contracts, setContracts] = useState<ProducerContract[]>([]);
   const [offers, setOffers] = useState<ProducerOffer[]>([]);
   // V5.23: el set de Fichas Técnicas de los lotes (RLS select-own; las compila
-  // CTCx en /ocp/fichas). Solo lectura — se listan en los panes B2/B3.
+  // CTCx en /ocp/kr?lote= (la vista del lote)). Solo lectura — se listan en los panes B2/B3.
   const [lotFichas, setLotFichas] = useState<LotFicha[]>([]);
   const [feedback, setFeedback] = useState<FeedbackNote[]>([]);
   const [curLotId, setCurLotId] = useState<string | null>(null);
@@ -434,7 +434,7 @@ function Experience() {
             )
             .order("emitted_at", { ascending: false }),
           // RLS (lot_fichas_select_own) scopes this to the producer's own lots
-          // — solo lectura; el set lo administra CTCx desde /ocp/fichas.
+          // — solo lectura; el set lo administra CTCx desde /ocp/kr?lote= (la vista del lote).
           supabase
             .from("lot_fichas")
             .select("id, lot_id, source, title, data, source_files, model, confianza, observaciones, is_official, created_at")

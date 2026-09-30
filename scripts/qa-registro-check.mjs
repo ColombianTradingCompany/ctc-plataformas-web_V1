@@ -99,11 +99,11 @@ const HOY = new Date("2026-10-01T12:00:00Z");
   const fichas = lee("src/app/ocp/(app)/fichasActions.ts");
   check("la transcripción a mano existe y es la fuente «ctc»", fichas.includes("export async function crearFichaManual(") && fichas.includes('source: "ctc"'));
   check("y nunca inventa: un formulario vacío no crea ficha", fichas.includes("La ficha está vacía"));
-  const cliente = lee("src/app/ocp/(app)/fichas/FichasClient.tsx");
+  const cliente = lee("src/app/ocp/(app)/kr/FichasClient.tsx");
   check("el formulario de transcripción vive en el set de fichas", cliente.includes("function FichaManualForm(") && cliente.includes("<FichaManualForm lotId={lotId} />"));
   const lote = lee("src/app/ocp/(app)/kr/LoteSeccion.tsx");
   check("la vista del lote monta el set de fichas (escáner · reporte · a mano · oficial)", lote.includes("<LotFichasCard") && lote.includes('from("lot_fichas")'));
-  check("con los soportes de una sola fuente (src/lib/fichas/soportes.ts)", lote.includes('from "@/lib/fichas/soportes"') && lee("src/app/ocp/(app)/fichas/page.tsx").includes('from "@/lib/fichas/soportes"'));
+  check("con los soportes de una sola fuente (src/lib/fichas/soportes.ts)", lote.includes('from "@/lib/fichas/soportes"') && cliente.includes('from "@/lib/fichas/soportes"'));
 }
 
 // ── 6. V5.79 · lo que la fase 2 le tocó a Kaffetal Regal (con el sí del owner, línea en §3) ──

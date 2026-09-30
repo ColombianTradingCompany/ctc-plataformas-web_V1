@@ -143,7 +143,7 @@ export function FichaView({
 }: {
   lot: Lot;
   /** V5.23: el set de Fichas Técnicas del lote (las compila CTCx en
-   *  /ocp/fichas; RLS select-own) — se listan en los panes B2 y B3, la
+   *  /ocp/kr?lote= (la vista del lote); RLS select-own) — se listan en los panes B2 y B3, la
    *  oficial primero. Solo lectura. */
   fichas?: import("@/lib/fichas/tipos").LotFicha[];
   fincas: Finca[];

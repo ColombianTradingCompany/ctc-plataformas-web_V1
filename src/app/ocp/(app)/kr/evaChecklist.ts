@@ -12,8 +12,9 @@ export const EVA_CHECKLIST_ITEMS = [
   { key: "ft", label: "FT · Identidad y Origen" },
   { key: "ft2_certs", label: "FT2 · Certificados (A3/A4)" },
   { key: "ft2_fisico", label: "FT2 · Análisis Físico (B2/B3)" },
-  { key: "eudr", label: "EUDR · Visa de la finca" },
-  { key: "video", label: "Video (B4)" },
+  // V5.97 (owner, 2026-09-30): el vocabulario de `src/lib/eudr.ts` — la finca tiene PASAPORTE; y B4 son fotos (obligatorias) y video.
+  { key: "eudr", label: "EUDR · Pasaporte de la finca" },
+  { key: "video", label: "Fotos y video (B4)" },
 ] as const;
 
 export type EvaChecklistKey = (typeof EVA_CHECKLIST_ITEMS)[number]["key"];

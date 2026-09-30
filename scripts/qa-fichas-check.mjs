@@ -26,8 +26,9 @@ const lee = (r) => readFileSync(new URL(`../${r}`, import.meta.url), "utf8");
 
 const acciones = lee("src/app/ocp/(app)/fichasActions.ts");
 const tipos = lee("src/lib/fichas/tipos.ts");
-const pagina = lee("src/app/ocp/(app)/fichas/page.tsx");
-const cliente = lee("src/app/ocp/(app)/fichas/FichasClient.tsx");
+// V5.97: el índice de Fichas Técnicas se retiró (308 a `/ocp/kr`); el set de fichas vive en la vista completa del lote.
+const pagina = lee("src/app/ocp/(app)/kr/LoteSeccion.tsx");
+const cliente = lee("src/app/ocp/(app)/kr/FichasClient.tsx");
 const consumo = lee("src/lib/ai/consumo.ts");
 const consolas = lee("src/lib/panel/consoles.ts");
 const experiencia = lee("src/components/kaffetal-regal/KaffetalExperience.tsx");
@@ -57,7 +58,7 @@ check("la extracción se sanea (nada fuera de rango entra)", acciones.includes("
 check("el botón del OCP confirma el costo antes de escanear", cliente.includes("scanFichaSoportes") && /confirm\([\s\S]{0,160}costo de IA/.test(cliente));
 check("loadData del productor NO escanea", !experiencia.includes("scanFichaSoportes"));
 check("el veredicto NO escanea", !lee("src/app/ocp/(app)/nominadosActions.ts").includes("scanFichaSoportes"));
-check("la página del OCP no escanea al cargar (solo el cliente)", !pagina.includes("scanFichaSoportes"));
+check("la vista del lote no escanea al cargar (solo el cliente)", !pagina.includes("scanFichaSoportes"));
 
 // ── 3. El set: escrituras service-role, una oficial, sin tocar el galardón ─
 check("todas las escrituras van por el service client", acciones.includes("createServiceRoleClient") && (acciones.match(/service\.from\("lot_fichas"\)/g) ?? []).length >= 4);
@@ -68,13 +69,12 @@ const cuerpoCompilar = acciones.slice(acciones.indexOf("export async function cr
 check("compilar del reporte es programático (sin fetch a la IA)", cuerpoCompilar.includes("revalidateAll") && !cuerpoCompilar.includes("fetch(") && !cuerpoCompilar.includes("ANTHROPIC_URL"));
 
 // ── 4. Las dos superficies ────────────────────────────────────────────────
-// V5.63: «Fichas Técnicas» salió del rail por decisión del owner (su cuadro no la tiene). Lo que hay que
-// vigilar ahora es lo contrario: que la página NO quede huérfana — se abre desde «Lotes en Evaluación».
-check("Fichas ya no es una entrada del rail del OCP", !consolas.includes('href: "/ocp/fichas"'));
-check(
-  "y no queda huérfana: «Lotes en Evaluación» la enlaza",
-  lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").includes('href="/ocp/fichas"')
-);
+// V5.63: «Fichas Técnicas» salió del rail; V5.97: el índice se retiró del todo (owner, 2026-09-30) y su URL es un 308 a la
+// tabla única. (La ruta vieja se escribe partida: qa-rutas-consolas (c) no admite el literal fuera de rutasMovidas.)
+const rutaVieja = "/ocp/" + "fichas";
+check("Fichas no es una entrada del rail del OCP", !consolas.includes(`href: "${rutaVieja}"`));
+check("y su URL vieja es un 308 a /ocp/kr (rutasMovidas + talón fuera de (app))", lee("src/lib/panel/rutasMovidas.ts").includes(`de: "${rutaVieja}", a: "/ocp/kr"`) && lee(`src/app${rutaVieja}/[[...resto]]/page.tsx`).includes("permanentRedirect(destinoDe("));
+check("el set de fichas se monta en la vista del lote", pagina.includes("<LotFichasCard") && pagina.includes('from "./FichasClient"'));
 check("el productor solo LEE lot_fichas (select, jamás insert/update)", experiencia.includes('from("lot_fichas")') && !/from\("lot_fichas"\)\s*\.\s*(insert|update|delete)/.test(experiencia));
 check("FichaView recibe y reparte el set", vista.includes("fichas={fichas}"));
 check("el pane B2 lista la cara sensorial", b2.includes('<FichasDelLote fichas={fichas} mostrar="sensorial"'));

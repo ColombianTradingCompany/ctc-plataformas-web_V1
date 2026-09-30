@@ -218,7 +218,7 @@ y la 7 son las que el productor ve: es donde la Etapa 2 hará su trabajo.
   Dueño `consolas`.
 - **`qa-evaluacion-check`** (§3 CREAR, Guardianes) no existe: vigilan `qa-evaluaciones-check` y `qa-centro-calidad-check`. Decidir si se
   renombra o se retira la línea. Dueño `consolas`.
-- **`/ocp/fichas`**: el §3 (RETIRAR) pedía un 308; la V5.78 lo dejó como índice fuera del rail. Decidir 308 o índice. Dueño `consolas`.
+- ~~**`/ocp/fichas`**: el §3 (RETIRAR) pedía un 308; la V5.78 lo dejó como índice fuera del rail. Decidir 308 o índice.~~ **308 a `/ocp/kr` en la V5.97** (owner, 2026-09-30).
 - ~~**La revisión de almacenaje a los 90 días y el kilo CTCx** (V5.88 contra V5.89): ¿con qué se revisa?~~ **Decidido por el owner el
   2026-09-30 y ejecutado en la V5.94**: el primer kilo son cuatro porciones de 250 g de CPS (una al Q-Grader, tres de reserva) y la
   revisión de los 90 días toma UNA contramuestra de reserva (`KG_REVISION_ALMACENAJE = PORCION_CPS_KG`); el kilo CTCx se trilla entero.

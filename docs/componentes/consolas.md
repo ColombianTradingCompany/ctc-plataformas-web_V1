@@ -178,18 +178,18 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   Compras, rutas del proveedor) tiene decisión abierta — los de **Plataformas de Pagos**, **Seguimiento de Temas** y
   **Simplificar el OCP** (este absorbido en lo esencial por el plan del circuito) siguen con las suyas (nodo final, wrap V47).
 - **Lo que destapó la auditoría del nodo final antes del wrap V47 (2026-09-25) — de este charter, CÓDIGO o decisión, sin tocar**:
-  **(a) Permisos LCP → ECP (V5.73, «Para `consolas`» en §3; no estaba anotado aquí)**: el CRM CP CaaS (`LeadsBoard.tsx`) enseña
+  **(a) HECHO en la V5.97 — el owner dio LECTURA: `/lcp/crm/caas/cotizacion/[id]` enseña el acta congelada sin los % del acuerdo. Era: Permisos LCP → ECP (V5.73, «Para `consolas`» en §3; no estaba anotado aquí)**: el CRM CP CaaS (`LeadsBoard.tsx`) enseña
   las cotizaciones courier de un item y enlaza a `/ecp/cotizador-courier`; un colaborador con grant de LCP y sin grant de ECP las ve
   y no puede abrirlas. Decidir si el enlace se esconde sin grant de ECP o si se le da lectura. ~~**(b) La revisión de almacenaje a
   los 90 días se queda sin kilo**~~ — **HECHO en la V5.94** (owner, 2026-09-30): el primer kilo son 4 × 250 g de CPS (una al
   Q-Grader, tres de reserva) y la revisión toma una contramuestra de reserva; `almacenajeCarga.ts` y `anotarRevisionDeAlmacenaje`
-  miran la reserva, no el testeo. **(c) Avisos al productor que faltan**: `signContract` no escribe nada en su feed ni le manda correo, y
+  miran la reserva, no el testeo. **(c) HECHO en la V5.97 para la firma (`signContract` deja nota en el feed y manda correo; el resultado va en el rastro); `rejectFinca` sigue pendiente. Era: Avisos al productor que faltan**: `signContract` no escribe nada en su feed ni le manda correo, y
   `rejectFinca` tampoco (y conserva un `throw` si la finca no existe; ver `ALINEACION` §4.8). **(d) Comentarios caducos en el
   código** (el siguiente barrido hace `grep`): `nominadosActions.ts` hacia la línea 568 («Rechazado ⇒ … cashback del 80 %», retirado
   en la V5.82) y 571-573 («black abre su negociación (CRM de CTC)», retirado en la V5.85); `src/lib/arena/eudrGate.ts` líneas 9 y
   74 (citan `clubActions.ts`, que ya no existe); `comprasActions.ts` hacia la línea 194 (la regla 3–4 de las mezclas, retirada en la
   V5.91); `ocp/(app)/actions.ts` hacia la línea 361 («la inscripción de Arena (COP 80.000)», hoy la solicitud de evaluación de
-  $200.000). **(e) `/ocp/fichas`**: la V5.78 lo dejó como índice del set de fichas (que vive en la vista del lote); decidir si se
+  $200.000). **(e) HECHO en la V5.97: `/ocp/fichas` es un 308 a `/ocp/kr` (el owner: lo ve en Productores, Fincas y Lotes); `FichasClient` vive en `kr/`. Era: `/ocp/fichas`**: la V5.78 lo dejó como índice del set de fichas (que vive en la vista del lote); decidir si se
   queda como índice o pasa a talón 308 hacia `/ocp/kr`. **(f) Sin construir del §3 del plan del circuito**: la **tarea
   «bienvenida»** del Tablero de Ejecución (la llamada de bienvenida de la Ruta Estándar; `TIPOS_DE_TAREA` no la tiene) y
   **`qa-evaluacion-check`** (el plan lo pedía; hoy vigilan `qa-evaluaciones-check` y `qa-centro-calidad-check`). **(g) Las cuentas de

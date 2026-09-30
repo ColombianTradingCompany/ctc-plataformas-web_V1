@@ -59,7 +59,7 @@ const T: Record<Lang, Dict> = {
           <>
             <b>Mitaca y cosecha principal</b>: dos ventanas de compra al año, no una.
           </>,
-          <>Dos Arenas de catación, una por cosecha, para calificar lo que entra.</>,
+          <>Dos temporadas de evaluación, una por cosecha, para calificar lo que entra.</>,
           <>
             Dos temporadas de venta en Europa: <b>S1 marzo–julio</b> y <b>S2 agosto–diciembre</b>.
           </>,
@@ -105,7 +105,7 @@ const T: Record<Lang, Dict> = {
             <b>Black</b> · el volumen con respaldo, disponible toda la temporada.
           </>,
           <>
-            <b>Red · Blue · Gold</b> · microlotes por preorden, según el puntaje de la Arena.
+            <b>Red · Blue · Gold</b> · microlotes por preorden, según el puntaje del Q-Grader.
           </>,
           <>
             <b>Tyrian</b> · el lote excepcional de la cosecha: se subasta por mitades.
@@ -138,7 +138,7 @@ const T: Record<Lang, Dict> = {
           <>
             <b>Mitaca and main harvest</b>: two buying windows a year, not one.
           </>,
-          <>Two cupping Arenas, one per harvest, to grade what comes in.</>,
+          <>Two evaluation seasons, one per harvest, to grade what comes in.</>,
           <>
             Two selling seasons in Europe: <b>S1 March–July</b> and <b>S2 August–December</b>.
           </>,
@@ -184,7 +184,7 @@ const T: Record<Lang, Dict> = {
             <b>Black</b> · backed volume, available all season long.
           </>,
           <>
-            <b>Red · Blue · Gold</b> · microlots by preorder, according to the Arena score.
+            <b>Red · Blue · Gold</b> · microlots by preorder, according to the Q-Grader&apos;s score.
           </>,
           <>
             <b>Tyrian</b> · the harvest&apos;s exceptional lot: auctioned in halves.
@@ -217,7 +217,7 @@ const T: Record<Lang, Dict> = {
           <>
             <b>Mitaca und Haupternte</b>: zwei Kauffenster im Jahr, nicht eines.
           </>,
-          <>Zwei Verkostungs-Arenen, eine pro Ernte, um das Eingehende zu bewerten.</>,
+          <>Zwei Bewertungssaisons, eine pro Ernte, um das Eingehende zu bewerten.</>,
           <>
             Zwei Verkaufssaisons in Europa: <b>S1 März–Juli</b> und <b>S2 August–Dezember</b>.
           </>,
@@ -263,7 +263,7 @@ const T: Record<Lang, Dict> = {
             <b>Black</b> · abgesichertes Volumen, die ganze Saison verfügbar.
           </>,
           <>
-            <b>Red · Blue · Gold</b> · Microlots auf Vorbestellung, nach der Punktzahl der Arena.
+            <b>Red · Blue · Gold</b> · Microlots auf Vorbestellung, nach der Punktzahl des Q-Graders.
           </>,
           <>
             <b>Tyrian</b> · das außergewöhnliche Lot der Ernte: wird in Hälften versteigert.

@@ -50,6 +50,8 @@ type CourierRow = {
   snapshot: { pais?: string | null; opciones?: { servicio: string; embalaje: string; etiqueta: string }[] } | null;
 };
 const COTIZADOR_COURIER = "/ecp/cotizador-courier";
+// V5.97 (owner, 2026-09-30): quien tiene la LCP y no el ECP LEE el acta congelada aquí, sin entrar al cotizador.
+const COTIZACION_LECTURA = "/lcp/crm/caas/cotizacion";
 type PlatformNote = { id: string; lead_id: string | null; parent_id: string | null; note: string; author_role: string; created_at: string };
 
 export type LeadPillarKey = "general" | "tech" | "cocreate" | "varietales";
@@ -421,7 +423,8 @@ function LeadCard({
                   {q.entradas?.fechaEnvio ? ` · envío ${fecha(q.entradas.fechaEnvio)}` : ""} · guardada {fecha(q.created_at)}
                   {q.nota ? ` · «${q.nota}»` : ""}
                 </span>
-                <a href={`${COTIZADOR_COURIER}?abrir=${q.id}`} style={{ color: "var(--primary)", textDecoration: "underline" }}>Abrir</a>
+                <a href={`${COTIZACION_LECTURA}/${q.id}`} style={{ color: "var(--primary)", textDecoration: "underline" }}>Ver desglose</a>
+                <a href={`${COTIZADOR_COURIER}?abrir=${q.id}`} style={{ color: "var(--primary)", textDecoration: "underline" }}>Abrir en el cotizador (ECP)</a>
               </p>
             );
           })}

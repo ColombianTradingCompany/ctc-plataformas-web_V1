@@ -202,7 +202,7 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
       // ── EL RAIL DEL OCP ES EL CUADRO DEL OWNER (2026-09-19, V5.63), entrada por entrada ──
       // Tres grupos: el origen (Kaffetal Regal), el camino comercial del lote (Catálogo) y el stock físico.
       // Sin «Panel» (la página `/ocp` sigue siendo donde aterriza el conmutador) y sin «Fichas Técnicas»
-      // (se abre desde «Lotes en Evaluación», que es donde se usa — D4 del overhaul).
+      // (el set de fichas vive en la vista completa de cada lote; el índice se retiró en la V5.97, 308 a `/ocp/kr`).
       //
       // ⚠️ LAS ETIQUETAS SON LAS DEL CUADRO; LAS RUTAS, LAS QUE YA EXISTÍAN. «Pendiente Oferta» es el módulo
       // de ofertas, «Ofertas CP Aceptadas» el de contratos (con la humedad dentro) y «Catálogo Activo» el

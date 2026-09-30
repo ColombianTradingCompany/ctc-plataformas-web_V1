@@ -2,7 +2,7 @@ import { ATRIBUTO_LABEL, ATRIBUTOS_SCA, type FichaTecnicaData } from "@/lib/fich
 
 // ── FichaDatos: una Ficha Técnica del set, en filas legibles ────────────────
 // Presentacional puro, compartido por las DOS superficies que muestran el set:
-// /ocp/fichas (CTCx revisa lo extraído) y los panes B2/B3 del productor
+// /ocp/kr?lote= (la vista del lote) (CTCx revisa lo extraído) y los panes B2/B3 del productor
 // (FichasDelLote). Sin estilos propios de módulo: hereda tipografía del
 // contenedor y usa una grilla mínima inline — cada superficie lo enmarca con
 // su propia tarjeta.

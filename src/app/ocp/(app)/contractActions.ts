@@ -8,6 +8,9 @@ import { emitOffer } from "./ofertasActions";
 import { renovacionDebida } from "@/lib/trato/mesAMes";
 import { RENOVACION_DIAS } from "@/lib/trato/terminos";
 import { esCompraEnFirme } from "@/lib/compras/reglas";
+import { formatCop } from "@/lib/arena/inscriptions";
+import { sendTransactionalEmail } from "@/lib/email/leadEmails";
+import { origenDeSuperficie } from "@/lib/red/subdominios";
 
 
 // Devuelve resultado en vez de lanzar: "ya fue firmado" y el gate del Club son
@@ -24,7 +27,7 @@ export async function signContract(
 
   const { data: contract } = await service
     .from("purchase_contracts")
-    .select("status, lot_id, price_per_kg_locked, quantity_frozen_kg")
+    .select("status, lot_id, price_per_kg_locked, quantity_frozen_kg, freeze_months, lots(name, producer_id)")
     .eq("id", contractId)
     .single();
   if (!contract) return { ok: false, error: "Contrato no encontrado." };
@@ -47,6 +50,23 @@ export async function signContract(
   // `contract_months` (pedir · enviar · pagar · retirar); `contract_releases` queda como espejo de cada envío para que
   // `lot_listings.total_kg` (trigger `contract_releases_sync_listing_total`) y `publishLot` sigan leyendo lo mismo.
 
+  // V5.97 (owner, 2026-09-30): la firma AVISA al productor — nota en su feed y correo por el remitente único (que filtra las
+  // etiquetas de los desacoplados). El resultado del envío no se traga: queda en el rastro de la firma.
+  const lote = (Array.isArray(contract.lots) ? contract.lots[0] : contract.lots) as { name: string; producer_id: string } | null;
+  let aviso = "sin lote: no se avisó";
+  if (lote) {
+    const texto =
+      `CTC firmó el contrato de su lote ${lote.name}: ${Number(contract.quantity_frozen_kg)} kg de CPS a ${formatCop(Number(contract.price_per_kg_locked))}/kg` +
+      `${contract.freeze_months ? `, ${contract.freeze_months} meses` : ""}. Desde hoy el trato se lleva mes a mes en «Mi trato»: CTC le pide cada mes, usted envía y CTC registra el recibo y el pago.`;
+    await service.from("producer_comm_log").insert({ producer_id: lote.producer_id, context_label: `Lote ${lote.name}`, lot_id: contract.lot_id, note: texto, created_by: adminId });
+    const { data: perfil } = await service.from("profiles").select("email").eq("id", lote.producer_id).maybeSingle();
+    const correo = (perfil as { email: string | null } | null)?.email ?? null;
+    const envio = correo
+      ? await sendTransactionalEmail(correo, `Contrato firmado · lote ${lote.name}`, `${texto}\n\n${origenDeSuperficie("/kaffetal-regal")}/kaffetal-regal`)
+      : { ok: false as const, error: "el productor no tiene correo" };
+    aviso = envio.ok ? "feed + correo" : `feed; correo no enviado: ${envio.error}`;
+  }
+
   await service.from("audit_log").insert({
     entity_type: "purchase_contract",
     entity_id: contractId,
@@ -54,6 +74,7 @@ export async function signContract(
     previous_status: "pending_signature",
     new_status: "active",
     performed_by: adminId,
+    notes: `aviso al productor: ${aviso}`,
   });
 
   revalidatePath("/ocp/contratos");

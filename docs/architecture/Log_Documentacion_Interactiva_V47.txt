@@ -169,3 +169,13 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   comprador (reflejo en verde de una carga). `PVC_BCP_PLAN` §14.8 n.º 31 confirmado.
 - ANN: `LecturaBoard.tsx` ya no dice «3 a 4 productores».
 (commit: 203ec44)
+
+## [2026-09-30] V5.97 · Consolas — checklist de la Visa, /ocp/fichas retirado, lectura del courier desde la LCP, la firma avisa, CTC Home
+- RUTAS: `/ocp/fichas` → 308 a `/ocp/kr` (57 rutas mudadas; ANN de `fichas/page.tsx` se repunta a `kr/FichasClient.tsx` y al talón).
+- INTERFAZ nueva entre consolas: LCP · CRM CaaS lee el acta congelada de una cotización courier (`/lcp/crm/caas/cotizacion/[id]`,
+  `src/lib/courier/lectura.ts`): cable `n-lcp → n-courier` deja de ser punteado. DICT `courier` · `lcp`: «Ver desglose» (LCP) y
+  «Abrir en el cotizador» (ECP).
+- FLUJO: `signContract` → `producer_comm_log` + correo (traza `contrato`, paso 1: la firma avisa). DICT `eva`: la checklist dice
+  Pasaporte de la finca y Fotos y video (B4).
+- CTC Home (`n-home`): el copy ya no nombra el Club ni la Arena como competencia.
+(commit: pendiente)

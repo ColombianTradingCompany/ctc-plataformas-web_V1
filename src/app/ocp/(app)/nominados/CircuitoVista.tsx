@@ -350,8 +350,8 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
       <h1 className={styles.title}>Lotes en Evaluación</h1>
       <p className={styles.subtitle}>
         Los baches en manos del <b>Centro de Calidad</b>: cada lote se evalúa anónimo (solo su código), física y sensorialmente.
-        Hasta que el Centro tenga su módulo (fase 4), CTCx registra aquí las planillas y el veredicto del Q-Grader. Los soportes y
-        el escáner están en <Link href="/ocp/fichas">Fichas Técnicas</Link>. Con el veredicto, el lote pasa a{" "}
+        Hasta que el Centro tenga su módulo (fase 4), CTCx registra aquí las planillas y el veredicto del Q-Grader. Los soportes, el
+        escáner y el set de Fichas de cada lote están en su vista completa (<Link href="/ocp/kr">Productores, Fincas y Lotes</Link>). Con el veredicto, el lote pasa a{" "}
         <Link href="/ocp/ofertas">Pendiente de Oferta</Link>; el que no supera sale con reembolso del 80 %.
       </p>
 

@@ -132,7 +132,7 @@ const T: Record<Lang, Dict> = {
     videoTitle: "CTC, el ecosistema en video",
     krWho: "En Colombia · Para el productor",
     krOneline:
-      "El portal donde los caficultores registran sus fincas y lotes, compiten en la Cupping Arena y firman tratos blindados con primas indexadas.",
+      "El portal donde los caficultores registran sus fincas y lotes, un Q-Grader certificado los evalúa y firman tratos con el precio anclado al PVC de CTCx.",
     krSummary: "Lo que ofrece al productor",
     // Reescrito 2026-08-11: cada punto abre con lo que el productor GANA, no con
     // el nombre del módulo. Se quitó «certificación gratis para todos», que se
@@ -144,24 +144,24 @@ const T: Record<Lang, Dict> = {
         lote. El expediente queda a tu nombre.
       </>,
       <>
-        <b>La Cupping Arena</b> · catación a ciegas ante Q-Graders invitados, dos veces al año. Compite la taza, no el
-        nombre ni el tamaño de la finca.
+        <b>Evaluación por un Q-Grader certificado</b> · su lote se cata anónimo en el Centro de Calidad y el grado (Black · Red ·
+        Blue · Gold · Tyrian) sale del puntaje, no del nombre ni del tamaño de la finca.
       </>,
       <>
-        <b>Un acta que sirve aunque no nos vendas</b> · todo participante recibe su puntaje y la retroalimentación del
-        panel, para negociar con quien quiera.
+        <b>Un acta que sirve aunque no nos vendas</b> · recibe su puntaje, su perfil sensorial y el feedback del Q-Grader,
+        para negociar con quien quiera.
       </>,
       <>
-        <b>Precio con piso, no a la suerte</b> · contrato de opción de compra a 3 meses sobre la referencia
-        internacional + Fedecafé del día, con prima indexada al grado.
+        <b>Precio anclado, no a la suerte</b> · la oferta va atada a la edición vigente del PVC de CTCx según el grado, y usted
+        declara cuánto compromete con la calculadora delante.
       </>,
       <>
-        <b>Liberación mes a mes</b> · escalera de entregas y acompañamiento en el control de humedad: no te toca vender
-        todo de golpe.
+        <b>Trato mes a mes</b> · pide, envía y cobra por meses, con un tramo libre para retirar sin costo y acompañamiento en
+        el control de humedad: no te toca vender todo de golpe.
       </>,
       <>
-        <b>Pasaporte del Kaffetal Club</b> · la membresía que habilita firmar el contrato y publicar tu lote en Cherry
-        Picked.
+        <b>Evaluación subvencionada</b> · el 30 % para todo el que la solicita desde su panel, y por lo general el 60 % o el
+        70 %; la muestra de 2 kg viaja contra entrega.
       </>,
     ],
     krCta: "Entrar a Kaffetal Regal ↗",
@@ -247,7 +247,7 @@ const T: Record<Lang, Dict> = {
     videoTitle: "CTC, the ecosystem on video",
     krWho: "In Colombia · For the producer",
     krOneline:
-      "The portal where coffee growers register their farms and lots, compete in the Cupping Arena and sign armored deals with indexed premiums.",
+      "The portal where coffee growers register their farms and lots, a certified Q-Grader evaluates them and they sign deals with the price anchored to CTCx's PVC.",
     krSummary: "What it offers the producer",
     krPoints: [
       <>
@@ -255,24 +255,24 @@ const T: Record<Lang, Dict> = {
         for the lot. The record stays in your name.
       </>,
       <>
-        <b>The Cupping Arena</b> · blind cupping before guest Q-Graders, twice a year. Your cup competes, not your name
-        or the size of your farm.
+        <b>Evaluation by a certified Q-Grader</b> · your lot is cupped anonymously at the Quality Centre and the grade (Black ·
+        Red · Blue · Gold · Tyrian) comes from the score, not from your name or the size of your farm.
       </>,
       <>
-        <b>A record that serves you even if you don&apos;t sell to us</b> · every participant gets their score and the
-        panel&apos;s feedback, to negotiate with whoever they like.
+        <b>A record that serves you even if you don&apos;t sell to us</b> · you get your score, your sensory profile and the
+        Q-Grader&apos;s feedback, to negotiate with whoever you like.
       </>,
       <>
-        <b>A price with a floor, not a gamble</b> · a 3-month purchase-option contract over the day&apos;s international
-        + Fedecafé reference, with a premium indexed to the grade.
+        <b>An anchored price, not a gamble</b> · the offer is tied to the current edition of CTCx&apos;s PVC for your grade, and
+        you declare how much you commit with the calculator in front of you.
       </>,
       <>
-        <b>Released month by month</b> · a delivery ladder and hands-on support with moisture control: you don&apos;t
-        have to sell it all at once.
+        <b>A month-by-month deal</b> · order, ship and get paid by the month, with a free tranche to withdraw at no cost and
+        hands-on support with moisture control: you don&apos;t have to sell it all at once.
       </>,
       <>
-        <b>The Kaffetal Club passport</b> · the membership that unlocks signing the contract and listing your lot on
-        Cherry Picked.
+        <b>A subsidised evaluation</b> · 30 % for everyone who requests it from their panel, and usually 60 % or 70 %; the
+        2 kg sample ships freight collect.
       </>,
     ],
     krCta: "Enter Kaffetal Regal ↗",
@@ -357,7 +357,7 @@ const T: Record<Lang, Dict> = {
     videoTitle: "CTC, das Ökosystem im Video",
     krWho: "In Kolumbien · Für den Produzenten",
     krOneline:
-      "Das Portal, in dem Kaffeebauern ihre Fincas und Lots registrieren, in der Cupping Arena antreten und abgesicherte Verträge mit indexierten Prämien unterzeichnen.",
+      "Das Portal, in dem Kaffeebauern ihre Fincas und Lots registrieren, ein zertifizierter Q-Grader sie bewertet und sie Verträge mit einem an den PVC von CTCx gebundenen Preis unterzeichnen.",
     krSummary: "Was es dem Produzenten bietet",
     krPoints: [
       <>
@@ -365,24 +365,24 @@ const T: Record<Lang, Dict> = {
         technisches Datenblatt des Lots. Die Akte läuft auf Ihren Namen.
       </>,
       <>
-        <b>Die Cupping Arena</b> · Blindverkostung vor eingeladenen Q-Gradern, zweimal im Jahr. Es tritt die Tasse an,
-        nicht der Name oder die Größe der Finca.
+        <b>Bewertung durch einen zertifizierten Q-Grader</b> · Ihr Lot wird im Qualitätszentrum anonym verkostet, und der Grad
+        (Black · Red · Blue · Gold · Tyrian) ergibt sich aus der Punktzahl, nicht aus Ihrem Namen oder der Größe der Finca.
       </>,
       <>
-        <b>Ein Protokoll, das auch ohne Verkauf an uns zählt</b> · jeder Teilnehmer erhält seine Punktzahl und das
-        Feedback des Panels — zum Verhandeln mit wem auch immer.
+        <b>Ein Protokoll, das auch ohne Verkauf an uns zählt</b> · Sie erhalten Ihre Punktzahl, Ihr sensorisches Profil und das
+        Feedback des Q-Graders — zum Verhandeln mit wem auch immer.
       </>,
       <>
-        <b>Ein Preis mit Boden, kein Glücksspiel</b> · Kaufoption über 3 Monate auf den internationalen +
-        Fedecafé-Referenzpreis des Tages, mit gradindexierter Prämie.
+        <b>Ein verankerter Preis, kein Glücksspiel</b> · das Angebot ist an die gültige Ausgabe des PVC von CTCx für Ihren Grad
+        gebunden, und Sie erklären mit dem Rechner vor Augen, wie viel Sie zusagen.
       </>,
       <>
-        <b>Freigabe Monat für Monat</b> · Lieferungstreppe und Begleitung bei der Feuchtekontrolle: Sie müssen nicht
-        alles auf einmal verkaufen.
+        <b>Ein Vertrag Monat für Monat</b> · bestellen, liefern und kassieren im Monatstakt, mit einer freien Tranche zum
+        kostenlosen Rückzug und Begleitung bei der Feuchtekontrolle: Sie müssen nicht alles auf einmal verkaufen.
       </>,
       <>
-        <b>Der Pass des Kaffetal Club</b> · die Mitgliedschaft, die das Unterzeichnen des Vertrags und die
-        Veröffentlichung Ihres Lots bei Cherry Picked freischaltet.
+        <b>Eine subventionierte Bewertung</b> · 30 % für jeden, der sie aus seinem Panel anfragt, üblicherweise 60 % oder
+        70 %; das 2-kg-Muster reist per Nachnahme.
       </>,
     ],
     krCta: "Zu Kaffetal Regal ↗",

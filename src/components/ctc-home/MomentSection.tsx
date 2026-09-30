@@ -188,7 +188,7 @@ const T: Record<Lang, Dict> = {
         lead: "Un solo dato viaja de punta a punta. Nada se cuenta dos veces, nada se pierde en el camino.",
         bullets: [
           "La geolocalización que el productor registra en Kaffetal Regal se convierte en la declaración EUDR que CTC presenta en Bruselas.",
-          "La catación de la Arena se convierte en el grado que se compra en Ámsterdam.",
+          "La catación del Q-Grader se convierte en el grado que se compra en Ámsterdam.",
           "El contrato firmado en Piedecuesta se convierte —si el tostador lo activa— en el Transparency Credit que su cliente lee al escanear la taza.",
           "Registro sellado criptográficamente, del predio a la factura.",
         ],
@@ -291,7 +291,7 @@ const T: Record<Lang, Dict> = {
         lead: "A single piece of data travels end to end. Nothing is told twice, nothing is lost along the way.",
         bullets: [
           "The geolocation a producer registers in Kaffetal Regal becomes the EUDR statement CTC files in Brussels.",
-          "The Arena's cupping becomes the grade that gets bought in Amsterdam.",
+          "The Q-Grader's cupping becomes the grade that gets bought in Amsterdam.",
           "The contract signed in Piedecuesta becomes — if the roaster activates it — the Transparency Credit their customer reads when scanning the cup.",
           "A cryptographically sealed record, from the plot to the invoice.",
         ],
@@ -394,7 +394,7 @@ const T: Record<Lang, Dict> = {
         lead: "Ein einziges Datum reist von Ende zu Ende. Nichts wird zweimal erzählt, nichts geht unterwegs verloren.",
         bullets: [
           "Die Geolokalisierung, die der Produzent in Kaffetal Regal registriert, wird zur EUDR-Erklärung, die CTC in Brüssel einreicht.",
-          "Die Verkostung der Arena wird zum Grad, der in Amsterdam gekauft wird.",
+          "Die Verkostung des Q-Graders wird zum Grad, der in Amsterdam gekauft wird.",
           "Der in Piedecuesta unterzeichnete Vertrag wird — wenn der Röster es aktiviert — zum Transparency Credit, den sein Kunde beim Scannen der Tasse liest.",
           "Ein kryptografisch versiegeltes Register, vom Grundstück bis zur Rechnung.",
         ],

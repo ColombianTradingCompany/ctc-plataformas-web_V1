@@ -8,7 +8,7 @@ import { FICHA_SOURCE_LABEL, type LotFicha } from "@/lib/fichas/tipos";
 import { FichaDatos } from "@/components/fichas/FichaDatos";
 import styles from "@/components/panel/shared.module.css";
 
-// Controles cliente de /ocp/fichas: ver un soporte (URL firmada bajo demanda),
+// Controles cliente del set de Fichas de un lote (en la vista completa de /ocp/kr desde la V5.78; el índice se retiró en la V5.97): ver un soporte (URL firmada bajo demanda),
 // disparar el escáner (opt-in, con su aviso de costo), compilar el reporte del
 // productor y administrar el set (oficial · eliminar).
 

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.96] — 2026-09-30 (commit pendiente)
+## [V5.96] — 2026-09-30 (commit 203ec44)
 
 - **Cambiado**: **los mínimos que el productor declara por lote, confirmados por el owner** (2026-09-30): Black y Red 6 cargas ·
   Blue 3 cargas · **Gold 150 kg** (era 200) · **Tyrian sin mínimo** (`MINIMO_POR_GRADO`, `src/lib/trato/terminos.ts`). La oferta,

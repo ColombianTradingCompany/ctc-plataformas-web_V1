@@ -19,6 +19,16 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.108] — 2026-09-30 (commit pendiente)
+
+- **Cambiado**: en **Productores, Fincas y Lotes**, los cuatro chips de finca y lote son ahora dos pares de casillas **«Finca ☐✅ ☐❌»**
+  y **«Lote ☐✅ ☐❌»** (owner, 2026-09-30): una casilla marcada filtra, ninguna o las dos = todas.
+- **Añadido**: el filtro **«Por revisar»**: «Pasaporte listo» (fincas cuya declaración EUDR está aparentemente completa y esperan la
+  revisión de CTCx) y «Ficha lista» (lotes con la Ficha completa que esperan la Visa documental). La tabla lo dice en cada fila: bajo el
+  Pasaporte, «Declaración completa · esperando a CTCx» o «Declaración incompleta»; bajo la Ficha, «Ficha completa · esperando a CTCx».
+  También por URL (`?filtro=pasaporte-por-revisar|lote-por-revisar`).
+- **Docs**: charter `consolas`. `qa-boards` 32 → 33.
+
 ## [V5.107] — 2026-09-30 (commit ea3a5d8)
 
 - **Cambiado**: en Kaffetal Regal, **la Información general se edita a pantalla completa** (`InfoView`, owner 2026-09-30), con la

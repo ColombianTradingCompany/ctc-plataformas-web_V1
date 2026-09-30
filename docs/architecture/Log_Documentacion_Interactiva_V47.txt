@@ -237,3 +237,8 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `src/components/kaffetal-regal/InfoView.tsx` (nuevo: cabecera de la Ficha + `InfoEditorBody`); `InfoModal.tsx` sin pop-up;
   `KaffetalExperience.tsx` `view === "info"`. Guardián: `qa-kr-ficha` +1.
 (commit: ea3a5d8)
+
+## [2026-09-30] V5.108 · Consolas — /ocp/kr: «Finca ☐✅ ☐❌» · «Lote ☐✅ ☐❌» y «Por revisar» (Pasaporte · Ficha)
+- ANN `src/app/ocp/(app)/kr/KrTabla.tsx`: pares de casillas, `ETAPAS_LOTE_POR_REVISAR`, notas «esperando a CTCx» bajo Pasaporte y Ficha;
+  `page.tsx` acepta los dos `?filtro=` nuevos. Guardián: `qa-boards` +1.
+(commit: pendiente)

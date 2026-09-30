@@ -24,6 +24,15 @@ const TONO: Record<Tono, string> = { good: "badgeGood", bad: "badgeBad", warn: "
 const Insignia = ({ v }: { v: { label: string; tono: Tono } | null }) =>
   v ? <span className={`${styles.badge} ${TONO[v.tono] ? styles[TONO[v.tono]] : ""}`}>{v.label}</span> : <span style={{ color: "var(--muted)" }}>—</span>;
 
+// V5.108: la tabla DICE si lo pendiente está aparentemente completo (la declaración EUDR / la Ficha) y espera a CTCx.
+const notaPorRevisar: React.CSSProperties = { display: "block", fontSize: 10.5, color: "var(--primary)", fontWeight: 600, marginTop: 3, whiteSpace: "nowrap" };
+const PorRevisarNota = ({ pasaporte }: { pasaporte: KrFila["pasaporte"] }) =>
+  pasaporte === "en_revision" ? (
+    <span style={notaPorRevisar}>Declaración completa · esperando a CTCx</span>
+  ) : pasaporte === "pendiente" || pasaporte === "no_apta" ? (
+    <span style={{ ...notaPorRevisar, color: "var(--muted)", fontWeight: 500 }}>Declaración incompleta</span>
+  ) : null;
+
 const th: React.CSSProperties = {
   textAlign: "left",
   padding: "8px 10px",
@@ -40,8 +49,15 @@ const enlace: React.CSSProperties = { color: "var(--ink)", fontWeight: 600, text
 const sub: React.CSSProperties = { display: "block", fontSize: 11.5, color: "var(--muted)", marginTop: 2 };
 
 type Agrupar = "" | "productor" | "finca";
-// V5.101 (owner, 2026-09-30): junto a «Sin finca» y «Sin lote», sus contrarios «Finca ✅» y «Lote ✅».
-export type FiltroRapido = "" | "galardonados" | "sin-finca" | "con-finca" | "sin-lote" | "con-lote";
+// V5.101 (owner, 2026-09-30): junto a «Sin finca» y «Sin lote», sus contrarios «Finca ✅» y «Lote ✅». V5.108 (owner, el mismo día):
+// reorganizados como «Finca ☐✅ ☐❌» y «Lote ☐✅ ☐❌» (casillas; ninguna o las dos = todas), y dos filtros de POR REVISAR: el Pasaporte
+// cuya declaración está aparentemente completa y espera a CTCx (`en_revision`) y el lote con la Ficha completa esperando la Visa
+// documental (`ETAPAS_LOTE_POR_REVISAR`). Los valores viejos de `?filtro=` siguen sirviendo para sembrar la URL.
+export type FiltroRapido = "" | "galardonados" | "sin-finca" | "con-finca" | "sin-lote" | "con-lote" | "pasaporte-por-revisar" | "lote-por-revisar";
+type ConSin = "con" | "sin";
+type PorRevisar = "pasaporte" | "lote";
+/** La Ficha está completa (salió de `borrador`) y CTCx aún no dio su veredicto documental (Visa): las tres etapas de `evaDelLote` = «En revisión». */
+export const ETAPAS_LOTE_POR_REVISAR = new Set(["ficha_completa", "videos_ok", "muestra_transito"]);
 
 // ── V5.76 · las cuatro indicaciones del owner al ver la tabla (2026-09-24) ───
 // (1) «Nuevo lote (en nombre del productor)» se retiró: eso se hace con la sesión asistida.
@@ -90,7 +106,13 @@ export function KrTabla({
   const [depto, setDepto] = useState("");
   const [grado, setGrado] = useState("");
   const [circuito, setCircuito] = useState("");
-  const [rapido, setRapido] = useState<FiltroRapido>(filtroInicial);
+  const [rapido, setRapido] = useState<FiltroRapido>(filtroInicial === "galardonados" ? "galardonados" : "");
+  // V5.108: «Finca ☐✅ ☐❌» · «Lote ☐✅ ☐❌» y «Por revisar» (Pasaporte · Lote), sembrados desde `?filtro=`.
+  const [finca, setFinca] = useState<Set<ConSin>>(() => new Set(filtroInicial === "con-finca" ? ["con"] : filtroInicial === "sin-finca" ? ["sin"] : []));
+  const [lote, setLote] = useState<Set<ConSin>>(() => new Set(filtroInicial === "con-lote" ? ["con"] : filtroInicial === "sin-lote" ? ["sin"] : []));
+  const [porRevisar, setPorRevisar] = useState<Set<PorRevisar>>(
+    () => new Set(filtroInicial === "pasaporte-por-revisar" ? ["pasaporte"] : filtroInicial === "lote-por-revisar" ? ["lote"] : [])
+  );
   // V5.101 (owner, 2026-09-30): el estado del productor (Marchitando, Nuevos, Primíparos, Establecidos, Activos) era invisible
   // como filtro; casillas, uno o varios a la vez. Vacío = todos.
   const [segmentos, setSegmentos] = useState<Set<ProducerSegment>>(() => new Set(segmentosIniciales));
@@ -132,10 +154,15 @@ export function KrTabla({
       // Una temporada elegida deja fuera lo que no tiene lote: una finca sin lote no es «de» ninguna temporada.
       if (enRango && !(f.temporadaId && enRango.has(f.temporadaId))) return false;
       if (rapido === "galardonados" && !f.grado) return false;
-      if (rapido === "sin-finca" && f.fincaId) return false;
-      if (rapido === "con-finca" && !f.fincaId) return false;
-      if (rapido === "sin-lote" && f.loteId) return false;
-      if (rapido === "con-lote" && !f.loteId) return false;
+      // Una sola casilla marcada filtra; ninguna o las dos = todas.
+      if (finca.size === 1 && (finca.has("con") ? !f.fincaId : !!f.fincaId)) return false;
+      if (lote.size === 1 && (lote.has("con") ? !f.loteId : !!f.loteId)) return false;
+      // Por revisar: lo que está aparentemente completo y espera a CTCx (con las dos marcadas, cualquiera de las dos).
+      if (porRevisar.size > 0) {
+        const pasaporteListo = porRevisar.has("pasaporte") && f.pasaporte === "en_revision";
+        const loteListo = porRevisar.has("lote") && !!f.etapa && ETAPAS_LOTE_POR_REVISAR.has(f.etapa);
+        if (!pasaporteListo && !loteListo) return false;
+      }
       if (segmentos.size > 0 && !segmentos.has(f.segmentoId)) return false;
       if (q) {
         const pajar = [f.productorNombre, f.productorCodigo, f.fincaNombre, f.fincaCodigo, f.fincaLugar, f.loteNombre, f.loteRef]
@@ -146,7 +173,7 @@ export function KrTabla({
       }
       return true;
     });
-  }, [filas, elemento, pasaporte, texto, pais, depto, grado, circuito, rapido, segmentos, rango, temporadas]);
+  }, [filas, elemento, pasaporte, texto, pais, depto, grado, circuito, rapido, finca, lote, porRevisar, segmentos, rango, temporadas]);
 
   // Al agrupar, las filas se ordenan por el grupo y cada una sabe si ABRE grupo (lleva la cabecera encima).
   const ordenadas = useMemo((): { fila: KrFila; cabecera: string | null }[] => {
@@ -198,6 +225,42 @@ export function KrTabla({
     lotes: visibles.filter((f) => f.loteId).length,
   };
 
+  // Un par de casillas ✅ / ❌ con su rótulo (V5.108): «Finca ☐✅ ☐❌».
+  const parDeCasillas = (rotulo: string, valor: Set<ConSin>, set: (v: Set<ConSin>) => void) => (
+    <span role="group" aria-label={rotulo} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, border: "1.5px solid var(--line)", borderRadius: 999, padding: "4px 10px" }}>
+      <b>{rotulo}</b>
+      {(["con", "sin"] as ConSin[]).map((k) => (
+        <label key={k} style={{ display: "inline-flex", alignItems: "center", gap: 3, cursor: "pointer" }} title={k === "con" ? `Con ${rotulo.toLowerCase()}` : `Sin ${rotulo.toLowerCase()}`}>
+          <input
+            type="checkbox"
+            checked={valor.has(k)}
+            onChange={(e) => {
+              const next = new Set(valor);
+              if (e.target.checked) next.add(k);
+              else next.delete(k);
+              set(next);
+            }}
+          />
+          {k === "con" ? "✅" : "❌"}
+        </label>
+      ))}
+    </span>
+  );
+  const casillaPorRevisar = (k: PorRevisar, label: string, title: string) => (
+    <label style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, cursor: "pointer" }} title={title}>
+      <input
+        type="checkbox"
+        checked={porRevisar.has(k)}
+        onChange={(e) => {
+          const next = new Set(porRevisar);
+          if (e.target.checked) next.add(k);
+          else next.delete(k);
+          setPorRevisar(next);
+        }}
+      />
+      {label}
+    </label>
+  );
   const chip = (k: FiltroRapido, label: string) => (
     <button
       type="button"
@@ -229,7 +292,7 @@ export function KrTabla({
           onChange={(e) => {
             const v = e.target.value as Elemento;
             setElemento(v);
-            if (v === "fincas" && (rapido === "sin-finca" || rapido === "con-finca")) setRapido("");
+            if (v === "fincas") setFinca(new Set());
           }}
           style={{ fontWeight: 700 }}
         >
@@ -300,10 +363,11 @@ export function KrTabla({
       </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 16 }}>
         {elemento === "lotes" && chip("galardonados", "Galardonados")}
-        {elemento === "lotes" && chip("sin-finca", "Sin finca")}
-        {elemento === "lotes" && chip("con-finca", "Finca ✅")}
-        {chip("sin-lote", "Sin lote")}
-        {chip("con-lote", "Lote ✅")}
+        {elemento === "lotes" && parDeCasillas("Finca", finca, setFinca)}
+        {parDeCasillas("Lote", lote, setLote)}
+        <span style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)", marginLeft: 6 }}>Por revisar:</span>
+        {casillaPorRevisar("pasaporte", "Pasaporte listo", "Fincas cuya declaración EUDR está aparentemente completa y esperan la revisión de CTCx")}
+        {elemento === "lotes" && casillaPorRevisar("lote", "Ficha lista", "Lotes con la Ficha completa (FT · FT2 · FOTO · EUDR) que esperan la Visa documental de CTCx")}
         <span className={styles.meta} style={{ marginTop: 0 }}>
           {cuenta.productores} productores · {cuenta.fincas} fincas · {cuenta.lotes} lotes
         </span>
@@ -359,7 +423,10 @@ export function KrTabla({
                         <Link href={`/ocp/kr?finca=${f.fincaId}`} style={enlace}>{f.fincaNombre}</Link>
                         <span style={sub}>{[f.fincaCodigo, f.fincaLugar].filter(Boolean).join(" · ")}</span>
                       </td>
-                      <td style={td}><Link href={`/ocp/kr?finca=${f.fincaId}`} style={{ textDecoration: "none" }}><Insignia v={f.visa} /></Link></td>
+                      <td style={td}>
+                        <Link href={`/ocp/kr?finca=${f.fincaId}`} style={{ textDecoration: "none" }}><Insignia v={f.visa} /></Link>
+                        <PorRevisarNota pasaporte={f.pasaporte} />
+                      </td>
                       <td style={td}>
                         {lotesPorFinca.get(f.fincaId!) ?? 0}
                       </td>
@@ -402,7 +469,10 @@ export function KrTabla({
                       <Insignia v={f.circuito} />
                       {f.circuito && f.circuito.falta.length > 0 && <span style={sub}>Falta: {f.circuito.falta.join(" · ")}</span>}
                     </td>
-                    <td style={td}>{f.fincaId ? <Link href={`/ocp/kr?finca=${f.fincaId}`} style={{ textDecoration: "none" }}><Insignia v={f.visa} /></Link> : <Insignia v={null} />}</td>
+                    <td style={td}>
+                      {f.fincaId ? <Link href={`/ocp/kr?finca=${f.fincaId}`} style={{ textDecoration: "none" }}><Insignia v={f.visa} /></Link> : <Insignia v={null} />}
+                      <PorRevisarNota pasaporte={f.pasaporte} />
+                    </td>
                     <td style={{ ...td, whiteSpace: "nowrap" }}>
                       {f.ficha ? (
                         <Link href={`/ocp/kr?lote=${f.loteId}`} style={{ textDecoration: "none", display: "inline-flex", gap: 4 }} title={PASOS_DE_LA_FICHA.map((p, i) => `${p} ${f.ficha![i] ? "✓" : "—"}`).join(" · ")}>
@@ -415,6 +485,7 @@ export function KrTabla({
                       ) : (
                         <Insignia v={null} />
                       )}
+                      {f.etapa && ETAPAS_LOTE_POR_REVISAR.has(f.etapa) && <span style={notaPorRevisar}>Ficha completa · esperando a CTCx</span>}
                     </td>
                     <td style={td}><Insignia v={f.eva} /></td>
                     <td style={td}><Insignia v={f.muestra} /></td>

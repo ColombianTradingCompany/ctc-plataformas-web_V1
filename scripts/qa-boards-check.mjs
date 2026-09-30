@@ -91,7 +91,9 @@ const krTabla = readFileSync("src/app/ocp/(app)/kr/KrTabla.tsx", "utf8");
 const krPage = readFileSync("src/app/ocp/(app)/kr/page.tsx", "utf8");
 check("la fila lleva el id del segmento y el correo", krCarga.includes("segmentoId: ProducerSegment;") && krCarga.includes("productorEmail: string | null;") && krCarga.includes("productorEmail: p.email,"), true);
 check("la tabla filtra por segmento con casillas de PRODUCER_SEGMENTS (varios a la vez)", krTabla.includes("PRODUCER_SEGMENTS.map((sg)") && krTabla.includes('type="checkbox"') && krTabla.includes("segmentos.size > 0 && !segmentos.has(f.segmentoId)"), true);
-check("«Finca ✅» y «Lote ✅» junto a «Sin finca» y «Sin lote»", krTabla.includes('chip("con-finca", "Finca ✅")') && krTabla.includes('chip("con-lote", "Lote ✅")') && krTabla.includes('rapido === "con-finca" && !f.fincaId') && krTabla.includes('rapido === "con-lote" && !f.loteId'), true);
+// V5.108 (owner): «Finca ☐✅ ☐❌» · «Lote ☐✅ ☐❌» (una casilla filtra; ninguna o las dos = todas) y «Por revisar» (Pasaporte · Ficha).
+check("«Finca ☐✅ ☐❌» y «Lote ☐✅ ☐❌» como pares de casillas", krTabla.includes('parDeCasillas("Finca", finca, setFinca)') && krTabla.includes('parDeCasillas("Lote", lote, setLote)') && krTabla.includes('finca.size === 1 && (finca.has("con") ? !f.fincaId : !!f.fincaId)'), true);
+check("«Por revisar»: el Pasaporte en_revision y el lote en las etapas de Visa pendiente, y la tabla lo DICE", krTabla.includes('f.pasaporte === "en_revision"') && krTabla.includes('new Set(["ficha_completa", "videos_ok", "muestra_transito"])') && krTabla.includes("Declaración completa · esperando a CTCx") && krTabla.includes("Ficha completa · esperando a CTCx") && krPage.includes('"pasaporte-por-revisar", "lote-por-revisar"'), true);
 check("el correo va bajo el código y el estado del productor (las dos celdas)", (krTabla.match(/\{f\.productorEmail && <span style=\{sub\}>\{f\.productorEmail\}<\/span>\}/g) ?? []).length, 2);
 check("la URL siembra `?segmento=` con ids de la fuente", krPage.includes("PRODUCER_SEGMENTS.some((sg) => sg.id === x)") && krPage.includes("segmentosIniciales={segmentosIniciales}"), true);
 

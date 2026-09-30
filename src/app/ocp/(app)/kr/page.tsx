@@ -26,7 +26,7 @@ export const dynamic = "force-dynamic";
 // tabla, son talones 308 hacia aquí (`rutasMovidas.ts`). Ninguna Server Action cambió.
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const FILTROS: FiltroRapido[] = ["galardonados", "sin-finca", "con-finca", "sin-lote", "con-lote"];
+const FILTROS: FiltroRapido[] = ["galardonados", "sin-finca", "con-finca", "sin-lote", "con-lote", "pasaporte-por-revisar", "lote-por-revisar"];
 const PASAPORTES: FiltroPasaporte[] = ["con", "sin", "no_apta", "pendiente", "en_revision", "aprobada", "apta", "rechazada"];
 
 type Params = { lote?: string; finca?: string; productor?: string; vista?: string; filtro?: string; elemento?: string; pasaporte?: string; segmento?: string };

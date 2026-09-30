@@ -317,7 +317,11 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
   para la Etapa 2)**: los filtros rápidos **«Finca ✅» y «Lote ✅»** junto a «Sin finca» y «Sin lote»; **el correo del productor** bajo su
   código y su estado; y **el estado del productor como filtro de casillas** (Marchitando · Nuevos · Primíparos · Establecidos · Activos,
   uno o varios; `?segmento=a,b`), que hasta entonces solo se leía en la fila. `KrFila` lleva `segmentoId` y `productorEmail`;
-  `qa-boards` lo vigila. **V5.106** (owner, al abrir un productor): las pestañas Fincas · Lotes · Arena · Contratos de la vista
+  `qa-boards` lo vigila. **V5.108** (owner, el mismo día): los chips de finca y lote pasaron a **«Finca ☐✅ ☐❌» · «Lote ☐✅ ☐❌»**
+  (una casilla filtra; ninguna o las dos = todas) y llegó **«Por revisar»**: «Pasaporte listo» = declaración EUDR aparentemente completa
+  esperando a CTCx (`en_revision`), «Ficha lista» = Ficha completa esperando la Visa documental (`ficha_completa` · `videos_ok` ·
+  `muestra_transito`); la tabla lo DICE bajo el Pasaporte («Declaración completa · esperando a CTCx» / «Declaración incompleta») y bajo la
+  Ficha. `?filtro=pasaporte-por-revisar|lote-por-revisar`. **V5.106** (owner, al abrir un productor): las pestañas Fincas · Lotes · Arena · Contratos de la vista
   completa traen un buen vistazo de cada entrada (finca: código, Pasaporte, ubicación, ha, msnm, lotes, certificaciones; lote: código,
   etapa, circuito, pasos de la Ficha, grado, temporada, muestra, oferta, trato; Arena: fase, pago, puntaje, decisión; contrato: estado,
   kg, $/kg, meses, firma). Lo derivado sale de `cargarKr(service, { productorId })`, la misma fuente que la tabla, que desde esta

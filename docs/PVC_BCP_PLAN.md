@@ -1010,10 +1010,10 @@ en verde empacado; la merma de trilla está considerada en los precios.
 
 Los MOQ son parte de **cómo se promocionan los lotes**, en escala descendente por grado.
 
-> **Dos mínimos distintos, que no se alinean** (nota del wrap V47, 2026-09-25; `PLAN_CIRCUITO_DEL_LOTE.md` §6 decisión 1 y fase 5):
+> **Dos mínimos distintos, una misma unidad** (nota del wrap V47, 2026-09-25, confirmada por el owner el 2026-09-30 — §14.8 n.º 31):
 > el **mínimo declarado por lote** —lo que el productor compromete al aceptar una oferta de temporada— vive en
-> `src/lib/trato/terminos.ts` (`MINIMO_POR_GRADO`: Black y Red 6 cargas · Blue 3 cargas · Gold 200 kg; Tyrian va a subasta con
-> MOQ de 100 kg de CPS) ≠ el **MOQ de compra** de esta tabla, que vive en `src/lib/pvc/lectura.ts` (`moqCargas`: Black y Red 3
+> `src/lib/trato/terminos.ts` (`MINIMO_POR_GRADO`: Black y Red 6 cargas · Blue 3 cargas · Gold 150 kg; Tyrian sin mínimo, va a
+> subasta) ≠ el **MOQ de compra** de esta tabla, que vive en `src/lib/pvc/lectura.ts` (`moqCargas`: Black y Red 3
 > cargas desde la V5.91 · Blue 2 · Gold y Tyrian 1). Ninguno se deriva del otro.
 
 **Empaque: se mantiene, pero como presentación, no como mínimo.** Black y Red en GrainPro-type + yute de 35 kg; Blue, Gold
@@ -1345,12 +1345,13 @@ wrap V47: el §9.3 es Moneda y TRM; las filas Black/Red actualizadas son las de 
     del mismo terroir). **Black y Red los usa CTCx de manera estratégica**: como **Single Origin** de varios estates (misma
     variedad y proceso) o como **Regional Blend** de varios lotes de la región (Santander, Huila, Boyacá…). El tipo de una mezcla
     se DERIVA de sus lotes; ni Red «una sola variedad» ni tope de cinco ni piso de tres productores.
-31. **El mínimo lo pone el MOQ de compra**, que en todo caso busca requerir **una demanda de al menos 3 cargas** (la compra mínima
-    esperada de cara al productor): Black y Red **3 cargas**; Blue 2; Gold y Tyrian 1 (o menos, según disponibilidad real). El
-    incremento sigue siendo la mitad del mínimo (1,5 cargas para Black y Red). Vale igual para Cherry Picked que para CaaS: es una
-    restricción del origen, no del canal (§12.6).
-    *(Redacción por confirmar con el owner, wrap V47: «la compra mínima esperada de cara al productor» choca con el mínimo
-    declarado por lote de `src/lib/trato/terminos.ts` —Black y Red 6 cargas—; ver la nota «Dos mínimos distintos» del §12.6.)*
+31. **Dos mínimos, una unidad: la carga de CPS es el común denominador** (redacción confirmada por el owner el 2026-09-30, V5.96).
+    **(a)** Lo que el productor **DEBE declarar** al aceptar una oferta para que se le pueda ofrecer un contrato son cantidades de
+    CPS por grado: **Black y Red 6 cargas · Blue 3 cargas · Gold 150 kg · Tyrian sin mínimo** (`MINIMO_POR_GRADO`,
+    `src/lib/trato/terminos.ts`). **(b)** El **MOQ de compra** del modelo CaaS es **de cara al comprador** y es el reflejo en café
+    verde de lo que rinde una carga de CPS: busca requerir **una demanda de al menos 3 cargas** — Black y Red **3 cargas**; Blue 2;
+    Gold y Tyrian 1 (o menos, según disponibilidad real); el incremento es la mitad del mínimo (1,5 cargas para Black y Red). Vale
+    igual para Cherry Picked que para CaaS: es una restricción del origen, no del canal (§12.6).
 32. **Para estas mezclas CTCx asegura un mínimo por temporada desde Adquisición de Stock** (`mezclas.temporada`,
     `mezclas.objetivo_temporada_kg`: informativo, no bloquea el cierre). En código: `src/lib/pvc/lectura.ts` (`MOQ_CARGAS_BLACK_RED`,
     `TIPOS_DE_MEZCLA`, `COMPOSICION_POR_GRADO`; `LOTES_EN_MEZCLA`, `CARGAS_POR_PRODUCTOR`, `MOQ_MEZCLA` y `COMPOSICION_MEZCLA` se

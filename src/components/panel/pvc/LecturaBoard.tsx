@@ -282,10 +282,11 @@ export function LecturaBoard({
       <div className={styles.card}>
         <div className={styles.sectionHead}><strong>Mínimos y empaque por grado</strong></div>
         <p className={styles.meta}>
-          Black y Red son mezclas de 3 a 4 productores: el Black, de varios orígenes y/o variedades; el Red, siempre de
-          una sola variedad (una mezcla regional). Su mínimo está anclado a la compra mínima a cada productor —una carga—,
-          así que son 3 o 4 cargas. El incremento después del mínimo es la mitad, y la casa puede bajar a cuartos para
-          colocar el resto. Siempre limitado a la disponibilidad.
+          El MOQ de compra de Black y Red es de 3 cargas (owner, 2026-09-25 y 2026-09-30): una mezcla Single Origin o Regional Blend
+          armada desde Adquisición de Stock, con la carga de CPS como común denominador — de cara al comprador, el MOQ de CaaS es el
+          reflejo en verde de lo que rinde una carga. Lo que el productor declara por lote es otro mínimo (6 · 6 · 3 cargas · 150 kg,
+          Tyrian sin mínimo; <code>src/lib/trato/terminos.ts</code>). El incremento después del mínimo es la mitad, y la casa puede
+          bajar a cuartos para colocar el resto. Siempre limitado a la disponibilidad.
         </p>
         <div className={table.scroll}>
           <table className={table.t}>

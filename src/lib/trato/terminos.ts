@@ -66,16 +66,16 @@ export const REEVALUACION = { tarifaPlena: true, reembolsoPctSiSubeGrado: 80 } a
 /** Una carga de café pergamino seco, kg. */
 export const CARGA_KG = 125;
 
-/** Respuesta 1 del owner: cantidad MÍNIMA declarada por cada lote, según su grado. Tyrian no entra por oferta. */
+/** Respuesta 1 del owner (2026-09-24) con su corrección del 2026-09-30: lo que el productor DEBE declarar (CPS) para que se le
+ *  pueda ofrecer un contrato, según el grado. Gold bajó de 200 a 150 kg; Tyrian NO tiene mínimo (va a subasta; el «MOQ de 100 kg» de
+ *  la respuesta 3 nunca lo aplicó ningún código y se retiró). El MOQ de CaaS de cara al COMPRADOR es otro número: el reflejo en
+ *  verde de lo que rinde una carga de CPS (`src/lib/pvc/lectura.ts`, `moqCargas`) — la carga es el común denominador. */
 export const MINIMO_POR_GRADO: Record<"black" | "red" | "blue" | "gold", { cargas?: number; kg?: number }> = {
   black: { cargas: 6 },
   red: { cargas: 6 },
   blue: { cargas: 3 },
-  gold: { kg: 200 },
+  gold: { kg: 150 },
 };
-
-/** Respuesta 3 del owner: la subasta Tyrian sigue, con MOQ de 100 kg de CPS. */
-export const MOQ_SUBASTA_TYRIAN_KG = 100;
 
 /** El mínimo declarable de un grado, en kg (las cargas se convierten con `CARGA_KG`). null = ese grado no se oferta. */
 export function minimoKg(grado: string | null | undefined): number | null {

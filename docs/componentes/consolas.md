@@ -208,7 +208,7 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   `kaffetal-media` (se retira por la Storage API, no por SQL) y el **wrap V47** lo compila WRAP-COMMIT-PUSH cuando el owner lo llame.
   Lo que las respuestas cambiaron en el plan: la **Arena se queda** en BCP (se rehace como sesiones de segunda apreciación con la
   Datasheet Tool; los «Reclamos de oficialización» salen de allí al chequeo del OCP); «Ofertas CP Aceptadas» y «Oferta desde CTCx
-  Selection» son el **staging** del Catálogo Activo; la subasta Tyrian sigue (MOQ 100 kg CPS); mínimos por lote 6 · 3 · 200 kg;
+  Selection» son el **staging** del Catálogo Activo; la subasta Tyrian sigue (sin mínimo desde la V5.96); mínimos por lote 6 · 3 · 150 kg (V5.96; 200 hasta entonces);
   tarifa $200.000 con Campañas de Subvención (30–70 %); el Q-Grader es una credencial `centro-calidad` con módulos activables y uso
   directo; la ruptura nunca es automática pero se hace visible sola. **Fase 1 EJECUTADA en la V5.77** (retiros y mudanzas): la
   Arena rehecha como sesiones de segunda apreciación (`/bcp/arena`, `arenaActions.ts`; `rige_grado` decide el grado); el Club

@@ -162,3 +162,10 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - Traza `envio`: el paso «postularLote» emite un KRX- del 30 % (ya no un KRA- al 0 %).
 - ANN nueva: `src/lib/arena/subvencionServidor.ts`. KR: `PorQueSection.tsx` y `faq.ts` (JSON-LD) dicen $200.000 / 30 % / contra entrega.
 (commit: d47dfc4)
+
+## [2026-09-30] V5.96 · Consolas — los mínimos según el owner: Gold 150 kg, Tyrian sin mínimo, la carga como común denominador
+- DICT `terminos`: `MINIMO_POR_GRADO` = 6 · 6 · 3 cargas · 150 kg, Tyrian sin mínimo (el MOQ de 100 kg se retiró: nada lo aplicaba).
+  DICT `pvcparagrado` · `mezclas`: dos mínimos con una unidad — lo que el productor declara (CPS) y el MOQ de CaaS de cara al
+  comprador (reflejo en verde de una carga). `PVC_BCP_PLAN` §14.8 n.º 31 confirmado.
+- ANN: `LecturaBoard.tsx` ya no dice «3 a 4 productores».
+(commit: pendiente)

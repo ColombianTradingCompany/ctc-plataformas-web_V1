@@ -19,6 +19,17 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.96] — 2026-09-30 (commit pendiente)
+
+- **Cambiado**: **los mínimos que el productor declara por lote, confirmados por el owner** (2026-09-30): Black y Red 6 cargas ·
+  Blue 3 cargas · **Gold 150 kg** (era 200) · **Tyrian sin mínimo** (`MINIMO_POR_GRADO`, `src/lib/trato/terminos.ts`). La oferta,
+  la calculadora y «Mi trato» lo leen de ahí.
+- **Retirado**: `MOQ_SUBASTA_TYRIAN_KG` (100 kg de CPS): ningún código lo aplicaba y el owner fijó que Tyrian no tiene mínimo.
+- **Docs**: `PVC_BCP_PLAN` §14.8 n.º 31 redactado como lo dijo el owner —la carga de CPS es el común denominador; el MOQ de compra de
+  CaaS es de cara al comprador, el reflejo en verde de una carga— y §12.6 lo repite; plan §6 decisiones 1 y 3; charters.
+- **Cambiado** (código de `herramientas-internas`, con el «organiza todo» del owner; ALINEACION §3): `LecturaBoard.tsx` deja de decir
+  «mezclas de 3 a 4 productores … 3 o 4 cargas» (el pendiente que dejó el wrap V47). `qa-trato` 106 (sin el MOQ de Tyrian).
+
 ## [V5.95] — 2026-09-30 (commit d47dfc4)
 
 - **Añadido**: **la subvención por defecto del 30 %** (owner, 2026-09-30): toda solicitud de evaluación que entra por el panel del

@@ -16,7 +16,7 @@ import { execSync } from "node:child_process";
 import { enMora, esPastCrop, mesEnCurso, moraDelMes, moraDelTrato, renovacionDebida, retiro } from "../src/lib/trato/mesAMes.ts";
 import { decidirRecordatorioDeMora, MAX_RECORDATORIOS_MORA } from "../src/lib/trato/mora.ts";
 import {
-  CARGA_KG, COMPRA_INICIAL_CTCX_CARGAS, DECLARACIONES, MODIFICADOR_DIRECTA_PCT, MODIFICADOR_PAST_CROP_PCT, MORA, MOQ_SUBASTA_TYRIAN_KG,
+  CARGA_KG, COMPRA_INICIAL_CTCX_CARGAS, DECLARACIONES, MODIFICADOR_DIRECTA_PCT, MODIFICADOR_PAST_CROP_PCT, MORA,
   PAST_CROP_MESES, PENALIDAD_RETIRO_PCT, PERIODO_MESES, REEVALUACION, RENOVACION_DIAS, TARIFA_EVALUACION_COP, TRAMO_LIBRE_ACUMULADO_PCT,
   VENTANA_DIRECTA_DIAS, modificadorDeOferta, minimoKg, TERMINOS_VERSION,
 } from "../src/lib/trato/terminos.ts";
@@ -61,8 +61,7 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   check("folio 12 / respuesta 2: la re-evaluación va a tarifa plena con 80 % si sube de grado", /re-evaluación a tarifa plena \(\$200\.000\)\*\*, con \*\*80 % de reembolso si sube un grado\*\*/.test(paso(12)) && REEVALUACION.tarifaPlena === true && REEVALUACION.reembolsoPctSiSubeGrado === 80);
   const minimos = plan.match(/Black\/Red (\d+) cargas · Blue (\d+) cargas · Gold (\d+) kg/);
   check("respuesta 1: los mínimos por grado", !!minimos && minimoKg("black") === num(minimos[1]) * CARGA_KG && minimoKg("blue") === num(minimos[2]) * CARGA_KG && minimoKg("gold") === num(minimos[3]));
-  const moq = plan.match(/MOQ de Tyrian \*\*(\d+) kg de CPS\*\*/);
-  check("respuesta 3: el MOQ de la subasta Tyrian", !!moq && MOQ_SUBASTA_TYRIAN_KG === num(moq[1]));
+  check("Tyrian no tiene mínimo (owner, 2026-09-30): ni en terminos.ts ni en el plan", minimoKg("tyrian") === null && !/MOQ_SUBASTA_TYRIAN_KG/.test(lee("src/lib/trato/terminos.ts")) && /Tyrian sin mínimo/.test(plan));
   check("el modificador de una oferta suma directa y past crop", modificadorDeOferta({}) === 0 && modificadorDeOferta({ directa: true }) === -8 && modificadorDeOferta({ pastCrop: true }) === -10 && modificadorDeOferta({ directa: true, pastCrop: true }) === -18);
 }
 

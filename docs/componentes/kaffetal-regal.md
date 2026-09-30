@@ -243,7 +243,7 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   3 a 4; Black = blend de orígenes y/o variedades, Red = siempre una sola variedad, mezcla regional — owner, 2026-09-19)~~ —
   **superado el 2026-09-25 (V5.91, `PVC_BCP_PLAN` §14.8)**: la regla 3–4 se retiró de raíz; Black y Red son mezclas Single Origin
   o Regional Blend de CTCx con un MOQ de compra de 3 cargas, y el mínimo que el productor declara por lote es otro:
-  **6 · 6 · 3 cargas · 200 kg** (Black · Red · Blue · Gold; `MINIMO_POR_GRADO` en `src/lib/trato/terminos.ts`, V5.80).
+  **6 · 6 · 3 cargas · 150 kg** (Black · Red · Blue · Gold; Tyrian sin mínimo; `MINIMO_POR_GRADO` en `src/lib/trato/terminos.ts`, V5.80; Gold de 200 a 150 kg en la V5.96).
 - **Papagayo Beans® (owner, 2026-09-17, `PVC_BCP_PLAN.md` §14.6)**: el café del productor sale al mundo como **Papagayo
   Beans®**, la marca de CTCx, con el sello de su grado (loro y monograma PB) y, en Cherry Picked, con su nombre y su finca en
   la vitrina; falta decir la marca en la landing, el FAQ y «Su café en el mundo»;
@@ -254,7 +254,7 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   faltan `TratoSection` y el FAQ; factor ≤ 94 confirmado; ~~mínimo del lote de Cherry Picked por grado **3–4 según la mezcla · 2 ·
   1 · ½ cargas** (§14.7 corrige el «4 · 3 · 2 · 1 · ½» del §14.4 — reconciliado el 2026-09-19 en
   el plan, los charters y `lectura.ts`, V5.53)~~ **superado**: el mínimo que el productor declara por lote es 6 · 6 · 3 cargas ·
-  200 kg (`terminos.ts`, V5.80) y el MOQ de compra de Black y Red es de 3 cargas (§14.8, V5.91) y
+  150 kg (`terminos.ts`, V5.80 · V5.96) y el MOQ de compra de Black y Red es de 3 cargas (§14.8, V5.91) y
   entrada CaaS de 15–25 kg; el 80 % del alza Tyrian **solo en Cherry Picked**, convertido a COP el día del pago; CaaS vende
   como **CTCx Selection** (CTCx figura como productor, la finca queda en la documentación); marca CTCx en todo el copy (ya
   previsto). La regla interna del CaaS sin cooperación (§14 n.º 8) **no va en ninguna pantalla**. El documento:

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.110] — 2026-09-30 (commit pendiente)
+## [V5.110] — 2026-09-30 (commit 8c6c9ca)
 
 - **Corregido**: en Kaffetal Regal la geolocalización de la finca «se borraba» al salir de «Editar finca» (el owner lo topó con
   «Finca La Muestra CTCx»). La causa estaba en la base: la V5.65 dijo que `finca_parcelas.requires_polygon` guarda la respuesta

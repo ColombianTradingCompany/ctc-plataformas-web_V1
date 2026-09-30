@@ -252,4 +252,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-09-30] V5.110 · Kaffetal Regal — la geolocalización de la finca «se borraba»: requires_polygon era generada
 - DICT `finca_parcelas.requires_polygon`: columna real (drop expression); acta 2026-09-30_parcelas_requires_polygon_es_declaracion.sql.
 - ANN `KaffetalExperience.tsx` (`mirrorParcelaUno` avisa en vez de callar). Guardián: `qa-visa` +3.
-(commit: pendiente)
+(commit: 8c6c9ca)

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.116] — 2026-09-30 (commit pendiente)
+## [V5.116] — 2026-09-30 (commit 8faa9bc)
 
 - **Cambiado**: el aviso **«¡Ficha completa!»** al cerrar la Ficha del lote (owner, 2026-09-30) ahora separa **lo que ya está** —la
   Ficha enviada a revisión y la **Visa EUDR** (lista si el Pasaporte de la finca está vigente; pendiente del Pasaporte si no)— de

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.98] — 2026-09-30 (commit pendiente)
+## [V5.98] — 2026-09-30 (commit fe288a1)
 
 - **Añadido**: **las dos cuentas de auditoría** (owner, 2026-09-30: «creemos 2 y toma control total de ellas»): un productor y un
   comprador `@ctc-qa-test.co`, del nodo final, con credenciales SOLO en `.env.local` (`QA_PRODUCER_EMAIL`, `QA_BUYER_EMAIL`,

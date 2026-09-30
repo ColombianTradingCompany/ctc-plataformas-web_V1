@@ -185,4 +185,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   `@ctc-qa-test.co` (credenciales solo en `.env.local`), y limpian lo que escriben. El remitente único las salta
   (`cuentasDePrueba.ts`), como a las etiquetas de los desacoplados (ficha `desacoplado`).
 - ANN nueva: `src/lib/email/cuentasDePrueba.ts`.
-(commit: pendiente)
+(commit: fe288a1)

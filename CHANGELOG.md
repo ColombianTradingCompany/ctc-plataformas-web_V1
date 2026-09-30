@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.109] — 2026-09-30 (commit pendiente)
+## [V5.109] — 2026-09-30 (commit f901e90)
 
 - **Cambiado**: en la Ficha del lote, **B2 y B3 son o lo uno o lo otro** (owner, 2026-09-30). **«No lo sé»** deja todo opcional (B2:
   puntaje, escala y perfil; B3: factor o almendra). **«Tengo un reporte»** (casilla nueva, excluyente) hace obligatorios el puntaje, la

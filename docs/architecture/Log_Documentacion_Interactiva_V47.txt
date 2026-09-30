@@ -247,4 +247,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `ficha/panes/PaneB2.tsx`, `PaneB3.tsx` (par excluyente + quién emitió el reporte), `FichaView.tsx` (compuertas; la solicitud
   sale sola con la FT2), `OfficialScoreBanner.tsx` (solo informa), `fichaData.ts` (4 campos). OCP: `EvaReviewCard.tsx` lee el emisor.
 - Guardián: `qa-reportado-productor` +10.
-(commit: pendiente)
+(commit: f901e90)

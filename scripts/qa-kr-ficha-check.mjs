@@ -80,6 +80,21 @@ const lee = (r) => readFileSync(new URL(`../${r}`, import.meta.url), "utf8");
   check("FichaView: y puede envolver (flex-wrap)", !!csvRow && /flex-wrap:\s*wrap/.test(csvRow[1]));
 }
 
+// ── V5.102 (owner, 2026-09-30) · «Borrar» con la frase escrita, y la finca a pantalla completa como la Ficha ──
+{
+  const ke = lee("src/components/kaffetal-regal/KaffetalExperience.tsx");
+  const modal = lee("src/components/kaffetal-regal/ConfirmarBorradoModal.tsx");
+  const fincaView = lee("src/components/kaffetal-regal/FincaView.tsx");
+  const fichaView = lee("src/components/kaffetal-regal/FichaView.tsx");
+  const fincaModal = lee("src/components/kaffetal-regal/FincaModal.tsx");
+  check("la frase que se escribe es «Borrar Lote» / «Borrar Finca», y el botón no se habilita sin ella", modal.includes('{ lote: "Borrar Lote", finca: "Borrar Finca" }') && modal.includes("texto.trim() === frase") && modal.includes("disabled={!coincide || busy}"));
+  check("KR ya no confirma con window.confirm: los dos borrados pasan por el pop-up escrito", !ke.includes("window.confirm") && ke.includes('setBorrado({ tipo: "lote"') && ke.includes('tipo: "finca"') && ke.includes("<ConfirmarBorradoModal"));
+  check("los dos DELETE piden .select(\"id\") y tratan cero filas como fallo (la RLS no devuelve error)", /from\("lots"\)\.delete\(\)\.eq\("id", borrado\.id\)\.select\("id"\)/.test(ke) && /from\("fincas"\)\.delete\(\)\.eq\("id", borrado\.id\)\.select\("id"\)/.test(ke) && (ke.match(/if \(error \|\| !data\?\.length\)/g) ?? []).length >= 2);
+  check("«Borrar» está DENTRO de la pantalla de edición del lote y de la finca, solo cuando la regla lo permite", fichaView.includes("onDelete?: () => void") && ke.includes("onDelete={!isLotCommitted(curLot) && curLot.source !== \"bcp_manual_entry\"") && fincaModal.includes("Borrar Finca") && ke.includes("onDelete={fincaSelfDeletable(fincaEnEdicion, lots)"));
+  check("editar una finca es una página completa con la cabecera de la Ficha; registrar una nueva sigue en el pop-up", fincaView.includes("styles.appTop") && fincaView.includes("<FincaEditorBody") && ke.includes('if (i >= 0) setView("finca");') && ke.includes("else setFincaModalOpen(true);") && ke.includes("<FincaModal"));
+  check("la página de la finca y el pop-up de borrado son capas del botón atrás", ke.includes('(view === "finca" ? 1 : 0)') && ke.includes("(borrado ? 1 : 0)") && ke.includes("else if (borrado) setBorrado(null);"));
+}
+
 // ── 4. Ninguna clase de CSS module usada se quedó sin definir ──────────────
 // (la trampa de la V4.30, aplicada a los archivos que esta tanda tocó)
 {

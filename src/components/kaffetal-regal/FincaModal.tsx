@@ -204,6 +204,19 @@ type ParcelaDraft = {
 };
 type CertDraft = { id?: string; fincaId: string; scheme: string; certNumber: string; validFrom: string; validTo: string; holderNote: string };
 
+/** V5.102: el cuerpo del editor es de la página `FincaView` (editar) Y del pop-up `FincaModal` (registrar nueva). */
+export type FincaEditorProps = {
+  finca: Finca | null;
+  gi: GeneralInfo;
+  onSave: (f: Finca) => Promise<boolean>;
+  onRequestHelp: (f: Finca, text: string) => Promise<boolean>;
+  onUploadPhoto: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
+  onUploadVideo: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
+  onUploadLegalDoc: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
+  /** V5.102 (owner): «Borrar Finca» con confirmación escrita; solo llega cuando `fincaSelfDeletable` lo permite. */
+  onDelete?: () => void;
+} & FincaModalExtras;
+
 type FincaModalExtras = {
   parcelas: Parcela[];
   certificates: FincaCertificate[];
@@ -242,7 +255,7 @@ export function FincaModal({
           this body with fresh initial state, instead of an effect that resets state
           imperatively on every open -- Modal itself never unmounts its children. */}
       {open && (
-        <FincaModalBody
+        <FincaEditorBody
           key={finca?.id ?? "new"}
           finca={finca}
           gi={gi}
@@ -258,7 +271,7 @@ export function FincaModal({
   );
 }
 
-function FincaModalBody({
+export function FincaEditorBody({
   finca,
   gi,
   onSave,
@@ -273,15 +286,8 @@ function FincaModalBody({
   onSaveCert,
   onDeleteCert,
   onUploadCertSupport,
-}: {
-  finca: Finca | null;
-  gi: GeneralInfo;
-  onSave: (f: Finca) => Promise<boolean>;
-  onRequestHelp: (f: Finca, text: string) => Promise<boolean>;
-  onUploadPhoto: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
-  onUploadVideo: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
-  onUploadLegalDoc: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
-} & FincaModalExtras) {
+  onDelete,
+}: FincaEditorProps) {
   const { showToast } = useToast();
 
   const defaultDepto = finca?.depto && finca.depto !== "—" ? finca.depto : gi.department || "Santander";
@@ -1391,6 +1397,12 @@ function FincaModalBody({
           flujo, ya no hay nada debajo que tapar. Apiladas en vertical contra la
           derecha, que es la regla de la casa. */}
       <div className={styles.fabDock}>
+        {/* V5.102 (owner): «Borrar» dentro de la pantalla de edición; la frase se escribe en el pop-up de KaffetalExperience. */}
+        {finca && onDelete && (
+          <button type="button" className="btn btn-sm" style={{ alignSelf: "flex-start", borderColor: "var(--t-red)", color: "var(--t-red)" }} onClick={onDelete} disabled={saving}>
+            Borrar Finca
+          </button>
+        )}
         {finca && helpOpen && (
           <div className={styles.helpBox}>
             <p style={{ fontWeight: 600, fontSize: 13, margin: "0 0 6px" }}>¿En qué necesita ayuda con esta finca?</p>

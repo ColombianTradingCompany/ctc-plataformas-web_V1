@@ -205,3 +205,9 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `src/app/ocp/(app)/kr/KrTabla.tsx` y `carga.ts`: `KrFila.segmentoId` + `productorEmail`; filtros `con-finca` · `con-lote`;
   casillas de `PRODUCER_SEGMENTS` (varios a la vez, `?segmento=`). Guardián: `qa-boards` +5.
 (commit: 0654a1f)
+
+## [2026-09-30] V5.102 · Consolas → Kaffetal Regal — «Borrar» con la frase escrita y la finca a pantalla completa
+- ANN `src/components/kaffetal-regal/ConfirmarBorradoModal.tsx` (nuevo: «Borrar Lote» / «Borrar Finca» escritos) y
+  `FincaView.tsx` (nuevo: la página de la finca, cabecera de la Ficha, cuerpo `FincaEditorBody`); `KaffetalExperience.tsx` sin
+  `window.confirm`, DELETE con `.select("id")`. Guardián: `qa-kr-ficha` +6.
+(commit: pendiente)

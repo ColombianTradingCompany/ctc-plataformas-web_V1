@@ -133,6 +133,7 @@ export function FichaView({
   fincaCerts,
   gi,
   onBack,
+  onDelete,
   onSave,
   onOpenNewFinca,
   onUploadFile,
@@ -150,6 +151,8 @@ export function FichaView({
   fincaCerts: import("./data").FincaCertificate[];
   gi: import("./data").GeneralInfo;
   onBack: () => void;
+  /** V5.102 (owner): «Borrar» con confirmación escrita; solo llega mientras el lote aún se puede borrar (`isLotCommitted`). */
+  onDelete?: () => void;
   // Resolves true only when the row actually persisted -- the buttons below
   // await this so success toasts / stage advances never fire on a failed save.
   onSave: (updates: FichaSaveUpdate) => Promise<boolean>;
@@ -716,6 +719,11 @@ export function FichaView({
               <span className={styles.chip}>{lot.stage <= 1 ? "✓ Ficha enviada a CTC · en revisión" : "✓ Ficha registrada en CTC"}</span>
             ) : (
               <>
+                {onDelete && (
+                  <button className="btn btn-sm" style={{ borderColor: "var(--t-red)", color: "var(--t-red)" }} onClick={onDelete} disabled={saving}>
+                    Borrar
+                  </button>
+                )}
                 <AutosaveChip status={autosaveStatus} />
                 <button className="btn btn-sm" onClick={save} disabled={saving}>
                   {saving ? "Guardando…" : "Guardar"}

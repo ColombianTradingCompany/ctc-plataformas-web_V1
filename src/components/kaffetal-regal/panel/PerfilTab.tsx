@@ -145,7 +145,7 @@ export function PerfilTab({
               request a data revision -- a full deletion affecting committed
               lots is handled by CTC over that thread. */}
           {fincaSelfDeletable(f, lots) ? (
-            <button className={styles.deletebtn} onClick={() => onDeleteFinca(f.id)}>Eliminar</button>
+            <button className={styles.deletebtn} onClick={() => onDeleteFinca(f.id)}>Borrar</button>
           ) : (
             <button className="btn btn-sm" onClick={() => onRequestFincaRevision(f)}>Solicitar revisión de datos</button>
           )}
@@ -237,7 +237,7 @@ export function PerfilTab({
               inscripción y antes del legado fila_arena — isLotCommitted), unless
               BCP already has the physical sample in hand (bcp_manual_entry). */}
           {!isLotCommitted(l) && l.source !== "bcp_manual_entry" && (
-            <button className={styles.deletebtn} onClick={() => onDeleteLot(l.id)}>Eliminar lote</button>
+            <button className={styles.deletebtn} onClick={() => onDeleteLot(l.id)}>Borrar lote</button>
           )}
         </div>
       </div>

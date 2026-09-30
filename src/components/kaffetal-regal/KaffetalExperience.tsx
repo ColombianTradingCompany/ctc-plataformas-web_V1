@@ -19,6 +19,8 @@ import { AppDashboard } from "./AppDashboard";
 import { LEGACY_MODULE_TO_DRILL, LEGACY_MODULE_TO_TAB, esModuloLegado, type PanelDrill, type PanelTab } from "./panel/panelTabs";
 import { FichaView, type FichaSaveUpdate } from "./FichaView";
 import { FincaModal } from "./FincaModal";
+import { FincaView } from "./FincaView";
+import { ConfirmarBorradoModal, type BorradoPendiente } from "./ConfirmarBorradoModal";
 import { InfoModal } from "./InfoModal";
 import { SolicitudRevisionModal } from "./SolicitudRevisionModal";
 import {
@@ -42,7 +44,8 @@ import {
   type ScaScoring,
 } from "./data";
 
-type View = "landing" | "app" | "ficha";
+// V5.102: `finca` = la página de la finca (como `ficha` lo es del lote).
+type View = "landing" | "app" | "ficha" | "finca";
 
 // Purely forward-looking guidance -- the stage/grade itself is already shown
 // by the state chip, so this never repeats that word (see AppDashboard).
@@ -349,6 +352,8 @@ function Experience() {
 
   const [fincaModalOpen, setFincaModalOpen] = useState(false);
   const [editingFincaIdx, setEditingFincaIdx] = useState(-1);
+  // V5.102 (owner): lo que está por borrarse mientras el productor escribe «Borrar Lote» / «Borrar Finca».
+  const [borrado, setBorrado] = useState<BorradoPendiente | null>(null);
   const [infoModalOpen, setInfoModalOpen] = useState(false);
   // El contrato `?m=<módulo>` (V4.34): los enlaces de vuelta de la concha de
   // herramientas y los marcadores viejos traen la clave de la rejilla
@@ -864,7 +869,7 @@ function Experience() {
     showToast(`Lote "${name}" renombrado ✓`);
   }
 
-  async function deleteLot(id: string) {
+  function deleteLot(id: string) {
     const lot = lots.find((l) => l.id === id);
     // Guard here matches the RLS policy (lots_delete_own_before_mue): a lot is
     // self-deletable while the paid pipeline hasn't taken it — sin inscripción
@@ -875,14 +880,8 @@ function Experience() {
       showToast("Este lote ya entró en revisión de CTC y no puede eliminarse.");
       return;
     }
-    if (!window.confirm(`¿Eliminar el lote "${lot.name}"? Esta acción no se puede deshacer.`)) return;
-    const { error } = await supabase.from("lots").delete().eq("id", id);
-    if (error) {
-      showToast("No se pudo eliminar el lote.");
-      return;
-    }
-    setLots((ls) => ls.filter((l) => l.id !== id));
-    showToast("Lote eliminado ✓");
+    // V5.102 (owner): la confirmación es ESCRIBIR «Borrar Lote» en el pop-up; el borrado lo corre ejecutarBorrado().
+    setBorrado({ tipo: "lote", id, nombre: lot.name });
   }
 
   async function confirmSampleShipped(id: string) {
@@ -1142,7 +1141,7 @@ function Experience() {
     return true;
   }
 
-  async function deleteFinca(fincaId: string) {
+  function deleteFinca(fincaId: string) {
     const finca = fincas.find((f) => f.id === fincaId);
     if (!finca) return;
     // Guard mirrors the RLS policy (fincas_delete_own_not_committed): deletable
@@ -1153,28 +1152,51 @@ function Experience() {
       return;
     }
     const cascading = pendingLotsOfFinca(finca, lots);
-    const warning =
-      cascading.length > 0
-        ? `¿Eliminar la finca "${finca.name}"? Se eliminarán también ${cascading.length} lote(s) pendiente(s) asociado(s) (${cascading
-            .map((l) => l.name)
-            .join(", ")}). Esta acción no se puede deshacer.`
-        : `¿Eliminar la finca "${finca.name}"? Esta acción no se puede deshacer.`;
-    if (!window.confirm(warning)) return;
-    const { data, error } = await supabase.from("fincas").delete().eq("id", fincaId).select("id");
-    if (error || !data?.length) {
-      showToast("No se pudo eliminar la finca.");
-      return;
+    // V5.102 (owner): la confirmación es ESCRIBIR «Borrar Finca» en el pop-up, que antes dice qué se lleva por delante.
+    setBorrado({
+      tipo: "finca",
+      id: fincaId,
+      nombre: finca.name,
+      detalle:
+        cascading.length > 0
+          ? `Se borrarán también ${cascading.length} lote(s) pendiente(s) asociado(s): ${cascading.map((l) => l.name).join(", ")}.`
+          : undefined,
+    });
+  }
+
+  // V5.102: lo que corre cuando el productor escribió la frase. Con `.select("id")` en los DOS: un DELETE que la RLS
+  // filtra no es error para PostgREST (cero filas), y el lote «eliminado» seguía ahí al recargar — era el caso del lote.
+  async function ejecutarBorrado(): Promise<boolean> {
+    if (!borrado) return false;
+    if (borrado.tipo === "lote") {
+      const { data, error } = await supabase.from("lots").delete().eq("id", borrado.id).select("id");
+      if (error || !data?.length) {
+        showToast("No se pudo borrar el lote.");
+        return false;
+      }
+      setLots((ls) => ls.filter((l) => l.id !== borrado.id));
+      if (view === "ficha" && curLotId === borrado.id) setView("app");
+      showToast("Lote borrado ✓");
+    } else {
+      const finca = fincas.find((f) => f.id === borrado.id);
+      const cascading = finca ? pendingLotsOfFinca(finca, lots) : [];
+      const { data, error } = await supabase.from("fincas").delete().eq("id", borrado.id).select("id");
+      if (error || !data?.length) {
+        showToast("No se pudo borrar la finca.");
+        return false;
+      }
+      // The DB cascades the pending lots; mirror that in local state so the lot list updates without a full reload.
+      const cascadedIds = new Set(cascading.map((l) => l.id));
+      setFincas((prev) => prev.filter((f) => f.id !== borrado.id));
+      setLots((prev) => prev.filter((l) => !cascadedIds.has(l.id)));
+      if (view === "finca") {
+        setEditingFincaIdx(-1);
+        setView("app");
+      }
+      showToast(cascading.length > 0 ? `Finca y ${cascading.length} lote(s) pendiente(s) borrados ✓` : "Finca borrada ✓");
     }
-    // The DB cascades the pending lots; mirror that in local state so the lot
-    // list updates without a full reload.
-    const cascadedIds = new Set(cascading.map((l) => l.id));
-    setFincas((prev) => prev.filter((f) => f.id !== fincaId));
-    setLots((prev) => prev.filter((l) => !cascadedIds.has(l.id)));
-    showToast(
-      cascading.length > 0
-        ? `Finca y ${cascading.length} lote(s) pendiente(s) eliminados ✓`
-        : "Finca eliminada ✓"
-    );
+    setBorrado(null);
+    return true;
   }
 
   // "Ayuda" from a finca: the producer opens a help request that lands in BCP's
@@ -1824,6 +1846,8 @@ function Experience() {
   }
 
   const curLot = lots.find((l) => l.id === curLotId) ?? null;
+  // V5.102: la finca abierta en su página (o en el pop-up al editar desde Retroalimentación).
+  const fincaEnEdicion = editingFincaIdx >= 0 ? fincas[editingFincaIdx] ?? null : null;
 
   // --- Botón "Atrás" del teléfono ------------------------------------------
   // La app cambia de pantalla (ficha) y abre modales solo con estado de React,
@@ -1835,8 +1859,10 @@ function Experience() {
   const backLayerCount =
     (loginOpen ? 1 : 0) +
     (fincaModalOpen ? 1 : 0) +
+    (borrado ? 1 : 0) +
     (infoModalOpen ? 1 : 0) +
     (view === "ficha" ? 1 : 0) +
+    (view === "finca" ? 1 : 0) +
     (drill ? 1 : 0);
   const closeTopLayer = useCallback(() => {
     // Orden de cierre: los modales están por encima de la ficha (un modal
@@ -1845,11 +1871,13 @@ function Experience() {
     // "Atrás" nunca deshace un cambio de pestaña, sale de la app — como en
     // cualquier app con barra inferior.
     if (loginOpen) setLoginOpen(false);
+    else if (borrado) setBorrado(null);
     else if (fincaModalOpen) setFincaModalOpen(false);
     else if (infoModalOpen) setInfoModalOpen(false);
     else if (view === "ficha") setView(userId ? "app" : "landing");
+    else if (view === "finca") setView("app");
     else if (drill) setDrill(null);
-  }, [loginOpen, fincaModalOpen, infoModalOpen, view, userId, drill]);
+  }, [loginOpen, borrado, fincaModalOpen, infoModalOpen, view, userId, drill]);
 
   const backDepth = useRef(0);
   const backFromPop = useRef(false);
@@ -1920,7 +1948,9 @@ function Experience() {
           onConfirmSampleShipped={confirmSampleShipped}
           onOpenFincaModal={(i) => {
             setEditingFincaIdx(i);
-            setFincaModalOpen(true);
+            // V5.102 (owner): EDITAR una finca es una página completa, como la Ficha del lote; REGISTRAR una nueva sigue en el pop-up.
+            if (i >= 0) setView("finca");
+            else setFincaModalOpen(true);
           }}
           onDeleteFinca={deleteFinca}
           onRequestFincaRevision={requestFincaRevision}
@@ -1940,6 +1970,7 @@ function Experience() {
           fincaCerts={fincaCerts}
           gi={gi}
           onBack={() => setView(userId ? "app" : "landing")}
+          onDelete={!isLotCommitted(curLot) && curLot.source !== "bcp_manual_entry" ? () => deleteLot(curLot.id) : undefined}
           onSave={saveFicha}
           onOpenNewFinca={() => {
             setEditingFincaIdx(-1);
@@ -1955,7 +1986,30 @@ function Experience() {
         />
       )}
 
+      {view === "finca" && fincaEnEdicion && (
+        <FincaView
+          key={fincaEnEdicion.id}
+          finca={fincaEnEdicion}
+          gi={gi}
+          onBack={() => setView("app")}
+          onSave={saveFinca}
+          onRequestHelp={requestFincaHelp}
+          onUploadPhoto={(file, onProgress) => uploadFincaPhoto(fincaEnEdicion.id, file, onProgress)}
+          onUploadVideo={(file, onProgress) => uploadFincaVideo(fincaEnEdicion.id, file, onProgress)}
+          onUploadLegalDoc={(file, onProgress) => uploadFincaLegalDoc(fincaEnEdicion.id, file, onProgress)}
+          parcelas={parcelas.filter((p) => p.fincaId === fincaEnEdicion.id)}
+          certificates={fincaCerts.filter((c) => c.fincaId === fincaEnEdicion.id)}
+          onSaveParcela={saveParcela}
+          onDeleteParcela={deleteParcela}
+          onSaveCert={saveFincaCert}
+          onDeleteCert={deleteFincaCert}
+          onUploadCertSupport={uploadCertSupport}
+          onDelete={fincaSelfDeletable(fincaEnEdicion, lots) ? () => deleteFinca(fincaEnEdicion.id) : undefined}
+        />
+      )}
+
       <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+      <ConfirmarBorradoModal pendiente={borrado} onClose={() => setBorrado(null)} onConfirm={ejecutarBorrado} />
       <SolicitudRevisionModal finca={revisionFinca} onClose={() => setRevisionFinca(null)} onSend={enviarRevisionFinca} />
       <FincaModal
         open={fincaModalOpen}

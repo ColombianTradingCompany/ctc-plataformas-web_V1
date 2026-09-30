@@ -33,7 +33,9 @@ salieron de la barra. El vocabulario lo asentó el owner el 2026-09-20 y vive es
   botón atrás: drill = capa, pestaña = no), `AppDashboard.tsx` (concha + `PanelNav`), **`panel/`**
   (`panelTabs.ts`, `PerfilTab`, `EvaluacionesTab`, `ContratosTab`, `EcosistemaTab`+`FlipCard`, `MensajesTab`,
   `mensajes.ts`), `FichaView.tsx` + **`ficha/`** (8 panes: A1–A5, B1–B4; `fichaData.ts` = `FichaFormData`,
-  `ReportFiles`, `FichasDelLote`, `FichaPreview`, `SpiderChart`), `FincaModal`, `InfoModal`, `LotKanbanStepper`,
+  `ReportFiles`, `FichasDelLote`, `FichaPreview`, `SpiderChart`), `FincaView.tsx` (V5.102: la PÁGINA de la finca, misma cabecera
+  que la Ficha; su cuerpo es `FincaEditorBody` de `FincaModal.tsx`, que sigue siendo el pop-up para registrar una finca nueva),
+  `ConfirmarBorradoModal` (V5.102: «Borrar Lote» / «Borrar Finca» escritos), `InfoModal`, `LotKanbanStepper`,
   `FileDrop`, las secciones de la landing en la misma carpeta (`ArenaSection`, `PorQueSection`, `OportunidadSection`, `TratoSection`, `FaqSection`, `BienvenidosSection`, `CalendarioSection`…), `data.ts`
   (tipos `Lot`/`Finca`, `STAGES`, `isLotCommitted`).
 - `src/lib/arena/producerActions.ts` (postular/solicitar evaluación, pagos), `src/lib/ofertas/producerActions.ts`
@@ -65,6 +67,13 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 `qa-recuperacion-check.mjs` (puerta KR).
 
 ## Reglas propias
+
+- **Borrar un lote o una finca se confirma ESCRIBIENDO «Borrar Lote» / «Borrar Finca»** (owner, 2026-09-30, V5.102), desde el botón
+  «Borrar» de su pantalla de edición (y desde la tarjeta de «Mis Fincas»); nunca con `window.confirm`. La regla de qué se puede borrar
+  sigue en `isLotCommitted` / `fincaSelfDeletable` (`data.ts`, espejo de las RLS `lots_delete_own_before_mue` y
+  `fincas_delete_own_not_committed`); los DELETE piden `.select("id")` porque una RLS que filtra devuelve cero filas, no error.
+- **Editar una finca es una página completa** (`FincaView`, V5.102), como la Ficha del lote; el pop-up `FincaModal` queda solo para
+  REGISTRAR una finca nueva (desde «+ Agregar finca» y desde A2 de la Ficha). `qa-kr-ficha` vigila las dos reglas.
 
 - **El código del lote es `CTC-L-XXXXXXXX`** (owner, 2026-09-30, V5.100): la misma forma que `CTC-P-` (productor) y `CTC-F-` (finca),
   derivado del uuid en `src/components/kaffetal-regal/data.ts` (`ctcLotReference` = `ctcLotReferenceShort`); es lo que va en el

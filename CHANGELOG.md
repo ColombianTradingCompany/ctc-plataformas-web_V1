@@ -19,6 +19,19 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.102] — 2026-09-30 (commit pendiente)
+
+- **Añadido**: en Kaffetal Regal, **«Borrar» dentro de la pantalla de edición del lote y de la finca**, con un pop-up en el que el
+  productor **escribe «Borrar Lote» o «Borrar Finca»** para confirmar (`ConfirmarBorradoModal`; owner, 2026-09-30). Las tarjetas de
+  «Mis Fincas» y de los lotes pasan por el mismo pop-up. La regla de qué se puede borrar no cambió (`isLotCommitted` /
+  `fincaSelfDeletable`).
+- **Cambiado**: **editar una finca es una página completa** (`FincaView`), con la misma cabecera y el mismo lienzo que la Ficha del lote,
+  en vez del pop-up de 560 px; el pop-up (`FincaModal`) queda solo para registrar una finca nueva. (Código de `kaffetal-regal` con el
+  «organiza todo» del owner; ALINEACION §3.)
+- **Corregido**: el borrado del lote fallaba en silencio cuando la RLS lo filtraba (PostgREST devuelve cero filas, no error): los dos
+  DELETE piden `.select("id")` y tratan cero filas como fallo.
+- **Docs**: charter `kaffetal-regal` (mapa de código, dos reglas propias), ALINEACION §3. `qa-kr-ficha` +6.
+
 ## [V5.101] — 2026-09-30 (commit 0654a1f)
 
 - **Añadido**: en **Productores, Fincas y Lotes** (`/ocp/kr`), tres cosas que el owner pidió al empezar a cargar productores para la

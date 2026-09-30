@@ -193,4 +193,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   ≥ 2 productores; `guard_mezcla_cerrada` reescrito (acta `2026-09-30_mezclas_como_tipo_de_lote.sql`).
 - Traza `mezcla`: el paso «tipoDeMezcla()» mira la unión de variedades/procesos/fincas; el cierre exige varios productores.
 - ANN: `src/lib/lotComposition.ts` (composición), `docs/migraciones/2026-09-30_mezclas_como_tipo_de_lote.sql`.
-(commit: pendiente)
+(commit: cf3155e)

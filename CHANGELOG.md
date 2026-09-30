@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.99] — 2026-09-30 (commit pendiente)
+## [V5.99] — 2026-09-30 (commit cf3155e)
 
 - **Cambiado**: **las mezclas son un tipo de lote** (owner, 2026-09-30). El arquetipo de la Ficha cruza el conjunto de fincas (A2) con la
   composición (B1): `deriveArchetype(contribs, composicion?)` + `composicionDeVariedades()` (`src/lib/lotComposition.ts`); nacen **Single

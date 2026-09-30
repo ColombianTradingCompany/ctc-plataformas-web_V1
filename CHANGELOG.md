@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.94] — 2026-09-30 (commit pendiente)
+## [V5.94] — 2026-09-30 (commit a382f5c)
 
 - **Cambiado**: **la muestra de 2 kg se parte como la dibujó el owner** (feedback del 2026-09-30): el primer kilo de CPS son **cuatro
   porciones de 250 g** — una la cata el Q-Grader de inmediato (`evaluacion`, 250 g) y **tres quedan de reserva** (`contramuestra`, 750 g) —

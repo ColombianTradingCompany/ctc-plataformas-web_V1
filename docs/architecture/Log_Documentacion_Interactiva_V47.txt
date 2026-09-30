@@ -153,4 +153,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   `envio`: el recibo crea 250/750/1000.
 - ANN: `src/lib/muestras/particion.ts` (porción de 250 g) y `almacenaje.ts` (la reserva). KR: `shipmentInstructionsPrint.ts` ya
   no nombra la Arena.
-(commit: pendiente)
+(commit: a382f5c)

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.112] — 2026-09-30 (commit pendiente)
+## [V5.112] — 2026-09-30 (commit db5a437)
 
 - **Cambiado**: en Kaffetal Regal, **registrar una finca nueva también es una página completa** (`FincaView` con `finca = null`; owner,
   2026-09-30), desde «+ Agregar finca» y desde A2 de la Ficha del lote — en este caso, al guardar o volver se regresa a la Ficha. El

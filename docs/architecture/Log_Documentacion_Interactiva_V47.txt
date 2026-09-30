@@ -267,4 +267,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-09-30] V5.113 · Kaffetal Regal — «⬇ Descargar Visa EUDR» en la tarjeta del lote
 - ANN `panel/PerfilTab.tsx` (`visaDelLote` · `visaRow`: apto o posterior + `lotEudrStatus` eudr_ready → certDownload a
   `/certificacion-lote/[id]`). Guardián: `qa-kr-panel` +3.
-(commit: pendiente)
+(commit: 2149582)

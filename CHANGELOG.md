@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.113] — 2026-09-30 (commit pendiente)
+## [V5.113] — 2026-09-30 (commit 2149582)
 
 - **Añadido**: en Kaffetal Regal, **«⬇ Descargar Visa EUDR de <lote>»** en la tarjeta del lote (el carrusel de «Mis Lotes» y la lista
   completa), con el mismo estilo del botón del Pasaporte de la finca (owner, 2026-09-30). Aparece cuando CTCx otorgó la Visa

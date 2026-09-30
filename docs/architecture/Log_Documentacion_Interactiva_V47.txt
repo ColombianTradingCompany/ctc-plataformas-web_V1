@@ -154,3 +154,11 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN: `src/lib/muestras/particion.ts` (porción de 250 g) y `almacenaje.ts` (la reserva). KR: `shipmentInstructionsPrint.ts` ya
   no nombra la Arena.
 (commit: a382f5c)
+
+## [2026-09-30] V5.95 · Consolas — la subvención por defecto del 30 % y la tarifa pública de KR a $200.000
+- DICT `solicitudevaluacion` · `campanas`: toda solicitud por KR nace con la campaña por defecto (30 %, `club_campaigns` buscada o
+  creada por `campanaPorDefecto`); CTCx sube a 60–70 % o quita; tarifa plena solo para «solo evaluación» (on-behalf desde el OCP).
+  El pago se confirma sobre `amount_cop` congelado.
+- Traza `envio`: el paso «postularLote» emite un KRX- del 30 % (ya no un KRA- al 0 %).
+- ANN nueva: `src/lib/arena/subvencionServidor.ts`. KR: `PorQueSection.tsx` y `faq.ts` (JSON-LD) dicen $200.000 / 30 % / contra entrega.
+(commit: pendiente)

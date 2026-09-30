@@ -8,7 +8,7 @@ La plataforma del **caficultor**: la landing (`kaffetal-regal.ctcexport.com`, tr
 login, el **panel en cinco interfaces** (V5.16): Mensajes · Ecosistema · Mi Perfil · Evaluaciones ·
 Contratos. Desde aquí el productor registra fincas y lotes, llena la **Ficha Técnica** (FT → FT2 → FOTO
 → EUDR, V5.79), pide su **evaluación** (muestra de 2 kg contra entrega + la tarifa de **$200.000**, `EVALUATION_FEE_COP` =
-`TARIFA_EVALUACION_COP` de `src/lib/trato/terminos.ts`, V5.80 — la landing y el FAQ todavía dicen $80.000: ver «Pendientes»),
+`TARIFA_EVALUACION_COP` de `src/lib/trato/terminos.ts`, V5.80; la landing y el FAQ lo dicen desde la V5.95, con el 30 % por defecto),
 sigue su lote hasta el **galardón**, y responde a las **ofertas** (temporada · directa · excepción, ancladas al PVC desde la
 V5.82; la subasta Tyrian aparte) cuya aceptación, con su declaración, crea el contrato. El camino base
 del lote (**redibujado por el owner, V5.64**; orden del intake de la V5.79) son DOS líneas: el **expediente** `FT · FT2 · FOTO · EUDR → VISA` y el
@@ -288,7 +288,7 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   - **Tandas de este componente**:
     1. Copy:
        - CTCx;
-       - evaluación de $200.000 con envío incluido — **la cara pública sigue diciendo $80.000** (pendiente de CÓDIGO, dueño KR;
+       - ~~evaluación de $200.000 con envío incluido — **la cara pública sigue diciendo $80.000**~~ **HECHO en la V5.95** (código de KR tocado por `consolas` con el «organiza todo» del owner: $200.000, 30 % por defecto, contra entrega, ES · EN · DE) (era pendiente de CÓDIGO, dueño KR;
          lo anota el nodo final, wrap V47): `PorQueSection.tsx` en ES · EN · DE («la inscripción cuesta $80.000») y
          `src/lib/kaffetal/faq.ts` (n.º 3 en los tres idiomas), **que alimenta el JSON-LD** de la landing; la tarifa es
          `TARIFA_EVALUACION_COP` = $200.000 (`src/lib/trato/terminos.ts`, V5.80);

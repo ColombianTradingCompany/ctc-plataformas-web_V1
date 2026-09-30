@@ -19,6 +19,20 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.95] — 2026-09-30 (commit pendiente)
+
+- **Añadido**: **la subvención por defecto del 30 %** (owner, 2026-09-30): toda solicitud de evaluación que entra por el panel del
+  productor nace con la campaña «Kaffetal Regal · subvención por defecto» (`SUBVENCION_KR_PCT`, `campanaPorDefecto()` en
+  `src/lib/arena/subvencionServidor.ts`; `postularLote` emite un KRX- del 30 % y guarda `subvencion_id`). CTCx la sube a 60–70 % o la
+  quita en Solicitudes de Evaluación; **la tarifa plena ($200.000) queda solo para quien pide la evaluación sola**, que CTCx registra desde
+  el OCP. Solicitudes, Campañas y el panel del productor lo dicen.
+- **Corregido**: el pago se confirma sobre el monto congelado en la solicitud (`dueFor(pct, ins.amount_cop)`; antes leía la tarifa
+  vigente) y las notas al productor ya no hablan de «inscripción de Arena».
+- **Cambiado** (código de `kaffetal-regal`, con el «organiza todo» del owner; ALINEACION §3): la página pública de Kaffetal Regal
+  (`PorQueSection`) y su FAQ (`faq.ts`, que alimenta el JSON-LD) dicen **$200.000 con el 30 % por defecto** y la muestra **contra
+  entrega**, en ES · EN · DE — decían $80.000 y «envío por su cuenta» desde julio.
+- **Docs**: plan §6 decisión 2; ALINEACION §3. `qa-solicitud-evaluacion` 79 → 81.
+
 ## [V5.94] — 2026-09-30 (commit a382f5c)
 
 - **Cambiado**: **la muestra de 2 kg se parte como la dibujó el owner** (feedback del 2026-09-30): el primer kilo de CPS son **cuatro

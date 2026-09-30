@@ -4,7 +4,8 @@ import { useState } from "react";
 import Image from "next/image";
 import { GRADES, ctcLotReference, ctcLotReferenceShort, type Finca, type Lot } from "../data";
 import { lotEudrStatus } from "@/lib/eudr";
-import { EVALUATION_FEE_COP, formatCop } from "@/lib/arena/inscriptions";
+import { EVALUATION_FEE_COP, formatCop, dueFor } from "@/lib/arena/inscriptions";
+import { SUBVENCION_KR_PCT } from "@/lib/arena/subvencion";
 import { NEQUI, PAYMENT_EMAIL, nequiConfigured } from "@/lib/arena/payment";
 import { openFactura } from "@/lib/arena/factura";
 import { aplicarCodigoCampana, peekCampaignCodeAction, postularLote } from "@/lib/arena/producerActions";
@@ -73,8 +74,9 @@ export function EvaluacionesTab({
           por lote y cubre el análisis físico, la catación por un <b>Q-Grader certificado</b>, el factor de rendimiento,
           la certificación CTC y el feedback — <b>salga o no salga galardonado</b>. CTC corrobora su solicitud y le emite
           la <b>factura de cobro</b>; con ella paga y envía su muestra de 2 kg <b>contra entrega</b> (el flete lo paga CTC).
-          ¿Tiene un <b>código de subvención</b>? Aplíquelo al solicitar y verá su descuento al instante; si no, puede
-          pedir un descuento en la nota y CTC decidirá la subvención al corroborar.
+          Toda solicitud hecha desde aquí nace con una <b>subvención del {SUBVENCION_KR_PCT} %</b> (paga {formatCop(dueFor(SUBVENCION_KR_PCT))});
+          ¿tiene un <b>código de subvención</b> mayor? Aplíquelo al solicitar; si no, pida un descuento en la nota y CTC decidirá la
+          subvención al corroborar (por lo general del 60 %, hasta el 70 %).
         </div>
         {solicitudes.length === 0 ? (
           <div className={styles.alist} style={{ marginTop: 10 }}>
@@ -293,8 +295,8 @@ function SolicitudCard({
             style={{ marginTop: 8, width: "100%", fontSize: 13 }}
           />
           <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>
-            Tarifa: {formatCop(EVALUATION_FEE_COP)} — con un código de subvención el descuento se muestra al escribirlo; sin código, CTC
-            decide la subvención al corroborar su solicitud y la factura llega con el total.
+            Tarifa: {formatCop(EVALUATION_FEE_COP)}, con {SUBVENCION_KR_PCT} % de subvención por solicitar desde aquí ({formatCop(dueFor(SUBVENCION_KR_PCT))}) — con un código de
+            subvención el descuento se muestra al escribirlo; sin código, CTC puede subir la subvención al corroborar y la factura llega con el total.
           </div>
         </div>
       ) : (

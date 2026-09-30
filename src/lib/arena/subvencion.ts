@@ -5,3 +5,10 @@
 // que una campaña puede dar sobre ella va del 30 al 70 % (respuesta 2 del owner al plan).
 export const SUBVENCION_MIN_PCT = 30;
 export const SUBVENCION_MAX_PCT = 70;
+
+// V5.95 (owner, 2026-09-30): «por defecto CTCx da una subvención del 30 % a quien aplique por KR (prácticamente cualquiera)».
+// Solo paga la tarifa plena quien pide la evaluación sola, sin interés en lo demás — esa solicitud la registra CTCx desde el OCP
+// (`postularOnBehalf`). Lo habitual será el 60 % ($80.000) y hasta el 70 % ($60.000): CTCx lo sube en Solicitudes de Evaluación.
+// La campaña por defecto es una fila de `club_campaigns` con este nombre; `subvencionServidor.ts` la busca o la crea.
+export const SUBVENCION_KR_PCT = 30;
+export const CAMPANA_KR_NOMBRE = "Kaffetal Regal · subvención por defecto";

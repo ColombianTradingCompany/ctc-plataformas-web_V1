@@ -32,8 +32,9 @@ const T: Record<Lang, Dict> = {
         body: (
           <>
             <p>
-              Registrar su finca y armar la ficha no cuesta nada. Solicitar la evaluación CTC de un lote cuesta <b>$80.000</b>{" "}
-              — y lo que recibe de vuelta <b>queda suyo</b>: puntaje, perfil sensorial y el feedback técnico de
+              Registrar su finca y armar la ficha no cuesta nada. La evaluación CTC de un lote vale <b>$200.000</b>, y toda solicitud hecha
+              desde su panel nace con una <b>subvención del 30 %</b> (paga $140.000; lo habitual es del 60 %, y llega al 70 %) — y lo que recibe de vuelta{" "}
+              <b>queda suyo</b>: puntaje, perfil sensorial y el feedback técnico de
               un Q-Grader profesional, salga o no salga galardonado. Es el diagnóstico que otros pagan en dólares y que ninguna
               cooperativa le entrega.
             </p>
@@ -84,10 +85,11 @@ const T: Record<Lang, Dict> = {
     ],
     closeBody: (
       <>
-        <b>Por qué la inscripción cuesta $80.000 y no es gratis:</b> porque una catación a ciegas ante Q-Graders, el
+        <b>Por qué la evaluación cuesta $200.000 y no es gratis:</b> porque la catación de un Q-Grader certificado, el
         factor de rendimiento y la certificación cuestan de verdad — y porque a la mesa se sienta quien se la
-        juega. Aun así, es la palanca de CTC, no una barrera: <b>descontamos o eximimos la inscripción</b> a los
-        productores que queremos ver compitiendo. Escríbanos antes de inscribir su primer lote.
+        juega. Aun así, es la palanca de CTC, no una barrera: <b>subvencionamos la evaluación</b> — el 30 % a todo el
+        que solicita por su panel, y por lo general el 60 % o el 70 % — y la muestra viaja contra entrega. Solo paga la
+        tarifa completa quien quiere la evaluación y nada más.
       </>
     ),
     cta: "Registrar mi primer lote",
@@ -104,8 +106,9 @@ const T: Record<Lang, Dict> = {
         body: (
           <>
             <p>
-              Registering your farm and building the datasheet costs nothing. Requesting a lot&apos;s CTC evaluation costs{" "}
-              <b>$80,000 COP</b> — and what you get back <b>stays yours</b>: score, sensory profile and technical
+              Registering your farm and building the datasheet costs nothing. A lot&apos;s CTC evaluation is worth{" "}
+              <b>$200,000 COP</b>, and every request made from your panel starts with a <b>30 % subsidy</b> (you pay $140,000; 60 % is the
+              usual, up to 70 %) — and what you get back <b>stays yours</b>: score, sensory profile and technical
               feedback from a professional Q-Grader, awarded or not. It&apos;s the diagnosis others pay for in dollars
               and no cooperative ever hands you.
             </p>
@@ -157,10 +160,11 @@ const T: Record<Lang, Dict> = {
     ],
     closeBody: (
       <>
-        <b>Why the entry costs $80,000 COP and isn&apos;t free:</b> because a blind cupping before Q-Graders, the
+        <b>Why the evaluation costs $200,000 COP and isn&apos;t free:</b> because a certified Q-Grader&apos;s cupping, the
         yield factor and the certification cost real money — and because the table is for those with skin in the
-        game. Even so, it&apos;s CTC&apos;s lever, not a barrier: <b>we discount or waive the entry</b> for
-        producers we want to see competing. Write to us before entering your first lot.
+        game. Even so, it&apos;s CTC&apos;s lever, not a barrier: <b>we subsidise the evaluation</b> — 30 % for everyone who
+        requests it from their panel, and usually 60 % or 70 % — and the sample ships freight collect. Only those who want
+        the evaluation and nothing else pay the full fee.
       </>
     ),
     cta: "Register my first lot",
@@ -177,8 +181,9 @@ const T: Record<Lang, Dict> = {
         body: (
           <>
             <p>
-              Die Finca zu registrieren und das Datenblatt zu erstellen kostet nichts. Die CTC-Bewertung eines Lots
-              kostet <b>$80.000 COP</b> — und was Sie zurückbekommen, <b>bleibt Ihres</b>: Punktzahl, sensorisches
+              Die Finca zu registrieren und das Datenblatt zu erstellen kostet nichts. Die CTC-Bewertung eines Lots ist
+              <b>$200.000 COP</b> wert, und jede Anfrage aus Ihrem Panel beginnt mit einer <b>Subvention von 30 %</b> (Sie zahlen $140.000;
+              üblich sind 60 %, bis zu 70 %) — und was Sie zurückbekommen, <b>bleibt Ihres</b>: Punktzahl, sensorisches
             Profil und das technische Feedback eines professionellen Q-Graders, prämiert oder nicht. Es ist die
               Diagnose, die andere in Dollar bezahlen und die Ihnen keine Kooperative je aushändigt.
             </p>
@@ -232,11 +237,11 @@ const T: Record<Lang, Dict> = {
     ],
     closeBody: (
       <>
-        <b>Warum die Anmeldung $80.000 COP kostet und nicht gratis ist:</b> weil eine Blindverkostung vor
-        Q-Gradern, der Ausbeutefaktor und die Zertifizierung wirklich etwas kosten — und weil am Tisch sitzt, wer
-        etwas riskiert. Trotzdem ist es CTCs Hebel, keine Barriere: <b>Wir rabattieren oder erlassen die
-        Anmeldung</b> für Produzenten, die wir antreten sehen wollen. Schreiben Sie uns, bevor Sie Ihr erstes Lot
-        anmelden.
+        <b>Warum die Bewertung $200.000 COP kostet und nicht gratis ist:</b> weil die Verkostung eines zertifizierten
+        Q-Graders, der Ausbeutefaktor und die Zertifizierung wirklich etwas kosten — und weil am Tisch sitzt, wer
+        etwas riskiert. Trotzdem ist es CTCs Hebel, keine Barriere: <b>Wir subventionieren die Bewertung</b> — 30 % für
+        jeden, der sie aus seinem Panel anfragt, üblicherweise 60 % oder 70 % — und das Muster reist per Nachnahme.
+        Den vollen Preis zahlt nur, wer die Bewertung und sonst nichts will.
       </>
     ),
     cta: "Mein erstes Lot registrieren",

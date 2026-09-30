@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { formatCop, EVALUATION_FEE_COP } from "@/lib/arena/inscriptions";
 import { createCampaign, revokeCampaignCode } from "../subvencionesActions";
-import { SUBVENCION_MAX_PCT, SUBVENCION_MIN_PCT } from "@/lib/arena/subvencion";
+import { SUBVENCION_MAX_PCT, SUBVENCION_MIN_PCT, SUBVENCION_KR_PCT, CAMPANA_KR_NOMBRE } from "@/lib/arena/subvencion";
 import { ActionForm } from "@/components/panel/ActionForm";
 import styles from "@/components/panel/shared.module.css";
 
@@ -38,7 +38,7 @@ export default async function SubvencionesPage() {
       <p className={styles.subtitle}>
         La tarifa plana de la evaluación es <b>{formatCop(EVALUATION_FEE_COP)}</b>. Una campaña fija una subvención del{" "}
         <b>{SUBVENCION_MIN_PCT} % al {SUBVENCION_MAX_PCT} %</b> y emite códigos (KRX-) que se aplican a la solicitud de un lote: CTCx
-        los aplica en nombre del productor, o el productor los indica al solicitar. Haga clic en una campaña para emitir y gestionar sus códigos.
+        los aplica en nombre del productor, o el productor los indica al solicitar. <b>Por defecto</b> (owner, 2026-09-30), toda solicitud que entra por Kaffetal Regal nace con la campaña «{CAMPANA_KR_NOMBRE}» ({SUBVENCION_KR_PCT} %); en Solicitudes de Evaluación se sube a 60–70 % o se quita. Haga clic en una campaña para emitir y gestionar sus códigos.
       </p>
 
       <div className={styles.card} style={{ flexDirection: "column", alignItems: "stretch" }}>

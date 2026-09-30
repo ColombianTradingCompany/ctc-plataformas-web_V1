@@ -186,7 +186,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
 
         {pendiente && (
           <div style={{ marginTop: 8 }}>
-            <p className={styles.meta} style={{ margin: "0 0 4px" }}>1 · Subvención (la decide CTCx; 30–70 % de la tarifa)</p>
+            <p className={styles.meta} style={{ margin: "0 0 4px" }}>1 · Subvención (30 % por defecto a quien solicita por Kaffetal Regal; súbala a 60–70 % si pidió descuento, o quítela: tarifa plena solo para quien pide la evaluación sola)</p>
             <SubvencionForm lotId={i.lot_id} campaigns={campaigns} actualId={i.subvencion_id} />
           </div>
         )}

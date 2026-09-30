@@ -4,6 +4,7 @@ import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/ser
 import { ARENA_FEE_COP, formatCop, dueFor } from "@/lib/arena/inscriptions";
 import { claimCampaignCode, insertEntryCode, peekCampaignCode } from "@/lib/arena/entryCodes";
 import { currentSeason, lotSeasonCount, MAX_SEASONS_PER_LOT } from "@/lib/arena/seasons";
+import { campanaPorDefecto } from "@/lib/arena/subvencionServidor";
 
 // ── Postulación a la Kaffetal Regal Arena (lado productor) ──────────────────
 // arena_inscriptions y arena_entry_codes son service-role-only en escritura,
@@ -50,17 +51,23 @@ export async function postularLote(lotId: string, campaignCode?: string, notaSol
   }
   const season = await currentSeason(service);
 
-  // El código: uno de campaña (con su descuento) o el KRA- automático a precio pleno.
+  // El código: uno de campaña (con su descuento) o —V5.95, owner 2026-09-30— el de la campaña por defecto de KR (30 %):
+  // quien solicita por el panel nunca paga la tarifa plena; CTCx puede subir la subvención al corroborar.
   let codeRow;
+  let subvencionId: string | null = null;
   if (campaignCode?.trim()) {
     codeRow = await claimCampaignCode(service, campaignCode, auth.userId, lotId);
     if (!codeRow) return { ok: false, message: "El código de campaña no es válido o ya fue usado." };
+    subvencionId = codeRow.campaign_id ?? null;
   } else {
     try {
+      const campana = await campanaPorDefecto(service);
+      subvencionId = campana.id;
       codeRow = await insertEntryCode(service, {
-        kind: "lote",
-        prefix: "KRA",
-        discountPct: 0,
+        kind: "campana",
+        prefix: "KRX",
+        discountPct: campana.discount_pct,
+        campaignId: campana.id,
         lotId,
         assignedTo: auth.userId,
       });
@@ -81,6 +88,7 @@ export async function postularLote(lotId: string, campaignCode?: string, notaSol
     entry_code: codeRow.code,
     entry_code_id: codeRow.id,
     season_id: season?.id ?? null,
+    subvencion_id: subvencionId,
     nota_solicitud: notaSolicitud?.trim().slice(0, 600) || null,
   });
   if (error) {
@@ -101,7 +109,7 @@ export async function postularLote(lotId: string, campaignCode?: string, notaSol
     producer_id: auth.userId,
     context_label: `Lote ${lot.name}`,
     lot_id: lotId,
-    note: `Su solicitud de evaluación quedó registrada. Código: ${codeRow.code}${codeRow.discount_pct > 0 ? ` (subvención ${codeRow.discount_pct}%)` : ""} · tarifa: ${formatCop(due)}. CTC la corroborará y le emitirá la factura de cobro; con ella paga y envía la muestra de 2 kg contra entrega.`,
+    note: `Su solicitud de evaluación quedó registrada. Código: ${codeRow.code}${codeRow.discount_pct > 0 ? ` (subvención ${codeRow.discount_pct}%)` : ""} · tarifa: ${formatCop(due)}. CTC la corroborará (puede subir la subvención si pidió un descuento) y le emitirá la factura de cobro; con ella paga y envía la muestra de 2 kg contra entrega.`,
   });
 
   return { ok: true, entryCode: codeRow.code, discountPct: codeRow.discount_pct, dueCop: due };

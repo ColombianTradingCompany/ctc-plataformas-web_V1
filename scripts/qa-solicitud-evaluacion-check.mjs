@@ -48,6 +48,8 @@ const plan = lee("docs/PLAN_CIRCUITO_DEL_LOTE.md");
   const inscripciones = lee("src/lib/arena/inscriptions.ts");
   check("la tarifa vieja de `inscriptions.ts` ES la de terminos (un solo número)", inscripciones.includes("export const ARENA_FEE_COP = TARIFA_EVALUACION_COP") && !/80000/.test(inscripciones));
   const subvencion = lee("src/lib/arena/subvencion.ts");
+  check("por defecto, quien solicita por KR nace con el 30 % (owner, 2026-09-30) y CTCx la sube o la quita en Solicitudes", subvencion.includes("SUBVENCION_KR_PCT = 30") && lee("src/lib/arena/producerActions.ts").includes("campanaPorDefecto(service)") && lee("src/lib/arena/producerActions.ts").includes("subvencion_id: subvencionId") && !lee("src/lib/arena/producerActions.ts").includes('prefix: "KRA"') && lee("src/app/ocp/(app)/nominadosActions.ts").includes("dueFor(pct, ins.amount_cop)"));
+  check("la cara pública de KR dice $200.000 con el 30 % por defecto, en tres idiomas, y ya no $80.000 (alimenta el JSON-LD)", !/80\.000|80,000/.test(lee("src/components/kaffetal-regal/PorQueSection.tsx")) && (lee("src/lib/kaffetal/faq.ts").match(/subvención del 30 %|30 % subsidy|Subvention von 30 %/g) ?? []).length === 3 && !/\$80\.000 por lote|\$80,000 COP per lot|80\.000 COP pro Lot/.test(lee("src/lib/kaffetal/faq.ts")));
   check("la subvención sigue en 30–70 % (respuesta 2)", subvencion.includes("SUBVENCION_MIN_PCT = 30") && subvencion.includes("SUBVENCION_MAX_PCT = 70"));
 }
 

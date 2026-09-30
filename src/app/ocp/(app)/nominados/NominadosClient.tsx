@@ -94,7 +94,7 @@ export function SubvencionForm({
     <div style={{ display: "grid", gap: 4 }}>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
         <select value={sel} onChange={(e) => setSel(e.target.value)} style={{ maxWidth: 260 }}>
-          <option value="">Sin subvención (tarifa plena)</option>
+          <option value="">Sin subvención (tarifa plena · solo evaluación)</option>
           {campaigns.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name} · {c.pct} %

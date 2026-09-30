@@ -34,7 +34,8 @@ function revalidateAll() {
   for (const p of PATHS) revalidatePath(p);
 }
 
-/** BCP postula en nombre del productor (lotes grandfathered o registrados a mano). */
+/** CTCx postula en nombre del productor. V5.95 (owner, 2026-09-30): esta es la puerta de quien pide SOLO la evaluación y paga la
+ *  tarifa plena — nace sin subvención (KRA-, 0 %); si el productor sí sigue el circuito, CTCx decide la subvención en Solicitudes. */
 export async function postularOnBehalf(lotId: string): Promise<Result> {
   const permiso = await permisoDeEscritura("ocp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
@@ -86,7 +87,7 @@ export async function postularOnBehalf(lotId: string): Promise<Result> {
     producer_id: lot.producer_id,
     context_label: `Lote ${lot.name}`,
     lot_id: lotId,
-    note: `CTC registró la solicitud de evaluación de su lote. Código: ${codeRow.code} · tarifa: ${formatCop(ARENA_FEE_COP)}. CTC corroborará la solicitud y le emitirá la factura de cobro.`,
+    note: `CTC registró la solicitud de evaluación de su lote. Código: ${codeRow.code} · tarifa plena: ${formatCop(ARENA_FEE_COP)} (CTC decide la subvención al corroborar). CTC corroborará la solicitud y le emitirá la factura de cobro.`,
     created_by: adminId,
   });
   revalidateAll();
@@ -196,7 +197,7 @@ export async function confirmInscriptionPayment(lotId: string, paymentRef?: stri
 
   const { data: ins } = await service
     .from("arena_inscriptions")
-    .select("id, status, discount_pct, entry_code, entry_code_id, producer_id, factura_ref, lots(name)")
+    .select("id, status, discount_pct, amount_cop, entry_code, entry_code_id, producer_id, factura_ref, lots(name)")
     .eq("lot_id", lotId)
     .maybeSingle();
   if (!ins) return { ok: false, error: "Postulación no encontrada." };
@@ -222,7 +223,7 @@ export async function confirmInscriptionPayment(lotId: string, paymentRef?: stri
     previous_status: "pendiente",
     new_status: status,
     performed_by: adminId,
-    notes: `Factura ${ins.factura_ref} · código ${ins.entry_code ?? "—"} · descuento ${pct}% · ${formatCop(dueFor(pct))}${paymentRef ? ` · ref ${paymentRef.trim()}` : ""}`,
+    notes: `Factura ${ins.factura_ref} · código ${ins.entry_code ?? "—"} · subvención ${pct}% · ${formatCop(dueFor(pct, ins.amount_cop))}${paymentRef ? ` · ref ${paymentRef.trim()}` : ""}`,
   });
   await service.from("producer_comm_log").insert({
     producer_id: ins.producer_id,
@@ -230,8 +231,8 @@ export async function confirmInscriptionPayment(lotId: string, paymentRef?: stri
     lot_id: lotId,
     note:
       status === "exento"
-        ? "Su inscripción de Arena quedó eximida (100%) — su código quedó confirmado."
-        : `CTC confirmó el pago de su inscripción de Arena (${formatCop(dueFor(pct))}${pct > 0 ? ` con descuento del ${pct}%` : ""}).`,
+        ? "Su evaluación quedó exenta de pago (100 %): su solicitud sigue adelante."
+        : `CTC confirmó el pago de su factura de evaluación (${formatCop(dueFor(pct, ins.amount_cop))}${pct > 0 ? ` con subvención del ${pct} %` : ""}). Envíe la muestra de 2 kg si aún no lo hizo.`,
     created_by: adminId,
   });
 

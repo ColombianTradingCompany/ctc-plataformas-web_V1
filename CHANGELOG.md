@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.107] — 2026-09-30 (commit pendiente)
+## [V5.107] — 2026-09-30 (commit ea3a5d8)
 
 - **Cambiado**: en Kaffetal Regal, **la Información general se edita a pantalla completa** (`InfoView`, owner 2026-09-30), con la
   misma cabecera y el mismo lienzo que la Ficha del lote y la página de la finca; «Editar información» ya no abre un pop-up. El cuerpo

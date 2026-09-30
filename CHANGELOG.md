@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.115] — 2026-09-30 (commit pendiente)
+## [V5.115] — 2026-09-30 (commit 040f6e8)
 
 - **Cambiado**: en la Ficha del lote, con **«No lo sé»** marcado en B2 (o «No lo sé / solo información básica» en B3) **los soportes
   desaparecen** (owner, 2026-09-30): no hay nada que adjuntar. Si ya había archivos subidos, una línea dice que siguen guardados en

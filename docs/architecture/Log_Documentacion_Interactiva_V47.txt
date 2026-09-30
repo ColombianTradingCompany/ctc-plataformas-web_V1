@@ -276,4 +276,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-09-30] V5.115 · Kaffetal Regal — B2 y B3: con «No lo sé», sin adjuntos
 - ANN `ficha/panes/PaneB2.tsx`, `PaneB3.tsx` (ReportFiles solo sin «No lo sé»). Guardián: `qa-reportado-productor` +1.
-(commit: pendiente)
+(commit: 040f6e8)

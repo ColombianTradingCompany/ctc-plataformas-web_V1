@@ -1,7 +1,7 @@
 // Disposable QA helper: creates a pre-confirmed producer test account, bypassing
 // GoTrue's public /signup endpoint (which requires a confirmation email and hits
 // Supabase's default-SMTP rate limit in this project). For manual verification only
-// -- delete the account afterward with scripts/delete-qa-producer.mjs.
+// -- delete the account afterward with scripts/delete-qa-user.mjs.
 // Run with: node scripts/create-qa-producer.mjs <email> <password> <fullName>
 
 import { createClient } from "@supabase/supabase-js";
@@ -20,6 +20,12 @@ loadEnvLocal();
 const [, , email, password, fullName] = process.argv;
 if (!email || !password) {
   console.error("Usage: node scripts/create-qa-producer.mjs <email> <password> [fullName]");
+  process.exit(1);
+}
+
+// V5.98: una cuenta de prueba SOLO puede vivir en el dominio de pruebas (el remitente y la Secretaría la reconocen por él).
+if (!email.toLowerCase().endsWith("@ctc-qa-test.co")) {
+  console.error(`Una cuenta de prueba tiene que ser @ctc-qa-test.co: ${email}`);
   process.exit(1);
 }
 

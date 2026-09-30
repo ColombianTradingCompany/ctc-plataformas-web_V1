@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { esCorreoEtiquetaDesacoplado } from "@/lib/asistencia/desacoplado";
+import { esCorreoDePrueba } from "@/lib/email/cuentasDePrueba";
 
 // Transactional emails for CTC Home leads. Sender comes from EMAIL_FROM once
 // ctcexport.com is verified in Resend; until then the resend.dev fallback only
@@ -79,6 +80,11 @@ async function send(to: string, subject: string, text: string): Promise<SendResu
   // Se reporta ok porque no es un fallo: es una cuenta que, por diseño, no recibe correos.
   if (esCorreoEtiquetaDesacoplado(to)) {
     console.log(`[email] omitido: ${to} es una etiqueta de proveedor desacoplado (sin buzón) · "${subject}"`);
+    return { ok: true };
+  }
+  // V5.98 · las cuentas de auditoría (`@ctc-qa-test.co`) tampoco reciben correo: son del nodo final, no de una persona.
+  if (esCorreoDePrueba(to)) {
+    console.log(`[email] omitido: ${to} es una cuenta de prueba · "${subject}"`);
     return { ok: true };
   }
   const apiKey = process.env.RESEND_API_KEY;

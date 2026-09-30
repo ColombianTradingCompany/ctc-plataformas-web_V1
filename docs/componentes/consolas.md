@@ -192,7 +192,7 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   $200.000). **(e) HECHO en la V5.97: `/ocp/fichas` es un 308 a `/ocp/kr` (el owner: lo ve en Productores, Fincas y Lotes); `FichasClient` vive en `kr/`. Era: `/ocp/fichas`**: la V5.78 lo dejó como índice del set de fichas (que vive en la vista del lote); decidir si se
   queda como índice o pasa a talón 308 hacia `/ocp/kr`. **(f) Sin construir del §3 del plan del circuito**: la **tarea
   «bienvenida»** del Tablero de Ejecución (la llamada de bienvenida de la Ruta Estándar; `TIPOS_DE_TAREA` no la tiene) y
-  **`qa-evaluacion-check`** (el plan lo pedía; hoy vigilan `qa-evaluaciones-check` y `qa-centro-calidad-check`). **(g) Las cuentas de
+  **`qa-evaluacion-check`** (el plan lo pedía; hoy vigilan `qa-evaluaciones-check` y `qa-centro-calidad-check`). **(g) HECHO en la V5.98: dos cuentas de auditoría `@ctc-qa-test.co` bajo el nodo final (`QA_*` en `.env.local`); `qa-guard` y `qa-checkout` las leen y limpian. Era: Las cuentas de
   prueba** para `qa-guard-check` y `qa-checkout-check` (ver «DOS GUARDIANES SIN CORRER», abajo): decisión del owner. **(h) El Mapa
   de Trabajo** (`workmap/schema.ts`) sigue con la barra anterior a la V5.64: el circuito ya está fijado, redibujarlo toca.
 - **ETAPA 1 · EL CIRCUITO DEL LOTE, DEL PERFIL AL CATÁLOGO ACTIVO — `docs/PLAN_CIRCUITO_DEL_LOTE.md` (2026-09-24; ~~PLAN sin

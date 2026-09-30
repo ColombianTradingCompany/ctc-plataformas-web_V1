@@ -179,3 +179,10 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   Pasaporte de la finca y Fotos y video (B4).
 - CTC Home (`n-home`): el copy ya no nombra el Club ni la Arena como competencia.
 (commit: 8f28aa7)
+
+## [2026-09-30] V5.98 · Plataforma — las dos cuentas de auditoría del nodo final
+- DICT `versionado` · `guardianespejo`: `qa-guard-check` y `qa-checkout-check` vuelven a correr, a mano, con dos cuentas
+  `@ctc-qa-test.co` (credenciales solo en `.env.local`), y limpian lo que escriben. El remitente único las salta
+  (`cuentasDePrueba.ts`), como a las etiquetas de los desacoplados (ficha `desacoplado`).
+- ANN nueva: `src/lib/email/cuentasDePrueba.ts`.
+(commit: pendiente)

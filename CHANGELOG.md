@@ -19,6 +19,18 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.98] — 2026-09-30 (commit pendiente)
+
+- **Añadido**: **las dos cuentas de auditoría** (owner, 2026-09-30: «creemos 2 y toma control total de ellas»): un productor y un
+  comprador `@ctc-qa-test.co`, del nodo final, con credenciales SOLO en `.env.local` (`QA_PRODUCER_EMAIL`, `QA_BUYER_EMAIL`,
+  `QA_PASSWORD`). `src/lib/email/cuentasDePrueba.ts` (`esCorreoDePrueba`) y el remitente único las salta: nunca reciben correo.
+- **Cambiado**: `qa-guard-check` y `qa-checkout-check` leen las cuentas del entorno, solo aceptan el dominio de pruebas y **limpian lo
+  que escriben** (el lote de prueba, el nombre y la razón social; el pedido y la reserva). `create-qa-producer` / `create-qa-buyer`
+  solo crean en ese dominio. `qa-asistencia` 57 → 59.
+- **Corregido**: la primera corrida real de `qa-guard-check` (12/12) destapó una expectativa vieja suya: desde la V5.64 un productor NO
+  cierra la Ficha sin dos fotos (`guard_lot_fotos_intake`); la prueba exige ahora el rechazo sin fotos y el paso con dos.
+- **Docs**: ALINEACION §4.6 y §3; charter `consolas` (g); HANDOFF; AGENTS.
+
 ## [V5.97] — 2026-09-30 (commit 8f28aa7)
 
 - **Cambiado**: la checklist de la Visa dice **«EUDR · Pasaporte de la finca»** y **«Fotos y video (B4)»** (`evaChecklist.ts`); la

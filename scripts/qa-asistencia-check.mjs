@@ -100,6 +100,9 @@ const lee = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
   const emails = lee("src/lib/email/leadEmails.ts");
   const iSend = emails.indexOf("async function send(");
   const iGuard = emails.indexOf("esCorreoEtiquetaDesacoplado(to)");
+  // V5.98: las cuentas de auditoría (@ctc-qa-test.co) tampoco reciben correo — misma puerta, mismo sitio.
+  check("el remitente único salta también las cuentas de prueba (@ctc-qa-test.co), antes de Resend", emails.includes("esCorreoDePrueba(to)") && emails.indexOf("esCorreoDePrueba(to)") < emails.indexOf("RESEND_API_KEY") && lee("src/lib/email/cuentasDePrueba.ts").includes('DOMINIO_PRUEBAS = "ctc-qa-test.co"'));
+  check("qa-guard y qa-checkout solo aceptan cuentas de prueba y limpian lo que escriben", lee("scripts/qa-guard-check.mjs").includes("deshacer.reverse()") && lee("scripts/qa-guard-check.mjs").includes("process.env.QA_PRODUCER_EMAIL") && lee("scripts/qa-checkout-check.mjs").includes('from("orders").delete()') && lee("scripts/qa-checkout-check.mjs").includes("process.env.QA_BUYER_EMAIL"));
   const iResend = emails.indexOf("resend.emails.send(");
   check("el remitente compartido filtra las etiquetas ANTES de llamar a Resend", iSend > -1 && iGuard > iSend && iResend > iGuard);
   check("y es el ÚNICO sitio que llama a Resend (los demás pasan por él)", (emails.match(/resend\.emails\.send\(/g) ?? []).length === 1);

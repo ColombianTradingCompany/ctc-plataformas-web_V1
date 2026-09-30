@@ -23,6 +23,12 @@ if (!email || !password) {
   process.exit(1);
 }
 
+// V5.98: una cuenta de prueba SOLO puede vivir en el dominio de pruebas (el remitente y la Secretaría la reconocen por él).
+if (!email.toLowerCase().endsWith("@ctc-qa-test.co")) {
+  console.error(`Una cuenta de prueba tiene que ser @ctc-qa-test.co: ${email}`);
+  process.exit(1);
+}
+
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(url, serviceKey, { auth: { persistSession: false } });

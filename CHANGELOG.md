@@ -19,6 +19,18 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.110] — 2026-09-30 (commit pendiente)
+
+- **Corregido**: en Kaffetal Regal la geolocalización de la finca «se borraba» al salir de «Editar finca» (el owner lo topó con
+  «Finca La Muestra CTCx»). La causa estaba en la base: la V5.65 dijo que `finca_parcelas.requires_polygon` guarda la respuesta
+  «¿mayor a 4 ha?», pero la columna siguió siendo GENERADA, y Postgres rechazaba toda escritura de parcelas desde KR (el espejo de
+  la parcela 1 se lo tragaba en silencio): las fincas nuevas quedaban sin Cafetal 1, la respuesta «> 4 ha» no se guardaba, la
+  pantalla volvía al modo punto y el polígono (que sí estaba en `fincas`) dejaba de verse; sin parcela, la declaración EUDR daba
+  «incompleta» y el OCP no podía evaluar la finca. La columna es real desde hoy y el espejo avisa cuando no puede escribir.
+- **Datos**: la parcela 1 de cada finca con geometría se puso al día con la geometría de `fincas`, y «Finca La Muestra CTCx» recibió
+  su Cafetal 1 con el polígono declarado. Acta `docs/migraciones/2026-09-30_parcelas_requires_polygon_es_declaracion.sql`.
+- **Docs**: charter `kaffetal-regal`. `qa-visa` 36 → 39.
+
 ## [V5.109] — 2026-09-30 (commit f901e90)
 
 - **Cambiado**: en la Ficha del lote, **B2 y B3 son o lo uno o lo otro** (owner, 2026-09-30). **«No lo sé»** deja todo opcional (B2:

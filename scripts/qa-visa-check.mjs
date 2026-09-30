@@ -196,6 +196,19 @@ const completa = (extra = {}) => ({
   check("approveFinca no mete el veredicto en su propio FincaEudrFields", !/certShared:/.test(bloque));
 }
 
+// ── V5.110 (2026-09-30) · el espejo de la parcela 1 no calla, y `requires_polygon` es una columna REAL ──
+// El fallo que lo trae: la V5.65 dijo que `finca_parcelas.requires_polygon` guarda la respuesta «> 4 ha», pero la columna
+// siguió GENERADA; cada escritura de KR fallaba y `mirrorParcelaUno` lo tragaba. Diez días de fincas sin Cafetal 1.
+{
+  const ke = lee("src/components/kaffetal-regal/KaffetalExperience.tsx");
+  const i = ke.indexOf("async function mirrorParcelaUno(");
+  const cuerpo = i < 0 ? "" : ke.slice(i, ke.indexOf("\n  async function ", i + 1));
+  check("mirrorParcelaUno avisa cuando no puede escribir la parcela 1 (nada de best-effort silencioso)", cuerpo.includes("showToast(") && !cuerpo.includes("best-effort"));
+  check("sigue escribiendo requires_polygon (la declaración «> 4 ha») en el espejo y en saveParcela", cuerpo.includes("requires_polygon:") && ke.includes("requires_polygon: draft.mayor4ha ?? null"));
+  const acta = lee("docs/migraciones/2026-09-30_parcelas_requires_polygon_es_declaracion.sql");
+  check("el acta deja la columna real (drop expression) y explica el fallo", acta.includes("alter column requires_polygon drop expression") && acta.includes("columna generada"));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-visa: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("   " + f);

@@ -89,7 +89,10 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 - **Pasaporte = finca · Visa = lote · EVA = Evaluación de Muestras en Origen** (owner, 2026-09-20). Una palabra, un
   objeto, en toda la red. La definición está en la cabecera de `src/lib/eudr.ts`; `qa-evaluaciones` la vigila.
 - **Un cafetal se edita en UN solo sitio**: `CafetalEditor` lo montan tanto la Parcela 1 como las 2..N. Y la
-  pregunta «¿mayor a 4 ha?» se DECLARA antes del mapa — nunca se deduce del área, que es un dato posterior.
+  pregunta «¿mayor a 4 ha?» se DECLARA antes del mapa — nunca se deduce del área, que es un dato posterior. **Y se GUARDA**
+  (`finca_parcelas.requires_polygon`): la V5.65 la declaró pero dejó la columna generada, y del 2026-09-20 al 30 ninguna
+  escritura de parcelas entró — el espejo de la parcela 1 callaba y las fincas nuevas quedaban sin Cafetal 1 (V5.110, acta
+  `2026-09-30_parcelas_requires_polygon_es_declaracion.sql`). **Un espejo que no puede escribir lo dice**; `qa-visa` lo vigila.
 - **El proceso de beneficio es de cada VARIEDAD** y la **Especie se deriva** de ellas. `species`,
   `base_processing` y `special_processing` se siguen escribiendo como PROYECCIÓN de la variedad dominante — los
   leen otros componentes; son copias de lectura, no verdades paralelas.

@@ -1643,7 +1643,11 @@ function Experience() {
 
   /** Espeja la geometría de la finca en su parcela 0 ("el cafetal principal").
    *  Mantiene vivos a todos los lectores legacy (mapas, dossier, KML) sin
-   *  duplicar trabajo del productor: el mapa de siempre ES la parcela 1. */
+   *  duplicar trabajo del productor: el mapa de siempre ES la parcela 1.
+   *  V5.110: YA NO es silencioso. Era «best effort» y se tragó durante diez días un error de la base
+   *  (`requires_polygon` era una columna generada: ninguna escritura entraba), así que las fincas nuevas se
+   *  quedaban sin Cafetal 1, la respuesta «> 4 ha» no se guardaba y el productor veía «desaparecer» su
+   *  polígono. Un espejo que no puede escribir lo DICE (regla de la casa: nada falla en silencio). */
   async function mirrorParcelaUno(fincaId: string, f: Finca) {
     if (f.status === "approved") return; // congelada — el guard la rechazaría igual
     const hasPoint = f.lat.trim() !== "" && f.lng.trim() !== "";
@@ -1674,7 +1678,10 @@ function Experience() {
       ? supabase.from("finca_parcelas").update(payload).eq("id", uno.id).select("*").single()
       : supabase.from("finca_parcelas").insert(payload).select("*").single();
     const { data, error } = await q;
-    if (error || !data) return; // best-effort: la finca ya se guardó bien
+    if (error || !data) {
+      showToast(`La finca se guardó, pero su Cafetal 1 no: ${error?.message ?? "sin respuesta de la base"}. Vuelva a guardar; si persiste, pida ayuda a CTC.`);
+      return;
+    }
     const mapped = dbParcelaToParcela(data as ParcelaRow);
     setParcelas((prev) => (uno ? prev.map((p) => (p.id === uno.id ? mapped : p)) : [...prev, mapped]));
   }

@@ -199,4 +199,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - DICT `codigopublico` (y la ficha de la Ficha/intake): el código INTERNO del lote es `CTC-L-` + 8 hex del uuid (como `CTC-P-` y
   `CTC-F-`), una sola fuente en `data.ts`; sustituye al `CTC_` largo y a los 7 hex cortos. El `CTCX-XXXX-XXXX` público no cambia.
 - Datos: 13 fichas reescritas por SQL (`datasheet.ctc_uid`).
-(commit: pendiente)
+(commit: 7997468)

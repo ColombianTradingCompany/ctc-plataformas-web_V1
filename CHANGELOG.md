@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.100] — 2026-09-30 (commit pendiente)
+## [V5.100] — 2026-09-30 (commit 7997468)
 
 - **Cambiado**: **el código del lote es `CTC-L-XXXXXXXX` en todas partes** (owner, 2026-09-30) — la misma forma que `CTC-P-` y
   `CTC-F-`, derivado del uuid en una sola fuente (`ctcLotReference` = `ctcLotReferenceShort`, `src/components/kaffetal-regal/data.ts`).

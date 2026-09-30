@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.117] — 2026-09-30 (commit pendiente)
+## [V5.117] — 2026-09-30 (commit 8de66d3)
 
 - **Añadido**: en Kaffetal Regal, la tarjeta del lote (carrusel y lista completa) tiene **«¿Qué sigue?»** cuando la Ficha está
   completa: abre el mismo aviso «Ficha completa» (lo que ya está · lo que sigue si quiere evaluarlo) con la Visa según el Pasaporte

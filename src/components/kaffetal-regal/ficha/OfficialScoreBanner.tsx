@@ -1,46 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import type { Lot } from "../data";
 
-// The producer's own self-report is never official on its own -- this shows
-// it alongside the real official average (if any accepted evaluation exists)
-// and, on the "sca" (Perfil de Taza) banner only, lets the producer request
-// officialization with a real Q-Grader reference, which lands in BCP's
-// review queue (src/app/bcp/(app)/evaluaciones -- reviewEvaluationClaim).
-export function OfficialScoreBanner({
-  lot,
-  selfEstimate,
-  kind,
-  defaultRef,
-  onSubmitClaim,
-}: {
-  lot: Lot;
-  selfEstimate: number | null;
-  kind: "sca" | "factor";
-  // Prellenado desde el bloque Q-Grader de B2 (nombre · laboratorio · N° cert).
-  defaultRef?: string;
-  onSubmitClaim: (qGraderRef: string, file: File | null, onProgress?: (fraction: number) => void) => void | Promise<void>;
-}) {
-  const [open, setOpen] = useState(false);
-  const [qGraderRef, setQGraderRef] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const up = useUpload();
+// El puntaje que el productor reporta nunca es oficial por sí solo: este banner lo pone al lado del promedio oficial
+// (si existe alguna evaluación aceptada) y dice si hay una solicitud de oficialización pendiente.
+// V5.109 (owner, 2026-09-30): el formulario «Solicitar oficialización» (nombre del Q-Grader + un adjunto) SALIÓ de aquí,
+// porque pedía lo mismo que los soportes de B2/B3: marcar «Tengo un reporte» —con el puntaje, los soportes y el nombre del
+// Q-Grader / institución— ES la solicitud, y sale sola al enviar la FT2 (`submitCurrentStage` en FichaView). CTCx la
+// revisa en su cola (`reviewEvaluationClaim`).
+export function OfficialScoreBanner({ lot, selfEstimate, kind, conReporte }: { lot: Lot; selfEstimate: number | null; kind: "sca" | "factor"; conReporte: boolean }) {
   const official = kind === "sca" ? lot.officialScaAverage : lot.officialFactorAverage;
-  const label = kind === "sca" ? "Perfil de Taza" : "Granulometría";
-
-  async function submit() {
-    if (!qGraderRef.trim()) return;
-    // Only the file (if any) reports byte progress; the ring stays hidden when
-    // there's no attachment since useUpload starts idle.
-    if (file) up.start();
-    await onSubmitClaim(qGraderRef.trim(), file, up.progress);
-    if (file) up.done();
-    setOpen(false);
-    setQGraderRef("");
-    setFile(null);
-  }
+  const label = kind === "sca" ? "Perfil de Taza" : "Factor de rendimiento";
 
   return (
     <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 10, padding: 14, margin: "16px 0" }}>
@@ -58,46 +28,13 @@ export function OfficialScoreBanner({
           )}
         </span>
       </div>
-      {kind === "sca" &&
-        (lot.hasPendingOfficializationClaim ? (
-          <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>Solicitud de oficialización pendiente de revisión por CTC.</p>
-        ) : !open ? (
-          <button
-            type="button"
-            className="btn btn-sm"
-            style={{ marginTop: 8 }}
-            onClick={() => {
-              setOpen(true);
-              if (!qGraderRef && defaultRef) setQGraderRef(defaultRef);
-            }}
-          >
-            Solicitar oficialización
-          </button>
-        ) : (
-          <div style={{ marginTop: 10 }}>
-            <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 8px" }}>
-              Para oficializar su puntaje, adjunte la referencia de un Q-Grader o laboratorio real. CTC revisará y aceptará o rechazará la solicitud.
-            </p>
-            <input
-              value={qGraderRef}
-              onChange={(e) => setQGraderRef(e.target.value)}
-              placeholder="Nombre del Q-Grader / laboratorio · certificación"
-              style={{ width: "100%", marginBottom: 8, padding: "8px 10px", border: "1.5px solid var(--line)", borderRadius: 8, background: "var(--paper)" }}
-            />
-            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-              <input type="file" accept="application/pdf,image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-              <UploadProgressRing state={up.state} size={26} />
-            </div>
-            <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
-              <button type="button" className="btn btn-sm btn-solid" onClick={submit} disabled={!qGraderRef.trim()}>
-                Enviar solicitud
-              </button>
-              <button type="button" className="btn btn-sm" onClick={() => setOpen(false)}>
-                Cancelar
-              </button>
-            </div>
-          </div>
-        ))}
+      <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>
+        {lot.hasPendingOfficializationClaim
+          ? "Solicitud de oficialización pendiente de revisión por CTC."
+          : conReporte
+            ? "Con «Tengo un reporte» marcado, la solicitud de oficialización sale sola al enviar la FT2: CTC revisa sus soportes y acepta o rechaza el puntaje."
+            : "Para oficializar un puntaje, marque «Tengo un reporte» y adjunte sus soportes con el nombre de quien los emitió."}
+      </p>
     </div>
   );
 }

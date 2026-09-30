@@ -242,3 +242,9 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `src/app/ocp/(app)/kr/KrTabla.tsx`: pares de casillas, `ETAPAS_LOTE_POR_REVISAR`, notas «esperando a CTCx» bajo Pasaporte y Ficha;
   `page.tsx` acepta los dos `?filtro=` nuevos. Guardián: `qa-boards` +1.
 (commit: 8fb5f32)
+
+## [2026-09-30] V5.109 · Consolas → Kaffetal Regal — B2 y B3: o «No lo sé» o «Tengo un reporte» (= la solicitud de oficialización)
+- ANN `ficha/panes/PaneB2.tsx`, `PaneB3.tsx` (par excluyente + quién emitió el reporte), `FichaView.tsx` (compuertas; la solicitud
+  sale sola con la FT2), `OfficialScoreBanner.tsx` (solo informa), `fichaData.ts` (4 campos). OCP: `EvaReviewCard.tsx` lee el emisor.
+- Guardián: `qa-reportado-productor` +10.
+(commit: pendiente)

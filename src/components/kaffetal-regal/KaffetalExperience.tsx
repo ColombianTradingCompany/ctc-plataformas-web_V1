@@ -1815,16 +1815,20 @@ function Experience() {
   // evaluationActions.ts's reviewEvaluationClaim). Snapshots the CURRENT
   // self-reported scores so what BCP reviews matches what the producer is
   // claiming at submission time.
-  async function submitOfficializationClaim(lotId: string, qGraderRef: string, file: File | null, scaTotal: number | null, factorRendimiento: number | null, onProgress?: ProgressFn) {
+  // V5.109: el adjunto puede ser un archivo nuevo o un SOPORTE ya subido en B2/B3 (`{ assetId }`): con «Tengo un reporte» la
+  // solicitud sale sola al enviar la FT2, con el primer soporte del reporte.
+  async function submitOfficializationClaim(lotId: string, qGraderRef: string, adjunto: File | { assetId: string } | null, scaTotal: number | null, factorRendimiento: number | null, onProgress?: ProgressFn) {
     if (!userId) return;
     let referenceAssetId: string | null = null;
-    if (file) {
-      const result = await uploadKaffetalMediaWithProgress(supabase, userId, `lots/${lotId}/official-cupping`, file, onProgress);
+    if (adjunto instanceof File) {
+      const result = await uploadKaffetalMediaWithProgress(supabase, userId, `lots/${lotId}/official-cupping`, adjunto, onProgress);
       if ("error" in result) {
         showToast(result.error);
         return;
       }
       referenceAssetId = result.assetId;
+    } else if (adjunto) {
+      referenceAssetId = adjunto.assetId;
     }
     const { error } = await supabase.from("lot_evaluations").insert({
       lot_id: lotId,
@@ -1978,8 +1982,8 @@ function Experience() {
           onGetFileUrl={getFileUrl}
           onUploadLotVideo={(file, onProgress) => uploadLotVideo(curLot.id, file, onProgress)}
           onRequestHelp={(text) => requestLotHelp(curLot, text)}
-          onSubmitOfficializationClaim={(qGraderRef, file, scaTotal, factorRendimiento, onProgress) =>
-            submitOfficializationClaim(curLot.id, qGraderRef, file, scaTotal, factorRendimiento, onProgress)
+          onSubmitOfficializationClaim={(qGraderRef, adjunto, scaTotal, factorRendimiento, onProgress) =>
+            submitOfficializationClaim(curLot.id, qGraderRef, adjunto, scaTotal, factorRendimiento, onProgress)
           }
         />
       )}

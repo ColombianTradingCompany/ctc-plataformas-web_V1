@@ -216,7 +216,7 @@ export function renderFichaHtml(
         : data.b2_score || data.cupping_profile || scaTable || data.b2_files_pdf.length + data.b2_files_foto.length > 0
           ? `<div class="ficha-section"><h3>Perfil Sensorial</h3>${
               data.b2_score
-                ? `<div class="scoreband"><span class="big">${esc(data.b2_score)}</span><div><div class="scoreclass">Reportado por Productor${data.b2_scale ? ` · escala ${esc(data.b2_scale.toUpperCase())}` : ""}</div><div class="prose">Puntaje declarado por el productor — sin contrastar por CTC.</div></div></div>`
+                ? `<div class="scoreband"><span class="big">${esc(data.b2_score)}</span><div><div class="scoreclass">Reportado por Productor${data.b2_scale ? ` · escala ${esc(data.b2_scale.toUpperCase())}` : ""}${data.b2_tiene_reporte && data.b2_reporte_ref ? ` · reporte de ${esc(data.b2_reporte_ref)}` : ""}</div><div class="prose">Puntaje declarado por el productor — sin contrastar por CTC.</div></div></div>`
                 : ""
             }${data.cupping_profile ? `<p class="prose">${esc(data.cupping_profile)}</p>` : ""}${
               data.b2_files_pdf.length + data.b2_files_foto.length > 0

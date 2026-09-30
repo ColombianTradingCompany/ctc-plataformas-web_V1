@@ -19,6 +19,18 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.109] — 2026-09-30 (commit pendiente)
+
+- **Cambiado**: en la Ficha del lote, **B2 y B3 son o lo uno o lo otro** (owner, 2026-09-30). **«No lo sé»** deja todo opcional (B2:
+  puntaje, escala y perfil; B3: factor o almendra). **«Tengo un reporte»** (casilla nueva, excluyente) hace obligatorios el puntaje, la
+  escala y el perfil (B2) / el factor o la almendra (B3), al menos un soporte (PDF o foto) y **quién emitió el reporte**. El «No lo sé»
+  de B2 bajó de la barra al pane, en par con la casilla nueva.
+- **Cambiado**: **«Tengo un reporte» es la solicitud de oficialización**: sale sola al enviar la FT2, con el primer soporte y el nombre
+  de quien lo emitió (`producer_claim`). El formulario aparte del banner «Solicitar oficialización» (nombre + otro adjunto) se retiró:
+  pedía lo mismo que los soportes. El banner solo informa (estimación vs. oficial, solicitud pendiente).
+- **Cambiado**: la EVA del OCP enseña quién emitió el reporte de B2 y de B3; la vista previa de la Ficha lo dice junto al puntaje.
+- **Docs**: charter `kaffetal-regal`, ALINEACION §3. `qa-reportado-productor` 45 → 55.
+
 ## [V5.108] — 2026-09-30 (commit 8fb5f32)
 
 - **Cambiado**: en **Productores, Fincas y Lotes**, los cuatro chips de finca y lote son ahora dos pares de casillas **«Finca ☐✅ ☐❌»**

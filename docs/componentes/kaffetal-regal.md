@@ -99,7 +99,11 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   lote guardado antes de que existiera el campo no puede reventar.
 - Las subidas van por `kaffetalMedia` con la ruta `{producer_id}/…` (las políticas de Storage la exigen);
   la re-descarga sobrevive al bloqueo de la sección (anclas con URL firmada bajo demanda).
-- Reportado por Productor (B2/B3): puntaje + escala o «No lo sé»; los números de B3 **siempre a la vista**.
+- Reportado por Productor (B2/B3): **o lo uno o lo otro** (owner, 2026-09-30, V5.109). **«No lo sé»** deja todo opcional (B2: puntaje,
+  escala, perfil; B3: factor / almendra). **«Tengo un reporte»** hace obligatorios los números, el perfil (B2), al menos un soporte (PDF o
+  foto) y quién lo emitió (`b2_reporte_ref` / `b3_reporte_ref`) — y **es la solicitud de oficialización**: sale sola al enviar la FT2
+  (`lot_evaluations` `producer_claim` con el primer soporte); el banner de B2/B3 ya no pide otro adjunto. Los números de B3 **siempre a
+  la vista**. `qa-reportado-productor` lo vigila.
 - Back del teléfono: cambiar de pestaña no sale de la app; drill, Ficha y modales cierran capa a capa.
 - Copy en tres idiomas; el cacao solo como nota de cata.
 

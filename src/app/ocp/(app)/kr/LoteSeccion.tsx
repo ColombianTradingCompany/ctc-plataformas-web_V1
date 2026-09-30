@@ -446,6 +446,8 @@ function LotCard({
   const fisico: FisicoPanel = {
     b2Na: !!ds.ft2_b2_na,
     b3Na: !!ds.ft2_b3_na,
+    b2Reporte: ds.b2_tiene_reporte ? (ds.b2_reporte_ref ?? "") : null,
+    b3Reporte: ds.b3_tiene_reporte ? (ds.b3_reporte_ref ?? "") : null,
     scaRows,
     scaTotal: anySca ? computeSca(scaValues).total.toFixed(2) : null,
     cuppingProfile: ds.cupping_profile ?? "",

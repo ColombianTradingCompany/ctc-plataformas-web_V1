@@ -17,6 +17,10 @@ import bstyles from "./PaneB2.module.css";
 // el escáner visual del OCP — aquí mismo se listarán esas Fichas al existir).
 // Como la pantalla queda liviana, lleva una explicación grande y dos bocetos
 // de cómo suelen verse estos documentos (red de araña y rueda de sabores).
+// V5.109 (owner, 2026-09-30): es O LO UNO O LO OTRO. «No lo sé» deja el puntaje, la escala y el perfil OPCIONALES;
+// «Tengo un reporte de catación» los hace obligatorios junto con los soportes (PDF o fotos) y el nombre del Q-Grader /
+// institución que lo emitió — y ESA es la solicitud de oficialización (antes se pedía aparte, con otro adjunto: era lo mismo).
+// Las dos casillas se excluyen; la que se marca desmarca a la otra.
 
 // Valores de MUESTRA para el boceto de la red de araña — no son datos.
 const SKETCH_VALUES = [8, 7.75, 7.5, 7.75, 8, 7.75, 10, 10, 10, 8];
@@ -59,6 +63,9 @@ export function PaneB2({
 }) {
   const score = Number(data.b2_score.replace(",", "."));
   const scoreValido = data.b2_score.trim() !== "" && Number.isFinite(score) && score >= 0 && score <= 100;
+  const conReporte = data.b2_tiene_reporte;
+  const obligatorio = (si: boolean) => (si ? <small style={{ fontWeight: 400, color: "var(--red, #C4402F)" }}> · obligatorio</small> : <small style={{ fontWeight: 400, color: "var(--muted)" }}> · opcional</small>);
+  const faltaSoporte = conReporte && data.b2_files_pdf.length + data.b2_files_foto.length === 0;
 
   return (
     <div className={styles.fsec}>
@@ -73,9 +80,10 @@ export function PaneB2({
         </p>
         <p className={bstyles.introSub}>
           Si alguna vez le han catado este café —la cooperativa, un laboratorio, un comprador— probablemente le
-          entregaron una hoja como las de abajo. <b>No necesita saber catación</b>: reporte el puntaje que le dieron y/o
-          adjunte una foto o PDF de esa hoja, y CTC extrae el resto. Si nunca se lo han catado, marque{" "}
-          <b>«No lo sé»</b> arriba — el Q-Grader de CTC lo determinará con su muestra.
+          entregaron una hoja como las de abajo. <b>No necesita saber catación</b>. Es <b>lo uno o lo otro</b>: si tiene esa hoja, marque{" "}
+          <b>«Tengo un reporte»</b>, escriba el puntaje y adjúntela con el nombre de quien la firmó — con eso mismo CTC
+          revisa y oficializa su puntaje. Si nunca se lo han catado, marque <b>«No lo sé»</b>: puede dejar su estimación
+          si la tiene, y el Q-Grader de CTC lo determinará con su muestra.
         </p>
       </div>
 
@@ -91,11 +99,21 @@ export function PaneB2({
         </figure>
       </div>
 
-      <p className={bstyles.divider}>Su estimación (Perfil de Taza)</p>
+      <p className={bstyles.divider}>Su Perfil de Taza · elija uno</p>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "0 0 12px" }} role="group" aria-label="Perfil de Taza: No lo sé o Tengo un reporte">
+        <label className={styles.chip}>
+          <input type="checkbox" checked={data.ft2_b2_na} onChange={(e) => onChange({ ft2_b2_na: e.target.checked, ...(e.target.checked ? { b2_tiene_reporte: false } : {}) })} />{" "}
+          No lo sé <small style={{ fontWeight: 400, color: "var(--muted)" }}>(nunca le han catado este café; lo de abajo es opcional)</small>
+        </label>
+        <label className={styles.chip}>
+          <input type="checkbox" checked={conReporte} onChange={(e) => onChange({ b2_tiene_reporte: e.target.checked, ...(e.target.checked ? { ft2_b2_na: false } : {}) })} />{" "}
+          Tengo un reporte de catación <small style={{ fontWeight: 400, color: "var(--muted)" }}>(puntaje, escala, perfil, soportes y quién lo emitió)</small>
+        </label>
+      </div>
       <div className={styles.fgrid}>
         <div className={styles.ff}>
           <label>
-            Puntaje reportado (0–100)
+            Puntaje reportado (0–100){obligatorio(conReporte)}
             <FieldInfo text="El puntaje total que le dieron a este café. En la escala SCA, 80 o más ya es café de especialidad." />
           </label>
           <input
@@ -113,7 +131,7 @@ export function PaneB2({
         </div>
         <div className={styles.ff}>
           <label>
-            Escala del puntaje
+            Escala del puntaje{obligatorio(conReporte)}
             <FieldInfo text="SCA es la escala clásica de 100 puntos; CVA es el sistema nuevo de evaluación de la misma asociación. Elija la que diga su hoja de catación." />
           </label>
           <select value={data.b2_scale} onChange={(e) => onChange({ b2_scale: e.target.value as "" | "sca" | "cva" })}>
@@ -123,13 +141,23 @@ export function PaneB2({
           </select>
         </div>
         <div className={`${styles.ff} ${styles.fw}`}>
-          <label>Perfil de Taza (notas descriptivas, opcional)</label>
+          <label>Perfil de Taza (notas descriptivas){obligatorio(conReporte)}</label>
           <textarea value={data.cupping_profile} onChange={(e) => onChange({ cupping_profile: e.target.value })} placeholder="En fragancia y aroma se perciben notas a…" />
         </div>
       </div>
 
+      {conReporte && (
+        <div className={styles.ff} style={{ marginTop: 14 }}>
+          <label>
+            Q-Grader / institución que emitió el reporte<small style={{ fontWeight: 400, color: "var(--red, #C4402F)" }}> · obligatorio</small>
+            <FieldInfo text="Quién firmó la hoja de catación: el nombre del Q-Grader, o el laboratorio o la cooperativa, y su certificación si la tiene. Con esto CTC verifica el reporte y oficializa su puntaje." />
+          </label>
+          <input value={data.b2_reporte_ref} onChange={(e) => onChange({ b2_reporte_ref: e.target.value })} placeholder="Nombre del Q-Grader / laboratorio · certificación" />
+        </div>
+      )}
+
       <ReportFiles
-        titulo="Soportes del Perfil de Taza · hoja de catación, radar, rueda (hasta 7 PDFs y 7 fotos)"
+        titulo={conReporte ? "Soportes del reporte · hoja de catación, radar, rueda — al menos un PDF o una foto (obligatorio)" : "Soportes del Perfil de Taza · hoja de catación, radar, rueda (hasta 7 PDFs y 7 fotos)"}
         pdfs={data.b2_files_pdf}
         fotos={data.b2_files_foto}
         subpathBase={`lots/${lot.id}/b2`}
@@ -143,6 +171,7 @@ export function PaneB2({
         onUploadFile={onUploadFile}
         onGetFileUrl={onGetFileUrl}
       />
+      {faltaSoporte && <p className={styles.fexample} style={{ color: "var(--red, #C4402F)" }}>Con «Tengo un reporte» hace falta al menos un soporte: el PDF o una foto de la hoja de catación.</p>}
 
       {/* El bloque «Notas de Análisis & Referencia Q-Grader» salió de B2
           (owner, 2026-08-21): esa información no es del reporte del productor

@@ -42,6 +42,9 @@ export type CertItem = {
 export type FisicoPanel = {
   b2Na: boolean;
   b3Na: boolean;
+  /** V5.109: quién emitió el reporte que el productor adjuntó («Tengo un reporte»); null = no marcó reporte. */
+  b2Reporte: string | null;
+  b3Reporte: string | null;
   scaRows: Row[];
   scaTotal: string | null;
   cuppingProfile: string;
@@ -418,6 +421,12 @@ export function EvaReviewCard({
                 </>
               )}
 
+              {fisico.b2Reporte !== null && (
+                <p className={styles.meta} style={{ margin: "3px 0" }}>
+                  «Tengo un reporte de catación» · emitido por: <b style={{ color: "var(--ink)" }}>{fisico.b2Reporte || "(sin nombre)"}</b> — los soportes van en
+                  la lista de archivos y la solicitud de oficialización en la cola de reclamos.
+                </p>
+              )}
               <p className={styles.meta} style={{ fontWeight: 600, margin: "10px 0 2px" }}>Referencia Q-Grader</p>
               {fisico.qgraderName || fisico.qgraderLab || fisico.qgraderCert ? (
                 <>
@@ -444,6 +453,11 @@ export function EvaReviewCard({
                 </p>
               ) : (
                 dataRows(fisico.granRows, "Sin análisis físico digitado todavía.")
+              )}
+              {fisico.b3Reporte !== null && (
+                <p className={styles.meta} style={{ margin: "3px 0" }}>
+                  «Tengo un reporte de laboratorio» · emitido por: <b style={{ color: "var(--ink)" }}>{fisico.b3Reporte || "(sin nombre)"}</b>
+                </p>
               )}
               {fisico.notas && (
                 <p className={styles.meta} style={{ margin: "6px 0 0" }}>

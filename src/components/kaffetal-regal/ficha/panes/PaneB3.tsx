@@ -11,12 +11,12 @@ import bstyles from "./PaneB3.module.css";
 // Igual que B2, el productor ya no llena la granulometría malla a malla. Los
 // NÚMEROS van siempre a la vista (owner, V5.21): factor (75–120) y almendra
 // total (150–245 g) arriba, y las humedades y la densidad opcionales abajo.
-// Dos caminos para COMPLETAR:
-//   · «Solo sé información básica» (la casilla declara que no habrá soportes):
-//     factor de rendimiento O almendra total — UNO de los dos, porque son la
-//     misma medida y el que falte se DERIVA (V5.64, owner: factor × AT = 17.500,
-//     ver almendraDesdeFactor/factorDesdeAlmendra en fichaCalculations).
-//   · Adjuntar al menos un soporte (PDF o foto del análisis físico).
+// Dos caminos para COMPLETAR (V5.109, owner 2026-09-30: es o lo uno o lo otro, como en B2):
+//   · «No lo sé / solo información básica» (`b3_solo_basica`): los números quedan OPCIONALES — si conoce el factor
+//     o la almendra total, UNO de los dos basta, porque son la misma medida y el que falte se DERIVA (V5.64, owner:
+//     factor × AT = 17.500, ver almendraDesdeFactor/factorDesdeAlmendra en fichaCalculations).
+//   · «Tengo un reporte de laboratorio» (`b3_tiene_reporte`): factor o almendra + al menos un soporte (PDF o foto)
+//     + quién lo emitió, obligatorios. Y con eso sale sola la solicitud de oficialización (FichaView).
 // La Densidad en Verde dejó de ser obligatoria en la V5.64 (owner) y bajó al
 // bloque opcional, junto a las humedades.
 // Todo viaja con B2 como «Reportado por Productor». El detalle completo
@@ -58,6 +58,8 @@ export function PaneB3({
   fichas?: LotFicha[];
 }) {
   const fueraDeRango = (v: string, r: { min: number; max: number }) => v.trim() !== "" && !rangoValido(v, r);
+  const conReporte = data.b3_tiene_reporte;
+  const faltaSoporte = conReporte && data.b3_files_pdf.length + data.b3_files_foto.length === 0;
 
   // El par factor ↔ almendra: el productor reporta UNO y el otro se DERIVA.
   // Se muestra, no se guarda — así el OCP siempre sabe cuál de los dos declaró
@@ -85,9 +87,10 @@ export function PaneB3({
           rendimiento, el tamaño del grano y su densidad.
         </p>
         <p className={bstyles.introSub}>
-          Si su cooperativa o un laboratorio ya le hizo el análisis, <b>adjunte esa hoja</b> (PDF o fotos) y CTC extrae
-          el detalle. Si solo conoce los números básicos, marque <b>«Solo sé información básica»</b> y repórtenos{" "}
-          <b>uno solo</b>: el factor que le dan al comprarle, <i>o</i> la almendra total. Con cualquiera de los dos basta.
+          Es <b>lo uno o lo otro</b>. Si su cooperativa o un laboratorio ya le hizo el análisis, marque{" "}
+          <b>«Tengo un reporte»</b>, escriba el factor <i>o</i> la almendra total y <b>adjunte esa hoja</b> (PDF o fotos) con el
+          nombre de quien la emitió: con eso mismo CTC verifica y oficializa. Si no tiene análisis, marque{" "}
+          <b>«No lo sé»</b> — y si conoce alguno de los dos números, repórtelo, que con uno basta.
         </p>
         <p className={styles.fexample} style={{ marginTop: 8 }}>
           🎥{" "}
@@ -98,14 +101,24 @@ export function PaneB3({
         </p>
       </div>
 
-      <label className={bstyles.toggleBasica}>
-        <input
-          type="checkbox"
-          checked={data.b3_solo_basica}
-          onChange={(e) => onChange({ b3_solo_basica: e.target.checked })}
-        />{" "}
-        Solo sé información básica <small>(sin hoja de análisis que adjuntar)</small>
-      </label>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }} role="group" aria-label="Caracterización física: No lo sé o Tengo un reporte">
+        <label className={bstyles.toggleBasica}>
+          <input
+            type="checkbox"
+            checked={data.b3_solo_basica}
+            onChange={(e) => onChange({ b3_solo_basica: e.target.checked, ...(e.target.checked ? { b3_tiene_reporte: false } : {}) })}
+          />{" "}
+          No lo sé / solo información básica <small>(sin hoja de análisis; los números son opcionales)</small>
+        </label>
+        <label className={bstyles.toggleBasica}>
+          <input
+            type="checkbox"
+            checked={conReporte}
+            onChange={(e) => onChange({ b3_tiene_reporte: e.target.checked, ...(e.target.checked ? { b3_solo_basica: false } : {}) })}
+          />{" "}
+          Tengo un reporte de laboratorio <small>(un número, los soportes y quién lo emitió)</small>
+        </label>
+      </div>
 
       {/* Los números van SIEMPRE a la vista (owner, 2026-08-21): el productor
           no debería tener que marcar una casilla para descubrir qué se le
@@ -154,8 +167,18 @@ export function PaneB3({
           </div>
       </div>
 
+      {conReporte && (
+        <div className={styles.ff} style={{ marginTop: 14 }}>
+          <label>
+            Laboratorio / institución que emitió el reporte<small style={{ fontWeight: 400, color: "var(--red, #C4402F)" }}> · obligatorio</small>
+            <FieldInfo text="Quién hizo el análisis físico: el laboratorio, la cooperativa o el comprador que le entregó la hoja. Con esto CTC verifica el reporte." />
+          </label>
+          <input value={data.b3_reporte_ref} onChange={(e) => onChange({ b3_reporte_ref: e.target.value })} placeholder="Nombre del laboratorio / cooperativa" />
+        </div>
+      )}
+
       <ReportFiles
-        titulo="Soportes del análisis físico · granulometría, factor, densidad (hasta 7 PDFs y 7 fotos)"
+        titulo={conReporte ? "Soportes del reporte · granulometría, factor, densidad — al menos un PDF o una foto (obligatorio)" : "Soportes del análisis físico · granulometría, factor, densidad (hasta 7 PDFs y 7 fotos)"}
         pdfs={data.b3_files_pdf}
         fotos={data.b3_files_foto}
         subpathBase={`lots/${lot.id}/b3`}
@@ -169,6 +192,7 @@ export function PaneB3({
         onUploadFile={onUploadFile}
         onGetFileUrl={onGetFileUrl}
       />
+      {faltaSoporte && <p className={bstyles.rangoError}>Con «Tengo un reporte» hace falta al menos un soporte: el PDF o una foto de la hoja de análisis.</p>}
 
       <div className={bstyles.opcionalBox}>
         <p className={styles.fexample} style={{ marginTop: 0, fontWeight: 600, color: "var(--ink)" }}>

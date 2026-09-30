@@ -7,7 +7,7 @@ import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
 import { fincaEudrStatus, lotEudrStatus, resolveContributionFincas, countryRiskFor, deriveChainComplexity, deriveProductRisk } from "@/lib/eudr";
 import { ctcLotReference, ctcLotReferenceShort, type Finca, type Lot } from "./data";
 import { EMPTY_FICHA, num, B1_OPTIONAL_FIELDS, deriveCertSchemes, seedContributions, seedProcesos, especieDelLote, variedadDominante, type FichaFormData } from "./ficha/fichaData";
-import { computeFactor, computeMesh, computeSca, varietyTotal } from "./ficha/fichaCalculations";
+import { computeFactor, computeMesh, computeSca, factorDesdeAlmendra, varietyTotal } from "./ficha/fichaCalculations";
 import { FichaNav, type PaneId } from "./ficha/FichaNav";
 import { PaneA1 } from "./ficha/panes/PaneA1";
 import { PaneA2 } from "./ficha/panes/PaneA2";
@@ -37,10 +37,10 @@ const PANE_SUBSTAGE: Record<PaneId, number> = { a1: 0, a2: 0, b1: 0, a3: 1, a4: 
 // of filled in (fichaData's ft2_*_na). B3 YA NO (V5.20): su escape es el camino
 // «Solo sé información básica» dentro del propio pane — ft2_b3_na queda en el
 // tipo solo por los datasheets viejos, y el gate lo honra como legado.
-const FT2_NA_FIELD: Partial<Record<PaneId, "ft2_a3_na" | "ft2_a4_na" | "ft2_b2_na">> = {
+// V5.109 (owner): B2 YA NO (como B3 desde la V5.20): su «No lo sé» vive dentro del pane, en par excluyente con «Tengo un reporte».
+const FT2_NA_FIELD: Partial<Record<PaneId, "ft2_a3_na" | "ft2_a4_na">> = {
   a3: "ft2_a3_na",
   a4: "ft2_a4_na",
-  b2: "ft2_b2_na",
 };
 
 export type FichaSaveUpdate = {
@@ -163,7 +163,8 @@ export function FichaView({
   onGetFileUrl: (assetId: string) => Promise<string | null>;
   onUploadLotVideo: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
   onRequestHelp: (text: string) => Promise<boolean>;
-  onSubmitOfficializationClaim: (qGraderRef: string, file: File | null, scaTotal: number | null, factorRendimiento: number | null, onProgress?: (fraction: number) => void) => void | Promise<void>;
+  /** V5.109: la solicitud de oficialización sale SOLA al enviar la FT2 con «Tengo un reporte»; el adjunto es un soporte ya subido. */
+  onSubmitOfficializationClaim: (qGraderRef: string, adjunto: File | { assetId: string } | null, scaTotal: number | null, factorRendimiento: number | null, onProgress?: (fraction: number) => void) => void | Promise<void>;
 }) {
   const { showToast } = useToast();
   // Lots that predate the intake_step system (or that BCP moved along) can be
@@ -253,16 +254,22 @@ export function FichaView({
     return Number.isFinite(n) && n >= min && n <= max;
   };
   const b2ScoreValido = data.b2_score.trim() !== "" && Number.isFinite(numOr(data.b2_score)) && numOr(data.b2_score) >= 0 && numOr(data.b2_score) <= 100;
-  const b2Reportado = b2ScoreValido || data.b2_files_pdf.length + data.b2_files_foto.length > 0;
+  // V5.109 (owner, 2026-09-30): B2 es O «No lo sé» (todo opcional) O «Tengo un reporte» (puntaje válido + escala + perfil +
+  // al menos un soporte + quién lo emitió). Y «Tengo un reporte» ES la solicitud de oficialización (ver submitCurrentStage).
+  const b2Adjuntos = data.b2_files_pdf.length + data.b2_files_foto.length > 0;
+  const b2ConReporte = data.b2_tiene_reporte && b2ScoreValido && data.b2_scale !== "" && data.cupping_profile.trim() !== "" && b2Adjuntos && data.b2_reporte_ref.trim() !== "";
+  const b2Reportado = data.ft2_b2_na || b2ConReporte;
   const b3FactorValido = enRango(data.yield_factor_producer, 75, 120);
   const b3AlmendraValida = enRango(data.b3_almendra_total, 150, 245);
   // V5.64 (owner): el camino básico se cierra con UNO de los dos —factor o
   // almendra—, porque son la misma medida y el que falte se deriva (factor ×
   // almendra = 17.500, ver fichaCalculations). La densidad en verde dejó de ser
   // obligatoria y bajó al bloque opcional de B3.
-  const b3Basica = data.b3_solo_basica && (b3FactorValido || b3AlmendraValida);
+  // V5.109: lo análogo en B3 — «No lo sé / solo básica» cierra la sección con los números opcionales; «Tengo un reporte» exige
+  // factor O almendra, un soporte y quién lo emitió.
   const b3Adjuntos = data.b3_files_pdf.length + data.b3_files_foto.length > 0;
-  const b3Reportado = b3Basica || b3Adjuntos;
+  const b3ConReporte = data.b3_tiene_reporte && (b3FactorValido || b3AlmendraValida) && b3Adjuntos && data.b3_reporte_ref.trim() !== "";
+  const b3Reportado = data.b3_solo_basica || b3ConReporte;
 
   const completed = useMemo<Partial<Record<PaneId, boolean>>>(
     () => ({
@@ -333,8 +340,8 @@ export function FichaView({
     a2: "A2 · Información de Origen → la finca de la que sale este café",
     b1: "B1 · Variedades & Básica → al menos una variedad con su porcentaje, y el Proceso Base de cada una",
     a3: "A3 · Reconocimientos & Narrativa → un premio, o la historia del origen",
-    b2: "B2 · Perfil de Taza → su puntaje reportado (0–100) o un soporte adjunto (PDF/foto)",
-    b3: "B3 · Física → UNO de los dos: el factor de rendimiento (75–120) o la almendra total (150–245 g). También sirve adjuntar un soporte del análisis físico",
+    b2: "B2 · Perfil de Taza → marque «No lo sé», o «Tengo un reporte» con el puntaje (0–100), la escala, el perfil, un soporte (PDF/foto) y quién lo emitió",
+    b3: "B3 · Física → marque «No lo sé / solo información básica», o «Tengo un reporte» con el factor (75–120) o la almendra total (150–245 g), un soporte y quién lo emitió",
   };
 
   function faltantes(panes: PaneId[], conEscape: boolean): string {
@@ -489,6 +496,17 @@ export function FichaView({
       const ok = await onSave(buildUpdate(withRevisionDate(), 2));
       setSaving(false);
       if (!ok) return;
+      // V5.109 (owner): «Tengo un reporte» ES la solicitud de oficialización — sale sola con la FT2, con los soportes ya
+      // subidos y el nombre de quien emitió el reporte. Antes se pedía aparte, con otro adjunto: era lo mismo.
+      if (!lot.hasPendingOfficializationClaim && (b2ConReporte || b3ConReporte)) {
+        const soporte = (b2ConReporte ? [...data.b2_files_pdf, ...data.b2_files_foto] : [...data.b3_files_pdf, ...data.b3_files_foto])[0] ?? null;
+        await onSubmitOfficializationClaim(
+          [b2ConReporte ? `Taza: ${data.b2_reporte_ref.trim()}` : null, b3ConReporte ? `Físico: ${data.b3_reporte_ref.trim()}` : null].filter(Boolean).join(" · "),
+          soporte ? { assetId: soporte.assetId } : null,
+          b2ConReporte ? numOr(data.b2_score) : null,
+          b3ConReporte ? (b3FactorValido ? numOr(data.yield_factor_producer) : factorDesdeAlmendra(numOr(data.b3_almendra_total))) : null
+        );
+      }
       setCelebrate({
         emoji: "🏅",
         title: "¡FT2 enviada a CTC!",
@@ -675,23 +693,10 @@ export function FichaView({
                 fieldset que bloquea: pedir el puntaje oficial es justamente una
                 acción post-envío, y en B2 queda al pie del bloque Q-Grader
                 (referencia diligenciada → solicitar con el adjunto). */}
-            {active === "b2" && (
-              <OfficialScoreBanner
-                lot={lot}
-                selfEstimate={sca.total}
-                kind="sca"
-                defaultRef={[data.qgrader_name, data.qgrader_lab, data.qgrader_cert].filter(Boolean).join(" · ")}
-                onSubmitClaim={(qGraderRef, file, onProgress) => onSubmitOfficializationClaim(qGraderRef, file, sca.total, factor.remainder, onProgress)}
-              />
-            )}
-            {active === "b3" && (
-              <OfficialScoreBanner
-                lot={lot}
-                selfEstimate={factor.remainder}
-                kind="factor"
-                onSubmitClaim={(qGraderRef, file, onProgress) => onSubmitOfficializationClaim(qGraderRef, file, sca.total, factor.remainder, onProgress)}
-              />
-            )}
+            {/* V5.109: el banner ya solo INFORMA (estimación vs. oficial, solicitud pendiente); pedir la oficialización es marcar
+                «Tengo un reporte» en el pane, y sale sola con la FT2. */}
+            {active === "b2" && <OfficialScoreBanner lot={lot} selfEstimate={b2ScoreValido ? numOr(data.b2_score) : sca.total} kind="sca" conReporte={data.b2_tiene_reporte} />}
+            {active === "b3" && <OfficialScoreBanner lot={lot} selfEstimate={b3FactorValido ? numOr(data.yield_factor_producer) : factor.remainder} kind="factor" conReporte={data.b3_tiene_reporte} />}
           </div>
         </div>
 

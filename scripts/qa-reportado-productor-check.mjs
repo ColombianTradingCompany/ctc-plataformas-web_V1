@@ -32,7 +32,7 @@ const calculos = lee("src/components/kaffetal-regal/ficha/fichaCalculations.ts")
 const drop = lee("src/components/kaffetal-regal/FileDrop.tsx");
 
 // ── 1. El modelo: los campos nuevos y los viejos conviven ─────────────────
-for (const f of ["b2_score", "b2_scale", "b2_files_pdf", "b2_files_foto", "b3_solo_basica", "b3_almendra_total", "b3_densidad_verde", "b3_humedad_verde", "b3_files_pdf", "b3_files_foto"]) {
+for (const f of ["b2_score", "b2_scale", "b2_files_pdf", "b2_files_foto", "b2_tiene_reporte", "b2_reporte_ref", "b3_solo_basica", "b3_almendra_total", "b3_densidad_verde", "b3_humedad_verde", "b3_files_pdf", "b3_files_foto", "b3_tiene_reporte", "b3_reporte_ref"]) {
   check(`FichaFormData declara ${f}`, datos.includes(`${f}:`));
 }
 check("los sca_* viejos siguen en el tipo (datasheets guardados)", datos.includes("sca_fragrance: string;"));
@@ -48,7 +48,15 @@ check("almendra 150–245", vista.includes("enRango(data.b3_almendra_total, 150,
 // ser obligatoria. Se vigila las DOS caras: que el gate pida uno u otro, y que
 // la densidad ya NO aparezca en él — si alguien la devuelve al gate sin decirlo,
 // este guardián lo canta.
-check("B3 básica = factor O almendra (uno de los dos)", vista.includes("data.b3_solo_basica && (b3FactorValido || b3AlmendraValida)"));
+// V5.109 (owner, 2026-09-30): es O LO UNO O LO OTRO. «No lo sé» = todo opcional; «Tengo un reporte» = número(s) + soporte + quién lo emitió,
+// obligatorios; y «Tengo un reporte» ES la solicitud de oficialización (sale sola con la FT2; el banner ya no pide otro adjunto).
+check("B2: «No lo sé» cierra con todo opcional; «Tengo un reporte» exige puntaje, escala, perfil, soporte y quién lo emitió", vista.includes("const b2Reportado = data.ft2_b2_na || b2ConReporte;") && vista.includes('data.b2_tiene_reporte && b2ScoreValido && data.b2_scale !== "" && data.cupping_profile.trim() !== "" && b2Adjuntos && data.b2_reporte_ref.trim() !== ""'));
+check("B3: «No lo sé / básica» cierra con los números opcionales; «Tengo un reporte» exige factor O almendra, soporte y quién lo emitió", vista.includes("const b3Reportado = data.b3_solo_basica || b3ConReporte;") && vista.includes('data.b3_tiene_reporte && (b3FactorValido || b3AlmendraValida) && b3Adjuntos && data.b3_reporte_ref.trim() !== ""'));
+check("las dos casillas se excluyen en los dos panes", b2.includes("b2_tiene_reporte: false") && b2.includes("ft2_b2_na: false") && b3.includes("b3_tiene_reporte: false") && b3.includes("b3_solo_basica: false"));
+check("«No lo sé» de B2 salió de la barra: vive en el pane", !/b2:\s*"ft2_b2_na"/.test(vista) && b2.includes("checked={data.ft2_b2_na}"));
+check("«Tengo un reporte» ES la solicitud de oficialización: sale sola con la FT2 con un soporte ya subido", vista.includes("if (!lot.hasPendingOfficializationClaim && (b2ConReporte || b3ConReporte))") && vista.includes("soporte ? { assetId: soporte.assetId } : null"));
+check("y el banner ya no pide nombre ni adjunto aparte", !lee("src/components/kaffetal-regal/ficha/OfficialScoreBanner.tsx").includes('type="file"') && !lee("src/components/kaffetal-regal/ficha/OfficialScoreBanner.tsx").includes("onSubmitClaim"));
+check("el OCP lee quién emitió el reporte", lee("src/app/ocp/(app)/kr/LoteSeccion.tsx").includes("b2Reporte: ds.b2_tiene_reporte") && lee("src/app/ocp/(app)/kr/EvaReviewCard.tsx").includes("fisico.b3Reporte !== null"));
 check("la densidad en verde ya NO es obligatoria", !vista.includes("b3DensidadValida"));
 check("la densidad vive en el bloque opcional de B3", /opcionalBox[\s\S]*b3_densidad_verde/.test(b3));
 check("el par factor↔almendra se deriva (17.500)", calculos.includes("B3_PRODUCTO = 70 * B3_MUESTRA_G") && calculos.includes("B3_MUESTRA_G = 250"));
@@ -72,7 +80,7 @@ check("B2 lleva la explicación grande", b2.includes("introBig"));
 check("y los dos bocetos (red de araña + rueda)", b2.includes("SpiderChart") && b2.includes("TasteWheelSketch"));
 check("B2 ofrece la escala SCA/CVA", b2.includes('value="sca"') && b2.includes('value="cva"'));
 check("B2 ya no pinta la tabla de 10 atributos", !b2.includes("SCA_ATTRS"));
-check("B3 ofrece «Solo sé información básica»", b3.includes("Solo sé información básica"));
+check("B3 ofrece «No lo sé / solo información básica» y «Tengo un reporte de laboratorio» (V5.109)", b3.includes("No lo sé / solo información básica") && b3.includes("Tengo un reporte de laboratorio"));
 check("B3 ya no pinta la granulometría malla a malla", !b3.includes("mesh_supremo_plus"));
 check("las dos secciones se rotulan «Reportado por Productor»", b2.includes("reportadoTag") && b3.includes("reportadoTag"));
 

@@ -359,6 +359,11 @@ export type FichaFormData = {
   b2_scale: "" | "sca" | "cva";
   b2_files_pdf: { assetId: string; fileName: string }[];
   b2_files_foto: { assetId: string; fileName: string }[];
+  // V5.109 (owner, 2026-09-30): B2 es O «No lo sé» (`ft2_b2_na`: puntaje, escala y perfil OPCIONALES) O «Tengo un reporte»
+  // (`b2_tiene_reporte`: puntaje, escala, perfil, soportes y quién lo emitió, TODOS obligatorios). Con «Tengo un reporte», la
+  // solicitud de oficialización sale sola al enviar la FT2 — pedía lo mismo que los soportes.
+  b2_tiene_reporte: boolean;
+  b2_reporte_ref: string;
   // B3 — rediseño V5.20: o «Solo sé información básica» (factor 75–120 y/o
   // O almendra total 150–245 — UNO de los dos, V5.64; el otro se deriva), o
   // soportes adjuntos con un bloque opcional de humedades/densidad. Junto a lo
@@ -369,6 +374,10 @@ export type FichaFormData = {
   b3_humedad_verde: string;
   b3_files_pdf: { assetId: string; fileName: string }[];
   b3_files_foto: { assetId: string; fileName: string }[];
+  // V5.109: lo análogo en B3 — O «No lo sé / solo información básica» (`b3_solo_basica`: los números OPCIONALES) O «Tengo un
+  // reporte de laboratorio» (`b3_tiene_reporte`: factor o almendra + soportes + quién lo emitió, obligatorios).
+  b3_tiene_reporte: boolean;
+  b3_reporte_ref: string;
   cupping_profile: string;
   sca_fragrance: string; sca_flavor: string; sca_aftertaste: string; sca_acidity: string;
   sca_body: string; sca_balance: string; sca_uniformity: string; sca_clean_cup: string;
@@ -446,8 +455,10 @@ export const EMPTY_FICHA: FichaFormData = {
   cupping_profile: "",
   b2_score: "", b2_scale: "",
   b2_files_pdf: [], b2_files_foto: [],
+  b2_tiene_reporte: false, b2_reporte_ref: "",
   b3_solo_basica: false, b3_almendra_total: "", b3_densidad_verde: "", b3_humedad_verde: "",
   b3_files_pdf: [], b3_files_foto: [],
+  b3_tiene_reporte: false, b3_reporte_ref: "",
   sca_fragrance: "", sca_flavor: "", sca_aftertaste: "", sca_acidity: "",
   sca_body: "", sca_balance: "", sca_uniformity: "", sca_clean_cup: "",
   sca_sweetness: "", sca_cuppers: "",

@@ -161,4 +161,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   El pago se confirma sobre `amount_cop` congelado.
 - Traza `envio`: el paso «postularLote» emite un KRX- del 30 % (ya no un KRA- al 0 %).
 - ANN nueva: `src/lib/arena/subvencionServidor.ts`. KR: `PorQueSection.tsx` y `faq.ts` (JSON-LD) dicen $200.000 / 30 % / contra entrega.
-(commit: pendiente)
+(commit: d47dfc4)

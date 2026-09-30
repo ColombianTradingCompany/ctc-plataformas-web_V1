@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.95] — 2026-09-30 (commit pendiente)
+## [V5.95] — 2026-09-30 (commit d47dfc4)
 
 - **Añadido**: **la subvención por defecto del 30 %** (owner, 2026-09-30): toda solicitud de evaluación que entra por el panel del
   productor nace con la campaña «Kaffetal Regal · subvención por defecto» (`SUBVENCION_KR_PCT`, `campanaPorDefecto()` en

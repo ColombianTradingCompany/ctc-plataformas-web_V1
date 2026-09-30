@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.105] — 2026-09-30 (commit pendiente)
+## [V5.105] — 2026-09-30 (commit 4f1a12f)
 
 - **Añadido**: en **Asistencia a Proveedores** (`/ocp/asistencia`), filtros y buscador (owner, 2026-09-30): el buscador mira al
   productor (nombre, correo, código, empresa) y, con el toggle de **búsqueda profunda**, también a sus fincas (nombre, `CTC-F-`, vereda,

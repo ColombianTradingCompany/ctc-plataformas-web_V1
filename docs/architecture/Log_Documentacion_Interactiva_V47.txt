@@ -226,4 +226,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-09-30] V5.105 · Consolas — Asistencia a Proveedores: filtros y buscador con búsqueda profunda
 - ANN `src/app/ocp/(app)/asistencia/AsistenciaTabla.tsx` (nuevo, cliente: buscador + toggle profundo en fincas y lotes, filtros de cuenta,
   estado, departamento, con/sin finca y lote); `page.tsx` solo carga. Guardián: `qa-asistencia` +3.
-(commit: pendiente)
+(commit: 4f1a12f)

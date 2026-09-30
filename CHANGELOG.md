@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.111] — 2026-09-30 (commit pendiente)
+## [V5.111] — 2026-09-30 (commit 6420251)
 
 - **Cambiado**: en **Proveedor Desacoplado** (`/ocp/desacoplado`), el departamento se elige de un **selector** con la misma lista que
   el productor ve en su Información general (`DEP_MUNI`, sin «Multi-Origin»), con **«Otro…»** que abre un campo libre (owner,

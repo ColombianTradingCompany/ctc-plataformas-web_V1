@@ -257,4 +257,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-09-30] V5.111 · Consolas — Proveedor Desacoplado: el departamento de un selector con «Otro…»
 - ANN `src/app/ocp/(app)/desacoplado/SelectorDepartamento.tsx` (nuevo; lista `DEP_MUNI`), `page.tsx`, `src/lib/asistencia/actions.ts`.
   Guardián: `qa-asistencia` +2.
-(commit: pendiente)
+(commit: 6420251)

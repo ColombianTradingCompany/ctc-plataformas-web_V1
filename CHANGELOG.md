@@ -19,6 +19,14 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.107] — 2026-09-30 (commit pendiente)
+
+- **Cambiado**: en Kaffetal Regal, **la Información general se edita a pantalla completa** (`InfoView`, owner 2026-09-30), con la
+  misma cabecera y el mismo lienzo que la Ficha del lote y la página de la finca; «Editar información» ya no abre un pop-up. El cuerpo
+  del editor no cambió (`InfoEditorBody` en `InfoModal.tsx`, que conserva el nombre y deja de montar el pop-up). Es una capa más del
+  botón atrás del teléfono.
+- **Docs**: charter `kaffetal-regal`. `qa-kr-ficha` 226 → 227.
+
 ## [V5.106] — 2026-09-30 (commit c83554c)
 
 - **Cambiado**: en la vista completa del productor (`/ocp/kr?productor=`), las pestañas **Fincas · Lotes · Arena · Contratos** dejan

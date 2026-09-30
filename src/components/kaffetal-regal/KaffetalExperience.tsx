@@ -21,7 +21,7 @@ import { FichaView, type FichaSaveUpdate } from "./FichaView";
 import { FincaModal } from "./FincaModal";
 import { FincaView } from "./FincaView";
 import { ConfirmarBorradoModal, type BorradoPendiente } from "./ConfirmarBorradoModal";
-import { InfoModal } from "./InfoModal";
+import { InfoView } from "./InfoView";
 import { SolicitudRevisionModal } from "./SolicitudRevisionModal";
 import {
   EMPTY_GI,
@@ -45,7 +45,7 @@ import {
 } from "./data";
 
 // V5.102: `finca` = la página de la finca (como `ficha` lo es del lote).
-type View = "landing" | "app" | "ficha" | "finca";
+type View = "landing" | "app" | "ficha" | "finca" | "info";
 
 // Purely forward-looking guidance -- the stage/grade itself is already shown
 // by the state chip, so this never repeats that word (see AppDashboard).
@@ -354,7 +354,6 @@ function Experience() {
   const [editingFincaIdx, setEditingFincaIdx] = useState(-1);
   // V5.102 (owner): lo que está por borrarse mientras el productor escribe «Borrar Lote» / «Borrar Finca».
   const [borrado, setBorrado] = useState<BorradoPendiente | null>(null);
-  const [infoModalOpen, setInfoModalOpen] = useState(false);
   // El contrato `?m=<módulo>` (V4.34): los enlaces de vuelta de la concha de
   // herramientas y los marcadores viejos traen la clave de la rejilla
   // retirada. Se lee UNA vez, como INICIALIZADOR de estado (no en un efecto:
@@ -1470,7 +1469,7 @@ function Experience() {
     setGi(next);
     setUserName(next.agri !== "—" ? next.agri.split(" ")[0] : "productor");
     if (!opts?.silent) {
-      setInfoModalOpen(false);
+      setView("app");
       showToast("Información general actualizada ✓ · aplica a todos sus lotes");
     }
   }
@@ -1860,7 +1859,7 @@ function Experience() {
     (loginOpen ? 1 : 0) +
     (fincaModalOpen ? 1 : 0) +
     (borrado ? 1 : 0) +
-    (infoModalOpen ? 1 : 0) +
+    (view === "info" ? 1 : 0) +
     (view === "ficha" ? 1 : 0) +
     (view === "finca" ? 1 : 0) +
     (drill ? 1 : 0);
@@ -1873,11 +1872,10 @@ function Experience() {
     if (loginOpen) setLoginOpen(false);
     else if (borrado) setBorrado(null);
     else if (fincaModalOpen) setFincaModalOpen(false);
-    else if (infoModalOpen) setInfoModalOpen(false);
     else if (view === "ficha") setView(userId ? "app" : "landing");
-    else if (view === "finca") setView("app");
+    else if (view === "finca" || view === "info") setView("app");
     else if (drill) setDrill(null);
-  }, [loginOpen, borrado, fincaModalOpen, infoModalOpen, view, userId, drill]);
+  }, [loginOpen, borrado, fincaModalOpen, view, userId, drill]);
 
   const backDepth = useRef(0);
   const backFromPop = useRef(false);
@@ -1957,7 +1955,7 @@ function Experience() {
           onReplyToFeedback={replyToFeedback}
           onCreateThread={createThread}
           onAcknowledgeNote={acknowledgeNote}
-          onOpenInfoModal={() => setInfoModalOpen(true)}
+          onOpenInfoModal={() => setView("info")}
         />
       )}
 
@@ -2038,17 +2036,19 @@ function Experience() {
         onDeleteCert={deleteFincaCert}
         onUploadCertSupport={uploadCertSupport}
       />
-      <InfoModal
-        open={infoModalOpen}
-        onClose={() => setInfoModalOpen(false)}
-        gi={gi}
-        userId={userId}
-        onSave={saveInfo}
-        onUploadAvatar={uploadAvatar}
-        onUploadVideo={uploadProducerVideo}
-        onUploadGalleryPhoto={uploadGalleryPhoto}
-        onRemoveGalleryPhoto={removeGalleryPhoto}
-      />
+      {/* V5.107 (owner): la Información general también es una página completa, como la Ficha y la finca. */}
+      {view === "info" && (
+        <InfoView
+          onBack={() => setView("app")}
+          gi={gi}
+          userId={userId}
+          onSave={saveInfo}
+          onUploadAvatar={uploadAvatar}
+          onUploadVideo={uploadProducerVideo}
+          onUploadGalleryPhoto={uploadGalleryPhoto}
+          onRemoveGalleryPhoto={removeGalleryPhoto}
+        />
+      )}
     </div>
   );
 }

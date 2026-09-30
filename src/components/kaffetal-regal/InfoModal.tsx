@@ -4,7 +4,6 @@ import { useState } from "react";
 import QRCode from "qrcode";
 import { useToast } from "@/components/Toast";
 import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
-import { Modal } from "@/components/Modal";
 import { checkFileSizeMb } from "@/lib/fileSize";
 import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import { FileDrop } from "./FileDrop";
@@ -16,7 +15,9 @@ const DEPARTMENTS = Object.keys(DEP_MUNI)
   .filter((d) => d !== "Multi-Origin")
   .sort();
 
-type InfoModalProps = {
+// V5.107 (owner): el editor es una PÁGINA (`InfoView.tsx`), no un pop-up. Este archivo conserva el nombre `InfoModal.tsx` por su
+// historia y por los guardianes que lo leen (`qa-reportado-productor`); exporta el cuerpo del editor y nada más.
+export type InfoEditorProps = {
   gi: GeneralInfo;
   userId: string | null;
   onSave: (gi: GeneralInfo, opts?: { silent?: boolean }) => void;
@@ -26,18 +27,9 @@ type InfoModalProps = {
   onRemoveGalleryPhoto: (index: number) => void;
 };
 
-export function InfoModal({ open, onClose, ...props }: { open: boolean; onClose: () => void } & InfoModalProps) {
-  return (
-    <Modal open={open} onClose={onClose} ariaLabel="Información general">
-      {/* El cuerpo solo existe mientras el modal está abierto (mismo patrón que
-          FincaModal): así su estado se siembra del perfil ya cargado cada vez
-          que se abre, sin efectos de resiembra que pisen lo que se escribe. */}
-      {open && <InfoModalBody {...props} />}
-    </Modal>
-  );
-}
-
-function InfoModalBody({
+// El cuerpo se monta solo mientras la página está abierta (`view === "info"` en KaffetalExperience): así su estado se siembra
+// del perfil ya cargado cada vez que se abre, sin efectos de resiembra que pisen lo que se escribe.
+export function InfoEditorBody({
   gi,
   userId,
   onSave,
@@ -45,7 +37,7 @@ function InfoModalBody({
   onUploadVideo,
   onUploadGalleryPhoto,
   onRemoveGalleryPhoto,
-}: InfoModalProps) {
+}: InfoEditorProps) {
   const { showToast } = useToast();
 
   // Estado controlado, NO refs (2026-07-29). El autosave guarda también al

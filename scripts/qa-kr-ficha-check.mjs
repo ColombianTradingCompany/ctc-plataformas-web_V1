@@ -93,6 +93,9 @@ const lee = (r) => readFileSync(new URL(`../${r}`, import.meta.url), "utf8");
   check("«Borrar» está DENTRO de la pantalla de edición del lote y de la finca, solo cuando la regla lo permite", fichaView.includes("onDelete?: () => void") && ke.includes("onDelete={!isLotCommitted(curLot) && curLot.source !== \"bcp_manual_entry\"") && fincaModal.includes("Borrar Finca") && ke.includes("onDelete={fincaSelfDeletable(fincaEnEdicion, lots)"));
   check("editar una finca es una página completa con la cabecera de la Ficha; registrar una nueva sigue en el pop-up", fincaView.includes("styles.appTop") && fincaView.includes("<FincaEditorBody") && ke.includes('if (i >= 0) setView("finca");') && ke.includes("else setFincaModalOpen(true);") && ke.includes("<FincaModal"));
   check("la página de la finca y el pop-up de borrado son capas del botón atrás", ke.includes('(view === "finca" ? 1 : 0)') && ke.includes("(borrado ? 1 : 0)") && ke.includes("else if (borrado) setBorrado(null);"));
+  // V5.107 (owner): la Información general también es una página completa, y otra capa del botón atrás.
+  const infoView = lee("src/components/kaffetal-regal/InfoView.tsx");
+  check("la Información general es una página completa con la cabecera de la Ficha, sin pop-up", infoView.includes("styles.appTop") && infoView.includes("<InfoEditorBody") && ke.includes('onOpenInfoModal={() => setView("info")}') && ke.includes('(view === "info" ? 1 : 0)') && !ke.includes("infoModalOpen") && !lee("src/components/kaffetal-regal/InfoModal.tsx").includes("<Modal"));
 }
 
 // ── 4. Ninguna clase de CSS module usada se quedó sin definir ──────────────

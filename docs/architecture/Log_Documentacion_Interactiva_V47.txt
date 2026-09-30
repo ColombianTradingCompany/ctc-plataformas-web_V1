@@ -232,3 +232,8 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `src/app/ocp/(app)/kr/ProducerPanel.tsx` (tarjetas), `ProductorSeccion.tsx` (deriva con `cargarKr`), `carga.ts` (`cargarKr` con
   `productorId`: carga un solo productor). Guardián: `qa-asistencia` +3.
 (commit: c83554c)
+
+## [2026-09-30] V5.107 · Consolas → Kaffetal Regal — la Información general a pantalla completa
+- ANN `src/components/kaffetal-regal/InfoView.tsx` (nuevo: cabecera de la Ficha + `InfoEditorBody`); `InfoModal.tsx` sin pop-up;
+  `KaffetalExperience.tsx` `view === "info"`. Guardián: `qa-kr-ficha` +1.
+(commit: pendiente)

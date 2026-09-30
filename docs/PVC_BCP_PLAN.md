@@ -1357,3 +1357,11 @@ wrap V47: el §9.3 es Moneda y TRM; las filas Black/Red actualizadas son las de 
     `TIPOS_DE_MEZCLA`, `COMPOSICION_POR_GRADO`; `LOTES_EN_MEZCLA`, `CARGAS_POR_PRODUCTOR`, `MOQ_MEZCLA` y `COMPOSICION_MEZCLA` se
     retiraron), `src/lib/compras/mezclas.ts` (`tipoDeMezcla`, `validarComponente`, `validarCierre`), guard `guard_mezcla_cerrada`
     reescrito (acta `docs/migraciones/2026-09-25_mezclas_composicion.sql`); guardianes `qa-pvc-lectura` (§3, §7) y `qa-compras` (§10).
+33. **Las mezclas son un TIPO DE LOTE** (owner, 2026-09-30; V5.99): «simplemente un tipo de Lote con más de una variedad y/o
+    proceso». Cada lote puede adjudicarse a varias fincas **del mismo productor**; su arquetipo cruza las fincas y la composición
+    de la ficha: **Single Estate** (una finca, una variedad y un proceso) · **Single Estate Blend** (una finca, varias) · **Single
+    Origin** (varias fincas de un municipio, una variedad y un proceso) · **Single Origin Regional** (varias fincas del mismo
+    departamento, una variedad y un proceso) · **Regional Blend** (la región, con varias variedades y/o procesos) · **Multi-Origin
+    Blend** (`src/lib/lotComposition.ts`). Un lote-blend lleva su código público y su ficha como cualquier lote. **Los blends de
+    varios productores son CTCx Selection**: la mezcla del OCP (n.º 30–32) lee la composición ENTERA de cada lote y exige varios
+    productores (`guard_mezcla_cerrada`, acta `docs/migraciones/2026-09-30_mezclas_como_tipo_de_lote.sql`).

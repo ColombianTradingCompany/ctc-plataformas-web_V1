@@ -9,7 +9,7 @@
 // puede depender de una casilla. Si el chip calculado "no cuadra", lo que está
 // mal es la lista de fincas — ese es el error útil.
 
-import { deriveArchetype, ARCHETYPE_LABEL, ARCHETYPE_INFO, type ContributionInput } from "@/lib/lotComposition";
+import { deriveArchetype, composicionDeVariedades, ARCHETYPE_LABEL, ARCHETYPE_INFO, type ContributionInput } from "@/lib/lotComposition";
 import { FieldInfo } from "./FieldInfo";
 import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
@@ -30,7 +30,8 @@ export function PaneA2({ data, onChange, fincas, onOpenNewFinca }: PaneProps) {
       };
     })
     .filter((x): x is ContributionInput => !!x);
-  const archetype = deriveArchetype(contribInputs);
+  // V5.99: el arquetipo mira también B1 (más de una variedad y/o proceso = blend).
+  const archetype = deriveArchetype(contribInputs, composicionDeVariedades(data.varieties));
   const primary = contribs.length ? fincas.find((f) => f.id === contribs[0].finca_id) ?? null : null;
   const availableFincas = fincas.filter((f) => !contribs.some((c) => c.finca_id === f.id));
 

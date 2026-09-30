@@ -143,7 +143,9 @@ con cuenta QA — **hoy no corre**: las cuentas de prueba se eliminaron en la V5
   variedades, **Red** = siempre una sola variedad, mezcla regional (owner, 2026-09-19)~~ — **superado el 2026-09-25 (V5.91,
   `PVC_BCP_PLAN` §14.8)**: Black y Red **3 cargas**, el MOQ de compra (una demanda de al menos tres cargas); la regla 3–4 se
   retiró de raíz y cada mezcla es **Single Origin** (varios estates, misma variedad y proceso) o **Regional Blend** (varios
-  lotes de una región), derivado de la composición de sus lotes. Importa para la ficha y la vitrina: un Single Origin puede
+  lotes de una región), derivado de la composición ENTERA de sus lotes (V5.99: todas las variedades y fincas, y de varios
+  productores; un blend de un solo productor es un tipo de LOTE con su código y su ficha —Single Estate Blend · Single Origin
+  Regional · Regional Blend—). Importa para la ficha y la vitrina: un Single Origin puede
   anunciar SU variedad y proceso; un Regional Blend anuncia su región. Donde la tienda repita «3 o 4 cargas», ahora son 3
   (nodo final, wrap V47, 2026-09-25).
 - **Papagayo Beans® (owner, 2026-09-17, `PVC_BCP_PLAN.md` §14.6)**: es la marca del café en los tres programas —Green lo

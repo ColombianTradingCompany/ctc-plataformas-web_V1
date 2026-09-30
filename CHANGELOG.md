@@ -19,6 +19,20 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.99] — 2026-09-30 (commit pendiente)
+
+- **Cambiado**: **las mezclas son un tipo de lote** (owner, 2026-09-30). El arquetipo de la Ficha cruza el conjunto de fincas (A2) con la
+  composición (B1): `deriveArchetype(contribs, composicion?)` + `composicionDeVariedades()` (`src/lib/lotComposition.ts`); nacen **Single
+  Estate Blend** (una finca, varias variedades y/o procesos) y **Single Origin Regional** (varias fincas del mismo departamento, una
+  variedad y un proceso); Regional Blend queda para la región con varias. Lo pasan `PaneA2`, la vista del lote del OCP, el dossier, la
+  certificación y el snapshot de la DDS (código de `kaffetal-regal`, con el «organiza todo» del owner; ALINEACION §3).
+- **Cambiado**: **la mezcla de CTCx Selection es de varios productores** y lee la composición ENTERA de cada lote (todas las variedades
+  con su proceso, todas las fincas: `SELECT_LOTE_PARA_MEZCLA` embebe `datasheet` y `lot_contributions`; `tipoDeMezcla` deriva sobre la
+  unión; `validarCierre` exige ≥ 2 productores — un blend de un solo productor es un lote). `guard_mezcla_cerrada` reescrito igual
+  (migración `mezclas_como_tipo_de_lote`, acta en `docs/migraciones/`). Las pantallas de mezclas enseñan las listas.
+- **Docs**: `PVC_BCP_PLAN` §14.8 n.º 33; el brief de Compras cierra la sub-pregunta de la decisión 4; HANDOFF; charters. `qa-claims`
+  y `qa-compras` prueban la composición.
+
 ## [V5.98] — 2026-09-30 (commit fe288a1)
 
 - **Añadido**: **las dos cuentas de auditoría** (owner, 2026-09-30: «creemos 2 y toma control total de ellas»): un productor y un

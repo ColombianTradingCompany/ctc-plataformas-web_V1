@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrDeclaracion, parcelaGeoOk, parcelasGeoComplete, type FincaEudrFields } from "@/lib/eudr";
-import { deriveArchetype, deriveClaims, CUSTODY_MODEL, type ContributionInput } from "@/lib/lotComposition";
+import { deriveArchetype, composicionDeVariedades, deriveClaims, CUSTODY_MODEL, type ContributionInput } from "@/lib/lotComposition";
 import { deriveCertSchemes } from "@/components/kaffetal-regal/ficha/fichaData";
 import { lotInscriptionSettled } from "@/lib/arena/inscriptions";
 import { recibirMuestra } from "@/lib/muestras/recibo";
@@ -224,7 +224,7 @@ export async function registerLotDds(
 
   const { data: lot } = await service
     .from("lots")
-    .select("id, name, stage, harvest_from, harvest_to, dds_snapshot, finca_id")
+    .select("id, name, stage, harvest_from, harvest_to, dds_snapshot, finca_id, datasheet")
     .eq("id", lotId)
     .single();
   if (!lot) return { ok: false, error: "Lote no encontrado." };
@@ -295,7 +295,7 @@ export async function registerLotDds(
   const snapshot = {
     version: 1,
     filed_at: filedAt,
-    archetype: deriveArchetype(contribs),
+    archetype: deriveArchetype(contribs, composicionDeVariedades(lot.datasheet?.varieties)),
     harvest: { from: lot.harvest_from, to: lot.harvest_to },
     custody: CUSTODY_MODEL,
     // El nivel de riesgo país TAL COMO ESTABA al presentar (fechado): si el

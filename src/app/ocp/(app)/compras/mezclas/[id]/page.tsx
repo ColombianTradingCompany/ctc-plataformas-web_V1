@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { ActionForm } from "@/components/panel/ActionForm";
 import { GRADO_POR_ID } from "@/lib/grados/definicion";
-import { MIN_COMPONENTES, MOQ_KG_MEZCLA, TIPO_MEZCLA_LABEL, resumenDeMezcla, tipoDeMezcla, validarCierre, validarComponente } from "@/lib/compras/mezclas";
+import { MIN_COMPONENTES, MOQ_KG_MEZCLA, TIPO_MEZCLA_LABEL, resumenDeMezcla, tipoDeMezcla, validarCierre, validarComponente, variedadesDe, procesosDe, regionesDe, estatesDe } from "@/lib/compras/mezclas";
 import { CARGA_KG } from "@/lib/trato/terminos";
 import { cargarMezcla, comprasDisponiblesPara } from "@/lib/compras/mezclasServidor";
 import { agregarComponente, anularMezcla, cerrarMezcla, guardarObjetivoDeMezcla, quitarComponente } from "../../../comprasActions";
@@ -114,9 +114,9 @@ export default async function MezclaPage({ params }: { params: Promise<{ id: str
                       {c.producerName}
                       <div className={styles.meta}>{c.fincaName ?? <span className={styles.warn}>sin finca</span>}</div>
                     </td>
-                    <td style={td}>{c.departamento ?? <span className={styles.warn}>sin departamento</span>}</td>
-                    <td style={td}>{c.variedad ?? <span className={styles.warn}>sin variedad</span>}</td>
-                    <td style={td}>{c.proceso ?? <span className={styles.warn}>sin proceso</span>}</td>
+                    <td style={td}>{regionesDe(c).length ? regionesDe(c).join(" · ") : <span className={styles.warn}>sin departamento</span>}</td>
+                    <td style={td}>{variedadesDe(c).length ? variedadesDe(c).join(" · ") : <span className={styles.warn}>sin variedad</span>}</td>
+                    <td style={td}>{procesosDe(c).length ? procesosDe(c).join(" · ") : <span className={styles.warn}>sin proceso</span>}</td>
                     <td style={{ ...td, textAlign: "right" }}>
                       <b>{c.kg}</b>
                     </td>
@@ -158,7 +158,7 @@ export default async function MezclaPage({ params }: { params: Promise<{ id: str
                       </option>
                       {elegibles.map((c) => (
                         <option key={c.compraId} value={c.compraId}>
-                          {c.lotName} · {c.producerName} · {c.fincaName ?? "sin finca"} · {c.departamento ?? "sin región"} · {c.variedad ?? "sin variedad"} · {c.proceso ?? "sin proceso"} ·{" "}
+                          {c.lotName} · {c.producerName} · {estatesDe(c).length} estate{estatesDe(c).length === 1 ? "" : "s"} · {regionesDe(c).join(" · ") || "sin región"} · {variedadesDe(c).join(" · ") || "sin variedad"} · {procesosDe(c).join(" · ") || "sin proceso"} ·{" "}
                           {c.disponibleKg} kg sin asignar
                         </option>
                       ))}

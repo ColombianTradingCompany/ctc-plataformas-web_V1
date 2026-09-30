@@ -244,6 +244,10 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   **superado el 2026-09-25 (V5.91, `PVC_BCP_PLAN` §14.8)**: la regla 3–4 se retiró de raíz; Black y Red son mezclas Single Origin
   o Regional Blend de CTCx con un MOQ de compra de 3 cargas, y el mínimo que el productor declara por lote es otro:
   **6 · 6 · 3 cargas · 150 kg** (Black · Red · Blue · Gold; Tyrian sin mínimo; `MINIMO_POR_GRADO` en `src/lib/trato/terminos.ts`, V5.80; Gold de 200 a 150 kg en la V5.96).
+  **V5.99 (owner, 2026-09-30): una mezcla es un TIPO DE LOTE** — el arquetipo de A2 cruza las fincas con la composición de B1
+  (`deriveArchetype(contribs, composicionDeVariedades(varieties))`): Single Estate · **Single Estate Blend** · Single Origin ·
+  **Single Origin Regional** · Regional Blend · Multi-Origin Blend (`ARCHETYPE_INFO` explica cada uno); `PaneA2` lo enseña, el
+  dossier y la certificación lo imprimen. Un lote puede adjudicarse a varias fincas del mismo productor (F2, como siempre).
 - **Papagayo Beans® (owner, 2026-09-17, `PVC_BCP_PLAN.md` §14.6)**: el café del productor sale al mundo como **Papagayo
   Beans®**, la marca de CTCx, con el sello de su grado (loro y monograma PB) y, en Cherry Picked, con su nombre y su finca en
   la vitrina; falta decir la marca en la landing, el FAQ y «Su café en el mundo»;

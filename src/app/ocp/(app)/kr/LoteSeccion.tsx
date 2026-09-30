@@ -12,7 +12,7 @@ import { soportesDe, tieneReporte } from "@/lib/fichas/soportes";
 import { ordenaFichas, rowToLotFicha, type LotFicha } from "@/lib/fichas/tipos";
 import { EvaReviewCard, type CertItem, type EvaEudrFields, type FileLink, type FisicoPanel, type Row } from "./EvaReviewCard";
 import { CERT_REGISTRY } from "@/lib/certRegistry";
-import { deriveClaims, deriveArchetype, ARCHETYPE_LABEL, type ContributionInput, type CertInput } from "@/lib/lotComposition";
+import { deriveClaims, deriveArchetype, composicionDeVariedades, ARCHETYPE_LABEL, type ContributionInput, type CertInput } from "@/lib/lotComposition";
 import type { EvaChecklist } from "./evaChecklist";
 import { fincaEudrFieldsDe } from "@/lib/ocp/fincaEudr";
 import { etapaDelLote, GRADO_LABEL as GRADE_LABEL } from "@/lib/ocp/etapas";
@@ -193,7 +193,7 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
     }));
   };
   const archetypeFor = (lot: LotRow): string | null => {
-    const a = deriveArchetype(contribsByLot.get(lot.id) ?? []);
+    const a = deriveArchetype(contribsByLot.get(lot.id) ?? [], composicionDeVariedades(lot.datasheet?.varieties));
     return a ? ARCHETYPE_LABEL[a] : null;
   };
 

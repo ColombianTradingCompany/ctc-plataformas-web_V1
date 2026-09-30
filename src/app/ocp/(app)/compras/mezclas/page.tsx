@@ -34,8 +34,10 @@ export default async function MezclasPage() {
       <p className={styles.subtitle}>
         Cómo se combina lo comprado en firme para la oferta. <b>Black</b> y <b>Red</b> los usa CTCx de forma estratégica como{" "}
         <b>{TIPO_MEZCLA_LABEL.single_origin}</b> (varios estates con la misma variedad y proceso) o <b>{TIPO_MEZCLA_LABEL.regional_blend}</b> (varios lotes
-        de la misma región: Santander, Huila, Boyacá…). Cada lote trae su composición en la ficha —variedad, proceso, finca y región— y el tipo
-        de la mezcla se deriva de ella. Blue, Gold y Tyrian son casi siempre Single Estate.
+        de la misma región: Santander, Huila, Boyacá…). Cada lote trae su composición en la ficha —sus variedades con su proceso, sus fincas y su
+        región— y el tipo de la mezcla se deriva de la unión. <b>Una mezcla de aquí es de varios productores</b> (owner, 2026-09-30): un blend de un
+        solo productor —varias fincas, varias variedades o procesos— es un <b>tipo de lote</b> y se arma en Kaffetal Regal. Blue, Gold y Tyrian son
+        casi siempre Single Estate.
       </p>
       <p className={styles.meta} style={{ marginBottom: 18 }}>
         Ya no hay regla de «3 a 4 productores, una carga cada uno» (owner, 2026-09-25): el mínimo lo pone el <b>MOQ de compra</b> —una demanda de al

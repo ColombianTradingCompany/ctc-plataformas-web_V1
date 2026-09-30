@@ -186,3 +186,11 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   (`cuentasDePrueba.ts`), como a las etiquetas de los desacoplados (ficha `desacoplado`).
 - ANN nueva: `src/lib/email/cuentasDePrueba.ts`.
 (commit: fe288a1)
+
+## [2026-09-30] V5.99 · Consolas → Kaffetal Regal — las mezclas son un tipo de lote; la mezcla de CTCx Selection es de varios productores
+- DICT `parcela`/`arquetipo` (F2): el arquetipo cruza fincas × composición (B1): Single Estate · Single Estate Blend · Single Origin ·
+  Single Origin Regional · Regional Blend · Multi-Origin (`composicionDeVariedades`). DICT `mezclas`: composición ENTERA y
+  ≥ 2 productores; `guard_mezcla_cerrada` reescrito (acta `2026-09-30_mezclas_como_tipo_de_lote.sql`).
+- Traza `mezcla`: el paso «tipoDeMezcla()» mira la unión de variedades/procesos/fincas; el cierre exige varios productores.
+- ANN: `src/lib/lotComposition.ts` (composición), `docs/migraciones/2026-09-30_mezclas_como_tipo_de_lote.sql`.
+(commit: pendiente)

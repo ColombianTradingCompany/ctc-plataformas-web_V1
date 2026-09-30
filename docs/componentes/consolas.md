@@ -291,6 +291,10 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   variedad y proceso) o **Regional Blend** (varios lotes de la misma región) y el tipo se DERIVA (`mezclas.tipo`; `tipoDeMezcla` en
   `src/lib/compras/mezclas.ts`; `guard_mezcla_cerrada` reescrito, acta `mezclas_composicion`); el mínimo es el **MOQ de compra** (≥ 3
   cargas — `lectura.ts` reescrito con el «continúa» del owner: `MOQ_CARGAS_BLACK_RED`, `TIPOS_DE_MEZCLA`, `COMPOSICION_POR_GRADO`;
+  **V5.99 (owner, 2026-09-30): las mezclas son un tipo de lote** — la del OCP lee la composición ENTERA de cada lote (todas las
+  variedades con su proceso, todas las fincas: `SELECT_LOTE_PARA_MEZCLA` embebe `datasheet` y `lot_contributions`) y exige VARIOS
+  productores (`validarCierre`; `guard_mezcla_cerrada` reescrito, acta `2026-09-30_mezclas_como_tipo_de_lote.sql`); un blend de un
+  solo productor es un lote de KR (arquetipo con composición, `src/lib/lotComposition.ts`);
   `LOTES_EN_MEZCLA` · `CARGAS_POR_PRODUCTOR` · `MOQ_MEZCLA` · `COMPOSICION_MEZCLA` retirados; los dos tableros del PVC lo dicen —salvo
   la tarjeta «Mínimos y empaque por grado» de `LecturaBoard`, que sigue con «3 o 4 cargas»: pendiente de `herramientas-internas`) y CTCx
   asegura un mínimo por temporada (`mezclas.temporada`, `objetivo_temporada_kg`, `guardarObjetivoDeMezcla`: informativo); las mezclas se

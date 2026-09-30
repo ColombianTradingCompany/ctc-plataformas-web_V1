@@ -263,6 +263,10 @@ export async function agregarComponente(mezclaId: string, formData: FormData): P
     departamento: comp.departamento,
     variedad: comp.variedad,
     proceso: comp.proceso,
+    fincaIds: comp.fincaIds,
+    departamentos: comp.departamentos,
+    variedades: comp.variedades,
+    procesos: comp.procesos,
     grado: compra.grado,
     disponibleKg: Math.max(0, Math.round((Number(compra.kg) - asignado) * 10) / 10),
   };

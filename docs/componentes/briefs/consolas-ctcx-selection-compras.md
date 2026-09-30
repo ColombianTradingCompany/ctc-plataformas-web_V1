@@ -76,9 +76,10 @@ disponible. Sin mezclas todavía. Verificable en vivo por SQL. **No antes de la 
 4. **¿Una mezcla es un lote nuevo?** Con su propio código público, su ficha y su nombre (Papagayo Beans®) — ¿o una etiqueta
    sobre los lotes que la componen? Decide si `mezclas` cuelga de `lots` o vive aparte. → **CONTESTADA el 2026-09-25 y ejecutada
    en la V5.91**: la regla por composición (cada lote trae la suya; Single Origin · Regional Blend; `PVC_BCP_PLAN.md` §14.8); en
-   código `mezclas` vive aparte de `lots` desde la V5.87. **Sigue abierta, como pregunta explícita al owner** (anotada en el wrap
-   V47): cuando una mezcla se CIERRA, ¿lleva código público, ficha propia y nombre en la vitrina, o se enseña como etiqueta sobre
-   los lotes que la componen? Llevarla a la vitrina es otra tanda.
+   código `mezclas` vive aparte de `lots` desde la V5.87. **Contestada el 2026-09-30 (V5.99)**: una mezcla es un TIPO DE LOTE
+   —un lote con más de una variedad y/o proceso, de varias fincas del mismo productor— y como lote lleva su código público y su
+   ficha; los blends de VARIOS productores son la mezcla de CTCx Selection (objeto de Compras, `MZ-`). Llevar esa mezcla de
+   varios productores a la vitrina con perfil propio sigue siendo otra tanda (Etapa 3, cherry-picked).
 5. **La unidad**: se compra en **cargas de pergamino** y se vende en **kilos de verde**. ¿La pantalla habla en las dos, con el
    factor del Modelo de Producción a la vista? → **Contestada (V5.87)**: todo en kg de CPS; la conversión a verde es del Modelo
    de Producción (los Sample Kits usan la nota del owner, 125 kg de CPS ≈ 90 kg de verde, V5.90).

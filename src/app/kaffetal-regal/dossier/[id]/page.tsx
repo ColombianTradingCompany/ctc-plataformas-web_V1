@@ -2,7 +2,7 @@ import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/ser
 import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { fincaEudrStatus, lotEudrStatus, type FincaEudrFields } from "@/lib/eudr";
 import { fincaEudrFieldsDe } from "@/lib/ocp/fincaEudr";
-import { deriveArchetype, ARCHETYPE_LABEL, type ContributionInput } from "@/lib/lotComposition";
+import { deriveArchetype, composicionDeVariedades, ARCHETYPE_LABEL, type ContributionInput } from "@/lib/lotComposition";
 import { ORIGIN_CERTS, INTL_CERTS, type FichaFormData } from "@/components/kaffetal-regal/ficha/fichaData";
 import { ctcLotReference, fincaCode } from "@/components/kaffetal-regal/data";
 import { GRADO_POR_ID, esGradoValido } from "@/lib/grados/definicion";
@@ -143,8 +143,8 @@ export default async function LotDossierPage({ params, searchParams }: { params:
     departamento: x.f.departamento ?? "",
     pais: "Colombia",
   }));
-  const archetype = deriveArchetype(contribInputs);
   const ds = lot.datasheet ?? {};
+  const archetype = deriveArchetype(contribInputs, composicionDeVariedades(ds.varieties));
   const grado = lot.grade && esGradoValido(lot.grade) ? GRADO_POR_ID[lot.grade] : null;
 
   const fincas: DossierFincaLine[] = origen.map((x) => ({

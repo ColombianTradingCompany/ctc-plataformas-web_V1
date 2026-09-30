@@ -2,6 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
 import type { ComponenteDeMezcla, GradoDeMezcla, TipoDeMezcla } from "./mezclas";
+import { composicionDeVariedades } from "@/lib/lotComposition";
 
 // ── Las mezclas · la carga desde la base (V5.87 · composición V5.91) ─────────────────────────
 // Lo que las acciones de Compras y la pantalla de una mezcla necesitan leer, en un solo sitio: la mezcla con sus
@@ -36,10 +37,20 @@ export type MezclaCargada = {
 };
 
 type FincaEmb = { id: string; name: string; departamento: string | null };
-type LotEmb = { name: string; producer_id: string; ficha_variedad: string | null; ficha_proceso: string | null; fincas: FincaEmb | FincaEmb[] | null };
+type VarietyEmb = { pct?: string | number | null; name?: string | null; base?: string | null; special?: string | null };
+type LotEmb = {
+  name: string;
+  producer_id: string;
+  ficha_variedad: string | null;
+  ficha_proceso: string | null;
+  datasheet: { varieties?: VarietyEmb[] } | null;
+  fincas: FincaEmb | FincaEmb[] | null;
+  /** V5.99 · todas las fincas del lote (F2); la primaria (`fincas`) es una de ellas. */
+  lot_contributions: { fincas: FincaEmb | FincaEmb[] | null }[] | null;
+};
 type CompraEmb = { id: string; kg: number | string; grado: string; lot_id: string; lots: LotEmb | LotEmb[] | null };
 const uno = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? v[0] ?? null : v ?? null);
-export const SELECT_LOTE_PARA_MEZCLA = "lots(name, producer_id, ficha_variedad, ficha_proceso, fincas(id, name, departamento))";
+export const SELECT_LOTE_PARA_MEZCLA = "lots(name, producer_id, ficha_variedad, ficha_proceso, datasheet, fincas(id, name, departamento), lot_contributions(fincas(id, name, departamento)))";
 
 /** Kilos ya asignados a mezclas NO anuladas, por compra (opcionalmente sin contar una mezcla). */
 export async function asignadoPorCompra(service: SupabaseClient, compraIds: string[], excluirMezclaId?: string): Promise<Map<string, number>> {
@@ -54,10 +65,17 @@ export async function asignadoPorCompra(service: SupabaseClient, compraIds: stri
   return out;
 }
 
-/** La composición de un lote tal como la lee la regla: estate, región, variedad y proceso de su ficha. */
+/** La composición de un lote tal como la lee la regla (V5.99, entera): TODAS sus fincas con su región (aportes + la primaria) y
+ *  TODAS sus variedades con su proceso (B1 de la ficha; si no trae filas, la proyección `ficha_variedad` / `ficha_proceso`). */
 export function composicionDelLote(lot: LotEmb | LotEmb[] | null | undefined) {
   const l = uno(lot);
   const finca = uno(l?.fincas);
+  const fincas = [...(l?.lot_contributions ?? []).map((c) => uno(c.fincas)).filter((f): f is FincaEmb => !!f), ...(finca ? [finca] : [])];
+  const fincaIds = [...new Set(fincas.map((f) => f.id))];
+  const departamentos = [...new Set(fincas.map((f) => (f.departamento ?? "").trim()).filter(Boolean))];
+  const comp = composicionDeVariedades(l?.datasheet?.varieties);
+  const variedades = comp.variedades.length ? comp.variedades : l?.ficha_variedad ? [l.ficha_variedad] : [];
+  const procesos = comp.variedades.length ? comp.procesos : l?.ficha_proceso ? [l.ficha_proceso] : [];
   return {
     producerId: l?.producer_id ?? "",
     fincaId: finca?.id ?? null,
@@ -65,6 +83,10 @@ export function composicionDelLote(lot: LotEmb | LotEmb[] | null | undefined) {
     departamento: finca?.departamento ?? null,
     variedad: l?.ficha_variedad ?? null,
     proceso: l?.ficha_proceso ?? null,
+    fincaIds,
+    departamentos,
+    variedades,
+    procesos,
     lotName: l?.name ?? "—",
   };
 }
@@ -91,6 +113,10 @@ export async function cargarMezcla(service: SupabaseClient, mezclaId: string): P
       departamento: c.departamento,
       variedad: c.variedad,
       proceso: c.proceso,
+      fincaIds: c.fincaIds,
+      departamentos: c.departamentos,
+      variedades: c.variedades,
+      procesos: c.procesos,
       grado: compra?.grado ?? "",
       disponibleKg: Math.max(0, Math.round((compraKg - (asignadoEnOtras.get(f.compra_id) ?? 0)) * 10) / 10),
       lotId: compra?.lot_id ?? "",
@@ -149,6 +175,10 @@ export async function comprasDisponiblesPara(service: SupabaseClient, grado: Gra
         departamento: comp.departamento,
         variedad: comp.variedad,
         proceso: comp.proceso,
+        fincaIds: comp.fincaIds,
+        departamentos: comp.departamentos,
+        variedades: comp.variedades,
+        procesos: comp.procesos,
         grado: c.grado,
         disponibleKg: Math.max(0, Math.round((compraKg - (asignado.get(c.id) ?? 0)) * 10) / 10),
         lotId: c.lot_id,

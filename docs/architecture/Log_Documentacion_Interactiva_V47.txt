@@ -221,4 +221,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-09-30] V5.104 · Consolas — borrar cuenta: las fotos se sueltan antes y se borran después del usuario
 - ANN `src/lib/inactividad/borrarCuenta.ts`: orden soltar uploaded_by → deleteUser → media_assets + Storage (FK sin cascada desde producer_profiles).
-(commit: pendiente)
+(commit: 35a3ad1)

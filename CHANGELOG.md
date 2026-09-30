@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.104] — 2026-09-30 (commit pendiente)
+## [V5.104] — 2026-09-30 (commit 35a3ad1)
 
 - **Corregido**: «Borrar cuenta» fallaba con `producer_profiles_avatar_asset_id_fkey` (el owner lo topó limpiando cuentas): las fotos
   del productor no se pueden borrar ANTES del perfil porque `producer_profiles.avatar_asset_id` / `video_asset_id` (y `fincas` / `lots`)

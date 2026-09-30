@@ -178,4 +178,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - FLUJO: `signContract` → `producer_comm_log` + correo (traza `contrato`, paso 1: la firma avisa). DICT `eva`: la checklist dice
   Pasaporte de la finca y Fotos y video (B4).
 - CTC Home (`n-home`): el copy ya no nombra el Club ni la Arena como competencia.
-(commit: pendiente)
+(commit: 8f28aa7)

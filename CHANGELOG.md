@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.97] — 2026-09-30 (commit pendiente)
+## [V5.97] — 2026-09-30 (commit 8f28aa7)
 
 - **Cambiado**: la checklist de la Visa dice **«EUDR · Pasaporte de la finca»** y **«Fotos y video (B4)»** (`evaChecklist.ts`); la
   vista del lote firma y enseña las fotos B4 junto al video (antes solo el video).

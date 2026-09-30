@@ -122,6 +122,15 @@ const lee = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
   check("el panel del productor pinta la insignia y el botón de sesión asistida", panel.includes("GESTION_LABEL[data.gestion]") && panel.includes("<SesionAsistidaBoton producerId={data.id}"));
 }
 
+// ── 5b. V5.105 (owner, 2026-09-30) · Asistencia a Proveedores: filtros y buscador con búsqueda profunda en fincas y lotes ──
+{
+  const pagina = lee("src/app/ocp/(app)/asistencia/page.tsx");
+  const tabla = lee("src/app/ocp/(app)/asistencia/AsistenciaTabla.tsx");
+  check("la página carga nombres y códigos de fincas y lotes y el estado del productor como /ocp/kr", pagina.includes("fincaCode(f.id)") && pagina.includes("ctcLotReference(l.id)") && pagina.includes("segmentProducer(") && pagina.includes("<AsistenciaTabla filas={filas} />"));
+  check("el buscador directo mira al productor y la búsqueda profunda (toggle) a sus fincas y lotes, diciendo dónde coincidió", tabla.includes('role="switch"') && tabla.includes("if (!profunda) return null;") && tabla.includes("f.fincas.filter((x) => [x.nombre, x.codigo, x.lugar]") && tabla.includes("f.lotes.filter((x) => [x.nombre, x.codigo]") && tabla.includes("Coincide en:"));
+  check("los filtros: cuenta (de GESTION_LABEL), estado por casillas (de PRODUCER_SEGMENTS), departamento, con/sin finca y lote", tabla.includes("Object.keys(GESTION_LABEL)") && tabla.includes("PRODUCER_SEGMENTS.map((sg)") && tabla.includes('aria-label="Departamento"') && tabla.includes('"Finca ✅"') && tabla.includes('"Sin lote"'));
+}
+
 // ── 6. La evaluación asumida por CTCx (Ruta Desacoplada: «CTCx bears the cost») ──
 {
   const nominados = lee("src/app/ocp/(app)/nominadosActions.ts");

@@ -19,6 +19,15 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.105] — 2026-09-30 (commit pendiente)
+
+- **Añadido**: en **Asistencia a Proveedores** (`/ocp/asistencia`), filtros y buscador (owner, 2026-09-30): el buscador mira al
+  productor (nombre, correo, código, empresa) y, con el toggle de **búsqueda profunda**, también a sus fincas (nombre, `CTC-F-`, vereda,
+  municipio) y a sus lotes (nombre, `CTC-L-`), diciendo en la fila dónde coincidió. Filtros: cuenta (propia · desacoplado · entregado),
+  estado del productor por casillas, departamento, «Finca ✅» / «Sin finca», «Lote ✅» / «Sin lote». La tabla pasó a cliente
+  (`AsistenciaTabla.tsx`); la página solo carga, con el mismo estado del productor que `/ocp/kr`.
+- **Docs**: charter `consolas`. `qa-asistencia` 59 → 62.
+
 ## [V5.104] — 2026-09-30 (commit 35a3ad1)
 
 - **Corregido**: «Borrar cuenta» fallaba con `producer_profiles_avatar_asset_id_fkey` (el owner lo topó limpiando cuentas): las fotos

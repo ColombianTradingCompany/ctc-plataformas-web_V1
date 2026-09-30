@@ -330,7 +330,9 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
   `docs/migraciones/2026-09-30_inactividad_marchitando.sql`; `qa-inactividad` (26) y `qa-trato` (tres barridos).
 - **LAS TRES RUTAS DEL PROVEEDOR (owner, 2026-09-23)** — brief `briefs/consolas-rutas-del-proveedor.md`, con las siete
   respuestas del owner al final. **Primera tanda EJECUTADA en la V5.75**: **Asistencia a Proveedores** (`/ocp/asistencia` + botón
-  en `/ocp/kr?productor=`: la sesión asistida, `src/lib/asistencia/actions.ts`), **Proveedor Desacoplado** (`/ocp/desacoplado`:
+  en `/ocp/kr?productor=`: la sesión asistida, `src/lib/asistencia/actions.ts`; **V5.105**, owner 2026-09-30: filtros —cuenta, estado del
+  productor por casillas, departamento, con/sin finca y lote— y buscador con **búsqueda profunda** (toggle) que también mira nombres y códigos
+  de fincas y lotes y dice dónde coincidió; `AsistenciaTabla.tsx`, `qa-asistencia` +3), **Proveedor Desacoplado** (`/ocp/desacoplado`:
   crear sin buzón, insignia, entregar) y «CTCx asume el costo» de una evaluación. Migración `producer_profiles_gestion_desacoplado` **aplicada** el
   2026-09-23 (acta en `docs/migraciones/`, carpeta nueva: el acta de cada DDL, porque la fuente de verdad es la base). **Nadie ha conducido la sesión asistida en vivo**
   (~~exige un productor `prueba-*`~~ — esas cuentas se eliminaron en la V5.89: se conduce sobre un productor real o un

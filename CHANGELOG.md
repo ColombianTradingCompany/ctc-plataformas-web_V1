@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.108] — 2026-09-30 (commit pendiente)
+## [V5.108] — 2026-09-30 (commit 8fb5f32)
 
 - **Cambiado**: en **Productores, Fincas y Lotes**, los cuatro chips de finca y lote son ahora dos pares de casillas **«Finca ☐✅ ☐❌»**
   y **«Lote ☐✅ ☐❌»** (owner, 2026-09-30): una casilla marcada filtra, ninguna o las dos = todas.

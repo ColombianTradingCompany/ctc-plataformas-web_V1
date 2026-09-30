@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.103] — 2026-09-30 (commit pendiente)
+## [V5.103] — 2026-09-30 (commit 4eb1f9e)
 
 - **Añadido**: **la inactividad de las cuentas «Marchitando»** (owner, 2026-09-30) — tercer barrido del cron semanal
   `/api/cron/recordatorios` (`src/lib/inactividad/`: regla pura `reglas.ts`, `barrido.ts`, `correos.ts`): un productor Marchitando sin

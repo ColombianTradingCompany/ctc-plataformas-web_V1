@@ -217,4 +217,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   `borrarCuenta.ts` = la única rutina de borrado) y `src/app/ocp/(app)/kr/{inactividadActions.ts,InactividadPanel.tsx}`.
 - DICT `producer_inactividad` (service-role-only: protegida, recordatorio_at, aviso_at). Acta 2026-09-30_inactividad_marchitando.sql.
 - Guardián nuevo: `qa-inactividad` (26). `qa-trato`: tres barridos.
-(commit: pendiente)
+(commit: 4eb1f9e)

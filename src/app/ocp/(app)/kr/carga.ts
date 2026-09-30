@@ -4,7 +4,7 @@ import { fincaEudrStatus } from "@/lib/eudr";
 import { fincaCenter } from "@/lib/earthKml";
 import { seasonLabel, type Season } from "@/lib/arena/seasons";
 import { ctcLotReferenceShort, fincaCode, supplierCode } from "@/components/kaffetal-regal/data";
-import { infoGeneralComplete, PRODUCER_SEGMENTS, segmentProducer } from "@/lib/bcp/producerSegments";
+import { infoGeneralComplete, PRODUCER_SEGMENTS, segmentProducer, type ProducerSegment } from "@/lib/bcp/producerSegments";
 import { fincaEudrFieldsDe, type FilaDeFincaParaLaVisa } from "@/lib/ocp/fincaEudr";
 import { ESTADO_DE_CONTRATO, ESTADO_DE_OFERTA, etapaDelLote, evaDelLote, fichaHecha, gradoLabel } from "@/lib/ocp/etapas";
 import { estadoDelCircuito, type EstadoDelCircuito } from "@/lib/ocp/circuito";
@@ -33,7 +33,12 @@ export type KrFila = {
   productorId: string;
   productorNombre: string;
   productorCodigo: string;
+  /** V5.101: el correo con el que entra a Kaffetal Regal, bajo el código y el estado (owner, 2026-09-30). */
+  productorEmail: string | null;
+  /** El rótulo del estado del productor (`PRODUCER_SEGMENTS`)… */
   segmento: string;
+  /** …y su id, para filtrarlo por casillas sin leer el rótulo (V5.101). */
+  segmentoId: ProducerSegment;
   pais: string;
   departamento: string;
   /** V5.75: null = cuenta propia · desacoplado = la lleva CTCx sin buzón · entregado (`src/lib/asistencia/desacoplado.ts`). */
@@ -198,31 +203,32 @@ export async function cargarKr(service: SupabaseClient): Promise<{
     const perfil = pp.get(p.id);
     const susFincas = fincasDe.get(p.id) ?? [];
     const susLotes = lotesDe.get(p.id) ?? [];
-    const segmento = etiquetaDelSegmento(
-      segmentProducer({
-        joinedAt: p.created_at,
-        infoComplete: infoGeneralComplete({
-          fullName: p.full_name,
-          companyName: perfil?.company_name ?? null,
-          taxId: perfil?.tax_id ?? null,
-          cedulaCafetera: perfil?.cedula_cafetera ?? null,
-          phone: p.phone,
-          avatarAssetId: perfil?.avatar_asset_id ?? null,
-          country: perfil?.country ?? null,
-          department: perfil?.department ?? null,
-        }),
-        hasFincas: susFincas.length > 0,
-        hasEudrRequest: susLotes.some((l) => l.intake_step >= 2 || l.stage !== "borrador"),
-        processed: susFincas.some((f) => f.status === "approved") && susLotes.some((l) => l.stage !== "borrador"),
-        activeArena: inscripciones.some((i) => i.producer_id === p.id && FASES_ACTIVAS.has(i.phase)),
-      })
-    );
+    const segmentoId = segmentProducer({
+      joinedAt: p.created_at,
+      infoComplete: infoGeneralComplete({
+        fullName: p.full_name,
+        companyName: perfil?.company_name ?? null,
+        taxId: perfil?.tax_id ?? null,
+        cedulaCafetera: perfil?.cedula_cafetera ?? null,
+        phone: p.phone,
+        avatarAssetId: perfil?.avatar_asset_id ?? null,
+        country: perfil?.country ?? null,
+        department: perfil?.department ?? null,
+      }),
+      hasFincas: susFincas.length > 0,
+      hasEudrRequest: susLotes.some((l) => l.intake_step >= 2 || l.stage !== "borrador"),
+      processed: susFincas.some((f) => f.status === "approved") && susLotes.some((l) => l.stage !== "borrador"),
+      activeArena: inscripciones.some((i) => i.producer_id === p.id && FASES_ACTIVAS.has(i.phase)),
+    });
+    const segmento = etiquetaDelSegmento(segmentoId);
 
     const delProductor = {
       productorId: p.id,
       productorNombre: p.full_name || p.email || "Productor",
       productorCodigo: supplierCode(p.id),
+      productorEmail: p.email,
       segmento,
+      segmentoId,
       pais: perfil?.country ?? "",
       departamento: perfil?.department ?? "",
       gestion: perfil?.gestion ?? null,

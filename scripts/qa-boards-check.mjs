@@ -84,5 +84,16 @@ check("2 vértices no son polígono ⇒ usa el punto", fincaReferencePoint("1", 
 check("sin geometría no hay punto", fincaReferencePoint(null, null, null), null);
 check("0,0 no cuenta como punto", fincaReferencePoint("0", "0", null), null);
 
+// ── V5.101 (owner, 2026-09-30) · /ocp/kr filtra por el estado del productor DE LA FUENTE, con casillas, y pinta su correo ──
+import { readFileSync } from "node:fs";
+const krCarga = readFileSync("src/app/ocp/(app)/kr/carga.ts", "utf8");
+const krTabla = readFileSync("src/app/ocp/(app)/kr/KrTabla.tsx", "utf8");
+const krPage = readFileSync("src/app/ocp/(app)/kr/page.tsx", "utf8");
+check("la fila lleva el id del segmento y el correo", krCarga.includes("segmentoId: ProducerSegment;") && krCarga.includes("productorEmail: string | null;") && krCarga.includes("productorEmail: p.email,"), true);
+check("la tabla filtra por segmento con casillas de PRODUCER_SEGMENTS (varios a la vez)", krTabla.includes("PRODUCER_SEGMENTS.map((sg)") && krTabla.includes('type="checkbox"') && krTabla.includes("segmentos.size > 0 && !segmentos.has(f.segmentoId)"), true);
+check("«Finca ✅» y «Lote ✅» junto a «Sin finca» y «Sin lote»", krTabla.includes('chip("con-finca", "Finca ✅")') && krTabla.includes('chip("con-lote", "Lote ✅")') && krTabla.includes('rapido === "con-finca" && !f.fincaId') && krTabla.includes('rapido === "con-lote" && !f.loteId'), true);
+check("el correo va bajo el código y el estado del productor (las dos celdas)", (krTabla.match(/\{f\.productorEmail && <span style=\{sub\}>\{f\.productorEmail\}<\/span>\}/g) ?? []).length, 2);
+check("la URL siembra `?segmento=` con ids de la fuente", krPage.includes("PRODUCER_SEGMENTS.some((sg) => sg.id === x)") && krPage.includes("segmentosIniciales={segmentosIniciales}"), true);
+
 console.log(`${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

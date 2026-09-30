@@ -19,6 +19,15 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.101] — 2026-09-30 (commit pendiente)
+
+- **Añadido**: en **Productores, Fincas y Lotes** (`/ocp/kr`), tres cosas que el owner pidió al empezar a cargar productores para la
+  Etapa 2 (2026-09-30): los filtros rápidos **«Finca ✅» y «Lote ✅»** junto a «Sin finca» y «Sin lote» (`?filtro=con-finca|con-lote`);
+  **el correo del productor** bajo su código y su estado, en las dos vistas; y **el estado del productor como filtro de casillas**
+  (Marchitando · Nuevos · Primíparos · Establecidos · Activos, uno o varios a la vez, `?segmento=a,b`), que hasta ahora solo se leía
+  en cada fila. `KrFila` lleva `segmentoId` (el id, no solo el rótulo) y `productorEmail`.
+- **Docs**: charter `consolas` (V5.76 → V5.101 en `/ocp/kr`, guardianes). `qa-boards` +5.
+
 ## [V5.100] — 2026-09-30 (commit 7997468)
 
 - **Cambiado**: **el código del lote es `CTC-L-XXXXXXXX` en todas partes** (owner, 2026-09-30) — la misma forma que `CTC-P-` y

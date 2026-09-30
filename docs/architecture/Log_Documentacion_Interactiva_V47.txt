@@ -200,3 +200,8 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   `CTC-F-`), una sola fuente en `data.ts`; sustituye al `CTC_` largo y a los 7 hex cortos. El `CTCX-XXXX-XXXX` público no cambia.
 - Datos: 13 fichas reescritas por SQL (`datasheet.ctc_uid`).
 (commit: 7997468)
+
+## [2026-09-30] V5.101 · Consolas — /ocp/kr: «Finca ✅» · «Lote ✅», el correo del productor y el estado como filtro de casillas
+- ANN `src/app/ocp/(app)/kr/KrTabla.tsx` y `carga.ts`: `KrFila.segmentoId` + `productorEmail`; filtros `con-finca` · `con-lote`;
+  casillas de `PRODUCER_SEGMENTS` (varios a la vez, `?segmento=`). Guardián: `qa-boards` +5.
+(commit: pendiente)

@@ -8,6 +8,7 @@ import { CIRCUITO_LABEL, ORDEN_DEL_CIRCUITO } from "@/lib/ocp/circuito";
 import { SeasonRangeDial } from "./LotePiezas";
 import type { KrFila, Tono } from "./carga";
 import { GESTION_CORTA } from "@/lib/asistencia/desacoplado";
+import { PRODUCER_SEGMENTS, type ProducerSegment } from "@/lib/bcp/producerSegments";
 import styles from "@/components/panel/shared.module.css";
 
 // ── Productores, Fincas y Lotes · la tabla única y su mapa (V5.61) ───────────
@@ -39,7 +40,8 @@ const enlace: React.CSSProperties = { color: "var(--ink)", fontWeight: 600, text
 const sub: React.CSSProperties = { display: "block", fontSize: 11.5, color: "var(--muted)", marginTop: 2 };
 
 type Agrupar = "" | "productor" | "finca";
-export type FiltroRapido = "" | "galardonados" | "sin-finca" | "sin-lote";
+// V5.101 (owner, 2026-09-30): junto a «Sin finca» y «Sin lote», sus contrarios «Finca ✅» y «Lote ✅».
+export type FiltroRapido = "" | "galardonados" | "sin-finca" | "con-finca" | "sin-lote" | "con-lote";
 
 // ── V5.76 · las cuatro indicaciones del owner al ver la tabla (2026-09-24) ───
 // (1) «Nuevo lote (en nombre del productor)» se retiró: eso se hace con la sesión asistida.
@@ -69,6 +71,7 @@ export function KrTabla({
   filtroInicial,
   elementoInicial = "lotes",
   pasaporteInicial = "",
+  segmentosIniciales = [],
 }: {
   filas: KrFila[];
   temporadas: { id: string; label: string }[];
@@ -76,6 +79,8 @@ export function KrTabla({
   filtroInicial: FiltroRapido;
   elementoInicial?: Elemento;
   pasaporteInicial?: FiltroPasaporte;
+  /** V5.101: el estado del productor (`?segmento=marchitando,primiparos`), varios a la vez. */
+  segmentosIniciales?: ProducerSegment[];
 }) {
   const [vista, setVista] = useState<"tabla" | "mapa">(vistaInicial);
   const [elemento, setElemento] = useState<Elemento>(elementoInicial);
@@ -86,6 +91,9 @@ export function KrTabla({
   const [grado, setGrado] = useState("");
   const [circuito, setCircuito] = useState("");
   const [rapido, setRapido] = useState<FiltroRapido>(filtroInicial);
+  // V5.101 (owner, 2026-09-30): el estado del productor (Marchitando, Nuevos, Primíparos, Establecidos, Activos) era invisible
+  // como filtro; casillas, uno o varios a la vez. Vacío = todos.
+  const [segmentos, setSegmentos] = useState<Set<ProducerSegment>>(() => new Set(segmentosIniciales));
   const [rango, setRango] = useState<[number, number] | null>(null);
   const [agrupar, setAgrupar] = useState<Agrupar>("productor");
 
@@ -125,7 +133,10 @@ export function KrTabla({
       if (enRango && !(f.temporadaId && enRango.has(f.temporadaId))) return false;
       if (rapido === "galardonados" && !f.grado) return false;
       if (rapido === "sin-finca" && f.fincaId) return false;
+      if (rapido === "con-finca" && !f.fincaId) return false;
       if (rapido === "sin-lote" && f.loteId) return false;
+      if (rapido === "con-lote" && !f.loteId) return false;
+      if (segmentos.size > 0 && !segmentos.has(f.segmentoId)) return false;
       if (q) {
         const pajar = [f.productorNombre, f.productorCodigo, f.fincaNombre, f.fincaCodigo, f.fincaLugar, f.loteNombre, f.loteRef]
           .filter(Boolean)
@@ -135,7 +146,7 @@ export function KrTabla({
       }
       return true;
     });
-  }, [filas, elemento, pasaporte, texto, pais, depto, grado, circuito, rapido, rango, temporadas]);
+  }, [filas, elemento, pasaporte, texto, pais, depto, grado, circuito, rapido, segmentos, rango, temporadas]);
 
   // Al agrupar, las filas se ordenan por el grupo y cada una sabe si ABRE grupo (lleva la cabecera encima).
   const ordenadas = useMemo((): { fila: KrFila; cabecera: string | null }[] => {
@@ -218,7 +229,7 @@ export function KrTabla({
           onChange={(e) => {
             const v = e.target.value as Elemento;
             setElemento(v);
-            if (v === "fincas" && rapido === "sin-finca") setRapido("");
+            if (v === "fincas" && (rapido === "sin-finca" || rapido === "con-finca")) setRapido("");
           }}
           style={{ fontWeight: 700 }}
         >
@@ -262,10 +273,37 @@ export function KrTabla({
           <option value="finca">Por finca</option>
         </select>
       </div>
+      <div style={{ display: "flex", gap: "6px 14px", flexWrap: "wrap", alignItems: "center", marginBottom: 10 }} role="group" aria-label="Estado del productor">
+        <span style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)" }}>Estado del productor:</span>
+        {PRODUCER_SEGMENTS.map((sg) => (
+          <label key={sg.id} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={segmentos.has(sg.id)}
+              onChange={(e) =>
+                setSegmentos((prev) => {
+                  const next = new Set(prev);
+                  if (e.target.checked) next.add(sg.id);
+                  else next.delete(sg.id);
+                  return next;
+                })
+              }
+            />
+            {sg.label}
+          </label>
+        ))}
+        {segmentos.size > 0 && (
+          <button type="button" className="btn btn-sm" onClick={() => setSegmentos(new Set())}>
+            Todos
+          </button>
+        )}
+      </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 16 }}>
         {elemento === "lotes" && chip("galardonados", "Galardonados")}
         {elemento === "lotes" && chip("sin-finca", "Sin finca")}
+        {elemento === "lotes" && chip("con-finca", "Finca ✅")}
         {chip("sin-lote", "Sin lote")}
+        {chip("con-lote", "Lote ✅")}
         <span className={styles.meta} style={{ marginTop: 0 }}>
           {cuenta.productores} productores · {cuenta.fincas} fincas · {cuenta.lotes} lotes
         </span>
@@ -315,6 +353,7 @@ export function KrTabla({
                       <td style={td}>
                         <Link href={`/ocp/kr?productor=${f.productorId}`} style={enlace}>{f.productorNombre}</Link>
                         <span style={sub}>{[f.productorCodigo, f.gestion ? GESTION_CORTA[f.gestion] : null, f.segmento, f.departamento].filter(Boolean).join(" · ")}</span>
+                        {f.productorEmail && <span style={sub}>{f.productorEmail}</span>}
                       </td>
                       <td style={td}>
                         <Link href={`/ocp/kr?finca=${f.fincaId}`} style={enlace}>{f.fincaNombre}</Link>
@@ -337,6 +376,7 @@ export function KrTabla({
                     <td style={td}>
                       <Link href={`/ocp/kr?productor=${f.productorId}`} style={enlace}>{f.productorNombre}</Link>
                       <span style={sub}>{[f.productorCodigo, f.gestion ? GESTION_CORTA[f.gestion] : null, f.segmento, f.departamento].filter(Boolean).join(" · ")}</span>
+                      {f.productorEmail && <span style={sub}>{f.productorEmail}</span>}
                     </td>
                     <td style={td}>
                       {f.fincaId ? (

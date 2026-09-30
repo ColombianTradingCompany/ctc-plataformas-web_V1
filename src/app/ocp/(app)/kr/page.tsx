@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { cargarKr } from "./carga";
 import { KrTabla, type Elemento, type FiltroPasaporte, type FiltroRapido } from "./KrTabla";
+import { PRODUCER_SEGMENTS, type ProducerSegment } from "@/lib/bcp/producerSegments";
 import { AnclasViejas } from "./AnclasViejas";
 import { LoteSeccion } from "./LoteSeccion";
 import { FincaSeccion } from "./FincaSeccion";
@@ -25,10 +26,10 @@ export const dynamic = "force-dynamic";
 // tabla, son talones 308 hacia aquí (`rutasMovidas.ts`). Ninguna Server Action cambió.
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const FILTROS: FiltroRapido[] = ["galardonados", "sin-finca", "sin-lote"];
+const FILTROS: FiltroRapido[] = ["galardonados", "sin-finca", "con-finca", "sin-lote", "con-lote"];
 const PASAPORTES: FiltroPasaporte[] = ["con", "sin", "no_apta", "pendiente", "en_revision", "aprobada", "apta", "rechazada"];
 
-type Params = { lote?: string; finca?: string; productor?: string; vista?: string; filtro?: string; elemento?: string; pasaporte?: string };
+type Params = { lote?: string; finca?: string; productor?: string; vista?: string; filtro?: string; elemento?: string; pasaporte?: string; segmento?: string };
 
 export default async function KrPage({ searchParams }: { searchParams: Promise<Params> }) {
   const sp = await searchParams;
@@ -123,6 +124,10 @@ export default async function KrPage({ searchParams }: { searchParams: Promise<P
   const filtroInicial = (FILTROS as string[]).includes(sp.filtro ?? "") ? (sp.filtro as FiltroRapido) : "";
   const elementoInicial: Elemento = sp.elemento === "fincas" ? "fincas" : "lotes";
   const pasaporteInicial = (PASAPORTES as string[]).includes(sp.pasaporte ?? "") ? (sp.pasaporte as FiltroPasaporte) : "";
+  // V5.101: `?segmento=marchitando,primiparos` — ids de `PRODUCER_SEGMENTS`, los demás se ignoran.
+  const segmentosIniciales = (sp.segmento ?? "")
+    .split(",")
+    .filter((x): x is ProducerSegment => PRODUCER_SEGMENTS.some((sg) => sg.id === x));
 
   return (
     <div>
@@ -131,7 +136,9 @@ export default async function KrPage({ searchParams }: { searchParams: Promise<P
       <p className={styles.subtitle}>
         Una fila por lote, con su finca y su productor al lado, agrupadas por productor — y una fila propia para la finca que aún no
         tiene lote y el productor que aún no tiene finca, que son a los que hay que acompañar. Con <b>Ver fincas</b>, una fila por finca y
-        el filtro de Pasaporte. Cada celda abre la vista completa de lo que nombra; la pestaña <b>Mapa</b> pinta lo mismo que esté filtrado.
+        el filtro de Pasaporte. El estado del productor (Marchitando, Nuevos, Primíparos, Establecidos, Activos) se filtra por casillas, y
+        bajo su código va el correo con el que entra. Cada celda abre la vista completa de lo que nombra; la pestaña <b>Mapa</b> pinta lo
+        mismo que esté filtrado.
       </p>
 
       {!filas.length ? (
@@ -144,6 +151,7 @@ export default async function KrPage({ searchParams }: { searchParams: Promise<P
           filtroInicial={filtroInicial}
           elementoInicial={elementoInicial}
           pasaporteInicial={pasaporteInicial}
+          segmentosIniciales={segmentosIniciales}
         />
       )}
     </div>

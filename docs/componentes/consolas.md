@@ -112,7 +112,8 @@ owner desde `declararRuptura` · `descongelarCuenta`, V5.84), `buyer_profiles`,
 ## Guardianes
 
 `qa-rutas-consolas.mjs` (514 a la V5.92 — rail, talones, sin rutas viejas, compuerta de SU consola en `src/app` Y, desde la V5.56, en `src/lib`: (f-bis)) ·
-`qa-nav-check.mjs` · `qa-crm-interes-check.mjs` · `qa-crm-green-check.mjs` · `qa-boards-check.mjs` · `qa-docs-check.mjs` ·
+`qa-nav-check.mjs` · `qa-crm-interes-check.mjs` · `qa-crm-green-check.mjs` · `qa-boards-check.mjs` (desde la V5.101 también que `/ocp/kr`
+filtre por el estado del productor DE LA FUENTE y pinte su correo) · `qa-docs-check.mjs` ·
 `qa-evaluaciones-check.mjs` (51 — el veredicto Q-Grader, el vocabulario Pasaporte · Visa · EVA por las dos caras y, desde la V5.77,
 que el Club no existe y la Arena no toca el circuito; `qa-jornada-check` se retiró con la jornada) · `qa-ofertas-check.mjs` (36) · `qa-fichas-check.mjs`
 (31) · `qa-subastas-check.mjs` (30, lado OCP) · `qa-visa-check.mjs` (30) · `qa-consumo-check.mjs` (22 — las tarifas contra la tabla publicada, no contra el código) ·
@@ -310,7 +311,11 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   5 leads de prueba se eliminaron. `qa-centro-calidad` 65 → 95. **Sigue**: la fase 2 del informe (escala.ts consume `PuntoSca`,
   con la PVC fase 2), la calibración (≥ 30 lotes duales) y la decisión 6 (reanclar El Punto en CVA).
   También en la V5.76, las cuatro indicaciones del owner sobre `/ocp/kr`: sin «Nuevo lote», agrupada por productor, el mapa por
-  elemento, y «Ver fincas» con el filtro de Pasaporte por etapa.
+  elemento, y «Ver fincas» con el filtro de Pasaporte por etapa. **Y en la V5.101 (owner, 2026-09-30, al empezar a cargar productores
+  para la Etapa 2)**: los filtros rápidos **«Finca ✅» y «Lote ✅»** junto a «Sin finca» y «Sin lote»; **el correo del productor** bajo su
+  código y su estado; y **el estado del productor como filtro de casillas** (Marchitando · Nuevos · Primíparos · Establecidos · Activos,
+  uno o varios; `?segmento=a,b`), que hasta entonces solo se leía en la fila. `KrFila` lleva `segmentoId` y `productorEmail`;
+  `qa-boards` lo vigila.
 - **LAS TRES RUTAS DEL PROVEEDOR (owner, 2026-09-23)** — brief `briefs/consolas-rutas-del-proveedor.md`, con las siete
   respuestas del owner al final. **Primera tanda EJECUTADA en la V5.75**: **Asistencia a Proveedores** (`/ocp/asistencia` + botón
   en `/ocp/kr?productor=`: la sesión asistida, `src/lib/asistencia/actions.ts`), **Proveedor Desacoplado** (`/ocp/desacoplado`:

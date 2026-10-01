@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.125] — 2026-10-01 (commit pendiente)
+## [V5.125] — 2026-10-01 (commit 77cd1e4)
 
 - **Corregido**: en la EVA del lote, el panel **EUDR** decía «Sin definir» / «Pendiente» con la finca completa (el owner lo vio en un
   lote de Alto de Reinas): las fichas leían las columnas `eudr_*` del LOTE, que son legado desde que la debida diligencia vive en la

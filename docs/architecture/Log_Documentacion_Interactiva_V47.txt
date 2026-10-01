@@ -307,3 +307,8 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `kr/FincaPanel.tsx` (`general` en fichas: barra de área, Sí/No, faltantes en rojo), `kr/FincaSeccion.tsx` (altitud, historia,
   características, DANE, geometría, parcelas, certificaciones). Guardián: `qa-visa` +2.
 (commit: a016720)
+
+## [2026-10-01] V5.122 · Kaffetal Regal — el área del Cafetal 1 viaja con la finca (se perdía); los Totales se calculan solos
+- ANN `FincaModal.tsx` (`CafetalUnoDraft`; `ha`/`alt` derivados; Totales de solo lectura), `KaffetalExperience.tsx` (`saveFinca(f, cafetalUno)`
+  → `mirrorParcelaUno` sin exigir geometría). Guardián: `qa-visa` +3.
+(commit: pendiente)

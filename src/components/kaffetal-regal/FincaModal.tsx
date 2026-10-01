@@ -207,10 +207,14 @@ type ParcelaDraft = {
 type CertDraft = { id?: string; fincaId: string; scheme: string; certNumber: string; validFrom: string; validTo: string; holderNote: string };
 
 /** V5.102: el cuerpo del editor es de la página `FincaView` (editar) Y del pop-up `FincaModal` (registrar nueva). */
+/** V5.122: lo que el productor escribió del Cafetal 1 y viaja con el guardado de la finca. */
+export type CafetalUnoDraft = { nombre: string; areaHa: string; alturaMsnm: string; mayor4ha: boolean | null };
+
 export type FincaEditorProps = {
   finca: Finca | null;
   gi: GeneralInfo;
-  onSave: (f: Finca) => Promise<boolean>;
+  /** V5.122: con el Cafetal 1 (nombre, área, altura, «> 4 ha») — viaja con la finca y se espeja en su parcela. */
+  onSave: (f: Finca, cafetalUno?: CafetalUnoDraft) => Promise<boolean>;
   onRequestHelp: (f: Finca, text: string) => Promise<boolean>;
   onUploadPhoto: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
   onUploadVideo: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
@@ -268,24 +272,14 @@ export function FincaEditorBody({
   const [depto, setDepto] = useState(defaultDepto);
   const [hist, setHist] = useState(finca?.hist && finca.hist !== "—" ? finca.hist : "");
   const [carac, setCarac] = useState(finca?.carac && finca.carac !== "—" ? finca.carac : "");
-  const [ha, setHa] = useState(finca?.ha ?? "");
-  // Altura (msnm): el productor la trae del mapa con un botón (centro del
-  // polígono si lo hay; si no, el punto marcado) vía la Elevation API de
-  // Open-Meteo (sin clave, CORS abierto), o la escribe a mano. altFrom recuerda
-  // de dónde salió el último valor traído; altErr marca un fallo de consulta.
-  const [alt, setAlt] = useState(finca?.alt && finca.alt !== "—" ? finca.alt : "");
-  const [altFrom, setAltFrom] = useState<"polygon" | "point" | null>(null);
-  const [altBusy, setAltBusy] = useState(false);
+  // V5.122 (owner, 2026-10-01): los TOTALES de la finca (área, altura) ya no se teclean ni se traen con botón — se derivan de los
+  // cafetales (ver `ha` / `alt` más abajo). Lo guardado antes vale mientras ningún cafetal tenga área o altura.
+  const altGuardada = finca?.alt && finca.alt !== "—" ? finca.alt : "";
+  const haGuardada = finca?.ha && finca.ha !== "—" && Number(finca.ha.replace(",", ".")) > 0 ? finca.ha : "";
   // «Estoy aquí»: el GPS del dispositivo marcando el punto del cafetal.
   const [geoBusy, setGeoBusy] = useState(false);
   const [geoErr, setGeoErr] = useState<string | null>(null);
   const [geoPrecision, setGeoPrecision] = useState<number | null>(null);
-  const [altErr, setAltErr] = useState(false);
-  // Área (ha): mismo trato que la altura — se calcula del polígono dibujado con
-  // un botón explícito, nunca sola. areaFromPoly marca que el valor que se ve
-  // salió de la geometría (y deja de marcarlo en cuanto el productor lo edita,
-  // porque el área SEMBRADA puede ser menor que el predio delimitado).
-  const [areaFromPoly, setAreaFromPoly] = useState(false);
   const [saving, setSaving] = useState(false);
   // Centered "Datos de Finca Actualizados" confirmation that fades on its own.
   const [flash, setFlash] = useState(false);
@@ -365,11 +359,6 @@ export function FincaEditorBody({
     setEudr((d) => ({ ...d, ...patch }));
   }
 
-  // Altura (msnm): NO se auto-rellena. El productor la trae del mapa con un
-  // botón explícito (centro del polígono si lo hay; si no, el punto marcado) o
-  // la escribe a mano. refPoint es el punto que representa a la finca; si aún
-  // no hay ubicación registrada, el botón queda deshabilitado.
-  const refPoint = fincaReferencePoint(eudr.lat, eudr.lng, eudr.eudrPolygon);
 
   // ── «Estoy aquí»: el punto sale del GPS, no del pulso ─────────────────────
   // `enableHighAccuracy` porque esto es evidencia de geolocalización EUDR y la
@@ -407,19 +396,6 @@ export function FincaEditorBody({
     );
   }
 
-  async function pullAltitude() {
-    if (!refPoint || altBusy) return;
-    setAltBusy(true);
-    setAltErr(false);
-    const m = await lookupElevation(refPoint.point);
-    if (m != null) {
-      setAlt(String(m));
-      setAltFrom(refPoint.from);
-    } else {
-      setAltErr(true);
-    }
-    setAltBusy(false);
-  }
 
   // Approximate live preview only -- vereda/mun/depto come from the finca prop
   // (not the refs above, which don't trigger re-renders as the producer types),
@@ -442,11 +418,24 @@ export function FincaEditorBody({
   const extrasArea = Math.round(extrasAreas.reduce((s, n) => s + (isNaN(n) ? 0 : n), 0) * 100) / 100;
   const extrasSinArea = extrasAreas.filter((n) => isNaN(n)).length;
   const totalPolyArea = polyArea != null ? Math.round((polyArea + extrasArea) * 100) / 100 : null;
-  function pullArea() {
-    if (totalPolyArea == null) return;
-    setHa(String(totalPolyArea));
-    setAreaFromPoly(true);
-  }
+
+  // ── V5.65 · el Cafetal 1 como un cafetal más ──────────────────────────────
+  // Su GEOMETRÍA sigue siendo la de la finca (se espeja a la parcela 0 al guardar); nombre, área, altura y la
+  // declaración de «> 4 ha» viven en SU fila. V5.122: viajan con el guardado de la finca (`cafetalUno`), así que
+  // escribir 3 ha y pulsar Guardar Finca ya no los pierde (antes solo los guardaba el botón del cafetal).
+  const parcelaUno = parcelas.find((p) => p.position === 0);
+  const conValor = (v: string | undefined) => (v && v.trim() && Number(v.replace(",", ".")) > 0 ? v : "");
+  const [nombreUno, setNombreUno] = useState(parcelaUno?.name ?? "Cafetal 1");
+  const [areaUno, setAreaUno] = useState(conValor(parcelaUno?.areaHa) || conValor(finca?.ha && finca.ha !== "—" ? finca.ha : ""));
+  const [alturaUno, setAlturaUno] = useState(conValor(parcelaUno?.alturaMsnm) || conValor(finca?.alt && finca.alt !== "—" ? finca.alt : ""));
+  const [mayor4haUno, setMayor4haUno] = useState<boolean | null>(
+    parcelaUno?.mayor4ha ?? (finca ? exigePoligono(null, finca.ha !== "—" ? finca.ha : "") : null)
+  );
+  // V5.122 (owner): los TOTALES se calculan solos — el área es Cafetal 1 + cafetales adicionales; la altura, la del Cafetal 1.
+  const areaUnoNum = areaUno.trim() ? Number(areaUno.replace(",", ".")) : NaN;
+  const haTotalNum = isNaN(areaUnoNum) && extrasAreas.every((n) => isNaN(n)) ? NaN : Math.round(((isNaN(areaUnoNum) ? 0 : areaUnoNum) + extrasArea) * 100) / 100;
+  const ha = !isNaN(haTotalNum) && haTotalNum > 0 ? String(haTotalNum) : haGuardada;
+  const alt = alturaUno.trim() ? alturaUno : altGuardada;
 
   const previewFinca: Finca = {
     id: finca?.id ?? "",
@@ -472,7 +461,6 @@ export function FincaEditorBody({
   const haNum = Number(ha.replace(",", "."));
   // Con parcelas adicionales, el área de la parcela 1 es la suya propia (la
   // finca guarda el TOTAL); con una sola, el área de la finca es la de la parcela.
-  const parcelaUno = parcelas.find((p) => p.position === 0);
   const parcelaUnoArea =
     extraParcelas.length > 0 && parcelaUno?.areaHa.trim()
       ? Number(parcelaUno.areaHa.replace(",", "."))
@@ -492,10 +480,6 @@ export function FincaEditorBody({
     })),
   ];
   const eudrStatus = fincaEudrStatus(previewFinca, previewParcelas);
-  // El nombre editable de la parcela 1 (V5.64). Se siembra del valor guardado;
-  // `parcelaUno?.name` como clave del estado inicial no hace falta porque el
-  // cuerpo del modal se monta de cero cada vez que se abre.
-  const [nombreUno, setNombreUno] = useState(parcelaUno?.name ?? "Cafetal 1");
 
   // ── V5.64 · todas las parcelas en UN mapa ────────────────────────────────
   // El owner las quiere juntas: la que se edita en oro, las demás fijadas en
@@ -515,16 +499,6 @@ export function FincaEditorBody({
     },
     ...extraParcelas.map((p) => ({ id: p.id, nombre: p.name, lat: p.lat, lng: p.lng, polygon: p.polygon })),
   ];
-  // ── V5.65 · el Cafetal 1 como un cafetal más ──────────────────────────────
-  // Su GEOMETRÍA sigue siendo la de la finca (se espeja a la parcela 0 al
-  // guardar, para que dossier, KML y mapas legacy no se enteren de nada); lo
-  // demás —nombre, área, altura y la declaración de «> 4 ha»— vive en SU fila y
-  // se guarda aparte, igual que los cafetales 2..N.
-  const [areaUno, setAreaUno] = useState(parcelaUno?.areaHa ?? (finca?.ha && finca.ha !== "—" ? finca.ha : ""));
-  const [alturaUno, setAlturaUno] = useState(parcelaUno?.alturaMsnm ?? (finca?.alt && finca.alt !== "—" ? finca.alt : ""));
-  const [mayor4haUno, setMayor4haUno] = useState<boolean | null>(
-    parcelaUno?.mayor4ha ?? (finca ? exigePoligono(null, finca.ha !== "—" ? finca.ha : "") : null)
-  );
   const [guardandoUno, setGuardandoUno] = useState(false);
   // Con la finca aprobada la geometría queda congelada (lo hace
   // `guard_finca_protected_columns`): se enseña, no se edita, y los cambios van
@@ -619,7 +593,7 @@ export function FincaEditorBody({
       ...eudr,
       // Derivado de la pestaña 4, nunca tecleado (ver certSchemeSummary).
       eudrCertScheme: certSchemeSummary,
-    });
+    }, { nombre: nombreUno, areaHa: areaUno, alturaMsnm: alturaUno, mayor4ha: mayor4haUno });
     setSaving(false);
     // El autosave pasa showFlash=false: el overlay centrado "Datos de Finca
     // Actualizados" cada pocos segundos de tecleo sería insoportable.
@@ -637,7 +611,7 @@ export function FincaEditorBody({
   // ref, y el flush-al-desmontar guarda valores reales en vez de refs sueltas.
   const { status: autosaveStatus } = useAutosave({
     enabled: !!finca?.id,
-    snapshot: { name, vereda, mun, depto, hist, carac, ha, alt, eudr, certSchemeSummary },
+    snapshot: { name, vereda, mun, depto, hist, carac, ha, alt, eudr, certSchemeSummary, nombreUno, areaUno, alturaUno, mayor4haUno },
     save: () => save(false),
   });
 
@@ -963,99 +937,30 @@ export function FincaEditorBody({
               son el TOTAL del predio, no los de un cafetal. Se dejan editables
               a mano —el área sembrada puede ser menor que la suma de linderos— y
               con los mismos botones de siempre para traerlos del mapa. */}
-          <p className={styles.totalesTitulo}>Totales de la finca</p>
+          <p className={styles.totalesTitulo}>
+            Totales de la finca <small style={{ fontWeight: 400, color: "var(--muted)" }}>· se calculan solos a partir de sus cafetales</small>
+          </p>
+          {/* V5.122 (owner): sin campos ni botones — el área es la suma de los cafetales y la altura es la del Cafetal 1. */}
           <div className={styles.grid} style={{ marginBottom: 4 }}>
             <div>
               <label>
                 Área en café de TODA la finca (ha)
-                <FieldInfo text="Superficie total sembrada en café del predio, sumando todos sus cafetales. El área de CADA cafetal se pide en su propio bloque, arriba. Dibuje el polígono en el mapa de abajo y tóquele «Calcular del polígono» para traerla, o escríbala a mano: el área SEMBRADA puede ser menor que el predio delimitado. A partir de 4 ha el EUDR exige el polígono, no basta el punto." />
+                <FieldInfo text="La suma del área del Cafetal 1 y de los cafetales adicionales. Cada área se escribe en su cafetal: con 4 ha o menos, a mano; con más de 4 ha, el polígono la mide. El área SEMBRADA puede ser menor que el predio delimitado." />
               </label>
-              <div className={styles.fieldRow}>
-                <input
-                  value={ha}
-                  onChange={(e) => {
-                    setHa(e.target.value);
-                    setAreaFromPoly(false); // editada a mano ⇒ ya no viene del polígono
-                  }}
-                  type="number"
-                  step="0.1"
-                  placeholder="3.5"
-                />
-                <button
-                  type="button"
-                  className="btn btn-sm"
-                  onClick={pullArea}
-                  disabled={totalPolyArea == null}
-                  title={
-                    totalPolyArea != null
-                      ? extraParcelas.length > 0
-                        ? "Reescribir el campo con el total: polígono del Cafetal 1 + cafetales adicionales"
-                        : "Reescribir el campo con el área del polígono dibujado en el mapa"
-                      : needsPolygon
-                        ? "Termine el polígono en el mapa de abajo para poder calcularla"
-                        : "Escríbala a mano — con más de 4 ha el mapa le pedirá el polígono y podrá calcularla de ahí"
-                  }
-                >
-                  Calcular del polígono 📐
-                </button>
-              </div>
+              <input value={ha} readOnly placeholder="—" aria-label="Área total calculada" />
               <p style={{ fontSize: 11, color: "var(--muted)", margin: "3px 0 0" }}>
-                {/* El área del polígono solo se puede traer cuando el polígono
-                    está TERMINADO: mientras se dibuja, la forma ya se ve en el
-                    mapa pero aún no es la geometría de la finca. Decirlo aquí
-                    evita el «no funciona» de tocar un botón deshabilitado. */}
-                {totalPolyArea == null
-                  ? needsPolygon
-                    ? "Dibuje el polígono en el mapa y toque «Terminar polígono» para poder calcularla, o escríbala a mano."
-                    : "Escríbala a mano. Con más de 4 ha, el mapa le pedirá delimitar el polígono y podrá calcularla de ahí."
-                  : areaFromPoly
-                    ? extraParcelas.length > 0
-                      ? `Calculada: Cafetal 1 (${polyArea} ha del polígono) + ${extraParcelas.length} cafetal(es) adicional(es) (${extrasArea} ha)${extrasSinArea > 0 ? ` — ${extrasSinArea} sin área definida, no incluido(s)` : ""}. Ajústela si sembró menos.`
-                      : `Calculada del polígono (${eudr.eudrPolygon?.length ?? 0} vértices). Ajústela si sembró menos.`
-                    : extraParcelas.length > 0
-                      ? `El total medido es ${totalPolyArea} ha (polígono del Cafetal 1 + cafetales adicionales). Toque «Calcular del polígono» para usarla.`
-                      : `El polígono dibujado mide ${polyArea} ha. Toque «Calcular del polígono» para usarla.`}
+                {ha
+                  ? `Cafetal 1: ${areaUno.trim() || "sin área"}${extraParcelas.length ? ` + ${extraParcelas.length} adicional(es) (${extrasArea} ha${extrasSinArea ? `, ${extrasSinArea} sin área` : ""})` : ""}${polyArea != null ? ` · el polígono mide ${polyArea} ha` : ""}${totalPolyArea != null && String(totalPolyArea) !== ha ? ` · medido ${totalPolyArea} ha` : ""}`
+                  : "Escriba el área del Cafetal 1 en su bloque (a mano si es de 4 ha o menos)."}
               </p>
             </div>
             <div>
               <label>
                 Altura de la finca (msnm)
-                <FieldInfo text="La altura de referencia del predio. La de CADA cafetal se pide en su propio bloque, arriba. Tráigala del mapa con el botón «Traer del mapa»: usa el centro del polígono cuando lo hay o el punto marcado. También puede escribirla a mano si conoce el dato exacto." />
+                <FieldInfo text="La del Cafetal 1: tráigala del mapa en su bloque («Traer del mapa») o escríbala allí." />
               </label>
-              <div className={styles.fieldRow}>
-                <input
-                  value={alt}
-                  onChange={(e) => {
-                    setAlt(e.target.value);
-                    setAltFrom(null); // editada a mano ⇒ ya no viene del mapa
-                    setAltErr(false);
-                  }}
-                  type="number"
-                  placeholder="1680"
-                />
-                <button
-                  type="button"
-                  className="btn btn-sm"
-                  onClick={pullAltitude}
-                  disabled={!refPoint || altBusy}
-                  title={refPoint ? "Traer la altura del punto/polígono registrado en el mapa" : "Marque primero la ubicación en el mapa de abajo"}
-                >
-                  {altBusy ? "Calculando…" : "Traer del mapa ⛰"}
-                </button>
-              </div>
-              <p style={{ fontSize: 11, color: altErr ? "var(--red)" : "var(--muted)", margin: "3px 0 0" }}>
-                {altBusy
-                  ? "Consultando la altura del terreno…"
-                  : altErr
-                    ? "No se pudo obtener la altura; escríbala a mano."
-                    : altFrom === "polygon"
-                      ? "Traída del centro del polígono."
-                      : altFrom === "point"
-                        ? "Traída del punto marcado."
-                        : !refPoint
-                          ? "Marque la ubicación en el mapa de abajo para poder traerla, o escríbala a mano."
-                          : "Toque «Traer del mapa» o escríbala a mano."}
-              </p>
+              <input value={alt} readOnly placeholder="—" aria-label="Altura calculada" />
+              <p style={{ fontSize: 11, color: "var(--muted)", margin: "3px 0 0" }}>{alt ? "Tomada del Cafetal 1." : "Traiga o escriba la altura en el bloque del Cafetal 1."}</p>
             </div>
           </div>
 

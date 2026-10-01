@@ -19,6 +19,17 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.122] — 2026-10-01 (commit pendiente)
+
+- **Corregido**: en Kaffetal Regal, el área escrita a mano del Cafetal 1 (obligatoria con 4 ha o menos) **se perdía** al guardar la
+  finca (el owner lo topó en `CTC-F-54657EF2` con 3 ha): solo la guardaba el botón del cafetal, y el espejo de la parcela no escribía
+  nada sin geometría. Ahora el nombre, el área, la altura y la respuesta «> 4 ha» del Cafetal 1 **viajan con Guardar Finca** y el
+  autosave, y el espejo los escribe aunque aún no haya punto ni polígono.
+- **Cambiado**: los **Totales de la finca se calculan solos** (owner): el área es la suma de los cafetales y la altura es la del
+  Cafetal 1; desaparecen los campos editables y los botones «Calcular del polígono» y «Traer del mapa» del total.
+- **Datos**: `Alto de Reinas` (CTC-F-54657EF2) quedó con 3 ha en su Cafetal 1 y en la finca, como el owner lo registró.
+- **Docs**: charter `kaffetal-regal`. `qa-visa` 51 → 54.
+
 ## [V5.121] — 2026-10-01 (commit a016720)
 
 - **Cambiado**: en la vista de la finca del OCP, la pestaña **General** con el mismo tratamiento visual (owner, 2026-10-01): lo que le

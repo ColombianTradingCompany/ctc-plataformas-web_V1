@@ -239,6 +239,15 @@ const completa = (extra = {}) => ({
   check("y la sección le pasa altitud, DANE, geometría, parcelas, certificaciones y los faltantes", seccion.includes("altitude_m, history_text, characteristics_text") && seccion.includes("faltantes: finca.status === \"approved\" ? [] : gaps") && seccion.includes("certificacionesCorroboradas:"));
 }
 
+// ── V5.122 (owner, 2026-10-01) · el área del Cafetal 1 viaja con la finca; los Totales se calculan solos ──
+{
+  const modal = lee("src/components/kaffetal-regal/FincaModal.tsx");
+  const ke = lee("src/components/kaffetal-regal/KaffetalExperience.tsx");
+  check("Guardar Finca lleva el Cafetal 1 (nombre, área, altura, > 4 ha) y el espejo lo escribe", modal.includes("{ nombre: nombreUno, areaHa: areaUno, alturaMsnm: alturaUno, mayor4ha: mayor4haUno }") && ke.includes("mirrorParcelaUno(editing.id, f, cafetalUno)") && ke.includes("const areaHa = areaTexto"));
+  check("el espejo no exige geometría para guardar un área escrita a mano", ke.includes("if (!hasPoint && !hasPoly && !areaTexto && !alturaTexto && cafetal?.mayor4ha == null) return;"));
+  check("los Totales son derivados y de solo lectura (sin «Calcular del polígono» ni «Traer del mapa» en el total)", modal.includes("const ha = !isNaN(haTotalNum)") && modal.includes("const alt = alturaUno.trim() ? alturaUno : altGuardada;") && modal.includes('<input value={ha} readOnly') && modal.includes('<input value={alt} readOnly') && !modal.includes("function pullArea()") && !modal.includes("async function pullAltitude()"));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-visa: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("   " + f);

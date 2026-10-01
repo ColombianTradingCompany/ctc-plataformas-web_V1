@@ -19,6 +19,7 @@ import { AppDashboard } from "./AppDashboard";
 import { LEGACY_MODULE_TO_DRILL, LEGACY_MODULE_TO_TAB, esModuloLegado, type PanelDrill, type PanelTab } from "./panel/panelTabs";
 import { FichaView, type FichaSaveUpdate } from "./FichaView";
 import { FincaView } from "./FincaView";
+import type { CafetalUnoDraft } from "./FincaModal";
 import { ConfirmarBorradoModal, type BorradoPendiente } from "./ConfirmarBorradoModal";
 import { InfoView } from "./InfoView";
 import { SolicitudRevisionModal } from "./SolicitudRevisionModal";
@@ -980,7 +981,7 @@ function Experience() {
     return true;
   }
 
-  async function saveFinca(f: Finca): Promise<boolean> {
+  async function saveFinca(f: Finca, cafetalUno?: CafetalUnoDraft): Promise<boolean> {
     if (!userId) return false;
     const hectares = f.ha !== "—" && f.ha.trim() ? Number(f.ha.replace(",", ".")) : 0;
     const editing = editingFincaIdx >= 0 ? fincas[editingFincaIdx] : null;
@@ -1122,7 +1123,7 @@ function Experience() {
         )
       );
       // F1: el mapa de la finca ES la parcela 1 — espejar su geometría.
-      void mirrorParcelaUno(editing.id, f);
+      void mirrorParcelaUno(editing.id, f, cafetalUno);
       // Stay in the modal on an edit -- the floating save button + the centered
       // "Datos de Finca Actualizados" flash confirm the save, so the producer
       // can keep refining. (Creating a new finca still closes below.)
@@ -1134,7 +1135,7 @@ function Experience() {
       return false;
     }
     setFincas((prev) => [...prev, dbFincaToFinca(data as FincaRow)]);
-    void mirrorParcelaUno((data as FincaRow).id, f);
+    void mirrorParcelaUno((data as FincaRow).id, f, cafetalUno);
     setView(fincaOrigen);
     showToast(`Finca "${f.name}" guardada ✓ · ya puede asociarle cafés`);
     return true;
@@ -1648,21 +1649,36 @@ function Experience() {
    *  (`requires_polygon` era una columna generada: ninguna escritura entraba), así que las fincas nuevas se
    *  quedaban sin Cafetal 1, la respuesta «> 4 ha» no se guardaba y el productor veía «desaparecer» su
    *  polígono. Un espejo que no puede escribir lo DICE (regla de la casa: nada falla en silencio). */
-  async function mirrorParcelaUno(fincaId: string, f: Finca) {
+  async function mirrorParcelaUno(fincaId: string, f: Finca, cafetal?: CafetalUnoDraft) {
     if (f.status === "approved") return; // congelada — el guard la rechazaría igual
     const hasPoint = f.lat.trim() !== "" && f.lng.trim() !== "";
     const hasPoly = (f.eudrPolygon?.length ?? 0) >= 3;
-    if (!hasPoint && !hasPoly) return;
+    // V5.122 (owner): el área, la altura y la respuesta «> 4 ha» del Cafetal 1 viajan con la finca — se espejan aunque
+    // todavía no haya geometría (antes, sin punto ni polígono, el área escrita a mano se perdía).
+    const areaTexto = cafetal?.areaHa?.trim() ? cafetal.areaHa : null;
+    const alturaTexto = cafetal?.alturaMsnm?.trim() ? cafetal.alturaMsnm : null;
+    if (!hasPoint && !hasPoly && !areaTexto && !alturaTexto && cafetal?.mayor4ha == null) return;
     const own = parcelas.filter((p) => p.fincaId === fincaId);
     const uno = own.find((p) => p.position === 0);
     // Con parcelas adicionales, el área de la parcela 1 es suya propia (no el
     // total de la finca); con una sola, el área de la finca ES la de la parcela.
-    const areaHa =
-      own.length > 1 && uno?.areaHa ? Number(uno.areaHa.replace(",", ".")) : f.ha !== "—" && f.ha.trim() ? Number(f.ha.replace(",", ".")) : null;
-    const alturaUno = uno?.alturaMsnm?.trim() ? Number(uno.alturaMsnm.replace(",", ".")) : f.alt !== "—" && f.alt.trim() ? Number(f.alt.replace(",", ".")) : null;
+    const areaHa = areaTexto
+      ? Number(areaTexto.replace(",", "."))
+      : own.length > 1 && uno?.areaHa
+        ? Number(uno.areaHa.replace(",", "."))
+        : f.ha !== "—" && f.ha.trim()
+          ? Number(f.ha.replace(",", "."))
+          : null;
+    const alturaUno = alturaTexto
+      ? Number(alturaTexto.replace(",", "."))
+      : uno?.alturaMsnm?.trim()
+        ? Number(uno.alturaMsnm.replace(",", "."))
+        : f.alt !== "—" && f.alt.trim()
+          ? Number(f.alt.replace(",", "."))
+          : null;
     const payload = {
       finca_id: fincaId,
-      name: uno?.name ?? "Cafetal 1",
+      name: cafetal?.nombre?.trim() || uno?.name || "Cafetal 1",
       area_ha: areaHa != null && !isNaN(areaHa) ? areaHa : null,
       lat: hasPoint ? Number(f.lat.replace(",", ".")) : null,
       lng: hasPoint ? Number(f.lng.replace(",", ".")) : null,
@@ -1670,7 +1686,7 @@ function Experience() {
       // V5.65: el espejo NO inventa — conserva lo que la parcela 1 ya tenía, y
       // solo cae a la altura de la finca cuando la parcela aún no tiene la suya.
       altitude_masl: alturaUno != null && !isNaN(alturaUno) ? Math.round(alturaUno) : null,
-      requires_polygon: uno?.mayor4ha ?? f.requiresEudrPolygon ?? null,
+      requires_polygon: cafetal?.mayor4ha ?? uno?.mayor4ha ?? f.requiresEudrPolygon ?? null,
       position: 0,
       updated_at: new Date().toISOString(),
     };

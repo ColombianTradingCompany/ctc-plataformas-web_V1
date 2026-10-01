@@ -92,7 +92,9 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 - **Pasaporte = finca · Visa = lote · EVA = Evaluación de Muestras en Origen** (owner, 2026-09-20). Una palabra, un
   objeto, en toda la red. La definición está en la cabecera de `src/lib/eudr.ts`; `qa-evaluaciones` la vigila.
 - **Un cafetal se edita en UN solo sitio**: `CafetalEditor` lo montan tanto la Parcela 1 como las 2..N. Y la
-  pregunta «¿mayor a 4 ha?» se DECLARA antes del mapa — nunca se deduce del área, que es un dato posterior. **Y se GUARDA**
+  pregunta «¿mayor a 4 ha?» se DECLARA antes del mapa — nunca se deduce del área, que es un dato posterior. **V5.122** (owner,
+  2026-10-01): el área, la altura y esa respuesta del Cafetal 1 **viajan con Guardar Finca** (`cafetalUno` → `mirrorParcelaUno`), y los
+  **Totales de la finca se calculan solos** (área = Cafetal 1 + adicionales; altura = la del Cafetal 1): sin campos ni botones. **Y se GUARDA**
   (`finca_parcelas.requires_polygon`): la V5.65 la declaró pero dejó la columna generada, y del 2026-09-20 al 30 ninguna
   escritura de parcelas entró — el espejo de la parcela 1 callaba y las fincas nuevas quedaban sin Cafetal 1 (V5.110, acta
   `2026-09-30_parcelas_requires_polygon_es_declaracion.sql`). **Un espejo que no puede escribir lo dice**; `qa-visa` lo vigila.

@@ -10,6 +10,7 @@ import { uploadKaffetalMediaWithProgress } from "@/lib/kaffetalMedia";
 import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import { LOCAL_INFRA, fincaCode } from "@/components/kaffetal-regal/data";
 import { CERT_REGISTRY } from "@/lib/certRegistry";
+import { DEPARTAMENTOS_DE_COLOMBIA, PAISES_FUERA_DE_COLOMBIA } from "@/lib/geo/departamentos";
 import { ORIGIN_CERTS, INTL_CERTS } from "@/components/kaffetal-regal/ficha/fichaData";
 import { corroborarCertificado, pedirEvidenciaCertificado, reabrirCertificado, retirarCertificado } from "../certificadosActions";
 import { ESTADO_CERTIFICACION_LABEL, MAX_RECORDATORIOS, type EstadoCertificacion } from "@/lib/registro/reglas";
@@ -84,6 +85,8 @@ export type FincaEudrValues = {
   vereda: string | null;
   municipio: string | null;
   departamento: string | null;
+  /** V5.127: país de la finca fuera de Colombia; null = Colombia. */
+  pais: string | null;
   altitude_m: number | null;
   history_text: string | null;
   characteristics_text: string | null;
@@ -656,7 +659,24 @@ export function FincaEudrEditor({
             </div>
             <div className={styles.field}>
               <label>Departamento</label>
-              <input name="departamento" defaultValue={values.departamento ?? ""} />
+              <input name="departamento" defaultValue={values.departamento ?? ""} list="deptos-de-colombia" />
+              <datalist id="deptos-de-colombia">
+                {DEPARTAMENTOS_DE_COLOMBIA.map((d) => (
+                  <option key={d} value={d} />
+                ))}
+              </datalist>
+            </div>
+            {/* V5.127 (owner): «Fuera de Colombia». Con un país, la acción guarda la finca SIN departamento. */}
+            <div className={styles.field}>
+              <label>País</label>
+              <select name="pais" defaultValue={values.pais ?? ""}>
+                <option value="">Colombia</option>
+                {PAISES_FUERA_DE_COLOMBIA.map((p) => (
+                  <option key={p} value={p}>
+                    {p} · fuera de Colombia
+                  </option>
+                ))}
+              </select>
             </div>
             <div className={styles.field}>
               <label>Altura (msnm)</label>

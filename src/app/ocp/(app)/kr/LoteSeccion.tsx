@@ -155,11 +155,11 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
   const [{ data: contribRowsRaw }, { data: fincaCertRowsRaw }] = await Promise.all([
     service
       .from("lot_contributions")
-      .select("lot_id, weight_kg, fincas(id, name, municipio, departamento)")
+      .select("lot_id, weight_kg, fincas(id, name, municipio, departamento, pais)")
       .in("lot_id", lotRows.map((l) => l.id)),
     service.from("finca_certificates").select("finca_id, scheme, cert_number, valid_from, valid_to, verified_by_ctc"),
   ]);
-  type ContribRowJoin = { lot_id: string; weight_kg: number | string | null; fincas: { id: string; name: string; municipio: string | null; departamento: string | null } | { id: string; name: string; municipio: string | null; departamento: string | null }[] | null };
+  type ContribRowJoin = { lot_id: string; weight_kg: number | string | null; fincas: { id: string; name: string; municipio: string | null; departamento: string | null; pais: string | null } | { id: string; name: string; municipio: string | null; departamento: string | null; pais: string | null }[] | null };
   const contribsByLot = new Map<string, ContributionInput[]>();
   for (const r of ((contribRowsRaw as ContribRowJoin[] | null) ?? [])) {
     const f = Array.isArray(r.fincas) ? r.fincas[0] : r.fincas;
@@ -171,7 +171,7 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
       weightKg: r.weight_kg != null ? Number(r.weight_kg) : null,
       municipio: f.municipio ?? "",
       departamento: f.departamento ?? "",
-      pais: "Colombia",
+      pais: f.pais || "Colombia",
     });
     contribsByLot.set(r.lot_id, list);
   }

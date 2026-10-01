@@ -8,7 +8,7 @@ import { dossierParcelasAndCerts } from "@/lib/dossierExtras";
 
 type CommRow = { id: string; note: string; created_at: string; author_role: string };
 
-const DOSSIER_COLUMNS = `id, name, producer_id, status, vereda, municipio, departamento, hectares, eudr_lat, eudr_lng, eudr_polygon_geojson,
+const DOSSIER_COLUMNS = `id, name, producer_id, status, vereda, municipio, departamento, pais, hectares, eudr_lat, eudr_lng, eudr_polygon_geojson,
   eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types,
   eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_legal_docs_asset_id, eudr_legal_docs_filename,
   eudr_sustainability_tags, eudr_sustainability_notes, eudr_evidence_files, eudr_sustainability_files, eudr_cert_shared, eudr_local_infra,

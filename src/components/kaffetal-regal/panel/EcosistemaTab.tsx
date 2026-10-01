@@ -58,7 +58,7 @@ export function EcosistemaTab({
       const fd = new FormData(form);
       const fincaName = String(fd.get("finca") ?? "");
       const finca = fincas.find((f) => f.name === fincaName);
-      const ubicacion = finca ? `${finca.mun}, ${finca.depto}` : "";
+      const ubicacion = finca ? `${finca.mun}, ${finca.pais || finca.depto}` : "";
       const fields: Record<string, unknown> =
         pillar === "tech"
           ? { finca: fincaName, ubicacion, interes: fd.getAll("interes").map(String) }

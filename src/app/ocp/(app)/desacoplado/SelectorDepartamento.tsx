@@ -1,18 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { DEP_MUNI } from "@/components/kaffetal-regal/ficha/fichaData";
+import { DEPARTAMENTOS_DE_COLOMBIA } from "@/lib/geo/departamentos";
 import styles from "@/components/panel/shared.module.css";
 
 // ── V5.111 (owner, 2026-09-30): el departamento del Proveedor Desacoplado se elige de un selector, con «Otro…» que abre un
-// campo libre. La lista es la MISMA que usa el productor en su Información general (`DEP_MUNI`, sin «Multi-Origin»), así el
+// campo libre. La lista es la MISMA que usa el productor en su Información general (`DEPARTAMENTOS_DE_COLOMBIA`; desde la V5.127, los 32 departamentos y Bogotá D.C.), así el
 // OCP y Kaffetal Regal escriben el departamento con la misma ortografía y los filtros de `/ocp/kr` lo agrupan bien.
 // El formulario manda `department` (el selector) y `department_otro` (el texto); `crearProveedorDesacoplado` resuelve.
 
 export const OTRO = "__otro__";
-const DEPARTAMENTOS = Object.keys(DEP_MUNI)
-  .filter((d) => d !== "Multi-Origin")
-  .sort((a, b) => a.localeCompare(b, "es-CO"));
+const DEPARTAMENTOS = DEPARTAMENTOS_DE_COLOMBIA;
 
 export function SelectorDepartamento() {
   const [valor, setValor] = useState("");

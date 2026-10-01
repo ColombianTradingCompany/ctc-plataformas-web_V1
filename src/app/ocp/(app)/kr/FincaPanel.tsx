@@ -32,6 +32,7 @@ export type FincaPanelData = {
     vereda: string | null;
     municipio: string | null;
     departamento: string | null;
+    pais: string | null;
     hectares: string | number | null;
     altitud: number | null;
     dane: { code: string; mun: string; dep: string } | null;
@@ -159,8 +160,8 @@ export function FincaPanel({
                 )}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 6 }}>
                   {ficha("Vereda", texto(g.vereda))}
-                  {ficha("Municipio · departamento", texto([g.municipio, g.departamento].filter(Boolean).join(", ") || null))}
-                  {ficha("Código DANE", g.dane ? <b style={{ color: "var(--ink)", fontSize: 13 }}><span className="mono">{g.dane.code}</span> · {g.dane.mun}, {g.dane.dep}</b> : <span className={`${styles.badge} ${styles.badgeBad}`}>Sin coincidencia · verifique municipio/departamento</span>)}
+                  {ficha(g.pais ? "Municipio · país" : "Municipio · departamento", texto([g.municipio, g.pais || g.departamento].filter(Boolean).join(", ") || null))}
+                  {ficha("Código DANE", g.dane ? <b style={{ color: "var(--ink)", fontSize: 13 }}><span className="mono">{g.dane.code}</span> · {g.dane.mun}, {g.dane.dep}</b> : g.pais ? <span style={{ color: "var(--muted)", fontSize: 13 }}>No aplica · fuera de Colombia</span> : <span className={`${styles.badge} ${styles.badgeBad}`}>Sin coincidencia · verifique municipio/departamento</span>)}
                   {ficha("Altitud", g.altitud != null ? <b style={{ color: "var(--ink)", fontSize: 13 }}>{g.altitud} msnm</b> : <span className={`${styles.badge} ${styles.badgeBad}`}>Sin definir</span>)}
                   {ficha("Punto marcado", <SiNo v={g.tienePunto} />)}
                   {ficha(g.requierePoligono ? "Polígono (exigido: > 4 ha)" : "Polígono (opcional: ≤ 4 ha)", g.requierePoligono ? <SiNo v={g.tienePoligono} /> : <span className={`${styles.badge} ${g.tienePoligono ? styles.badgeGood : ""}`}>{g.tienePoligono ? "Sí" : "No"}</span>)}

@@ -29,6 +29,7 @@ type FincaRow = {
   vereda: string | null;
   municipio: string | null;
   departamento: string | null;
+  pais: string | null;
   hectares: string | number | null;
   altitude_m: number | null;
   history_text: string | null;
@@ -132,7 +133,7 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
     // A single literal string (not runtime-concatenated) -- see the note on
     // the lots query in ../lotes/page.tsx for why that distinction matters.
     .select(
-      `id, name, producer_id, status, vereda, municipio, departamento, hectares, altitude_m, history_text, characteristics_text, profile_photo_asset_id, video_asset_id,
+      `id, name, producer_id, status, vereda, municipio, departamento, pais, hectares, altitude_m, history_text, characteristics_text, profile_photo_asset_id, video_asset_id,
        requires_eudr_polygon, eudr_polygon_geojson, eudr_lat, eudr_lng,
        eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types,
        eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_legal_docs_asset_id, eudr_legal_docs_filename,
@@ -247,7 +248,8 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
                   }
                   const fincaComms = commsByFinca.get(finca.id) ?? [];
                   const fincaLots = lotsByFinca.get(finca.id) ?? [];
-                  const dane = daneCodeFor(finca.departamento, finca.municipio);
+                  // V5.127: el DANE es de Colombia — una finca «Fuera de Colombia» no tiene código (ni es un fallo que le falte).
+                  const dane = finca.pais ? null : daneCodeFor(finca.departamento, finca.municipio);
 
                   return (
                     <div>
@@ -256,10 +258,12 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
                           code: fincaCode(finca.id),
                           photoUrl: finca.profile_photo_asset_id ? signedUrls.get(finca.profile_photo_asset_id) ?? null : null,
                           videoUrl: finca.video_asset_id ? signedUrls.get(finca.video_asset_id) ?? null : null,
-                          locationLine: `${finca.municipio}, ${finca.departamento} · ${finca.hectares} ha${finca.requires_eudr_polygon ? " · requiere polígono EUDR" : ""}`,
+                          locationLine: `${finca.municipio}, ${finca.pais || finca.departamento} · ${finca.hectares} ha${finca.requires_eudr_polygon ? " · requiere polígono EUDR" : ""}`,
                           daneLine: dane
                             ? `DANE: ${dane.code} · ${dane.mun}, ${dane.dep} (depto ${dane.depCode})`
-                            : "DANE: sin coincidencia — verifique municipio/departamento",
+                            : finca.pais
+                              ? "DANE: no aplica — finca fuera de Colombia"
+                              : "DANE: sin coincidencia — verifique municipio/departamento",
                           lotes: fincaLots.map((l): FincaLote => ({
                             id: l.id,
                             name: l.name,
@@ -279,6 +283,7 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
                             vereda: finca.vereda,
                             municipio: finca.municipio,
                             departamento: finca.departamento,
+                            pais: finca.pais,
                             hectares: finca.hectares,
                             altitud: finca.altitude_m,
                             dane: dane ? { code: dane.code, mun: dane.mun, dep: dane.dep } : null,

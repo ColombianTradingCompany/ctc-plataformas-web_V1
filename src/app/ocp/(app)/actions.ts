@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrDeclaracion, MAX_CHEQUEO_FILES, parcelaGeoOk, parcelasGeoComplete, type FincaEudrFields } from "@/lib/eudr";
+import { PAISES_FUERA_DE_COLOMBIA } from "@/lib/geo/departamentos";
 import { deriveArchetype, composicionDeVariedades, deriveClaims, CUSTODY_MODEL, type ContributionInput } from "@/lib/lotComposition";
 import { deriveCertSchemes } from "@/components/kaffetal-regal/ficha/fichaData";
 import { lotInscriptionSettled } from "@/lib/arena/inscriptions";
@@ -255,17 +256,17 @@ export async function registerLotDds(
   }
 
   // Origen por aportes (fallback a la finca primaria para lotes pre-F2).
-  type CJoin = { weight_kg: number | string | null; fincas: { id: string; name: string; municipio: string | null; departamento: string | null } | { id: string; name: string; municipio: string | null; departamento: string | null }[] | null };
+  type CJoin = { weight_kg: number | string | null; fincas: { id: string; name: string; municipio: string | null; departamento: string | null; pais: string | null } | { id: string; name: string; municipio: string | null; departamento: string | null; pais: string | null }[] | null };
   const { data: contribRaw } = await service
     .from("lot_contributions")
-    .select("weight_kg, fincas(id, name, municipio, departamento)")
+    .select("weight_kg, fincas(id, name, municipio, departamento, pais)")
     .eq("lot_id", lotId);
-  type FincaMini = { id: string; name: string; municipio: string | null; departamento: string | null };
+  type FincaMini = { id: string; name: string; municipio: string | null; departamento: string | null; pais: string | null };
   let joins: { f: FincaMini; kg: number | null }[] = (((contribRaw as CJoin[] | null) ?? []))
     .map((r) => ({ f: (Array.isArray(r.fincas) ? r.fincas[0] : r.fincas) as FincaMini | null, kg: r.weight_kg != null ? Number(r.weight_kg) : null }))
     .filter((x): x is { f: FincaMini; kg: number | null } => !!x.f);
   if (!joins.length && lot.finca_id) {
-    const { data: f } = await service.from("fincas").select("id, name, municipio, departamento").eq("id", lot.finca_id).single();
+    const { data: f } = await service.from("fincas").select("id, name, municipio, departamento, pais").eq("id", lot.finca_id).single();
     if (f) joins = [{ f, kg: null }];
   }
   if (!joins.length) return { ok: false, error: "El lote no tiene fincas de origen registradas." };
@@ -282,7 +283,7 @@ export async function registerLotDds(
     weightKg: x.kg,
     municipio: x.f.municipio ?? "",
     departamento: x.f.departamento ?? "",
-    pais: "Colombia",
+    pais: x.f.pais || "Colombia",
   }));
   const claims = deriveClaims(
     contribs,
@@ -300,7 +301,13 @@ export async function registerLotDds(
     custody: CUSTODY_MODEL,
     // El nivel de riesgo país TAL COMO ESTABA al presentar (fechado): si el
     // benchmarking cambia, este lote se explica solo en una auditoría a 5 años.
-    country_risk: { pais: "Colombia", tier: countryRiskFor("Colombia"), determined_at: filedAt },
+    // V5.127: el país sale de las fincas de origen (`fincas.pais`; null = Colombia). Con varios países manda el nivel más alto.
+    country_risk: (() => {
+      const paises = [...new Set(joins.map((x) => x.f.pais || "Colombia"))];
+      const niveles = paises.map((p) => countryRiskFor(p));
+      const tier = niveles.includes("Alto") ? "Alto" : niveles.includes("Estándar") || !niveles.length ? "Estándar" : "Bajo";
+      return { pais: paises.join(" · ") || "Colombia", tier, determined_at: filedAt };
+    })(),
     contributions: joins.map((x) => ({
       finca_id: x.f.id,
       finca: x.f.name,
@@ -738,6 +745,13 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
   }
   for (const campo of ["vereda", "municipio", "departamento", "history_text", "characteristics_text"] as const) {
     if (formData.has(campo)) patch[campo] = textOrNull(formData, campo);
+  }
+  // V5.127 (owner, 2026-10-01): «Fuera de Colombia». Con un país de la lista, el departamento queda vacío; «Colombia» (vacío)
+  // borra el país y deja el departamento que traiga el formulario.
+  if (formData.has("pais")) {
+    const pais = String(formData.get("pais") ?? "").trim();
+    patch.pais = PAISES_FUERA_DE_COLOMBIA.includes(pais) ? pais : null;
+    if (patch.pais) patch.departamento = null;
   }
   if (formData.has("altitude_m")) {
     const alt = String(formData.get("altitude_m") ?? "").trim();

@@ -70,6 +70,7 @@ type FincaRow = {
   vereda: string | null;
   municipio: string | null;
   departamento: string | null;
+  pais: string | null;
   altitude_m: number | null;
   hectares: string | number | null;
   history_text: string | null;
@@ -218,6 +219,7 @@ function dbFincaToFinca(
     vereda: row.vereda || "—",
     mun: row.municipio || "—",
     depto: row.departamento || "—",
+    pais: row.pais ?? "",
     alt: row.altitude_m != null ? String(row.altitude_m) : "—",
     ha: row.hectares != null ? String(row.hectares) : "—",
     hist: row.history_text || "—",
@@ -1071,7 +1073,9 @@ function Experience() {
       name: f.name,
       vereda: f.vereda === "—" ? null : f.vereda,
       municipio: f.mun === "—" ? null : f.mun,
-      departamento: f.depto === "—" ? null : f.depto,
+      // V5.127 (owner): «Fuera de Colombia» — con país, el departamento queda vacío y manda el país (`fincas.pais`; null = Colombia).
+      departamento: f.pais || f.depto === "—" ? null : f.depto,
+      pais: f.pais || null,
       altitude_m: f.alt !== "—" && f.alt.trim() ? Number(f.alt) : null,
       history_text: f.hist === "—" ? null : f.hist,
       characteristics_text: f.carac === "—" ? null : f.carac,

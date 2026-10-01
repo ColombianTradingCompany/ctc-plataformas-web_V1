@@ -26,7 +26,7 @@ export function PaneA2({ data, onChange, fincas, onOpenNewFinca }: PaneProps) {
         weightKg: c.weight_kg.trim() ? Number(c.weight_kg.replace(",", ".")) : null,
         municipio: f.mun !== "—" ? f.mun : "",
         departamento: f.depto !== "—" ? f.depto : "",
-        pais: "Colombia",
+        pais: f.pais || "Colombia", // V5.127: la finca puede estar fuera de Colombia
       };
     })
     .filter((x): x is ContributionInput => !!x);
@@ -61,7 +61,7 @@ export function PaneA2({ data, onChange, fincas, onOpenNewFinca }: PaneProps) {
     onChange({
       contributions: next,
       estate: f?.name ?? "",
-      country: f ? "Colombia" : data.country,
+      country: f ? f.pais || "Colombia" : data.country,
       region_dep: f && f.depto !== "—" ? f.depto : "",
       county_muni: f && f.mun !== "—" ? f.mun : "",
       county_muni_text: "",
@@ -92,7 +92,7 @@ export function PaneA2({ data, onChange, fincas, onOpenNewFinca }: PaneProps) {
               <div key={c.finca_id} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                 <span style={{ flex: "1 1 220px", fontSize: 13.5 }}>
                   <b>{f?.name ?? "Finca eliminada"}</b>
-                  {f && f.mun !== "—" && <span style={{ color: "var(--muted)" }}> · {f.mun}, {f.depto}</span>}
+                  {f && f.mun !== "—" && <span style={{ color: "var(--muted)" }}> · {f.mun}, {f.pais || f.depto}</span>}
                 </span>
                 {contribs.length > 1 && (
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
@@ -116,7 +116,7 @@ export function PaneA2({ data, onChange, fincas, onOpenNewFinca }: PaneProps) {
             <select value="" onChange={(e) => addContribution(e.target.value)} style={{ maxWidth: 340 }}>
               <option value="">{contribs.length ? "＋ Agregar otra finca aportante…" : "— Seleccione una de sus fincas —"}</option>
               {availableFincas.map((f) => (
-                <option key={f.id} value={f.id}>{f.name} · {f.mun}, {f.depto}</option>
+                <option key={f.id} value={f.id}>{f.name} · {f.mun}, {f.pais || f.depto}</option>
               ))}
               <option value="__new__">＋ Registrar una finca nueva</option>
             </select>
@@ -166,7 +166,7 @@ export function PaneA2({ data, onChange, fincas, onOpenNewFinca }: PaneProps) {
         </div>
         <div className={styles.ff}>
           <label>País {primary && <small>(desde la finca)</small>}</label>
-          <input value={primary ? "Colombia" : data.country} readOnly />
+          <input value={primary ? primary.pais || "Colombia" : data.country} readOnly />
         </div>
         <div className={styles.ff}>
           <label>Departamento {primary && <small>(desde la finca)</small>}</label>

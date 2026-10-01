@@ -137,7 +137,7 @@ const lee = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
   const selector = lee("src/app/ocp/(app)/desacoplado/SelectorDepartamento.tsx");
   const pagina = lee("src/app/ocp/(app)/desacoplado/page.tsx");
   const acciones = lee("src/lib/asistencia/actions.ts");
-  check("el selector usa la lista de Kaffetal Regal (DEP_MUNI sin Multi-Origin) y ofrece «Otro…» con campo libre", selector.includes("Object.keys(DEP_MUNI)") && selector.includes('d !== "Multi-Origin"') && selector.includes("<option value={OTRO}>Otro…</option>") && selector.includes('name="department_otro"'));
+  check("el selector usa la lista completa de departamentos (V5.127) y ofrece «Otro…» con campo libre", selector.includes("const DEPARTAMENTOS = DEPARTAMENTOS_DE_COLOMBIA;") && !selector.includes("DEP_MUNI)") && selector.includes("<option value={OTRO}>Otro…</option>") && selector.includes('name="department_otro"'));
   check("el formulario lo monta y la acción resuelve selector u «Otro»", pagina.includes("<SelectorDepartamento />") && acciones.includes('departmentSel === "__otro__" ? String(formData.get("department_otro")'));
 }
 

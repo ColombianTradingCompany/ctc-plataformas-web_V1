@@ -88,6 +88,7 @@ type PPRow = {
 type FincaRow = FilaDeFincaParaLaVisa & {
   id: string;
   producer_id: string;
+  pais: string | null;
   eudr_polygon_geojson: { lat: number; lng: number }[] | null;
 };
 type LotRow = {
@@ -128,7 +129,7 @@ export async function cargarKr(service: SupabaseClient, opciones: { productorId?
       service
           .from("fincas")
           .select(
-            "id, producer_id, name, status, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_polygon_geojson, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, eudr_cert_shared"
+            "id, producer_id, name, status, hectares, vereda, municipio, departamento, pais, eudr_lat, eudr_lng, eudr_polygon_geojson, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, eudr_cert_shared"
           ).match(soloDe("producer_id")).order("created_at", { ascending: true }),
       service.from("lots").select("id, name, producer_id, finca_id, stage, intake_step, grade, source, season_id, sample_shipped_at, sample_2kg_confirmed_at").match(soloDe("producer_id")).order("created_at", { ascending: false }),
       service.from("arena_inscriptions").select("lot_id, producer_id, phase, status, sondeo_batch_id, sondeo_result, decision_comercial").match(soloDe("producer_id")),
@@ -249,7 +250,7 @@ export async function cargarKr(service: SupabaseClient, opciones: { productorId?
         fincaId: f.id,
         fincaNombre: f.name || "Finca",
         fincaCodigo: fincaCode(f.id),
-        fincaLugar: [f.municipio, f.departamento].filter(Boolean).join(", "),
+        fincaLugar: [f.municipio, f.pais || f.departamento].filter(Boolean).join(", "),
         visa: { label: estado.label, tono: f.status === "rejected" ? ("bad" as Tono) : tonoDeLaVisa(estado.tone) },
         pasaporte: estado.code,
         lat: centro?.la ?? null,

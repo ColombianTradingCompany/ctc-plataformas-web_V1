@@ -14,6 +14,7 @@ type FincaJoin = {
   vereda: string | null;
   municipio: string | null;
   departamento: string | null;
+  pais: string | null;
   eudr_lat: string | number | null;
   eudr_lng: string | number | null;
   eudr_deforestation_free: boolean | null;
@@ -82,7 +83,7 @@ export default async function LotEudrCertPage({ params }: { params: Promise<{ id
        eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_country, eudr_country_risk, eudr_chain_complexity,
        eudr_product_risk, eudr_product_risk_factors, eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme,
        eudr_risk_level, eudr_mitigation_actions, eudr_mitigation_effective, eudr_mitigation_responsible,
-       fincas(id, name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, status, eudr_cert_shared)`
+       fincas(id, name, hectares, vereda, municipio, departamento, pais, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, status, eudr_cert_shared)`
     )
     .eq("id", id)
     .single();
@@ -94,7 +95,7 @@ export default async function LotEudrCertPage({ params }: { params: Promise<{ id
   type ContribJoin = { weight_kg: number | string | null; fincas: FincaJoin | FincaJoin[] | null };
   const { data: contribRaw } = await service
     .from("lot_contributions")
-    .select("weight_kg, fincas(id, name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, status, eudr_cert_shared)")
+    .select("weight_kg, fincas(id, name, hectares, vereda, municipio, departamento, pais, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, status, eudr_cert_shared)")
     .eq("lot_id", id);
   const contribJoins = (((contribRaw as ContribJoin[] | null) ?? []))
     .map((r) => ({ f: (Array.isArray(r.fincas) ? r.fincas[0] : r.fincas) as FincaJoin | null, kg: r.weight_kg != null ? Number(r.weight_kg) : null }))
@@ -112,14 +113,14 @@ export default async function LotEudrCertPage({ params }: { params: Promise<{ id
   ]);
   const producer = producers.get(lot.producer_id);
   const certFincas: CertFinca[] = originJoins.map((x) => ({
-    id: x.f.id, name: x.f.name ?? "—", municipio: x.f.municipio, departamento: x.f.departamento,
+    id: x.f.id, name: x.f.name ?? "—", municipio: x.f.municipio, departamento: x.f.departamento, pais: x.f.pais,
   }));
 
   // F2: claims derivados — el Sello imprime SOLO los sellos al 100% (cobertura
   // parcial es un dato interno, nunca una afirmación en un documento).
   const contribInputs: ContributionInput[] = originJoins.map((x) => ({
     fincaId: x.f.id, fincaName: x.f.name ?? "—", weightKg: x.kg,
-    municipio: x.f.municipio ?? "", departamento: x.f.departamento ?? "", pais: "Colombia",
+    municipio: x.f.municipio ?? "", departamento: x.f.departamento ?? "", pais: x.f.pais || "Colombia",
   }));
   const { data: certRowsRaw } = await service
     .from("finca_certificates")

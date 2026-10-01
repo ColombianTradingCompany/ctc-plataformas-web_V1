@@ -11,6 +11,7 @@ import { checkFileSizeMb } from "@/lib/fileSize";
 import { fincaEudrStatus, deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, PRODUCT_RISK_AFFIRMATIONS, type ParcelaGeoFields } from "@/lib/eudr";
 import { fincaLevelSchemes, CERT_REGISTRY } from "@/lib/certRegistry";
 import { MAX_RECORDATORIOS } from "@/lib/registro/reglas";
+import { DEPARTAMENTOS_DE_COLOMBIA, PAISES_FUERA_DE_COLOMBIA } from "@/lib/geo/departamentos";
 import { EudrYesNo } from "./EudrYesNo";
 import { EudrStatusBadge } from "./EudrStatusBadge";
 import { FincaMapPicker, type ParcelaEnMapa } from "./FincaMapPicker";
@@ -270,6 +271,13 @@ export function FincaEditorBody({
   const [vereda, setVereda] = useState(finca?.vereda && finca.vereda !== "—" ? finca.vereda : "");
   const [mun, setMun] = useState(finca?.mun && finca.mun !== "—" ? finca.mun : "");
   const [depto, setDepto] = useState(defaultDepto);
+  // V5.127 (owner, 2026-10-01): «Fuera de Colombia» congela el Departamento y pide el país. El país solo se guarda con el
+  // interruptor encendido Y un país elegido; mientras no lo haya, la finca sigue en Colombia con su departamento.
+  const [fuera, setFuera] = useState(!!finca?.pais);
+  const [pais, setPais] = useState(finca?.pais ?? "");
+  const paisEfectivo = fuera ? pais : "";
+  // Un departamento guardado antes de la lista completa («Otro») no se pierde: se sigue ofreciendo tal cual.
+  const deptos = DEPARTAMENTOS_DE_COLOMBIA.includes(depto) ? DEPARTAMENTOS_DE_COLOMBIA : [depto, ...DEPARTAMENTOS_DE_COLOMBIA];
   const [hist, setHist] = useState(finca?.hist && finca.hist !== "—" ? finca.hist : "");
   const [carac, setCarac] = useState(finca?.carac && finca.carac !== "—" ? finca.carac : "");
   // V5.122 (owner, 2026-10-01): los TOTALES de la finca (área, altura) ya no se teclean ni se traen con botón — se derivan de los
@@ -445,6 +453,7 @@ export function FincaEditorBody({
     vereda: finca?.vereda ?? "—",
     mun: finca?.mun ?? "—",
     depto: finca?.depto ?? "—",
+    pais: finca?.pais ?? "",
     alt: finca?.alt ?? "—",
     ha,
     hist: finca?.hist ?? "—",
@@ -581,7 +590,8 @@ export function FincaEditorBody({
       certShared: finca?.certShared ?? false,
       vereda: vereda.trim() || "—",
       mun: mun.trim() || "—",
-      depto: depto || defaultDepto,
+      depto: paisEfectivo ? "—" : depto || defaultDepto,
+      pais: paisEfectivo,
       alt: alt.trim() || "—",
       ha: ha.trim() || "—",
       hist: hist.trim() || "—",
@@ -614,7 +624,7 @@ export function FincaEditorBody({
   // ref, y el flush-al-desmontar guarda valores reales en vez de refs sueltas.
   const { status: autosaveStatus } = useAutosave({
     enabled: !!finca?.id && !soloLectura,
-    snapshot: { name, vereda, mun, depto, hist, carac, ha, alt, eudr, certSchemeSummary, nombreUno, areaUno, alturaUno, mayor4haUno },
+    snapshot: { name, vereda, mun, depto, paisEfectivo, hist, carac, ha, alt, eudr, certSchemeSummary, nombreUno, areaUno, alturaUno, mayor4haUno },
     save: () => save(false),
   });
 
@@ -717,14 +727,48 @@ export function FincaEditorBody({
             </div>
             <div><label>Vereda</label><input value={vereda} onChange={(e) => setVereda(e.target.value)} placeholder="Ej. El Encanto" /></div>
             <div><label>Municipio</label><input value={mun} onChange={(e) => setMun(e.target.value)} placeholder="Ej. Piedecuesta" /></div>
-            <div className={styles.wide}>
+            {/* V5.127 (owner, 2026-10-01): la lista COMPLETA — los 32 departamentos y Bogotá D.C. — y el interruptor «Fuera de
+                Colombia», que congela el Departamento y pide el país de la finca. */}
+            <div>
               <label>Departamento</label>
-              <select value={depto} onChange={(e) => setDepto(e.target.value)}>
-                {["Santander", "Huila", "Cauca", "Nariño", "Tolima", "Antioquia", "Quindío", "Caldas", "Otro"].map((d) => (
+              <select value={fuera ? "" : depto} disabled={fuera} onChange={(e) => setDepto(e.target.value)} style={fuera ? { background: "var(--line)", color: "var(--muted)", cursor: "not-allowed" } : undefined}>
+                {fuera && <option value="">No aplica · fuera de Colombia</option>}
+                {deptos.map((d) => (
                   <option key={d}>{d}</option>
                 ))}
               </select>
             </div>
+            <div>
+              <label>¿La finca queda en otro país?</label>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={fuera}
+                onClick={() => setFuera((v) => !v)}
+                style={{ display: "inline-flex", alignItems: "center", gap: 10, minHeight: 40, padding: "6px 12px 6px 8px", border: `1.5px solid ${fuera ? "var(--primary)" : "var(--line)"}`, borderRadius: 999, background: "var(--paper)", color: "var(--ink)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+              >
+                <span aria-hidden style={{ position: "relative", width: 38, height: 22, borderRadius: 999, background: fuera ? "var(--primary)" : "var(--line)", transition: "background .15s", flex: "0 0 auto" }}>
+                  <span style={{ position: "absolute", top: 2, left: fuera ? 18 : 2, width: 18, height: 18, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,.3)", transition: "left .15s" }} />
+                </span>
+                Fuera de Colombia
+              </button>
+            </div>
+            {fuera && (
+              <div className={styles.wide}>
+                <label>País</label>
+                <select value={pais} onChange={(e) => setPais(e.target.value)}>
+                  <option value="">— Elija el país —</option>
+                  {PAISES_FUERA_DE_COLOMBIA.map((p) => (
+                    <option key={p}>{p}</option>
+                  ))}
+                </select>
+                {!pais && (
+                  <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--muted)" }}>
+                    Elija el país. Mientras no lo elija, la finca se guarda en Colombia con su departamento.
+                  </p>
+                )}
+              </div>
+            )}
             <div className={styles.wide}>
               <label>Sistema productivo</label>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>

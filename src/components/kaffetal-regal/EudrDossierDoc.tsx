@@ -1,5 +1,5 @@
 import { fincaCode, LOCAL_INFRA } from "./data";
-import { deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, PRODUCT_RISK_QUESTIONS } from "@/lib/eudr";
+import { countryRiskFor, deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, PRODUCT_RISK_QUESTIONS } from "@/lib/eudr";
 import { PrintButton } from "./PrintButton";
 
 const CUSTODY_LABEL: Record<string, string> = {
@@ -45,6 +45,8 @@ export type DossierFinca = {
   vereda: string | null;
   municipio: string | null;
   departamento: string | null;
+  /** V5.127: país de la finca fuera de Colombia; null = Colombia. */
+  pais?: string | null;
   hectares: string | number | null;
   eudr_lat: string | number | null;
   eudr_lng: string | number | null;
@@ -204,7 +206,7 @@ export function EudrDossierDoc({
           <tbody>
             {row("Proveedor", producerName)}
             {row("Contacto", producerContact || "—")}
-            {row("Ubicación", `${finca.vereda ?? "—"}, ${finca.municipio ?? "—"}, ${finca.departamento ?? "—"}`)}
+            {row("Ubicación", `${finca.vereda ?? "—"}, ${finca.municipio ?? "—"}, ${finca.pais || finca.departamento || "—"}`)}
             {row("Código DANE", daneText ?? "sin coincidencia")}
             {row("Área en café", `${finca.hectares ?? "—"} ha`)}
           </tbody>
@@ -295,7 +297,7 @@ export function EudrDossierDoc({
           return (
             <table style={{ borderCollapse: "collapse", fontSize: 13, width: "100%" }}>
               <tbody>
-                {row("País / región de producción", "Colombia · riesgo estándar")}
+                {row("País / región de producción", `${finca.pais || "Colombia"} · riesgo ${countryRiskFor(finca.pais || "Colombia").toLowerCase()}`)}
                 {row("Método de separación", finca.eudr_custody_method ? CUSTODY_METHOD_LABEL[finca.eudr_custody_method] ?? finca.eudr_custody_method : "sin definir")}
                 {finca.eudr_custody_method === "custom" && finca.eudr_custody_notes ? row("Notas de custodia", finca.eudr_custody_notes) : null}
                 {row("Cadena de custodia", `${(finca.eudr_custody_stages ?? []).map((k) => CUSTODY_LABEL[k] ?? k).join(", ") || "ninguna"} · complejidad ${deriveChainComplexity(finca.eudr_custody_stages) || "—"}`)}

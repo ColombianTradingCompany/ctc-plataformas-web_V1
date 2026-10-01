@@ -279,13 +279,19 @@ export type LotRiskFactors = {
 // bajo ni alto quedan como "estándar". Los orígenes cafeteros de la región
 // (Colombia, Perú, Venezuela, Panamá) son todos estándar. Se declara el país y
 // la clasificación se deriva de aquí, en vez de que alguien la elija a mano.
-export const EUDR_ORIGIN_COUNTRIES = ["Colombia", "Perú", "Venezuela", "Panamá"] as const;
+export const EUDR_ORIGIN_COUNTRIES = ["Colombia", "Perú", "Ecuador", "Venezuela", "Panamá", "Costa Rica", "Guatemala", "El Salvador"] as const;
 export type EudrCountryRisk = "Bajo" | "Estándar" | "Alto";
 export const EUDR_COUNTRY_RISK: Record<string, EudrCountryRisk> = {
   Colombia: "Estándar",
   Perú: "Estándar",
   Venezuela: "Estándar",
   Panamá: "Estándar",
+  // V5.127 (owner, 2026-10-01): los demás países de «Fuera de Colombia» (`fincas.pais`). Verificado contra la lista de la
+  // Comisión (Green Forum, «Country Classification List») el 2026-10-01: Costa Rica es el único de riesgo BAJO.
+  Ecuador: "Estándar",
+  Guatemala: "Estándar",
+  "El Salvador": "Estándar",
+  "Costa Rica": "Bajo",
 };
 export function countryRiskFor(country: string | null | undefined): EudrCountryRisk {
   if (!country) return "Estándar";

@@ -35,6 +35,7 @@ export type DossierFincaLine = {
   name: string;
   municipio: string | null;
   departamento: string | null;
+  pais?: string | null;
   /** El código de `fincaEudrStatus` — se traduce aquí. */
   pasaporte: string;
 };
@@ -282,7 +283,7 @@ export function LotDossierDoc({
                 <td style={S.td}>
                   <b>{f.name}</b> <span style={S.meta}>{f.code}</span>
                 </td>
-                <td style={S.td}>{[f.municipio, f.departamento, "Colombia"].filter(Boolean).join(", ")}</td>
+                <td style={S.td}>{[f.municipio, f.departamento, f.pais || "Colombia"].filter(Boolean).join(", ")}</td>
                 <td style={S.td}>{t.eudr[f.pasaporte] ?? f.pasaporte}</td>
               </tr>
             ))}

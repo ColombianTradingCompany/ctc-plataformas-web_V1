@@ -271,6 +271,21 @@ const completa = (extra = {}) => ({
   check("y la Comunicación de la finca enseña el punto y el adjunto de la solicitud", lee("src/app/ocp/(app)/kr/FincaPanel.tsx").includes("Revisión de datos · {SECCION_LABEL[c.seccion] ?? c.seccion}") && lee("src/app/ocp/(app)/kr/FincaSeccion.tsx").includes("seccion, adjunto_asset_id, adjunto_filename"));
 }
 
+// ── V5.127 (owner, 2026-10-01) · todos los departamentos de Colombia + «Fuera de Colombia» (`fincas.pais`) ──
+{
+  const geo = lee("src/lib/geo/departamentos.ts");
+  const modal = lee("src/components/kaffetal-regal/FincaModal.tsx");
+  const ke = lee("src/components/kaffetal-regal/KaffetalExperience.tsx");
+  const deptos = [...geo.matchAll(/^  "([^"]+)",\r?$/gm)].map((m) => m[1]);
+  check("la lista trae los 32 departamentos y Bogotá D.C. (33), sin repetir", deptos.length === 33 && new Set(deptos).size === 33 && ["Norte de Santander", "Bogotá D.C.", "Vichada", "San Andrés y Providencia", "Risaralda"].every((d) => deptos.includes(d)));
+  check("los siete países de «Fuera de Colombia»", ["Perú", "Ecuador", "Venezuela", "Panamá", "Costa Rica", "Guatemala", "El Salvador"].every((p) => geo.includes(`"${p}"`)));
+  check("el editor de la finca usa la lista completa y el interruptor congela el Departamento", modal.includes("DEPARTAMENTOS_DE_COLOMBIA") && modal.includes('role="switch"') && modal.includes("disabled={fuera}") && modal.includes("PAISES_FUERA_DE_COLOMBIA.map") && !modal.includes('"Caldas", "Otro"'));
+  check("con país, la finca se guarda sin departamento", /departamento: f\.pais \|\| f\.depto === "—" \? null : f\.depto,\s*pais: f\.pais \|\| null,/.test(ke) && modal.includes('depto: paisEfectivo ? "—" : depto || defaultDepto'));
+  check("el Pasaporte declara el país de la finca y su nivel de riesgo (Costa Rica es bajo)", lee("src/components/kaffetal-regal/EudrDossierDoc.tsx").includes('countryRiskFor(finca.pais || "Colombia")') && lee("src/lib/eudr.ts").includes('"Costa Rica": "Bajo"'));
+  check("el OCP lo lee y lo edita en nombre del productor; el DANE no aplica fuera de Colombia", lee("src/app/ocp/(app)/kr/FincaEudrEditor.tsx").includes('name="pais"') && lee("src/app/ocp/(app)/actions.ts").includes('formData.has("pais")') && lee("src/app/ocp/(app)/kr/FincaSeccion.tsx").includes("finca.pais ? null : daneCodeFor("));
+  check("el acta de la migración `fincas.pais` existe", lee("docs/migraciones/2026-10-01_fincas_pais.sql").includes("add column if not exists pais text"));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-visa: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("   " + f);

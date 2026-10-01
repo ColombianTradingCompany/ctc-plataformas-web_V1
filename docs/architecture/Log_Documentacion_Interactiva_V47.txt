@@ -333,3 +333,13 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `kr/EvaReviewCard.tsx` (`FileLink.tipo`; miniaturas), `kr/LoteSeccion.tsx`, `subvenciones/campanas/[id]/page.tsx` (enlace al lote).
   Guardián: `qa-evaluaciones` +2.
 (commit: 9edf0ee)
+
+## [2026-10-01] V5.127 · Kaffetal Regal + Consolas — todos los departamentos de Colombia y «Fuera de Colombia» (`fincas.pais`)
+- ADD `src/lib/geo/departamentos.ts` (`DEPARTAMENTOS_DE_COLOMBIA` ×33, `PAISES_FUERA_DE_COLOMBIA` ×7); columna `fincas.pais` (null = Colombia).
+- ANN `kaffetal-regal/FincaModal.tsx` (lista completa + interruptor que congela el Departamento y pide el país), `data.ts` (`Finca.pais`),
+  `KaffetalExperience.tsx` (mapeo y payload), `InfoModal.tsx`, `desacoplado/SelectorDepartamento.tsx` (misma lista).
+- ANN `lib/eudr.ts` (`EUDR_COUNTRY_RISK`: +Ecuador, Guatemala, El Salvador estándar; Costa Rica bajo), `EudrDossierDoc.tsx`, `LotDossierDoc.tsx`,
+  `LotEudrCertDoc.tsx` y sus páginas (país real de la finca), `ocp/actions.ts` (`country_risk` de la presentación; `updateFincaEudr` con `pais`).
+- ANN `ocp/kr/FincaSeccion.tsx`, `FincaPanel.tsx`, `FincaEudrEditor.tsx`, `carga.ts`, `LoteSeccion.tsx` (país; DANE «no aplica»).
+  Guardianes: `qa-visa` +7, `qa-asistencia` (check ajustado). Acta: `docs/migraciones/2026-10-01_fincas_pais.sql`.
+(commit: pendiente)

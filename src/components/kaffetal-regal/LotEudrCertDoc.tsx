@@ -37,7 +37,7 @@ export type CertLot = {
   eudr_mitigation_responsible: string | null;
 };
 
-export type CertFinca = { id: string; name: string; municipio: string | null; departamento: string | null };
+export type CertFinca = { id: string; name: string; municipio: string | null; departamento: string | null; pais?: string | null };
 
 const yesNo = (v: boolean | null) => (v === true ? "Sí" : v === false ? "No" : "Sin definir");
 
@@ -139,7 +139,7 @@ export function LotEudrCertDoc({
             {row(
               "Finca(s) de origen",
               fincas.length
-                ? fincas.map((f) => `${f.name} (${fincaCode(f.id)}) · ${f.municipio ?? "—"}, ${f.departamento ?? "—"}`).join(" · ")
+                ? fincas.map((f) => `${f.name} (${fincaCode(f.id)}) · ${f.municipio ?? "—"}, ${f.pais || f.departamento || "—"}`).join(" · ")
                 : "sin resolver"
             )}
           </tbody>

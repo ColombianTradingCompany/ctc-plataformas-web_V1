@@ -7,13 +7,12 @@ import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
 import { checkFileSizeMb } from "@/lib/fileSize";
 import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import { FileDrop } from "./FileDrop";
-import { DEP_MUNI } from "./ficha/fichaData";
+import { DEPARTAMENTOS_DE_COLOMBIA } from "@/lib/geo/departamentos";
 import { supplierCode, type GeneralInfo } from "./data";
 import styles from "./FincaModal.module.css";
 
-const DEPARTMENTS = Object.keys(DEP_MUNI)
-  .filter((d) => d !== "Multi-Origin")
-  .sort();
+// V5.127 (owner): los 32 departamentos y Bogotá D.C. — antes, los 22 cafeteros de `DEP_MUNI`.
+const DEPARTMENTS = DEPARTAMENTOS_DE_COLOMBIA;
 
 // V5.107 (owner): el editor es una PÁGINA (`InfoView.tsx`), no un pop-up. Este archivo conserva el nombre `InfoModal.tsx` por su
 // historia y por los guardianes que lo leen (`qa-reportado-productor`); exporta el cuerpo del editor y nada más.

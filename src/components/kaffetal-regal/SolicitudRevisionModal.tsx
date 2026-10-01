@@ -92,7 +92,7 @@ export function SolicitudRevisionModal({
           <h3>Solicitar revisión de datos</h3>
           <p>
             <b>{finca.name}</b>
-            {finca.mun !== "—" && ` · ${finca.mun}, ${finca.depto}`}
+            {finca.mun !== "—" && ` · ${finca.mun}, ${finca.pais || finca.depto}`}
           </p>
           <p style={{ marginBottom: 14 }}>
             Esta finca ya tiene su Pasaporte, así que sus datos no se editan: los cambios los aplica CTC. Elija a cuál de los cuatro

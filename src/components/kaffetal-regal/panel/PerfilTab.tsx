@@ -138,7 +138,7 @@ export function PerfilTab({
         <div className="mono" style={{ fontSize: 10, color: "var(--muted)", overflowWrap: "anywhere" }}>{fincaCode(f.id)}</div>
         <div className={styles.sub}>
           {f.vereda} · {f.mun}<br />
-          {f.depto} · {f.alt} msnm · {f.ha} ha
+          {f.pais || f.depto} · {f.alt} msnm · {f.ha} ha
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {/* V5.124 (owner): una finca APROBADA no se edita — se revisa (solo lectura) y se pide la revisión de datos. */}

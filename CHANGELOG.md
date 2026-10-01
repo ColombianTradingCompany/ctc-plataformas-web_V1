@@ -19,6 +19,23 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.127] — 2026-10-01 (commit pendiente)
+
+- **Corregido**: en Kaffetal Regal, el editor de la finca ofrecía **ocho departamentos y «Otro»** (owner, 2026-10-01). Ahora
+  trae **los 32 departamentos y Bogotá D.C.**, de una sola fuente (`src/lib/geo/departamentos.ts`) que también usan la
+  Información general del productor y el Proveedor Desacoplado (antes, los 22 de `DEP_MUNI`).
+- **Añadido**: interruptor **«Fuera de Colombia»** en la finca: congela el Departamento y pide el **país** entre Perú, Ecuador,
+  Venezuela, Panamá, Costa Rica, Guatemala y El Salvador. Con país, la finca se guarda sin departamento; la tarjeta de la
+  finca, la Ficha del lote (País «desde la finca») y la solicitud de revisión enseñan el país.
+- **Cambiado**: el **Pasaporte EUDR** y los documentos del lote (dossier, certificación) declaran el **país real** de la finca
+  en vez de «Colombia» fijo, con su nivel de riesgo según la lista de la Comisión Europea: los seis nuevos son estándar salvo
+  **Costa Rica, que es bajo** (`EUDR_COUNTRY_RISK`). La presentación de la debida diligencia guarda el país de las fincas de
+  origen.
+- **Cambiado**: en el OCP, la finca enseña «Municipio · país», el **DANE «No aplica · fuera de Colombia»** (no en rojo), y el
+  editor en nombre del productor trae el campo País y sugiere los departamentos.
+- **Datos**: migración `fincas_pais` — `fincas.pais text` (null = Colombia). Acta en `docs/migraciones/2026-10-01_fincas_pais.sql`.
+- **Docs**: charter `kaffetal-regal`, ALINEACION §3. `qa-visa` 60 → 67; `qa-asistencia` ajustado a la lista nueva.
+
 ## [V5.126] — 2026-10-01 (commit 9edf0ee)
 
 - **Añadido**: en la EVA del lote, el bloque **Fotos y video (B4)** enseña las **miniaturas allí mismo** (owner, 2026-10-01): cada foto

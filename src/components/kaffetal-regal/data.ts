@@ -14,6 +14,8 @@ export type Finca = {
   vereda: string;
   mun: string;
   depto: string;
+  /** V5.127 (owner, 2026-10-01): país de la finca cuando está FUERA de Colombia ("" = Colombia). Con país, `depto` es "—". */
+  pais: string;
   alt: string;
   ha: string;
   hist: string;

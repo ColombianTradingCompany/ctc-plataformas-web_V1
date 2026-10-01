@@ -38,7 +38,7 @@ export function PaneA4({ data, fincas, fincaCerts }: PaneProps) {
             weightKg: c.weight_kg.trim() ? Number(c.weight_kg.replace(",", ".")) : null,
             municipio: f.mun !== "—" ? f.mun : "",
             departamento: f.depto !== "—" ? f.depto : "",
-            pais: "Colombia",
+            pais: f.pais || "Colombia",
           };
         })
         .filter((x): x is ContributionInput => !!x),

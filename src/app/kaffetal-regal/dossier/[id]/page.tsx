@@ -24,6 +24,7 @@ type FincaJoin = {
   name: string | null;
   municipio: string | null;
   departamento: string | null;
+  pais: string | null;
   status: string | null;
   eudr_cert_shared: boolean | null;
   hectares: string | number | null;
@@ -38,7 +39,7 @@ type FincaJoin = {
   eudr_mitigation_effective: boolean | null;
 } | null;
 
-const FINCA_COLS = "id, name, municipio, departamento, status, eudr_cert_shared, hectares, vereda, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective";
+const FINCA_COLS = "id, name, municipio, departamento, pais, status, eudr_cert_shared, hectares, vereda, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective";
 
 function gate(message: string, lang: Lang) {
   return (
@@ -141,7 +142,7 @@ export default async function LotDossierPage({ params, searchParams }: { params:
     weightKg: x.kg,
     municipio: x.f.municipio ?? "",
     departamento: x.f.departamento ?? "",
-    pais: "Colombia",
+    pais: x.f.pais || "Colombia",
   }));
   const ds = lot.datasheet ?? {};
   const archetype = deriveArchetype(contribInputs, composicionDeVariedades(ds.varieties));
@@ -152,6 +153,7 @@ export default async function LotDossierPage({ params, searchParams }: { params:
     name: x.f.name ?? "—",
     municipio: x.f.municipio,
     departamento: x.f.departamento,
+    pais: x.f.pais,
     pasaporte: fincaEudrStatus(camposDe(x.f)).code,
   }));
 

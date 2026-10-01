@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { INSTAGRAM_URL, YOUTUBE_URL } from "@/lib/redesSociales";
 import { useLang, type Lang } from "@/components/lang/i18n";
 import { LegalFooter } from "@/components/LegalFooter";
 import styles from "./Footer.module.css";
@@ -61,14 +62,14 @@ export function Footer() {
           <br />
           <a href="mailto:info@ctcexport.com">info@ctcexport.com</a> · {t.dds}
           <div className={styles.social}>
-            <a href="https://instagram.com/ctcexport" target="_blank" rel="noopener" aria-label="Instagram de CTC">
+            <a href={INSTAGRAM_URL} target="_blank" rel="noopener" aria-label="Instagram de CTC">
               <svg viewBox="0 0 24 24">
                 <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" />
                 <circle cx="12" cy="12" r="4" />
                 <circle cx="17.2" cy="6.8" r=".8" fill="currentColor" stroke="none" />
               </svg>
             </a>
-            <a href="https://www.youtube.com/@ctcx.oficial" target="_blank" rel="noopener" aria-label="YouTube de CTC">
+            <a href={YOUTUBE_URL} target="_blank" rel="noopener" aria-label="YouTube de CTC">
               <svg viewBox="0 0 24 24">
                 <rect x="2.5" y="5.5" width="19" height="13" rx="3.5" />
                 <path d="M10 9.3v5.4l4.8-2.7z" fill="currentColor" stroke="none" />

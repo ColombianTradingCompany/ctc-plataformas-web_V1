@@ -1,11 +1,12 @@
+import { INSTAGRAM_URL, YOUTUBE_URL } from "@/lib/redesSociales";
 import styles from "./SocialLinks.module.css";
 
 // CTC's social profiles, shared by the satellite-site footers (Kaffetal
 // Regal + the Cherry Picked family). CTC Home's footer keeps its own inline
-// markup for these same two profiles — if a URL changes, update both.
+// markup for these same two profiles; both read the URLs from `@/lib/redesSociales` (V5.136).
 const SOCIALS = [
   {
-    href: "https://instagram.com/ctcexport",
+    href: INSTAGRAM_URL,
     label: "Instagram",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden>
@@ -16,7 +17,7 @@ const SOCIALS = [
     ),
   },
   {
-    href: "https://www.youtube.com/@ctcx.oficial",
+    href: YOUTUBE_URL,
     label: "YouTube",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden>

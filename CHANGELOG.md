@@ -19,6 +19,12 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.136] — 2026-10-01 (commit pendiente)
+
+- **Cambiado**: el **Instagram de CTC** es `https://www.instagram.com/ctc.oficiall/` (owner, 2026-10-01; antes `instagram.com/ctcexport`).
+  Estaba escrito en dos sitios —el pie de CTC Home y `SocialLinks` (Kaffetal Regal y la familia Cherry Picked)—; ahora los dos leen
+  de `src/lib/redesSociales.ts`, junto con el YouTube.
+
 ## [V5.135] — 2026-10-01 (commit 4b595bb)
 
 - **Corregido**: el **botón de borrado nuclear no se veía** (owner). Estaba al final de la sección del lote, en mitad de una página

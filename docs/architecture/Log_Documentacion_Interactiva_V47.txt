@@ -409,3 +409,8 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   (radar desde 0, `Info`), `components/bcp/LabEvalEditor.tsx`, `public/tools/coffee-datasheet/…html` (núcleo: mismos dominios),
   `ocp/(app)/kr/page.tsx` + `BotonNuclear.tsx` (arriba, junto al título). Guardianes: `qa-centro-calidad` +17, `qa-borrado-nuclear` (ajustado).
 (commit: 4b595bb)
+
+## [2026-10-01] V5.136 · Red — el Instagram de CTC cambia de cuenta; una sola fuente para las redes
+- ADD `src/lib/redesSociales.ts` (`INSTAGRAM_URL`, `YOUTUBE_URL`).
+- ANN `components/SocialLinks.tsx`, `components/ctc-home/Footer.tsx` (leen de ahí).
+(commit: pendiente)

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.134] — 2026-10-01 (commit pendiente)
+## [V5.134] — 2026-10-01 (commit 32e0007)
 
 - **Añadido**: **borrado nuclear** de un lote o una finca desde el OCP (owner, 2026-10-01), aunque ya haya pasado por todo el circuito:
   desaparece «como si no hubiese existido» — solicitud y factura, muestras, evaluaciones, ofertas, contratos y sus meses, compras,

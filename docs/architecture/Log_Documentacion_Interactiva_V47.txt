@@ -371,4 +371,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `src/lib/catacion/rueda.ts` (tres niveles, `idDeNota`, `rutaDe`, `descriptorDe`; los 28 ids resumidos se traducen), `components/bcp/PlanillaPiezas.tsx`
   (`RuedaDeSabores` con la geometría, los matices y las agujas de la herramienta), `LabEvalEditor.tsx` (rueda a lo ancho, marcas por camino),
   `planillaI18n.ts`, `nominados/CircuitoVista.tsx` y `socios/…/evaluacion/page.tsx` (`rutaDe`). Guardián: `qa-centro-calidad` +11.
-(commit: pendiente)
+(commit: be4f2b4)

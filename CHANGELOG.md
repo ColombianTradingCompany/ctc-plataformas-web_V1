@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.131] — 2026-10-01 (commit pendiente)
+## [V5.131] — 2026-10-01 (commit be4f2b4)
 
 - **Corregido**: la **rueda de la planilla de evaluación ES la Rueda del Café del taller** (owner, 2026-10-01: «no entiendo por qué
   la rueda es diferente… ¡deben ser iguales!»). La V5.130 dibujaba una rueda de dos anillos sobre una taxonomía resumida escrita a

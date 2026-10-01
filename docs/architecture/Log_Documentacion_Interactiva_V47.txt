@@ -384,4 +384,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   CVA de uno o varios lotes; consume la Rueda (catacion) y la Ficha de KR (fichaData); sus fórmulas son las de `labEvaluation.ts`». TRAZA: Rueda V23 →
   build-coffee-datasheet → herramienta; fichaData → build-coffee-datasheet → herramienta; labEvaluation ⇄ qa-coffee-datasheet (paridad).
 - DATOS: fila en `tools` + `tool_versions` (origen repo), insertada con el archivo ya desplegado.
-(commit: pendiente)
+(commit: 759765d)

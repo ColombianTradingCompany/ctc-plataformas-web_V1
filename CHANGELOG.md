@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.132] — 2026-10-01 (commit pendiente)
+## [V5.132] — 2026-10-01 (commit 759765d)
 
 - **Añadido**: **CTCx Coffee Datasheet Tool** (`herramientas.ctcexport.com`, id `coffee-datasheet`), una herramienta NUEVA que combina la
   Rueda del Café y la Ficha de café verde (owner, 2026-10-01) para evaluar **uno o varios lotes** con **SCA 2004 o con CVA**, llenando

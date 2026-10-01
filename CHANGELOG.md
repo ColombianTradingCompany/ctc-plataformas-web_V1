@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.126] — 2026-10-01 (commit pendiente)
+## [V5.126] — 2026-10-01 (commit 9edf0ee)
 
 - **Añadido**: en la EVA del lote, el bloque **Fotos y video (B4)** enseña las **miniaturas allí mismo** (owner, 2026-10-01): cada foto
   como miniatura que abre la foto completa, y cada video reproducible en el sitio; lo que no tenga URL firmada sigue en la lista.

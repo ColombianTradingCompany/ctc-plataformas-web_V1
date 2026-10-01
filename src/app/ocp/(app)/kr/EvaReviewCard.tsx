@@ -6,6 +6,8 @@ import { markLotApto, markLotNoApto, setCertVerification, setEvaChecklistItem } 
 import { logProducerComm } from "../commActions";
 import { Q_GRADER_REGISTRY } from "@/lib/certRegistry";
 import { EVA_CHECKLIST_ITEMS, type EvaChecklist, type EvaChecklistKey } from "./evaChecklist";
+import { Fichas, SiNo } from "./EudrPiezas";
+import { PRODUCT_RISK_AFFIRMATIONS } from "@/lib/eudr";
 import styles from "@/components/panel/shared.module.css";
 
 // ── La revisión de la VISA como checklist (2026-07-18) ───────────────────────
@@ -26,6 +28,13 @@ import styles from "@/components/panel/shared.module.css";
 // panel EUDR de aquí solo muestra el estado heredado del Sello.
 
 export type Row = { l: string; v: string };
+
+// V5.120 (owner, 2026-10-01): «el mismo tratamiento visual para la EVA del lote» — las filas se leen como FICHAS en una
+// grilla (rótulo pequeño, valor en negrita), los Sí/No en color y las listas como fichas verdes/grises/rojas (`EudrPiezas`).
+const CUSTODY_STAGES: [string, string][] = [
+  ["finca", "Finca"], ["beneficio", "Beneficio"], ["secado", "Secado"],
+  ["trilla", "Trilla"], ["almacenamiento", "Almacenamiento"], ["exportacion", "Exportación"],
+];
 export type FileLink = { label: string; url: string | null };
 
 /** Un certificado A3/A4 declarado, con su soporte EN LÍNEA, su registro público
@@ -45,6 +54,13 @@ export type FisicoPanel = {
   /** V5.109: quién emitió el reporte que el productor adjuntó («Tengo un reporte»); null = no marcó reporte. */
   b2Reporte: string | null;
   b3Reporte: string | null;
+  /** V5.120: lo reportado en B2/B3 tal cual, para las fichas de la EVA. */
+  puntajeReportado: string | null;
+  escala: string | null;
+  factorReportado: string | null;
+  almendraReportada: string | null;
+  soportesB2: number;
+  soportesB3: number;
   scaRows: Row[];
   scaTotal: string | null;
   cuppingProfile: string;
@@ -171,16 +187,27 @@ export function EvaReviewCard({
     <span style={{ fontSize: 13, color: "var(--ink)", fontWeight: 600 }}>{v || "Sin definir"}</span>
   );
 
+  // V5.120: cada fila es una FICHA en una grilla — se recorre con la vista, no leyendo línea a línea.
   const dataRows = (rows: Row[], emptyMsg: string) =>
     rows.length ? (
-      rows.map((r) => (
-        <p key={r.l} className={styles.meta} style={{ margin: "3px 0" }}>
-          {r.l}: <b style={{ color: "var(--ink)" }}>{r.v}</b>
-        </p>
-      ))
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 6, margin: "4px 0" }}>
+        {rows.map((r) => (
+          <div key={r.l} style={{ border: "1px solid var(--line)", borderRadius: 8, padding: "6px 10px", background: "var(--paper)" }}>
+            <div className={styles.meta} style={{ margin: 0, fontSize: 10.5, letterSpacing: ".04em", textTransform: "uppercase" }}>{r.l}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", overflowWrap: "anywhere" }}>{r.v}</div>
+          </div>
+        ))}
+      </div>
     ) : (
       <p className={styles.meta}>{emptyMsg}</p>
     );
+  const ficha = (l: string, v: React.ReactNode) => (
+    <div style={{ border: "1px solid var(--line)", borderRadius: 8, padding: "6px 10px", background: "var(--paper)" }}>
+      <div className={styles.meta} style={{ margin: "0 0 3px", fontSize: 10.5, letterSpacing: ".04em", textTransform: "uppercase" }}>{l}</div>
+      <div>{v}</div>
+    </div>
+  );
+  const grilla = (hijos: React.ReactNode) => <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 6, margin: "4px 0" }}>{hijos}</div>;
 
   const fileList = (files: FileLink[], emptyMsg: string) =>
     files.length ? (
@@ -324,7 +351,9 @@ export function EvaReviewCard({
             <>
               <h4 style={{ margin: "0 0 8px", fontSize: 13.5 }}>FT2 · Certificados (A3/A4)</h4>
               {naCerts.length > 0 && (
-                <p className={styles.meta}>Declarado &quot;no lo sé / no aplica&quot;: {naCerts.join(" · ")}</p>
+                <p className={styles.meta} style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                  Declarado &quot;no lo sé / no aplica&quot;:{naCerts.map((n) => <span key={n} className={`${styles.badge} ${styles.badgeWarn}`}>{n}</span>)}
+                </p>
               )}
               {!certItems.length && <p className={styles.meta}>Sin certificados declarados todavía.</p>}
               {certItems.length > 0 && (
@@ -399,6 +428,15 @@ export function EvaReviewCard({
               <h4 style={{ margin: "0 0 8px", fontSize: 13.5 }}>FT2 · Análisis Físico (B2/B3)</h4>
 
               <p className={styles.meta} style={{ fontWeight: 600, margin: "6px 0 2px" }}>B2 · Perfil de Taza (SCA declarado)</p>
+              {/* V5.120: lo reportado en B2, en fichas: «No lo sé» / puntaje grande con su escala / reporte / soportes. */}
+              {grilla(
+                <>
+                  {ficha("Camino", fisico.b2Na ? <span className={`${styles.badge} ${styles.badgeWarn}`}>No lo sé</span> : fisico.b2Reporte !== null ? <span className={`${styles.badge} ${styles.badgeGood}`}>Tengo un reporte</span> : <span className={styles.badge}>Sin elegir</span>)}
+                  {ficha("Puntaje reportado", fisico.puntajeReportado ? <span style={{ fontSize: 20, fontWeight: 800, color: "var(--ink)" }}>{fisico.puntajeReportado} <span className={styles.badge}>{(fisico.escala ?? "").toUpperCase() || "sin escala"}</span></span> : <span className={`${styles.badge} ${fisico.b2Na ? "" : styles.badgeBad}`}>Sin puntaje</span>)}
+                  {ficha("Emitido por", fisico.b2Reporte !== null ? <b style={{ color: "var(--ink)" }}>{fisico.b2Reporte || "(sin nombre)"}</b> : <span className={styles.badge}>—</span>)}
+                  {ficha("Soportes", <span className={`${styles.badge} ${fisico.soportesB2 > 0 ? styles.badgeGood : fisico.b2Na ? "" : styles.badgeBad}`}>{fisico.soportesB2} archivo(s)</span>)}
+                </>
+              )}
               {fisico.b2Na ? (
                 <p className={styles.warn} style={{ margin: "2px 0 6px" }}>
                   El productor marcó «No lo sé / no aplica» en B2 — todavía NO hay perfil de taza declarado para este lote.
@@ -447,6 +485,14 @@ export function EvaReviewCard({
               )}
 
               <p className={styles.meta} style={{ fontWeight: 600, margin: "10px 0 2px" }}>B3 · Caracterización Física</p>
+              {grilla(
+                <>
+                  {ficha("Camino", fisico.b3Na ? <span className={`${styles.badge} ${styles.badgeWarn}`}>No lo sé / solo básica</span> : fisico.b3Reporte !== null ? <span className={`${styles.badge} ${styles.badgeGood}`}>Tengo un reporte</span> : <span className={styles.badge}>Sin elegir</span>)}
+                  {ficha("Factor de rendimiento", fisico.factorReportado ? <b style={{ color: "var(--ink)", fontSize: 15 }}>{fisico.factorReportado}</b> : <span className={styles.badge}>—</span>)}
+                  {ficha("Almendra total", fisico.almendraReportada ? <b style={{ color: "var(--ink)", fontSize: 15 }}>{fisico.almendraReportada} g</b> : <span className={styles.badge}>—</span>)}
+                  {ficha("Soportes", <span className={`${styles.badge} ${fisico.soportesB3 > 0 ? styles.badgeGood : fisico.b3Na ? "" : styles.badgeBad}`}>{fisico.soportesB3} archivo(s)</span>)}
+                </>
+              )}
               {fisico.b3Na ? (
                 <p className={styles.warn} style={{ margin: "2px 0 6px" }}>
                   El productor marcó «No lo sé / no aplica» en B3 — todavía NO hay análisis físico declarado para este lote.
@@ -470,6 +516,17 @@ export function EvaReviewCard({
           {openPanel === "video" && (
             <>
               <h4 style={{ margin: "0 0 8px", fontSize: 13.5 }}>Fotos y video (B4)</h4>
+              {/* V5.120: el mínimo son DOS fotos (V5.64) — el conteo en verde o rojo lo dice antes de abrir la lista. */}
+              {(() => {
+                const fotos = videoLinks.filter((f) => f.label.startsWith("Foto")).length;
+                const videos = videoLinks.length - fotos;
+                return (
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
+                    <span className={`${styles.badge} ${fotos >= 2 ? styles.badgeGood : styles.badgeBad}`}>{fotos} foto(s) · mínimo 2</span>
+                    <span className={styles.badge}>{videos} video(s) · opcional</span>
+                  </div>
+                );
+              })()}
               {fileList(videoLinks, "El productor todavía no sube las fotos del lote (dos como mínimo; el video es opcional).")}
             </>
           )}
@@ -485,9 +542,22 @@ export function EvaReviewCard({
                 La <b>Visa EUDR</b> de este lote se hereda por completo del <b>Pasaporte EUDR</b> de su(s) finca(s) de
                 origen — el lote no tiene debida diligencia propia.
               </p>
-              <p style={{ fontSize: 13.5, fontWeight: 700, margin: "0 0 6px", color: eudrReady ? "var(--primary)" : "#B45309" }}>
-                {eudrReady ? "✓ " : ""}Estado de la Visa: {eudrLabel}
+              <p style={{ margin: "0 0 10px" }}>
+                <span className={`${styles.badge} ${eudrReady ? styles.badgeGood : styles.badgeWarn}`} style={{ textTransform: "none", letterSpacing: 0, fontSize: 12.5 }}>
+                  {eudrReady ? "✓ " : ""}Visa: {eudrLabel}
+                </span>
               </p>
+              {/* V5.120: lo que la finca de origen declaró en su cuestionario, en fichas y Sí/No (solo lectura: se evalúa en la finca). */}
+              {grilla(
+                <>
+                  {ficha("Cadena de custodia", <Fichas opciones={CUSTODY_STAGES} activas={eudr.custodyStages} />)}
+                  {ficha("Riesgo del producto", <Fichas opciones={PRODUCT_RISK_AFFIRMATIONS} activas={PRODUCT_RISK_AFFIRMATIONS.map(([k]) => k).filter((k) => !eudr.productRiskFactors.includes(k))} faltante="rojo" />)}
+                  {ficha("¿Indicios de ilegalidad?", <SiNo v={eudr.illegality} bienSi={false} si="Sí, hay indicios" no="No hay indicios" />)}
+                  {ficha("¿Documentos verificables?", <SiNo v={eudr.docsAvailable} />)}
+                  {ficha("Nivel de riesgo", <span className={`${styles.badge} ${eudr.riskLevel === "insignificante" ? styles.badgeGood : eudr.riskLevel === "no_insignificante" ? styles.badgeBad : styles.badgeWarn}`}>{eudr.riskLevel === "insignificante" ? "Insignificante" : eudr.riskLevel === "no_insignificante" ? "No insignificante" : "Pendiente"}</span>)}
+                  {ficha("¿Mitigación efectiva?", <SiNo v={eudr.mitigationEffective} si="Sí, efectiva" no="No suficiente" />)}
+                </>
+              )}
               <p className={styles.meta} style={{ margin: 0 }}>
                 El Pasaporte se revisa y otorga en <a href="/ocp/kr">Fincas</a> (panel de la finca → pestaña EUDR:
                 declaración del productor, análisis con Google Earth y atributos). Al quedar el Pasaporte vigente, este

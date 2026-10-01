@@ -19,6 +19,17 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.120] — 2026-10-01 (commit pendiente)
+
+- **Cambiado**: en la **EVA del lote** (OCP · vista completa del lote), el mismo tratamiento visual de la finca (owner, 2026-10-01):
+  las filas de FT y FT2 se leen como fichas en una grilla; B2 y B3 muestran el camino elegido («No lo sé» / «Tengo un reporte»), el
+  puntaje grande con su escala, quién emitió el reporte y cuántos soportes (rojo si faltan); las fotos con su mínimo de 2 en verde o
+  rojo; y el panel EUDR enseña lo que la finca declaró en fichas y Sí/No (cadena de custodia, afirmaciones del producto, indicios,
+  documentos, nivel de riesgo, mitigación), solo lectura.
+- **Corregido**: en la FT de la EVA, un **blend** mostraba solo la primera variedad y su proceso (`ficha_variedad` y
+  `base_processing` son la proyección de la dominante): ahora lista todas las variedades con su % y el proceso de cada una
+  (el owner lo vio en `CTC-L-323FEDE6`). `qa-evaluaciones` 53 → 56.
+
 ## [V5.119] — 2026-10-01 (commit 9f98387)
 
 - **Cambiado**: en **Productores, Fincas y Lotes**, la revisión EUDR de la finca se lee de un vistazo (owner, 2026-10-01). **Declaración**:

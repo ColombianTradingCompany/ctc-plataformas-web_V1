@@ -351,6 +351,20 @@ function LotCard({
   };
   const rows = (...items: (Row | null)[]): Row[] => items.filter((r): r is Row => r !== null);
 
+  const variedades = (ds.varieties ?? []).filter((v) => v.name?.trim());
+  const variedadTexto = variedades.length
+    ? variedades.map((v) => `${v.name.trim()}${v.pct?.trim() ? ` ${v.pct.trim()} %` : ""}`).join(" · ")
+    : lot.ficha_variedad;
+  const procesoDe = (v: { base?: string; special?: string }) =>
+    [v.base?.trim() || ds.base_processing || lot.ficha_proceso, v.special?.trim() || (variedades.length <= 1 ? ds.special_processing : "")].filter(Boolean).join(" + ");
+  const procesos = variedades.map(procesoDe);
+  const procesoTexto =
+    variedades.length === 0
+      ? [ds.base_processing || lot.ficha_proceso, ds.special_processing].filter(Boolean).join(" + ")
+      : new Set(procesos.filter(Boolean)).size <= 1
+        ? procesos[0] || ""
+        : variedades.map((v, i) => `${v.name.trim()}: ${procesos[i] || "—"}`).join(" · ");
+
   const ftRows = rows(
     row("Producto", ds.product_name),
     row("Especie", ds.species),
@@ -361,8 +375,10 @@ function LotCard({
     row("Región", [ds.region_dep, ds.county_muni_text || ds.county_muni].filter(Boolean).join(" · ")),
     row("Altitud", ds.masl ? `${ds.masl} msnm` : lot.ficha_altitud_m ? `${lot.ficha_altitud_m} msnm` : ""),
     row("Edad del cultivo", ds.plantation_age),
-    row("Variedad", lot.ficha_variedad),
-    row("Proceso", [ds.base_processing || lot.ficha_proceso, ds.special_processing].filter(Boolean).join(" + "))
+    // V5.120 (owner, 2026-10-01): un blend tiene VARIAS variedades y el proceso es de CADA una (V5.65) — `ficha_variedad` y
+    // `base_processing` son solo la proyección de la dominante, y la EVA mostraba únicamente la primera.
+    row("Variedad", variedadTexto),
+    row("Proceso", procesoTexto)
   );
 
   // "Finca declarada" sale de las filas planas: lleva su propio chip
@@ -448,6 +464,13 @@ function LotCard({
     b3Na: !!ds.ft2_b3_na,
     b2Reporte: ds.b2_tiene_reporte ? (ds.b2_reporte_ref ?? "") : null,
     b3Reporte: ds.b3_tiene_reporte ? (ds.b3_reporte_ref ?? "") : null,
+    // V5.120: el puntaje reportado en B2 (con su escala) y lo básico de B3, para las fichas de la EVA.
+    puntajeReportado: ds.b2_score?.trim() || null,
+    escala: ds.b2_scale || null,
+    factorReportado: ds.yield_factor_producer?.trim() || null,
+    almendraReportada: ds.b3_almendra_total?.trim() || null,
+    soportesB2: (ds.b2_files_pdf?.length ?? 0) + (ds.b2_files_foto?.length ?? 0),
+    soportesB3: (ds.b3_files_pdf?.length ?? 0) + (ds.b3_files_foto?.length ?? 0),
     scaRows,
     scaTotal: anySca ? computeSca(scaValues).total.toFixed(2) : null,
     cuppingProfile: ds.cupping_profile ?? "",

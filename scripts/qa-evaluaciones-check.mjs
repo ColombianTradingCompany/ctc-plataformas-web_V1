@@ -164,6 +164,15 @@ check("y avanza la inscripción a la fila", acciones.includes("recibirMuestra(se
   check("ni la Ficha ni las instrucciones de envío hablan ya de «7 caracteres»", !/7 (dígitos|caracteres)/.test(lee("src/components/kaffetal-regal/ficha/panes/PaneA1.tsx")) && !/7 caracteres/.test(lee("src/components/kaffetal-regal/ficha/shipmentInstructionsPrint.ts")));
 }
 
+// ── V5.120 (owner, 2026-10-01) · la EVA con el mismo tratamiento visual, y el blend con TODAS sus variedades ──
+{
+  const eva = lee("src/app/ocp/(app)/kr/EvaReviewCard.tsx");
+  const lote = lee("src/app/ocp/(app)/kr/LoteSeccion.tsx");
+  check("la EVA usa las piezas (fichas, Sí/No) y pinta las filas como grilla", eva.includes('from "./EudrPiezas"') && eva.includes("<Fichas opciones={CUSTODY_STAGES}") && eva.includes("<SiNo v={eudr.illegality} bienSi={false}") && eva.includes('gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))"'));
+  check("B2/B3 en fichas: camino, puntaje con escala, emisor, soportes; las fotos con su mínimo de 2", eva.includes('ficha("Puntaje reportado"') && eva.includes('ficha("Factor de rendimiento"') && eva.includes("fotos >= 2 ? styles.badgeGood : styles.badgeBad"));
+  check("un blend lista todas sus variedades (con %) y el proceso de cada una", lote.includes("const variedadTexto = variedades.length") && lote.includes('row("Variedad", variedadTexto)') && lote.includes('row("Proceso", procesoTexto)') && lote.includes("`${v.name.trim()}: ${procesos[i] || \"—\"}`"));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-evaluaciones: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("   " + f);

@@ -297,3 +297,8 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   `src/lib/eudr.ts` (`MAX_CHEQUEO_FILES`). DICT `finca_certificates.corroboracion_asset_id/_filename` (acta 2026-10-01).
 - Guardián: `qa-visa` +8.
 (commit: 9f98387)
+
+## [2026-10-01] V5.120 · Consolas — la EVA del lote con el mismo tratamiento visual; el blend lista todas sus variedades
+- ANN `kr/EvaReviewCard.tsx` (grilla de fichas, `Fichas`/`SiNo` de `EudrPiezas`), `kr/LoteSeccion.tsx` (`variedadTexto` · `procesoTexto`;
+  `FisicoPanel` con lo reportado en B2/B3). Guardián: `qa-evaluaciones` +3.
+(commit: pendiente)

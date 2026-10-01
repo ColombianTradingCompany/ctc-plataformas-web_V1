@@ -19,6 +19,24 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.135] — 2026-10-01 (commit pendiente)
+
+- **Corregido**: el **botón de borrado nuclear no se veía** (owner). Estaba al final de la sección del lote, en mitad de una página
+  larga; ahora va **arriba, junto al título** del lote o de la finca.
+- **Cambiado**: en la planilla, **Uniformidad, Taza limpia y Dulzor** se teclean como los demás atributos (pasos de 0,25, de 0 a 10)
+  en lugar del selector de pares.
+- **Cambiado**: el **CVA admite aumentos de 0,25** en cada sección (antes, solo enteros).
+- **Corregido**: la **gráfica de araña** partía del mínimo del formulario y un 6 se leía como un cero. Ahora el centro es 0.
+- **Cambiado**: **taint y fault** se anotan taza a taza, con el mismo selector de tipo de defecto que la taza defectuosa del CVA, y
+  cada uno tiene su «i» que lo explica. La fórmula no cambia: los dos contadores salen de las tazas.
+- **Añadido**: en B3, **«Registrar detalle» (R)** junto al defecto primario y al secundario —los 16 defectos del formato físico, con
+  granos y defectos completos— y el selector de **color** del grano verde. Los gramos siguen siendo lo que entra en el factor.
+- **Añadido**: **acidez** (intensidad 0–15 y un tipo) y **sensación en boca** (intensidad y hasta dos texturas), que no están en la
+  rueda. No entran en el puntaje.
+- **Cambiado**: el núcleo de la CTCx Coffee Datasheet Tool acepta los mismos dominios que la planilla (una fórmula, no dos); sus
+  campos de pantalla quedan como pendiente de `herramientas-cafe`.
+- **Docs**: charters `consolas`, `socios` y `herramientas-cafe`, ALINEACION §3. `qa-centro-calidad` 127 → 144.
+
 ## [V5.134] — 2026-10-01 (commit 32e0007)
 
 - **Añadido**: **borrado nuclear** de un lote o una finca desde el OCP (owner, 2026-10-01), aunque ya haya pasado por todo el circuito:

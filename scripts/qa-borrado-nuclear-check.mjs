@@ -50,7 +50,8 @@ const rail = lee("src/lib/panel/consoles.ts");
   check("un bloqueo no deja ni empezar: se enseña el porqué y no hay botón de continuar", boton.includes("inv.inventario.bloqueos.map((b) => (") && boton.includes("{!bloqueado && ("));
   check("el servidor vuelve a exigir el motivo, la casilla y la frase (lo que valida la pantalla no cuenta)", acciones.includes("if (motivo.length < MOTIVO_MINIMO)") && acciones.includes('if (formData.get("entiendo") !== "si")') && acciones.includes("if (frase !== fraseNuclear(codigo))") && MOTIVO_MINIMO >= 10);
   check("el código de la frase lo calcula el servidor del id, no lo manda la pantalla", acciones.includes('const codigoDe = (tipo: TipoNuclear, id: string) => (tipo === "lote" ? ctcLotReference(id) : fincaCode(id));') && !/formData\.get\("codigo"\)/.test(acciones));
-  check("el botón vive en la vista del lote y en la de la finca cuando es la protagonista", kr.includes('{nombreLote && <BotonNuclear tipo="lote" id={loteId} />}') && kr.includes('{protagonista === "finca" && nombreFinca && <BotonNuclear tipo="finca" id={fincaId} />}'));
+  // V5.135 (owner: «no veo el botón»): ARRIBA, junto al título, y una sola vez por vista.
+  check("el botón está arriba, junto al título, en la vista del lote y en la de la finca cuando es la protagonista", /<h1 className=\{styles\.title\}>\{titulo\}<\/h1>\s*\{protagonista === "lote" && loteId && nombreLote && <BotonNuclear tipo="lote" id=\{loteId\} \/>\}\s*\{protagonista === "finca" && fincaId && nombreFinca && <BotonNuclear tipo="finca" id=\{fincaId\} \/>\}/.test(kr) && (kr.match(/<BotonNuclear /g) ?? []).length === 2);
 }
 
 // ── 3. Primero se archiva, después se borra; una transacción ────────────────

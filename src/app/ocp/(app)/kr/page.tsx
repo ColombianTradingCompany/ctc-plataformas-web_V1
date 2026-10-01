@@ -92,22 +92,24 @@ export default async function KrPage({ searchParams }: { searchParams: Promise<P
             </>
           )}
         </nav>
-        <h1 className={styles.title}>{titulo}</h1>
+        {/* V5.135 (owner: «no veo el botón»): el borrado nuclear va ARRIBA, junto al título de lo que se está viendo. En la V5.134
+            quedó al final de la sección del lote, en mitad de una página larga, y no se veía. */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+          <h1 className={styles.title}>{titulo}</h1>
+          {protagonista === "lote" && loteId && nombreLote && <BotonNuclear tipo="lote" id={loteId} />}
+          {protagonista === "finca" && fincaId && nombreFinca && <BotonNuclear tipo="finca" id={fincaId} />}
+        </div>
 
         {loteId && (
           <section style={{ marginBottom: 36 }}>
             <h2 className={styles.sectionHead}>Lote</h2>
             <LoteSeccion service={service} loteId={loteId} />
-            {/* V5.134 (owner): el borrado nuclear del lote, con doble confirmación. Solo en SU vista (`?lote=`). */}
-            {nombreLote && <BotonNuclear tipo="lote" id={loteId} />}
           </section>
         )}
         {fincaId && protagonista !== "productor" && (
           <section style={{ marginBottom: 36 }}>
             <h2 className={styles.sectionHead}>Finca{protagonista === "lote" ? " de origen" : ""}</h2>
             <FincaSeccion service={service} fincaId={fincaId} />
-            {/* V5.134: el de la finca solo cuando la finca ES la protagonista (`?finca=`), no cuando se ve como origen de un lote. */}
-            {protagonista === "finca" && nombreFinca && <BotonNuclear tipo="finca" id={fincaId} />}
           </section>
         )}
         {productorId && (

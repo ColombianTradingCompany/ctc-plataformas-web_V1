@@ -945,7 +945,7 @@ function calcCva(ev){
     const raw = String(ev["cva_"+k]==null?"":ev["cva_"+k]).trim();
     if(!raw){ faltan.push(k); return; }
     const n = numO(raw);
-    if(n==null || !Number.isInteger(n) || n<CVA_K.min || n>CVA_K.max){ errores.push("rango:"+k); return; }
+    if(n==null || n<CVA_K.min || n>CVA_K.max || Math.abs(n/CVA_K.paso - Math.round(n/CVA_K.paso))>1e-9){ errores.push("rango:"+k); return; } /* V5.135: cuartos de punto, como la planilla */
     cal++; suma += n;
   });
   const tz = contarTazas(ev.cva_tazas);
@@ -965,7 +965,7 @@ function calcSca2004(ev){
     const n = numO(raw);
     if(n==null){ errores.push("numero:"+k); return; }
     if(SCA_TAZ.indexOf(k)>=0){
-      if(n<0 || n>SCA_K.max || Math.abs(n/SCA_K.porTaza - Math.round(n/SCA_K.porTaza))>1e-9){ errores.push("taza:"+k); return; }
+      if(n<0 || n>SCA_K.max || Math.abs(n/SCA_K.paso - Math.round(n/SCA_K.paso))>1e-9){ errores.push("taza:"+k); return; } /* V5.135: 0–10 al 0,25, como la planilla */
     } else if(n<SCA_K.min || n>SCA_K.max || Math.abs(n/SCA_K.paso - Math.round(n/SCA_K.paso))>1e-9){ errores.push("escala:"+k); return; }
     cal++;
   });

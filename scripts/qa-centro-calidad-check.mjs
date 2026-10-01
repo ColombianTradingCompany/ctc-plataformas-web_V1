@@ -15,7 +15,7 @@
 import { readFileSync } from "node:fs";
 import { RUEDA, DESCRIPTORES, normalizaRueda, descriptorLabel, rutaDe, familiaDe, ETAPAS_DE_LA_RUEDA, ETAPA_LABEL, INTENSIDAD, MARCA_POR_DEFECTO, ZONA_LABEL, zonaDeIntensidad, normalizaDetalle, marcaLabel, ajustaIntensidad } from "../src/lib/catacion/rueda.ts";
 import { generar as generarRuedaDatos, leerDatosDeLaHerramienta } from "./build-rueda-datos.mjs";
-import { CVA, CVA_SECCIONES, SCA2004, computeCva, computeSca2004, EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, protocoloDelPunto, puntoDeLaPlanilla, toLabEvaluation } from "../src/lib/arena/labEvaluation.ts";
+import { CVA, CVA_SECCIONES, SCA2004, computeCva, computeSca2004, contarScaTazas, normalizaScaTazas, EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, protocoloDelPunto, puntoDeLaPlanilla, toLabEvaluation } from "../src/lib/arena/labEvaluation.ts";
 import { BANDA_SIN_CALIBRAR, CVA_PROPOSITO, LOTES_PARA_CALIBRAR, admiteTyrian, decidirPorPunto, gradoFirme, homologarCva, puntoDeFila, puntoHomologado, puntoNativo, rotuloDelPunto, techoDelPunto } from "../src/lib/arena/homologacion.ts";
 import { PL, SCA_ATTR_LABEL, CVA_SECCION_LABEL, MALLA_LABEL } from "../src/lib/arena/planillaI18n.ts";
 import { estadoDelCircuito } from "../src/lib/ocp/circuito.ts";
@@ -160,11 +160,13 @@ const gate = lee("src/lib/partners/requirePartner.ts");
     check(`CVA «${caso}» = ${oficial} (u ${u} · d ${d})`, r.total === Number(oficial) && r.u === Number(u) && r.d === Number(d), `dio ${r.total} (u ${r.u} · d ${r.d})`);
   }
   check("menos de ocho secciones → Incompleto, sin puntaje", computeCva(cva([7, 7, 7, 7, 7, 7, 7, ""])).total === null && computeCva(cva([7, 7, 7, 7, 7, 7, 7, ""])).errores.some((e) => /incompleto/i.test(e)));
-  check("un 10 o un 7,5 es un error, no se recorta", computeCva(cva(conGeneral(7, 10))).total === null && computeCva(cva(conGeneral(7, "7.5"))).total === null);
+  // V5.135 (owner): el CVA admite cuartos de punto — 7,5 ya vale; un 10 o un 7,3 siguen siendo un error, no se recortan.
+  check("un 10 o un 7,3 es un error, no se recorta; un 7,5 vale (cuartos de punto)", computeCva(cva(conGeneral(7, 10))).total === null && computeCva(cva(conGeneral(7, "7.3"))).total === null && computeCva(cva(conGeneral(7, "7.5"))).total === 89.75 && computeCva(cva(conGeneral(7, "0.75"))).total === null);
   check("una taza defectuosa sin tipo no vale; cinco defectuosas por igual no son «no uniformes»", computeCva(cva(todo(7), [{ defectuosa: true }])).total === null && computeCva(cva(todo(7), Array(5).fill({ defectuosa: true, defecto: "papa" }))).u === 0 && computeCva(cva(todo(7), Array(5).fill({ defectuosa: true, defecto: "papa" }))).d === 5);
   const sca = (extra = {}) => toLabEvaluation({ vista: "sca", sca_fragrance: "8", sca_flavor: "8", sca_aftertaste: "8", sca_acidity: "8", sca_body: "8", sca_balance: "8", sca_uniformity: "10", sca_clean_cup: "10", sca_sweetness: "10", sca_cuppers: "8", ...extra });
   check("SCA 2004: diez atributos completos dan el total; taint −2 y fault −4 por taza", computeSca2004(sca()).total === 86 && computeSca2004(sca({ sca_taint_cups: "1" })).total === 84 && computeSca2004(sca({ sca_fault_cups: "1" })).total === 82 && SCA2004.min === 6 && SCA2004.paso === 0.25);
-  check("SCA 2004: incompleto sin Punto; 5,5 en un escalado y 7 en Uniformidad son errores", computeSca2004(sca({ sca_body: "" })).total === null && computeSca2004(sca({ sca_flavor: "5.5" })).total === null && computeSca2004(sca({ sca_uniformity: "7" })).total === null);
+  // V5.135 (owner): Uniformidad, Taza limpia y Dulzor se teclean como los demás (0,25), de 0 a 10 — un 7 o un 7,25 valen.
+  check("SCA 2004: incompleto sin Punto; 5,5 en un escalado es un error; Uniformidad admite 7 y 7,25 pero no 7,3 ni 10,5", computeSca2004(sca({ sca_body: "" })).total === null && computeSca2004(sca({ sca_flavor: "5.5" })).total === null && computeSca2004(sca({ sca_uniformity: "7" })).total === 83 && computeSca2004(sca({ sca_uniformity: "7.25" })).total === 83.25 && computeSca2004(sca({ sca_uniformity: "7.3" })).total === null && computeSca2004(sca({ sca_uniformity: "10.5" })).total === null && computeSca2004(sca({ sca_sweetness: "0" })).total === 76);
   const homolog = [...s10.matchAll(/CVA ([\d,]+) → (?:Punto )?([\d,]+)–([\d,]+)/g)].map((m) => m.slice(1).map((x) => Number(x.replace(",", "."))));
   check("la banda sin calibrar es la del plan (79 + (CVA − 79) / k, k de 1 a 2) y reproduce sus ejemplos", homolog.length >= 2 && BANDA_SIN_CALIBRAR.pivote === 79 && BANDA_SIN_CALIBRAR.kMin === 1 && BANDA_SIN_CALIBRAR.kMax === 2 && homolog.every(([c, b, a]) => homologarCva(c).bajo === b && homologarCva(c).alto === a));
   check("R2: con las dos planillas completas rige el SCA nativo y el CVA queda registrado (banco comparativo)", (() => { const ev = toLabEvaluation({ ...sca(), ...secciones(todo(7)), vista: "ambas" }); const p = puntoDeLaPlanilla(ev); return p?.origen === "nativo" && p.valor === 86 && p.cvaTotal === 89.5 && protocoloDelPunto(ev) === "sca" && labEvaluationScore(ev) === 86; })());
@@ -243,6 +245,43 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("el editor: tocar la marca abre las cuatro etapas y el deslizador; marcar crea el detalle y desmarcar lo borra", editor.includes("ETAPAS_DE_LA_RUEDA.map((etapa) => (") && editor.includes('type="range"') && editor.includes("max={INTENSIDAD.max}") && editor.includes("detalle[id] = { ...MARCA_POR_DEFECTO };") && editor.includes("delete detalle[id];") && editor.includes("onChange({ rueda: [...set], rueda_detalle: detalle });"));
   check("se guarda con la evaluación (Centro y «Registrar a mano») y lo leen el OCP y el Centro", acciones.includes("rueda_detalle: normalizaDetalle(ev.rueda_detalle, normalizaRueda(ev.rueda))") && nominados.includes("rueda_detalle: normalizaDetalle(lastEval.rueda_detalle, normalizaRueda(lastEval.rueda))") && lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").includes("marcaLabel(id, normalizaDetalle(pendiente.rueda_detalle, ids))") && lee("src/app/socios/[partner]/panel/evaluacion/page.tsx").includes("marcaLabel(id, normalizaDetalle(pendiente.rueda_detalle, ids))"));
   check("el acta de la migración `lot_evaluations.rueda_detalle` existe", lee("docs/migraciones/2026-10-01_lot_evaluations_rueda_detalle.sql").includes("add column if not exists rueda_detalle jsonb not null default '{}'::jsonb"));
+}
+
+// ── 11. V5.135 (owner, 2026-10-01) · siete correcciones sobre la planilla del Centro de Calidad ──
+{
+  const editor = lee("src/components/bcp/LabEvalEditor.tsx");
+  const piezas = lee("src/components/bcp/PlanillaPiezas.tsx");
+  const fisicoTs = lee("src/lib/catacion/fisico.ts");
+  const datasheet = lee("public/tools/coffee-datasheet/ctcx-coffee-datasheet-tool.html");
+  const F = await import("../src/lib/catacion/fisico.ts");
+
+  // (a) los tres atributos por taza, como los demás.
+  check("Uniformidad, Taza limpia y Dulzor se teclean igual que los demás (ya no un selector de pares)", !editor.includes("[0, 2, 4, 6, 8, 10].map") && editor.includes("min: SCA2004_POR_TAZAS.includes(key) ? 0 : SCA2004.min"));
+  // (b) el CVA en cuartos.
+  check("el CVA admite aumentos de 0,25", CVA.pasoSeccion === 0.25 && editor.includes("step: String(CVA.pasoSeccion)") && computeCva(toLabEvaluation({ vista: "cva", cva_fragrance: "7.25", cva_aroma: "7.25", cva_flavor: "7.25", cva_aftertaste: "7.25", cva_acidity: "7.25", cva_sweetness: "7.25", cva_mouthfeel: "7.25", cva_overall: "7.25" })).total === 90.75);
+  // (c) el radar desde 0.
+  check("el radar va de 0: el centro es 0, no el mínimo del formulario", piezas.includes("const fraccion = (v: number) => Math.min(1, Math.max(0, v / max));") && editor.includes("marcas={radarSca ? [2, 4, 6, 8, 10] : [3, 6, 9]}") && !/RadarDeTaza[^>]*\bmin=/.test(editor));
+  // (d) taint y fault, taza a taza.
+  const viejas = normalizaScaTazas(undefined, "2", "3");
+  check("taint y fault se anotan taza a taza: los contadores de antes se reparten y los nuevos se derivan", JSON.stringify(contarScaTazas(viejas)) === JSON.stringify({ taint: 2, fault: 3 }) && viejas.length === 5 && JSON.stringify(contarScaTazas(normalizaScaTazas([{ estado: "taint", defecto: "moho" }, { estado: "x" }, { estado: "fault" }]))) === JSON.stringify({ taint: 1, fault: 1 }));
+  const conTazas = toLabEvaluation({ vista: "sca", sca_tazas: [{ estado: "fault", defecto: "fenol" }, { estado: "taint", defecto: "" }], sca_taint_cups: "4", sca_fault_cups: "4" });
+  check("las tazas mandan sobre los contadores, y la fórmula sigue leyendo los contadores", conTazas.sca_taint_cups === "1" && conTazas.sca_fault_cups === "1" && toLabEvaluation({ sca_taint_cups: "2" }).sca_tazas.filter((t) => t.estado === "taint").length === 2 && toLabEvaluation({ sca_taint_cups: "2" }).sca_taint_cups === "2");
+  check("el editor: cinco tazas con limpia · taint · fault, el tipo de defecto del CVA, y una «i» para cada uno", editor.includes("value.sca_tazas.map((x, i) => (") && editor.includes("<Info texto={t.infoTaint} />") && editor.includes("<Info texto={t.infoFault} />") && (editor.match(/CVA_DEFECTOS\.map\(\(\[id\]\) => \(/g) ?? []).length === 2 && editor.includes('sca_taint_cups: n.taint ? String(n.taint) : ""') && !editor.includes('numInput("sca_taint_cups"'));
+  // (e) B3: el detalle de los defectos y el color.
+  check("16 defectos físicos: 6 de categoría 1 y 10 de categoría 2, con su equivalencia", F.DEFECTOS_FISICOS.length === 16 && F.DEFECTOS_FISICOS.filter((d) => d.cat === 1).length === 6 && F.DEFECTOS_FISICOS.filter((d) => d.cat === 2).length === 10);
+  check("son los de la CTCx Coffee Datasheet Tool: mismas claves, categorías, equivalencias y rótulos ES/EN", F.DEFECTOS_FISICOS.every((d) => datasheet.includes(`["${d.key}",${d.cat},${d.granos}]`) && datasheet.includes(`df_${d.key}:["${d.es}","${d.en}"`)), F.DEFECTOS_FISICOS.filter((d) => !(datasheet.includes(`["${d.key}",${d.cat},${d.granos}]`) && datasheet.includes(`df_${d.key}:["${d.es}","${d.en}"`))).map((d) => d.key).join(", "));
+  const cuenta = F.calcDefectos({ negro: "2", insecto_grave: "9", negro_parcial: "7", insecto_leve: "25", inventado: "9" });
+  check("granos → defectos completos (solo enteros), por categoría", cuenta.cat1 === 3 && cuenta.cat2 === 4 && cuenta.total === 7 && cuenta.filas.insecto_grave.completos === 1 && cuenta.filas.negro_parcial.completos === 2 && cuenta.granos === 43);
+  check("ocho colores del grano verde, los de la herramienta", F.COLORES_DEL_VERDE.length === 8 && F.COLORES_DEL_VERDE.every((c, i) => datasheet.includes(`col${i + 1}:["${c.es}","${c.en}"`)));
+  check("el editor: la (R) de «Registrar detalle» en cada defecto, la tabla del detalle y el selector de color; los gramos siguen", (editor.match(/setDetalleAbierto\(detalleAbierto === cat \? null : cat\)/g) ?? []).length === 1 && editor.includes("DEFECTOS_FISICOS.filter((d) => d.cat === detalleAbierto)") && editor.includes("COLORES_DEL_VERDE.map((o) => (") && editor.includes('numInput(cat === 1 ? "fa_primary_defect" : "fa_secondary_defect")'));
+  check("el detalle NO entra en el factor: la aritmética sigue con los gramos", !/defectos_detalle|fa_color/.test(lee("src/components/kaffetal-regal/ficha/fichaCalculations.ts")));
+  // (f) acidez y sensación en boca.
+  check("sensación en boca: cinco texturas, hasta dos; acidez: dos tipos, uno", F.TEXTURAS_EN_BOCA.length === 5 && F.MAX_TEXTURAS === 2 && F.TIPOS_DE_ACIDEZ.length === 2 && JSON.stringify(F.normalizaTexturas(["metallic", "rough", "oily", "x"])) === JSON.stringify(["rough", "oily"]) && F.TEXTURAS_EN_BOCA.every((o) => datasheet.includes(`b_${o.key}:["${o.es}","${o.en}"`)));
+  check("el editor las ofrece con su intensidad 0–15, y no entran en el puntaje", editor.includes('intensidadDe("acidez_intensidad")') && editor.includes('intensidadDe("boca_intensidad")') && editor.includes("TIPOS_DE_ACIDEZ.map((o) => (") && editor.includes("value.boca_texturas.length >= MAX_TEXTURAS") && !/acidez_|boca_/.test(lee("src/lib/arena/homologacion.ts")));
+  const llena = toLabEvaluation({ fa_color: "verde", defectos_detalle: { negro: "2", x: "1", agrio: "0" }, acidez_tipo: "dulce", boca_texturas: ["smooth", "oily", "rough"], acidez_intensidad: "9" });
+  check("la planilla normaliza lo nuevo y una vacía sigue sin datos", llena.fa_color === "verde" && JSON.stringify(llena.defectos_detalle) === JSON.stringify({ negro: "2" }) && llena.boca_texturas.length === 2 && toLabEvaluation({ fa_color: "morado", acidez_tipo: "x" }).fa_color === "" && labEvaluationHasData(toLabEvaluation({})) === false && labEvaluationHasData(toLabEvaluation({ fa_color: "verde" })) === true && labEvaluationHasData(toLabEvaluation({ sca_tazas: [{ estado: "taint" }] })) === true);
+  check("fisico.ts es puro (no importa nada)", !/^\s*import\s/m.test(fisicoTs.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "")));
+  check("todo lo nuevo está en los dos idiomas", ["tazasSca", "infoTaint", "infoFault", "color", "detalle", "thGranos", "thCompletos", "totalDefectos", "acidez", "boca", "elijaUna", "hastaDos", "sinRegistrar"].every((k) => PL.es[k] && PL.en[k]) && F.DEFECTOS_FISICOS.every((d) => d.es && d.en));
 }
 
 if (fallos.length) {

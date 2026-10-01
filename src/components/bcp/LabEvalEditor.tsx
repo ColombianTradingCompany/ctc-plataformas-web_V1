@@ -37,8 +37,11 @@ import {
   VISTA_LABEL,
   erroresDePlanilla,
   puntoDeLaPlanilla,
+  contarScaTazas,
   type CvaTaza,
+  type EstadoDeTazaSca,
   type LabEvaluation,
+  type ScaTaza,
   type VistaDePlanilla,
 } from "@/lib/arena/labEvaluation";
 import { CVA_PROPOSITO, decidirPorPunto, rotuloDelPunto } from "@/lib/arena/homologacion";
@@ -57,7 +60,8 @@ import {
   type IdiomaDePlanilla,
 } from "@/lib/arena/planillaI18n";
 import { origenDeSuperficie } from "@/lib/red/subdominios";
-import { BarraDeMalla, RadarDeTaza, RuedaDeSabores, type EjeDeRadar } from "./PlanillaPiezas";
+import { COLORES_DEL_VERDE, DEFECTOS_FISICOS, MAX_TEXTURAS, TEXTURAS_EN_BOCA, TIPOS_DE_ACIDEZ, calcDefectos, normalizaTexturas } from "@/lib/catacion/fisico";
+import { BarraDeMalla, Info, RadarDeTaza, RuedaDeSabores, type EjeDeRadar } from "./PlanillaPiezas";
 
 // Las dos herramientas de apoyo del folio 11 se ENLAZAN (no se embeben): viven en el taller de Herramientas del Café.
 const TALLER = origenDeSuperficie("/herramientas");
@@ -83,6 +87,10 @@ marca: { fontSize: 12, padding: "4px 8px", borderRadius: 7, border: "1px solid v
   marcaBoton: { flex: 1, minWidth: 0, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap", textAlign: "left", fontSize: 12, padding: 0, border: "none", background: "none", color: "inherit", cursor: "pointer" } as const,
   marcaInsignia: { fontSize: 10.5, fontWeight: 700, border: "1px solid var(--line)", borderRadius: 999, padding: "1px 7px", color: "var(--muted)", whiteSpace: "nowrap" } as const,
   marcaQuitar: { border: "none", background: "none", cursor: "pointer", color: "var(--muted)", fontSize: 15, lineHeight: 1, padding: "0 2px" } as const,
+  // V5.135: la (R) de «Registrar detalle», las opciones del descriptivo y su caja.
+  r: { width: 20, height: 20, borderRadius: 6, border: "1.5px solid var(--primary, #3C0A86)", background: "transparent", color: "var(--primary, #3C0A86)", fontSize: 10.5, fontWeight: 800, lineHeight: 1, cursor: "pointer", padding: 0 } as const,
+  opcion: { display: "flex", gap: 6, alignItems: "flex-start", fontSize: 12, cursor: "pointer" } as const,
+  descriptivo: { border: "1px solid var(--line)", borderRadius: 8, padding: "8px 10px", display: "grid", gap: 5 } as const,
   etapa: { fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 999, border: "1.5px solid var(--line)", background: "transparent", color: "var(--muted)", cursor: "pointer" } as const,
   bloque: { border: "1px solid var(--line)", borderRadius: 10, padding: "10px 12px" } as const,
   // Dos columnas cuando caben (≥ 2 × 330 px); una sola en un teléfono o dentro de una tarjeta estrecha.
@@ -166,9 +174,45 @@ export function LabEvalEditor({
     }
     onChange({ rueda: [...set], rueda_detalle: detalle });
   };
+  // V5.135 (owner): las cinco tazas del SCA 2004. Los contadores de taint y fault que lee la fórmula se derivan de ellas.
+  const setScaTaza = (i: number, cambio: Partial<ScaTaza>) => {
+    const next = value.sca_tazas.map((x, j) => (j === i ? { ...x, ...cambio, ...(cambio.estado === "" ? { defecto: "" } : {}) } : x));
+    const n = contarScaTazas(next);
+    onChange({ sca_tazas: next, sca_taint_cups: n.taint ? String(n.taint) : "", sca_fault_cups: n.fault ? String(n.fault) : "" });
+  };
+  // El detalle de los defectos físicos: se abre con la (R) de cada categoría.
+  const [detalleAbierto, setDetalleAbierto] = useState<1 | 2 | null>(null);
+  const defectos = calcDefectos(value.defectos_detalle);
+  // La intensidad descriptiva (0–15) de la acidez y de la sensación en boca: «sin registrar» hasta que se mueve.
+  const intensidadDe = (campo: "acidez_intensidad" | "boca_intensidad") => {
+    const v = numOrNull(value[campo]);
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <input
+          type="range"
+          aria-label={t.intensidad}
+          min={INTENSIDAD.min}
+          max={INTENSIDAD.max}
+          step={INTENSIDAD.paso}
+          value={v ?? 0}
+          disabled={disabled}
+          onChange={(e) => onChange({ [campo]: String(ajustaIntensidad(e.target.value)) } as Partial<LabEvaluation>)}
+          style={{ flex: 1, minWidth: 0, opacity: v == null ? 0.5 : 1 }}
+        />
+        <b className="mono" style={{ fontSize: 11.5, minWidth: 96, textAlign: "right", fontWeight: v == null ? 400 : 700, color: v == null ? "var(--muted)" : "var(--ink)" }}>
+          {v == null ? t.sinRegistrar : `${fmtIntensidad(v)}/${INTENSIDAD.max} · ${ZONA_LABEL[lang][zonaDeIntensidad(v)]}`}
+        </b>
+        {v != null && (
+          <button type="button" title={t.borrar} aria-label={t.borrar} disabled={disabled} onClick={() => onChange({ [campo]: "" } as Partial<LabEvaluation>)} style={S.marcaQuitar}>
+            ×
+          </button>
+        )}
+      </div>
+    );
+  };
   const setDetalle = (id: string, cambio: Partial<DetalleDeMarca>) => onChange({ rueda_detalle: { ...value.rueda_detalle, [id]: { ...detalleDe(value.rueda_detalle, id), ...cambio } } });
 
-  // El radar enseña el protocolo que la vista deja ver: los diez atributos SCA (escala 6–10), o las ocho secciones CVA (1–9).
+  // El radar enseña el protocolo que la vista deja ver: los diez atributos SCA o las ocho secciones CVA. V5.135: el centro es 0.
   const radarSca = value.vista !== "cva";
   const ejes: EjeDeRadar[] = radarSca
     ? SCA_ATTRS.map(([key]) => ({ label: SCA_ATTR_LABEL[lang][key], valor: numOrNull(value[`sca_${key}` as keyof LabEvaluation] as string) }))
@@ -211,7 +255,7 @@ export function LabEvalEditor({
       {/* El radar vivo con el puntaje grande y su franja: la cabecera de Intrínsecos de la Datasheet Tool. */}
       <div style={{ ...S.bloque, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, alignItems: "center", marginBottom: 12 }}>
         <div>
-          <RadarDeTaza ejes={ejes} min={radarSca ? SCA2004.min : CVA.min} max={radarSca ? SCA2004.max : CVA.max} />
+          <RadarDeTaza ejes={ejes} max={radarSca ? SCA2004.max : CVA.max} marcas={radarSca ? [2, 4, 6, 8, 10] : [3, 6, 9]} />
           <p style={{ ...S.hint, textAlign: "center", margin: "2px 0 0" }}>
             {t.radar} · {radarSca ? t.radarEscalaSca : t.radarEscalaCva}
           </p>
@@ -259,26 +303,41 @@ export function LabEvalEditor({
                 {SCA_ATTRS.map(([key]) => (
                   <label key={key} style={S.par}>
                     <span>{SCA_ATTR_LABEL[lang][key]}</span>
-                    {SCA2004_POR_TAZAS.includes(key) ? (
-                      <select value={value[`sca_${key}` as keyof LabEvaluation] as string} onChange={(e) => onChange({ [`sca_${key}`]: e.target.value } as Partial<LabEvaluation>)} disabled={disabled} style={{ ...S.sel, width: 76 }}>
-                        <option value="">—</option>
-                        {[0, 2, 4, 6, 8, 10].map((n) => (
-                          <option key={n} value={String(n)}>{n}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      numInput(`sca_${key}` as keyof LabEvaluation, { step: String(SCA2004.paso), min: SCA2004.min, max: SCA2004.max })
-                    )}
+                    {/* V5.135 (owner): Uniformidad, Taza limpia y Dulzor se teclean igual que los demás (pasos de 0,25); su piso es 0. */}
+                    {numInput(`sca_${key}` as keyof LabEvaluation, { step: String(SCA2004.paso), min: SCA2004_POR_TAZAS.includes(key) ? 0 : SCA2004.min, max: SCA2004.max })}
                   </label>
                 ))}
-                <label style={S.par}>
-                  <span>{t.tazasTaint(SCA2004.castigoTaint)}</span>
-                  {numInput("sca_taint_cups", { step: "1", max: SCA2004.tazas })}
-                </label>
-                <label style={S.par}>
-                  <span>{t.tazasFault(SCA2004.castigoFault)}</span>
-                  {numInput("sca_fault_cups", { step: "1", max: SCA2004.tazas })}
-                </label>
+              </div>
+              {/* V5.135 (owner): taint y fault, taza a taza y con el mismo selector de tipo que la taza defectuosa del CVA; cada uno
+                  con su «i». Los dos contadores que lee la fórmula se derivan de aquí. */}
+              <div style={{ ...S.lbl, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", margin: "10px 0 4px" }}>
+                <span>{t.tazasSca}</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 400 }}>
+                  taint <Info texto={t.infoTaint} />
+                </span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 400 }}>
+                  fault <Info texto={t.infoFault} />
+                </span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(118px, 1fr))", gap: 6 }}>
+                {value.sca_tazas.map((x, i) => (
+                  <div key={i} style={{ border: "1px dashed var(--line)", borderRadius: 8, padding: "4px 6px", fontSize: 11.5 }}>
+                    <div style={{ fontWeight: 700, marginBottom: 2 }}>{t.taza} {i + 1}</div>
+                    <select aria-label={`${t.taza} ${i + 1}`} value={x.estado} onChange={(e) => setScaTaza(i, { estado: e.target.value as EstadoDeTazaSca })} disabled={disabled} style={{ ...S.sel, width: "100%", fontSize: 11.5 }}>
+                      <option value="">{t.limpia}</option>
+                      <option value="taint">{t.tazaTaint(SCA2004.castigoTaint)}</option>
+                      <option value="fault">{t.tazaFault(SCA2004.castigoFault)}</option>
+                    </select>
+                    {x.estado && (
+                      <select value={x.defecto} onChange={(e) => setScaTaza(i, { defecto: e.target.value })} disabled={disabled} style={{ ...S.sel, width: "100%", marginTop: 2, fontSize: 11.5 }}>
+                        <option value="">{t.tipo}</option>
+                        {CVA_DEFECTOS.map(([id]) => (
+                          <option key={id} value={id}>{CVA_DEFECTO_LABEL[lang][id]}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                ))}
               </div>
               <div style={S.total}>
                 <span>
@@ -300,7 +359,7 @@ export function LabEvalEditor({
                 {CVA_SECCIONES.map(([key]) => (
                   <label key={key} style={S.par}>
                     <span>{CVA_SECCION_LABEL[lang][key]}</span>
-                    {numInput(`cva_${key}` as keyof LabEvaluation, { step: "1", min: CVA.min, max: CVA.max, ancho: 64 })}
+                    {numInput(`cva_${key}` as keyof LabEvaluation, { step: String(CVA.pasoSeccion), min: CVA.min, max: CVA.max, ancho: 70 })}
                   </label>
                 ))}
               </div>
@@ -426,6 +485,39 @@ export function LabEvalEditor({
                   </div>
                 )}
               </div>
+              {/* V5.135 (owner): lo que el formato descriptivo pide de la acidez y de la sensación en boca y «no está en la rueda como
+                  tal» — la intensidad (0–15) y sus opciones: una para la acidez, hasta dos para la boca. No entra en el puntaje. */}
+              <div style={S.descriptivo}>
+                <div style={S.lbl}>
+                  {t.acidez} <small style={{ fontWeight: 400, color: "var(--muted)" }}>· {t.intensidad} · {t.elijaUna}</small>
+                </div>
+                {intensidadDe("acidez_intensidad")}
+                {TIPOS_DE_ACIDEZ.map((o) => (
+                  <label key={o.key} style={S.opcion}>
+                    <input type="checkbox" checked={value.acidez_tipo === o.key} disabled={disabled} onChange={(e) => onChange({ acidez_tipo: e.target.checked ? o.key : "" })} /> {o[lang]}
+                  </label>
+                ))}
+              </div>
+              <div style={S.descriptivo}>
+                <div style={S.lbl}>
+                  {t.boca} <small style={{ fontWeight: 400, color: "var(--muted)" }}>· {t.intensidad} · {t.hastaDos}</small>
+                </div>
+                {intensidadDe("boca_intensidad")}
+                {TEXTURAS_EN_BOCA.map((o) => {
+                  const on = value.boca_texturas.includes(o.key);
+                  return (
+                    <label key={o.key} style={{ ...S.opcion, ...(!on && value.boca_texturas.length >= MAX_TEXTURAS ? { opacity: 0.5 } : {}) }}>
+                      <input
+                        type="checkbox"
+                        checked={on}
+                        disabled={disabled || (!on && value.boca_texturas.length >= MAX_TEXTURAS)}
+                        onChange={(e) => onChange({ boca_texturas: normalizaTexturas(e.target.checked ? [...value.boca_texturas, o.key] : value.boca_texturas.filter((k) => k !== o.key)) })}
+                      />{" "}
+                      {o[lang]}
+                    </label>
+                  );
+                })}
+              </div>
               <div>
                 <label style={S.lbl}>{t.perfil}</label>
                 <textarea rows={6} value={value.cupping_profile} onChange={(e) => onChange({ cupping_profile: e.target.value })} disabled={disabled} style={{ ...S.input, fontFamily: "inherit" }} placeholder={t.perfilPh} />
@@ -458,13 +550,27 @@ export function LabEvalEditor({
               <span>{t.humedad}</span>
               {numInput("fa_parch_hum")}
             </label>
+            {/* V5.135 (owner): los gramos se quedan («me gusta por simplicidad»); la (R) abre el detalle — cuál defecto es cuál. */}
+            {([1, 2] as const).map((cat) => (
+              <div key={cat} style={S.par}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                  {cat === 1 ? t.defPrimario : t.defSecundario}
+                  <button type="button" onClick={() => setDetalleAbierto(detalleAbierto === cat ? null : cat)} aria-expanded={detalleAbierto === cat} title={t.detalle} aria-label={`${t.detalle}: ${cat === 1 ? t.defPrimario : t.defSecundario}`} style={{ ...S.r, ...(detalleAbierto === cat ? { background: "var(--primary, #3C0A86)", color: "#fff" } : {}) }}>
+                    R
+                  </button>
+                  {(cat === 1 ? defectos.cat1 : defectos.cat2) > 0 && <small style={{ color: "var(--muted)" }}>{cat === 1 ? defectos.cat1 : defectos.cat2}</small>}
+                </span>
+                {numInput(cat === 1 ? "fa_primary_defect" : "fa_secondary_defect")}
+              </div>
+            ))}
             <label style={S.par}>
-              <span>{t.defPrimario}</span>
-              {numInput("fa_primary_defect")}
-            </label>
-            <label style={S.par}>
-              <span>{t.defSecundario}</span>
-              {numInput("fa_secondary_defect")}
+              <span>{t.color}</span>
+              <select value={value.fa_color} onChange={(e) => onChange({ fa_color: e.target.value })} disabled={disabled} style={{ ...S.sel, maxWidth: 160 }}>
+                <option value="">—</option>
+                {COLORES_DEL_VERDE.map((o) => (
+                  <option key={o.key} value={o.key}>{o[lang]}</option>
+                ))}
+              </select>
             </label>
             <div style={S.par}>
               <span>
@@ -479,6 +585,56 @@ export function LabEvalEditor({
               <input readOnly tabIndex={-1} value={factor.remainder > 0 ? factor.healthy.toFixed(1) : ""} placeholder="auto" style={{ ...S.num, background: "var(--line)" }} />
             </div>
           </div>
+          {detalleAbierto && (
+            <div style={{ border: "1px dashed var(--line)", borderRadius: 8, padding: "8px 10px", marginTop: 8 }}>
+              <div style={{ ...S.lbl, display: "flex", justifyContent: "space-between", gap: 8 }}>
+                <span>{t.detalleCat(detalleAbierto)}</span>
+                <button type="button" onClick={() => setDetalleAbierto(null)} title={t.cerrar} aria-label={t.cerrar} style={S.marcaQuitar}>
+                  ×
+                </button>
+              </div>
+              <table style={S.tbl}>
+                <thead>
+                  <tr>
+                    <th style={S.th}>{t.thDefecto}</th>
+                    <th style={{ ...S.th, textAlign: "right", width: 54 }}>{t.thEq}</th>
+                    <th style={{ ...S.th, textAlign: "right", width: 90 }}>{t.thGranos}</th>
+                    <th style={{ ...S.th, textAlign: "right", width: 86 }}>{t.thCompletos}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {DEFECTOS_FISICOS.filter((d) => d.cat === detalleAbierto).map((d) => (
+                    <tr key={d.key}>
+                      <td style={S.td}>{d[lang]}</td>
+                      <td style={{ ...S.td, textAlign: "right", color: "var(--muted)" }}>({d.granos}:1)</td>
+                      <td style={{ ...S.td, textAlign: "right" }}>
+                        <input
+                          type="number"
+                          step="1"
+                          min={0}
+                          aria-label={`${d[lang]} · ${t.thGranos}`}
+                          value={value.defectos_detalle[d.key] ?? ""}
+                          onChange={(e) => onChange({ defectos_detalle: { ...value.defectos_detalle, [d.key]: e.target.value } })}
+                          disabled={disabled}
+                          style={{ ...S.num, width: 70 }}
+                        />
+                      </td>
+                      <td style={{ ...S.td, textAlign: "right", fontWeight: 700 }}>{defectos.filas[d.key].granos > 0 ? defectos.filas[d.key].completos : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td style={{ ...S.td, fontWeight: 700, borderBottom: "none" }} colSpan={3}>{t.totalCat(detalleAbierto)}</td>
+                    <td style={{ ...S.td, textAlign: "right", fontWeight: 800, borderBottom: "none" }}>{detalleAbierto === 1 ? defectos.cat1 : defectos.cat2}</td>
+                  </tr>
+                </tfoot>
+              </table>
+              <p style={{ ...S.hint, margin: "6px 0 0" }}>
+                {t.detalleHint} {t.totalDefectos}: <b style={{ color: "var(--ink)" }}>{defectos.total}</b>
+              </p>
+            </div>
+          )}
           <div style={{ marginTop: 10, display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
             <span style={{ fontSize: 13 }}>{t.factor}:</span>
             <b style={{ fontSize: 28, lineHeight: 1 }}>{factor.yieldFactor !== null ? factor.yieldFactor.toFixed(2) : "—"}</b>

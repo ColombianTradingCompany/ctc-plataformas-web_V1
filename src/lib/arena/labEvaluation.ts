@@ -30,6 +30,7 @@ import {
 import { normalizaDetalle, normalizaRueda, type DetalleDeLaRueda } from "@/lib/catacion/rueda";
 import { alGrid, puntoHomologado, puntoNativo, type PuntoSca } from "./homologacion";
 import { CVA_SECCION_LABEL, PL, SCA_ATTR_LABEL, type IdiomaDePlanilla } from "./planillaI18n";
+import { esAcidez, esColor, normalizaDefectos, normalizaTexturas } from "@/lib/catacion/fisico";
 
 /** El protocolo que RIGE el Punto (derivado de la planilla; ver `protocoloDelPunto`). */
 export type EscalaSensorial = "sca" | "cva";
@@ -52,7 +53,8 @@ export const CVA_SECCIONES: readonly [key: string, label: string][] = [
 ];
 
 /** Constantes del CVA (SCA-104): S = 0,65625 × Σ h_i + 52,75 − 2·u − 4·d, con las ocho secciones a peso 1 y redondeo al 0,25. */
-export const CVA = { coeficiente: 0.65625, base: 52.75, castigoNoUniforme: 2, castigoDefectuosa: 4, min: 1, max: 9, tazas: 5, paso: 0.25 } as const;
+/** `pasoSeccion` (V5.135, owner): cada sección admite cuartos de punto (1 · 1,25 · … · 9), ya no solo enteros. */
+export const CVA = { coeficiente: 0.65625, base: 52.75, castigoNoUniforme: 2, castigoDefectuosa: 4, min: 1, max: 9, tazas: 5, paso: 0.25, pasoSeccion: 0.25 } as const;
 
 /** Un defecto cuenta solo con su tipo registrado. */
 export const CVA_DEFECTOS: readonly [id: string, label: string][] = [
@@ -82,6 +84,39 @@ export type CvaFields = {
 /** Lo que el formulario SCA 2004 tiene además de los diez atributos: los defectos por taza (taint × 2 · fault × 4). */
 export type Sca2004Extra = { sca_taint_cups: string; sca_fault_cups: string };
 
+// V5.135 (owner, 2026-10-01): los defectos de taza del SCA 2004 se anotan TAZA A TAZA, con el mismo selector que la taza
+// defectuosa del CVA — limpia · taint · fault, y el tipo de defecto—. Los dos contadores (`sca_taint_cups` · `sca_fault_cups`)
+// se DERIVAN de aquí y siguen siendo lo que lee la fórmula: la aritmética no cambió.
+export type EstadoDeTazaSca = "" | "taint" | "fault";
+export type ScaTaza = { estado: EstadoDeTazaSca; defecto: string };
+const TAZAS_SCA = 5;
+const scaTazasLimpias = (): ScaTaza[] => Array.from({ length: TAZAS_SCA }, () => ({ estado: "" as EstadoDeTazaSca, defecto: "" }));
+export function contarScaTazas(tazas: readonly ScaTaza[]): { taint: number; fault: number } {
+  const t = tazas.slice(0, TAZAS_SCA);
+  return { taint: t.filter((x) => x.estado === "taint").length, fault: t.filter((x) => x.estado === "fault").length };
+}
+/** Cinco tazas siempre. Acepta la lista nueva y los dos contadores de antes (V5.92–V5.134), que se reparten taza a taza. */
+export function normalizaScaTazas(raw: unknown, taintViejo?: unknown, faultViejo?: unknown): ScaTaza[] {
+  const out = scaTazasLimpias();
+  if (Array.isArray(raw)) {
+    raw.slice(0, TAZAS_SCA).forEach((t, i) => {
+      const x = (t ?? {}) as Partial<ScaTaza>;
+      const estado: EstadoDeTazaSca = x.estado === "taint" || x.estado === "fault" ? x.estado : "";
+      out[i] = { estado, defecto: estado ? String(x.defecto ?? "") : "" };
+    });
+    return out;
+  }
+  const entero = (v: unknown) => {
+    const n = Math.trunc(Number(String(v ?? "").replace(",", ".")));
+    return Number.isFinite(n) ? Math.max(0, n) : 0;
+  };
+  const fault = Math.min(TAZAS_SCA, entero(faultViejo));
+  const taint = Math.min(TAZAS_SCA - fault, entero(taintViejo));
+  for (let i = 0; i < fault; i++) out[i] = { estado: "fault", defecto: "" };
+  for (let i = fault; i < fault + taint; i++) out[i] = { estado: "taint", defecto: "" };
+  return out;
+}
+
 export type LabEvaluation = ScaFields &
   FactorFields &
   MeshFields &
@@ -93,6 +128,16 @@ export type LabEvaluation = ScaFields &
     rueda: string[];
     /** V5.133: la etapa y la intensidad de cada marca de `rueda` (formato descriptivo SCA-CVA). */
     rueda_detalle: DetalleDeLaRueda;
+    /** V5.135: las cinco tazas del SCA 2004 (limpia · taint · fault, con su tipo). Los contadores salen de aquí. */
+    sca_tazas: ScaTaza[];
+    /** V5.135 · B3: el color del grano verde y el detalle de los defectos (granos por defecto; claves de `fisico.ts`). */
+    fa_color: string;
+    defectos_detalle: Record<string, string>;
+    /** V5.135 · descriptivo: la intensidad (0–15) y el tipo de acidez (uno), y la de la sensación en boca con hasta dos texturas. */
+    acidez_intensidad: string;
+    acidez_tipo: string;
+    boca_intensidad: string;
+    boca_texturas: string[];
     fa_parch_hum: string;
     cupping_profile: string;
     analysis_notes: string;
@@ -108,6 +153,9 @@ export const EMPTY_LAB_EVALUATION: LabEvaluation = {
   cva_tazas: tazasLimpias(),
   rueda: [],
   rueda_detalle: {},
+  sca_tazas: scaTazasLimpias(),
+  fa_color: "", defectos_detalle: {},
+  acidez_intensidad: "", acidez_tipo: "", boca_intensidad: "", boca_texturas: [],
   fa_start: "", fa_green_remainder: "", fa_primary_defect: "", fa_secondary_defect: "",
   mesh_supremo_plus: "", mesh_supremo: "", mesh_extra: "", mesh_europa: "",
   mesh_ugq: "", mesh_peaberry: "", mesh_residue: "",
@@ -145,7 +193,25 @@ export function toLabEvaluation(raw: unknown): LabEvaluation {
   const escala: EscalaSensorial = r.escala === "cva" ? "cva" : "sca";
   const vista: VistaDePlanilla = r.vista === "ambas" || r.vista === "cva" || r.vista === "sca" ? r.vista : escala;
   const rueda = normalizaRueda(r.rueda);
-  return { ...EMPTY_LAB_EVALUATION, ...r, escala, vista, cva_tazas: normalizaTazas(r.cva_tazas, cva_nonuniform, cva_defective), rueda, rueda_detalle: normalizaDetalle(r.rueda_detalle, rueda) };
+  // V5.135: las tazas del SCA mandan sobre los contadores (una planilla anterior solo trae contadores: se reparten).
+  const scaTazas = normalizaScaTazas(r.sca_tazas, r.sca_taint_cups, r.sca_fault_cups);
+  const cuenta = contarScaTazas(scaTazas);
+  const contadores = Array.isArray(r.sca_tazas) ? { sca_taint_cups: cuenta.taint ? String(cuenta.taint) : "", sca_fault_cups: cuenta.fault ? String(cuenta.fault) : "" } : {};
+  return {
+    ...EMPTY_LAB_EVALUATION,
+    ...r,
+    ...contadores,
+    escala,
+    vista,
+    cva_tazas: normalizaTazas(r.cva_tazas, cva_nonuniform, cva_defective),
+    rueda,
+    rueda_detalle: normalizaDetalle(r.rueda_detalle, rueda),
+    sca_tazas: scaTazas,
+    fa_color: esColor(r.fa_color) ? r.fa_color : "",
+    defectos_detalle: normalizaDefectos(r.defectos_detalle),
+    acidez_tipo: esAcidez(r.acidez_tipo) ? r.acidez_tipo : "",
+    boca_texturas: normalizaTexturas(r.boca_texturas),
+  };
 }
 
 /**
@@ -161,13 +227,11 @@ export function toLabEvaluationList(raw: unknown): LabEvaluation[] {
 
 /** ¿Hay al menos un dato digitado? (para no guardar planillas vacías). La escala y la vista son elecciones, no datos. */
 export function labEvaluationHasData(ev: LabEvaluation): boolean {
-  return Object.entries(ev).some(([k, v]) => {
-    // El detalle de las marcas no es un dato por sí solo: sin marcas no hay nada (y un `{}` no puede pasar por «digitado»).
-    if (k === "escala" || k === "vista" || k === "rueda_detalle") return false;
-    if (k === "rueda") return Array.isArray(v) && v.length > 0;
-    if (k === "cva_tazas") return Array.isArray(v) && (v as CvaTaza[]).some((t) => t.noUniforme || t.defectuosa);
-    return String(v ?? "").trim() !== "";
-  });
+  // V5.135: una regla para todo lo que la planilla guarda — una lista o un objeto tienen dato si lo tiene alguno de sus
+  // valores; `false` y «» no cuentan (una taza limpia, un detalle vacío). El detalle de las marcas no es un dato por sí solo.
+  const tieneDato = (v: unknown): boolean =>
+    Array.isArray(v) ? v.some(tieneDato) : v && typeof v === "object" ? Object.values(v).some(tieneDato) : typeof v === "boolean" ? v : String(v ?? "").trim() !== "";
+  return Object.entries(ev).some(([k, v]) => k !== "escala" && k !== "vista" && k !== "rueda_detalle" && tieneDato(v));
 }
 
 // ── CVA · la evaluación afectiva (SCA-104) ────────────────────────────────────
@@ -202,7 +266,7 @@ export function computeCva(ev: CvaFields, lang: IdiomaDePlanilla = "es"): Result
       continue;
     }
     const n = numOr(raw);
-    if (n == null || !Number.isInteger(n) || n < CVA.min || n > CVA.max) {
+    if (n == null || n < CVA.min || n > CVA.max || Math.abs(n / CVA.pasoSeccion - Math.round(n / CVA.pasoSeccion)) > 1e-9) {
       errores.push(PL[lang].errCvaEntero(label, CVA.min, CVA.max, raw));
       continue;
     }
@@ -244,7 +308,8 @@ export function computeSca2004(ev: ScaFields & Sca2004Extra, lang: IdiomaDePlani
       continue;
     }
     if (SCA2004_POR_TAZAS.includes(key)) {
-      if (n < 0 || n > SCA2004.max || Math.abs(n / SCA2004.porTaza - Math.round(n / SCA2004.porTaza)) > 1e-9) {
+      // V5.135 (owner): Uniformidad, Taza limpia y Dulzor se teclean como los demás —en pasos de 0,25—, de 0 a 10.
+      if (n < 0 || n > SCA2004.max || Math.abs(n / SCA2004.paso - Math.round(n / SCA2004.paso)) > 1e-9) {
         errores.push(PL[lang].errPorTaza(label, SCA2004.porTaza, raw));
         continue;
       }

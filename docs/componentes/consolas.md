@@ -244,7 +244,9 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
   planilla `LabEvalEditor` se rehízo con sus piezas —radar, rueda, granulometría con barras— en dos columnas y con idioma ES · EN,
   `components/bcp/PlanillaPiezas.tsx` + `lib/arena/planillaI18n.ts`; vale para el Centro, «Registrar a mano» y la Arena; **V5.131**: su
   rueda ES la Rueda del Café del taller —misma taxonomía, generada del HTML por `scripts/build-rueda-datos.mjs`, misma geometría—;
-  **V5.133**: cada marca lleva etapa e intensidad, `lot_evaluations.rueda_detalle`),
+  **V5.133**: cada marca lleva etapa e intensidad, `lot_evaluations.rueda_detalle`; **V5.135**: CVA en cuartos, los tres atributos por
+  taza como los demás, radar desde 0, taint/fault taza a taza con su «i», detalle de defectos (R) y color en B3, acidez y sensación
+  en boca descriptivas — `src/lib/catacion/fisico.ts`),
   y que KR
   alimente `evaluacionPendiente` a la barra (hoy el productor ve «en evaluación» hasta que CTCx confirma). ~~⚠️ La fórmula del
   CVA está en constantes con nombre (`CVA` en `labEvaluation.ts`): la valida el Q-Grader de la casa.~~ — **el Q-Grader la
@@ -345,7 +347,7 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
   (`src/lib/ocp/borradoNuclear.ts`) quita después los objetos de Storage y avisa al productor (nota + correo), y anota cada resultado.
   **Se niega** con pedidos, reservas o pujas de compradores, con una compra del lote dentro de una mezcla o de Sample Kits, y con una
   finca que aporta a un lote de otra. Clase `emite`. Módulo «Archivo de Borrados» (`/ocp/borrados`, solo lectura, con la instantánea
-  en JSON). Guardián `qa-borrado-nuclear` (32). **Probado** contra datos reales en una transacción revertida (una finca con dos lotes y
+  en JSON). **V5.135: el botón va ARRIBA**, junto al título del lote o la finca (al final de la sección no se veía). Guardián `qa-borrado-nuclear` (32). **Probado** contra datos reales en una transacción revertida (una finca con dos lotes y
   un lote suelto); **nadie lo ha usado todavía en vivo**. **Queda**: los códigos de subvención que usó el lote siguen marcados como
   usados (sin lote); un bache de evaluación puede quedar vacío; no hay «restaurar».
 - **LA INACTIVIDAD DE LAS CUENTAS «MARCHITANDO» (owner, 2026-09-30) — EJECUTADA en la V5.103.** «Los productores Marchitando sin

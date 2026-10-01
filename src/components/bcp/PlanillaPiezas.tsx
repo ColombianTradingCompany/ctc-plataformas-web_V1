@@ -24,17 +24,18 @@ const punto = (i: number, n: number, fraccion: number): [number, number] => {
 };
 const corta = (label: string) => label.split("/")[0].split("(")[0].trim();
 
-/** `min`–`max` es la escala del eje (6–10 en SCA 2004, 1–9 en CVA): el centro es `min`, el borde es `max`. */
-export function RadarDeTaza({ ejes, min, max, color = "#3C0A86" }: { ejes: EjeDeRadar[]; min: number; max: number; color?: string }) {
+/** V5.135 (owner: «la gráfica de araña es un poco misleading […] hagamos que el "0" sea equivalente a 0»): el CENTRO es 0 y
+ *  el borde es `max` (10 en SCA 2004, 9 en CVA). Antes el centro era el mínimo del formulario (6), y un 6 se leía como un cero.
+ *  `marcas` son los anillos que se dibujan, con su cifra sobre el eje de arriba. */
+export function RadarDeTaza({ ejes, max, marcas, color = "#3C0A86" }: { ejes: EjeDeRadar[]; max: number; marcas: number[]; color?: string }) {
   const n = ejes.length;
-  const fraccion = (v: number) => Math.min(1, Math.max(0.04, (v - min) / (max - min)));
-  const anillos = [0.25, 0.5, 0.75, 1];
+  const fraccion = (v: number) => Math.min(1, Math.max(0, v / max));
   const hayDatos = ejes.some((e) => e.valor != null);
-  const poligono = ejes.map((e, i) => punto(i, n, e.valor != null ? fraccion(e.valor) : 0.04).map((x) => x.toFixed(1)).join(",")).join(" ");
+  const poligono = ejes.map((e, i) => punto(i, n, e.valor != null ? fraccion(e.valor) : 0).map((x) => x.toFixed(1)).join(",")).join(" ");
   return (
     <svg viewBox="-112 -98 224 196" role="img" aria-label={ejes.map((e) => `${e.label}: ${e.valor ?? "—"}`).join(", ")} style={{ width: "100%", maxWidth: 300, display: "block", margin: "0 auto" }}>
-      {anillos.map((f) => (
-        <polygon key={f} points={ejes.map((_, i) => punto(i, n, f).map((x) => x.toFixed(1)).join(",")).join(" ")} fill="none" stroke="var(--line)" strokeWidth={f === 1 ? 1 : 0.6} />
+      {marcas.map((m) => (
+        <polygon key={m} points={ejes.map((_, i) => punto(i, n, m / max).map((x) => x.toFixed(1)).join(",")).join(" ")} fill="none" stroke="var(--line)" strokeWidth={m === max ? 1 : 0.6} />
       ))}
       {ejes.map((e, i) => {
         const [x, y] = punto(i, n, 1);
@@ -54,10 +55,38 @@ export function RadarDeTaza({ ejes, min, max, color = "#3C0A86" }: { ejes: EjeDe
         const [x, y] = punto(i, n, fraccion(e.valor));
         return <circle key={e.label} cx={x} cy={y} r={2.4} fill={color} />;
       })}
-      {/* La escala, sobre el eje de arriba: el centro y el borde. */}
-      <text x={3} y={-R * 0.5 - 1} fontSize={5.6} fill="var(--muted)">{(min + (max - min) / 2).toString()}</text>
-      <text x={3} y={-R - 1} fontSize={5.6} fill="var(--muted)">{max}</text>
+      {/* La escala, sobre el eje de arriba: 0 en el centro y cada anillo con su cifra. */}
+      <text x={3} y={-1} fontSize={5.6} fill="var(--muted)">0</text>
+      {marcas.map((m) => (
+        <text key={m} x={3} y={-R * (m / max) - 1} fontSize={5.6} fill="var(--muted)">
+          {m}
+        </text>
+      ))}
     </svg>
+  );
+}
+
+// ── La «i»: una explicación corta que se abre al tocarla ─────────────────────────────────────────────────────────────
+export function Info({ texto }: { texto: string }) {
+  const [abierto, setAbierto] = useState(false);
+  return (
+    <span style={{ position: "relative", display: "inline-flex" }}>
+      <button
+        type="button"
+        aria-label={texto}
+        aria-expanded={abierto}
+        onClick={() => setAbierto((v) => !v)}
+        onBlur={() => setAbierto(false)}
+        style={{ width: 17, height: 17, borderRadius: "50%", border: "1px solid var(--line)", background: "var(--paper)", color: "var(--primary, #3C0A86)", fontSize: 11, fontWeight: 700, fontFamily: "Georgia, serif", fontStyle: "italic", lineHeight: 1, cursor: "pointer", padding: 0 }}
+      >
+        i
+      </button>
+      {abierto && (
+        <span role="tooltip" style={{ position: "absolute", zIndex: 5, top: 22, left: 0, width: 270, background: "var(--ink)", color: "#fff", borderRadius: 8, padding: "8px 10px", fontSize: 12, fontWeight: 400, lineHeight: 1.4, boxShadow: "0 6px 18px rgba(0,0,0,.25)" }}>
+          {texto}
+        </span>
+      )}
+    </span>
   );
 }
 

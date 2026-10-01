@@ -64,12 +64,15 @@ export function BotonNuclear({ tipo, id }: { tipo: TipoNuclear; id: string }) {
   const rotulo = TIPO_NUCLEAR_LABEL[tipo].toLowerCase();
 
   return (
-    <div style={{ marginTop: 18, border: `1.5px dashed ${ROJO}`, borderRadius: 10, padding: "10px 14px" }}>
-      <p className={styles.meta} style={{ margin: "0 0 8px" }}>
-        <b style={{ color: ROJO }}>Zona nuclear.</b> Borra {tipo === "finca" ? "esta finca y todos sus lotes" : "este lote"} con todo lo que tenga —solicitudes, facturas, muestras,
-        evaluaciones, ofertas, contratos, compras, archivos y mensajes— como si no hubiese existido. El productor recibe un aviso y queda una copia en el Archivo de Borrados.
-      </p>
-      <button type="button" className="btn btn-sm" onClick={abrir} style={{ borderColor: ROJO, color: ROJO, fontWeight: 800 }}>
+    <div>
+      {/* V5.135: un botón, arriba junto al título (la explicación está en la primera confirmación). */}
+      <button
+        type="button"
+        className="btn btn-sm"
+        onClick={abrir}
+        title={`Borra ${tipo === "finca" ? "esta finca y todos sus lotes" : "este lote"} con todo lo que tenga, como si no hubiese existido. Pide doble confirmación, avisa al productor y deja copia en el Archivo de Borrados.`}
+        style={{ borderColor: ROJO, color: ROJO, fontWeight: 800, whiteSpace: "nowrap" }}
+      >
         ☢ Borrado nuclear de {tipo === "finca" ? "la finca" : "el lote"}…
       </button>
 
@@ -85,6 +88,10 @@ export function BotonNuclear({ tipo, id }: { tipo: TipoNuclear; id: string }) {
 
             {inv && paso === 1 && (
               <>
+                <p className={styles.meta} style={{ margin: "4px 0 8px" }}>
+                  Borra {tipo === "finca" ? "esta finca y todos sus lotes" : "este lote"} con todo lo que tenga —solicitudes, facturas, muestras, evaluaciones, ofertas, contratos, compras,
+                  archivos y mensajes— como si no hubiese existido. El productor recibe un aviso y queda una copia en el Archivo de Borrados.
+                </p>
                 <p style={{ fontSize: 14, margin: "6px 0 10px" }}>
                   {TIPO_NUCLEAR_LABEL[tipo]} <b>«{inv.inventario.nombre}»</b> · <span className="mono">{inv.codigo}</span>
                   {tipo === "finca" && inv.inventario.lotes.length > 0 && (

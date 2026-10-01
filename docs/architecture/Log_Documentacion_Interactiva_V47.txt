@@ -401,3 +401,11 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `ocp/(app)/kr/page.tsx` (el botón en la vista del lote y de la finca), `lib/panel/consoles.ts` (rail: «Archivo de Borrados»).
   Guardián nuevo: `qa-borrado-nuclear-check.mjs` (32). Acta: `docs/migraciones/2026-10-01_borrado_nuclear.sql`.
 (commit: 32e0007)
+
+## [2026-10-01] V5.135 · Consolas + Socios — siete correcciones a la planilla del Centro de Calidad; el botón nuclear, arriba
+- ADD `src/lib/catacion/fisico.ts` (16 defectos físicos, 8 colores, texturas en boca, tipos de acidez; `calcDefectos`).
+- ANN `lib/arena/labEvaluation.ts` (`sca_tazas` + contadores derivados; `fa_color`, `defectos_detalle`, `acidez_*`, `boca_*`; CVA en cuartos;
+  los tres atributos por taza de 0 a 10 al 0,25; `labEvaluationHasData` genérica), `planillaI18n.ts`, `components/bcp/PlanillaPiezas.tsx`
+  (radar desde 0, `Info`), `components/bcp/LabEvalEditor.tsx`, `public/tools/coffee-datasheet/…html` (núcleo: mismos dominios),
+  `ocp/(app)/kr/page.tsx` + `BotonNuclear.tsx` (arriba, junto al título). Guardianes: `qa-centro-calidad` +17, `qa-borrado-nuclear` (ajustado).
+(commit: pendiente)

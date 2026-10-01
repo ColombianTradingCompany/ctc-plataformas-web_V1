@@ -128,3 +128,12 @@ El del charter (`docs/componentes/herramientas-cafe.md` § Kick-off) con `<id>` 
 ```
 Hoy: <la tarea> — lee antes docs/componentes/herramientas-cafe/coffee-datasheet/README.md.
 ```
+
+## V5.135 · pendiente con dueño aquí (viene de `consolas`, 2026-10-01)
+
+El owner cambió los dominios de la planilla del Centro de Calidad: **el CVA admite cuartos de punto** (1–9 al 0,25) y **Uniformidad,
+Taza limpia y Dulzor del SCA 2004 van de 0 a 10 al 0,25**, tecleados como los demás. Para que «una fórmula, no dos» siguiera en
+verde, `consolas` cambió SOLO el núcleo de esta herramienta (`calcCva` y `calcSca2004`, dos líneas marcadas `V5.135`). **Falta aquí**:
+que los campos de pantalla de la herramienta acepten esos valores (hoy siguen ofreciendo enteros y pares) y que sus textos de ayuda
+lo digan. La planilla ganó además lo que esta herramienta ya tenía —defectos físicos con su detalle, color del grano, texturas en
+boca—, con las mismas claves (`src/lib/catacion/fisico.ts`; `qa-centro-calidad` las compara contra este HTML).

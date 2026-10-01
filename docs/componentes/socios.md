@@ -119,7 +119,8 @@ fórmula del CVA y la rueda única). Lo tocan también `qa-recuperacion-check.mj
   directo» (emitir una Ficha Técnica o un reporte sin bache — respuesta 5), `Procesamiento de Lotes` (Etapa 3), la variante
   interna de la Datasheet Tool (charter `herramientas-cafe`; **V5.130**: la planilla ya trae su radar, la rueda como rueda y la
   granulometría con barras, sin espacio muerto y con conmutador ES · EN — el idioma lo lleva `PlanillaCentro` y traduce también
-  lo que rodea a la hoja), y **nadie ha conducido el módulo en vivo** con la credencial
+  lo que rodea a la hoja; **V5.135**, correcciones del owner: CVA y atributos por taza al 0,25, radar desde 0, taint/fault taza a taza,
+  detalle de defectos y color, acidez y sensación en boca), y **nadie ha conducido el módulo en vivo** con la credencial
   (se verificó por `tsc`, build y guardianes; la credencial interna existe y tiene Evaluación activa).
 
 - **Plan de ejecución de la narrativa** (`docs/PLAN_NARRATIVA_2026-09-17.md`): **SO-1** (narrativa de los nodos; ola 1)

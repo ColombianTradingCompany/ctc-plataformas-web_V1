@@ -92,3 +92,70 @@ export function normalizaRueda(raw: unknown): string[] {
   const elegidos = new Set(lista.filter(esDescriptor).map(idVigente));
   return DESCRIPTORES.filter((x) => elegidos.has(x.id)).map((x) => x.id);
 }
+
+// ── Etapa e intensidad de cada marca (V5.133, owner 2026-10-01) ──────────────────────────────────────────────────────
+// El formato descriptivo SCA-CVA, tal como lo lleva el modo Catar de la herramienta: de cada nota marcada se registra QUÉ
+// (el punto de la rueda), DÓNDE se percibió (la etapa — una sola por nota, la dominante) y CON QUÉ INTENSIDAD (0–15 en
+// pasos de 0,5: 0–4 baja · 5–9 media · 10–15 alta). La intensidad dice cuánto HAY de esa nota en esa etapa, no cuánto
+// gusta: eso es la evaluación afectiva. Los valores por defecto son los de la herramienta (sabor · 10).
+// `lot_evaluations.rueda_detalle` guarda `{ [id]: { etapa, intensidad } }`, una entrada por cada id de `rueda`.
+
+export const ETAPAS_DE_LA_RUEDA = ["fragancia", "aroma", "sabor", "residual"] as const;
+export type EtapaDeLaRueda = (typeof ETAPAS_DE_LA_RUEDA)[number];
+export const ETAPA_LABEL: Record<"es" | "en", Record<EtapaDeLaRueda, string>> = {
+  es: { fragancia: "Fragancia", aroma: "Aroma", sabor: "Sabor", residual: "Sabor residual" },
+  en: { fragancia: "Fragrance", aroma: "Aroma", sabor: "Flavor", residual: "Aftertaste" },
+};
+
+export const INTENSIDAD = { min: 0, max: 15, paso: 0.5 } as const;
+export const MARCA_POR_DEFECTO = { etapa: "sabor", intensidad: 10 } as const;
+
+export type ZonaDeIntensidad = "baja" | "media" | "alta";
+export const ZONA_LABEL: Record<"es" | "en", Record<ZonaDeIntensidad, string>> = {
+  es: { baja: "BAJA", media: "MEDIA", alta: "ALTA" },
+  en: { baja: "LOW", media: "MEDIUM", alta: "HIGH" },
+};
+export function zonaDeIntensidad(v: number): ZonaDeIntensidad {
+  if (v < 5) return "baja";
+  if (v < 10) return "media";
+  return "alta";
+}
+
+export type DetalleDeMarca = { etapa: EtapaDeLaRueda; intensidad: number };
+export type DetalleDeLaRueda = Record<string, DetalleDeMarca>;
+
+const esEtapa = (v: unknown): v is EtapaDeLaRueda => typeof v === "string" && (ETAPAS_DE_LA_RUEDA as readonly string[]).includes(v);
+/** La intensidad en la rejilla de la herramienta: entre 0 y 15, en pasos de 0,5. */
+export function ajustaIntensidad(v: unknown): number {
+  const n = typeof v === "number" ? v : Number(String(v ?? "").replace(",", "."));
+  if (!Number.isFinite(n)) return MARCA_POR_DEFECTO.intensidad;
+  return Math.round(Math.max(INTENSIDAD.min, Math.min(INTENSIDAD.max, n)) / INTENSIDAD.paso) * INTENSIDAD.paso;
+}
+/** «10» · «7.5»: como la escribe la herramienta. */
+export const fmtIntensidad = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(1));
+
+/** El detalle de UNA marca; si no lo trae (una evaluación anterior a la V5.133), el valor por defecto. */
+export function detalleDe(detalle: DetalleDeLaRueda | null | undefined, id: string): DetalleDeMarca {
+  const x = detalle?.[id];
+  return x ? x : { ...MARCA_POR_DEFECTO };
+}
+
+/** Limpia el detalle que venga de la base o de un formulario: UNA entrada por cada id de `ids` (ya normalizados), ninguna más. */
+export function normalizaDetalle(raw: unknown, ids: readonly string[]): DetalleDeLaRueda {
+  const origen = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+  // Lo que venga con un id de la rueda resumida se lee con su id vigente.
+  const porId = new Map<string, unknown>(Object.entries(origen).map(([k, v]) => [idVigente(k), v]));
+  const out: DetalleDeLaRueda = {};
+  for (const id of ids) {
+    const x = porId.get(id);
+    const o = x && typeof x === "object" ? (x as Record<string, unknown>) : {};
+    out[id] = { etapa: esEtapa(o.etapa) ? o.etapa : MARCA_POR_DEFECTO.etapa, intensidad: "intensidad" in o ? ajustaIntensidad(o.intensidad) : MARCA_POR_DEFECTO.intensidad };
+  }
+  return out;
+}
+
+/** Una marca completa en una línea: «Frutal › Cítricos › Lima · Sabor · 10/15». */
+export function marcaLabel(id: string, detalle: DetalleDeLaRueda | null | undefined, lang: "es" | "en" = "es"): string {
+  const d = detalleDe(detalle, id);
+  return `${rutaDe(id, lang)} · ${ETAPA_LABEL[lang][d.etapa]} · ${fmtIntensidad(d.intensidad)}/${INTENSIDAD.max}`;
+}

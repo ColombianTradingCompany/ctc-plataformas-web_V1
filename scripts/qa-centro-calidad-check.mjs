@@ -13,7 +13,7 @@
 // Q-Grader (los vectores se LEEN de la tabla del §10.2) y el Punto homologado obedece R1–R8 (banda k 1–2, piso, Tyrian nativo).
 
 import { readFileSync } from "node:fs";
-import { RUEDA, DESCRIPTORES, normalizaRueda, descriptorLabel, rutaDe, familiaDe } from "../src/lib/catacion/rueda.ts";
+import { RUEDA, DESCRIPTORES, normalizaRueda, descriptorLabel, rutaDe, familiaDe, ETAPAS_DE_LA_RUEDA, ETAPA_LABEL, INTENSIDAD, MARCA_POR_DEFECTO, ZONA_LABEL, zonaDeIntensidad, normalizaDetalle, marcaLabel, ajustaIntensidad } from "../src/lib/catacion/rueda.ts";
 import { generar as generarRuedaDatos, leerDatosDeLaHerramienta } from "./build-rueda-datos.mjs";
 import { CVA, CVA_SECCIONES, SCA2004, computeCva, computeSca2004, EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, protocoloDelPunto, puntoDeLaPlanilla, toLabEvaluation } from "../src/lib/arena/labEvaluation.ts";
 import { BANDA_SIN_CALIBRAR, CVA_PROPOSITO, LOTES_PARA_CALIBRAR, admiteTyrian, decidirPorPunto, gradoFirme, homologarCva, puntoDeFila, puntoHomologado, puntoNativo, rotuloDelPunto, techoDelPunto } from "../src/lib/arena/homologacion.ts";
@@ -221,7 +221,28 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("los matices también: subcategoría +16 %, nota +34 %, banda −22 %", ["shade(fam.color, 0.16)", "shade(fam.color, 0.34)", "shade(fam.color, -0.22)"].every((x) => herramienta.includes(x)) && ["matiz(fam.f.color, 0.16)", "matiz(fam.f.color, 0.34)", "matiz(fam.f.color, -0.22)"].every((x) => piezas.includes(x)));
   check("tres anillos y la banda exterior, con el icono de la familia y los rótulos donde caben (los mismos umbrales)", piezas.includes("sector(R0, R1,") && piezas.includes("sector(R1, R2,") && piezas.includes("sector(R2, R3,") && piezas.includes("sector(OB0, OB1,") && piezas.includes("{fam.f.icono}") && piezas.includes("sub.a1 - sub.a0 > 9") && piezas.includes("hoja.a1 - hoja.a0 > 3.4") && herramienta.includes("(sub.endAngle - sub.startAngle) > 9") && herramienta.includes("(leaf.endAngle - leaf.startAngle) > 3.4"));
   check("cada marca deja su aguja, del centro al borde de su anillo (como el modo Catar)", piezas.includes("polar(blanco.radio + 16, blanco.angulo)") && herramienta.includes("polar(radius + 16, angle)") && piezas.includes('role="checkbox"'));
-  check("la planilla la pinta a tamaño de lectura, con las marcas listadas por su camino", editor.includes('flex: "4 1 620px"') && editor.includes("normalizaRueda(value.rueda).map((id) => (") && editor.includes("{rutaDe(id, lang)}"));
+  check("la planilla la pinta a tamaño de lectura, con las marcas listadas por su camino", editor.includes('flex: "4 1 620px"') && editor.includes("normalizaRueda(value.rueda).map((id) => {") && editor.includes("{rutaDe(id, lang)}"));
+}
+
+// ── 10. V5.133 (owner, 2026-10-01) · cada marca de la rueda lleva su ETAPA y su INTENSIDAD, como el modo Catar ──
+{
+  const herramienta = lee("public/tools/catacion/rueda-del-cafe-v23.html");
+  const editor = lee("src/components/bcp/LabEvalEditor.tsx");
+  const obj = (o) => `{ ${ETAPAS_DE_LA_RUEDA.map((e) => `${e}:'${o[e]}'`).join(", ")} }`;
+  check("las cuatro etapas son las de la herramienta, con sus rótulos en ES y EN", ETAPAS_DE_LA_RUEDA.join() === "fragancia,aroma,sabor,residual" && herramienta.includes(`cvaCheckpoints:${obj(ETAPA_LABEL.es)}`) && herramienta.includes(`cvaCheckpoints:${obj(ETAPA_LABEL.en)}`));
+  check("la intensidad es la de la herramienta: 0–15 en pasos de 0,5, por defecto sabor · 10", herramienta.includes(`min="${INTENSIDAD.min}" max="${INTENSIDAD.max}" step="${INTENSIDAD.paso}"`) && herramienta.includes(`checkpoint: '${MARCA_POR_DEFECTO.etapa}', intensity: ${MARCA_POR_DEFECTO.intensidad},`));
+  check("las zonas también: baja < 5 ≤ media < 10 ≤ alta, con sus rótulos", zonaDeIntensidad(4.5) === "baja" && zonaDeIntensidad(5) === "media" && zonaDeIntensidad(9.5) === "media" && zonaDeIntensidad(10) === "alta" && /if\(val < 5\) return I18N\(\)\.cvaIntensityLow;\s*if\(val < 10\) return I18N\(\)\.cvaIntensityMid;/.test(herramienta) && herramienta.includes(`cvaIntensityLow:'${ZONA_LABEL.es.baja}', cvaIntensityMid:'${ZONA_LABEL.es.media}', cvaIntensityHigh:'${ZONA_LABEL.es.alta}'`) && herramienta.includes(`cvaIntensityLow:'${ZONA_LABEL.en.baja}', cvaIntensityMid:'${ZONA_LABEL.en.media}', cvaIntensityHigh:'${ZONA_LABEL.en.alta}'`));
+  const ids = ["frutal-citricos|lima", "dulce"];
+  const limpio = normalizaDetalle({ "frutal-citricos|lima": { etapa: "aroma", intensidad: 7.3 }, dulce: { etapa: "inventada", intensidad: 40 }, "floral-te": { etapa: "sabor", intensidad: 3 } }, ids);
+  check("el detalle se limpia: UNA entrada por marca, la etapa válida o «sabor», la intensidad en la rejilla y sin pasarse", JSON.stringify(limpio) === JSON.stringify({ "frutal-citricos|lima": { etapa: "aroma", intensidad: 7.5 }, dulce: { etapa: "sabor", intensidad: 15 } }) && ajustaIntensidad(-3) === 0 && ajustaIntensidad("x") === 10);
+  check("una marca sin detalle (evaluación anterior) toma el valor por defecto; el de un id resumido se lee con su id vigente", JSON.stringify(normalizaDetalle(null, ["dulce"])) === JSON.stringify({ dulce: { etapa: "sabor", intensidad: 10 } }) && normalizaDetalle({ citrus: { etapa: "residual", intensidad: 4 } }, ["frutal-citricos"])["frutal-citricos"].etapa === "residual");
+  check("una marca completa se lee en una línea, en los dos idiomas", marcaLabel("frutal-citricos|lima", limpio) === "Frutal › Cítricos › Lima · Aroma · 7.5/15" && marcaLabel("dulce", limpio, "en") === "Sweet · Flavor · 15/15");
+  const conMarcas = toLabEvaluation({ rueda: ["citrus", "dulce"], rueda_detalle: { citrus: { etapa: "fragancia", intensidad: 12 } } });
+  check("la planilla normaliza las marcas y su detalle juntos", JSON.stringify(conMarcas.rueda) === JSON.stringify(["frutal-citricos", "dulce"]) && conMarcas.rueda_detalle["frutal-citricos"].etapa === "fragancia" && conMarcas.rueda_detalle.dulce.intensidad === 10 && Object.keys(conMarcas.rueda_detalle).length === 2);
+  check("una planilla vacía sigue sin datos (el `{}` del detalle no cuenta como digitado)", labEvaluationHasData(EMPTY_LAB_EVALUATION) === false && labEvaluationHasData(toLabEvaluation({})) === false && labEvaluationHasData(conMarcas) === true);
+  check("el editor: tocar la marca abre las cuatro etapas y el deslizador; marcar crea el detalle y desmarcar lo borra", editor.includes("ETAPAS_DE_LA_RUEDA.map((etapa) => (") && editor.includes('type="range"') && editor.includes("max={INTENSIDAD.max}") && editor.includes("detalle[id] = { ...MARCA_POR_DEFECTO };") && editor.includes("delete detalle[id];") && editor.includes("onChange({ rueda: [...set], rueda_detalle: detalle });"));
+  check("se guarda con la evaluación (Centro y «Registrar a mano») y lo leen el OCP y el Centro", acciones.includes("rueda_detalle: normalizaDetalle(ev.rueda_detalle, normalizaRueda(ev.rueda))") && nominados.includes("rueda_detalle: normalizaDetalle(lastEval.rueda_detalle, normalizaRueda(lastEval.rueda))") && lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").includes("marcaLabel(id, normalizaDetalle(pendiente.rueda_detalle, ids))") && lee("src/app/socios/[partner]/panel/evaluacion/page.tsx").includes("marcaLabel(id, normalizaDetalle(pendiente.rueda_detalle, ids))"));
+  check("el acta de la migración `lot_evaluations.rueda_detalle` existe", lee("docs/migraciones/2026-10-01_lot_evaluations_rueda_detalle.sql").includes("add column if not exists rueda_detalle jsonb not null default '{}'::jsonb"));
 }
 
 if (fallos.length) {

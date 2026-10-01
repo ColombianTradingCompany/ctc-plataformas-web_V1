@@ -19,6 +19,18 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.133] — 2026-10-01 (commit pendiente)
+
+- **Añadido**: en la planilla de evaluación, **cada marca de la rueda lleva su etapa y su intensidad** (owner, 2026-10-01), como el
+  modo Catar de la Rueda del Café: la **etapa** en que se percibió (Fragancia · Aroma · Sabor · Sabor residual — una por nota) y la
+  **intensidad** de 0 a 15 en pasos de 0,5 (baja · media · alta). Tocar una nota marcada abre su editor; la recién marcada llega
+  abierta, con el valor por defecto de la herramienta (Sabor · 10).
+- **Cambiado**: el OCP («Lotes en Evaluación») y el Centro de Calidad leen cada marca completa: «Frutal › Cítricos › Lima · Sabor ·
+  10/15».
+- **Datos**: migración `lot_evaluations_rueda_detalle` — `lot_evaluations.rueda_detalle jsonb` (por id marcado, `{etapa,
+  intensidad}`); `rueda` no cambia. Acta en `docs/migraciones/`.
+- **Docs**: charter `consolas`, ficha `catacion`, ALINEACION §3. `qa-centro-calidad` 116 → 127.
+
 ## [V5.132] — 2026-10-01 (commit 759765d)
 
 - **Añadido**: **CTCx Coffee Datasheet Tool** (`herramientas.ctcexport.com`, id `coffee-datasheet`), una herramienta NUEVA que combina la

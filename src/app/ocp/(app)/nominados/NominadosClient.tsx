@@ -511,7 +511,7 @@ export function ConfirmarCentroControls({
             <h3>Alta del Centro de Calidad · {lotName}</h3>
             <p className={styles.meta} style={{ marginTop: 2 }}>
               Q-Grader <b>{alta.qGrader ?? "—"}</b> · <b>{alta.punto ? rotuloDelPunto(alta.punto) : "—"}</b> · dada de alta el {alta.fecha}
-              {alta.rueda.length > 0 && <> · rueda: {alta.rueda.join(", ")}</>}
+              {alta.rueda.length > 0 && <> · rueda: {alta.rueda.join(" — ")}</>}
             </p>
             {alta.notas && <p className={styles.meta}>Notas del Q-Grader: {alta.notas}</p>}
             <div className={styles.field} style={{ marginTop: 10 }}>

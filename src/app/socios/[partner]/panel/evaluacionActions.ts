@@ -5,7 +5,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { getPartnerIdentity } from "@/lib/partners/requirePartner";
 import { erroresDePlanilla, labEvaluationHasData, labEvaluationScaData, protocoloDelPunto, puntoDeLaPlanilla, computeFactor, toLabEvaluation, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import { rotuloDelPunto } from "@/lib/arena/homologacion";
-import { normalizaRueda } from "@/lib/catacion/rueda";
+import { normalizaDetalle, normalizaRueda } from "@/lib/catacion/rueda";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 
 // ── Centro de Calidad · Evaluación de Lotes (fase 4 del PLAN_CIRCUITO_DEL_LOTE, V5.81) ─────────
@@ -96,6 +96,7 @@ export async function registrarEvaluacion(lotId: string, raw: LabEvaluation, not
     punto,
     cva_total: punto.cvaTotal,
     rueda: normalizaRueda(ev.rueda),
+    rueda_detalle: normalizaDetalle(ev.rueda_detalle, normalizaRueda(ev.rueda)), // V5.133: etapa e intensidad por marca
     uid_anonimo: ctcLotReferenceShort(lotId),
     q_grader_reference: identity.contactName?.trim() || identity.orgName,
     notes: notas.trim() || null,

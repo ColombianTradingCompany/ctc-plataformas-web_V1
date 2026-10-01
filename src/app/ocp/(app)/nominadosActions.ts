@@ -11,7 +11,7 @@ import { decidirPorPunto, puntoDeFila, puntoNativo, rotuloDelPunto, type PuntoSc
 import { currentSeason, lotSeasonCount, MAX_SEASONS_PER_LOT } from "@/lib/arena/seasons";
 import { saldoDe } from "@/lib/muestras/particion";
 import { anularRecibo } from "@/lib/muestras/recibo";
-import { normalizaRueda } from "@/lib/catacion/rueda";
+import { normalizaDetalle, normalizaRueda } from "@/lib/catacion/rueda";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { GRADOS, redondeaPuntaje } from "@/lib/grados/definicion";
 import { REEVALUACION, TARIFA_EVALUACION_COP } from "@/lib/trato/terminos";
@@ -692,6 +692,7 @@ export async function recordEvaluationVerdict(
         punto: puntoEfectivo,
         cva_total: puntoEfectivo.cvaTotal,
         rueda: normalizaRueda(lastEval.rueda),
+        rueda_detalle: normalizaDetalle(lastEval.rueda_detalle, normalizaRueda(lastEval.rueda)), // V5.133
         uid_anonimo: ctcLotReferenceShort(lotId),
         physical_data: {
           fa_start: lastEval.fa_start,

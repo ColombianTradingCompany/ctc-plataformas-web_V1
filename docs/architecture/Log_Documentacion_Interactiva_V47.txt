@@ -385,3 +385,11 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   build-coffee-datasheet → herramienta; fichaData → build-coffee-datasheet → herramienta; labEvaluation ⇄ qa-coffee-datasheet (paridad).
 - DATOS: fila en `tools` + `tool_versions` (origen repo), insertada con el archivo ya desplegado.
 (commit: 759765d)
+
+## [2026-10-01] V5.133 · Consolas + Socios — etapa e intensidad por marca de la rueda (formato descriptivo SCA-CVA)
+- ADD columna `lot_evaluations.rueda_detalle` (`{ [id]: { etapa, intensidad } }`).
+- ANN `src/lib/catacion/rueda.ts` (`ETAPAS_DE_LA_RUEDA`, `INTENSIDAD`, `MARCA_POR_DEFECTO`, `normalizaDetalle`, `marcaLabel`), `lib/arena/labEvaluation.ts`
+  (`rueda_detalle`; no cuenta como dato digitado), `components/bcp/LabEvalEditor.tsx` (editor por marca: etapas + deslizador),
+  `socios/…/evaluacionActions.ts`, `ocp/nominadosActions.ts` (se guarda), `nominados/CircuitoVista.tsx`, `socios/…/evaluacion/page.tsx` (se lee).
+  Guardián: `qa-centro-calidad` +11. Acta: `docs/migraciones/2026-10-01_lot_evaluations_rueda_detalle.sql`.
+(commit: pendiente)

@@ -243,7 +243,8 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
   «uso directo» de la credencial (Ficha sin bache), la variante interna de la Datasheet Tool (`herramientas-cafe`; **V5.130**: la
   planilla `LabEvalEditor` se rehízo con sus piezas —radar, rueda, granulometría con barras— en dos columnas y con idioma ES · EN,
   `components/bcp/PlanillaPiezas.tsx` + `lib/arena/planillaI18n.ts`; vale para el Centro, «Registrar a mano» y la Arena; **V5.131**: su
-  rueda ES la Rueda del Café del taller —misma taxonomía, generada del HTML por `scripts/build-rueda-datos.mjs`, misma geometría—),
+  rueda ES la Rueda del Café del taller —misma taxonomía, generada del HTML por `scripts/build-rueda-datos.mjs`, misma geometría—;
+  **V5.133**: cada marca lleva etapa e intensidad, `lot_evaluations.rueda_detalle`),
   y que KR
   alimente `evaluacionPendiente` a la barra (hoy el productor ve «en evaluación» hasta que CTCx confirma). ~~⚠️ La fórmula del
   CVA está en constantes con nombre (`CVA` en `labEvaluation.ts`): la valida el Q-Grader de la casa.~~ — **el Q-Grader la

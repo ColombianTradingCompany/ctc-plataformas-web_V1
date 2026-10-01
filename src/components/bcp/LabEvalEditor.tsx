@@ -42,7 +42,7 @@ import {
   type VistaDePlanilla,
 } from "@/lib/arena/labEvaluation";
 import { CVA_PROPOSITO, decidirPorPunto, rotuloDelPunto } from "@/lib/arena/homologacion";
-import { familiaDe, normalizaRueda, rutaDe } from "@/lib/catacion/rueda";
+import { ETAPAS_DE_LA_RUEDA, ETAPA_LABEL, INTENSIDAD, MARCA_POR_DEFECTO, ZONA_LABEL, ajustaIntensidad, detalleDe, familiaDe, fmtIntensidad, normalizaRueda, rutaDe, zonaDeIntensidad, type DetalleDeMarca } from "@/lib/catacion/rueda";
 import { scaClassFor } from "@/components/kaffetal-regal/ficha/fichaCalculations";
 import {
   CLASE_LABEL,
@@ -79,7 +79,11 @@ const S = {
   total: { display: "flex", gap: 10, alignItems: "baseline", marginTop: 8, fontSize: 13, flexWrap: "wrap" } as const,
   pill: { fontSize: 11.5, border: "1px solid var(--line)", borderRadius: 999, padding: "2px 10px", color: "var(--muted)" } as const,
 // Una marca de la rueda en la lista: su camino («Frutal › Cítricos › Lima») con el color de la familia al borde.
-  marca: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, textAlign: "left", fontSize: 12, padding: "4px 8px", borderRadius: 7, border: "1px solid var(--line)", borderLeft: "5px solid var(--ink)", background: "var(--paper)", color: "var(--ink)", cursor: "pointer" } as const,
+marca: { fontSize: 12, padding: "4px 8px", borderRadius: 7, border: "1px solid var(--line)", borderLeft: "5px solid var(--ink)", background: "var(--paper)", color: "var(--ink)" } as const,
+  marcaBoton: { flex: 1, minWidth: 0, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap", textAlign: "left", fontSize: 12, padding: 0, border: "none", background: "none", color: "inherit", cursor: "pointer" } as const,
+  marcaInsignia: { fontSize: 10.5, fontWeight: 700, border: "1px solid var(--line)", borderRadius: 999, padding: "1px 7px", color: "var(--muted)", whiteSpace: "nowrap" } as const,
+  marcaQuitar: { border: "none", background: "none", cursor: "pointer", color: "var(--muted)", fontSize: 15, lineHeight: 1, padding: "0 2px" } as const,
+  etapa: { fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 999, border: "1.5px solid var(--line)", background: "transparent", color: "var(--muted)", cursor: "pointer" } as const,
   bloque: { border: "1px solid var(--line)", borderRadius: 10, padding: "10px 12px" } as const,
   // Dos columnas cuando caben (≥ 2 × 330 px); una sola en un teléfono o dentro de una tarjeta estrecha.
   dosCol: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(330px, 1fr))", gap: 12, alignItems: "start" } as const,
@@ -145,12 +149,24 @@ export function LabEvalEditor({
     onChange({ cva_tazas: next });
   };
 
+  // V5.133 (owner): cada marca lleva su etapa y su intensidad. Marcar crea el detalle con el valor de la herramienta (sabor · 10)
+  // y abre su editor; desmarcar lo borra.
+  const [marcaAbierta, setMarcaAbierta] = useState<string | null>(null);
   const toggleDescriptor = (id: string) => {
     const set = new Set(value.rueda);
-    if (set.has(id)) set.delete(id);
-    else set.add(id);
-    onChange({ rueda: [...set] });
+    const detalle = { ...value.rueda_detalle };
+    if (set.has(id)) {
+      set.delete(id);
+      delete detalle[id];
+      if (marcaAbierta === id) setMarcaAbierta(null);
+    } else {
+      set.add(id);
+      detalle[id] = { ...MARCA_POR_DEFECTO };
+      setMarcaAbierta(id);
+    }
+    onChange({ rueda: [...set], rueda_detalle: detalle });
   };
+  const setDetalle = (id: string, cambio: Partial<DetalleDeMarca>) => onChange({ rueda_detalle: { ...value.rueda_detalle, [id]: { ...detalleDe(value.rueda_detalle, id), ...cambio } } });
 
   // El radar enseña el protocolo que la vista deja ver: los diez atributos SCA (escala 6–10), o las ocho secciones CVA (1–9).
   const radarSca = value.vista !== "cva";
@@ -343,12 +359,70 @@ export function LabEvalEditor({
                   <span style={{ fontSize: 12, color: "var(--muted)" }}>{t.ninguno}</span>
                 ) : (
                   <div style={{ display: "grid", gap: 4 }}>
-                    {normalizaRueda(value.rueda).map((id) => (
-                      <button key={id} type="button" disabled={disabled} onClick={() => toggleDescriptor(id)} title={t.quitar} style={{ ...S.marca, borderLeftColor: familiaDe(id)?.color ?? "var(--ink)" }}>
-                        <span>{rutaDe(id, lang)}</span>
-                        <span aria-hidden style={{ color: "var(--muted)" }}>×</span>
-                      </button>
-                    ))}
+                    {/* V5.133 (owner): cada marca lleva su ETAPA y su INTENSIDAD, como el modo Catar de la herramienta. Tocar la marca
+                        abre su editor; la recién marcada llega abierta. */}
+                    {normalizaRueda(value.rueda).map((id) => {
+                      const d = detalleDe(value.rueda_detalle, id);
+                      const abierta = marcaAbierta === id;
+                      return (
+                        <div key={id} style={{ ...S.marca, borderLeftColor: familiaDe(id)?.color ?? "var(--ink)" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <button type="button" aria-expanded={abierta} onClick={() => setMarcaAbierta(abierta ? null : id)} style={S.marcaBoton}>
+                              <span>{rutaDe(id, lang)}</span>
+                              <span style={S.marcaInsignia}>
+                                {ETAPA_LABEL[lang][d.etapa]} · {fmtIntensidad(d.intensidad)}
+                              </span>
+                            </button>
+                            <button type="button" disabled={disabled} onClick={() => toggleDescriptor(id)} title={t.quitar} aria-label={`${t.quitar}: ${rutaDe(id, lang)}`} style={S.marcaQuitar}>
+                              ×
+                            </button>
+                          </div>
+                          {abierta && (
+                            <div style={{ display: "grid", gap: 6, marginTop: 6 }}>
+                              <div role="radiogroup" aria-label={t.etapa} style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                                {ETAPAS_DE_LA_RUEDA.map((etapa) => (
+                                  <button
+                                    key={etapa}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={d.etapa === etapa}
+                                    disabled={disabled}
+                                    onClick={() => setDetalle(id, { etapa })}
+                                    style={{ ...S.etapa, ...(d.etapa === etapa ? { background: "var(--primary, #3C0A86)", borderColor: "var(--primary, #3C0A86)", color: "#fff" } : {}) }}
+                                  >
+                                    {ETAPA_LABEL[lang][etapa]}
+                                  </button>
+                                ))}
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                <input
+                                  type="range"
+                                  aria-label={t.intensidad}
+                                  min={INTENSIDAD.min}
+                                  max={INTENSIDAD.max}
+                                  step={INTENSIDAD.paso}
+                                  value={d.intensidad}
+                                  disabled={disabled}
+                                  onChange={(e) => setDetalle(id, { intensidad: ajustaIntensidad(e.target.value) })}
+                                  style={{ flex: 1, minWidth: 0 }}
+                                />
+                                <b className="mono" style={{ fontSize: 12.5, minWidth: 58, textAlign: "right" }}>
+                                  {fmtIntensidad(d.intensidad)}/{INTENSIDAD.max}
+                                </b>
+                              </div>
+                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9.5, letterSpacing: ".04em", color: "var(--muted)" }}>
+                                {(["baja", "media", "alta"] as const).map((z) => (
+                                  <span key={z} style={zonaDeIntensidad(d.intensidad) === z ? { color: "var(--ink)", fontWeight: 800 } : undefined}>
+                                    {ZONA_LABEL[lang][z]}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    <p style={{ ...S.hint, margin: "2px 0 0" }}>{t.marcasHint}</p>
                   </div>
                 )}
               </div>

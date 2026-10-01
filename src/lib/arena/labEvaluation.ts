@@ -27,7 +27,7 @@ import {
   type MeshFields,
   type ScaFields,
 } from "@/components/kaffetal-regal/ficha/fichaCalculations";
-import { normalizaRueda } from "@/lib/catacion/rueda";
+import { normalizaDetalle, normalizaRueda, type DetalleDeLaRueda } from "@/lib/catacion/rueda";
 import { alGrid, puntoHomologado, puntoNativo, type PuntoSca } from "./homologacion";
 import { CVA_SECCION_LABEL, PL, SCA_ATTR_LABEL, type IdiomaDePlanilla } from "./planillaI18n";
 
@@ -91,6 +91,8 @@ export type LabEvaluation = ScaFields &
     vista: VistaDePlanilla;
     /** Ids de descriptor de la rueda (`src/lib/catacion/rueda.ts`). */
     rueda: string[];
+    /** V5.133: la etapa y la intensidad de cada marca de `rueda` (formato descriptivo SCA-CVA). */
+    rueda_detalle: DetalleDeLaRueda;
     fa_parch_hum: string;
     cupping_profile: string;
     analysis_notes: string;
@@ -105,6 +107,7 @@ export const EMPTY_LAB_EVALUATION: LabEvaluation = {
   cva_fragrance: "", cva_aroma: "", cva_flavor: "", cva_aftertaste: "", cva_acidity: "", cva_sweetness: "", cva_mouthfeel: "", cva_overall: "",
   cva_tazas: tazasLimpias(),
   rueda: [],
+  rueda_detalle: {},
   fa_start: "", fa_green_remainder: "", fa_primary_defect: "", fa_secondary_defect: "",
   mesh_supremo_plus: "", mesh_supremo: "", mesh_extra: "", mesh_europa: "",
   mesh_ugq: "", mesh_peaberry: "", mesh_residue: "",
@@ -141,7 +144,8 @@ export function toLabEvaluation(raw: unknown): LabEvaluation {
   const { cva_nonuniform, cva_defective, ...r } = ((raw as (Partial<LabEvaluation> & { cva_nonuniform?: unknown; cva_defective?: unknown }) | null | undefined) ?? {});
   const escala: EscalaSensorial = r.escala === "cva" ? "cva" : "sca";
   const vista: VistaDePlanilla = r.vista === "ambas" || r.vista === "cva" || r.vista === "sca" ? r.vista : escala;
-  return { ...EMPTY_LAB_EVALUATION, ...r, escala, vista, cva_tazas: normalizaTazas(r.cva_tazas, cva_nonuniform, cva_defective), rueda: normalizaRueda(r.rueda) };
+  const rueda = normalizaRueda(r.rueda);
+  return { ...EMPTY_LAB_EVALUATION, ...r, escala, vista, cva_tazas: normalizaTazas(r.cva_tazas, cva_nonuniform, cva_defective), rueda, rueda_detalle: normalizaDetalle(r.rueda_detalle, rueda) };
 }
 
 /**
@@ -158,7 +162,8 @@ export function toLabEvaluationList(raw: unknown): LabEvaluation[] {
 /** ¿Hay al menos un dato digitado? (para no guardar planillas vacías). La escala y la vista son elecciones, no datos. */
 export function labEvaluationHasData(ev: LabEvaluation): boolean {
   return Object.entries(ev).some(([k, v]) => {
-    if (k === "escala" || k === "vista") return false;
+    // El detalle de las marcas no es un dato por sí solo: sin marcas no hay nada (y un `{}` no puede pasar por «digitado»).
+    if (k === "escala" || k === "vista" || k === "rueda_detalle") return false;
     if (k === "rueda") return Array.isArray(v) && v.length > 0;
     if (k === "cva_tazas") return Array.isArray(v) && (v as CvaTaza[]).some((t) => t.noUniforme || t.defectuosa);
     return String(v ?? "").trim() !== "";

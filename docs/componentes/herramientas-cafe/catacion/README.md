@@ -45,7 +45,8 @@ El owner puso esta rueda junto a la de la planilla del Q-Grader: «deben ser igu
 (`components/bcp/PlanillaPiezas.tsx` · `RuedaDeSabores`) la dibuja con la misma geometría, matices y agujas, y guarda las marcas
 con los ids de la herramienta (`frutal-citricos|lima`). `qa-centro-calidad` falla si la herramienta y la hoja dejan de coincidir.
 **Al publicar una versión nueva**: cambiar `HERRAMIENTA` en el script, `node scripts/build-rueda-datos.mjs`, y correr el guardián.
-Lo que la planilla no trae: girar, la lupa, y la etapa e intensidad de cada marca.
+Lo que la planilla no trae: girar y la lupa. **V5.133**: la etapa y la intensidad de cada marca SÍ — mismas cuatro etapas,
+misma escala 0–15 en pasos de 0,5 y mismo valor por defecto (sabor · 10); se guardan en `lot_evaluations.rueda_detalle`.
 
 ## V5.132 · la rueda también vive dentro de `coffee-datasheet` (2026-10-01)
 

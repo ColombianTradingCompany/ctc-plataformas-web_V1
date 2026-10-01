@@ -5,7 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { PARTNERS } from "@/lib/partners/partners";
 import { requirePartner } from "@/lib/partners/requirePartner";
-import { rutaDe } from "@/lib/catacion/rueda";
+import { marcaLabel, normalizaDetalle, normalizaRueda } from "@/lib/catacion/rueda";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { puntoDeFila, rotuloDelPunto } from "@/lib/arena/homologacion";
 import { BUILD_SHA, VERSION_LABEL } from "@/lib/version";
@@ -24,7 +24,7 @@ export const dynamic = "force-dynamic";
 
 type BatchRow = { id: string; label: string; shipped_at: string | null; q_grader_name: string | null };
 type InsRow = { lot_id: string; sondeo_batch_id: string | null; phase: string };
-type EvalRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; cva_total: number | string | null; escala: string; rueda: unknown; created_at: string; reviewed_at: string | null; notes: string | null; submitted_by: string | null };
+type EvalRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; cva_total: number | string | null; escala: string; rueda: unknown; rueda_detalle: unknown; created_at: string; reviewed_at: string | null; notes: string | null; submitted_by: string | null };
 // V5.92: nunca un homologado se lee como un SCA catado.
 const rotulo = (e: EvalRow) => {
   const p = puntoDeFila(e);
@@ -56,7 +56,7 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
         service.from("arena_inscriptions").select("lot_id, sondeo_batch_id, phase").in("sondeo_batch_id", batchIds),
         service
           .from("lot_evaluations")
-          .select("id, lot_id, batch_id, status, sca_total, punto, cva_total, escala, rueda, created_at, reviewed_at, notes, submitted_by")
+          .select("id, lot_id, batch_id, status, sca_total, punto, cva_total, escala, rueda, rueda_detalle, created_at, reviewed_at, notes, submitted_by")
           .in("batch_id", batchIds)
           .eq("source", "q_grader_batch")
           .order("created_at", { ascending: false }),
@@ -143,7 +143,7 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
                         )}
                         {pendiente && Array.isArray(pendiente.rueda) && pendiente.rueda.length > 0 && (
                           <span className={styles.orgLine} style={{ width: "100%" }}>
-                            Rueda: {(pendiente.rueda as string[]).map((id) => rutaDe(id)).join(" · ")}
+                            Rueda: {normalizaRueda(pendiente.rueda).map((id, _i, ids) => marcaLabel(id, normalizaDetalle(pendiente.rueda_detalle, ids))).join(" — ")}
                           </span>
                         )}
                       </div>

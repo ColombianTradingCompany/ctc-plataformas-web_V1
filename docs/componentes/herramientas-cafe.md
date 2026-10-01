@@ -97,7 +97,7 @@ SUPERFICIE, no de una consola — gotcha 12) · `/tools/<id>/*.html` y `/tools/h
 `qa-tools-carpetas.mjs` (175, `node --experimental-strip-types`: carpeta ↔ lista ↔ disco ↔ 308, y nadie escribe una ruta plana) ·
 `qa-taller-check.mjs` (66) · `qa-herramientas-acceso-check.mjs` (31) · `qa-concha-herramientas-check.mjs` (42,
 once vectores de ataque) · `qa-tools-puente-conformance.mjs` (14/14; las de esquema propio —`agtron`, `coffee-datasheet`— con sonda) · `qa-tools-seo-check.mjs` (257, recorre las carpetas) ·
-`qa-tools-seo-espejo.mjs` (86, toca la base: columna = archivo; `noindex` en archivadas y en `FUERA_DEL_INDICE`) ·
+`qa-tools-seo-espejo.mjs` (92, toca la base: columna = archivo; `noindex` en archivadas y en `FUERA_DEL_INDICE`) ·
 `qa-coffee-datasheet-check.mjs` (1.197, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`: catálogos generados al día,
 **paridad de las fórmulas SCA 2004 y CVA con la planilla de la plataforma** sobre 1.200 planillas, los dos métodos sin mezclar, tres idiomas
 completos, sin CDN) ·
@@ -117,7 +117,7 @@ completos, sin CDN) ·
 - **Un catálogo que ya tiene dueño en el repo no se copia dentro de un HTML: se GENERA** (V5.132). Una herramienta autocontenida no
   puede importar, pero sí llevar un bloque entre marcas que un script escribe desde la fuente y un guardián compara (`build-coffee-datasheet.mjs`
   → la rueda, los municipios y las variedades de `coffee-datasheet`). Lo mismo con una fórmula: el núcleo puro se ejecuta en Node contra la de la plataforma.
-- Una herramienta nueva: `.html` a **`public/tools/<id>/`** + su línea en `carpetas.ts` + su ficha en `herramientas-cafe/<id>/` → `vendor-tool-assets.mjs` → alta en `tools` desde el BCP
+- Una herramienta nueva: `.html` a **`public/tools/<id>/`** + su línea en `carpetas.ts` + su ficha en `herramientas-cafe/<id>/` → `vendor-tool-assets.mjs` → alta en `tools` (el BCP crea la fila, pero una versión de origen `repo` solo entra por SQL, y **después** de desplegar el archivo: ver Pendientes)
   → línea del puente si guarda trabajo → captura con `build-tool-shots.mjs` → `qa-tools-carpetas` y `qa-tools-seo-*` verdes.
 - **Una pieza que otra parte reutiliza se EXTRAE a una fuente única** (datos puros en `src/lib/tools/<id>/`, o la
   herramienta embebida tal cual, como el cotizador de empaque); nunca una copia. Mapa en `herramientas-cafe/README.md`.
@@ -143,6 +143,12 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
   SCA difiere de la de la Ficha de KR (`scaClassFor`) — anotado en la ficha, no armonizado; (e) superficies puestas por defecto en KR · web ·
   DC (se cambian en BCP · Herramientas sin desplegar). Y sigue abierto el paso corto hacia la planilla: `CTC.emitir` con el lote, que ya usa
   los nombres de campo de `LabEvaluation` (transcribir FT2, folio 11).
+- **El rastro de auditoría de BCP · Herramientas nunca ha guardado nada** (visto el 2026-10-01 al dar de alta `coffee-datasheet`):
+  `toolsActions.ts` escribe en `audit_log` con `entity_id = tools.id`, pero esa columna es `uuid` y los ids son texto (`coffee-datasheet`);
+  Postgres rechaza cada insert y el código no mira el error — `select count(*) from audit_log where entity_type = 'tool'` da 0. Arreglo
+  mínimo por decidir (columna de texto para el slug, o DDL con acta) y que el insert compruebe su error. Además: **una versión `repo` no se
+  puede crear desde el BCP** (solo sube a Storage), así que el alta de una herramienta del repositorio se hace por SQL con el archivo ya
+  desplegado — `tools` → `tool_versions` (origen `repo`, `src_publico`) → `version_publicada` — y `qa-tools-seo-espejo` la comprueba.
 - **V5.93 · Disco Agtron V8** (owner, 2026-09-26; ficha `herramientas-cafe/agtron/README.md`). Hecho: lectura por foto por
   luminosidad, blanco de referencia, 7 puntos o áreas con % en vivo y mínimo del 10 %, instrucciones de luz de día o blanca a 12 cm,
   aplicado único a los 10 s, ventana de catación SCA, alemán, apertura en el idioma de la superficie y memoria con esquema propio.

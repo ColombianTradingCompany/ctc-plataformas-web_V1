@@ -413,4 +413,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-10-01] V5.136 · Red — el Instagram de CTC cambia de cuenta; una sola fuente para las redes
 - ADD `src/lib/redesSociales.ts` (`INSTAGRAM_URL`, `YOUTUBE_URL`).
 - ANN `components/SocialLinks.tsx`, `components/ctc-home/Footer.tsx` (leen de ahí).
-(commit: pendiente)
+(commit: 19dc6d4)

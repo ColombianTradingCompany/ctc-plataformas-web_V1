@@ -323,3 +323,8 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   espejo de la parcela 1), `kr/FincaPanel.tsx` (Comunicación con punto y adjunto).
 - DICT `producer_comm_log.seccion/adjunto_asset_id/adjunto_filename` (acta 2026-10-01). Guardián: `qa-visa` +5.
 (commit: acf8be2)
+
+## [2026-10-01] V5.125 · Consolas — la EVA lee el EUDR de la finca de origen (no del lote) y la enlaza
+- ANN `kr/LoteSeccion.tsx` (`fincasDeOrigen`: finca_id + aportes, riesgo derivado), `kr/EvaReviewCard.tsx` (`EvaEudrFinca`; enlaces junto
+  a la Visa; un bloque por finca). Guardián: `qa-evaluaciones` +3.
+(commit: pendiente)

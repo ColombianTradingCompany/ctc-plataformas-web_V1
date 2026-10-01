@@ -19,6 +19,16 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.125] — 2026-10-01 (commit pendiente)
+
+- **Corregido**: en la EVA del lote, el panel **EUDR** decía «Sin definir» / «Pendiente» con la finca completa (el owner lo vio en un
+  lote de Alto de Reinas): las fichas leían las columnas `eudr_*` del LOTE, que son legado desde que la debida diligencia vive en la
+  finca. Ahora se leen de la(s) **finca(s) de origen** (`lots.finca_id` + aportes): cadena de custodia, afirmaciones del producto,
+  indicios, documentos, nivel de riesgo (derivado) y mitigación — con «No aplica» cuando el riesgo ya es insignificante.
+- **Añadido**: junto a «Visa: …», **cada finca de origen con su estado y enlace** a su vista completa; con varias fincas, un bloque
+  por finca.
+- **Docs**: `qa-evaluaciones` 56 → 59.
+
 ## [V5.124] — 2026-10-01 (commit acf8be2)
 
 - **Cambiado**: en Kaffetal Regal, **una finca aprobada ya no se edita: se revisa** (owner, 2026-10-01). El botón de la tarjeta dice

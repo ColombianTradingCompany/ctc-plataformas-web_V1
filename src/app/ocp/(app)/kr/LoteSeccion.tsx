@@ -10,13 +10,14 @@ import { reviewEvaluationClaim } from "../evaluationActions";
 import { LotFichasCard } from "./FichasClient";
 import { soportesDe, tieneReporte } from "@/lib/fichas/soportes";
 import { ordenaFichas, rowToLotFicha, type LotFicha } from "@/lib/fichas/tipos";
-import { EvaReviewCard, type CertItem, type EvaEudrFields, type FileLink, type FisicoPanel, type Row } from "./EvaReviewCard";
+import { EvaReviewCard, type CertItem, type EvaEudrFields, type EvaEudrFinca, type FileLink, type FisicoPanel, type Row } from "./EvaReviewCard";
 import { CERT_REGISTRY } from "@/lib/certRegistry";
 import { deriveClaims, deriveArchetype, composicionDeVariedades, ARCHETYPE_LABEL, type ContributionInput, type CertInput } from "@/lib/lotComposition";
 import type { EvaChecklist } from "./evaChecklist";
 import { fincaEudrFieldsDe } from "@/lib/ocp/fincaEudr";
-import { etapaDelLote, GRADO_LABEL as GRADE_LABEL } from "@/lib/ocp/etapas";
+import { estadoDeFinca, etapaDelLote, GRADO_LABEL as GRADE_LABEL } from "@/lib/ocp/etapas";
 import {
+  deriveFincaRiskLevel,
   fincaEudrStatus,
   lotEudrStatus,
   type FincaEudrFields,
@@ -192,6 +193,35 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
           }`,
     }));
   };
+  // ── V5.125 (owner, 2026-10-01): el panel EUDR de la EVA lee de la(s) FINCA(S) de origen ───────────────────────────
+  // La debida diligencia vive en la finca desde 2026-07-24; las columnas `eudr_*` del LOTE son legado y están vacías en los
+  // lotes nuevos. La V5.120 pintó esas columnas viejas y la EVA decía «Sin definir» con la finca completa (el owner lo vio en
+  // Alto de Reinas). Origen = `lots.finca_id` + las fincas de sus aportes (`lot_contributions`).
+  const idsDeOrigen = [...new Set([...lotRows.map((l) => l.finca_id), ...[...contribsByLot.values()].flat().map((x) => x.fincaId)].filter((x): x is string => !!x))];
+  type OrigenRow = { id: string; name: string; status: string; eudr_custody_stages: string[] | null; eudr_product_risk_factors: string[] | null; eudr_illegality_indicators: boolean | null; eudr_docs_available: boolean | null; eudr_mitigation_effective: boolean | null };
+  const { data: origenRaw } = idsDeOrigen.length
+    ? await service
+        .from("fincas")
+        .select("id, name, status, eudr_custody_stages, eudr_product_risk_factors, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective")
+        .in("id", idsDeOrigen)
+    : { data: [] as OrigenRow[] };
+  const origenPorId = new Map(((origenRaw as OrigenRow[] | null) ?? []).map((f) => [f.id, f]));
+  const fincasDeOrigen = (lot: LotRow): EvaEudrFinca[] =>
+    [...new Set([lot.finca_id, ...(contribsByLot.get(lot.id) ?? []).map((x) => x.fincaId)].filter((x): x is string => !!x))]
+      .map((id) => origenPorId.get(id))
+      .filter((f): f is OrigenRow => !!f)
+      .map((f) => ({
+        id: f.id,
+        name: f.name,
+        estado: estadoDeFinca(f.status),
+        custodyStages: f.eudr_custody_stages ?? [],
+        productRiskFactors: f.eudr_product_risk_factors ?? [],
+        illegality: f.eudr_illegality_indicators,
+        docsAvailable: f.eudr_docs_available,
+        riskLevel: deriveFincaRiskLevel({ eudrIllegalityIndicators: f.eudr_illegality_indicators, eudrDocsAvailable: f.eudr_docs_available, eudrMitigationEffective: f.eudr_mitigation_effective }),
+        mitigationEffective: f.eudr_mitigation_effective,
+      }));
+
   const archetypeFor = (lot: LotRow): string | null => {
     const a = deriveArchetype(contribsByLot.get(lot.id) ?? [], composicionDeVariedades(lot.datasheet?.varieties));
     return a ? ARCHETYPE_LABEL[a] : null;
@@ -272,6 +302,7 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
         inscriptionSettled={inscriptionSettledByLot.get(lot.id) ?? false}
         derivedClaimRows={claimRowsFor(lot)}
         archetypeLabel={archetypeFor(lot)}
+        eudrFincas={fincasDeOrigen(lot)}
       />
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-start", marginTop: 14 }}>
         {lot.stage === "no_apto" && <RevertNoAptoButton lotId={lot.id} />}
@@ -320,6 +351,7 @@ function LotCard({
   fichas,
   derivedClaimRows,
   archetypeLabel,
+  eudrFincas,
 }: {
   lot: LotRow;
   producer: ProducerContact | undefined;
@@ -336,6 +368,8 @@ function LotCard({
   // arquetipo calculado — la EVA los VERIFICA, no los digita.
   derivedClaimRows: { l: string; v: string }[];
   archetypeLabel: string | null;
+  /** V5.125: la debida diligencia de la(s) finca(s) de origen, que es lo que la EVA enseña en su panel EUDR. */
+  eudrFincas: EvaEudrFinca[];
 }) {
   const finca = toFincaEudrFields(lot.fincas);
   const eudrStatus: EudrStatus = lotEudrStatus(lot, finca ? [finca] : []);
@@ -570,6 +604,7 @@ function LotCard({
         eudrReady={eudrStatus.code === "eudr_ready"}
         eudrLabel={eudrStatus.label}
         eudr={eudrFields}
+        eudrFincas={eudrFincas}
         ftRows={ftRows}
         fincaDeclared={fincaDeclared}
         certItems={certItems}

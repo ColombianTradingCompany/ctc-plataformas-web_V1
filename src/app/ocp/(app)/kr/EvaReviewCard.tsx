@@ -71,6 +71,19 @@ export type FisicoPanel = {
   notas: string;
 };
 
+/** V5.125: lo que la FINCA de origen declaró y CTC evaluó en su cuestionario EUDR — la fuente del panel EUDR de la EVA. */
+export type EvaEudrFinca = {
+  id: string;
+  name: string;
+  estado: string;
+  custodyStages: string[];
+  productRiskFactors: string[];
+  illegality: boolean | null;
+  docsAvailable: boolean | null;
+  riskLevel: "" | "insignificante" | "no_insignificante";
+  mitigationEffective: boolean | null;
+};
+
 export type EvaEudrFields = {
   custodyStages: string[];
   custodyMethod: string; // "" | "ctc_standard" | "custom"
@@ -95,6 +108,7 @@ export function EvaReviewCard({
   eudrReady,
   eudrLabel,
   eudr,
+  eudrFincas,
   ftRows,
   fincaDeclared,
   certItems,
@@ -112,6 +126,7 @@ export function EvaReviewCard({
   eudrReady: boolean;
   eudrLabel: string;
   eudr: EvaEudrFields;
+  eudrFincas: EvaEudrFinca[];
   ftRows: Row[];
   /** La finca declarada en A2 + el estado de revisión de esa finca en BCP. */
   fincaDeclared: { name: string; status: "approved" | "rejected" | "pending_review" | null } | null;
@@ -542,22 +557,42 @@ export function EvaReviewCard({
                 La <b>Visa EUDR</b> de este lote se hereda por completo del <b>Pasaporte EUDR</b> de su(s) finca(s) de
                 origen — el lote no tiene debida diligencia propia.
               </p>
-              <p style={{ margin: "0 0 10px" }}>
+              {/* V5.125 (owner): junto a la Visa, la(s) finca(s) de origen con enlace — es ahí donde se revisa y se otorga el Pasaporte. */}
+              <p style={{ margin: "0 0 10px", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                 <span className={`${styles.badge} ${eudrReady ? styles.badgeGood : styles.badgeWarn}`} style={{ textTransform: "none", letterSpacing: 0, fontSize: 12.5 }}>
                   {eudrReady ? "✓ " : ""}Visa: {eudrLabel}
                 </span>
+                {eudrFincas.length ? (
+                  eudrFincas.map((f) => (
+                    <a key={f.id} href={`/ocp/kr?finca=${f.id}`} className={styles.badge} style={{ textTransform: "none", letterSpacing: 0, fontSize: 12.5, textDecoration: "underline" }}>
+                      Finca {f.name} · {f.estado} ↗
+                    </a>
+                  ))
+                ) : (
+                  <span className={`${styles.badge} ${styles.badgeBad}`}>Sin finca de origen</span>
+                )}
               </p>
-              {/* V5.120: lo que la finca de origen declaró en su cuestionario, en fichas y Sí/No (solo lectura: se evalúa en la finca). */}
-              {grilla(
-                <>
-                  {ficha("Cadena de custodia", <Fichas opciones={CUSTODY_STAGES} activas={eudr.custodyStages} />)}
-                  {ficha("Riesgo del producto", <Fichas opciones={PRODUCT_RISK_AFFIRMATIONS} activas={PRODUCT_RISK_AFFIRMATIONS.map(([k]) => k).filter((k) => !eudr.productRiskFactors.includes(k))} faltante="rojo" />)}
-                  {ficha("¿Indicios de ilegalidad?", <SiNo v={eudr.illegality} bienSi={false} si="Sí, hay indicios" no="No hay indicios" />)}
-                  {ficha("¿Documentos verificables?", <SiNo v={eudr.docsAvailable} />)}
-                  {ficha("Nivel de riesgo", <span className={`${styles.badge} ${eudr.riskLevel === "insignificante" ? styles.badgeGood : eudr.riskLevel === "no_insignificante" ? styles.badgeBad : styles.badgeWarn}`}>{eudr.riskLevel === "insignificante" ? "Insignificante" : eudr.riskLevel === "no_insignificante" ? "No insignificante" : "Pendiente"}</span>)}
-                  {ficha("¿Mitigación efectiva?", <SiNo v={eudr.mitigationEffective} si="Sí, efectiva" no="No suficiente" />)}
-                </>
-              )}
+              {/* Lo que CADA finca de origen declaró y CTC evaluó en su cuestionario, en fichas y Sí/No (solo lectura: se evalúa en la
+                  finca). V5.125: se lee de la FINCA — las columnas eudr_* del lote son legado y están vacías en los lotes nuevos. */}
+              {eudrFincas.map((f) => (
+                <div key={f.id} style={{ marginBottom: 10 }}>
+                  {eudrFincas.length > 1 && (
+                    <p className={styles.meta} style={{ margin: "0 0 2px", fontWeight: 600 }}>
+                      <a href={`/ocp/kr?finca=${f.id}`}>{f.name}</a>
+                    </p>
+                  )}
+                  {grilla(
+                    <>
+                      {ficha("Cadena de custodia", <Fichas opciones={CUSTODY_STAGES} activas={f.custodyStages} />)}
+                      {ficha("Riesgo del producto", <Fichas opciones={PRODUCT_RISK_AFFIRMATIONS} activas={PRODUCT_RISK_AFFIRMATIONS.map(([k]) => k).filter((k) => !f.productRiskFactors.includes(k))} faltante="rojo" />)}
+                      {ficha("¿Indicios de ilegalidad?", <SiNo v={f.illegality} bienSi={false} si="Sí, hay indicios" no="No hay indicios" />)}
+                      {ficha("¿Documentos verificables?", <SiNo v={f.docsAvailable} />)}
+                      {ficha("Nivel de riesgo", <span className={`${styles.badge} ${f.riskLevel === "insignificante" ? styles.badgeGood : f.riskLevel === "no_insignificante" ? styles.badgeBad : styles.badgeWarn}`}>{f.riskLevel === "insignificante" ? "Insignificante" : f.riskLevel === "no_insignificante" ? "No insignificante" : "Pendiente"}</span>)}
+                      {ficha("¿Mitigación efectiva?", f.riskLevel === "insignificante" && f.mitigationEffective == null ? <span className={styles.badge}>No aplica (riesgo insignificante)</span> : <SiNo v={f.mitigationEffective} si="Sí, efectiva" no="No suficiente" />)}
+                    </>
+                  )}
+                </div>
+              ))}
               <p className={styles.meta} style={{ margin: 0 }}>
                 El Pasaporte se revisa y otorga en <a href="/ocp/kr">Fincas</a> (panel de la finca → pestaña EUDR:
                 declaración del productor, análisis con Google Earth y atributos). Al quedar el Pasaporte vigente, este

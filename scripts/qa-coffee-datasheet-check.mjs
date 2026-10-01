@@ -19,12 +19,18 @@
 //   4. TRES IDIOMAS COMPLETOS (ALINEACION §1): toda clave de texto y todo botón «i» tiene ES · EN · DE, y no hay una
 //      clave usada que no exista (saldría el nombre de la clave en pantalla).
 //   5. AUTOCONTENIDA Y CON MEMORIA: nada de CDN (una finca sin señal la abre igual) y el puente con esquema propio.
+//   6. LA MISMA HERRAMIENTA QUE LA PLANILLA, MÁS B1 (V5.137, owner 2026-10-01: «este tiene que ser la misma herramienta,
+//      agregándole B1»). Los campos de B2 y B3 de la planilla del Centro de Calidad (`LabEvalEditor`) y los de esta
+//      herramienta son los mismos: los tres atributos por taza como un número, taint y fault taza a taza con su tipo, el
+//      CVA en cuartos de punto, etapa e intensidad por nota de la rueda, el tipo de acidez, las texturas, los defectos
+//      físicos y el color. Si una de las dos cambia sola, hay dos planillas — y eso es lo que el owner pidió que no pase.
 
 import { readFileSync } from "node:fs";
 import { HERRAMIENTA, aplicar, leerRueda } from "./build-coffee-datasheet.mjs";
 import { leerDatosDeLaHerramienta } from "./build-rueda-datos.mjs";
-import { RUEDA as RUEDA_PLATAFORMA } from "../src/lib/catacion/rueda.ts";
-import { CVA as CVA_PLATAFORMA, SCA2004, computeCva, computeSca2004, computeFactor } from "../src/lib/arena/labEvaluation.ts";
+import { RUEDA as RUEDA_PLATAFORMA, ETAPAS_DE_LA_RUEDA, INTENSIDAD, MARCA_POR_DEFECTO, ajustaIntensidad } from "../src/lib/catacion/rueda.ts";
+import { CVA as CVA_PLATAFORMA, SCA2004, SCA2004_POR_TAZAS, CVA_DEFECTOS, computeCva, computeSca2004, computeFactor, contarScaTazas, normalizaScaTazas } from "../src/lib/arena/labEvaluation.ts";
+import { DEFECTOS_FISICOS, COLORES_DEL_VERDE, TEXTURAS_EN_BOCA, MAX_TEXTURAS, TIPOS_DE_ACIDEZ } from "../src/lib/catacion/fisico.ts";
 import { CARPETAS_HERRAMIENTAS } from "../src/lib/tools/carpetas.ts";
 
 let ok = 0;
@@ -144,13 +150,13 @@ const dinamicas = [
   ...M.MALLAS_CO.map((k) => `m_${k.replace("mesh_", "")}`), ...[1, 2, 3, 4, 5, 6, 7, 8].map((n) => `col${n}`), ...[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `e${n}`),
   "q6", "q7", "q8", "q9", "cls90", "cls85", "cls80", "cls0", "cls_spec", "cls_prem", "cls_exch", "cls_below", "cls_off", "cat1", "cat2",
   ...["salty", "sour", "sweet", "bitter", "umami"].map((g) => `g_${g}`), ...["rough", "oily", "smooth", "drying", "metallic"].map((b) => `b_${b}`),
-  "d_moho", "d_fenol", "d_papa", ...["4c", "fair", "org", "ra", "food", "eudr", "bird", "cafe", "aaa", "gi"].map((c) => `ce_${c}`),
+  "d_moho", "d_fenol", "d_papa", "d_otro", "et_fragancia", "et_aroma", "et_sabor", "et_residual", "ac_seca", "ac_dulce", ...["4c", "fair", "org", "ra", "food", "eudr", "bird", "cafe", "aaa", "gi"].map((c) => `ce_${c}`),
   "tu1", "tu2", "tu3", "tu4", "tu5", "alta", "media", "baja", "pesado", "medio", "ligero",
   ...["sca", "cva"].flatMap((m) => [`${m}Nom`, `${m}Sub`, `${m}Tag`, `${m}Btn`, ...[1, 2, 3, 4, 5].map((n) => `${m}L${n}`)]),
 ];
 for (const k of [...usadas, ...dinamicas]) check(`texto · «${k}» se usa y existe`, k in M.TX);
 const infos = new Set([...js.matchAll(/\bib\("([a-z_0-9]+)"\)/g), ...js.matchAll(/info:"([a-z_0-9]+)"/g), ...js.matchAll(/data-v=\\"([a-z_0-9]+)\\">"\+t\("eligeDif"\)/g)].map((m) => m[1]));
-for (const k of [...infos, ...["fragrance", "flavor", "aftertaste", "acidity", "body", "balance", "cuppers", "uniformity", "clean_cup", "sweetness"].map((x) => `sca_${x}`), ...M.CVA_SEC.map((x) => `sec_${x}`), "dif", "prep", "partes", "lotes", "sesion"])
+for (const k of [...infos, ...["fragrance", "flavor", "aftertaste", "acidity", "body", "balance", "cuppers", "uniformity", "clean_cup", "sweetness"].map((x) => `sca_${x}`), ...M.CVA_SEC.map((x) => `sec_${x}`), "dif", "prep", "partes", "lotes", "sesion", "sca_taint", "sca_fault", "cva_acidez"])
   check(`«i» · «${k}» se usa y existe`, k in M.INFO);
 check("hay botones «i» suficientes para asistir la evaluación", Object.keys(M.INFO).length >= 40, String(Object.keys(M.INFO).length));
 
@@ -165,7 +171,7 @@ check("método: el puntaje SCA sale solo de campos sca_* y el CVA solo de cva_*"
 check("CVA: descriptiva y afectiva en columnas separadas, con su estándar", js.includes('class=\\"col-d\\"') && js.includes('class=\\"col-a\\"') && js.includes("SCA 103") && js.includes("SCA 104"));
 check("CVA: la intensidad no entra en la fórmula", !/cva_int/.test(corte("function calcCva", "/** SCA 2004")));
 check("SCA 2004: la parte extrínseca avisa que no es del protocolo", M.TX.extScaNota[0].includes("no tiene parte extrínseca"));
-check("las tres partes se pueden apagar, y siempre queda una", js.includes('t("unaParte")') && ["pSabor", "pFisico", "pExtr"].every((k) => k in M.TX));
+check("las cuatro partes se pueden apagar, y siempre queda una", js.includes('t("unaParte")') && ["pBasico", "pSabor", "pFisico", "pExtr"].every((k) => k in M.TX));
 check("varios lotes, con tope", /MAX_LOTES = \d+/.test(js) && js.includes('case "masLote": case "dupLote"'));
 
 // ── 7. Autocontenida, con memoria y en las listas ─────────────────────────────────────────────────────────────────────
@@ -179,6 +185,83 @@ check("carpetas.ts conoce la herramienta", CARPETAS_HERRAMIENTAS.some((c) => c.i
 check("build-tool-shots la captura", lee("scripts/build-tool-shots.mjs").includes('"coffee-datasheet"'));
 check("la conformidad del puente la sondea", lee("scripts/qa-tools-puente-conformance.mjs").includes('"coffee-datasheet": {'));
 check("los enlaces a otras herramientas van a su carpeta", ["/tools/defectos-cafe/defectos-cafe.html", "/tools/mapa-variedades/mapa-variedades.html", "/tools/agtron/agtron-dial.html"].every((u) => html.includes(u)));
+
+// ── 8. La MISMA herramienta que la planilla del Centro de Calidad, más B1 (V5.137) ────────────────────────────────────
+// El estado de la herramienta (qué campos tiene un lote y cómo se normaliza un archivo) se ejecuta aquí, sin navegador.
+const tramo = (desde, hasta) => { const x = corte(desde, hasta); return x.slice(0, x.length - hasta.length); };
+const E = new Function(
+  "IDX",
+  `${corte("/*<CATALOGOS-GENERADOS>*/", "/*</NUCLEO-PURO>*/")}
+   const APP = "ctcx-coffee-datasheet", VER = 1, MAX_LOTES = 12; let S = null;
+   ${tramo("const GUSTOS = [", "const PAISES = [")}
+   ${tramo("const RUEDA_A_CATA = {", "const UI = {")}
+   ${tramo("function hoy(){", "let tBorrador = null;")}
+   return { DEF_CVA, ETAPAS, ACIDECES, TEXTURAS, loteVacio, estadoVacio, normLote, normalizar, evSca, normDetalle, etapasDe };`,
+)(Object.fromEntries(idsHerramienta.map((id) => [id, true])));
+const igual = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const vacio = E.loteVacio(0);
+
+// B2 · SCA 2004 — los tres atributos por taza son un número, como los demás; taint y fault, taza a taza.
+check("planilla · SCA: Uniformidad, Taza limpia y Dulzor son un número (no cinco casillas)", SCA2004_POR_TAZAS.every((k) => vacio[`sca_${k}`] === "") && !("sca_cups" in vacio) && !js.includes('data-a=\\"copa\\"'));
+check("planilla · SCA: los tres por taza van de 0 a 10 al 0,25; los demás de 6 a 10", js.includes("min = SCA_TAZ.indexOf(k)>=0 ? 0 : SCA_K.min") && js.includes('max=\\"10\\" step=\\"0.25\\" data-k=\\"sca_"') && igual(M.SCA_TAZ, SCA2004_POR_TAZAS));
+check("planilla · SCA: cinco tazas con su estado (limpia · taint · fault) y su tipo", vacio.sca_tazas.length === SCA2004.tazas && vacio.sca_tazas.every((x) => x.estado === "" && x.defecto === "") && js.includes('data-a=\\"scaTz\\"') && js.includes('data-k=\\"sca_tazas."'));
+check("planilla · SCA: el tipo de defecto es el mismo selector de la taza defectuosa del CVA", igual(E.DEF_CVA, CVA_DEFECTOS.map((d) => d[0])));
+check("planilla · SCA: taint y fault se explican con su «i»", js.includes('ib("sca_taint")') && js.includes('ib("sca_fault")') && M.INFO.sca_taint.es[1].includes("2 puntos") && M.INFO.sca_fault.es[1].includes("4 puntos"));
+{
+  const conTazas = E.normLote({ sca_tazas: [{ estado: "taint", defecto: "moho" }, { estado: "fault", defecto: "inventado" }, { estado: "raro" }, {}, {}] }, 0);
+  const cuenta = contarScaTazas(normalizaScaTazas(conTazas.sca_tazas));
+  check("planilla · SCA: los contadores salen de las tazas, como en la planilla", conTazas.sca_taint_cups === String(cuenta.taint) && conTazas.sca_fault_cups === String(cuenta.fault) && cuenta.taint === 1 && cuenta.fault === 1);
+  check("planilla · SCA: un tipo de defecto desconocido no se guarda", conTazas.sca_tazas[0].defecto === "moho" && conTazas.sca_tazas[1].defecto === "" && conTazas.sca_tazas[2].estado === "");
+  // Un archivo guardado ANTES de la V5.137 (cinco casillas por atributo y dos contadores) se abre sin perder nada.
+  const viejo = E.normLote({ sca_cups: { uniformity: [1, 1, 0, 1, 1], clean_cup: [1, 1, 1, 1, 1], sweetness: [0, 0, 1, 1, 1] }, sca_taint_cups: "1", sca_fault_cups: "2" }, 0);
+  const cv = contarScaTazas(normalizaScaTazas(undefined, "1", "2"));
+  check("planilla · SCA: un archivo anterior convierte sus casillas a puntos (2 por taza)", viejo.sca_uniformity === "8" && viejo.sca_clean_cup === "10" && viejo.sca_sweetness === "6");
+  check("planilla · SCA: un archivo anterior reparte sus contadores en tazas", viejo.sca_tazas.filter((x) => x.estado === "taint").length === cv.taint && viejo.sca_tazas.filter((x) => x.estado === "fault").length === cv.fault && cv.taint === 1 && cv.fault === 2);
+  const lleno = E.normLote({ ...Object.fromEntries(M.SCA_ATR.map((k) => [`sca_${k}`, "8.25"])), sca_uniformity: "9.75", sca_tazas: [{ estado: "taint", defecto: "papa" }] }, 0);
+  const a = M.calcSca2004(E.evSca(lleno)), b = computeSca2004(E.evSca(lleno));
+  check("planilla · SCA: el puntaje con cuartos por taza y un taint es el de la planilla", a.total != null && a.total === b.total && Math.abs(a.total - (8.25 * 9 + 9.75 - 2)) < 1e-9, `${a.total} vs ${b.total}`);
+}
+
+// B2 · CVA — cuartos de punto en la afectiva y el tipo de acidez del formato descriptivo.
+check("planilla · CVA: la afectiva admite cuartos de punto (casilla fina 1–9 al 0,25)", M.CVA_K.paso === CVA_PLATAFORMA.pasoSeccion && CVA_PLATAFORMA.pasoSeccion === 0.25 && js.includes('class=\\"fino\\" type=\\"number\\" min=\\"1\\" max=\\"9\\" step=\\"0.25\\"'));
+check("planilla · CVA: los nueve botones siguen (el sondeo del puente los usa)", js.includes('data-a=\\"aff\\" data-v=\\""+k+"\\" data-i=\\""+n+"\\" aria-pressed='));
+check("planilla · CVA: la palabra de la escala solo acompaña a los enteros", js.includes("Number.isInteger(n) && n>=1 && n<=9 ? n+\" · \"+esc(t(\"e\"+n)) : nf(n)"));
+check("planilla · CVA: tipo de acidez — las dos de la planilla, se elige una", igual(E.ACIDECES, TIPOS_DE_ACIDEZ.map((o) => o.key)) && E.normLote({ cva_acidez: ["seca", "dulce", "x"] }, 0).cva_acidez.length === 1 && js.includes('topes("acTipos","cva_acidez","cva_acidez",ACIDECES,"ac_",1)'));
+check("planilla · CVA: los textos del tipo de acidez son los de la planilla", TIPOS_DE_ACIDEZ.every((o) => M.TX[`ac_${o.key}`][0] === o.es && M.TX[`ac_${o.key}`][1] === o.en));
+check("planilla · CVA: las texturas en boca y su tope son los de la planilla", igual(E.TEXTURAS, TEXTURAS_EN_BOCA.map((o) => o.key)) && M.TOPE.textura === MAX_TEXTURAS);
+
+// La rueda — cada nota marcada lleva su etapa y su intensidad.
+check("planilla · rueda: las cuatro etapas", igual(E.ETAPAS, ETAPAS_DE_LA_RUEDA) && E.ETAPAS.every((e) => `et_${e}` in M.TX));
+check("planilla · rueda: en CVA la etapa sale de dónde se marcó (nariz: fragancia · aroma; boca: sabor · residual)", igual(E.etapasDe("nariz"), ["fragancia", "aroma"]) && igual(E.etapasDe("boca"), ["sabor", "residual"]) && igual(E.etapasDe(""), ETAPAS_DE_LA_RUEDA));
+check("planilla · rueda: la marca nace como en la planilla (sabor · 10)", igual(E.normDetalle(null, ""), { etapa: MARCA_POR_DEFECTO.etapa, intensidad: String(MARCA_POR_DEFECTO.intensidad) }));
+check("planilla · rueda: la intensidad va de 0 a 15 al 0,5", INTENSIDAD.min === 0 && INTENSIDAD.max === 15 && INTENSIDAD.paso === 0.5 && js.includes('type=\\"range\\" min=\\"0\\" max=\\"15\\" step=\\"0.5\\" data-k=\\"rueda_detalle."'));
+for (const v of [-3, 0, 0.2, 7.3, 7.75, 12.5, 15, 99, "8,5"]) check(`planilla · rueda: la intensidad ${v} se ajusta igual`, Number(E.normDetalle({ intensidad: v }, "").intensidad) === ajustaIntensidad(v));
+{
+  const id = idsHerramienta[3], otro = idsHerramienta[7];
+  const l = E.normLote({ sca_rueda: [id], cva_desc_boca: [otro], rueda_detalle: { [id]: { etapa: "aroma", intensidad: "12.5" }, [`boca:${otro}`]: { etapa: "fragancia", intensidad: 3 }, fantasma: { etapa: "sabor", intensidad: 5 } } }, 0);
+  check("planilla · rueda: el detalle se conserva al abrir un archivo", igual(l.rueda_detalle[id], { etapa: "aroma", intensidad: "12.5" }));
+  check("planilla · rueda: una etapa que no es de la boca vuelve a «sabor»", igual(l.rueda_detalle[`boca:${otro}`], { etapa: "sabor", intensidad: "3" }));
+  check("planilla · rueda: no queda detalle de una nota que no está marcada", igual(Object.keys(l.rueda_detalle).sort(), [id, `boca:${otro}`].sort()));
+  check("planilla · rueda: quitar o cambiar una nota poda su detalle", (js.match(/podaDetalle\(l\)/g) ?? []).length >= 3);
+}
+
+// El radar: el centro es 0 (antes el 6 del formulario quedaba en el centro y la figura se deformaba).
+check("planilla · radar: el centro es 0 en los dos métodos", js.includes("return n/10;") && !js.includes("(n-5)/5") && js.includes("n/9") && js.includes("n/15"));
+
+// B3 · lo físico — los mismos defectos y los mismos colores que la planilla.
+check("planilla · B3: los 16 defectos, con su categoría y su equivalencia", igual(M.DEFECTOS, DEFECTOS_FISICOS.map((d) => [d.key, d.cat, d.granos])));
+check("planilla · B3: los 8 colores del verde", COLORES_DEL_VERDE.length === 8 && [1, 2, 3, 4, 5, 6, 7, 8].every((n) => `col${n}` in M.TX));
+
+// B1 · variedades y caracterización básica — una parte más, con los MISMOS campos de las partes 2 y 3 (no una copia).
+check("B1: es la primera pestaña y la primera parte", js.includes('[["basico","pBasico","tBasico"],["sabor","pSabor"') && js.includes('const ps = [["basico","pBasico"],["sabor","pSabor"]'));
+check("B1: un estado nuevo la trae encendida, y un archivo anterior también", E.estadoVacio().partes.basico === true && E.normalizar({ metodo: "sca", partes: { sabor: true, fisico: false, extr: true } }).partes.basico === true && E.normalizar({ partes: { basico: false, sabor: true } }).partes.basico === false);
+{
+  const b1 = corte("function basico(){", "function tieneBasico(");
+  check("B1: variedad, especie, proceso, humedad, densidad, actividad de agua y el factor", ["variedadesCampo(false)", '"ext.especie"', 'seg("ext.tipo"', '"ext.proc_otro"', '"fis_humedad"', '"fis_densidad"', '"fis_aw"', 'data-o=\\"factor\\"'].every((x) => b1.includes(x)), b1.length + " caracteres");
+  check("B1: no inventa campos — escribe en los de las partes 2 y 3", !/data-k=\\"b1|"b1_|basico\./.test(b1) && corte("function extr(){", "function ").length > 0 && js.includes("variedadesCampo(true)"));
+  check("B1: sale en la ficha, y se puede apagar", js.includes("if(S.partes.basico && tieneBasico(l)) cuerpo += fichaBasico(l);") && js.includes('if(UI.tab==="basico") return basico();'));
+  check("B1: las variedades se validan en B1 igual que en la parte extrínseca", js.includes('if(UI.tab==="extr" || UI.tab==="basico"){'));
+}
 
 if (fallos.length) {
   console.error(`✗ qa-coffee-datasheet: ${fallos.length} fallo(s), ${ok} OK\n`);

@@ -98,7 +98,7 @@ SUPERFICIE, no de una consola — gotcha 12) · `/tools/<id>/*.html` y `/tools/h
 `qa-taller-check.mjs` (66) · `qa-herramientas-acceso-check.mjs` (31) · `qa-concha-herramientas-check.mjs` (42,
 once vectores de ataque) · `qa-tools-puente-conformance.mjs` (14/14; las de esquema propio —`agtron`, `coffee-datasheet`— con sonda) · `qa-tools-seo-check.mjs` (257, recorre las carpetas) ·
 `qa-tools-seo-espejo.mjs` (92, toca la base: columna = archivo; `noindex` en archivadas y en `FUERA_DEL_INDICE`) ·
-`qa-coffee-datasheet-check.mjs` (1.197, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`: catálogos generados al día,
+`qa-coffee-datasheet-check.mjs` (1.291, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`: catálogos generados al día,
 **paridad de las fórmulas SCA 2004 y CVA con la planilla de la plataforma** sobre 1.200 planillas, los dos métodos sin mezclar, tres idiomas
 completos, sin CDN) ·
 `qa-cromatografia-check.mjs` (294, puro) · `qa-cromatografia-modelo.mjs` (manual, gasta: estabilidad del modelo; acepta
@@ -131,6 +131,12 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 
 ## Pendientes
 
+- **V5.137 · la Coffee Datasheet Tool es la misma herramienta que la planilla, más B1** (owner, 2026-10-01; ejecutado desde la
+  conversación de `consolas`). Hecho: mismos campos que la planilla del Centro de Calidad —tres atributos por taza como número, taint y
+  fault taza a taza con su tipo, CVA en cuartos de punto, tipo de acidez, etapa e intensidad por nota, radar con centro en 0— y la
+  parte nueva **B1 · Variedades y caracterización básica**. `qa-coffee-datasheet` (sección 8) compara las dos. Cierra el pendiente de
+  la V5.135. Abierto, **con decisión del owner**: si «la misma herramienta» debe llegar a UNA sola implementación (hoy son dos códigos
+  con los mismos campos); y volver a tomar la captura de la herramienta (`build-tool-shots`) y correr a mano `qa-tools-puente-conformance`.
 - **V5.132 · CTCx Coffee Datasheet Tool** (owner, 2026-10-01; ficha `herramientas-cafe/coffee-datasheet/README.md`). Hecho: herramienta
   NUEVA que combina la Rueda del Café y la Ficha de café verde para evaluar **uno o varios lotes** con **SCA 2004 o CVA** —el método se
   elige primero y manda en toda la pantalla (cinta fija, casillas, ficha, archivo)—, en tres partes que se pueden apagar: Perfil de

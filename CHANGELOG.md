@@ -19,6 +19,24 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.137] — 2026-10-01 (commit pendiente)
+
+- **Cambiado**: la **CTCx Coffee Datasheet Tool** del taller tiene los MISMOS campos que la planilla del Centro de Calidad (owner,
+  2026-10-01: «este tiene que ser la misma herramienta, agregándole B1»). **SCA 2004**: Uniformidad, Taza limpia y Dulzor se califican
+  como los demás atributos (de 0 a 10 en pasos de 0,25; antes eran cinco casillas por atributo); los defectos de taza se marcan **taza a
+  taza** —leve (taint) o grave (fault)— con el mismo selector de tipo que la taza defectuosa del CVA, y cada uno tiene su botón «i».
+  **CVA**: la afectiva admite **cuartos de punto** (los nueve botones siguen; al lado, una casilla de 1 a 9 al 0,25) y la sección de
+  acidez pide su **tipo** (seca · dulce, se elige una). **Rueda**: cada nota marcada lleva su **etapa** (fragancia · aroma · sabor ·
+  residual; en CVA, las dos de donde se marcó) y su **intensidad** de 0 a 15 al 0,5, y así sale en la ficha. **Radar**: el centro es 0.
+- **Añadido**: parte **B1 · Variedades y caracterización básica** en la herramienta —especie, variedades con su proporción, tipo de
+  proceso, humedad, densidad, actividad de agua y el factor de rendimiento—. Es la primera pestaña, se puede apagar como las otras y
+  sale en la ficha. No son campos nuevos: son los de las partes 2 y 3, juntos en una pantalla (lo que se escribe en una aparece en la otra).
+- **Corregido**: un archivo `.json` guardado con la herramienta anterior se abre sin perder nada —las casillas por taza se convierten
+  a puntos (2 por taza marcada) y los dos contadores de defectos se reparten en tazas—.
+- **Seguridad**: `qa-coffee-datasheet` (1.197 → 1.291) vigila que la herramienta y la planilla sigan teniendo los mismos campos: etapas,
+  intensidad, tipos de acidez, texturas, defectos físicos, colores, tipos de defecto de taza y la migración de archivos anteriores.
+- **Docs**: guía de `coffee-datasheet` (cuatro partes; el pendiente de la V5.135 queda cerrado), charter `herramientas-cafe`, ALINEACION §3.
+
 ## [V5.136] — 2026-10-01 (commit 19dc6d4)
 
 - **Cambiado**: el **Instagram de CTC** es `https://www.instagram.com/ctc.oficiall/` (owner, 2026-10-01; antes `instagram.com/ctcexport`).

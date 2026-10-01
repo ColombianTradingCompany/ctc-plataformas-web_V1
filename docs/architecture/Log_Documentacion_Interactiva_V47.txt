@@ -414,3 +414,11 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ADD `src/lib/redesSociales.ts` (`INSTAGRAM_URL`, `YOUTUBE_URL`).
 - ANN `components/SocialLinks.tsx`, `components/ctc-home/Footer.tsx` (leen de ahí).
 (commit: 19dc6d4)
+
+## [2026-10-01] V5.137 · Herramientas del Café — la Coffee Datasheet Tool es la misma herramienta que la planilla, más B1
+- ANN `public/tools/coffee-datasheet/ctcx-coffee-datasheet-tool.html`: cuatro partes (B1 · Variedades y básicos, Perfil de sabores,
+  Granulometría, Extrínseca); SCA 2004 con los tres atributos por taza como número y taint/fault taza a taza (`sca_tazas`); CVA con
+  cuartos de punto y tipo de acidez (`cva_acidez`); etapa e intensidad por nota de la rueda (`rueda_detalle`); radar con centro en 0.
+- ANN `scripts/qa-coffee-datasheet-check.mjs`: sección 8, «la misma herramienta que la planilla del Centro de Calidad, más B1».
+- ANN `docs/componentes/herramientas-cafe/coffee-datasheet/README.md`, `docs/componentes/herramientas-cafe.md`, `docs/ALINEACION.md`.
+(commit: pendiente)

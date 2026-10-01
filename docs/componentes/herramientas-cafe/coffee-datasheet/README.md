@@ -6,12 +6,12 @@
 
 | | |
 |---|---|
-| Estado | Viva (V5.132) |
+| Estado | Viva (V5.132; mismos campos que la planilla + B1 desde la V5.137) |
 | Nivel | default |
 | Idioma | es (+ en, de en la propia herramienta) |
 | Superficies (`tools.kr/cp/web/dc`) | KR · web · DC |
 | Memoria | sí (esquema propio, `CTC.usarEstado`) |
-| Guardián | `scripts/qa-coffee-datasheet-check.mjs` (1.197) |
+| Guardián | `scripts/qa-coffee-datasheet-check.mjs` (1.291) |
 
 ## Qué es
 
@@ -34,15 +34,22 @@ Los dos números **no son intercambiables**, y la herramienta está hecha alrede
    que hace cada uno y el aviso de que un 84 de uno no es un 84 del otro.
 2. **La cinta fija.** Bajo la barra, siempre a la vista: azul marino con «SCA 2004» o dorada con «CVA», con el botón
    «Cambiar método». Todo el acento de la pantalla (`body[data-m]`) cambia con ella.
-3. **Las casillas son otras.** SCA 2004: siete deslizadores de 6,00 a 10,00 (paso 0,25), tres atributos por taza (2
-   puntos cada una), defectos leve/grave. CVA: cada sección en **dos columnas que no se copian** —descriptiva (intensidad
-   0–15 y casillas CATA, SCA 103) y afectiva (impresión de calidad 1–9, SCA 104)— y las cinco tazas con su tipo de defecto.
+3. **Las casillas son otras.** SCA 2004: siete deslizadores de 6,00 a 10,00 (paso 0,25), tres atributos por taza de 0 a
+   10 (paso 0,25: 2 puntos por taza que cumple) y las cinco tazas con su defecto leve/grave y su tipo. CVA: cada sección en
+   **dos columnas que no se copian** —descriptiva (intensidad 0–15, casillas CATA y tipo de acidez, SCA 103) y afectiva
+   (impresión de calidad 1–9 en cuartos de punto, SCA 104)— y las cinco tazas con su tipo de defecto.
 4. **Cada casilla cita su estándar** y la ficha impresa, el HTML exportado y el nombre del archivo llevan el método.
 5. **Los datos de taza no se cruzan**: cada lote guarda `sca_*` y `cva_*` por separado. Cambiar de método no borra nada
    y no convierte nada. La muestra, los defectos físicos y lo extrínseco sí se comparten; las mallas van por método (las
    14 del formato CVA o la agrupación comercial de Colombia).
 
-## Las tres partes, por método
+## Las cuatro partes, por método
+
+**B1 · Variedades y caracterización básica** (V5.137) es igual en los dos métodos: especie, variedades con su proporción, tipo de
+proceso, humedad, densidad, actividad de agua y el factor de rendimiento (solo lectura). **No tiene campos propios**: escribe en los
+de Granulometría y Extrínseca (`ext.variedades`, `ext.especie`, `ext.tipo`, `fis_humedad`…), así que lo que se llena en una parte
+aparece en la otra. Existe porque la planilla del Centro de Calidad son B2 y B3 —el Q-Grader cata a ciegas, sin variedad— y el owner
+pidió que esta herramienta fuera «la misma, agregándole B1».
 
 | Parte | SCA 2004 | CVA |
 |---|---|---|
@@ -68,7 +75,7 @@ los datos de la ficha CTCx (proveedor, identificación tributaria, código de lo
 
 | De | Se trajo | Se dejó (y por qué) |
 |---|---|---|
-| **Rueda del Café V23** | La taxonomía completa (9 → 22 → 85, ES · EN · DE, descripciones), la geometría de tres anillos y banda, el buscador, las rondas de varios lotes, la evaluación afectiva con su fórmula, los tres idiomas | Girar y la lupa (hay vista de lista y buscador); la **intensidad por nota** (el SCA 103 califica la intensidad total de la sección, no la de cada descriptor — era el desvío de la V23); los 5 por defecto de la afectiva (una sección sin calificar no puntúa); el PDF oficial embebido en base64 (340 KB) y las librerías de CDN; la firma dibujada (queda la línea de firma) |
+| **Rueda del Café V23** | La taxonomía completa (9 → 22 → 85, ES · EN · DE, descripciones), la geometría de tres anillos y banda, el buscador, las rondas de varios lotes, la evaluación afectiva con su fórmula, los tres idiomas | Girar y la lupa (hay vista de lista y buscador); la **intensidad por nota** (volvió en la V5.137 por decisión del owner, ver abajo; el SCA 103 califica la intensidad total de la sección, no la de cada descriptor — era el desvío de la V23); los 5 por defecto de la afectiva (una sección sin calificar no puntúa); el PDF oficial embebido en base64 (340 KB) y las librerías de CDN; la firma dibujada (queda la línea de firma) |
 | **Ficha de café verde V5** | El radar vivo con el puntaje, la granulometría con barras, el factor de rendimiento, los extrínsecos, la ficha imprimible y exportable, los botones «i» | La tabla SCA de 0 a 10 sin dominio (aceptaba un 3 o un 9,9; ahora es el formulario 2004 de verdad); el CSV campo-valor (ahora: archivo `.json` que se vuelve a cargar y CSV resumen por lote); los catálogos copiados a mano |
 
 **Redundancias arregladas**: una sola rueda, un solo juego de extrínsecos (el del SCA 105, que absorbe la «Identidad &
@@ -129,7 +136,34 @@ El del charter (`docs/componentes/herramientas-cafe.md` § Kick-off) con `<id>` 
 Hoy: <la tarea> — lee antes docs/componentes/herramientas-cafe/coffee-datasheet/README.md.
 ```
 
-## V5.135 · pendiente con dueño aquí (viene de `consolas`, 2026-10-01)
+## V5.137 · la misma herramienta que la planilla del Centro de Calidad, más B1 (owner, 2026-10-01)
+
+«Actualiza también los campos de la Coffee Datasheet Tool del taller. Básicamente, este tiene que ser la misma herramienta,
+agregándole B1.» Se leyó así: **los mismos campos, no un solo código** — la herramienta sigue siendo un HTML autocontenido (método
+elegido primero, varios lotes, extrínseca, exportar, ES · EN · DE) y la planilla sigue siendo `LabEvalEditor`; lo que se igualó es
+QUÉ se registra y con qué dominios, y un guardián lo compara. Si el owner quiere una sola implementación (la planilla dentro del
+taller, o la herramienta dentro de la consola), es otra decisión y otro lote.
+
+| Campo | En la planilla (`labEvaluation.ts` · `rueda.ts` · `fisico.ts`) | En la herramienta (estado del lote) |
+|---|---|---|
+| Uniformidad · Taza limpia · Dulzor | número de 0 a 10 al 0,25 | `sca_uniformity` · `sca_clean_cup` · `sca_sweetness` (antes `sca_cups`, cinco casillas) |
+| Taint y fault | `sca_tazas` (5 × estado + tipo); los contadores se derivan | `sca_tazas`, igual; `sca_taint_cups`/`sca_fault_cups` derivados (`sincScaTazas`) |
+| CVA afectiva | 1–9 al 0,25 (`CVA.pasoSeccion`) | nueve botones + casilla fina `cva_<sección>` |
+| Tipo de acidez | `acidez_tipo` (seca · dulce) | `cva_acidez` (lista de una) |
+| Texturas en boca | `boca_texturas`, tope 2 | `cva_boca`, tope 2 (ya estaba) |
+| Etapa e intensidad por nota | `rueda_detalle` (4 etapas; 0–15 al 0,5; nace «sabor · 10») | `rueda_detalle`; clave = id de la nota en SCA, `nariz:<id>` · `boca:<id>` en CVA |
+| Defectos físicos y color | `defectos_detalle`, `fa_color` | `fis_def`, `fis_color` (ya estaban; de aquí salieron) |
+| Radar | centro en 0 | centro en 0 |
+
+**Esto revierte una decisión de la V5.132**: la herramienta había dejado fuera la «intensidad por nota» de la Rueda V23 (el SCA 103
+califica la intensidad de la sección, no la de cada descriptor). El owner la pidió en la planilla (V5.133) y, con «la misma
+herramienta», también aquí. No entra en ningún puntaje: documenta la taza. En CVA la etapa sale de dónde se marcó la nota (nariz:
+fragancia o aroma; boca: sabor o residual).
+
+**Archivos anteriores**: `normLote` convierte `sca_cups` a puntos (2 por taza marcada) y reparte los contadores viejos en tazas.
+**Sondeo del puente**: los nueve botones `data-a="aff"` siguen (los usa `qa-tools-puente-conformance`).
+
+## V5.135 · CERRADO en la V5.137 (venía de `consolas`, 2026-10-01)
 
 El owner cambió los dominios de la planilla del Centro de Calidad: **el CVA admite cuartos de punto** (1–9 al 0,25) y **Uniformidad,
 Taza limpia y Dulzor del SCA 2004 van de 0 a 10 al 0,25**, tecleados como los demás. Para que «una fórmula, no dos» siguiera en

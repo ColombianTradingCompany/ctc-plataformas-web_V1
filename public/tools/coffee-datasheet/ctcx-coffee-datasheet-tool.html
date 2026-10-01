@@ -339,6 +339,18 @@ body[data-m="cva"] .btn.lleno{background:#3C0A86}
   .ficha:last-child{page-break-after:auto}
   .f-cab,.f-met,.banda,.f-pie{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+/* V5.137 · la misma herramienta que la planilla del Centro de Calidad: ajuste fino del CVA y el detalle de cada nota */
+.nueve-fila{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.nueve-fila .fino{width:84px;min-height:34px;padding:5px 8px;border:1px solid var(--line);border-radius:4px;background:#fff;font-family:var(--mono);font-size:13px}
+.rnotas{display:grid;gap:5px}
+.rnota{border:1px solid var(--line);border-left:5px solid var(--ink);border-radius:4px;padding:5px 8px;background:#fff}
+.rnota .mc{display:flex;gap:6px;align-items:center}
+.rnota .mt{flex:1;min-width:0;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;text-align:left;background:none;border:none;font-size:12.5px;padding:3px 0;min-height:30px}
+.rnota .mb{font-family:var(--mono);font-size:10.5px;border:1px solid var(--line);border-radius:99px;padding:1px 8px;white-space:nowrap;color:var(--soft)}
+.rnota .md{margin-top:6px;display:grid;gap:6px}
+.rnota .md .int{grid-template-columns:minmax(70px,auto) 1fr 54px}
+.rnota .md .zonas{margin:-4px 63px 0 79px}
+.pista-m{font-size:10.5px;color:var(--faint);font-family:var(--mono);line-height:1.4;margin-top:6px}
 </style>
 </head>
 <body data-m="">
@@ -476,12 +488,28 @@ const TX = {
   a_sweetness:["Dulzor","Sweetness","Süße"],
   a_cuppers:["Puntaje del catador","Overall (cupper's score)","Gesamturteil des Verkosters"],
   scaEsc:["Atributos con escala · de 6,00 a 10,00","Scaled attributes · 6.00 to 10.00","Skalierte Attribute · 6,00 bis 10,00"],
-  scaTaz:["Atributos por taza · 2 puntos por taza","Per-cup attributes · 2 points per cup","Attribute pro Tasse · 2 Punkte pro Tasse"],
-  scaTazNota:["Cinco tazas por muestra. Deja marcada la taza que cumple; toca la que no.","Five cups per sample. Leave the cups that comply marked; tap the ones that do not.","Fünf Tassen pro Probe. Lassen Sie die Tassen markiert, die bestehen; tippen Sie auf die anderen."],
+  scaTaz:["Atributos por taza · de 0 a 10","Per-cup attributes · 0 to 10","Attribute pro Tasse · 0 bis 10"],
+  scaTazNota:["Cinco tazas por muestra: 2 puntos por cada taza que cumple. Se califican como los demás atributos, en pasos de 0,25, de 0 a 10.","Five cups per sample: 2 points for each cup that complies. They are scored like the other attributes, in steps of 0.25, from 0 to 10.","Fünf Tassen pro Probe: 2 Punkte für jede Tasse, die besteht. Bewertet wird wie bei den anderen Attributen, in Schritten von 0,25, von 0 bis 10."],
   scaDef:["Defectos de taza · restan","Cup defects · subtracted","Tassenfehler · werden abgezogen"],
   taint:["Defecto leve (taint) · 2 puntos por taza","Taint · 2 points per cup","Leichter Fehler (Taint) · 2 Punkte pro Tasse"],
   fault:["Defecto grave (fault) · 4 puntos por taza","Fault · 4 points per cup","Schwerer Fehler (Fault) · 4 Punkte pro Tasse"],
   tazasAfect:["tazas afectadas","cups affected","betroffene Tassen"],
+  /* V5.137 · los mismos campos que la planilla del Centro de Calidad */
+  tzTaint:["Leve · taint −2","Taint −2","Leicht · Taint −2"], tzFault:["Grave · fault −4","Fault −4","Schwer · Fault −4"],
+  scaDefTaza:["Marca cada taza con defecto: leve (taint) o grave (fault), y di cuál es. Una taza sin marcar está limpia.","Mark each defective cup: taint or fault, and say which defect. An unmarked cup is clean.","Markieren Sie jede fehlerhafte Tasse: leicht (Taint) oder schwer (Fault), und nennen Sie den Fehler. Eine unmarkierte Tasse ist sauber."],
+  scaDefRes:["leves: {0} · graves: {1} → {2}","taints: {0} · faults: {1} → {2}","leicht: {0} · schwer: {1} → {2}"],
+  d_otro:["Otro (anótalo en las notas)","Other (write it in the notes)","Anderer (in den Notizen vermerken)"],
+  affFino:["Ajuste al 0,25","Fine-tune to 0.25","Feinabstufung 0,25"],
+  acTipos:["Tipo de acidez","Acidity type","Art der Säure"],
+  ac_seca:["Acidez seca (herbal, a pasto, agria)","Dry acidity (herby, grassy, tart)","Trockene Säure (kräuterig, grasig, herb)"],
+  ac_dulce:["Acidez dulce (jugosa, frutal, brillante)","Sweet acidity (juicy, fruit-like, bright)","Süße Säure (saftig, fruchtig, lebhaft)"],
+  et_fragancia:["Fragancia","Fragrance","Fragrance"], et_aroma:["Aroma","Aroma","Aroma"], et_sabor:["Sabor","Flavor","Geschmack"], et_residual:["Sabor residual","Aftertaste","Nachgeschmack"],
+  marcaAyuda:["Toca una nota marcada para decir en qué etapa la percibiste y con qué intensidad (0–15).","Tap a marked note to say at which stage you perceived it and how intensely (0–15).","Tippen Sie auf eine markierte Note, um anzugeben, in welcher Phase und wie intensiv (0–15) Sie sie wahrgenommen haben."],
+  pBasico:["Variedades y básicos","Varieties & basics","Sorten & Grunddaten"],
+  tBasico:["B1 · caracterización básica","B1 · basic characterisation","B1 · Grundcharakterisierung"],
+  b1Tit:["Variedades y caracterización básica","Varieties and basic characterisation","Sorten und Grundcharakterisierung"],
+  b1Nota:["Lo básico del lote en un solo sitio: de qué variedades es, cómo se procesó y las tres medidas del grano verde. Son los mismos datos de las otras partes: lo que escribas aquí aparece allá.","The basics of the lot in one place: its varieties, how it was processed and the three measurements of the green bean. They are the same data as in the other parts: what you write here shows up there.","Das Wesentliche des Lots an einem Ort: Sorten, Aufbereitung und die drei Messwerte des Rohkaffees. Es sind dieselben Daten wie in den anderen Teilen: Was Sie hier eintragen, erscheint auch dort."],
+  b1Factor:["El factor se calcula en Granulometría → Factor de rendimiento.","The factor is calculated under Physical grading → Yield factor.","Der Faktor wird unter Physische Analyse → Ausbeutefaktor berechnet."],
   q6:["Bueno","Good","Gut"], q7:["Muy bueno","Very good","Sehr gut"], q8:["Excelente","Excellent","Ausgezeichnet"], q9:["Sobresaliente","Outstanding","Herausragend"],
   sinCal:["sin calificar","not rated","nicht bewertet"],
   cls90:["Sobresaliente · especialidad","Outstanding · specialty","Herausragend · Spezialität"],
@@ -765,6 +793,18 @@ const INFO = {
     es:["Defectos de taza","<p>Sabores negativos que restan calidad. <b>Leve (taint):</b> se nota, pero no domina; suele estar en lo aromático — 2 puntos por taza. <b>Grave (fault):</b> domina o hace la taza desagradable — 4 puntos por taza.</p><p>Se multiplica la intensidad por el número de tazas afectadas y el resultado se <b>resta</b> de la suma de los diez atributos.</p>"],
     en:["Cup defects","<p>Negative flavors that detract from quality. <b>Taint:</b> noticeable but not overwhelming, usually in the aromatics — 2 points per cup. <b>Fault:</b> overwhelming, or makes the cup unpalatable — 4 points per cup.</p><p>The intensity is multiplied by the number of cups affected and the result is <b>subtracted</b> from the sum of the ten attributes.</p>"],
     de:["Tassenfehler","<p>Negative Geschmäcker, die die Qualität mindern. <b>Taint (leicht):</b> spürbar, aber nicht dominant, meist in den Aromen – 2 Punkte pro Tasse. <b>Fault (schwer):</b> dominant oder macht die Tasse ungenießbar – 4 Punkte pro Tasse.</p><p>Die Intensität wird mit der Zahl der betroffenen Tassen multipliziert und das Ergebnis von der Summe der zehn Attribute <b>abgezogen</b>.</p>"] },
+  sca_taint:{ std:"SCA 2004",
+    es:["Defecto leve · taint","<p>Un sabor o un olor ajeno que <b>se nota pero no domina</b> la taza; suele estar en lo aromático.</p><p>Resta <b>2 puntos</b> por cada taza que lo tenga. Marca la taza y di cuál es el defecto.</p>"],
+    en:["Taint","<p>An off-flavor or off-odor that is <b>noticeable but not overwhelming</b>, usually found in the aromatics.</p><p>It subtracts <b>2 points</b> for each cup that shows it. Mark the cup and say which defect it is.</p>"],
+    de:["Leichter Fehler · Taint","<p>Ein Fehlgeschmack oder Fehlgeruch, der <b>spürbar, aber nicht dominant</b> ist; meist in den Aromen.</p><p>Er zieht <b>2 Punkte</b> für jede betroffene Tasse ab. Markieren Sie die Tasse und nennen Sie den Fehler.</p>"] },
+  sca_fault:{ std:"SCA 2004",
+    es:["Defecto grave · fault","<p>Un sabor ajeno que <b>domina la taza o la vuelve desagradable</b>; suele estar en el gusto.</p><p>Resta <b>4 puntos</b> por cada taza que lo tenga. Marca la taza y di cuál es el defecto.</p>"],
+    en:["Fault","<p>An off-flavor that <b>overwhelms the cup or makes it unpalatable</b>, usually found in the taste.</p><p>It subtracts <b>4 points</b> for each cup that shows it. Mark the cup and say which defect it is.</p>"],
+    de:["Schwerer Fehler · Fault","<p>Ein Fehlgeschmack, der <b>die Tasse dominiert oder ungenießbar macht</b>; meist im Geschmack.</p><p>Er zieht <b>4 Punkte</b> für jede betroffene Tasse ab. Markieren Sie die Tasse und nennen Sie den Fehler.</p>"] },
+  cva_acidez:{ std:"SCA 103",
+    es:["Tipo de acidez","<p>El formato descriptivo pide elegir <b>una</b>: <b>seca</b> —herbal, a pasto, agria— o <b>dulce</b> —jugosa, frutal, brillante—.</p><p>Describe el carácter de la acidez; su fuerza va en la escala de 0 a 15. No entra en el puntaje.</p>"],
+    en:["Acidity type","<p>The descriptive form asks you to choose <b>one</b>: <b>dry</b> — herby, grassy, tart — or <b>sweet</b> — juicy, fruit-like, bright.</p><p>It describes the character of the acidity; its strength goes on the 0 to 15 scale. It does not enter the score.</p>"],
+    de:["Art der Säure","<p>Das deskriptive Formular verlangt <b>eine</b> Auswahl: <b>trocken</b> – kräuterig, grasig, herb – oder <b>süß</b> – saftig, fruchtig, lebhaft.</p><p>Sie beschreibt den Charakter der Säure; ihre Stärke steht auf der Skala von 0 bis 15. Sie fließt nicht in die Punktzahl ein.</p>"] },
   sca_punt:{ std:"SCA 2004",
     es:["El puntaje SCA 2004","<p><b>Puntaje final = suma de los diez atributos − defectos.</b></p><p>Lectura del total: 90–100 sobresaliente · 85–89,99 excelente · 80–84,99 muy bueno · menos de 80, por debajo de la calidad de especialidad.</p><p>No hay puntaje hasta que los diez atributos están calificados: una suma a medias no es un puntaje.</p>"],
     en:["The SCA 2004 score","<p><b>Final score = sum of the ten attributes − defects.</b></p><p>Reading the total: 90–100 outstanding · 85–89.99 excellent · 80–84.99 very good · under 80, below specialty quality.</p><p>There is no score until all ten attributes are rated: a half-finished sum is not a score.</p>"],
@@ -792,9 +832,9 @@ const INFO = {
     en:["Mouthfeel texture","<p>Up to <b>2</b> options describing the <b>quality</b> of the mouthfeel. Its intensity — body or thickness — is already on the 0 to 15 scale.</p><p><b>Rough:</b> fine particles, as in ibrik coffee. <b>Oily:</b> like coffee with a little butter. <b>Smooth:</b> like a syrup. <b>Mouth-drying:</b> astringency. <b>Metallic:</b> reminiscent of tin cans or aluminium foil.</p>"],
     de:["Textur im Mund","<p>Bis zu <b>2</b> Optionen, die die <b>Qualität</b> des Mundgefühls beschreiben. Seine Intensität – Körper oder Dicke – steht bereits auf der Skala von 0 bis 15.</p><p><b>Rau:</b> feine Partikel, wie bei Mokka aus dem Ibrik. <b>Ölig:</b> wie Kaffee mit etwas Butter. <b>Weich:</b> wie ein Sirup. <b>Mundtrocknend:</b> Adstringenz. <b>Metallisch:</b> erinnert an Blechdosen oder Alufolie.</p>"] },
   cva_aff:{ std:"SCA 104-2024 · 5.2",
-    es:["Impresión de calidad de 1 a 9","<p>La escala tiene un <b>punto medio verdadero</b>: 5 = ni alta ni baja. Por debajo, la impresión es cada vez más baja (1 = extremadamente baja); por encima, cada vez más alta (9 = extremadamente alta).</p><p>Refleja tu preferencia o la de un mercado que conoces bien — por eso importa el objetivo de la sesión. Úsala de forma intuitiva y sin dejarte influir por otros catadores. Solo enteros.</p>"],
-    en:["Impression of quality from 1 to 9","<p>The scale has a <b>true midpoint</b>: 5 = neither high nor low. Below it, the impression gets lower (1 = extremely low); above it, higher (9 = extremely high).</p><p>It reflects your own preference or that of a market you know well — which is why the session's purpose matters. Use it intuitively and without being influenced by other cuppers. Whole numbers only.</p>"],
-    de:["Qualitätseindruck von 1 bis 9","<p>Die Skala hat einen <b>echten Mittelpunkt</b>: 5 = weder hoch noch niedrig. Darunter wird der Eindruck immer niedriger (1 = extrem niedrig), darüber immer höher (9 = extrem hoch).</p><p>Sie spiegelt Ihre eigene Vorliebe oder die eines Marktes, den Sie gut kennen – deshalb ist der Zweck der Sitzung wichtig. Nutzen Sie sie intuitiv und ohne sich von anderen Verkostern beeinflussen zu lassen. Nur ganze Zahlen.</p>"] },
+    es:["Impresión de calidad de 1 a 9","<p>La escala tiene un <b>punto medio verdadero</b>: 5 = ni alta ni baja. Por debajo, la impresión es cada vez más baja (1 = extremadamente baja); por encima, cada vez más alta (9 = extremadamente alta).</p><p>Refleja tu preferencia o la de un mercado que conoces bien — por eso importa el objetivo de la sesión. Úsala de forma intuitiva y sin dejarte influir por otros catadores. Admite cuartos de punto (7,25 · 7,5 · 7,75).</p>"],
+    en:["Impression of quality from 1 to 9","<p>The scale has a <b>true midpoint</b>: 5 = neither high nor low. Below it, the impression gets lower (1 = extremely low); above it, higher (9 = extremely high).</p><p>It reflects your own preference or that of a market you know well — which is why the session's purpose matters. Use it intuitively and without being influenced by other cuppers. Quarter points are allowed (7.25 · 7.5 · 7.75).</p>"],
+    de:["Qualitätseindruck von 1 bis 9","<p>Die Skala hat einen <b>echten Mittelpunkt</b>: 5 = weder hoch noch niedrig. Darunter wird der Eindruck immer niedriger (1 = extrem niedrig), darüber immer höher (9 = extrem hoch).</p><p>Sie spiegelt Ihre eigene Vorliebe oder die eines Marktes, den Sie gut kennen – deshalb ist der Zweck der Sitzung wichtig. Nutzen Sie sie intuitiv und ohne sich von anderen Verkostern beeinflussen zu lassen. Viertelpunkte sind zulässig (7,25 · 7,5 · 7,75).</p>"] },
   cva_notasA:{ std:"SCA 104-2024 · 5.3",
     es:["Notas afectivas","<p>No repiten la descripción: <b>justifican</b> la calificación. Explican por qué esa impresión de calidad — un juicio subjetivo— resulta de lo que percibiste.</p>"],
     en:["Affective notes","<p>They do not repeat the description: they <b>justify</b> the rating. They explain why that impression of quality — a subjective judgement — follows from what you perceived.</p>"],
@@ -1040,7 +1080,10 @@ const APP = "ctcx-coffee-datasheet", VER = 1, MAX_LOTES = 12, LS = "ctcx-coffee-
 const ENCONCHA = window.parent !== window;
 const GUSTOS = ["salty","sour","sweet","bitter","umami"];
 const TEXTURAS = ["rough","oily","smooth","drying","metallic"];
-const DEF_CVA = ["moho","fenol","papa"];
+const DEF_CVA = ["moho","fenol","papa","otro"];
+// V5.137 · las cuatro etapas de una nota marcada (las de la planilla, `src/lib/catacion/rueda.ts`) y su intensidad 0–15 al 0,5.
+const ETAPAS = ["fragancia","aroma","sabor","residual"];
+const ACIDECES = ["seca","dulce"];
 const SCA_ESC = ["fragrance","flavor","aftertaste","acidity","body","balance","cuppers"];
 const CVA_INT = ["fragrance","aroma","flavor","aftertaste","acidity","sweetness","mouthfeel"];
 const CERT_OFI = ["4c","fair","org","ra","food"];
@@ -1064,7 +1107,7 @@ const CATA_TX = { floral:["Floral","Floral","Blumig"], fruity:["Afrutado","Fruit
   nuttycocoa:["Nueces / Cacao","Nutty / Cocoa","Nussig / Kakao"], nutty:["Nueces","Nutty","Nussig"], cocoa:["Cacao","Cocoa","Kakao"], spice:["Especias","Spice","Gewürze"],
   sweet:["Dulce","Sweet","Süß"], vanilla:["Vainilla","Vanilla / Vanillin","Vanille / Vanillin"], brownsugar:["Azúcar morena","Brown sugar","Brauner Zucker"] };
 
-const UI = { tab:"sabor", etapa:"nariz", vista: window.innerWidth<600 ? "lista" : "rueda", acc:{ sesion:false, factor:false }, busca:"", ficha:"actual", elegir:false, ultima:"" };
+const UI = { marca:"", tab:"sabor", etapa:"nariz", vista: window.innerWidth<600 ? "lista" : "rueda", acc:{ sesion:false, factor:false }, busca:"", ficha:"actual", elegir:false, ultima:"" };
 let S = null;
 
 const $ = function(s,r){ return (r||document).querySelector(s); };
@@ -1081,11 +1124,12 @@ function loteVacio(i){
   return {
     codigo:"L"+String(i+1).padStart(2,"0"), nombre:"", tueste:"",
     sca_fragrance:"", sca_flavor:"", sca_aftertaste:"", sca_acidity:"", sca_body:"", sca_balance:"", sca_cuppers:"",
-    sca_cups:{ uniformity:cinco(1), clean_cup:cinco(1), sweetness:cinco(1) },
-    sca_taint_cups:"", sca_fault_cups:"", sca_acidity_int:"", sca_body_level:"", sca_rueda:[], sca_notas:"",
+    sca_uniformity:"", sca_clean_cup:"", sca_sweetness:"",
+    sca_tazas:cinco(0).map(function(){ return { estado:"", defecto:"" }; }),
+    sca_taint_cups:"", sca_fault_cups:"", sca_acidity_int:"", sca_body_level:"", sca_rueda:[], sca_notas:"", rueda_detalle:{},
     cva_int:{ fragrance:"", aroma:"", flavor:"", aftertaste:"", acidity:"", sweetness:"", mouthfeel:"" },
     cva_fragrance:"", cva_aroma:"", cva_flavor:"", cva_aftertaste:"", cva_acidity:"", cva_sweetness:"", cva_mouthfeel:"", cva_overall:"",
-    cva_cata_nariz:[], cva_cata_boca:[], cva_desc_nariz:[], cva_desc_boca:[], cva_gustos:[], cva_boca:[],
+    cva_cata_nariz:[], cva_cata_boca:[], cva_desc_nariz:[], cva_desc_boca:[], cva_gustos:[], cva_boca:[], cva_acidez:[],
     cva_n:{ fa:"", fl:"", ac:"", du:"", bo:"" }, cva_a:{ fa:"", fl:"", ac:"", du:"", bo:"", gl:"" },
     cva_tazas:[0,1,2,3,4].map(function(){ return { noUniforme:false, defectuosa:false, defecto:"" }; }),
     fis_muestra:"350", fis_humedad:"", fis_aw:"", fis_densidad:"", fis_color:"", fis_def:{}, fis_quakers:"", fis_m:{},
@@ -1098,7 +1142,7 @@ function loteVacio(i){
   };
 }
 function estadoVacio(){
-  return { app:APP, v:VER, metodo:"", lang:LANG, partes:{ sabor:true, fisico:true, extr:true },
+  return { app:APP, v:VER, metodo:"", lang:LANG, partes:{ basico:true, sabor:true, fisico:true, extr:true },
     sesion:{ evaluador:"", scaId:"", fecha:hoy(), lugar:"", objetivo:"" }, lotes:[loteVacio(0)], actual:0 };
 }
 function mezclar(base, d){
@@ -1121,7 +1165,24 @@ function normLote(l, i){
   o.cva_gustos = solo(o.cva_gustos, function(x){ return GUSTOS.indexOf(x)>=0; }).slice(0, TOPE.gustos);
   o.cva_boca = solo(o.cva_boca, function(x){ return TEXTURAS.indexOf(x)>=0; }).slice(0, TOPE.textura);
   o.cva_tazas = [0,1,2,3,4].map(function(j){ const x = (Array.isArray(o.cva_tazas) && o.cva_tazas[j]) || {}; return { noUniforme:!!x.noUniforme, defectuosa:!!x.defectuosa, defecto: DEF_CVA.indexOf(x.defecto)>=0 ? x.defecto : "" }; });
-  SCA_TAZ.forEach(function(k){ const a = o.sca_cups[k]; o.sca_cups[k] = [0,1,2,3,4].map(function(j){ return Array.isArray(a) && a[j]===0 ? 0 : 1; }); });
+  // V5.137 · Uniformidad, Taza limpia y Dulzor son un número (0–10 al 0,25), como en la planilla. Un archivo anterior traía
+  // cinco casillas por atributo (`sca_cups`): se convierten a 2 puntos por taza marcada.
+  const crudo = l && typeof l==="object" ? l : {}, viejas = crudo.sca_cups && typeof crudo.sca_cups==="object" ? crudo.sca_cups : null;
+  SCA_TAZ.forEach(function(k){ if(viejas && Array.isArray(viejas[k]) && String(o["sca_"+k]).trim()==="") o["sca_"+k] = String(SCA_K.porTaza * [0,1,2,3,4].filter(function(j){ return viejas[k][j]!==0; }).length); });
+  // Los defectos de taza, taza a taza (limpia · taint · fault, con su tipo). Los dos contadores de antes se reparten.
+  const tzs = Array.isArray(crudo.sca_tazas) ? crudo.sca_tazas : null;
+  const nF = tzs ? 0 : Math.min(5, Math.max(0, Math.floor(num0(o.sca_fault_cups)))), nT = tzs ? 0 : Math.min(5-nF, Math.max(0, Math.floor(num0(o.sca_taint_cups))));
+  o.sca_tazas = [0,1,2,3,4].map(function(j){
+    if(!tzs) return { estado: j<nF ? "fault" : j<nF+nT ? "taint" : "", defecto:"" };
+    const x = tzs[j] || {}, es = x.estado==="taint" || x.estado==="fault" ? x.estado : "";
+    return { estado:es, defecto: es && DEF_CVA.indexOf(x.defecto)>=0 ? x.defecto : "" };
+  });
+  sincScaTazas(o);
+  o.cva_acidez = solo(o.cva_acidez, function(x){ return ACIDECES.indexOf(x)>=0; }).slice(0, 1);
+  // La etapa y la intensidad de cada nota marcada: una entrada por marca, ninguna más (`mezclar` no copia objetos anidados).
+  const rd = crudo.rueda_detalle && typeof crudo.rueda_detalle==="object" ? crudo.rueda_detalle : {}, det = {};
+  marcasDe(o).forEach(function(m){ det[m.clave] = normDetalle(rd[m.clave], m.et); });
+  o.rueda_detalle = det;
   const vs = (Array.isArray(o.ext.variedades) ? o.ext.variedades : []).slice(0,8).map(function(v){ return { n:String((v&&v.n)||""), p:String((v&&v.p)||"") }; });
   o.ext.variedades = vs.length ? vs : [{ n:"", p:"" }];
   return o;
@@ -1133,8 +1194,8 @@ function normalizar(e){
   o.app = APP; o.v = VER;
   o.metodo = o.metodo==="sca" || o.metodo==="cva" ? o.metodo : "";
   if(IDIOMAS.indexOf(o.lang)<0) o.lang = LANG;
-  ["sabor","fisico","extr"].forEach(function(k){ o.partes[k] = o.partes[k]!==false; });
-  if(!o.partes.sabor && !o.partes.fisico && !o.partes.extr) o.partes.sabor = true;
+  ["basico","sabor","fisico","extr"].forEach(function(k){ o.partes[k] = o.partes[k]!==false; });
+  if(!o.partes.basico && !o.partes.sabor && !o.partes.fisico && !o.partes.extr) o.partes.sabor = true;
   const ls = Array.isArray(e.lotes) && e.lotes.length ? e.lotes.slice(0, MAX_LOTES) : [null];
   o.lotes = ls.map(normLote);
   o.actual = Math.min(Math.max(0, parseInt(o.actual,10)||0), o.lotes.length-1);
@@ -1142,10 +1203,26 @@ function normalizar(e){
 }
 function evSca(l){
   const o = { sca_taint_cups:l.sca_taint_cups, sca_fault_cups:l.sca_fault_cups };
-  SCA_ESC.forEach(function(k){ o["sca_"+k] = l["sca_"+k]; });
-  SCA_TAZ.forEach(function(k){ o["sca_"+k] = String(SCA_K.porTaza * l.sca_cups[k].filter(Boolean).length); });
+  SCA_ATR.forEach(function(k){ o["sca_"+k] = l["sca_"+k]; });
   return o;
 }
+// V5.137 · los dos contadores que lee la fórmula salen de las cinco tazas.
+function sincScaTazas(l){
+  const nt = l.sca_tazas.filter(function(x){ return x.estado==="taint"; }).length, nf0 = l.sca_tazas.filter(function(x){ return x.estado==="fault"; }).length;
+  l.sca_taint_cups = nt ? String(nt) : ""; l.sca_fault_cups = nf0 ? String(nf0) : "";
+}
+// Cada nota marcada con la clave de su detalle: en SCA 2004 es el id; en CVA lleva delante dónde se percibió (nariz · boca).
+function marcasDe(l){
+  return l.sca_rueda.map(function(id){ return { id:id, clave:id, et:"" }; })
+    .concat(l.cva_desc_nariz.map(function(id){ return { id:id, clave:"nariz:"+id, et:"nariz" }; }), l.cva_desc_boca.map(function(id){ return { id:id, clave:"boca:"+id, et:"boca" }; }));
+}
+function etapasDe(et){ return et==="nariz" ? ["fragancia","aroma"] : et==="boca" ? ["sabor","residual"] : ETAPAS; }
+function normDetalle(x, et){
+  const o = x && typeof x==="object" ? x : {}, n = numO(o.intensidad), ops = etapasDe(et);
+  return { etapa: ops.indexOf(o.etapa)>=0 ? o.etapa : (et==="nariz" ? "fragancia" : "sabor"), intensidad: String(n==null ? 10 : Math.round(Math.max(0, Math.min(15, n))*2)/2) };
+}
+function podaDetalle(l){ const vivas = {}; marcasDe(l).forEach(function(m){ vivas[m.clave] = normDetalle(l.rueda_detalle[m.clave], m.et); }); l.rueda_detalle = vivas; }
+function detalleTx(l, clave){ const d = l.rueda_detalle[clave]; return d ? " · "+t("et_"+d.etapa)+" · "+d.intensidad+"/15" : ""; }
 let tBorrador = null;
 function cambio(){
   if(window.CTC && window.CTC.tocado) window.CTC.tocado();
@@ -1260,11 +1337,19 @@ function chipQuita(id, lista){
   const x = IDX[id];
   return "<button class=\"chip on\" data-a=\"quita\" data-v=\""+id+"\" data-i=\""+lista+"\" title=\""+esc(rutaId(id))+"\"><i style=\"background:"+x.f.c+"\"></i>"+esc(nombreId(id))+" <span class=\"q\">×</span></button>";
 }
+function filaMarca(id, lista, et){
+  const l = lote(), clave = (et ? et+":" : "")+id, d = l.rueda_detalle[clave] || normDetalle(null, et), ab = UI.marca===clave, x = IDX[id];
+  return "<div class=\"rnota\" style=\"border-left-color:"+x.f.c+"\"><div class=\"mc\"><button class=\"mt\" data-a=\"marca\" data-v=\""+esc(clave)+"\" aria-expanded=\""+ab+"\" title=\""+esc(rutaId(id))+"\"><span>"+esc(rutaId(id))+"</span><span class=\"mb\">"+t("et_"+d.etapa)+" · <span data-o=\"mi."+esc(clave)+"\"></span></span></button>"+
+    "<button class=\"x\" data-a=\"quita\" data-v=\""+id+"\" data-i=\""+lista+"\" aria-label=\"×\">×</button></div>"+
+    (ab ? "<div class=\"md\"><span class=\"seg\">"+etapasDe(et).map(function(e){ return "<button class=\""+(d.etapa===e?"on":"")+"\" data-a=\"mEtapa\" data-v=\""+esc(clave)+"\" data-i=\""+e+"\" aria-pressed=\""+(d.etapa===e)+"\">"+t("et_"+e)+"</button>"; }).join("")+"</span>"+
+      "<div class=\"int\"><span class=\"nm\">"+t("intens")+"</span><input type=\"range\" min=\"0\" max=\"15\" step=\"0.5\" data-k=\"rueda_detalle."+esc(clave)+".intensidad\" value=\""+esc(d.intensidad)+"\" aria-label=\""+esc(t("intens"))+"\"><output data-o=\"mi."+esc(clave)+"\"></output></div>"+
+      "<div class=\"zonas\"><span>"+t("zBaja")+"</span><span>"+t("zMedia")+"</span><span>"+t("zAlta")+"</span></div></div>" : "")+"</div>";
+}
 function marcadasHTML(){
-  const l = lote();
-  if(S.metodo!=="cva") return l.sca_rueda.length ? "<div class=\"chips\">"+l.sca_rueda.map(function(id){ return chipQuita(id,"sca_rueda"); }).join("")+"</div>" : "<div class=\"vacio\">"+t("sinNotas")+"</div>";
-  const g = function(tit, lista, arr){ return "<div class=\"sub-etq\">"+t(tit)+"</div>"+(arr.length ? "<div class=\"chips\">"+arr.map(function(id){ return chipQuita(id, lista); }).join("")+"</div>" : "<div class=\"vacio\">—</div>"); };
-  return g("etNariz","cva_desc_nariz",l.cva_desc_nariz) + g("etBoca","cva_desc_boca",l.cva_desc_boca);
+  const l = lote(), ayuda = "<div class=\"pista-m\">"+t("marcaAyuda")+"</div>";
+  if(S.metodo!=="cva") return l.sca_rueda.length ? "<div class=\"rnotas\">"+l.sca_rueda.map(function(id){ return filaMarca(id,"sca_rueda",""); }).join("")+"</div>"+ayuda : "<div class=\"vacio\">"+t("sinNotas")+"</div>";
+  const g = function(tit, lista, arr, et){ return "<div class=\"sub-etq\">"+t(tit)+"</div>"+(arr.length ? "<div class=\"rnotas\">"+arr.map(function(id){ return filaMarca(id, lista, et); }).join("")+"</div>" : "<div class=\"vacio\">—</div>"); };
+  return g("etNariz","cva_desc_nariz",l.cva_desc_nariz,"nariz") + g("etBoca","cva_desc_boca",l.cva_desc_boca,"boca") + (l.cva_desc_nariz.length+l.cva_desc_boca.length ? ayuda : "");
 }
 function tocarNota(id){
   const l = lote();
@@ -1333,7 +1418,7 @@ function radar(ejes, series){
 function radarLote(l){
   if(S.metodo==="sca"){
     const ev = evSca(l);
-    return radar(SCA_ATR.map(function(k){ return t("r_"+k); }), [{ cls:"a", v:SCA_ATR.map(function(k){ const n = numO(ev["sca_"+k]); if(n==null) return null; return SCA_TAZ.indexOf(k)>=0 ? n/10 : (n-5)/5; }) }]);
+    return radar(SCA_ATR.map(function(k){ return t("r_"+k); }), [{ cls:"a", v:SCA_ATR.map(function(k){ const n = numO(ev["sca_"+k]); if(n==null) return null; return n/10; /* V5.137: el centro es 0, no el mínimo del formulario */ }) }]);
   }
   return radar(CVA_SEC.map(function(k){ return t("r_"+k); }), [
     { cls:"b", v:CVA_SEC.map(function(k){ const n = numO(l.cva_int[k]); return n==null ? null : n/15; }) },
@@ -1378,7 +1463,7 @@ function vistaSesion(){
     "<span class=\"std\" data-o=\"sesRes\">"+esc(res)+"</span>"+ib("sesion"));
 }
 function vistaLotes(){
-  const ps = [["sabor","pSabor"],["fisico","pFisico"],["extr","pExtr"]];
+  const ps = [["basico","pBasico"],["sabor","pSabor"],["fisico","pFisico"],["extr","pExtr"]];
   return "<section class=\"caja\"><div class=\"cab\"><h2>"+t("lotes")+"</h2>"+ib("lotes")+"</div><div class=\"cuerpo\"><div class=\"lotes\">"+
     S.lotes.map(function(x,i){ return "<button class=\"lote"+(i===S.actual?" on":"")+"\" data-a=\"lote\" data-v=\""+i+"\"><span data-o=\"lc."+i+"\"></span><span class=\"p\" data-o=\"ln."+i+"\"></span></button>"; }).join("")+
     (S.lotes.length<MAX_LOTES ? "<button class=\"mini\" data-a=\"masLote\">"+t("masLote")+"</button><button class=\"mini\" data-a=\"dupLote\">"+t("dupLote")+"</button>" : "")+
@@ -1391,7 +1476,7 @@ function vistaLotes(){
 }
 function tabsVisibles(){
   const sca = S.metodo==="sca";
-  return [["sabor","pSabor", sca?"tSaborSca":"tSaborCva"],["fisico","pFisico", sca?"tFisSca":"tFisCva"],["extr","pExtr", sca?"tExtSca":"tExtCva"]]
+  return [["basico","pBasico","tBasico"],["sabor","pSabor", sca?"tSaborSca":"tSaborCva"],["fisico","pFisico", sca?"tFisSca":"tFisCva"],["extr","pExtr", sca?"tExtSca":"tExtCva"]]
     .filter(function(x){ return S.partes[x[0]]; }).concat([["ficha","pFicha","tFicha"]]);
 }
 function vistaTabs(){
@@ -1419,26 +1504,25 @@ function tarjetaRueda(){
 function saborSca(){
   const l = lote();
   const filaEsc = function(k){
-    const v = l["sca_"+k];
+    const v = l["sca_"+k], min = SCA_TAZ.indexOf(k)>=0 ? 0 : SCA_K.min; // V5.137: los tres por taza, igual que los demás (su piso es 0)
     return "<div class=\"fila\"><div class=\"fl\">"+t("a_"+k)+" "+ib("sca_"+k)+"</div>"+
-      "<input type=\"range\" min=\"6\" max=\"10\" step=\"0.25\" data-k=\"sca_"+k+"\" data-rango value=\""+(numO(v)==null?6:esc(v))+"\" aria-label=\""+esc(t("a_"+k))+"\">"+
+      "<input type=\"range\" min=\""+min+"\" max=\"10\" step=\"0.25\" data-k=\"sca_"+k+"\" data-rango value=\""+(numO(v)==null?min:esc(v))+"\" aria-label=\""+esc(t("a_"+k))+"\">"+
       "<output data-o=\"v.sca_"+k+"\"></output><span class=\"pal\" data-o=\"w.sca_"+k+"\"></span><button class=\"x\" data-a=\"borra\" data-v=\"sca_"+k+"\" aria-label=\"×\">×</button>"+
       (k==="acidity" ? "<div class=\"sub\">"+t("intAcidez")+": "+seg("sca_acidity_int",[["alta",t("alta")],["media",t("media")],["baja",t("baja")]])+"</div>" : "")+
       (k==="body" ? "<div class=\"sub\">"+t("nivCuerpo")+": "+seg("sca_body_level",[["pesado",t("pesado")],["medio",t("medio")],["ligero",t("ligero")]])+"</div>" : "")+"</div>";
   };
-  const filaTaz = function(k){
-    return "<div class=\"fila tz\"><div class=\"fl\">"+t("a_"+k)+" "+ib("sca_"+k)+"</div><div class=\"tazas\">"+
-      [0,1,2,3,4].map(function(i){ const on = !!l.sca_cups[k][i]; return "<button class=\"taza"+(on?" on":" mal")+"\" data-a=\"copa\" data-v=\""+k+"\" data-i=\""+i+"\" aria-pressed=\""+on+"\" aria-label=\""+esc(t("tazaN", i+1))+"\">"+(on?"✓":"×")+"</button>"; }).join("")+
-      "</div><output data-o=\"v.sca_"+k+"\"></output></div>";
-  };
-  const filaDef = function(k, lbl){
-    return "<div class=\"fila tz\"><div class=\"fl\">"+t(lbl)+"</div><div>"+seg(k,[["1","1"],["2","2"],["3","3"],["4","4"],["5","5"]])+" <span class=\"cat-cuenta\">"+t("tazasAfect")+"</span></div><output data-o=\"v."+k+"\"></output></div>";
-  };
+  // V5.137 · taint y fault, taza a taza y con el mismo selector de tipo que la taza defectuosa del CVA. Una taza sin marcar está limpia.
+  const tazasSca = "<div class=\"cva-tz\">"+l.sca_tazas.map(function(tz,i){
+    const b = function(es, k){ return "<button class=\""+(es==="fault"?"def ":"")+(tz.estado===es?"on":"")+"\" data-a=\"scaTz\" data-v=\""+i+"\" data-i=\""+es+"\" aria-pressed=\""+(tz.estado===es)+"\">"+t(k)+"</button>"; };
+    return "<div class=\"t\"><b>"+t("tazaN", i+1)+"</b>"+b("taint","tzTaint")+b("fault","tzFault")+
+      (tz.estado ? "<select data-k=\"sca_tazas."+i+".defecto\" aria-label=\""+esc(t("tipoDef"))+"\"><option value=\"\">"+t("tipoDef")+"</option>"+DEF_CVA.map(function(d){ return "<option value=\""+d+"\""+(tz.defecto===d?" selected":"")+">"+t("d_"+d)+"</option>"; }).join("")+"</select>" : "")+"</div>";
+  }).join("")+"</div>";
+  const cabDef = "<div class=\"nota-m\">"+t("scaDefTaza")+"<br>"+t("taint")+" "+ib("sca_taint")+" &nbsp;·&nbsp; "+t("fault")+" "+ib("sca_fault")+"</div>";
   return "<div class=\"puntaje\" data-o=\"puntaje\"></div>"+
     caja("1", t("fiMuestra"), "SCA 2004", "", tuesteCampo())+
     caja("2", t("scaEsc"), "SCA 2004", "sca_esc", SCA_ESC.map(filaEsc).join(""))+
-    caja("3", t("scaTaz"), "SCA 2004", "", "<div class=\"nota-m\">"+t("scaTazNota")+"</div>"+SCA_TAZ.map(filaTaz).join(""))+
-    caja("4", t("scaDef"), "SCA 2004", "sca_def", filaDef("sca_taint_cups","taint")+filaDef("sca_fault_cups","fault"))+
+    caja("3", t("scaTaz"), "SCA 2004", "", "<div class=\"nota-m\">"+t("scaTazNota")+"</div>"+SCA_TAZ.map(filaEsc).join(""))+
+    caja("4", t("scaDef"), "SCA 2004", "sca_def", cabDef+tazasSca+"<div class=\"dato\" data-o=\"v.sca_def\"></div>")+
     tarjetaRueda();
 }
 function saborCva(){
@@ -1451,9 +1535,11 @@ function saborCva(){
   const zonas = "<div class=\"zonas\"><span>"+t("zBaja")+"</span><span>"+t("zMedia")+"</span><span>"+t("zAlta")+"</span></div>";
   const affFila = function(k){
     const v = numO(l["cva_"+k]);
-    return "<div class=\"af\"><div class=\"nm\">"+t("s_"+k)+(k==="overall" ? " "+ib("sec_overall") : "")+"</div><div class=\"nueve\">"+
+    // V5.137 · los nueve botones dan el entero; la casilla de al lado admite cuartos de punto (1–9 al 0,25), como la planilla.
+    return "<div class=\"af\"><div class=\"nm\">"+t("s_"+k)+(k==="overall" ? " "+ib("sec_overall") : "")+"</div><div class=\"nueve-fila\"><div class=\"nueve\">"+
       [1,2,3,4,5,6,7,8,9].map(function(n){ return "<button class=\""+(v===n?"on":"")+(n===5?" medio":"")+"\" data-a=\"aff\" data-v=\""+k+"\" data-i=\""+n+"\" aria-pressed=\""+(v===n)+"\" title=\""+esc(t("e"+n))+"\">"+n+"</button>"; }).join("")+
-      "</div><div class=\"dice\">"+(v ? v+" · "+t("e"+v) : "")+"</div></div>";
+      "</div><input class=\"fino\" type=\"number\" min=\"1\" max=\"9\" step=\"0.25\" inputmode=\"decimal\" data-k=\"cva_"+k+"\" value=\""+esc(l["cva_"+k])+"\" aria-label=\""+esc(t("affFino")+" · "+t("s_"+k))+"\" title=\""+esc(t("affFino"))+"\" placeholder=\"7.25\"></div>"+
+      "<div class=\"dice\" data-o=\"ad."+k+"\"></div></div>";
   };
   const cajas = function(et){
     const arr = l["cva_cata_"+et], tiene = function(x){ return arr.indexOf(x)>=0; };
@@ -1488,7 +1574,7 @@ function saborCva(){
     caja("0", t("fiMuestra"), "SCA 103 · 6.1", "", tuesteCampo())+
     sec(t("c_fa"), intFila("fragrance")+intFila("aroma")+zonas+cajas("nariz")+notasD("fa"), affFila("fragrance")+affFila("aroma")+notasA("fa", true), true)+
     sec(t("c_fl"), intFila("flavor")+intFila("aftertaste")+zonas+cajas("boca")+topes("gustos","cva_gustos","cva_gustos",GUSTOS,"g_",TOPE.gustos)+notasD("fl"), affFila("flavor")+affFila("aftertaste")+notasA("fl"))+
-    sec(t("s_acidity"), intFila("acidity")+zonas+notasD("ac"), affFila("acidity")+notasA("ac"))+
+    sec(t("s_acidity"), intFila("acidity")+zonas+topes("acTipos","cva_acidez","cva_acidez",ACIDECES,"ac_",1)+notasD("ac"), affFila("acidity")+notasA("ac"))+
     sec(t("s_sweetness"), intFila("sweetness")+zonas+notasD("du"), affFila("sweetness")+notasA("du"))+
     sec(t("s_mouthfeel"), intFila("mouthfeel")+zonas+topes("texturas","cva_textura","cva_boca",TEXTURAS,"b_",TOPE.textura)+notasD("bo"), affFila("mouthfeel")+notasA("bo"))+
     sec(t("s_overall"), "<div class=\"vacio\">"+t("soloAfectiva")+"</div>", affFila("overall")+notasA("gl"))+
@@ -1534,6 +1620,38 @@ function fisico(){
     caja("", t("fNotas"), "", "", "<div class=\"campo\"><textarea data-k=\"fis_notas\">"+esc(l.fis_notas)+"</textarea></div>");
 }
 
+/* ── B1 · variedades y caracterización básica (V5.137) ─────────────────────
+   La planilla del Centro de Calidad son B2 y B3 (el Q-Grader cata a ciegas: sin variedad). Esta herramienta es la misma
+   más B1: de qué variedades es el lote, cómo se procesó y las tres medidas del grano verde. No son campos nuevos: son los
+   de las partes 2 y 3, juntos en una pantalla — lo que se escribe aquí aparece allá. */
+function variedadesCampo(conOficial){
+  const e = lote().ext;
+  const vars = e.variedades.map(function(v,i){
+    return "<div class=\"vrow\"><input data-k=\"ext.variedades."+i+".n\" value=\""+esc(v.n)+"\" list=\"dl-vars\" placeholder=\""+esc(t("xVarPh"))+"\" aria-label=\""+esc(t("xVarPh"))+"\"><input type=\"number\" min=\"0\" max=\"100\" step=\"1\" inputmode=\"numeric\" data-k=\"ext.variedades."+i+".p\" value=\""+esc(v.p)+"\" placeholder=\"%\" aria-label=\"%\">"+
+      (e.variedades.length>1 ? "<button class=\"x\" data-a=\"delVar\" data-v=\""+i+"\" aria-label=\"×\" style=\"height:36px\">×</button>" : "<span></span>")+"<div class=\"vmeta\" data-o=\"vm."+i+"\"></div></div>";
+  }).join("");
+  return "<div class=\"campo s2\"><label>"+(conOficial ? "<span class=\"ofi\" data-of=\"variedad\">✓</span>" : "")+t("xVariedad")+"</label>"+vars+"<div style=\"display:flex;gap:10px;align-items:center;flex-wrap:wrap\">"+(e.variedades.length<8?"<button class=\"mini\" data-a=\"masVar\">"+t("xMasVar")+"</button>":"")+"<span class=\"pista\" data-o=\"varTot\"></span><a class=\"pista\" href=\"/tools/mapa-variedades/mapa-variedades.html\" target=\"_blank\" rel=\"noopener\">"+t("xVerVar")+" ↗</a></div></div>";
+}
+function basico(){
+  const e = lote().ext;
+  return "<datalist id=\"dl-vars\">"+VARIEDADES.map(function(v){ return "<option value=\""+esc(v.v)+"\">"; }).join("")+"</datalist>"+
+    caja("B1", t("b1Tit"), "CTCx", "", "<div class=\"nota-m\">"+t("b1Nota")+"</div><div class=\"grid g3\">"+
+      cL(t("xEspecie"),"ext.especie",{ tipo:"sel", ops:[["","—"],["Arabica","Coffea arabica"],["Canephora","Coffea canephora (robusta)"],["Otra",t("xTipoOtro")]] })+
+      variedadesCampo(false)+
+      "<div class=\"campo\"><label>"+t("xTipo")+"</label><div>"+seg("ext.tipo",[["lavado",t("xLavado")],["natural",t("xNatural")],["otro",t("xTipoOtro")]])+"</div></div>"+
+      (e.tipo==="otro" ? cL(t("xTipoCual"),"ext.tipo_cual",{ ph:"Honey" }) : "")+
+      cL(t("xProcOtro"),"ext.proc_otro")+
+      cL(t("fHum"),"fis_humedad",{ tipo:"number", step:"0.1", min:0, ph:"10–12" })+cL(t("fDens"),"fis_densidad",{ tipo:"number", step:"1", min:0 })+cL(t("fAw"),"fis_aw",{ tipo:"number", step:"0.001", min:0, ph:"< 0,70" })+
+      "</div><div class=\"dato\" data-o=\"factor\"></div><div class=\"pista-m\">"+t("b1Factor")+"</div>");
+}
+function tieneBasico(l){ return variedadesTx(l)!=="" || procesoTx(l)!=="" || [l.ext.especie, l.ext.proc_otro, l.fis_humedad, l.fis_densidad, l.fis_aw].some(function(v){ return String(v||"").trim()!==""; }); }
+function fichaBasico(l){
+  const f = calcFactor(l);
+  return "<div class=\"f-sec\"><h3>"+t("b1Tit")+"<small>B1</small></h3><div class=\"dl\">"+
+    di(t("xEspecie"), l.ext.especie)+di(t("xVariedad"), variedadesTx(l))+di(t("xTipo"), procesoTx(l))+di(t("xProcOtro"), l.ext.proc_otro)+
+    di(t("fHum"), l.fis_humedad)+di(t("fDens"), l.fis_densidad)+di(t("fAw"), l.fis_aw)+(f.factor!=null ? di(t("factor"), nf(f.factor)) : "")+"</div></div>";
+}
+
 /* ── Parte 3 · caracterización extrínseca ────────────────────────────────── */
 function oficiales(l){
   const e = l.ext, v = function(x){ return String(x==null?"":x).trim()!==""; }, c = e.certs || {};
@@ -1556,10 +1674,6 @@ function extr(){
   const l = lote(), e = l.ext, cva = S.metodo==="cva";
   const x = function(lbl, k, o){ return cL(t(lbl), "ext."+k, o); };
   const cabCat = function(g){ return "<span class=\"cat-cuenta\" data-o=\"xc."+g+"\"></span>"; };
-  const vars = e.variedades.map(function(v,i){
-    return "<div class=\"vrow\"><input data-k=\"ext.variedades."+i+".n\" value=\""+esc(v.n)+"\" list=\"dl-vars\" placeholder=\""+esc(t("xVarPh"))+"\" aria-label=\""+esc(t("xVarPh"))+"\"><input type=\"number\" min=\"0\" max=\"100\" step=\"1\" inputmode=\"numeric\" data-k=\"ext.variedades."+i+".p\" value=\""+esc(v.p)+"\" placeholder=\"%\" aria-label=\"%\">"+
-      (e.variedades.length>1 ? "<button class=\"x\" data-a=\"delVar\" data-v=\""+i+"\" aria-label=\"×\" style=\"height:36px\">×</button>" : "<span></span>")+"<div class=\"vmeta\" data-o=\"vm."+i+"\"></div></div>";
-  }).join("");
   const ck = function(k, extra){ const on = !!(e.certs||{})[k]; return "<button class=\"ck"+(on?" on":"")+(extra?" extra":"")+"\" data-a=\"cert\" data-v=\""+k+"\" aria-pressed=\""+on+"\"><span class=\"ofi"+(on?" on":"")+"\">✓</span>"+t("ce_"+k)+"</button>"; };
   const hs = [["","—"]].concat(HS_CODES.map(function(h){ return [h[1], h[1]+" · "+h[0]]; }));
   return "<div class=\"nota-m\">"+t(cva?"extCvaNota":"extScaNota")+" "+ib("e_que")+"<br><b data-o=\"extCuenta\"></b></div>"+
@@ -1569,7 +1683,7 @@ function extr(){
     caja("A", t("xCultivo"), cva?"SCA 105 · 5.3":"", "e_cultivo",
       "<div class=\"grid g3\">"+x("xPais","pais",{ ofi:"pais", lista:"dl-paises" })+x("xRegion","region",{ ofi:"region", lista:"dl-deps" })+x("xMuni","municipio",{ lista:"dl-munis" })+
       x("xFinca","finca",{ ofi:"finca" })+x("xProductor","productor",{ ofi:"productor" })+x("xEspecie","especie",{ ofi:"especie", tipo:"sel", ops:[["","—"],["Arabica","Coffea arabica"],["Canephora","Coffea canephora (robusta)"],["Otra",t("xTipoOtro")]] })+
-      "<div class=\"campo s2\"><label><span class=\"ofi\" data-of=\"variedad\">✓</span>"+t("xVariedad")+"</label>"+vars+"<div style=\"display:flex;gap:10px;align-items:center;flex-wrap:wrap\">"+(e.variedades.length<8?"<button class=\"mini\" data-a=\"masVar\">"+t("xMasVar")+"</button>":"")+"<span class=\"pista\" data-o=\"varTot\"></span><a class=\"pista\" href=\"/tools/mapa-variedades/mapa-variedades.html\" target=\"_blank\" rel=\"noopener\">"+t("xVerVar")+" ↗</a></div></div>"+
+      variedadesCampo(true)+
       x("xCosecha","cosecha",{ ofi:"cosecha", ph:"2026 · Mitaca" })+x("xAltitud","altitud",{ tipo:"number", step:"1", min:0, ofi:"cultivo_otro", ph:"1650" })+x("xGeo","geo",{ ph:"6.5581, -73.1320" })+
       x("xCultivoInfo","cultivo_info",{ tipo:"area", cls:"s3", ph:t("xCultivoPh") })+"</div>", cabCat("cultivo"))+
     caja("B", t("xProceso"), cva?"SCA 105 · 5.4":"", "e_proceso",
@@ -1615,7 +1729,7 @@ function cataTexto(cata, desc){
     return (c[1] ? tl(CATA_TX[c[1]])+" › " : "")+tl(CATA_TX[c[0]])+(ds.length ? " ("+ds.join(", ")+")" : "");
   }).join(" · ");
 }
-function chipsFicha(ids){ return "<div class=\"chips\">"+ids.map(function(id){ return "<span class=\"chip\"><i style=\"background:"+IDX[id].f.c+"\"></i>"+esc(rutaId(id))+"</span>"; }).join("")+"</div>"; }
+function chipsFicha(ids, l, pref){ return "<div class=\"chips\">"+ids.map(function(id){ return "<span class=\"chip\"><i style=\"background:"+IDX[id].f.c+"\"></i>"+esc(rutaId(id)+(l ? detalleTx(l, (pref||"")+id) : ""))+"</span>"; }).join("")+"</div>"; }
 function fichaSabor(l){
   if(S.metodo==="sca"){
     const ev = evSca(l), r = calcSca2004(ev);
@@ -1624,7 +1738,7 @@ function fichaSabor(l){
       "<div class=\"dl\">"+SCA_ATR.map(function(k){ const n = numO(ev["sca_"+k]); return di(t("a_"+k), n==null ? "" : nf(n)); }).join("")+
       di(t("intAcidez"), l.sca_acidity_int ? t(l.sca_acidity_int) : "")+di(t("nivCuerpo"), l.sca_body_level ? t(l.sca_body_level) : "")+
       di(t("taint"), numO(l.sca_taint_cups) ? l.sca_taint_cups+" "+t("tazasAfect") : "")+di(t("fault"), numO(l.sca_fault_cups) ? l.sca_fault_cups+" "+t("tazasAfect") : "")+di(t("tueste"), tuesteTx(l.tueste))+"</div></div></div>"+
-      (l.sca_rueda.length ? "<div style=\"margin-top:9px\">"+chipsFicha(l.sca_rueda)+"</div>" : "")+(l.sca_notas.trim() ? "<p class=\"prosa\" style=\"margin-top:8px\">"+esc(l.sca_notas)+"</p>" : "")+"</div>";
+      (l.sca_rueda.length ? "<div style=\"margin-top:9px\">"+chipsFicha(l.sca_rueda, l, "")+"</div>" : "")+(l.sca_notas.trim() ? "<p class=\"prosa\" style=\"margin-top:8px\">"+esc(l.sca_notas)+"</p>" : "")+"</div>";
   }
   const r = calcCva(l), notas = function(o, ks){ return ks.map(function(k){ return String(o[k[0]]||"").trim() ? "<p class=\"prosa\"><b>"+t(k[1])+":</b> "+esc(o[k[0]])+"</p>" : ""; }).join(""); };
   const ks = [["fa","c_fa"],["fl","c_fl"],["ac","s_acidity"],["du","s_sweetness"],["bo","s_mouthfeel"]];
@@ -1632,11 +1746,13 @@ function fichaSabor(l){
   return "<div class=\"f-sec\"><h3>"+t("fiPerfil")+"<small>CVA · SCA 103 + 104</small></h3><div class=\"f-punt\"><div>"+radarLote(l)+"</div><div>"+
     "<div class=\"banda\"><span class=\"g\">"+(r.total!=null?nf(r.total):"—")+"</span><div><b>"+t("cvaPunt")+"</b><br><span class=\"prosa\">"+(r.total!=null ? t("cvaSuma")+": "+r.suma+" · "+t("cvaTz", r.u, r.d) : t("sinPunt"))+"</span></div></div>"+
     "<table class=\"tbl\"><thead><tr><th></th><th class=\"n\">"+t("fiDescr")+" · 0–15</th><th class=\"n\">"+t("fiAfect")+" · 1–9</th></tr></thead><tbody>"+
-    CVA_SEC.map(function(k){ const a = numO(l["cva_"+k]), i = numO(l.cva_int[k]); return "<tr><td>"+t("s_"+k)+"</td><td class=\"n\">"+(k==="overall"?"":i==null?"—":i)+"</td><td class=\"n\">"+(a==null?"—":a+" · "+esc(t("e"+a)))+"</td></tr>"; }).join("")+
+    CVA_SEC.map(function(k){ const a = numO(l["cva_"+k]), i = numO(l.cva_int[k]); return "<tr><td>"+t("s_"+k)+"</td><td class=\"n\">"+(k==="overall"?"":i==null?"—":i)+"</td><td class=\"n\">"+(a==null?"—":Number.isInteger(a) && a>=1 && a<=9 ? a+" · "+esc(t("e"+a)) : nf(a))+"</td></tr>"; }).join("")+
     "</tbody></table></div></div><div class=\"dl\" style=\"margin-top:9px\">"+
     di(t("cataNariz"), cataTexto(l.cva_cata_nariz, l.cva_desc_nariz))+di(t("cataBoca"), cataTexto(l.cva_cata_boca, l.cva_desc_boca))+
+    di(t("acTipos"), l.cva_acidez.map(function(g){ return t("ac_"+g); }).join(", "))+
     di(t("gustos"), l.cva_gustos.map(function(g){ return t("g_"+g); }).join(", "))+di(t("texturas"), l.cva_boca.map(function(g){ return t("b_"+g); }).join(", "))+
     di(t("tueste"), tuesteTx(l.tueste))+di(t("tazasFi"), tz)+"</div>"+
+    (l.cva_desc_nariz.length+l.cva_desc_boca.length ? "<div style=\"margin-top:9px\">"+chipsFicha(l.cva_desc_nariz, l, "nariz:")+chipsFicha(l.cva_desc_boca, l, "boca:")+"</div>" : "")+
     (notas(l.cva_n, ks) ? "<p class=\"prosa\" style=\"margin-top:8px;color:#0B5C6B\"><b>"+t("notasD")+"</b></p>"+notas(l.cva_n, ks) : "")+
     (notas(l.cva_a, ks.concat([["gl","s_overall"]])) ? "<p class=\"prosa\" style=\"margin-top:8px;color:#8A1C7C\"><b>"+t("notasA")+"</b></p>"+notas(l.cva_a, ks.concat([["gl","s_overall"]])) : "")+"</div>";
 }
@@ -1669,6 +1785,7 @@ function fichaHTML(l){
   const s = S.sesion, sca = S.metodo==="sca";
   const tags = [l.codigo, [l.ext.pais, l.ext.region].filter(Boolean).join(" · "), variedadesTx(l), procesoTx(l)].filter(Boolean);
   let cuerpo = "";
+  if(S.partes.basico && tieneBasico(l)) cuerpo += fichaBasico(l);
   if(S.partes.sabor && tieneSabor(l)) cuerpo += fichaSabor(l);
   if(S.partes.fisico && tieneFisico(l)) cuerpo += fichaFisico(l);
   if(S.partes.extr && tieneExtr(l)) cuerpo += fichaExtr(l);
@@ -1702,6 +1819,7 @@ function ficha(){
    ═══════════════════════════════════════════════════════════════════════════ */
 function vistaPanel(){
   if(UI.tab==="ficha") return ficha();
+  if(UI.tab==="basico") return basico();
   if(UI.tab==="fisico") return fisico();
   if(UI.tab==="extr") return extr();
   return S.metodo==="sca" ? saborSca() : saborCva();
@@ -1715,10 +1833,14 @@ function derivados(){
     if(sca){
       const ev = evSca(l);
       SCA_ESC.forEach(function(k){ const n = numO(l["sca_"+k]); D["v.sca_"+k] = n==null ? "—" : nf(n); D["w.sca_"+k] = n==null ? t("sinCal") : t(palabraSca(n)); });
-      SCA_TAZ.forEach(function(k){ D["v.sca_"+k] = ev["sca_"+k]; });
-      const resta = function(n){ return n ? "−"+n : "0"; };
-      D["v.sca_taint_cups"] = resta(SCA_K.taint*(numO(l.sca_taint_cups)||0)); D["v.sca_fault_cups"] = resta(SCA_K.fault*(numO(l.sca_fault_cups)||0));
-    } else CVA_INT.forEach(function(k){ const n = numO(l.cva_int[k]); D["v.cva_int."+k] = n==null ? "—" : String(n); });
+      SCA_TAZ.forEach(function(k){ const n = numO(ev["sca_"+k]); D["v.sca_"+k] = n==null ? "—" : nf(n); D["w.sca_"+k] = n==null ? t("sinCal") : ""; });
+      const nT = numO(l.sca_taint_cups)||0, nF = numO(l.sca_fault_cups)||0, resta = SCA_K.taint*nT + SCA_K.fault*nF;
+      D["v.sca_def"] = t("scaDefRes", nT, nF, resta ? "−"+resta : "0");
+    } else {
+      CVA_INT.forEach(function(k){ const n = numO(l.cva_int[k]); D["v.cva_int."+k] = n==null ? "—" : String(n); });
+      CVA_SEC.forEach(function(k){ const n = numO(l["cva_"+k]); D["ad."+k] = n==null ? "" : Number.isInteger(n) && n>=1 && n<=9 ? n+" · "+esc(t("e"+n)) : nf(n); /* la palabra de la escala es de los enteros: un 7,5 no es «alta» ni «muy alta» */ });
+    }
+    Object.keys(l.rueda_detalle).forEach(function(c){ D["mi."+c] = esc(l.rueda_detalle[c].intensidad)+"/15"; });
   }
   if(UI.tab==="fisico"){
     const d = calcDefectos(l.fis_def), mm = mallasDe(l), m = mm.m, f = calcFactor(l);
@@ -1739,10 +1861,14 @@ function derivados(){
     }
     D.factor = f.factor!=null ? t("faRes", nf(f.factor), nf(f.sano,1), nf(f.merma,1)) : t("faVacio");
   }
-  if(UI.tab==="extr"){
-    const of = oficiales(l); let tot = 0, hayP = false;
-    D.extCuenta = t("extCuenta", of.total);
-    Object.keys(of.cuenta).forEach(function(g){ D["xc."+g] = of.cuenta[g][0]+" / "+of.cuenta[g][1]; });
+  if(UI.tab==="basico"){ const f = calcFactor(l); D.factor = f.factor!=null ? t("faRes", nf(f.factor), nf(f.sano,1), nf(f.merma,1)) : t("faVacio"); }
+  if(UI.tab==="extr" || UI.tab==="basico"){
+    let tot = 0, hayP = false;
+    if(UI.tab==="extr"){
+      const of = oficiales(l);
+      D.extCuenta = t("extCuenta", of.total);
+      Object.keys(of.cuenta).forEach(function(g){ D["xc."+g] = of.cuenta[g][0]+" / "+of.cuenta[g][1]; });
+    }
     l.ext.variedades.forEach(function(v,i){
       if(String(v.p).trim()!==""){ hayP = true; tot += num0(v.p); }
       const q = sinTildes(v.n.trim()), x = q ? VARIEDADES.filter(function(y){ return sinTildes(y.v)===q; })[0] : null;
@@ -1757,6 +1883,8 @@ function refrescar(){
   const D = derivados(), l = lote();
   $$("[data-o]").forEach(function(el){ const k = el.dataset.o; if(k in D && el.innerHTML!==D[k]) el.innerHTML = D[k]; });
   $$("[data-rango]").forEach(function(el){ el.classList.toggle("sin", numO(leer(l, el.dataset.k))==null); });
+  // V5.137 · al escribir un cuarto de punto en la casilla fina, los nueve botones se ponen al día sin repintar (se perdería el foco).
+  $$("[data-a=\"aff\"]").forEach(function(el){ const on = numO(l["cva_"+el.dataset.v])===+el.dataset.i; el.classList.toggle("on", on); el.setAttribute("aria-pressed", String(on)); });
   $$("[data-bar]").forEach(function(el){ el.style.width = (D["bar."+el.dataset.bar]||0)+"%"; });
   if(UI.tab==="extr"){
     const of = oficiales(l).o;
@@ -1842,19 +1970,23 @@ function accion(a, d, el, ev){
     case "delLote": if(S.lotes.length>1 && window.confirm(t("delLoteConf", l.codigo))){ S.lotes.splice(S.actual,1); S.actual = Math.max(0, S.actual-1); pintar(); cambio(); } break;
     case "parte": {
       const sig = !S.partes[d.v];
-      if(!sig && ["sabor","fisico","extr"].filter(function(p){ return S.partes[p]; }).length<2){ toast(t("unaParte"), true); break; }
+      if(!sig && ["basico","sabor","fisico","extr"].filter(function(p){ return S.partes[p]; }).length<2){ toast(t("unaParte"), true); break; }
       S.partes[d.v] = sig; pintar(); cambio(); break; }
     case "tab": UI.tab = d.v; pintar(); break;
     case "seg": { const cur = String(leer(l, d.k)==null ? "" : leer(l, d.k)); poner(l, d.k, cur===d.v ? "" : d.v); pintarPanel(); cambio(); break; }
     case "borra": poner(l, d.v, ""); pintarPanel(); cambio(); break;
-    case "copa": l.sca_cups[d.v][+d.i] = l.sca_cups[d.v][+d.i] ? 0 : 1; pintarPanel(); cambio(); break;
+    case "scaTz": { const tz = l.sca_tazas[+d.v]; tz.estado = tz.estado===d.i ? "" : d.i; if(!tz.estado) tz.defecto = ""; sincScaTazas(l); pintarPanel(); cambio(); break; }
+    case "marca": UI.marca = UI.marca===d.v ? "" : d.v; pintarPanel(); break;
+    case "mEtapa": { const x = l.rueda_detalle[d.v]; if(x){ x.etapa = d.i; pintarPanel(); cambio(); } break; }
     case "aff": l["cva_"+d.v] = numO(l["cva_"+d.v])===+d.i ? "" : String(+d.i); pintarPanel(); cambio(); break;
-    case "caja": tocarCaja(d.i, d.v); pintarPanel(); cambio(); break;
-    case "tope": tocarTope(l[d.k], d.v, +d.i); pintarPanel(); cambio(); break;
+    case "caja": tocarCaja(d.i, d.v); podaDetalle(l); pintarPanel(); cambio(); break;
+    // «Elija una» (tope 1): tocar otra la reemplaza; tocar la misma la quita.
+    case "tope": if(+d.i===1){ const arr = l[d.k], era = arr[0]===d.v; arr.length = 0; if(!era) arr.push(d.v); } else tocarTope(l[d.k], d.v, +d.i); pintarPanel(); cambio(); break;
     case "tzNu": { const tz = l.cva_tazas[+d.v]; if(tz.defectuosa) break; tz.noUniforme = !tz.noUniforme; pintarPanel(); cambio(); break; }
     case "tzDef": { const tz = l.cva_tazas[+d.v]; tz.defectuosa = !tz.defectuosa; if(tz.defectuosa) tz.noUniforme = true; else tz.defecto = ""; pintarPanel(); cambio(); break; }
-    case "nota": UI.ultima = d.v; tocarNota(d.v); pintarPanel(); cambio(); break;
-    case "quita": quitarNota(d.i, d.v); pintarPanel(); cambio(); break;
+    // V5.137 · la nota recién marcada llega con su detalle abierto (etapa e intensidad), como en la planilla.
+    case "nota": { UI.ultima = d.v; tocarNota(d.v); podaDetalle(l); const cl = (S.metodo==="cva" ? (UI.etapa==="boca" ? "boca:" : "nariz:") : "")+d.v; UI.marca = l.rueda_detalle[cl] ? cl : ""; pintarPanel(); cambio(); break; }
+    case "quita": quitarNota(d.i, d.v); podaDetalle(l); pintarPanel(); cambio(); break;
     case "etapa": UI.etapa = d.v; pintarPanel(); break;
     case "vista": UI.vista = d.v; pintarPanel(); break;
     case "irRueda": { UI.etapa = d.v; pintarPanel(); const tr = $("#tarjetaRueda"); if(tr) tr.scrollIntoView({ behavior:"smooth", block:"start" }); break; }

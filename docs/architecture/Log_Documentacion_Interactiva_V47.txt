@@ -421,4 +421,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   cuartos de punto y tipo de acidez (`cva_acidez`); etapa e intensidad por nota de la rueda (`rueda_detalle`); radar con centro en 0.
 - ANN `scripts/qa-coffee-datasheet-check.mjs`: sección 8, «la misma herramienta que la planilla del Centro de Calidad, más B1».
 - ANN `docs/componentes/herramientas-cafe/coffee-datasheet/README.md`, `docs/componentes/herramientas-cafe.md`, `docs/ALINEACION.md`.
-(commit: pendiente)
+(commit: d9bc732)

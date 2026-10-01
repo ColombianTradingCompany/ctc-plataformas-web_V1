@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.137] — 2026-10-01 (commit pendiente)
+## [V5.137] — 2026-10-01 (commit d9bc732)
 
 - **Cambiado**: la **CTCx Coffee Datasheet Tool** del taller tiene los MISMOS campos que la planilla del Centro de Calidad (owner,
   2026-10-01: «este tiene que ser la misma herramienta, agregándole B1»). **SCA 2004**: Uniformidad, Taza limpia y Dulzor se califican

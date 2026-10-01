@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.118] — 2026-10-01 (commit pendiente)
+## [V5.118] — 2026-10-01 (commit 74ba262)
 
 - **Cambiado**: en **Solicitudes de Evaluación**, **toda la solicitud es un acordeón compacto** (owner, 2026-10-01): cerrada muestra
   una línea (lote · productor · código · fecha) con sus insignias (subvención, factura, pago, muestra, «Pide descuento»); abierta,

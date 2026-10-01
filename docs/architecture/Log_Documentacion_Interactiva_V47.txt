@@ -290,4 +290,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-01] V5.118 · Consolas — Solicitudes de Evaluación: toda la solicitud es un acordeón compacto
 - ANN `nominados/CircuitoVista.tsx` (`solicitudCard` = details/summary). Guardián: `qa-solicitud-evaluacion` +1.
-(commit: pendiente)
+(commit: 74ba262)

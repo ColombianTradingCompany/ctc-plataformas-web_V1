@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.121] — 2026-10-01 (commit pendiente)
+## [V5.121] — 2026-10-01 (commit a016720)
 
 - **Cambiado**: en la vista de la finca del OCP, la pestaña **General** con el mismo tratamiento visual (owner, 2026-10-01): lo que le
   falta a la declaración EUDR en insignias rojas (o «Declaración EUDR completa» en verde), y fichas en grilla con vereda, municipio y

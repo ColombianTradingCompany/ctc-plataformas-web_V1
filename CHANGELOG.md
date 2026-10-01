@@ -19,6 +19,11 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.123] — 2026-10-01 (commit pendiente)
+
+- **Cambiado**: en el editor de la finca (Kaffetal Regal · Ubicación y medidas), el bloque de cada cafetal pone **Área a la izquierda y
+  Altura a la derecha**, el mismo orden que «Totales de la finca» (owner: estaban cruzados). `qa-visa` 54 → 55.
+
 ## [V5.122] — 2026-10-01 (commit e78f98c)
 
 - **Corregido**: en Kaffetal Regal, el área escrita a mano del Cafetal 1 (obligatoria con 4 ha o menos) **se perdía** al guardar la

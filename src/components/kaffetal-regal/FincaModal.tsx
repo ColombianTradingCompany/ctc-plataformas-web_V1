@@ -1537,29 +1537,10 @@ function CafetalEditor({
             nombreActual={nombre.trim() || titulo}
           />
 
-          {/* ── 3 · Altura y área, de ESTE cafetal ───────────────────────── */}
+          {/* ── 3 · Área y altura, de ESTE cafetal ─────────────────────────
+              V5.123 (owner): Área a la izquierda y Altura a la derecha — el MISMO orden que «Totales de la finca», abajo,
+              para que cada cifra del cafetal quede encima de su total. */}
           <div className={styles.grid} style={{ marginTop: 12 }}>
-            <div>
-              <label>
-                Altura (msnm)
-                <FieldInfo text="Tráigala del mapa: usa el centro del polígono cuando lo hay, o el punto marcado. También puede escribirla a mano si conoce el dato exacto." />
-              </label>
-              <div className={styles.fieldRow}>
-                <input value={alturaMsnm} onChange={(e) => { onAltura(e.target.value); setAltErr(null); }} type="number" placeholder="1680" disabled={locked} />
-                <button
-                  type="button"
-                  className="btn btn-sm"
-                  onClick={traerAltura}
-                  disabled={!refPoint || altBusy || locked}
-                  title={refPoint ? "Traer la altura del punto o del centro del polígono" : "Marque primero la ubicación en el mapa"}
-                >
-                  {altBusy ? "Calculando…" : "Traer del mapa ⛰"}
-                </button>
-              </div>
-              <p style={{ fontSize: 11, color: altErr ? "var(--red)" : "var(--muted)", margin: "3px 0 0" }}>
-                {altErr ?? (refPoint ? "Toque «Traer del mapa» o escríbala a mano." : "Marque la ubicación para poder traerla.")}
-              </p>
-            </div>
             <div>
               <label>
                 Área en café (ha)
@@ -1585,6 +1566,27 @@ function CafetalEditor({
                     ? `El polígono guardado mide ${areaDelPoligono} ha.`
                     : "Guarde el polígono para poder calcularla, o escríbala a mano."
                   : "Escríbala a mano."}
+              </p>
+            </div>
+            <div>
+              <label>
+                Altura (msnm)
+                <FieldInfo text="Tráigala del mapa: usa el centro del polígono cuando lo hay, o el punto marcado. También puede escribirla a mano si conoce el dato exacto." />
+              </label>
+              <div className={styles.fieldRow}>
+                <input value={alturaMsnm} onChange={(e) => { onAltura(e.target.value); setAltErr(null); }} type="number" placeholder="1680" disabled={locked} />
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={traerAltura}
+                  disabled={!refPoint || altBusy || locked}
+                  title={refPoint ? "Traer la altura del punto o del centro del polígono" : "Marque primero la ubicación en el mapa"}
+                >
+                  {altBusy ? "Calculando…" : "Traer del mapa ⛰"}
+                </button>
+              </div>
+              <p style={{ fontSize: 11, color: altErr ? "var(--red)" : "var(--muted)", margin: "3px 0 0" }}>
+                {altErr ?? (refPoint ? "Toque «Traer del mapa» o escríbala a mano." : "Marque la ubicación para poder traerla.")}
               </p>
             </div>
           </div>

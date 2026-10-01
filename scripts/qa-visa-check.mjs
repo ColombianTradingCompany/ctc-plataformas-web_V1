@@ -248,6 +248,13 @@ const completa = (extra = {}) => ({
   check("los Totales son derivados y de solo lectura (sin «Calcular del polígono» ni «Traer del mapa» en el total)", modal.includes("const ha = !isNaN(haTotalNum)") && modal.includes("const alt = alturaUno.trim() ? alturaUno : altGuardada;") && modal.includes('<input value={ha} readOnly') && modal.includes('<input value={alt} readOnly') && !modal.includes("function pullArea()") && !modal.includes("async function pullAltitude()"));
 }
 
+// ── V5.123 (owner) · el cafetal y los Totales en el mismo orden: Área a la izquierda, Altura a la derecha ──
+{
+  const modal = lee("src/components/kaffetal-regal/FincaModal.tsx");
+  const enOrden = (area, altura) => modal.indexOf(area) > 0 && modal.indexOf(area) < modal.indexOf(altura);
+  check("en el cafetal, Área va antes que Altura; en los Totales, igual", enOrden("                Área en café (ha)\n", "                Altura (msnm)\n") && enOrden("Área en café de TODA la finca (ha)", "Altura de la finca (msnm)"));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-visa: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("   " + f);

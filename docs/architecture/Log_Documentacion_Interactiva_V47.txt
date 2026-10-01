@@ -312,3 +312,7 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `FincaModal.tsx` (`CafetalUnoDraft`; `ha`/`alt` derivados; Totales de solo lectura), `KaffetalExperience.tsx` (`saveFinca(f, cafetalUno)`
   → `mirrorParcelaUno` sin exigir geometría). Guardián: `qa-visa` +3.
 (commit: e78f98c)
+
+## [2026-10-01] V5.123 · Kaffetal Regal — cafetal y Totales en el mismo orden (Área · Altura)
+- ANN `FincaModal.tsx` (`CafetalEditor`: Área a la izquierda, Altura a la derecha). Guardián: `qa-visa` +1.
+(commit: pendiente)

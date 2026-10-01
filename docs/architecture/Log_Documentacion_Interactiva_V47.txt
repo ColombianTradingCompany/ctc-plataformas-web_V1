@@ -302,3 +302,8 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `kr/EvaReviewCard.tsx` (grilla de fichas, `Fichas`/`SiNo` de `EudrPiezas`), `kr/LoteSeccion.tsx` (`variedadTexto` · `procesoTexto`;
   `FisicoPanel` con lo reportado en B2/B3). Guardián: `qa-evaluaciones` +3.
 (commit: 02c224a)
+
+## [2026-10-01] V5.121 · Consolas — la pestaña General de la finca, en fichas
+- ANN `kr/FincaPanel.tsx` (`general` en fichas: barra de área, Sí/No, faltantes en rojo), `kr/FincaSeccion.tsx` (altitud, historia,
+  características, DANE, geometría, parcelas, certificaciones). Guardián: `qa-visa` +2.
+(commit: pendiente)

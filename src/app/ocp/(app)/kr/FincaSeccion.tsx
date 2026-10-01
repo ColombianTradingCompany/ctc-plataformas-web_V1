@@ -30,6 +30,9 @@ type FincaRow = {
   municipio: string | null;
   departamento: string | null;
   hectares: string | number | null;
+  altitude_m: number | null;
+  history_text: string | null;
+  characteristics_text: string | null;
   profile_photo_asset_id: string | null;
   video_asset_id: string | null;
   requires_eudr_polygon: boolean | null;
@@ -129,7 +132,7 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
     // A single literal string (not runtime-concatenated) -- see the note on
     // the lots query in ../lotes/page.tsx for why that distinction matters.
     .select(
-      `id, name, producer_id, status, vereda, municipio, departamento, hectares, profile_photo_asset_id, video_asset_id,
+      `id, name, producer_id, status, vereda, municipio, departamento, hectares, altitude_m, history_text, characteristics_text, profile_photo_asset_id, video_asset_id,
        requires_eudr_polygon, eudr_polygon_geojson, eudr_lat, eudr_lng,
        eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types,
        eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_legal_docs_asset_id, eudr_legal_docs_filename,
@@ -260,6 +263,25 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
                             ...lotStatus(l),
                           })),
                           comms: fincaComms.map((c) => ({ id: c.id, authorRole: c.author_role, createdAt: c.created_at, note: c.note })),
+                          // V5.121: la General en fichas.
+                          general: {
+                            vereda: finca.vereda,
+                            municipio: finca.municipio,
+                            departamento: finca.departamento,
+                            hectares: finca.hectares,
+                            altitud: finca.altitude_m,
+                            dane: dane ? { code: dane.code, mun: dane.mun, dep: dane.dep } : null,
+                            registrada: finca.created_at,
+                            parcelas: (parcelasByFinca.get(finca.id) ?? []).length,
+                            tienePoligono: (finca.eudr_polygon_geojson?.length ?? 0) >= 3,
+                            requierePoligono: !!finca.requires_eudr_polygon,
+                            tienePunto: finca.eudr_lat != null && finca.eudr_lng != null && String(finca.eudr_lat) !== "" && String(finca.eudr_lng) !== "",
+                            certificaciones: (certsByFinca.get(finca.id) ?? []).length,
+                            certificacionesCorroboradas: (certsByFinca.get(finca.id) ?? []).filter((c) => c.status === "corroborada").length,
+                            historia: finca.history_text,
+                            caracteristicas: finca.characteristics_text,
+                            faltantes: finca.status === "approved" ? [] : gaps,
+                          },
                         }}
                         header={
                           <>

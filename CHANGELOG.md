@@ -19,6 +19,14 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.121] — 2026-10-01 (commit pendiente)
+
+- **Cambiado**: en la vista de la finca del OCP, la pestaña **General** con el mismo tratamiento visual (owner, 2026-10-01): lo que le
+  falta a la declaración EUDR en insignias rojas (o «Declaración EUDR completa» en verde), y fichas en grilla con vereda, municipio y
+  departamento, código DANE (rojo si no coincide), altitud, punto marcado y polígono (Sí/No, exigido si > 4 ha), parcelas, lotes
+  asociados, certificaciones (y corroboradas), fecha de registro; el área cultivada como barra contra los 4 ha; y la historia y las
+  características de la finca. `qa-visa` 49 → 51.
+
 ## [V5.120] — 2026-10-01 (commit 02c224a)
 
 - **Cambiado**: en la **EVA del lote** (OCP · vista completa del lote), el mismo tratamiento visual de la finca (owner, 2026-10-01):

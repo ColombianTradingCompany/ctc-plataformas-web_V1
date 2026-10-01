@@ -231,6 +231,14 @@ const completa = (extra = {}) => ({
   check("corroborar admite un archivo por certificación y el guard lo protege", certs.includes("corroboracion_asset_id: adjunto.assetId") && editor.includes("cert-corroboracion/${certId}") && lee("docs/migraciones/2026-10-01_finca_certificates_corroboracion.sql").includes("new.corroboracion_asset_id is distinct from old.corroboracion_asset_id"));
 }
 
+// ── V5.121 (owner, 2026-10-01) · la pestaña General de la finca, en fichas ──
+{
+  const panel = lee("src/app/ocp/(app)/kr/FincaPanel.tsx");
+  const seccion = lee("src/app/ocp/(app)/kr/FincaSeccion.tsx");
+  check("la General usa la barra de área y Sí/No, y dice en rojo lo que falta a la declaración", panel.includes("<BarraArea ha={g.hectares} />") && panel.includes("<SiNo v={g.tienePunto} />") && panel.includes("Falta para completar la declaración:") && panel.includes("Declaración EUDR completa"));
+  check("y la sección le pasa altitud, DANE, geometría, parcelas, certificaciones y los faltantes", seccion.includes("altitude_m, history_text, characteristics_text") && seccion.includes("faltantes: finca.status === \"approved\" ? [] : gaps") && seccion.includes("certificacionesCorroboradas:"));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-visa: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("   " + f);

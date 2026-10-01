@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import styles from "@/components/panel/shared.module.css";
+import { BarraArea, SiNo } from "./EudrPiezas";
 
 // ── Panel de la finca con pestañas (2026-07-23, pedido del owner) ────────────
 // El pop-up de la finca pasó de un bloque plano a pestañas con iconos
@@ -24,6 +25,26 @@ export type FincaPanelData = {
   daneLine: string;
   lotes: FincaLote[];
   comms: FincaComm[];
+  /** V5.121 (owner, 2026-10-01): la pestaña General en FICHAS, como la EUDR y la EVA. */
+  general: {
+    vereda: string | null;
+    municipio: string | null;
+    departamento: string | null;
+    hectares: string | number | null;
+    altitud: number | null;
+    dane: { code: string; mun: string; dep: string } | null;
+    registrada: string;
+    parcelas: number;
+    tienePoligono: boolean;
+    requierePoligono: boolean;
+    tienePunto: boolean;
+    certificaciones: number;
+    certificacionesCorroboradas: number;
+    historia: string | null;
+    caracteristicas: string | null;
+    /** Lo que le falta a la declaración EUDR para estar completa (vacío = completa). */
+    faltantes: string[];
+  };
 };
 
 type TabKey = "general" | "eudr" | "lotes" | "comm";
@@ -113,8 +134,52 @@ export function FincaPanel({
       {tab === "general" && (
         <div>
           {header}
-          <p className={styles.meta}>{data.locationLine}</p>
-          <p className={styles.meta}>{data.daneLine}</p>
+          {/* V5.121 (owner): la General en fichas — ubicación, área contra 4 ha, altitud, DANE, geometría, parcelas, lotes,
+              certificaciones, registro — y lo que le falta a la declaración EUDR en rojo. */}
+          {(() => {
+            const g = data.general;
+            const ficha = (l: string, v: ReactNode) => (
+              <div style={{ border: "1px solid var(--line)", borderRadius: 8, padding: "6px 10px", background: "var(--paper)" }}>
+                <div className={styles.meta} style={{ margin: "0 0 3px", fontSize: 10.5, letterSpacing: ".04em", textTransform: "uppercase" }}>{l}</div>
+                <div>{v}</div>
+              </div>
+            );
+            const texto = (v: string | null | undefined, vacio = "Sin definir") => (v ? <b style={{ color: "var(--ink)", fontSize: 13 }}>{v}</b> : <span className={`${styles.badge} ${styles.badgeBad}`}>{vacio}</span>);
+            return (
+              <div style={{ marginTop: 10 }}>
+                {g.faltantes.length > 0 ? (
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginBottom: 8 }}>
+                    <span className={styles.meta} style={{ margin: 0, fontWeight: 600 }}>Falta para completar la declaración:</span>
+                    {g.faltantes.map((f) => <span key={f} className={`${styles.badge} ${styles.badgeBad}`} style={{ textTransform: "none", letterSpacing: 0 }}>✗ {f}</span>)}
+                  </div>
+                ) : (
+                  <div style={{ marginBottom: 8 }}><span className={`${styles.badge} ${styles.badgeGood}`}>✓ Declaración EUDR completa</span></div>
+                )}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 6 }}>
+                  {ficha("Vereda", texto(g.vereda))}
+                  {ficha("Municipio · departamento", texto([g.municipio, g.departamento].filter(Boolean).join(", ") || null))}
+                  {ficha("Código DANE", g.dane ? <b style={{ color: "var(--ink)", fontSize: 13 }}><span className="mono">{g.dane.code}</span> · {g.dane.mun}, {g.dane.dep}</b> : <span className={`${styles.badge} ${styles.badgeBad}`}>Sin coincidencia · verifique municipio/departamento</span>)}
+                  {ficha("Altitud", g.altitud != null ? <b style={{ color: "var(--ink)", fontSize: 13 }}>{g.altitud} msnm</b> : <span className={`${styles.badge} ${styles.badgeBad}`}>Sin definir</span>)}
+                  {ficha("Punto marcado", <SiNo v={g.tienePunto} />)}
+                  {ficha(g.requierePoligono ? "Polígono (exigido: > 4 ha)" : "Polígono (opcional: ≤ 4 ha)", g.requierePoligono ? <SiNo v={g.tienePoligono} /> : <span className={`${styles.badge} ${g.tienePoligono ? styles.badgeGood : ""}`}>{g.tienePoligono ? "Sí" : "No"}</span>)}
+                  {ficha("Parcelas (cafetales)", <span className={`${styles.badge} ${g.parcelas > 0 ? styles.badgeGood : styles.badgeBad}`}>{g.parcelas}</span>)}
+                  {ficha("Lotes asociados", <span className={styles.badge}>{data.lotes.length}</span>)}
+                  {ficha("Certificaciones", <span className={styles.badge}>{g.certificaciones}{g.certificaciones > 0 ? ` · ${g.certificacionesCorroboradas} corroborada(s)` : ""}</span>)}
+                  {ficha("Registrada", <b style={{ color: "var(--ink)", fontSize: 13 }}>{fecha(g.registrada)}</b>)}
+                </div>
+                <div style={{ marginTop: 10 }}>
+                  <div className={styles.meta} style={{ margin: "0 0 4px", fontWeight: 600 }}>Área cultivada en café</div>
+                  <BarraArea ha={g.hectares} />
+                </div>
+                {(g.historia || g.caracteristicas) && (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 6, marginTop: 10 }}>
+                    {g.historia && ficha("Historia de la finca", <span style={{ fontSize: 12.5, color: "var(--ink)", whiteSpace: "pre-wrap" }}>{g.historia}</span>)}
+                    {g.caracteristicas && ficha("Características", <span style={{ fontSize: 12.5, color: "var(--ink)", whiteSpace: "pre-wrap" }}>{g.caracteristicas}</span>)}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {(data.photoUrl || data.videoUrl) && (
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 12 }}>

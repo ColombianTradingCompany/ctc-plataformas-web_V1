@@ -141,8 +141,9 @@ export async function retirar(service: SupabaseClient, certId: string, motivo: s
   return { ok: true };
 }
 
-/** CTC la contrastó con el registro público: corroborada (y `verified_by_ctc`, que leen los claims). Exige vigencia. */
-export async function corroborar(service: SupabaseClient, certId: string, adminId: string): Promise<ResultadoCert> {
+/** CTC la contrastó con el registro público: corroborada (y `verified_by_ctc`, que leen los claims). Exige vigencia.
+ *  V5.119: con `adjunto`, guarda el archivo con el que se corroboró (uno por certificación; reemplaza al anterior). */
+export async function corroborar(service: SupabaseClient, certId: string, adminId: string, adjunto?: { assetId: string; fileName: string } | null): Promise<ResultadoCert> {
   const c = await cargar(service, certId);
   if (!c) return { ok: false, error: "Certificado no encontrado." };
   const { data: fechas } = await service.from("finca_certificates").select("valid_from, valid_to").eq("id", certId).maybeSingle();
@@ -152,11 +153,17 @@ export async function corroborar(service: SupabaseClient, certId: string, adminI
   const ahora = new Date().toISOString();
   const { error } = await service
     .from("finca_certificates")
-    .update({ status: "corroborada", verified_by_ctc: true, verified_at: ahora, updated_at: ahora })
+    .update({
+      status: "corroborada",
+      verified_by_ctc: true,
+      verified_at: ahora,
+      updated_at: ahora,
+      ...(adjunto ? { corroboracion_asset_id: adjunto.assetId, corroboracion_filename: adjunto.fileName } : {}),
+    })
     .eq("id", c.id);
   if (error) return { ok: false, error: error.message };
   const finca = fincaDe(c);
-  await rastro(service, c, "cert_verified", adminId, `CTCx corroboró la certificación «${nombreDe(c)}» de la finca ${finca?.name ?? ""}: ya respalda el Pasaporte.`, c.status, "corroborada");
+  await rastro(service, c, "cert_verified", adminId, `CTCx corroboró la certificación «${nombreDe(c)}» de la finca ${finca?.name ?? ""}${adjunto ? ` (archivo: ${adjunto.fileName})` : ""}: ya respalda el Pasaporte.`, c.status, "corroborada");
   return { ok: true };
 }
 

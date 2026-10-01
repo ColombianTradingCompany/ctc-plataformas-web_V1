@@ -2,8 +2,9 @@
 
 import { useReducer, useRef, useState, useTransition, type ReactNode } from "react";
 import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
-import { mapPreviewUrl, deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, PRODUCT_RISK_QUESTIONS } from "@/lib/eudr";
-import { earthWebUrl, buildFincaGeoJson } from "@/lib/earthKml";
+import { mapPreviewUrl, deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, MAX_CHEQUEO_FILES, PRODUCT_RISK_AFFIRMATIONS, PRODUCT_RISK_QUESTIONS } from "@/lib/eudr";
+import { earthWebUrl, buildFincaGeoJson, fincaCenter } from "@/lib/earthKml";
+import { BarraArea, Coordenada, Documento, Fichas, LineaDeTiempo, SiNo } from "./EudrPiezas";
 import { createClient } from "@/lib/supabase/client";
 import { uploadKaffetalMediaWithProgress } from "@/lib/kaffetalMedia";
 import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
@@ -15,6 +16,7 @@ import { ESTADO_CERTIFICACION_LABEL, MAX_RECORDATORIOS, type EstadoCertificacion
 import styles from "@/components/panel/shared.module.css";
 
 const INFRA_DICT: [string, string][] = LOCAL_INFRA.map(([k, l]) => [k, l]);
+const INFRA_TITULOS: Record<string, string> = Object.fromEntries(LOCAL_INFRA.map(([k, , d]) => [k, d]));
 
 const EVIDENCE_TYPES: [string, string][] = [
   ["satelital", "Imágenes satelitales"], ["observatory", "EU Observatory 2020"],
@@ -205,6 +207,9 @@ export type BcpCert = {
   recordatorios: number;
   ultimoRecordatorioAt: string | null;
   retiradaAt: string | null;
+  /** V5.119: el archivo con el que CTC corroboró (uno por certificación). */
+  corroboracionUrl: string | null;
+  corroboracionFilename: string | null;
 };
 
 const SCHEME_LABEL: Record<string, string> = Object.fromEntries([
@@ -332,6 +337,17 @@ export function FincaEudrEditor({
   // marcado) enlaza a Earth por su centroide.
   const earthUrl = earthWebUrl(values.eudr_lat, values.eudr_lng, values.eudr_polygon_geojson);
   const hasCoords = !!(values.eudr_polygon_geojson?.length || (values.eudr_lat && values.eudr_lng));
+  // V5.119: la coordenada «a mano» del predio — el centro del polígono si lo hay; si no, el punto.
+  const centro = values.eudr_polygon_geojson?.length
+    ? fincaCenter(null, null, values.eudr_polygon_geojson)
+    : fincaCenter(values.eudr_lat, values.eudr_lng, null);
+  // Una fila de lectura: rótulo arriba, la pieza visual debajo.
+  const fila = (rotulo: string, pieza: ReactNode) => (
+    <div>
+      <div className={styles.meta} style={{ fontWeight: 600, margin: "0 0 4px" }}>{rotulo}</div>
+      {pieza}
+    </div>
+  );
 
   // Autosave del modo edición (2026-07-23): los campos del formulario viajan
   // con el MISMO server action que Guardar — pero SIN los archivos (esos solo
@@ -412,7 +428,7 @@ export function FincaEudrEditor({
       }
       // Never ship File payloads (even empty ones) through the action.
       for (const k of [...fd.keys()]) {
-        if (/^(evidence|sustainability)_file_/.test(k)) fd.delete(k);
+        if (/^(evidence|sustainability|chequeo)_file_/.test(k)) fd.delete(k);
       }
       await saveAction(fd);
       setEditing(false);
@@ -473,19 +489,17 @@ export function FincaEudrEditor({
         </div>
         <SubTabBar tab={subTab} setTab={setSubTab} />
 
+        {/* V5.119 (owner): la declaración se LEE de un vistazo — área contra los 4 ha, fecha contra el corte y hoy,
+            Sí/No en color, documento en rojo si falta. */}
         {subTab === "declaracion" && (
-          <div className={styles.meta} style={{ lineHeight: 1.9 }}>
-            <div>Área cultivada en café: {values.hectares != null && String(values.hectares).trim() !== "" && Number(values.hectares) > 0 ? `${values.hectares} ha` : "sin definir"}</div>
-            <div>Fecha de establecimiento del cultivo: {values.eudr_planting_date || "sin definir"}</div>
-            <div>Sistema productivo: {values.eudr_production_system ? PRODUCTION_SYSTEM_LABEL[values.eudr_production_system] : "sin definir"}</div>
-            <div>Libre de deforestación posterior al 31/12/2020: {yesNoLabel(values.eudr_deforestation_free)}</div>
-            <div>Producción en áreas legalmente establecidas: {yesNoLabel(values.eudr_legal_production)}</div>
-            <div>Tenencia de la tierra: {values.eudr_tenure ? TENURE_LABEL[values.eudr_tenure] : "sin definir"}</div>
-            <div>
-              Documento de respaldo: {values.eudr_legal_docs_filename ? (
-                <>{values.eudr_legal_docs_filename}{legalDocUrl && <> · <a href={legalDocUrl} target="_blank" rel="noopener noreferrer">ver</a></>}</>
-              ) : "no adjuntado"}
-            </div>
+          <div style={{ display: "grid", gap: 14 }}>
+            {fila("Área cultivada en café", <BarraArea ha={values.hectares} />)}
+            {fila("Fecha de establecimiento del cultivo", <LineaDeTiempo fecha={values.eudr_planting_date} />)}
+            {fila("Sistema productivo", <span className={`${styles.badge} ${values.eudr_production_system ? "" : styles.badgeBad}`}>{values.eudr_production_system ? PRODUCTION_SYSTEM_LABEL[values.eudr_production_system] : "Sin definir"}</span>)}
+            {fila("Libre de deforestación posterior al 31/12/2020", <SiNo v={values.eudr_deforestation_free} />)}
+            {fila("Producción en áreas legalmente establecidas", <SiNo v={values.eudr_legal_production} />)}
+            {fila("Tenencia de la tierra", <span className={`${styles.badge} ${values.eudr_tenure ? "" : styles.badgeBad}`}>{values.eudr_tenure ? TENURE_LABEL[values.eudr_tenure] : "Sin definir"}</span>)}
+            {fila("Documento de respaldo (SICA)", <Documento nombre={values.eudr_legal_docs_filename} url={legalDocUrl} />)}
           </div>
         )}
 
@@ -501,6 +515,12 @@ export function FincaEudrEditor({
                     ? `${values.eudr_lat}, ${values.eudr_lng}`
                     : "no capturada"}
               </div>
+              {/* V5.119: la coordenada a mano, con copiar — el centro del polígono, o el punto. */}
+              {centro && (
+                <div>
+                  Coordenada: <Coordenada lat={centro.la} lng={centro.ln} origen={values.eudr_polygon_geojson?.length ? "centro del polígono" : "punto marcado"} />
+                </div>
+              )}
               <div>
                 Proyecto Google Earth guardado: {values.eudr_google_earth_url ? (
                   <a href={values.eudr_google_earth_url} target="_blank" rel="noopener noreferrer">ver enlace</a>
@@ -513,9 +533,10 @@ export function FincaEudrEditor({
             <div className={styles.meta} style={{ lineHeight: 1.9, marginTop: 8 }}>
               <b style={{ fontSize: 12.5 }}>Chequeo contra bases EUDR oficiales</b>
               <div style={{ whiteSpace: "pre-wrap" }}>{values.eudr_chequeo_notas || <span style={{ color: "#B45309" }}>Sin chequeo anotado.</span>}</div>
+              {(values.eudr_chequeo_files ?? []).length === 0 && <div><span className={`${styles.badge} ${styles.badgeBad}`}>Sin evidencia adjunta</span></div>}
               {(values.eudr_chequeo_files ?? []).length > 0 && (
                 <div>
-                  Adjuntos:{" "}
+                  Evidencia ({(values.eudr_chequeo_files ?? []).length}/{MAX_CHEQUEO_FILES}):{" "}
                   {(values.eudr_chequeo_files ?? []).map((f, i) => (
                     <span key={f.assetId}>
                       {i > 0 && " · "}
@@ -546,26 +567,31 @@ export function FincaEudrEditor({
           </div>
         )}
 
-        {subTab === "certs" && <FincaCertsPanel certificates={certificates} />}
+        {subTab === "certs" && <FincaCertsPanel certificates={certificates} producerId={producerId} />}
 
+        {/* V5.119 (owner): fichas verdes/rojas — la legislación no verificada es una falta (rojo); la sostenibilidad es
+            opcional (gris); la infraestructura, las mismas fichas del cuestionario del productor. */}
         {subTab === "atributos" && (
-          <div className={styles.meta} style={{ lineHeight: 1.9 }}>
-            <div>Áreas de legislación verificadas: {labelsFor(values.eudr_legal_areas, LEGAL_AREAS)}</div>
-            <div>Sostenibilidad y enfoque social: {labelsFor(values.eudr_sustainability_tags, SUSTAINABILITY_TAGS)}</div>
-            {values.eudr_sustainability_notes && <div>Notas de sostenibilidad: {values.eudr_sustainability_notes}</div>}
-            <div>Infraestructura local: {labelsFor(values.eudr_local_infra, INFRA_DICT)}</div>
+          <div style={{ display: "grid", gap: 14 }}>
+            {fila("Áreas de legislación verificadas", <Fichas opciones={LEGAL_AREAS} activas={values.eudr_legal_areas} faltante="rojo" />)}
+            {fila("Sostenibilidad y enfoque social", <Fichas opciones={SUSTAINABILITY_TAGS} activas={values.eudr_sustainability_tags} />)}
+            {values.eudr_sustainability_notes && fila("Notas de sostenibilidad", <span className={styles.meta}>{values.eudr_sustainability_notes}</span>)}
+            {fila("Infraestructura local (declarada por el productor)", <Fichas opciones={INFRA_DICT} activas={values.eudr_local_infra} titulos={INFRA_TITULOS} />)}
           </div>
         )}
 
+        {/* V5.119 (owner): fichas y Sí/No en color también aquí. Las afirmaciones del producto se pintan AL DERECHO (verde = se
+            cumple; rojo = el factor de riesgo está marcado), como las ve el productor. */}
         {subTab === "riesgo" && (
-          <div className={styles.meta} style={{ lineHeight: 1.9 }}>
-            <div>Método de separación: {values.eudr_custody_method === "ctc_standard" ? "Estándar CTC de Almacenamiento de Pergamino · CTC Parchment Storage Standard" : values.eudr_custody_method === "custom" ? "Método propio" : "sin definir"}</div>
-            {values.eudr_custody_method === "custom" && values.eudr_custody_notes && <div>Notas de custodia: {values.eudr_custody_notes}</div>}
-            <div>Cadena de custodia: {labelsFor(values.eudr_custody_stages, CUSTODY_STAGES)} · complejidad {deriveChainComplexity(values.eudr_custody_stages) || "—"}</div>
-            <div>Riesgo del producto: {deriveProductRisk(values.eudr_product_risk_factors)} ({values.eudr_product_risk_factors?.length ?? 0} factor(es))</div>
-            <div>Esquemas de certificación: {values.eudr_cert_scheme || "ninguno declarado"}</div>
-            <div>¿Indicios de ilegalidad/deforestación?: {yesNoLabel(values.eudr_illegality_indicators)}</div>
-            <div>¿Documentos disponibles y verificables?: {yesNoLabel(values.eudr_docs_available)}</div>
+          <div style={{ display: "grid", gap: 14 }}>
+            {fila("Método de separación", <span className={`${styles.badge} ${values.eudr_custody_method ? styles.badgeGood : styles.badgeBad}`} style={{ textTransform: "none", letterSpacing: 0 }}>{values.eudr_custody_method === "ctc_standard" ? "Estándar CTC de Almacenamiento de Pergamino" : values.eudr_custody_method === "custom" ? "Método propio" : "Sin definir"}</span>)}
+            {values.eudr_custody_method === "custom" && values.eudr_custody_notes && fila("Notas de custodia", <span className={styles.meta}>{values.eudr_custody_notes}</span>)}
+            {fila(`Cadena de custodia · complejidad ${deriveChainComplexity(values.eudr_custody_stages) || "—"}`, <Fichas opciones={CUSTODY_STAGES} activas={values.eudr_custody_stages} />)}
+            {fila(`Riesgo del producto · ${deriveProductRisk(values.eudr_product_risk_factors)}`, <Fichas opciones={PRODUCT_RISK_AFFIRMATIONS} activas={PRODUCT_RISK_AFFIRMATIONS.map(([k]) => k).filter((k) => !(values.eudr_product_risk_factors ?? []).includes(k))} faltante="rojo" />)}
+            {fila("Esquemas de certificación", <span className={styles.badge} style={{ textTransform: "none", letterSpacing: 0 }}>{values.eudr_cert_scheme || "ninguno declarado"}</span>)}
+            {fila("¿Indicios de ilegalidad, deforestación o degradación?", <SiNo v={values.eudr_illegality_indicators} bienSi={false} si="Sí, hay indicios" no="No hay indicios" />)}
+            {fila("¿Documentos disponibles y verificables?", <SiNo v={values.eudr_docs_available} />)}
+            <div className={styles.meta} style={{ lineHeight: 1.9 }}>
             <div>
               Nivel de riesgo determinado:{" "}
               <b style={{ color: deriveFincaRiskLevel({ eudrIllegalityIndicators: values.eudr_illegality_indicators, eudrDocsAvailable: values.eudr_docs_available, eudrMitigationEffective: values.eudr_mitigation_effective }) === "no_insignificante" ? "var(--red)" : "inherit" }}>
@@ -577,8 +603,9 @@ export function FincaEudrEditor({
               </b>
             </div>
             {values.eudr_mitigation_actions && <div>Acciones de mitigación: {values.eudr_mitigation_actions}</div>}
-            <div>¿Mitigación efectiva?: {yesNoLabel(values.eudr_mitigation_effective)}</div>
+            <div>¿Mitigación efectiva? <SiNo v={values.eudr_mitigation_effective} si="Sí, efectiva" no="No suficiente" /></div>
             {values.eudr_mitigation_responsible && <div>Responsable de la determinación: {values.eudr_mitigation_responsible}</div>}
+            </div>
           </div>
         )}
       </div>
@@ -726,7 +753,13 @@ export function FincaEudrEditor({
                 <input type="checkbox" name={`chequeo_remove_${f.assetId}`} /> quitar {fileUrls[f.assetId] ? <a href={fileUrls[f.assetId]} target="_blank" rel="noopener noreferrer">{f.fileName}</a> : f.fileName}
               </label>
             ))}
-            <input type="file" name="chequeo_file_nuevo" accept=".pdf,image/*" style={{ marginTop: 6 }} />
+            {/* V5.119 (owner): «Adjuntar evidencia» — hasta cuatro archivos en total. */}
+            {Array.from({ length: Math.max(0, MAX_CHEQUEO_FILES - (values.eudr_chequeo_files ?? []).length) }, (_, k) => (
+              <label key={k} style={{ display: "block", fontSize: 12.5, fontWeight: 400, marginTop: 6 }}>
+                Adjuntar evidencia {k + 1} <input type="file" name={`chequeo_file_nuevo${k + 1}`} accept=".pdf,image/*" />
+              </label>
+            ))}
+            <p className={styles.meta} style={{ margin: "4px 0 0" }}>Hasta {MAX_CHEQUEO_FILES} archivos de evidencia (≤ 5 MB cada uno): capturas de Global Forest Watch, IDEAM, EU Observatory…</p>
           </div>
 
           <div className={styles.field}>
@@ -942,7 +975,7 @@ export function FincaEudrEditor({
       </form>
       {/* F1: los certificados viven FUERA del form de la Visa — su verificación
           es una acción propia (setFincaCertVerified), no parte del guardado. */}
-      {subTab === "certs" && <FincaCertsPanel certificates={certificates} />}
+      {subTab === "certs" && <FincaCertsPanel certificates={certificates} producerId={producerId} />}
     </div>
   );
 }
@@ -959,9 +992,31 @@ const TONO_ESTADO: Record<EstadoCertificacion, string> = {
   corroborada: "var(--green, #2E7D52)",
   retirada: "var(--red)",
 };
-function FincaCertsPanel({ certificates }: { certificates: BcpCert[] }) {
+// V5.119 (owner): al corroborar, CTC puede adjuntar UN archivo por certificación (la captura del registro público, el certificado
+// contrastado). Sube directo al Storage (como todo adjunto) y viaja a la acción como assetId + nombre.
+function FincaCertsPanel({ certificates, producerId }: { certificates: BcpCert[]; producerId: string }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [supabase] = useState(() => createClient());
+  const [archivos, setArchivos] = useState<Record<string, File | null>>({});
+  async function corroborarCon(certId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+    const file = archivos[certId] ?? null;
+    const fd = new FormData();
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) return { ok: false, error: `El archivo "${file.name}" supera 5 MB.` };
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return { ok: false, error: "Sesión expirada; vuelva a iniciar sesión." };
+      const subida = await uploadKaffetalMediaWithProgress(supabase, producerId, `cert-corroboracion/${certId}`, file, undefined, user.id);
+      if ("error" in subida) return { ok: false, error: `No se pudo subir "${file.name}": ${subida.error}` };
+      fd.set("asset_id", subida.assetId);
+      fd.set("file_name", file.name);
+    }
+    const r = await corroborarCertificado(certId, fd);
+    if (r.ok) setArchivos((prev) => ({ ...prev, [certId]: null }));
+    return r;
+  }
   const [abierto, setAbierto] = useState<{ id: string; que: "evidencia" | "retirar" } | null>(null);
   const [texto, setTexto] = useState("");
   if (!certificates.length) {
@@ -997,9 +1052,14 @@ function FincaCertsPanel({ certificates }: { certificates: BcpCert[] }) {
               {lapsed && <span style={{ fontSize: 11.5, color: "var(--red)", fontWeight: 700 }}>vencido {c.validTo}</span>}
               <span style={{ flex: 1 }} />
               {estado !== "corroborada" && estado !== "retirada" && (
-                <button type="button" className="btn btn-sm btn-solid" disabled={pending} onClick={() => corre(() => corroborarCertificado(c.id))}>
-                  Corroborar
-                </button>
+                <>
+                  <label style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11.5, fontWeight: 400 }} title="Un archivo que respalde la corroboración (opcional, ≤ 5 MB)">
+                    <input type="file" accept=".pdf,image/*" style={{ fontSize: 11 }} onChange={(e) => setArchivos((prev) => ({ ...prev, [c.id]: e.target.files?.[0] ?? null }))} />
+                  </label>
+                  <button type="button" className="btn btn-sm btn-solid" disabled={pending} onClick={() => corre(() => corroborarCon(c.id))}>
+                    {archivos[c.id] ? "Corroborar con el archivo" : "Corroborar"}
+                  </button>
+                </>
               )}
               {estado === "declarada" && (
                 <button type="button" className="btn btn-sm" disabled={pending} onClick={() => setAbierto(abierto?.id === c.id && abierto.que === "evidencia" ? null : { id: c.id, que: "evidencia" })}>
@@ -1044,6 +1104,11 @@ function FincaCertsPanel({ certificates }: { certificates: BcpCert[] }) {
             <div className={styles.meta} style={{ lineHeight: 1.8, marginTop: 4 }}>
               <div>N.º: {c.certNumber || "sin número"} · Vigencia: {hasValidity ? `${c.validFrom} → ${c.validTo}` : <b style={{ color: "#B45309" }}>sin registrar — no respalda claims</b>}</div>
               {c.holderNote && <div>Titular: {c.holderNote}</div>}
+              {(c.corroboracionFilename || c.corroboracionUrl) && (
+                <div>
+                  Corroboración de CTC: {c.corroboracionUrl ? <a href={c.corroboracionUrl} target="_blank" rel="noopener noreferrer">{c.corroboracionFilename ?? "ver"}</a> : c.corroboracionFilename}
+                </div>
+              )}
               <div>
                 Soporte: {c.supportUrl ? <a href={c.supportUrl} target="_blank" rel="noopener noreferrer">{c.supportFilename ?? "ver"}</a> : "no adjuntado"}
                 {reg && (

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrDeclaracion, parcelaGeoOk, parcelasGeoComplete, type FincaEudrFields } from "@/lib/eudr";
+import { countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrDeclaracion, MAX_CHEQUEO_FILES, parcelaGeoOk, parcelasGeoComplete, type FincaEudrFields } from "@/lib/eudr";
 import { deriveArchetype, composicionDeVariedades, deriveClaims, CUSTODY_MODEL, type ContributionInput } from "@/lib/lotComposition";
 import { deriveCertSchemes } from "@/components/kaffetal-regal/ficha/fichaData";
 import { lotInscriptionSettled } from "@/lib/arena/inscriptions";
@@ -680,7 +680,7 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
 
   const patch = {
     eudr_chequeo_notas: textOrNull(formData, "eudr_chequeo_notas"),
-    eudr_chequeo_files: [...chequeoExistentes, ...chequeoNuevos],
+    eudr_chequeo_files: [...chequeoExistentes, ...chequeoNuevos].slice(0, MAX_CHEQUEO_FILES), // V5.119: hasta cuatro
     // Área cultivada (ha): BCP puede completarla/corregirla en nombre del
     // productor -- es requisito para que la finca llegue a "Apta". "" -> null.
     hectares: formData.get("hectares") !== null && String(formData.get("hectares")).trim() !== "" ? Number(formData.get("hectares")) : null,

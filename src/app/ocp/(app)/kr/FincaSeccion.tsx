@@ -171,7 +171,7 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
       .order("position", { ascending: true }),
     service
       .from("finca_certificates")
-      .select("id, finca_id, scheme, cert_number, valid_from, valid_to, holder_note, support_asset_id, support_filename, verified_by_ctc, status, nota_ctc, evidencia_pedida_at, recordatorios, ultimo_recordatorio_at, retirada_at")
+      .select("id, finca_id, scheme, cert_number, valid_from, valid_to, holder_note, support_asset_id, support_filename, verified_by_ctc, status, nota_ctc, evidencia_pedida_at, recordatorios, ultimo_recordatorio_at, retirada_at, corroboracion_asset_id, corroboracion_filename")
       .in("finca_id", fincaRows.map((f) => f.id))
       .order("created_at", { ascending: true }),
   ]);
@@ -186,7 +186,7 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
     lotsByFinca.set(l.finca_id, [...(lotsByFinca.get(l.finca_id) ?? []), l]);
   }
   type BcpParcelaRow = { id: string; finca_id: string; name: string; area_ha: number | string | null; lat: number | string | null; lng: number | string | null; polygon_geojson: { lat: number; lng: number }[] | null; position: number };
-  type BcpCertRow = { id: string; finca_id: string; scheme: string; cert_number: string | null; valid_from: string | null; valid_to: string | null; holder_note: string | null; support_asset_id: string | null; support_filename: string | null; verified_by_ctc: boolean; status: BcpCert["status"]; nota_ctc: string | null; evidencia_pedida_at: string | null; recordatorios: number; ultimo_recordatorio_at: string | null; retirada_at: string | null };
+  type BcpCertRow = { id: string; finca_id: string; scheme: string; cert_number: string | null; valid_from: string | null; valid_to: string | null; holder_note: string | null; support_asset_id: string | null; support_filename: string | null; verified_by_ctc: boolean; status: BcpCert["status"]; nota_ctc: string | null; evidencia_pedida_at: string | null; recordatorios: number; ultimo_recordatorio_at: string | null; retirada_at: string | null; corroboracion_asset_id: string | null; corroboracion_filename: string | null };
   const parcelasByFinca = new Map<string, BcpParcelaRow[]>();
   for (const p of (parcelasRaw as BcpParcelaRow[] | null) ?? []) {
     parcelasByFinca.set(p.finca_id, [...(parcelasByFinca.get(p.finca_id) ?? []), p]);
@@ -199,7 +199,7 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
   // paralelo al primer lote de firmas, así que sus asset ids no estaban a mano.
   const certUrls = await signedKaffetalMediaUrls(
     service,
-    ((certsRaw as BcpCertRow[] | null) ?? []).map((c) => c.support_asset_id)
+    ((certsRaw as BcpCertRow[] | null) ?? []).flatMap((c) => [c.support_asset_id, c.corroboracion_asset_id])
   );
 
   const finca = fincaRows[0];
@@ -383,6 +383,8 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
                               recordatorios: c.recordatorios,
                               ultimoRecordatorioAt: c.ultimo_recordatorio_at,
                               retiradaAt: c.retirada_at,
+                              corroboracionUrl: c.corroboracion_asset_id ? certUrls.get(c.corroboracion_asset_id) ?? null : null,
+                              corroboracionFilename: c.corroboracion_filename,
                             }))}
                           />
                         }

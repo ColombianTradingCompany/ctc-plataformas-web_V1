@@ -19,6 +19,21 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.119] — 2026-10-01 (commit pendiente)
+
+- **Cambiado**: en **Productores, Fincas y Lotes**, la revisión EUDR de la finca se lee de un vistazo (owner, 2026-10-01). **Declaración**:
+  el área cultivada como barra contra la referencia de 4 ha (tope visual de 30 ha; más allá, la barra se corta y lo dice), la fecha de
+  establecimiento como línea de tiempo con la siembra, el corte EUDR (31/12/2020) y hoy, los Sí/No en verde o rojo según la buena
+  respuesta, y el documento de respaldo en rojo si falta. **Análisis y Evidencia**: la coordenada del predio (centro del polígono, o el
+  punto) con botón de copiar, y «Adjuntar evidencia» del chequeo contra bases EUDR oficiales hasta 4 archivos. **Atributos
+  Complementarios** y **Riesgo y Mitigación**: fichas verdes/rojas (la legislación no verificada en rojo; la infraestructura local con
+  las fichas del cuestionario del productor; las afirmaciones del producto al derecho). Piezas puras en `kr/EudrPiezas.tsx`.
+- **Añadido**: en **Certificaciones**, al corroborar CTC puede adjuntar **un archivo por certificación** (`finca_certificates.corroboracion_*`,
+  solo CTC por el guard; acta `docs/migraciones/2026-10-01_finca_certificates_corroboracion.sql`).
+- **Corregido**: el formulario del Pasaporte EUDR mandaba el archivo del chequeo como `File` por la Server Action (tope de 1 MB): ahora se
+  sube al Storage como los demás y solo viaja su id.
+- **Docs**: charter `consolas`, ALINEACION §3. `qa-visa` 41 → 49.
+
 ## [V5.118] — 2026-10-01 (commit 74ba262)
 
 - **Cambiado**: en **Solicitudes de Evaluación**, **toda la solicitud es un acordeón compacto** (owner, 2026-10-01): cerrada muestra

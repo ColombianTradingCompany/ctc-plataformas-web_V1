@@ -291,3 +291,9 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-10-01] V5.118 · Consolas — Solicitudes de Evaluación: toda la solicitud es un acordeón compacto
 - ANN `nominados/CircuitoVista.tsx` (`solicitudCard` = details/summary). Guardián: `qa-solicitud-evaluacion` +1.
 (commit: 74ba262)
+
+## [2026-10-01] V5.119 · Consolas — la revisión EUDR de la finca, intuitiva (barra de área, línea de tiempo, Sí/No, fichas, coordenada, evidencia ×4, corroboración con archivo)
+- ANN `kr/EudrPiezas.tsx` (nuevo), `kr/FincaEudrEditor.tsx`, `kr/FincaSeccion.tsx`, `src/lib/registro/certificados.ts`, `certificadosActions.ts`,
+  `src/lib/eudr.ts` (`MAX_CHEQUEO_FILES`). DICT `finca_certificates.corroboracion_asset_id/_filename` (acta 2026-10-01).
+- Guardián: `qa-visa` +8.
+(commit: pendiente)

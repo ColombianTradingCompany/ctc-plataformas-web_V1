@@ -24,10 +24,13 @@ export async function pedirEvidenciaCertificado(certId: string, formData: FormDa
   return r;
 }
 
-export async function corroborarCertificado(certId: string): Promise<ActionResult> {
+/** V5.119: `formData` trae, si CTC adjuntó uno, el archivo de corroboración ya subido (`asset_id` + `file_name`). */
+export async function corroborarCertificado(certId: string, formData?: FormData): Promise<ActionResult> {
   const permiso = await permisoDeEscritura("ocp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
-  const r = await corroborar(createServiceRoleClient(), certId, permiso.userId);
+  const assetId = String(formData?.get("asset_id") ?? "").trim();
+  const fileName = String(formData?.get("file_name") ?? "").trim();
+  const r = await corroborar(createServiceRoleClient(), certId, permiso.userId, assetId && fileName ? { assetId, fileName } : null);
   if (r.ok) despues();
   return r;
 }

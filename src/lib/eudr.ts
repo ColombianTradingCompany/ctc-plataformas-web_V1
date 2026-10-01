@@ -310,6 +310,9 @@ export function deriveChainComplexity(stages: string[] | null | undefined): "" |
 // factor marcado ("sí") es una circunstancia que diluye el origen o rompe la
 // trazabilidad del lote. Sin factores = bajo; 1-2 = medio; 3+ = alto. Como son
 // casillas (sin marcar = "no"), siempre resuelve a por lo menos "Bajo".
+/** V5.119 (owner): la evidencia del chequeo contra bases EUDR oficiales admite hasta CUATRO archivos. */
+export const MAX_CHEQUEO_FILES = 4;
+
 export const PRODUCT_RISK_QUESTIONS: [string, string][] = [
   ["mezcla", "El café se acopia o mezcla con café de otros orígenes o productores."],
   ["sin_id_lote", "La identidad del lote (finca de origen) no se conserva durante el proceso."],

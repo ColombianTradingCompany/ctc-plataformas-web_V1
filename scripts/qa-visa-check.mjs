@@ -216,6 +216,21 @@ const completa = (extra = {}) => ({
   check("una finca con un tipo viejo lo conserva y la pantalla lo dice", modal.includes("SUPPORT_DOC_LABEL[eudr.eudrSupportDocType]"));
 }
 
+// ── V5.119 (owner, 2026-10-01) · la revisión EUDR de la finca, intuitiva ──
+{
+  const piezas = lee("src/app/ocp/(app)/kr/EudrPiezas.tsx");
+  const editor = lee("src/app/ocp/(app)/kr/FincaEudrEditor.tsx");
+  check("la barra de área se mide contra 4 ha y se corta a 30", piezas.includes("EUDR_HA_REFERENCIA = 4") && piezas.includes("EUDR_HA_TOPE_VISUAL = 30") && piezas.includes("la barra se corta"));
+  check("la línea de tiempo marca la siembra, el corte EUDR (31/12/2020) y hoy", piezas.includes('EUDR_FECHA_CORTE = "2020-12-31"') && piezas.includes('label: "hoy"'));
+  check("Sí/No en verde o rojo según la buena respuesta; el documento en rojo si falta", piezas.includes("const bien = v === bienSi;") && piezas.includes("styles.badgeBad}`}>{vacio}"));
+  check("la lectura usa las piezas: área, fecha, Sí/No, documento, fichas, coordenada copiable", ["<BarraArea", "<LineaDeTiempo", "<SiNo", "<Documento", "<Fichas", "<Coordenada"].every((t) => editor.includes(t)));
+  check("las afirmaciones del producto se pintan al derecho y los indicios con «bien = No»", editor.includes("opciones={PRODUCT_RISK_AFFIRMATIONS}") && editor.includes("bienSi={false}"));
+  check("la evidencia del chequeo admite hasta 4 archivos (tope en la fuente y en la acción)", lee("src/lib/eudr.ts").includes("export const MAX_CHEQUEO_FILES = 4") && editor.includes("MAX_CHEQUEO_FILES - (values.eudr_chequeo_files ?? []).length") && lee("src/app/ocp/(app)/actions.ts").includes(".slice(0, MAX_CHEQUEO_FILES)"));
+  check("y el submit no manda Files del chequeo por la acción", editor.includes("/^(evidence|sustainability|chequeo)_file_/.test(k)) fd.delete(k)"));
+  const certs = lee("src/lib/registro/certificados.ts");
+  check("corroborar admite un archivo por certificación y el guard lo protege", certs.includes("corroboracion_asset_id: adjunto.assetId") && editor.includes("cert-corroboracion/${certId}") && lee("docs/migraciones/2026-10-01_finca_certificates_corroboracion.sql").includes("new.corroboracion_asset_id is distinct from old.corroboracion_asset_id"));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-visa: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("   " + f);

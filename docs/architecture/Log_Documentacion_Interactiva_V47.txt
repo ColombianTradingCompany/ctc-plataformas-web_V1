@@ -351,3 +351,10 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   `FincaSeccion.tsx`, `ocp/actions.ts` (`updateFincaEudr`: evidencia `areas_*`, notas por ítem; `valuesDiffer` por contenido).
   Guardián: `qa-visa` +9. Acta: `docs/migraciones/2026-10-01_fincas_chequeo_de_atributos.sql`.
 (commit: a50f41c)
+
+## [2026-10-01] V5.129 · Kaffetal Regal + Consolas — cuánto y dónde se paga la evaluación; el carril de pago es un dato del OCP
+- ADD `kaffetal-regal/panel/PagoDeEvaluacion.tsx` (`ComoFunciona`, `CuentaDeLaSolicitud`, `DondePagar`), `lib/arena/carrilServidor.ts`.
+- ANN `lib/arena/payment.ts` (`CarrilDePago`, clave `carril_de_pago_evaluacion` de `platform_settings`; se retira `NEQUI`), `factura.ts`,
+  `producerActions.ts` (`carrilDePagoAction`), `panel/EvaluacionesTab.tsx`, `ocp/solicitudesActions.ts` (`guardarCarrilDePago`, emite),
+  `nominados/NominadosClient.tsx` (`CarrilDePagoForm`), `nominados/CircuitoVista.tsx`. Guardián: `qa-solicitud-evaluacion` +7.
+(commit: pendiente)

@@ -4,7 +4,7 @@ import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { formatCop, MAX_BATCH_LOTS, type ArenaInscription } from "@/lib/arena/inscriptions";
 import { toLabEvaluationList } from "@/lib/arena/labEvaluation";
 import { segmentPostulacion } from "@/lib/bcp/producerSegments";
-import { NEQUI, PAYMENT_EMAIL } from "@/lib/arena/payment";
+import { cargarCarrilDePago } from "@/lib/arena/carrilServidor";
 import type { FacturaData } from "@/lib/arena/factura";
 import { TIPO_LABEL, type TipoDeMuestra } from "@/lib/muestras/particion";
 import { descriptorLabel } from "@/lib/catacion/rueda";
@@ -15,6 +15,7 @@ import { estadoDeFinca, fichaHecha, PASOS_DE_LA_FICHA } from "@/lib/ocp/etapas";
 import { centrosConEvaluacion, createSondeoBatch } from "../nominadosActions";
 import {
   BatchPicker,
+  CarrilDePagoForm,
   CashbackControls,
   CerrarBacheButton,
   ConfirmarCentroControls,
@@ -91,6 +92,8 @@ const fecha = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleD
 export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
   const service = createServiceRoleClient();
 
+  // V5.129: el carril de pago (dónde paga el productor) es un dato del OCP; va en la factura y en Kaffetal Regal.
+  const carril = await cargarCarrilDePago(service);
   const [{ data: insRaw }, { data: batchesRaw }, { data: campaignsRaw }, { data: centrosRaw }] = await Promise.all([
     service
       .from("arena_inscriptions")
@@ -171,7 +174,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
           subvencionNombre: campaigns.find((c) => c.id === i.subvencion_id)?.name ?? null,
           totalCop: i.amount_due_cop,
           contraEntrega: i.pago_contra_entrega,
-          carril: { nequiNumber: NEQUI.number, nequiHolder: NEQUI.holder, email: PAYMENT_EMAIL },
+          carril,
         }
       : null;
 
@@ -325,6 +328,8 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
           entrega). Con el pago y la muestra confirmados el lote pasa solo a <Link href="/ocp/a-evaluar">Lotes a Evaluar</Link>.{" "}
           <b>Embotelladas</b> lleva más de 5 días esperando.
         </p>
+        {/* V5.129 (owner): «debe ser más claro cuánto y dónde hay que pagar» — el DÓNDE se escribe aquí y lo ven el productor y la factura. */}
+        <CarrilDePagoForm carril={carril} />
         {board([
           { label: "Recién llegadas", count: recien.length, body: recien.map(solicitudCard) },
           { label: "Embotelladas", count: embotelladas.length, body: embotelladas.map(solicitudCard) },

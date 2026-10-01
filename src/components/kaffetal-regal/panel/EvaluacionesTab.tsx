@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { GRADES, ctcLotReference, ctcLotReferenceShort, type Finca, type Lot } from "../data";
 import { lotEudrStatus } from "@/lib/eudr";
 import { EVALUATION_FEE_COP, formatCop, dueFor } from "@/lib/arena/inscriptions";
 import { SUBVENCION_KR_PCT } from "@/lib/arena/subvencion";
-import { NEQUI, PAYMENT_EMAIL, nequiConfigured } from "@/lib/arena/payment";
+import { CARRIL_SIN_CONFIGURAR, carrilConfigurado, type CarrilDePago } from "@/lib/arena/payment";
 import { openFactura } from "@/lib/arena/factura";
-import { aplicarCodigoCampana, peekCampaignCodeAction, postularLote } from "@/lib/arena/producerActions";
+import { aplicarCodigoCampana, carrilDePagoAction, peekCampaignCodeAction, postularLote } from "@/lib/arena/producerActions";
+import { ComoFunciona, CuentaDeLaSolicitud, DondePagar } from "./PagoDeEvaluacion";
 import { openShipmentInstructions } from "../ficha/shipmentInstructionsPrint";
 import { useToast } from "@/components/Toast";
 import { CtcRef } from "./CtcRef";
@@ -61,23 +62,33 @@ export function EvaluacionesTab({
   const paymentsDue = lots.filter((l) => l.inscription && l.inscription.status === "pendiente" && l.inscription.phase === "postulacion" && l.inscription.facturaRef);
   const totalDueCop = paymentsDue.reduce((sum, l) => sum + (l.inscription?.amountDueCop ?? EVALUATION_FEE_COP), 0);
 
+  // V5.129 (owner, 2026-10-01): DÓNDE se paga es un dato que CTCx configura en el OCP (`payment.ts`); llega al abrir la pestaña.
+  const [carril, setCarril] = useState<CarrilDePago>(CARRIL_SIN_CONFIGURAR);
+  useEffect(() => {
+    let vivo = true;
+    carrilDePagoAction()
+      .then((c) => {
+        if (vivo) setCarril(c);
+      })
+      .catch(() => {});
+    return () => {
+      vivo = false;
+    };
+  }, []);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 12 }}>
       <section>
         <div className={styles.secHead}>
           <span className={styles.secTitle}>Solicitudes de Evaluación</span>
+          {/* V5.129: la factura que CTCx emite en el OCP aparece aquí; «Actualizar» la trae sin recargar la página. */}
+          <button type="button" className="btn btn-sm" onClick={onRefreshData} title="Vuelve a consultar sus solicitudes, facturas y pagos">
+            ↻ Actualizar
+          </button>
         </div>
         <div className={styles.secSub}>Lleve sus lotes registrados al siguiente nivel</div>
-        <div className={styles.alist} style={{ marginTop: 8 }}>
-          Registrar su finca y armar la ficha no cuesta nada. Cuando CTC declara un lote <b>Apto</b> (con su Visa EUDR
-          emitida), usted decide si <b>solicita su evaluación</b>: la tarifa es <b>{formatCop(EVALUATION_FEE_COP)}</b>{" "}
-          por lote y cubre el análisis físico, la catación por un <b>Q-Grader certificado</b>, el factor de rendimiento,
-          la certificación CTC y el feedback — <b>salga o no salga galardonado</b>. CTC corrobora su solicitud y le emite
-          la <b>factura de cobro</b>; con ella paga y envía su muestra de 2 kg <b>contra entrega</b> (el flete lo paga CTC).
-          Toda solicitud hecha desde aquí nace con una <b>subvención del {SUBVENCION_KR_PCT} %</b> (paga {formatCop(dueFor(SUBVENCION_KR_PCT))});
-          ¿tiene un <b>código de subvención</b> mayor? Aplíquelo al solicitar; si no, pida un descuento en la nota y CTC decidirá la
-          subvención al corroborar (por lo general del 60 %, hasta el 70 %).
-        </div>
+        {/* V5.129 (owner): cuánto cuesta y cómo va, de un vistazo — era un párrafo de ocho líneas. */}
+        <ComoFunciona />
         {solicitudes.length === 0 ? (
           <div className={styles.alist} style={{ marginTop: 10 }}>
             Aún no tiene lotes aptos por solicitar. Complete la ficha de un lote y CTC lo evaluará — al ser declarado
@@ -86,37 +97,27 @@ export function EvaluacionesTab({
         ) : (
           <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
             {solicitudes.map((l) => (
-              <SolicitudCard key={l.id} lot={l} productorNombre={productorNombre} onRefreshData={onRefreshData} onConfirmSampleShipped={onConfirmSampleShipped} onVerLotes={onVerLotes} />
+              <SolicitudCard key={l.id} lot={l} carril={carril} productorNombre={productorNombre} onRefreshData={onRefreshData} onConfirmSampleShipped={onConfirmSampleShipped} onVerLotes={onVerLotes} />
             ))}
           </div>
         )}
 
-        {/* Instrucciones de pago. Sin cuenta configurada NO se muestra un
-            número a medias: se manda al productor a escribirnos. */}
+        {/* V5.129: el total de las facturas emitidas y sin pagar, y DÓNDE pagarlo. Sin carril configurado NO se muestra un
+            número a medias: se manda al productor a escribirnos (regla de `payment.ts`). */}
         {paymentsDue.length > 0 && (
-          <div style={{ marginTop: 14, border: "1.5px solid var(--accent)", borderRadius: 10, padding: "14px 16px", background: "var(--card)" }}>
-            <span className={styles.k}>Cómo pagar · Nequi</span>
-            {nequiConfigured() ? (
-              <>
-                <div className={styles.alist} style={{ marginTop: 6 }}>
-                  Transfiera por <b>Nequi</b> al número <b style={{ fontSize: 16 }}>{NEQUI.number}</b>
-                  {NEQUI.holder && <> — a nombre de <b>{NEQUI.holder}</b></>}.
-                  <br />
-                  Total a pagar hoy: <b>{formatCop(totalDueCop)}</b>
-                  {paymentsDue.length > 1 && <> por {paymentsDue.length} lotes</>}.
-                </div>
-                <ol style={{ margin: "10px 0 0 18px", fontSize: 13, color: "var(--muted)", lineHeight: 1.8 }}>
-                  <li>Envíe el valor de su <b>factura de cobro</b> por Nequi al número de arriba.</li>
-                  <li>Escriba en el mensaje del pago la <b>referencia de su lote</b> (los 7 caracteres de la factura).</li>
-                  <li>Mándenos el comprobante a <b>{PAYMENT_EMAIL}</b> o por su hilo de &quot;Mensajes y Notificaciones&quot;.</li>
-                  <li>CTC confirma el pago y, con la muestra recibida, su lote pasa a «Lotes a Evaluar».</li>
-                </ol>
-              </>
-            ) : (
-              <div className={styles.alist} style={{ marginTop: 6 }}>
-                Escríbanos a <b>{PAYMENT_EMAIL}</b> y le indicamos cómo pagar su inscripción.
-              </div>
-            )}
+          <div style={{ marginTop: 14, border: "1.5px solid var(--accent)", borderRadius: 10, padding: "14px 16px", background: "var(--card)", display: "grid", gap: 8 }}>
+            <span className={styles.k}>Cómo pagar{carrilConfigurado(carril) ? ` · ${carril.medio}` : ""}</span>
+            <div style={{ fontSize: 15 }}>
+              Total a pagar hoy: <b style={{ fontSize: 20 }}>{formatCop(totalDueCop)}</b>
+              {paymentsDue.length > 1 && <> por {paymentsDue.length} facturas</>}
+            </div>
+            <DondePagar carril={carril} referencia={paymentsDue.map((l) => ctcLotReferenceShort(l.id)).join(" · ")} />
+            <ol style={{ margin: "2px 0 0 18px", fontSize: 13, color: "var(--muted)", lineHeight: 1.8 }}>
+              <li>Pague el <b>total de su factura de cobro</b> — una transferencia por factura.</li>
+              <li>Escriba en el mensaje del pago la <b>referencia de su lote</b>.</li>
+              <li>Mande el comprobante a <b>{carril.email}</b> o por su hilo de &quot;Mensajes y Notificaciones&quot;.</li>
+              <li>CTCx confirma el pago y, con la muestra recibida, su lote pasa a «Lotes a Evaluar».</li>
+            </ol>
           </div>
         )}
       </section>
@@ -191,12 +192,15 @@ function CardHead({ lot, onVerLotes }: { lot: Lot; onVerLotes?: () => void }) {
 // (Era «ArenaLotCard»; V5.17 la reescribe al vocabulario de la evaluación.)
 function SolicitudCard({
   lot,
+  carril,
   productorNombre,
   onRefreshData,
   onConfirmSampleShipped,
   onVerLotes,
 }: {
   lot: Lot;
+  /** V5.129: dónde se paga — lo configura CTCx en el OCP. */
+  carril: CarrilDePago;
   productorNombre: string;
   onRefreshData: () => void;
   onConfirmSampleShipped: (lotId: string) => void;
@@ -242,7 +246,7 @@ function SolicitudCard({
       subvencionPct: ins.discountPct,
       totalCop: ins.amountDueCop,
       contraEntrega: ins.pagoContraEntrega,
-      carril: { nequiNumber: NEQUI.number, nequiHolder: NEQUI.holder, email: PAYMENT_EMAIL },
+      carril,
     });
   }
 
@@ -313,27 +317,19 @@ function SolicitudCard({
           {ins.notaSolicitud && (
             <div style={{ fontSize: 12.5, color: "var(--muted)" }}>Su nota: «{ins.notaSolicitud}»</div>
           )}
-          <div style={{ fontSize: 13 }}>
-            {settled ? (
-              <span style={{ color: "var(--green)", fontWeight: 700 }}>
-                {ins.status === "exento" ? "✓ Evaluación sin costo para usted (la asume CTC)." : `✓ Factura pagada${ins.discountPct > 0 ? ` (subvención ${ins.discountPct}%)` : ""}.`}
-              </span>
-            ) : ins.facturaRef ? (
-              <>
-                Factura de cobro <b className="mono">{ins.facturaRef}</b>: <b>{formatCop(ins.amountDueCop)}</b>
-                {ins.discountPct > 0 && <span style={{ color: "var(--green)", fontWeight: 700 }}> · subvención {ins.discountPct}%</span>}
-                <span className="mono" style={{ fontSize: 11.5, color: "var(--muted)" }}> · referencia: {ctcLotReferenceShort(lot.id)}</span>{" "}
-                <button className="btn btn-sm" onClick={verFactura} style={{ marginLeft: 6 }}>
-                  Ver factura ↗
-                </button>
-              </>
-            ) : (
-              <span style={{ color: "var(--muted)" }}>
-                Solicitud recibida — CTC la corrobora y le emite su factura de cobro (tarifa {formatCop(ins.amountCop)}
-                {ins.discountPct > 0 ? `, con su subvención del ${ins.discountPct}%` : ""}).
-              </span>
-            )}
-          </div>
+          {/* V5.129 (owner): LA CUENTA del lote — tarifa − subvención = total — y el estado de la factura: sin emitir, emitida
+              (con su número y dónde pagar) o pagada. Lo que CTCx emite en el OCP se lee aquí. */}
+          <CuentaDeLaSolicitud
+            tarifaCop={ins.amountCop}
+            discountPct={ins.discountPct}
+            totalCop={ins.amountDueCop}
+            status={ins.status}
+            facturaRef={ins.facturaRef}
+            facturaEmitidaAt={ins.facturaEmitidaAt}
+            referencia={ctcLotReferenceShort(lot.id)}
+            carril={carril}
+            onVerFactura={verFactura}
+          />
           {/* Con un código de subvención (KRX-) ya aplicado, la caja desaparece:
               cada lote admite UN código y el descuento ya quedó puesto. */}
           {!settled && !ins.entryCode?.startsWith("KRX-") && (

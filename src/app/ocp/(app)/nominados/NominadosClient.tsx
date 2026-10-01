@@ -23,7 +23,8 @@ import {
   removeFromBatch,
   unsettleInscription,
 } from "../nominadosActions";
-import { decidirSubvencion, emitirFactura, recibirMuestraAction } from "../solicitudesActions";
+import { decidirSubvencion, emitirFactura, guardarCarrilDePago, recibirMuestraAction } from "../solicitudesActions";
+import { carrilConfigurado, type CarrilDePago } from "@/lib/arena/payment";
 import { LabEvalEditor } from "@/components/bcp/LabEvalEditor";
 import { decidirPorPunto, rotuloDelPunto, type PuntoSca } from "@/lib/arena/homologacion";
 import { EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, computeSca, type LabEvaluation } from "@/lib/arena/labEvaluation";
@@ -127,6 +128,63 @@ export function EmitirFacturaButton({ lotId }: { lotId: string }) {
       </button>
       <ErrorLine error={error} />
     </span>
+  );
+}
+
+// V5.129 (owner, 2026-10-01): DÓNDE paga el productor. Hasta hoy era una constante vacía en el código y Kaffetal Regal decía
+// «escríbanos»; ahora CTCx lo escribe aquí y lo leen la tarjeta de la solicitud del productor y la factura imprimible.
+export function CarrilDePagoForm({ carril }: { carril: CarrilDePago }) {
+  const { pending, error, run } = useAction();
+  const listo = carrilConfigurado(carril);
+  return (
+    <details open={!listo} style={{ border: `1.5px solid ${listo ? "var(--line)" : "#92400E"}`, background: listo ? "transparent" : "#FEF3C7", borderRadius: 10, padding: "8px 12px", margin: "0 0 14px" }}>
+      <summary style={{ cursor: "pointer", fontSize: 13, fontWeight: 700 }}>
+        Medio de pago que ve el productor ·{" "}
+        {listo ? (
+          <span style={{ fontWeight: 500 }}>
+            {carril.medio} <span className="mono">{carril.numero}</span>
+            {carril.titular ? ` · ${carril.titular}` : ""}
+          </span>
+        ) : (
+          <span style={{ color: "#92400E" }}>SIN CONFIGURAR — hoy el productor solo lee «escríbanos y le confirmamos el medio de pago»</span>
+        )}
+      </summary>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const fd = new FormData(e.currentTarget);
+          run(() => guardarCarrilDePago(fd));
+        }}
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 8, marginTop: 10, alignItems: "end" }}
+      >
+        <div className={styles.field}>
+          <label>Medio</label>
+          <input name="medio" defaultValue={carril.medio} placeholder="Nequi · Bancolombia ahorros · Daviplata" maxLength={60} required />
+        </div>
+        <div className={styles.field}>
+          <label>Número (celular o cuenta)</label>
+          <input name="numero" defaultValue={carril.numero} placeholder="300 123 4567" maxLength={40} />
+        </div>
+        <div className={styles.field}>
+          <label>A nombre de</label>
+          <input name="titular" defaultValue={carril.titular} placeholder="Colombian Trading Company S.A.S." maxLength={120} />
+        </div>
+        <div className={styles.field}>
+          <label>Indicaciones (opcional)</label>
+          <input name="instrucciones" defaultValue={carril.instrucciones} placeholder="NIT, tipo de cuenta, llave…" maxLength={300} />
+        </div>
+        <div>
+          <button className="btn btn-sm btn-solid" disabled={pending}>
+            {pending ? "Guardando…" : "Guardar medio de pago"}
+          </button>
+        </div>
+      </form>
+      <p className={styles.meta} style={{ margin: "8px 0 0" }}>
+        Aparece en la tarjeta de la solicitud en Kaffetal Regal (cuando la factura está emitida) y en la factura de cobro imprimible. Con el número vacío,
+        las dos dicen «escríbanos a {carril.email}».
+      </p>
+      <ErrorLine error={error} />
+    </details>
   );
 }
 

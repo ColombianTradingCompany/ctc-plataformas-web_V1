@@ -7,6 +7,7 @@ import { formatCop, dueFor } from "@/lib/arena/inscriptions";
 import { insertEntryCode } from "@/lib/arena/entryCodes";
 import { recibirMuestra } from "@/lib/muestras/recibo";
 import { PAGO_CONTRA_ENTREGA } from "@/lib/trato/terminos";
+import { CLAVE_CARRIL_DE_PAGO, leerCarrilDePago } from "@/lib/arena/payment";
 
 // ── OCP · Catálogo · Solicitudes de Evaluación (fase 3 del PLAN_CIRCUITO_DEL_LOTE, V5.80) ─────
 // Folio 7, pasos 7–10: el productor SOLICITA la evaluación (y puede pedir un descuento por nota); CTCx
@@ -183,5 +184,28 @@ export async function recibirMuestraAction(lotId: string, formData: FormData): P
   if (!res.ok) return res;
   revalidar();
   revalidatePath("/bcp");
+  return { ok: true };
+}
+
+/** V5.129 (owner): DÓNDE paga el productor la evaluación — el carril que leen Kaffetal Regal y la factura de cobro.
+ *  Un dato de `platform_settings` (clave `CLAVE_CARRIL_DE_PAGO`); con el número vacío las dos caras dicen «escríbanos». */
+export async function guardarCarrilDePago(formData: FormData): Promise<Result> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const service = createServiceRoleClient();
+  const carril = leerCarrilDePago({
+    medio: String(formData.get("medio") ?? ""),
+    numero: String(formData.get("numero") ?? ""),
+    titular: String(formData.get("titular") ?? ""),
+    instrucciones: String(formData.get("instrucciones") ?? ""),
+  });
+  const valor = { medio: carril.medio, numero: carril.numero, titular: carril.titular, instrucciones: carril.instrucciones };
+  const { error } = await service
+    .from("platform_settings")
+    .upsert({ key: CLAVE_CARRIL_DE_PAGO, value: valor, updated_at: new Date().toISOString(), updated_by: permiso.userId }, { onConflict: "key" });
+  if (error) return { ok: false, error: "No se pudo guardar el medio de pago: " + error.message };
+  // Sin fila en `audit_log` (su `entity_id` es un uuid obligatorio y esto no es una entidad): el quien y el cuando quedan en
+  // `platform_settings.updated_by` / `updated_at`.
+  revalidar();
   return { ok: true };
 }

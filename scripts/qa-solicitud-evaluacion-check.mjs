@@ -105,7 +105,7 @@ const plan = lee("docs/PLAN_CIRCUITO_DEL_LOTE.md");
   const factura = lee("src/lib/arena/factura.ts");
   check("la factura lleva la línea legal de CTC", factura.includes("CTC_LEGAL_LINE"));
   check("y dice que no sustituye a la factura electrónica", factura.includes("no sustituye a una factura electrónica"));
-  check("el carril de pago viene de los datos, no está escrito aquí", factura.includes("d.carril.nequiNumber") && !/\d{3} \d{3} \d{4}/.test(factura));
+  check("el carril de pago viene de los datos, no está escrito aquí", factura.includes("d.carril.numero") && !factura.includes("nequiNumber") && !/\d{3} \d{3} \d{4}/.test(factura));
   check("sin número de Nequi la factura manda a escribir a CTC", factura.includes("Escríbanos a"));
   const vista = lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx");
   const evalTab = lee("src/components/kaffetal-regal/panel/EvaluacionesTab.tsx");
@@ -119,7 +119,7 @@ const plan = lee("docs/PLAN_CIRCUITO_DEL_LOTE.md");
   check("postularLote acepta la nota del descuento (paso 7)", acciones.includes("notaSolicitud?: string") && acciones.includes("nota_solicitud:"));
   const evalTab = lee("src/components/kaffetal-regal/panel/EvaluacionesTab.tsx");
   check("el productor tiene dónde pedir el descuento", /<textarea[\s\S]{0,300}descuento/.test(evalTab) && evalTab.includes("nota.trim() || undefined"));
-  check("y ve su factura con el total", evalTab.includes("Factura de cobro") && evalTab.includes("ins.facturaRef"));
+  check("y ve su factura con el total", evalTab.includes("facturaRef={ins.facturaRef}") && evalTab.includes("totalCop={ins.amountDueCop}") && lee("src/components/kaffetal-regal/panel/PagoDeEvaluacion.tsx").includes("FACTURA EMITIDA")); // V5.129: la cuenta vive en PagoDeEvaluacion.tsx
   check("el envío dice contra entrega", evalTab.includes("contra entrega"));
   check("«Evaluaciones en Fila» ya no habla de laboratorio", !/laboratorio/.test(evalTab));
   const exp = lee("src/components/kaffetal-regal/KaffetalExperience.tsx");
@@ -185,6 +185,23 @@ const plan = lee("docs/PLAN_CIRCUITO_DEL_LOTE.md");
   check("el aviso separa «lo que ya está» de «lo que sigue», y la Visa según el Pasaporte de la finca", aviso.includes("Lo que ya está") && aviso.includes("Lo que sigue, solo si quiere que CTC evalúe") && aviso.includes('visa === "lista"') && lee("src/components/kaffetal-regal/FichaView.tsx").includes('visa={lotIsEudrReady ? "lista" : "pendiente_finca"}'));
   check("las cifras del aviso salen de la fuente (tarifa, subvención KR y máxima), no tecleadas", aviso.includes("formatCop(ARENA_FEE_COP)") && aviso.includes("dueFor(SUBVENCION_KR_PCT)") && aviso.includes("dueFor(SUBVENCION_MAX_PCT)") && !/\$\s?\d{2,3}\.\d{3}/.test(aviso));
   check("y dice contra entrega, 2 kg y que enviar la muestra no es obligatorio", aviso.includes("contra entrega") && aviso.includes("2 kg de café pergamino seco") && aviso.includes("no lo compromete a nada más"));
+}
+
+// ── V5.129 (owner, 2026-10-01) · cuánto y dónde se paga, y la factura emitida a la vista en Kaffetal Regal ──
+{
+  const pago = lee("src/lib/arena/payment.ts");
+  const piezas = lee("src/components/kaffetal-regal/panel/PagoDeEvaluacion.tsx");
+  const tab = lee("src/components/kaffetal-regal/panel/EvaluacionesTab.tsx");
+  const acciones = lee("src/app/ocp/(app)/solicitudesActions.ts");
+  const cliente = lee("src/app/ocp/(app)/nominados/NominadosClient.tsx");
+  const vistaOcp = lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx");
+  check("el carril de pago es un dato (platform_settings), no una constante vacía en el código", pago.includes('CLAVE_CARRIL_DE_PAGO = "carril_de_pago_evaluacion"') && !pago.includes("export const NEQUI") && !/numero: "\d/.test(pago));
+  check("CTCx lo escribe en Solicitudes de Evaluación (acción de clase emite)", acciones.includes("export async function guardarCarrilDePago") && /guardarCarrilDePago[\s\S]{0,160}permisoDeEscritura\("ocp", "emite"\)/.test(acciones) && cliente.includes("export function CarrilDePagoForm") && vistaOcp.includes("<CarrilDePagoForm carril={carril} />"));
+  check("el productor lo recibe por una acción con sesión de productor", /carrilDePagoAction[\s\S]{0,200}requireProducer\(\)/.test(lee("src/lib/arena/producerActions.ts")) && tab.includes("carrilDePagoAction()"));
+  check("la tarjeta trae LA CUENTA: tarifa − subvención = total", piezas.includes("Tarifa de evaluación") && piezas.includes("Subvención ${discountPct} %") && piezas.includes('"Total a pagar"') && tab.includes("<CuentaDeLaSolicitud"));
+  check("sin factura dice «todavía no pague»; con factura, FACTURA EMITIDA con su número, «Ver factura» y dónde pagar", piezas.includes("Todavía no pague.") && piezas.includes("FACTURA EMITIDA") && piezas.includes("Ver factura ↗") && piezas.includes("<DondePagar carril={carril} referencia={referencia} />"));
+  check("sin carril configurado nunca hay un número a medias: manda a escribir a CTCx", /if \(!carrilConfigurado\(carril\)\)[\s\S]{0,260}escríbanos a/.test(piezas));
+  check("los pasos y las cifras reemplazan el párrafo largo; hay «Actualizar»", tab.includes("<ComoFunciona />") && !tab.includes("Registrar su finca y armar la ficha no cuesta nada. Cuando CTC declara") && tab.includes("↻ Actualizar"));
 }
 
 if (fallos.length) {

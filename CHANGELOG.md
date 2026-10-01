@@ -19,6 +19,18 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.129] — 2026-10-01 (commit pendiente)
+
+- **Cambiado**: en Kaffetal Regal, «Solicitudes de Evaluación» dice **cuánto y dónde se paga** (owner, 2026-10-01). El párrafo de
+  ocho líneas pasa a tres cifras (tarifa · con la subvención del 30 % · con código o descuento) y cuatro pasos. Cada solicitud
+  trae **su cuenta**: tarifa − subvención = **total a pagar**.
+- **Cambiado**: la **factura que CTCx emite en el OCP se ve en la tarjeta**: «FACTURA EMITIDA», su número, la fecha, «Ver factura» y
+  dónde pagar con la referencia del lote. Antes de emitirse, la tarjeta dice «Todavía no pague». Botón «↻ Actualizar».
+- **Añadido**: el **medio de pago es un dato del OCP** («Medio de pago que ve el productor», en Solicitudes de Evaluación): medio,
+  número, titular e indicaciones. Hasta hoy era una constante vacía en el código y el productor solo leía «escríbanos». Lo leen la
+  tarjeta del productor y la factura imprimible; sin número, las dos siguen mandando a escribir a CTCx.
+- **Docs**: charter `kaffetal-regal`, ALINEACION §3. `qa-solicitud-evaluacion` 86 → 93.
+
 ## [V5.128] — 2026-10-01 (commit a50f41c)
 
 - **Añadido**: en Kaffetal Regal, pestaña 3 de la finca, el bloque **«Chequeos que hace CTCx»** (owner, 2026-10-01): el productor

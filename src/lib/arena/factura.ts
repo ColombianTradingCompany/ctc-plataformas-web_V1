@@ -6,12 +6,13 @@
 // `sondeoRequestPrint.ts` y `shipmentInstructionsPrint.ts`.
 //
 // NO es una factura electrónica DIAN: es la cuenta de cobro con la que CTC pide el pago de un servicio. El carril
-// es Nequi mientras no exista «Plataformas de Pagos» (su brief); si el número no está configurado, la factura lo
+// es el que CTCx configura en el OCP (V5.129) mientras no exista «Plataformas de Pagos»; si no está configurado, la factura lo
 // dice y manda a escribir a CTC — nunca un número a medias (regla de `payment.ts`).
 
 import { CTC_LEGAL_LINE } from "@/lib/legal";
 import { formatCop } from "@/lib/arena/inscriptions";
 import { MUESTRA_EVALUACION_KG, TERMINOS_VERSION } from "@/lib/trato/terminos";
+import type { CarrilDePago } from "@/lib/arena/payment";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -28,14 +29,16 @@ export type FacturaData = {
   subvencionNombre?: string | null;
   totalCop: number;
   contraEntrega: boolean;
-  carril: { nequiNumber: string; nequiHolder: string; email: string };
+  /** V5.129: el carril que CTCx configuró en el OCP (`payment.ts`) — antes, las constantes vacías de Nequi. */
+  carril: CarrilDePago;
 };
 
 export function facturaHtml(d: FacturaData): string {
   const fecha = new Date(d.emitidaAt).toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
-  const nequi = d.carril.nequiNumber.trim();
-  const carril = nequi
-    ? `<p>Transfiera por <b>Nequi</b> al número <b class="mono">${esc(nequi)}</b>${d.carril.nequiHolder ? ` — a nombre de <b>${esc(d.carril.nequiHolder)}</b>` : ""}.
+  const numero = d.carril.numero.trim();
+  const carril = numero
+    ? `<p>Transfiera por <b>${esc(d.carril.medio)}</b> al número <b class="mono">${esc(numero)}</b>${d.carril.titular ? ` — a nombre de <b>${esc(d.carril.titular)}</b>` : ""}.
+       ${d.carril.instrucciones ? `${esc(d.carril.instrucciones)}<br>` : ""}
        Escriba en el mensaje del pago la referencia <b class="mono">${esc(d.codigoLote)}</b> y envíe el comprobante a <b>${esc(d.carril.email)}</b>.</p>`
     : `<p>Escríbanos a <b>${esc(d.carril.email)}</b> indicando la referencia <b class="mono">${esc(d.codigoLote)}</b> y le confirmamos el medio de pago.</p>`;
   const subvencion = d.subvencionPct > 0

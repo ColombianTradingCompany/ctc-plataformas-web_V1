@@ -5,6 +5,8 @@ import { ARENA_FEE_COP, formatCop, dueFor } from "@/lib/arena/inscriptions";
 import { claimCampaignCode, insertEntryCode, peekCampaignCode } from "@/lib/arena/entryCodes";
 import { currentSeason, lotSeasonCount, MAX_SEASONS_PER_LOT } from "@/lib/arena/seasons";
 import { campanaPorDefecto } from "@/lib/arena/subvencionServidor";
+import { cargarCarrilDePago } from "@/lib/arena/carrilServidor";
+import { CARRIL_SIN_CONFIGURAR, type CarrilDePago } from "@/lib/arena/payment";
 
 // ── Postulación a la Kaffetal Regal Arena (lado productor) ──────────────────
 // arena_inscriptions y arena_entry_codes son service-role-only en escritura,
@@ -174,4 +176,12 @@ export async function aplicarCodigoCampana(lotId: string, rawCode: string): Prom
   });
 
   return { ok: true, entryCode: codeRow.code, discountPct: codeRow.discount_pct, dueCop: due };
+}
+
+/** V5.129 (owner): DÓNDE se paga la evaluación. Lo configura CTCx en el OCP (`platform_settings`, service-role-only), así que
+ *  el productor lo recibe por aquí. No es secreto, pero solo se le entrega a una cuenta de productor con sesión. */
+export async function carrilDePagoAction(): Promise<CarrilDePago> {
+  const quien = await requireProducer();
+  if ("error" in quien) return CARRIL_SIN_CONFIGURAR;
+  return cargarCarrilDePago(createServiceRoleClient());
 }

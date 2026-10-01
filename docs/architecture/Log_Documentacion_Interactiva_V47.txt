@@ -350,4 +350,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `FincaModal.tsx` (bloque fuera del fieldset), `KaffetalExperience.tsx` (`solicitarChequeosFinca`), `data.ts`, `FincaEudrEditor.tsx`,
   `FincaSeccion.tsx`, `ocp/actions.ts` (`updateFincaEudr`: evidencia `areas_*`, notas por ítem; `valuesDiffer` por contenido).
   Guardián: `qa-visa` +9. Acta: `docs/migraciones/2026-10-01_fincas_chequeo_de_atributos.sql`.
-(commit: pendiente)
+(commit: a50f41c)

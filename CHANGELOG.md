@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.128] — 2026-10-01 (commit pendiente)
+## [V5.128] — 2026-10-01 (commit a50f41c)
 
 - **Añadido**: en Kaffetal Regal, pestaña 3 de la finca, el bloque **«Chequeos que hace CTCx»** (owner, 2026-10-01): el productor
   **marca y solicita** el chequeo de las cinco áreas de legislación y de los cuatro ítems de sostenibilidad, con una **nota y una

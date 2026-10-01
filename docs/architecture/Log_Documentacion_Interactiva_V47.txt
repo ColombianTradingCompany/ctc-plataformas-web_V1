@@ -364,4 +364,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `components/bcp/LabEvalEditor.tsx` (reescrito: radar + puntaje, dos columnas, rueda, granulometría con barras, conmutador de idioma),
   `lib/arena/labEvaluation.ts` y `homologacion.ts` (`lang` opcional en los errores y en `rotuloDelPunto`; por defecto español),
   `socios/[partner]/panel/evaluacion/PlanillaCentro.tsx` (el idioma traduce también lo que rodea a la hoja). Guardián: `qa-centro-calidad` +10.
-(commit: pendiente)
+(commit: a279d4e)

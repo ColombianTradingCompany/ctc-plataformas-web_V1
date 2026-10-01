@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.130] — 2026-10-01 (commit pendiente)
+## [V5.130] — 2026-10-01 (commit a279d4e)
 
 - **Cambiado**: la **planilla de evaluación** (Centro de Calidad · «Registrar a mano» del OCP · apreciación de la Arena) se rehízo
   con las piezas de la **CTCx Datasheet Tool** (owner, 2026-10-01): abre con el **radar** vivo de los atributos de taza junto al

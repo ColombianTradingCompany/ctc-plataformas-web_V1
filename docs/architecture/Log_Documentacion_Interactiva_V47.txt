@@ -408,4 +408,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   los tres atributos por taza de 0 a 10 al 0,25; `labEvaluationHasData` genérica), `planillaI18n.ts`, `components/bcp/PlanillaPiezas.tsx`
   (radar desde 0, `Info`), `components/bcp/LabEvalEditor.tsx`, `public/tools/coffee-datasheet/…html` (núcleo: mismos dominios),
   `ocp/(app)/kr/page.tsx` + `BotonNuclear.tsx` (arriba, junto al título). Guardianes: `qa-centro-calidad` +17, `qa-borrado-nuclear` (ajustado).
-(commit: pendiente)
+(commit: 4b595bb)

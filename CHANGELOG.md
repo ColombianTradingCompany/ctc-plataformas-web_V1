@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.135] — 2026-10-01 (commit pendiente)
+## [V5.135] — 2026-10-01 (commit 4b595bb)
 
 - **Corregido**: el **botón de borrado nuclear no se veía** (owner). Estaba al final de la sección del lote, en mitad de una página
   larga; ahora va **arriba, junto al título** del lote o de la finca.

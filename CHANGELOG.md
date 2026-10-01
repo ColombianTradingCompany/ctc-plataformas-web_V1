@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.120] — 2026-10-01 (commit pendiente)
+## [V5.120] — 2026-10-01 (commit 02c224a)
 
 - **Cambiado**: en la **EVA del lote** (OCP · vista completa del lote), el mismo tratamiento visual de la finca (owner, 2026-10-01):
   las filas de FT y FT2 se leen como fichas en una grilla; B2 y B3 muestran el camino elegido («No lo sé» / «Tengo un reporte»), el

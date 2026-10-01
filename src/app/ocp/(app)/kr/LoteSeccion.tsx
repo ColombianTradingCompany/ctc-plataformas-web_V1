@@ -517,13 +517,14 @@ function LotCard({
 
   // V5.97: B4 son fotos (obligatorias desde la V5.64) y video; la checklist las revisa juntas.
   const videoLinks: FileLink[] = [
-    ...(ds.b4_files_foto ?? []).map((f) => ({ label: `Foto del lote — ${f.fileName}`, url: signedUrls.get(f.assetId) ?? null })),
+    ...(ds.b4_files_foto ?? []).map((f) => ({ label: `Foto del lote — ${f.fileName}`, url: signedUrls.get(f.assetId) ?? null, tipo: "foto" as const })),
     ...(lot.video_asset_id
-      ? [{ label: "Video principal del lote (B4)", url: signedUrls.get(lot.video_asset_id) ?? null }]
+      ? [{ label: "Video principal del lote (B4)", url: signedUrls.get(lot.video_asset_id) ?? null, tipo: "video" as const }]
       : []),
     ...(ds.extra_video_assets ?? []).map((v) => ({
       label: `Video adicional — ${v.fileName}`,
       url: signedUrls.get(v.assetId) ?? null,
+      tipo: "video" as const,
     })),
   ];
 

@@ -35,7 +35,8 @@ const CUSTODY_STAGES: [string, string][] = [
   ["finca", "Finca"], ["beneficio", "Beneficio"], ["secado", "Secado"],
   ["trilla", "Trilla"], ["almacenamiento", "Almacenamiento"], ["exportacion", "Exportación"],
 ];
-export type FileLink = { label: string; url: string | null };
+/** `tipo` (V5.126): las fotos y los videos del lote se enseñan como MINIATURAS en el bloque B4, no solo como enlaces. */
+export type FileLink = { label: string; url: string | null; tipo?: "foto" | "video" };
 
 /** Un certificado A3/A4 declarado, con su soporte EN LÍNEA, su registro público
  *  de verificación y el veredicto de BCP (Confirmado / No confirmado). */
@@ -542,6 +543,27 @@ export function EvaReviewCard({
                   </div>
                 );
               })()}
+              {/* V5.126 (owner, 2026-10-01): las miniaturas, allí mismo — las fotos se ven y los videos se reproducen sin salir de la
+                  checklist; tocar una foto la abre completa. Lo que no tiene URL firmada cae a la lista de abajo. */}
+              {videoLinks.some((f) => f.url && f.tipo) && (
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", margin: "6px 0 8px" }}>
+                  {videoLinks
+                    .filter((f) => f.url && f.tipo)
+                    .map((f, k) =>
+                      f.tipo === "foto" ? (
+                        <a key={k} href={f.url!} target="_blank" rel="noreferrer" title={`${f.label} · abrir completa`} style={{ display: "block" }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element -- URL firmada efímera; next/image no aporta aquí */}
+                          <img src={f.url!} alt={f.label} loading="lazy" style={{ width: 168, height: 126, objectFit: "cover", borderRadius: 10, border: "1.5px solid var(--line)", display: "block" }} />
+                        </a>
+                      ) : (
+                        <figure key={k} style={{ margin: 0 }}>
+                          <video src={f.url!} controls preload="metadata" style={{ width: 224, height: 126, borderRadius: 10, border: "1.5px solid var(--line)", background: "#000", display: "block" }} />
+                          <figcaption className={styles.meta} style={{ margin: "2px 0 0", fontSize: 11, maxWidth: 224, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.label}</figcaption>
+                        </figure>
+                      )
+                    )}
+                </div>
+              )}
               {fileList(videoLinks, "El productor todavía no sube las fotos del lote (dos como mínimo; el video es opcional).")}
             </>
           )}

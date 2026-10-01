@@ -182,6 +182,14 @@ check("y avanza la inscripción a la fila", acciones.includes("recibirMuestra(se
   check("junto a la Visa va cada finca de origen con su enlace", eva.includes("href={`/ocp/kr?finca=${f.id}`}") && eva.includes("Sin finca de origen"));
 }
 
+// ── V5.126 (owner, 2026-10-01) · miniaturas de fotos y videos en B4; «Usado por» de una campaña lleva al lote ──
+{
+  const eva = lee("src/app/ocp/(app)/kr/EvaReviewCard.tsx");
+  const lote = lee("src/app/ocp/(app)/kr/LoteSeccion.tsx");
+  check("B4 enseña las fotos como miniaturas (que abren la foto completa) y los videos reproducibles", eva.includes('f.tipo === "foto"') && eva.includes("<img src={f.url!}") && eva.includes("<video src={f.url!} controls") && lote.includes('tipo: "foto" as const') && lote.includes('tipo: "video" as const'));
+  check("el código de subvención usado enlaza al lote que lo usó", lee("src/app/ocp/(app)/subvenciones/campanas/[id]/page.tsx").includes("href={`/ocp/kr?lote=${lot.id}`}"));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-evaluaciones: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("   " + f);

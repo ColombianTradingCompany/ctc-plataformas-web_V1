@@ -124,7 +124,10 @@ export default async function CampanaDeSubvencionPage({ params }: { params: Prom
                   <span style={{ fontWeight: 700 }}>Usado por:</span>
                   {lot ? (
                     <>
-                      <span className="mono">Lote {ctcLotReferenceShort(lot.id)}</span>
+                      {/* V5.126 (owner): «Usado por» lleva al LOTE que lo usó, no solo a su productor. */}
+                      <Link href={`/ocp/kr?lote=${lot.id}`} className="mono" style={{ color: "var(--primary)", fontWeight: 700 }}>
+                        Lote {ctcLotReferenceShort(lot.id)} →
+                      </Link>
                       <span>· Finca {fincaNameOf(lot)}</span>
                       <span>·</span>
                       <Link href={`/ocp/kr?productor=${lot.producer_id}`} style={{ color: "var(--primary)", fontWeight: 700 }}>

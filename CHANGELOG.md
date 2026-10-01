@@ -19,6 +19,13 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.126] — 2026-10-01 (commit pendiente)
+
+- **Añadido**: en la EVA del lote, el bloque **Fotos y video (B4)** enseña las **miniaturas allí mismo** (owner, 2026-10-01): cada foto
+  como miniatura que abre la foto completa, y cada video reproducible en el sitio; lo que no tenga URL firmada sigue en la lista.
+- **Cambiado**: en **Campañas de Subvención**, «Usado por» enlaza al **lote** que usó el código (`/ocp/kr?lote=`), además del productor.
+- **Docs**: `qa-evaluaciones` 59 → 61.
+
 ## [V5.125] — 2026-10-01 (commit 77cd1e4)
 
 - **Corregido**: en la EVA del lote, el panel **EUDR** decía «Sin definir» / «Pendiente» con la finca completa (el owner lo vio en un

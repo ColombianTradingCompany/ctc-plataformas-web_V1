@@ -328,3 +328,8 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `kr/LoteSeccion.tsx` (`fincasDeOrigen`: finca_id + aportes, riesgo derivado), `kr/EvaReviewCard.tsx` (`EvaEudrFinca`; enlaces junto
   a la Visa; un bloque por finca). Guardián: `qa-evaluaciones` +3.
 (commit: 77cd1e4)
+
+## [2026-10-01] V5.126 · Consolas — EVA: miniaturas de fotos y videos en B4 · Campañas: «Usado por» enlaza al lote
+- ANN `kr/EvaReviewCard.tsx` (`FileLink.tipo`; miniaturas), `kr/LoteSeccion.tsx`, `subvenciones/campanas/[id]/page.tsx` (enlace al lote).
+  Guardián: `qa-evaluaciones` +2.
+(commit: pendiente)

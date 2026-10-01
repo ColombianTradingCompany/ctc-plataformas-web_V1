@@ -357,4 +357,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `lib/arena/payment.ts` (`CarrilDePago`, clave `carril_de_pago_evaluacion` de `platform_settings`; se retira `NEQUI`), `factura.ts`,
   `producerActions.ts` (`carrilDePagoAction`), `panel/EvaluacionesTab.tsx`, `ocp/solicitudesActions.ts` (`guardarCarrilDePago`, emite),
   `nominados/NominadosClient.tsx` (`CarrilDePagoForm`), `nominados/CircuitoVista.tsx`. Guardián: `qa-solicitud-evaluacion` +7.
-(commit: pendiente)
+(commit: 6218778)

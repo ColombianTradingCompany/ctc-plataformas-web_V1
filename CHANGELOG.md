@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.129] — 2026-10-01 (commit pendiente)
+## [V5.129] — 2026-10-01 (commit 6218778)
 
 - **Cambiado**: en Kaffetal Regal, «Solicitudes de Evaluación» dice **cuánto y dónde se paga** (owner, 2026-10-01). El párrafo de
   ocho líneas pasa a tres cifras (tarifa · con la subvención del 30 % · con código o descuento) y cuatro pasos. Cada solicitud

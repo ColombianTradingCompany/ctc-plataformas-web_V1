@@ -227,31 +227,39 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
     const factura = facturaDe(i);
     const recibida = Boolean(i.lot!.sample_2kg_confirmed_at);
     const subvencion = campaigns.find((c) => c.id === i.subvencion_id);
+    // V5.118 (owner, 2026-10-01): TODA la solicitud es un acordeón compacto. Cerrada: una línea (lote · productor · código ·
+    // fecha) y sus cuatro insignias. Abierta: la nota de descuento, la Ficha (su propio acordeón) y los cuatro pasos.
     return (
-      <div key={i.id} className={styles.card} style={{ flexDirection: "column", alignItems: "stretch" }}>
-        <b>{i.lot!.name}</b>
-        <p className={styles.meta}>
-          {name(i.producer_id)} · <span className="mono">{ctcLotReferenceShort(i.lot_id)}</span> · código <span className="mono">{i.entry_code ?? "—"}</span>
-          {` · solicitada ${fecha(i.postulated_at)}`}
-        </p>
+      <details key={i.id} className={styles.card} style={{ display: "block" }}>
+        <summary style={{ cursor: "pointer", listStyle: "none" }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
+            <span aria-hidden style={{ fontSize: 11, color: "var(--muted)" }}>▸</span>
+            <b>{i.lot!.name}</b>
+            <span className={styles.meta} style={{ margin: 0 }}>
+              {name(i.producer_id)} · <span className="mono">{ctcLotReferenceShort(i.lot_id)}</span> · código <span className="mono">{i.entry_code ?? "—"}</span>
+              {` · solicitada ${fecha(i.postulated_at)}`}
+            </span>
+          </div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
+            <span className={`${styles.badge} ${i.discount_pct > 0 ? styles.badgeGood : ""}`}>
+              {i.discount_pct > 0 ? `Subvención ${i.discount_pct} %${subvencion ? ` · ${subvencion.name}` : ""}` : "Sin subvención"}
+            </span>
+            <span className={`${styles.badge} ${factura ? styles.badgeGood : styles.badgeWarn}`}>{factura ? `Factura ${factura.ref}` : "Sin factura"}</span>
+            <span className={`${styles.badge} ${!pendiente ? styles.badgeGood : styles.badgeWarn}`}>
+              {!pendiente ? `Pago ✓ (${i.status})` : `Pago pendiente · ${formatCop(i.amount_due_cop)}`}
+            </span>
+            <span className={`${styles.badge} ${recibida ? styles.badgeGood : styles.badgeWarn}`}>
+              {recibida ? "Muestra ✓" : i.lot!.sample_shipped_at ? "Muestra enviada" : "Muestra sin enviar"}
+            </span>
+            {i.nota_solicitud && <span className={`${styles.badge} ${styles.badgeWarn}`}>Pide descuento</span>}
+          </div>
+        </summary>
         {i.nota_solicitud && (
-          <p style={{ margin: "2px 0 6px", padding: "6px 10px", borderLeft: "3px solid var(--accent)", background: "var(--paper)", fontSize: 12.5 }}>
+          <p style={{ margin: "10px 0 6px", padding: "6px 10px", borderLeft: "3px solid var(--accent)", background: "var(--paper)", fontSize: 12.5 }}>
             <b>Pide descuento:</b> «{i.nota_solicitud}»
           </p>
         )}
         {fichaDelLote(i.lot!)}
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
-          <span className={`${styles.badge} ${i.discount_pct > 0 ? styles.badgeGood : ""}`}>
-            {i.discount_pct > 0 ? `Subvención ${i.discount_pct} %${subvencion ? ` · ${subvencion.name}` : ""}` : "Sin subvención"}
-          </span>
-          <span className={`${styles.badge} ${factura ? styles.badgeGood : styles.badgeWarn}`}>{factura ? `Factura ${factura.ref}` : "Sin factura"}</span>
-          <span className={`${styles.badge} ${!pendiente ? styles.badgeGood : styles.badgeWarn}`}>
-            {!pendiente ? `Pago ✓ (${i.status})` : `Pago pendiente · ${formatCop(i.amount_due_cop)}`}
-          </span>
-          <span className={`${styles.badge} ${recibida ? styles.badgeGood : styles.badgeWarn}`}>
-            {recibida ? "Muestra ✓" : i.lot!.sample_shipped_at ? "Muestra enviada" : "Muestra sin enviar"}
-          </span>
-        </div>
 
         {pendiente && (
           <div style={{ marginTop: 8 }}>
@@ -280,7 +288,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
         ) : (
           <ReciboForm lotId={i.lot_id} shipped={Boolean(i.lot!.sample_shipped_at) || i.lot!.source === "bcp_manual_entry"} bodegas={bodegas} />
         )}
-      </div>
+      </details>
     );
   };
 

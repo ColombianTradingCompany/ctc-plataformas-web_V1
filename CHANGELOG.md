@@ -19,6 +19,12 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.118] — 2026-10-01 (commit pendiente)
+
+- **Cambiado**: en **Solicitudes de Evaluación**, **toda la solicitud es un acordeón compacto** (owner, 2026-10-01): cerrada muestra
+  una línea (lote · productor · código · fecha) con sus insignias (subvención, factura, pago, muestra, «Pide descuento»); abierta,
+  la nota de descuento, la Ficha del lote (su propio acordeón) y los cuatro pasos. `qa-solicitud-evaluacion` 85 → 86.
+
 ## [V5.117] — 2026-09-30 (commit 8de66d3)
 
 - **Añadido**: en Kaffetal Regal, la tarjeta del lote (carrusel y lista completa) tiene **«¿Qué sigue?»** cuando la Ficha está

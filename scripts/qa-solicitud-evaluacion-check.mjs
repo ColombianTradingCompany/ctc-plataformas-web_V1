@@ -166,6 +166,8 @@ const plan = lee("docs/PLAN_CIRCUITO_DEL_LOTE.md");
   check("las tres vistas salen de UN componente", vista.includes('"solicitudes" | "a-evaluar" | "en-evaluacion"'));
   check("la vista de solicitudes enseña la nota del productor", vista.includes("i.nota_solicitud"));
   // V5.117 (owner): la Ficha del lote se despliega en acordeón dentro de la solicitud, con lo reportado en B2/B3 y el enlace a la vista completa.
+  // V5.118 (owner): TODA la solicitud es un acordeón: cerrada, una línea con sus insignias; abierta, la nota, la Ficha y los cuatro pasos.
+  check("toda la solicitud es un acordeón compacto (details/summary con las insignias en la línea cerrada)", vista.includes("<details key={i.id} className={styles.card}") && /<summary[\s\S]*Sin subvención[\s\S]*Muestra sin enviar[\s\S]*<\/summary>/.test(vista) && vista.includes("</details>"));
   check("la solicitud trae la Ficha del lote (datasheet + finca) y la despliega en acordeón", vista.includes("datasheet, fincas(name, municipio, departamento, status, eudr_cert_shared)") && vista.includes("<details") && vista.includes("Ficha del lote · ") && vista.includes("{fichaDelLote(i.lot!)}") && vista.includes("Abrir la vista completa del lote"));
 }
 

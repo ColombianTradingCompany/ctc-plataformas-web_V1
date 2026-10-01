@@ -73,6 +73,10 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   «Borrar» de su pantalla de edición (y desde la tarjeta de «Mis Fincas»); nunca con `window.confirm`. La regla de qué se puede borrar
   sigue en `isLotCommitted` / `fincaSelfDeletable` (`data.ts`, espejo de las RLS `lots_delete_own_before_mue` y
   `fincas_delete_own_not_committed`); los DELETE piden `.select("id")` porque una RLS que filtra devuelve cero filas, no error.
+- **Una finca APROBADA no se edita: se REVISA** (owner, 2026-10-01, V5.124). El botón de la tarjeta dice «Revisar» y la página abre en
+  solo lectura (fieldset deshabilitado, sin autosave ni Guardar). Los cambios se piden con **«Solicitar revisión de datos»**: uno de los
+  cuatro puntos de la finca, una nota y un adjunto opcional (`producer_comm_log.seccion` / `adjunto_*`); se pueden mandar varias. CTCx
+  aplica el cambio desde el OCP, en nombre del productor.
 - **El documento de respaldo de la finca es SOLO el SICA** (owner, 2026-09-30, V5.114): sin selector de tipo; al subir el PDF,
   `eudr_support_doc_type` pasa a `sica`. Las fincas con un tipo viejo lo conservan y la pantalla lo dice. `qa-visa` lo vigila.
 - **Editar Y registrar una finca son una página completa** (`FincaView`, V5.102 · V5.112), como la Ficha del lote; desde «+ Agregar

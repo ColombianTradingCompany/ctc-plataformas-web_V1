@@ -226,7 +226,8 @@ const completa = (extra = {}) => ({
   check("la lectura usa las piezas: área, fecha, Sí/No, documento, fichas, coordenada copiable", ["<BarraArea", "<LineaDeTiempo", "<SiNo", "<Documento", "<Fichas", "<Coordenada"].every((t) => editor.includes(t)));
   check("las afirmaciones del producto se pintan al derecho y los indicios con «bien = No»", editor.includes("opciones={PRODUCT_RISK_AFFIRMATIONS}") && editor.includes("bienSi={false}"));
   check("la evidencia del chequeo admite hasta 4 archivos (tope en la fuente y en la acción)", lee("src/lib/eudr.ts").includes("export const MAX_CHEQUEO_FILES = 4") && editor.includes("MAX_CHEQUEO_FILES - (values.eudr_chequeo_files ?? []).length") && lee("src/app/ocp/(app)/actions.ts").includes(".slice(0, MAX_CHEQUEO_FILES)"));
-  check("y el submit no manda Files del chequeo por la acción", editor.includes("/^(evidence|sustainability|chequeo)_file_/.test(k)) fd.delete(k)"));
+  // V5.124: el grupo `legal` (el SICA que CTCx adjunta en nombre del productor) se suma a los que suben al Storage y no viajan por la acción.
+  check("y el submit no manda Files (chequeo, SICA…) por la acción", editor.includes("/^(evidence|sustainability|chequeo|legal)_file_/.test(k)) fd.delete(k)"));
   const certs = lee("src/lib/registro/certificados.ts");
   check("corroborar admite un archivo por certificación y el guard lo protege", certs.includes("corroboracion_asset_id: adjunto.assetId") && editor.includes("cert-corroboracion/${certId}") && lee("docs/migraciones/2026-10-01_finca_certificates_corroboracion.sql").includes("new.corroboracion_asset_id is distinct from old.corroboracion_asset_id"));
 }
@@ -253,6 +254,21 @@ const completa = (extra = {}) => ({
   const modal = lee("src/components/kaffetal-regal/FincaModal.tsx");
   const enOrden = (area, altura) => modal.indexOf(area) > 0 && modal.indexOf(area) < modal.indexOf(altura);
   check("en el cafetal, Área va antes que Altura; en los Totales, igual", enOrden("                Área en café (ha)\n", "                Altura (msnm)\n") && enOrden("Área en café de TODA la finca (ha)", "Altura de la finca (msnm)"));
+}
+
+// ── V5.124 (owner, 2026-10-01) · la finca aprobada se REVISA; la solicitud lleva punto, nota y adjunto; CTCx edita todo en su nombre ──
+{
+  const modal = lee("src/components/kaffetal-regal/FincaModal.tsx");
+  const solicitud = lee("src/components/kaffetal-regal/SolicitudRevisionModal.tsx");
+  const ke = lee("src/components/kaffetal-regal/KaffetalExperience.tsx");
+  const perfil = lee("src/components/kaffetal-regal/panel/PerfilTab.tsx");
+  check("la finca aprobada abre en solo lectura: «Revisar», fieldset deshabilitado, sin autosave ni Guardar", perfil.includes('f.status === "approved" ? "Revisar" : "Editar"') && modal.includes("<fieldset disabled={soloLectura}") && modal.includes("enabled: !!finca?.id && !soloLectura") && modal.includes("{!soloLectura && ("));
+  check("la solicitud elige uno de los 4 puntos, lleva nota y un adjunto, y se pueden mandar varias", ["general", "ubicacion", "eudr", "certs"].every((k) => solicitud.includes(`key: "${k}"`)) && solicitud.includes('type="file"') && solicitud.includes("Puede enviar otra") && ke.includes("adjunto_asset_id: extras?.adjunto?.assetId ?? null") && ke.includes("{ seccion: solicitud.seccion, adjunto }"));
+  const editor = lee("src/app/ocp/(app)/kr/FincaEudrEditor.tsx");
+  const acciones = lee("src/app/ocp/(app)/actions.ts");
+  check("el OCP edita en nombre del productor: generales, polígono, infraestructura y el SICA", ['name="finca_name"', 'name="eudr_polygon_text"', 'name="eudr_local_infra"', 'name="legal_file_doc"', 'name="en_nombre_del_productor"'].every((t) => editor.includes(t)));
+  check("la acción lo guarda, valida el polígono, fija el SICA y espeja la parcela 1", acciones.includes('patch.eudr_support_doc_type = "sica"') && acciones.includes("Un polígono necesita al menos 3 vértices") && acciones.includes('if (formData.get("en_nombre_del_productor"))') && acciones.includes('service.from("finca_parcelas").update(espejo)'));
+  check("y la Comunicación de la finca enseña el punto y el adjunto de la solicitud", lee("src/app/ocp/(app)/kr/FincaPanel.tsx").includes("Revisión de datos · {SECCION_LABEL[c.seccion] ?? c.seccion}") && lee("src/app/ocp/(app)/kr/FincaSeccion.tsx").includes("seccion, adjunto_asset_id, adjunto_filename"));
 }
 
 if (fallos.length) {

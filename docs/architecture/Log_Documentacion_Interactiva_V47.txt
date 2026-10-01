@@ -316,3 +316,10 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-10-01] V5.123 · Kaffetal Regal — cafetal y Totales en el mismo orden (Área · Altura)
 - ANN `FincaModal.tsx` (`CafetalEditor`: Área a la izquierda, Altura a la derecha). Guardián: `qa-visa` +1.
 (commit: a3207c3)
+
+## [2026-10-01] V5.124 · KR: la finca aprobada se revisa; la solicitud de revisión con punto, nota y adjunto · OCP: CTCx edita todo en nombre del productor
+- ANN `SolicitudRevisionModal.tsx` (4 puntos + adjunto), `FincaModal.tsx` (`soloLectura`), `KaffetalExperience.tsx` (`enviarRevisionFinca`),
+  `kr/FincaEudrEditor.tsx` (generales, polígono, infraestructura, SICA), `ocp/(app)/actions.ts` (`updateFincaEudr`: nombre del productor,
+  espejo de la parcela 1), `kr/FincaPanel.tsx` (Comunicación con punto y adjunto).
+- DICT `producer_comm_log.seccion/adjunto_asset_id/adjunto_filename` (acta 2026-10-01). Guardián: `qa-visa` +5.
+(commit: pendiente)

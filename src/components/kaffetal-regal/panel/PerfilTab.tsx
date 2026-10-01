@@ -141,7 +141,8 @@ export function PerfilTab({
           {f.depto} · {f.alt} msnm · {f.ha} ha
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          <button className="btn btn-sm" onClick={() => onOpenFincaModal(i)}>Editar</button>
+          {/* V5.124 (owner): una finca APROBADA no se edita — se revisa (solo lectura) y se pide la revisión de datos. */}
+          <button className="btn btn-sm" onClick={() => onOpenFincaModal(i)}>{f.status === "approved" ? "Revisar" : "Editar"}</button>
           {/* Deletable while CTC hasn't accepted the finca and no lot of it has
               entered the paid pipeline (fincaSelfDeletable mirrors the RLS
               policy). Otherwise CTC is relying on it, so the producer can only

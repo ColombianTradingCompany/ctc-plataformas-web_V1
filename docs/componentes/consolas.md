@@ -135,7 +135,9 @@ registrar ≠ confirmar, CVA, rueda; charter `socios`, guardián de `consolas` p
 cada cifra de `terminos.ts` contra el §0/§6 del plan; rechazo gratis; re-evaluación; «sin oferta»; los laterales del circuito) ·
 **`qa-pvc-precio.mjs`** (52, V5.82 — la escalera publicada grado por grado, `RANGOS` = `definicion.ts`, nadie lee `rango`, las
 ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-internas`) · **`qa-compras-check.mjs`** (96, V5.85 · mezclas V5.87 · Sample Kits V5.90 · composición V5.91 — lo disponible derivado y nunca negativo, `ctc_selection` desde `compras` sin Tyrian y con la finca anulada en SQL, el precio cita el PVC, la compra nace del pago de una oferta de compra en firme, el CRM sin escritor, el perfil único y la imagen por lote, la vitrina con el perfil, el circuito y la barra con la misma regla, decisión 7) · `qa-ofertas-check.mjs` (37). Los siete `qa-pvc-*`, `qa-grados`, `qa-definicion`,
-**`qa-visa-check.mjs`** desde la V5.119 vigila también la revisión EUDR intuitiva de la finca (barra de área contra 4 ha con tope de 30,
+**V5.124**: en la vista de la finca, CTCx edita TODO en nombre del productor (datos generales, polígono como texto, infraestructura,
+documento SICA; «Guardar en nombre del productor» sincroniza su respuesta; la parcela 1 se espeja) y la Comunicación enseña las
+solicitudes de revisión de datos con su punto y su adjunto. **`qa-visa-check.mjs`** desde la V5.119 vigila también la revisión EUDR intuitiva de la finca (barra de área contra 4 ha con tope de 30,
 línea de tiempo contra el corte EUDR, Sí/No en color, fichas, coordenada copiable, evidencia del chequeo ×4, archivo de corroboración por
 certificación). **`qa-inactividad-check.mjs`** (26, V5.103 — la regla pura del barrido de inactividad contra el código; el sello solo si el correo salió;
 la única rutina de borrado; el cron con tres barridos; las acciones del OCP con clase `emite`; las cuentas protegidas del owner en el acta).

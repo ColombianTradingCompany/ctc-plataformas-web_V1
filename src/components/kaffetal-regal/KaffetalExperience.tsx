@@ -22,7 +22,7 @@ import { FincaView } from "./FincaView";
 import type { CafetalUnoDraft } from "./FincaModal";
 import { ConfirmarBorradoModal, type BorradoPendiente } from "./ConfirmarBorradoModal";
 import { InfoView } from "./InfoView";
-import { SolicitudRevisionModal } from "./SolicitudRevisionModal";
+import { SolicitudRevisionModal, SECCIONES_DE_REVISION, type SolicitudDeRevision } from "./SolicitudRevisionModal";
 import {
   EMPTY_GI,
   GRADE_DB,
@@ -1202,7 +1202,11 @@ function Experience() {
   // "Ayuda" from a finca: the producer opens a help request that lands in BCP's
   // Registro de comunicación for that finca (author_role='producer'), and shows
   // up in their own "Retroalimentación y ayuda" feed too.
-  async function requestFincaHelp(finca: Finca, text: string): Promise<boolean> {
+  async function requestFincaHelp(
+    finca: Finca,
+    text: string,
+    extras?: { seccion?: string; adjunto?: { assetId: string; fileName: string } | null }
+  ): Promise<boolean> {
     if (!userId) return false;
     const body = text.trim();
     if (!body) return false;
@@ -1215,6 +1219,10 @@ function Experience() {
         context_label: `Finca ${finca.name}`,
         note: body,
         created_by: userId,
+        // V5.124: la solicitud de revisión dice de qué punto habla y puede llevar un adjunto.
+        seccion: extras?.seccion ?? null,
+        adjunto_asset_id: extras?.adjunto?.assetId ?? null,
+        adjunto_filename: extras?.adjunto?.fileName ?? null,
       })
       .select("id, context_label, finca_id, lot_id, note, created_at, author_role, parent_id")
       .single();
@@ -1302,13 +1310,25 @@ function Experience() {
   function requestFincaRevision(finca: Finca) {
     setRevisionFinca(finca);
   }
-  async function enviarRevisionFinca(finca: Finca, texto: string): Promise<boolean> {
-    const ok = await requestFincaHelp(
+  // V5.124 (owner): la solicitud lleva el PUNTO de la finca, la nota y, si lo hay, UN adjunto (sube al Storage del productor).
+  // El pop-up se queda abierto tras enviar: el productor puede mandar varias.
+  async function enviarRevisionFinca(finca: Finca, solicitud: SolicitudDeRevision): Promise<boolean> {
+    if (!userId) return false;
+    let adjunto: { assetId: string; fileName: string } | null = null;
+    if (solicitud.archivo) {
+      const subida = await uploadKaffetalMediaWithProgress(supabase, userId, `fincas/${finca.id}/revision`, solicitud.archivo);
+      if ("error" in subida) {
+        showToast(subida.error);
+        return false;
+      }
+      adjunto = { assetId: subida.assetId, fileName: solicitud.archivo.name };
+    }
+    const punto = SECCIONES_DE_REVISION.find((x) => x.key === solicitud.seccion)?.label ?? solicitud.seccion;
+    return requestFincaHelp(
       finca,
-      `Solicitud de revisión de datos — ${finca.name} (${finca.mun}, ${finca.depto})\n\n${texto.trim()}`
+      `Solicitud de revisión de datos — ${finca.name} · ${punto}\n\n${solicitud.texto.trim()}${adjunto ? `\n\nAdjunto: ${adjunto.fileName}` : ""}`,
+      { seccion: solicitud.seccion, adjunto }
     );
-    if (ok) setRevisionFinca(null);
-    return ok;
   }
 
   // Producer replies to a specific CTC note. The reply copies the parent's

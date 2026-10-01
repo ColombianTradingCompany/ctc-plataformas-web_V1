@@ -504,6 +504,9 @@ export function FincaEditorBody({
   // `guard_finca_protected_columns`): se enseña, no se edita, y los cambios van
   // por «Solicitar revisión de datos».
   const eudrLocked = finca?.status === "approved";
+  // V5.124 (owner, 2026-10-01): con la finca aprobada TODA la página es de solo lectura — «Revisar», no «Editar». El guard de la
+  // base ya congelaba las declaraciones; ahora la pantalla lo dice y no deja teclear nada que no se vaya a guardar.
+  const soloLectura = eudrLocked;
 
   async function guardarParcelaUno() {
     if (!parcelaUno || guardandoUno) return;
@@ -610,7 +613,7 @@ export function FincaEditorBody({
   // no hace falta el contador `rev` que espiaba los onInput de los campos con
   // ref, y el flush-al-desmontar guarda valores reales en vez de refs sueltas.
   const { status: autosaveStatus } = useAutosave({
-    enabled: !!finca?.id,
+    enabled: !!finca?.id && !soloLectura,
     snapshot: { name, vereda, mun, depto, hist, carac, ha, alt, eudr, certSchemeSummary, nombreUno, areaUno, alturaUno, mayor4haUno },
     save: () => save(false),
   });
@@ -658,7 +661,7 @@ export function FincaEditorBody({
   return (
     <>
       <h3 style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-        {finca ? `Editar finca · ${finca.name}` : "Registrar finca nueva"}
+        {finca ? `${soloLectura ? "Revisar" : "Editar"} finca · ${finca.name}` : "Registrar finca nueva"}
         <AutosaveChip status={autosaveStatus} />
       </h3>
       {finca && <p className="mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: -4 }}>{fincaCode(finca.id)}</p>}
@@ -698,7 +701,13 @@ export function FincaEditorBody({
         </button>
       </div>
 
-      <div>
+      {soloLectura && (
+        <p style={{ background: "#EEF3EA", border: "1px dashed var(--primary)", borderRadius: 8, padding: "9px 12px", margin: "8px 0", fontSize: 12.5, color: "var(--ink)" }}>
+          🔒 Esta finca ya tiene su Pasaporte: aquí puede <b>revisar</b> sus datos, pero no editarlos. Para corregir algo, vuelva al panel y use{" "}
+          <b>«Solicitar revisión de datos»</b> — CTC aplica el cambio.
+        </p>
+      )}
+      <fieldset disabled={soloLectura} style={{ border: "none", padding: 0, margin: 0, minWidth: 0 }}>
         {/* ── PANEL 1 · Información general ─────────────────────────────── */}
         <div style={{ display: tab === "general" ? undefined : "none" }}>
           <div className={styles.grid}>
@@ -1250,7 +1259,7 @@ export function FincaEditorBody({
             )}
           </div>
         </div>
-      </div>
+      </fieldset>
 
       {/* La botonera, PEGADA AL PIE DEL POP-UP (2026-08-20).
           Iba `position:fixed` en la esquina del VIEWPORT: flotaba por encima
@@ -1291,10 +1300,12 @@ export function FincaEditorBody({
             <span className={styles.fabLabel}>Ayuda</span>
           </button>
         )}
-        <button className={styles.fab} onClick={() => save()} disabled={saving} aria-label="Guardar finca">
-          <span className={styles.fabIcon} aria-hidden>💾</span>
-          <span className={styles.fabLabel}>{saving ? "Guardando…" : "Guardar Finca"}</span>
-        </button>
+        {!soloLectura && (
+          <button className={styles.fab} onClick={() => save()} disabled={saving} aria-label="Guardar finca">
+            <span className={styles.fabIcon} aria-hidden>💾</span>
+            <span className={styles.fabLabel}>{saving ? "Guardando…" : "Guardar Finca"}</span>
+          </button>
+        )}
       </div>
 
       {flash && (

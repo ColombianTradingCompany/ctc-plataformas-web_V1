@@ -19,6 +19,20 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.124] — 2026-10-01 (commit pendiente)
+
+- **Cambiado**: en Kaffetal Regal, **una finca aprobada ya no se edita: se revisa** (owner, 2026-10-01). El botón de la tarjeta dice
+  «Revisar» y la página abre en solo lectura (sin autosave ni «Guardar Finca»), con un aviso que remite a la solicitud de revisión.
+- **Cambiado**: **«Solicitar revisión de datos»** pide ahora uno de los **cuatro puntos** de la finca (Información general · Ubicación y
+  medidas · Cuestionario EUDR · Certificaciones), una **nota** y un **archivo adjunto** opcional (PDF o foto, 10 MB). El pop-up se queda
+  abierto tras enviar: el productor puede mandar varias.
+- **Añadido**: en el OCP, **CTCx edita toda la información de la finca en nombre del productor**: nombre, vereda, municipio,
+  departamento, altura, historia y características; el **polígono** (un vértice «lat, lng» por línea); la **infraestructura local**; y
+  **adjunta o reemplaza el SICA**. Con «Guardar en nombre del productor» (marcado por defecto) lo guardado queda también como la
+  respuesta del productor; la parcela 1 se espeja. La pestaña **Comunicación** de la finca enseña cada solicitud con su punto y su adjunto.
+- **Datos**: `producer_comm_log` gana `seccion`, `adjunto_asset_id`, `adjunto_filename` (acta `2026-10-01_comm_log_seccion_y_adjunto.sql`).
+- **Docs**: charters `kaffetal-regal` y `consolas`, ALINEACION §3. `qa-visa` 55 → 60.
+
 ## [V5.123] — 2026-10-01 (commit a3207c3)
 
 - **Cambiado**: en el editor de la finca (Kaffetal Regal · Ubicación y medidas), el bloque de cada cafetal pone **Área a la izquierda y

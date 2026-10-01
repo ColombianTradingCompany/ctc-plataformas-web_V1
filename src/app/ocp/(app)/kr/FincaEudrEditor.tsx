@@ -79,6 +79,14 @@ function ProducerAnswerNote({
 }
 
 export type FincaEudrValues = {
+  /** V5.124 (owner): CTCx edita también los datos GENERALES de la finca en nombre del productor. */
+  name: string;
+  vereda: string | null;
+  municipio: string | null;
+  departamento: string | null;
+  altitude_m: number | null;
+  history_text: string | null;
+  characteristics_text: string | null;
   hectares: string | number | null;
   eudr_lat: string | number | null;
   eudr_lng: string | number | null;
@@ -362,8 +370,9 @@ export function FincaEudrEditor({
       const form = formRef.current;
       if (!form || saving) return false;
       const fd = new FormData(form);
+      fd.delete("eudr_polygon_text"); // a medio escribir no es un polígono: solo viaja con Guardar
       for (const k of [...fd.keys()]) {
-        if (/^(evidence|sustainability|chequeo)_file_/.test(k)) fd.delete(k);
+        if (/^(evidence|sustainability|chequeo|legal)_file_/.test(k)) fd.delete(k);
       }
       await saveAction(fd);
       return true;
@@ -388,7 +397,7 @@ export function FincaEudrEditor({
     // "saved fine" locally and silently never arrived in production.
     const staged: { field: string; group: string; key: string; file: File }[] = [];
     for (const [k, v] of fd.entries()) {
-      const m = k.match(/^(evidence|sustainability|chequeo)_file_(.+)$/);
+      const m = k.match(/^(evidence|sustainability|chequeo|legal)_file_(.+)$/);
       if (!m || !(v instanceof File)) continue;
       if (v.size > 5 * 1024 * 1024) {
         setSaveError(`El archivo "${v.name}" supera 5 MB. Adjunte uno más liviano.`);
@@ -428,7 +437,7 @@ export function FincaEudrEditor({
       }
       // Never ship File payloads (even empty ones) through the action.
       for (const k of [...fd.keys()]) {
-        if (/^(evidence|sustainability|chequeo)_file_/.test(k)) fd.delete(k);
+        if (/^(evidence|sustainability|chequeo|legal)_file_/.test(k)) fd.delete(k);
       }
       await saveAction(fd);
       setEditing(false);
@@ -629,6 +638,42 @@ export function FincaEudrEditor({
           juntos al guardar sin importar en cuál pestaña esté parado BCP. */}
       <form onSubmit={handleSubmit} ref={formRef} onInput={bumpRev} onChange={bumpRev}>
         <div style={{ display: subTab === "declaracion" ? "block" : "none" }}>
+          {/* V5.124 (owner): «debo poder cambiar la info y adjuntar archivos en nombre del productor» — los datos generales de la
+              finca, que hasta hoy solo podía tocar el productor (y nadie, con la finca aprobada). */}
+          <p className={styles.meta} style={{ margin: "0 0 6px", fontWeight: 600 }}>Datos generales de la finca</p>
+          <div className={styles.formGrid}>
+            <div className={styles.field}>
+              <label>Nombre de la finca</label>
+              <input name="finca_name" defaultValue={values.name} />
+            </div>
+            <div className={styles.field}>
+              <label>Vereda</label>
+              <input name="vereda" defaultValue={values.vereda ?? ""} />
+            </div>
+            <div className={styles.field}>
+              <label>Municipio</label>
+              <input name="municipio" defaultValue={values.municipio ?? ""} />
+            </div>
+            <div className={styles.field}>
+              <label>Departamento</label>
+              <input name="departamento" defaultValue={values.departamento ?? ""} />
+            </div>
+            <div className={styles.field}>
+              <label>Altura (msnm)</label>
+              <input name="altitude_m" type="number" step="1" min="0" defaultValue={values.altitude_m ?? ""} placeholder="1680" />
+            </div>
+          </div>
+          <div className={styles.formGrid}>
+            <div className={styles.field}>
+              <label>Historia de la finca</label>
+              <textarea name="history_text" rows={3} defaultValue={values.history_text ?? ""} />
+            </div>
+            <div className={styles.field}>
+              <label>Características</label>
+              <textarea name="characteristics_text" rows={3} defaultValue={values.characteristics_text ?? ""} />
+            </div>
+          </div>
+          <p className={styles.meta} style={{ margin: "8px 0 6px", fontWeight: 600 }}>Declaración EUDR</p>
           <div className={styles.formGrid}>
             <div className={styles.field}>
               <label>Área cultivada en café (ha)</label>
@@ -717,6 +762,9 @@ export function FincaEudrEditor({
               ) : (
                 <p className={styles.meta} style={{ margin: 0 }}>El productor todavía no ha adjuntado ningún documento.</p>
               )}
+              {/* V5.124: CTCx adjunta (o reemplaza) el SICA en nombre del productor. */}
+              <input type="file" name="legal_file_doc" accept="application/pdf" style={{ marginTop: 6 }} />
+              <p className={styles.meta} style={{ margin: "4px 0 0" }}>Adjuntar o reemplazar el SICA en nombre del productor (PDF ≤ 5 MB).</p>
             </div>
           </div>
         </div>
@@ -739,6 +787,20 @@ export function FincaEudrEditor({
               </label>
               <input name="eudr_google_earth_url" type="url" defaultValue={values.eudr_google_earth_url ?? ""} placeholder="https://earth.google.com/..." />
             </div>
+          </div>
+          {/* V5.124: el polígono, editable por CTCx — un vértice «lat, lng» por línea (péguelo de Google Earth o del GeoJSON). */}
+          <div className={styles.field}>
+            <label>
+              Polígono del predio
+              <span style={{ fontWeight: 400, color: "var(--muted)" }}> (un vértice «lat, lng» por línea; mínimo 3 · vacío = sin polígono)</span>
+            </label>
+            <textarea
+              name="eudr_polygon_text"
+              rows={5}
+              defaultValue={(values.eudr_polygon_geojson ?? []).map((v) => `${v.lat}, ${v.lng}`).join("\n")}
+              placeholder={"6.482750, -73.234382\n6.483100, -73.233900\n6.482300, -73.233500"}
+              style={{ fontFamily: "var(--font-spline-mono), monospace", fontSize: 12.5 }}
+            />
           </div>
 
           {/* V5.78 · el chequeo contra bases EUDR oficiales: cuadro de texto + adjuntos (folio 7 del owner). */}
@@ -810,6 +872,18 @@ export function FincaEudrEditor({
             Registro de la revisión propia de CTC — enriquece el dossier de la Visa, pero <b>no bloquea</b> la
             aptitud EUDR ni la aprobación de la finca.
           </p>
+          {/* V5.124: la infraestructura local, editable por CTCx en nombre del productor (las mismas fichas del cuestionario). */}
+          <div className={styles.field}>
+            <label>Infraestructura local</label>
+            <input type="hidden" name="eudr_local_infra_presente" value="1" />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 6 }}>
+              {INFRA_DICT.map(([key, label]) => (
+                <label key={key} title={INFRA_TITULOS[key]} style={{ display: "inline-flex", gap: 6, fontSize: 13, fontWeight: 400 }}>
+                  <input type="checkbox" name="eudr_local_infra" value={key} defaultChecked={values.eudr_local_infra?.includes(key)} /> {label}
+                </label>
+              ))}
+            </div>
+          </div>
           <div className={styles.field}>
             <label>Áreas de legislación verificadas</label>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -969,6 +1043,9 @@ export function FincaEudrEditor({
         </div>
 
         <div style={{ display: subTab === "certs" ? "none" : "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <label style={{ display: "inline-flex", gap: 6, alignItems: "center", fontSize: 12.5, fontWeight: 400 }} title="Marcado: lo que guarde queda también como la respuesta del productor (así lo verá en su panel). Desmarcado: solo cambia la evaluación de CTC.">
+            <input type="checkbox" name="en_nombre_del_productor" defaultChecked /> Guardar en nombre del productor
+          </label>
           <button className="btn btn-solid" type="submit" disabled={saving}>{saving ? "Guardando…" : "Guardar Pasaporte EUDR"}</button>
           <UploadProgressRing state={filesUp.state} />
         </div>

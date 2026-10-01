@@ -600,6 +600,16 @@ const FINCA_EUDR_FIELD_LABEL: Record<string, string> = {
   eudr_lng: "Longitud",
   eudr_planting_date: "Fecha de siembra",
   eudr_production_system: "Sistema productivo",
+  name: "Nombre de la finca",
+  vereda: "Vereda",
+  municipio: "Municipio",
+  departamento: "Departamento",
+  altitude_m: "Altura",
+  history_text: "Historia",
+  characteristics_text: "Características",
+  eudr_local_infra: "Infraestructura local",
+  eudr_polygon_geojson: "Polígono",
+  eudr_legal_docs_filename: "Documento de respaldo (SICA)",
   eudr_deforestation_free: "Libre de deforestación",
   eudr_legal_production: "Producción legal",
   eudr_evidence_types: "Evidencia disponible",
@@ -639,7 +649,7 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
   const { data: before } = await service
     .from("fincas")
     .select(
-      "name, producer_id, hectares, eudr_lat, eudr_lng, eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types, eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files, eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_product_risk_factors, eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme, eudr_mitigation_actions, eudr_mitigation_responsible, eudr_mitigation_effective, eudr_chequeo_notas, eudr_chequeo_files"
+      "name, producer_id, vereda, municipio, departamento, altitude_m, history_text, characteristics_text, eudr_local_infra, eudr_polygon_geojson, eudr_legal_docs_asset_id, eudr_legal_docs_filename, eudr_support_doc_type, eudr_producer_answers, hectares, eudr_lat, eudr_lng, eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types, eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files, eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_product_risk_factors, eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme, eudr_mitigation_actions, eudr_mitigation_responsible, eudr_mitigation_effective, eudr_chequeo_notas, eudr_chequeo_files"
     )
     .eq("id", fincaId)
     .single();
@@ -678,7 +688,7 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
     if (typeof v === "string" && v && fileName) chequeoNuevos.push({ assetId: v, fileName });
   }
 
-  const patch = {
+  const patch: Record<string, unknown> = {
     eudr_chequeo_notas: textOrNull(formData, "eudr_chequeo_notas"),
     eudr_chequeo_files: [...chequeoExistentes, ...chequeoNuevos].slice(0, MAX_CHEQUEO_FILES), // V5.119: hasta cuatro
     // Área cultivada (ha): BCP puede completarla/corregirla en nombre del
@@ -719,11 +729,88 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
     eudr_mitigation_responsible,
   };
 
+  // ── V5.124 (owner, 2026-10-01): CTCx cambia TODA la información en nombre del productor ─────────────────────────────
+  // Lo que hasta hoy solo podía el productor (y nadie, con la finca aprobada): los datos generales, la infraestructura, el
+  // polígono y el documento de respaldo (SICA). Cada campo se toca solo si el formulario lo trae.
+  if (formData.has("finca_name")) {
+    const nombre = String(formData.get("finca_name") ?? "").trim();
+    if (nombre) patch.name = nombre;
+  }
+  for (const campo of ["vereda", "municipio", "departamento", "history_text", "characteristics_text"] as const) {
+    if (formData.has(campo)) patch[campo] = textOrNull(formData, campo);
+  }
+  if (formData.has("altitude_m")) {
+    const alt = String(formData.get("altitude_m") ?? "").trim();
+    patch.altitude_m = alt && Number.isFinite(Number(alt)) ? Math.round(Number(alt)) : null;
+  }
+  if (formData.has("eudr_local_infra_presente")) patch.eudr_local_infra = formData.getAll("eudr_local_infra").map(String);
+  if (formData.has("eudr_polygon_text")) {
+    // Un vértice «lat, lng» por línea. Vacío = sin polígono; 1 o 2 líneas, o una que no sea un par de números, se rechaza.
+    const lineas = String(formData.get("eudr_polygon_text") ?? "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const puntos = lineas.map((l) => {
+      const [la, ln] = l.split(/[,;\s]+/).filter(Boolean).map(Number);
+      return { lat: la, lng: ln };
+    });
+    if (puntos.some((v) => !Number.isFinite(v.lat) || !Number.isFinite(v.lng) || Math.abs(v.lat) > 90 || Math.abs(v.lng) > 180)) {
+      throw new Error("El polígono tiene una línea que no es «lat, lng».");
+    }
+    if (puntos.length > 0 && puntos.length < 3) throw new Error("Un polígono necesita al menos 3 vértices (o déjelo vacío).");
+    patch.eudr_polygon_geojson = puntos.length ? puntos : null;
+  }
+  const legalAsset = textOrNull(formData, "legal_asset_doc");
+  const legalName = textOrNull(formData, "legal_name_doc");
+  if (legalAsset && legalName) {
+    patch.eudr_legal_docs_asset_id = legalAsset;
+    patch.eudr_legal_docs_filename = legalName;
+    patch.eudr_support_doc_type = "sica";
+  }
+  // «Guardar en nombre del productor»: lo guardado queda TAMBIÉN como su respuesta (lo verá así en su panel). Sin marcar, solo
+  // cambia la evaluación de CTC y la respuesta del productor se conserva para el contraste.
+  if (formData.get("en_nombre_del_productor")) {
+    const previas = ((before as { eudr_producer_answers?: Record<string, unknown> | null }).eudr_producer_answers ?? {}) as Record<string, unknown>;
+    const poligono = "eudr_polygon_geojson" in patch ? patch.eudr_polygon_geojson : (before as { eudr_polygon_geojson?: unknown }).eudr_polygon_geojson ?? null;
+    patch.eudr_producer_answers = {
+      ...previas,
+      deforestationFree: patch.eudr_deforestation_free,
+      legalProduction: patch.eudr_legal_production,
+      tenure: patch.eudr_tenure ?? "",
+      plantingDate: patch.eudr_planting_date ?? "",
+      productionSystem: patch.eudr_production_system ?? "",
+      lat: patch.eudr_lat != null ? String(patch.eudr_lat) : "",
+      lng: patch.eudr_lng != null ? String(patch.eudr_lng) : "",
+      polygon: poligono,
+      custodyStages: patch.eudr_custody_stages,
+      custodyMethod: patch.eudr_custody_method ?? "",
+      custodyNotes: patch.eudr_custody_notes ?? "",
+      productRiskFactors: patch.eudr_product_risk_factors,
+      illegalityIndicators: patch.eudr_illegality_indicators,
+      docsAvailable: patch.eudr_docs_available,
+      mitigationActions: patch.eudr_mitigation_actions ?? "",
+      supportDocType: (patch.eudr_support_doc_type as string | undefined) ?? (before as { eudr_support_doc_type?: string | null }).eudr_support_doc_type ?? "",
+    };
+  }
+
   const { error } = await service.from("fincas").update(patch).eq("id", fincaId);
   if (error) throw new Error("No se pudo guardar la información EUDR de la finca.");
 
-  const changedFields = Object.keys(patch).filter((key) =>
-    valuesDiffer((before as Record<string, unknown>)[key], (patch as Record<string, unknown>)[key])
+  // La parcela 1 ES la geometría de la finca (F1): lo que CTCx cambió aquí se espeja en ella, o el Pasaporte se juzgaría con la vieja.
+  {
+    const [{ data: uno }, { count: nParcelas }] = await Promise.all([
+      service.from("finca_parcelas").select("id").eq("finca_id", fincaId).eq("position", 0).maybeSingle(),
+      service.from("finca_parcelas").select("id", { count: "exact", head: true }).eq("finca_id", fincaId),
+    ]);
+    const espejo: Record<string, unknown> = { lat: patch.eudr_lat ?? null, lng: patch.eudr_lng ?? null, updated_at: new Date().toISOString() };
+    if ("eudr_polygon_geojson" in patch) espejo.polygon_geojson = patch.eudr_polygon_geojson;
+    if ((nParcelas ?? 0) <= 1 && patch.hectares != null) espejo.area_ha = patch.hectares;
+    if (patch.altitude_m != null) espejo.altitude_masl = patch.altitude_m;
+    const tieneGeometria = patch.eudr_lat != null || (Array.isArray(patch.eudr_polygon_geojson) && patch.eudr_polygon_geojson.length >= 3);
+    if (uno) await service.from("finca_parcelas").update(espejo).eq("id", uno.id);
+    else if (tieneGeometria || espejo.area_ha != null) await service.from("finca_parcelas").insert({ finca_id: fincaId, name: "Cafetal 1", position: 0, ...espejo });
+  }
+
+  const SIN_RESUMEN = new Set(["eudr_producer_answers", "eudr_legal_docs_asset_id", "eudr_support_doc_type"]);
+  const changedFields = Object.keys(patch).filter(
+    (key) => !SIN_RESUMEN.has(key) && valuesDiffer((before as Record<string, unknown>)[key], (patch as Record<string, unknown>)[key])
   );
 
   await service.from("audit_log").insert({

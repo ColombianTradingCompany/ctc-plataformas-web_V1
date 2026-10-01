@@ -15,7 +15,9 @@ import { BarraArea, SiNo } from "./EudrPiezas";
 // llevan Server Actions enlazadas) y este cliente solo pone la navegación.
 
 export type FincaLote = { id: string; name: string; stageLabel: string; statusLabel: string; statusTone: "good" | "bad" | "warn" | "muted" };
-export type FincaComm = { id: string; authorRole: string; createdAt: string; note: string };
+/** V5.124: una nota puede ser una SOLICITUD DE REVISIÓN de datos — con el punto de la finca al que se refiere y un adjunto. */
+export type FincaComm = { id: string; authorRole: string; createdAt: string; note: string; seccion?: string | null; adjunto?: { nombre: string; url: string | null } | null };
+const SECCION_LABEL: Record<string, string> = { general: "1 · Información general", ubicacion: "2 · Ubicación y medidas", eudr: "3 · Cuestionario EUDR", certs: "4 · Certificaciones" };
 
 export type FincaPanelData = {
   code: string;
@@ -236,7 +238,15 @@ export function FincaPanel({
                   <span className={c.authorRole === "producer" ? styles.badgeGood : styles.badge}>
                     {c.authorRole === "producer" ? "Productor" : "CTC"}
                   </span>{" "}
-                  <b>{fecha(c.createdAt)}</b> · {c.note}
+                  <b>{fecha(c.createdAt)}</b>
+                  {c.seccion && <> <span className={`${styles.badge} ${styles.badgeWarn}`}>Revisión de datos · {SECCION_LABEL[c.seccion] ?? c.seccion}</span></>}
+                  {" "}· <span style={{ whiteSpace: "pre-wrap" }}>{c.note}</span>
+                  {c.adjunto && (
+                    <>
+                      {" "}·{" "}
+                      {c.adjunto.url ? <a href={c.adjunto.url} target="_blank" rel="noopener noreferrer">📎 {c.adjunto.nombre}</a> : <span>📎 {c.adjunto.nombre}</span>}
+                    </>
+                  )}
                 </li>
               ))}
             </ul>

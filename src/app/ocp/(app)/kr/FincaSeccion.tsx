@@ -18,7 +18,7 @@ import { FincaEudrEditor, type BcpCert, type ProducerAnswers } from "./FincaEudr
 import { FincaPanel, type FincaLote } from "./FincaPanel";
 import styles from "@/components/panel/shared.module.css";
 
-type CommRow = { id: string; finca_id: string | null; context_label: string | null; note: string; created_at: string; author_role: string };
+type CommRow = { id: string; finca_id: string | null; context_label: string | null; note: string; created_at: string; author_role: string; seccion: string | null; adjunto_asset_id: string | null; adjunto_filename: string | null };
 type LotRow = { id: string; name: string; finca_id: string | null; stage: string; intake_step: number };
 
 type FincaRow = {
@@ -158,7 +158,7 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
     fetchProducerContacts(service, fincaRows.map((f) => f.producer_id)),
     service
       .from("producer_comm_log")
-      .select("id, finca_id, context_label, note, created_at, author_role")
+      .select("id, finca_id, context_label, note, created_at, author_role, seccion, adjunto_asset_id, adjunto_filename")
       .in("finca_id", fincaRows.map((f) => f.id))
       .order("created_at", { ascending: false }),
     service
@@ -202,7 +202,11 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
   // paralelo al primer lote de firmas, así que sus asset ids no estaban a mano.
   const certUrls = await signedKaffetalMediaUrls(
     service,
-    ((certsRaw as BcpCertRow[] | null) ?? []).flatMap((c) => [c.support_asset_id, c.corroboracion_asset_id])
+    [
+      ...((certsRaw as BcpCertRow[] | null) ?? []).flatMap((c) => [c.support_asset_id, c.corroboracion_asset_id]),
+      // V5.124: los adjuntos de las solicitudes de revisión de datos.
+      ...((comms as CommRow[] | null) ?? []).map((c) => c.adjunto_asset_id),
+    ]
   );
 
   const finca = fincaRows[0];
@@ -262,7 +266,14 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
                             stageLabel: etapaDelLote(l.stage),
                             ...lotStatus(l),
                           })),
-                          comms: fincaComms.map((c) => ({ id: c.id, authorRole: c.author_role, createdAt: c.created_at, note: c.note })),
+                          comms: fincaComms.map((c) => ({
+                            id: c.id,
+                            authorRole: c.author_role,
+                            createdAt: c.created_at,
+                            note: c.note,
+                            seccion: c.seccion,
+                            adjunto: c.adjunto_filename ? { nombre: c.adjunto_filename, url: c.adjunto_asset_id ? certUrls.get(c.adjunto_asset_id) ?? null : null } : null,
+                          })),
                           // V5.121: la General en fichas.
                           general: {
                             vereda: finca.vereda,

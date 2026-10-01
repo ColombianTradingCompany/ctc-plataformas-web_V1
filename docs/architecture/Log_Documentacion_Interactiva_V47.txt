@@ -342,4 +342,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   `LotEudrCertDoc.tsx` y sus páginas (país real de la finca), `ocp/actions.ts` (`country_risk` de la presentación; `updateFincaEudr` con `pais`).
 - ANN `ocp/kr/FincaSeccion.tsx`, `FincaPanel.tsx`, `FincaEudrEditor.tsx`, `carga.ts`, `LoteSeccion.tsx` (país; DANE «no aplica»).
   Guardianes: `qa-visa` +7, `qa-asistencia` (check ajustado). Acta: `docs/migraciones/2026-10-01_fincas_pais.sql`.
-(commit: pendiente)
+(commit: 1267d44)

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.127] — 2026-10-01 (commit pendiente)
+## [V5.127] — 2026-10-01 (commit 1267d44)
 
 - **Corregido**: en Kaffetal Regal, el editor de la finca ofrecía **ocho departamentos y «Otro»** (owner, 2026-10-01). Ahora
   trae **los 32 departamentos y Bogotá D.C.**, de una sola fuente (`src/lib/geo/departamentos.ts`) que también usan la

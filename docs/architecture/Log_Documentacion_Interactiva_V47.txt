@@ -296,4 +296,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `kr/EudrPiezas.tsx` (nuevo), `kr/FincaEudrEditor.tsx`, `kr/FincaSeccion.tsx`, `src/lib/registro/certificados.ts`, `certificadosActions.ts`,
   `src/lib/eudr.ts` (`MAX_CHEQUEO_FILES`). DICT `finca_certificates.corroboracion_asset_id/_filename` (acta 2026-10-01).
 - Guardián: `qa-visa` +8.
-(commit: pendiente)
+(commit: 9f98387)

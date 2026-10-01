@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.119] — 2026-10-01 (commit pendiente)
+## [V5.119] — 2026-10-01 (commit 9f98387)
 
 - **Cambiado**: en **Productores, Fincas y Lotes**, la revisión EUDR de la finca se lee de un vistazo (owner, 2026-10-01). **Declaración**:
   el área cultivada como barra contra la referencia de 4 ha (tope visual de 30 ha; más allá, la barra se corta y lo dice), la fecha de

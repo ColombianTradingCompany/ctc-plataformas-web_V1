@@ -392,4 +392,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   (`rueda_detalle`; no cuenta como dato digitado), `components/bcp/LabEvalEditor.tsx` (editor por marca: etapas + deslizador),
   `socios/…/evaluacionActions.ts`, `ocp/nominadosActions.ts` (se guarda), `nominados/CircuitoVista.tsx`, `socios/…/evaluacion/page.tsx` (se lee).
   Guardián: `qa-centro-calidad` +11. Acta: `docs/migraciones/2026-10-01_lot_evaluations_rueda_detalle.sql`.
-(commit: pendiente)
+(commit: caf2410)

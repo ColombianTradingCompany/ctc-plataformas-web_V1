@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.133] — 2026-10-01 (commit pendiente)
+## [V5.133] — 2026-10-01 (commit caf2410)
 
 - **Añadido**: en la planilla de evaluación, **cada marca de la rueda lleva su etapa y su intensidad** (owner, 2026-10-01), como el
   modo Catar de la Rueda del Café: la **etapa** en que se percibió (Fragancia · Aroma · Sabor · Sabor residual — una por nota) y la

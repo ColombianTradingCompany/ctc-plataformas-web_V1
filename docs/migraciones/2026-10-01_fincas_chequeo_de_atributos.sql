@@ -1,12 +1,12 @@
--- ── Acta · 2026-10-01 · V5.128 (EN CURSO) · fincas: solicitud de chequeo de atributos ──────────────────────────────
+-- ── Acta · 2026-10-01 · V5.128 · fincas: solicitud de chequeo de atributos ──────────────────────────────
 -- Aplicada con `apply_migration` (nombre `fincas_chequeo_de_atributos`) en el proyecto sjznkzvefqfcysczllli.
 --
 -- Owner (2026-10-01): en Kaffetal Regal, pestaña 3 de la finca, el productor MARCA y SOLICITA el chequeo de las «Áreas de
 -- legislación» y de «Sostenibilidad y enfoque social», con una nota y una imagen opcionales por ítem. En el OCP esa
 -- solicitud se ve, y cada ítem lleva —además de la marca— una NOTA de CTCx y su EVIDENCIA.
 --
--- ⚠ ESTADO: la base ya tiene las columnas y el guard; el CÓDIGO que las usa todavía NO está (la V5.128 quedó a medio hacer
--- el 2026-10-01). Las tres columnas son aditivas con valor por defecto: nada de lo que hoy corre las lee ni las escribe.
+-- La migración se aplicó antes que el código (misma fecha); el código que las usa entró con la V5.128:
+-- `src/lib/eudrAtributos.ts`, `ChequeosCtcx.tsx` (KR), `AtributosChequeo.tsx` + `FincaEudrEditor.tsx` (OCP), `updateFincaEudr`.
 --
 --   eudr_chequeo_solicitudes  la escribe el PRODUCTOR (finca pendiente o aprobada) — fuera del guard, a propósito.
 --                             {"legal:<clave>" | "sost:<clave>": {nota, assetId, fileName, at}}

@@ -19,6 +19,22 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.128] — 2026-10-01 (commit pendiente)
+
+- **Añadido**: en Kaffetal Regal, pestaña 3 de la finca, el bloque **«Chequeos que hace CTCx»** (owner, 2026-10-01): el productor
+  **marca y solicita** el chequeo de las cinco áreas de legislación y de los cuatro ítems de sostenibilidad, con una **nota y una
+  imagen opcionales** por cada uno. Reemplaza el aviso «no requieren acción suya aquí». Funciona también con la finca aprobada y
+  no frena el Pasaporte. Cada ítem dice «Chequeo solicitado» o «✓ Verificado por CTCx».
+- **Añadido**: en el OCP (`/ocp/kr?finca=` → EUDR → Atributos Complementarios), cada ítem enseña **lo que el productor pidió** (nota e
+  imagen) y lleva, además de la marca, una **nota de CTCx y su evidencia**. El sub-tab cuenta los chequeos pedidos y sin hacer, y
+  cada solicitud nueva deja una nota en la Comunicación de la finca.
+- **Corregido**: la nota automática «CTC actualizó la información EUDR: …» listaba **nombres crudos de columna**
+  (`eudr_evidence_files`…) en cada guardado aunque nada hubiera cambiado: los jsonb se comparaban por referencia. Ahora se comparan
+  por contenido y tienen rótulo.
+- **Datos**: migración `fincas_chequeo_de_atributos` — `eudr_chequeo_solicitudes` (la escribe el productor), `eudr_legal_files` y
+  `eudr_atributos_notas` (solo CTC, en `guard_finca_protected_columns`). Acta en `docs/migraciones/`.
+- **Docs**: charter `kaffetal-regal`, ALINEACION §3. `qa-visa` 67 → 76.
+
 ## [V5.127] — 2026-10-01 (commit 1267d44)
 
 - **Corregido**: en Kaffetal Regal, el editor de la finca ofrecía **ocho departamentos y «Otro»** (owner, 2026-10-01). Ahora

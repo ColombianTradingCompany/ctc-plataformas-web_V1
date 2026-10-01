@@ -16,6 +16,7 @@ import { EudrYesNo } from "./EudrYesNo";
 import { EudrStatusBadge } from "./EudrStatusBadge";
 import { FincaMapPicker, type ParcelaEnMapa } from "./FincaMapPicker";
 import { FieldInfo } from "./ficha/panes/FieldInfo";
+import { ChequeosCtcx, type SolicitudDeChequeos } from "./ChequeosCtcx";
 import { ORIGIN_CERTS, INTL_CERTS, CERT_INFO } from "./ficha/fichaData";
 import { exigePoligono, fincaCode, LOCAL_INFRA, type Finca, type FincaCertificate, type GeneralInfo, type Parcela } from "./data";
 import styles from "./FincaModal.module.css";
@@ -220,6 +221,8 @@ export type FincaEditorProps = {
   onUploadPhoto: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
   onUploadVideo: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
   onUploadLegalDoc: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
+  /** V5.128 (owner): el productor solicita el chequeo de legislación y sostenibilidad — nota e imagen por ítem. */
+  onSolicitarChequeos: (finca: Finca, cambios: SolicitudDeChequeos) => Promise<boolean>;
   /** V5.102 (owner): «Borrar Finca» con confirmación escrita; solo llega cuando `fincaSelfDeletable` lo permite. */
   onDelete?: () => void;
 } & FincaModalExtras;
@@ -245,6 +248,7 @@ export function FincaEditorBody({
   onUploadPhoto,
   onUploadVideo,
   onUploadLegalDoc,
+  onSolicitarChequeos,
   parcelas,
   certificates,
   onSaveParcela,
@@ -454,6 +458,7 @@ export function FincaEditorBody({
     mun: finca?.mun ?? "—",
     depto: finca?.depto ?? "—",
     pais: finca?.pais ?? "",
+    eudrChequeoSolicitudes: finca?.eudrChequeoSolicitudes ?? {},
     alt: finca?.alt ?? "—",
     ha,
     hist: finca?.hist ?? "—",
@@ -592,6 +597,8 @@ export function FincaEditorBody({
       mun: mun.trim() || "—",
       depto: paisEfectivo ? "—" : depto || defaultDepto,
       pais: paisEfectivo,
+      // Carried for the type only: las solicitudes de chequeo tienen su propio envío (V5.128), `saveFinca` no las escribe.
+      eudrChequeoSolicitudes: finca?.eudrChequeoSolicitudes ?? {},
       alt: alt.trim() || "—",
       ha: ha.trim() || "—",
       hist: hist.trim() || "—",
@@ -1264,9 +1271,8 @@ export function FincaEditorBody({
             ))}
           </div>
 
-          <p style={{ fontSize: 12, color: "var(--muted)", fontStyle: "italic" }}>
-            La evidencia de no deforestación, las áreas de legislación verificadas y el enfoque de sostenibilidad los completa CTC como parte de su propia revisión — no requieren acción suya aquí.
-          </p>
+          {/* V5.128: el aviso «…los completa CTC, no requieren acción suya aquí» pasó a ser el bloque «Chequeos que hace CTCx»,
+              debajo del fieldset: el productor marca y solicita el chequeo. */}
         </div>
 
         {/* ── PANEL 4 · Certificaciones (F1) ───────────────────────────── */}
@@ -1304,6 +1310,16 @@ export function FincaEditorBody({
           </div>
         </div>
       </fieldset>
+
+      {/* V5.128 (owner, 2026-10-01): el productor MARCA y SOLICITA el chequeo de legislación y sostenibilidad. FUERA del fieldset
+          de solo lectura: con la finca aprobada también se puede pedir. La `key` lo vuelve a montar cuando llega lo guardado. */}
+      <div style={{ display: tab === "eudr" ? undefined : "none" }}>
+        <ChequeosCtcx
+          key={`${finca?.id ?? "new"}:${JSON.stringify(finca?.eudrChequeoSolicitudes ?? {})}:${(finca?.eudrLegalAreas ?? []).join()}:${(finca?.eudrSustainabilityTags ?? []).join()}`}
+          finca={finca}
+          onSolicitar={(cambios) => (finca ? onSolicitarChequeos(finca, cambios) : Promise.resolve(false))}
+        />
+      </div>
 
       {/* La botonera, PEGADA AL PIE DEL POP-UP (2026-08-20).
           Iba `position:fixed` en la esquina del VIEWPORT: flotaba por encima

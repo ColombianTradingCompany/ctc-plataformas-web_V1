@@ -23,6 +23,8 @@ import type { CafetalUnoDraft } from "./FincaModal";
 import { ConfirmarBorradoModal, type BorradoPendiente } from "./ConfirmarBorradoModal";
 import { InfoView } from "./InfoView";
 import { SolicitudRevisionModal, SECCIONES_DE_REVISION, type SolicitudDeRevision } from "./SolicitudRevisionModal";
+import type { SolicitudDeChequeos } from "./ChequeosCtcx";
+import { etiquetaDeChequeo, leerChequeosSolicitados, type ChequeosSolicitados } from "@/lib/eudrAtributos";
 import {
   EMPTY_GI,
   GRADE_DB,
@@ -92,6 +94,7 @@ type FincaRow = {
   eudr_legal_docs_filename: string | null;
   eudr_sustainability_tags: string[] | null;
   eudr_sustainability_notes: string | null;
+  eudr_chequeo_solicitudes: unknown;
   eudr_polygon_geojson: { lat: number; lng: number }[] | null;
   eudr_local_infra: string[] | null;
   eudr_producer_answers: Finca["eudrProducerAnswers"] | null;
@@ -246,6 +249,7 @@ function dbFincaToFinca(
     eudrLegalDocsUrl: urls.legalDocsUrl ?? null,
     eudrSustainabilityTags: row.eudr_sustainability_tags || [],
     eudrSustainabilityNotes: row.eudr_sustainability_notes || "",
+    eudrChequeoSolicitudes: leerChequeosSolicitados(row.eudr_chequeo_solicitudes),
     eudrSupportDocType: row.eudr_support_doc_type || "",
     eudrCustodyStages: row.eudr_custody_stages || [],
     eudrCustodyMethod: (row.eudr_custody_method as Finca["eudrCustodyMethod"]) || "",
@@ -1209,7 +1213,7 @@ function Experience() {
   async function requestFincaHelp(
     finca: Finca,
     text: string,
-    extras?: { seccion?: string; adjunto?: { assetId: string; fileName: string } | null }
+    extras?: { seccion?: string; adjunto?: { assetId: string; fileName: string } | null; /** V5.128: quien llama pone su propio aviso. */ silencioso?: boolean }
   ): Promise<boolean> {
     if (!userId) return false;
     const body = text.trim();
@@ -1251,7 +1255,7 @@ function Experience() {
       },
       ...prev,
     ]);
-    showToast("Solicitud de ayuda enviada a CTC ✓");
+    if (!extras?.silencioso) showToast("Solicitud de ayuda enviada a CTC ✓");
     return true;
   }
 
@@ -1333,6 +1337,47 @@ function Experience() {
       `Solicitud de revisión de datos — ${finca.name} · ${punto}\n\n${solicitud.texto.trim()}${adjunto ? `\n\nAdjunto: ${adjunto.fileName}` : ""}`,
       { seccion: solicitud.seccion, adjunto }
     );
+  }
+
+  // V5.128 (owner, 2026-10-01): el productor MARCA y SOLICITA el chequeo de las áreas de legislación y de sostenibilidad, con una
+  // nota y una imagen opcionales por ítem. Es un envío propio (no viaja con el guardado de la finca) y escribe SOLO
+  // `eudr_chequeo_solicitudes`, que el guard deja pasar también con la finca aprobada. Lo NUEVO deja una nota en el hilo de la
+  // finca, para que CTCx lo vea en Comunicación además de en Atributos Complementarios.
+  async function solicitarChequeosFinca(finca: Finca, cambios: SolicitudDeChequeos): Promise<boolean> {
+    if (!userId || !finca.id) return false;
+    const mapa: ChequeosSolicitados = { ...finca.eudrChequeoSolicitudes };
+    for (const clave of cambios.retirar) delete mapa[clave];
+    const nuevas: string[] = [];
+    const ahora = new Date().toISOString();
+    for (const item of cambios.items) {
+      const previa = mapa[item.clave];
+      let assetId = previa?.assetId ?? null;
+      let fileName = previa?.fileName ?? null;
+      if (item.archivo) {
+        const subida = await uploadKaffetalMediaWithProgress(supabase, userId, `fincas/${finca.id}/chequeos`, item.archivo);
+        if ("error" in subida) {
+          showToast(subida.error);
+          return false;
+        }
+        assetId = subida.assetId;
+        fileName = item.archivo.name;
+      }
+      if (!previa) nuevas.push(item.clave);
+      mapa[item.clave] = { nota: item.nota.trim() || null, assetId, fileName, at: previa?.at || ahora };
+    }
+    // `.select("id")`: un UPDATE que la RLS filtra no da error — devuelve cero filas, y eso también es un fallo.
+    const { data, error } = await supabase.from("fincas").update({ eudr_chequeo_solicitudes: mapa }).eq("id", finca.id).select("id");
+    if (error || !data?.length) {
+      showToast("No se pudo enviar la solicitud de chequeo.");
+      return false;
+    }
+    setFincas((prev) => prev.map((f) => (f.id === finca.id ? { ...f, eudrChequeoSolicitudes: mapa } : f)));
+    if (nuevas.length) {
+      const lineas = nuevas.map((clave) => `• ${etiquetaDeChequeo(clave)}${mapa[clave].nota ? `: ${mapa[clave].nota}` : ""}${mapa[clave].fileName ? ` (imagen: ${mapa[clave].fileName})` : ""}`);
+      await requestFincaHelp(finca, `Solicitud de chequeo — ${finca.name}\n\n${lineas.join("\n")}`, { silencioso: true });
+    }
+    showToast(nuevas.length ? "Chequeo solicitado a CTCx ✓" : "Solicitud de chequeo actualizada ✓");
+    return true;
   }
 
   // Producer replies to a specific CTC note. The reply copies the parent's
@@ -2044,6 +2089,7 @@ function Experience() {
           onBack={() => setView(fincaOrigen)}
           onSave={saveFinca}
           onRequestHelp={requestFincaHelp}
+          onSolicitarChequeos={solicitarChequeosFinca}
           onUploadPhoto={(file, onProgress) => (fincaEnEdicion ? uploadFincaPhoto(fincaEnEdicion.id, file, onProgress) : Promise.resolve(false))}
           onUploadVideo={(file, onProgress) => (fincaEnEdicion ? uploadFincaVideo(fincaEnEdicion.id, file, onProgress) : Promise.resolve(false))}
           onUploadLegalDoc={(file, onProgress) => (fincaEnEdicion ? uploadFincaLegalDoc(fincaEnEdicion.id, file, onProgress) : Promise.resolve(false))}

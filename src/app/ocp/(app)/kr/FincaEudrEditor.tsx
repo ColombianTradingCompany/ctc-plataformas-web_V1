@@ -11,6 +11,8 @@ import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import { LOCAL_INFRA, fincaCode } from "@/components/kaffetal-regal/data";
 import { CERT_REGISTRY } from "@/lib/certRegistry";
 import { DEPARTAMENTOS_DE_COLOMBIA, PAISES_FUERA_DE_COLOMBIA } from "@/lib/geo/departamentos";
+import { AREAS_DE_LEGISLACION, SOSTENIBILIDAD_Y_ENFOQUE_SOCIAL, chequeosPendientes, claveDeChequeo, leerChequeosSolicitados } from "@/lib/eudrAtributos";
+import { AtributoEditable, AtributosLectura } from "./AtributosChequeo";
 import { ORIGIN_CERTS, INTL_CERTS } from "@/components/kaffetal-regal/ficha/fichaData";
 import { corroborarCertificado, pedirEvidenciaCertificado, reabrirCertificado, retirarCertificado } from "../certificadosActions";
 import { ESTADO_CERTIFICACION_LABEL, MAX_RECORDATORIOS, type EstadoCertificacion } from "@/lib/registro/reglas";
@@ -23,14 +25,7 @@ const EVIDENCE_TYPES: [string, string][] = [
   ["satelital", "Imágenes satelitales"], ["observatory", "EU Observatory 2020"],
   ["registros", "Registros productivos"], ["terreno", "Verificación en campo"], ["catastro", "Mapas catastrales"],
 ];
-const LEGAL_AREAS: [string, string][] = [
-  ["suelo", "Uso del suelo y forestal"], ["ambiental", "Protección ambiental"],
-  ["laboral", "Laborales y humanos"], ["clpi", "CLPI / terceros"], ["fiscal", "Fiscal / anticorrupción / aduanas"],
-];
-const SUSTAINABILITY_TAGS: [string, string][] = [
-  ["sa8000", "SA 8000 evaluación voluntaria"], ["familiar", "Agricultura familiar campesina"],
-  ["inclusion", "Inclusión de mujeres y jóvenes"], ["paisaje", "Conservación de paisajes"],
-];
+// V5.128: las áreas de legislación y la sostenibilidad salen de `lib/eudrAtributos.ts` — una lista para KR y para el OCP.
 const PRODUCTION_SYSTEM_LABEL: Record<string, string> = { sombra: "Café bajo sombra", agroforestal: "Agroforestal", tradicional: "Tradicional / pleno sol" };
 const TENURE_LABEL: Record<string, string> = { propietario: "Propietario", poseedor: "Poseedor reconocido", asociacion: "Asociación" };
 
@@ -112,6 +107,10 @@ export type FincaEudrValues = {
   eudr_chequeo_files: { assetId: string; fileName: string }[] | null;
   eudr_evidence_files: Record<string, { assetId: string; fileName: string }> | null;
   eudr_sustainability_files: Record<string, { assetId: string; fileName: string }> | null;
+  /** V5.128: lo que el productor pidió chequear; la evidencia y las notas de CTCx por ítem. */
+  eudr_chequeo_solicitudes: unknown;
+  eudr_legal_files: Record<string, { assetId: string; fileName: string }> | null;
+  eudr_atributos_notas: Record<string, string> | null;
   eudr_local_infra: string[] | null;
   // Risk questionnaire (moved onto the finca 2026-07-24).
   eudr_support_doc_type: string | null;
@@ -248,11 +247,11 @@ function SubTabIcon({ k }: { k: SubTab }) {
   );
 }
 
-function SubTabBar({ tab, setTab }: { tab: SubTab; setTab: (t: SubTab) => void }) {
+function SubTabBar({ tab, setTab, porChequear = 0 }: { tab: SubTab; setTab: (t: SubTab) => void; /** V5.128: chequeos que el productor pidió y CTCx no ha hecho. */ porChequear?: number }) {
   const tabs: { key: SubTab; label: string }[] = [
     { key: "declaracion", label: "Declaración de Productor" },
     { key: "analisis", label: "Análisis y Evidencia" },
-    { key: "atributos", label: "Atributos Complementarios" },
+    { key: "atributos", label: porChequear ? `Atributos Complementarios · ${porChequear} por chequear` : "Atributos Complementarios" },
     { key: "riesgo", label: "Riesgo y Mitigación" },
     { key: "certs", label: "Certificaciones" },
   ];
@@ -329,6 +328,7 @@ export function FincaEudrEditor({
   // sustainability keys.
   const [evidence, setEvidence] = useState<string[]>(values.eudr_evidence_types ?? []);
   const [sustain, setSustain] = useState<string[]>(values.eudr_sustainability_tags ?? []);
+  const [legal, setLegal] = useState<string[]>(values.eudr_legal_areas ?? []);
   // Risk questionnaire (BCP-evaluated values). Custody stages / product factors
   // are controlled so the derived pills recompute live; the yes/no factors gate
   // the risk determination shown read-only.
@@ -340,6 +340,11 @@ export function FincaEudrEditor({
   const [evalMitEffective, setEvalMitEffective] = useState(triSelectValue(values.eudr_mitigation_effective));
   const evidenceFiles = values.eudr_evidence_files ?? {};
   const sustainabilityFiles = values.eudr_sustainability_files ?? {};
+  // V5.128 (owner): lo que el productor pidió chequear, y la nota y la evidencia de CTCx por ítem.
+  const solicitudes = leerChequeosSolicitados(values.eudr_chequeo_solicitudes);
+  const legalFiles = values.eudr_legal_files ?? {};
+  const notasDeAtributos = values.eudr_atributos_notas ?? {};
+  const porChequear = chequeosPendientes(solicitudes, values.eudr_legal_areas, values.eudr_sustainability_tags).length;
   function toggle(list: string[], set: (v: string[]) => void, key: string, on: boolean) {
     set(on ? [...list, key] : list.filter((k) => k !== key));
   }
@@ -368,14 +373,14 @@ export function FincaEudrEditor({
   const [rev, bumpRev] = useReducer((x: number) => x + 1, 0);
   const { status: autosaveStatus } = useAutosave({
     enabled: editing,
-    snapshot: { rev, evalPlanting, evalSystem, evalDefor, evalLegal, evalTenure, evidence, sustain, custodyStages, custodyMethod, productFactors, evalIllegality, evalDocs, evalMitEffective },
+    snapshot: { rev, evalPlanting, evalSystem, evalDefor, evalLegal, evalTenure, evidence, sustain, legal, custodyStages, custodyMethod, productFactors, evalIllegality, evalDocs, evalMitEffective },
     save: async () => {
       const form = formRef.current;
       if (!form || saving) return false;
       const fd = new FormData(form);
       fd.delete("eudr_polygon_text"); // a medio escribir no es un polígono: solo viaja con Guardar
       for (const k of [...fd.keys()]) {
-        if (/^(evidence|sustainability|chequeo|legal)_file_/.test(k)) fd.delete(k);
+        if (/^(evidence|sustainability|chequeo|legal|areas)_file_/.test(k)) fd.delete(k);
       }
       await saveAction(fd);
       return true;
@@ -400,7 +405,7 @@ export function FincaEudrEditor({
     // "saved fine" locally and silently never arrived in production.
     const staged: { field: string; group: string; key: string; file: File }[] = [];
     for (const [k, v] of fd.entries()) {
-      const m = k.match(/^(evidence|sustainability|chequeo|legal)_file_(.+)$/);
+      const m = k.match(/^(evidence|sustainability|chequeo|legal|areas)_file_(.+)$/);
       if (!m || !(v instanceof File)) continue;
       if (v.size > 5 * 1024 * 1024) {
         setSaveError(`El archivo "${v.name}" supera 5 MB. Adjunte uno más liviano.`);
@@ -440,7 +445,7 @@ export function FincaEudrEditor({
       }
       // Never ship File payloads (even empty ones) through the action.
       for (const k of [...fd.keys()]) {
-        if (/^(evidence|sustainability|chequeo|legal)_file_/.test(k)) fd.delete(k);
+        if (/^(evidence|sustainability|chequeo|legal|areas)_file_/.test(k)) fd.delete(k);
       }
       await saveAction(fd);
       setEditing(false);
@@ -499,7 +504,7 @@ export function FincaEudrEditor({
           <span style={{ fontWeight: 600, fontSize: 13.5 }}>Pasaporte EUDR de la finca (asistencia CTCx)</span>
           <button type="button" className="btn btn-sm" onClick={() => setEditing(true)}>Editar</button>
         </div>
-        <SubTabBar tab={subTab} setTab={setSubTab} />
+        <SubTabBar tab={subTab} setTab={setSubTab} porChequear={porChequear} />
 
         {/* V5.119 (owner): la declaración se LEE de un vistazo — área contra los 4 ha, fecha contra el corte y hoy,
             Sí/No en color, documento en rojo si falta. */}
@@ -585,8 +590,9 @@ export function FincaEudrEditor({
             opcional (gris); la infraestructura, las mismas fichas del cuestionario del productor. */}
         {subTab === "atributos" && (
           <div style={{ display: "grid", gap: 14 }}>
-            {fila("Áreas de legislación verificadas", <Fichas opciones={LEGAL_AREAS} activas={values.eudr_legal_areas} faltante="rojo" />)}
-            {fila("Sostenibilidad y enfoque social", <Fichas opciones={SUSTAINABILITY_TAGS} activas={values.eudr_sustainability_tags} />)}
+            {/* V5.128 (owner): cada ítem enseña lo que el productor pidió chequear, la nota de CTCx y la evidencia. */}
+            {fila("Áreas de legislación verificadas", <AtributosLectura grupo="legal" opciones={AREAS_DE_LEGISLACION} activas={values.eudr_legal_areas} faltante="rojo" solicitudes={solicitudes} notas={notasDeAtributos} files={legalFiles} fileUrls={fileUrls} />)}
+            {fila("Sostenibilidad y enfoque social", <AtributosLectura grupo="sost" opciones={SOSTENIBILIDAD_Y_ENFOQUE_SOCIAL} activas={values.eudr_sustainability_tags} solicitudes={solicitudes} notas={notasDeAtributos} files={sustainabilityFiles} fileUrls={fileUrls} />)}
             {values.eudr_sustainability_notes && fila("Notas de sostenibilidad", <span className={styles.meta}>{values.eudr_sustainability_notes}</span>)}
             {fila("Infraestructura local (declarada por el productor)", <Fichas opciones={INFRA_DICT} activas={values.eudr_local_infra} titulos={INFRA_TITULOS} />)}
           </div>
@@ -633,7 +639,7 @@ export function FincaEudrEditor({
         </span>
         <button type="button" className="btn btn-sm" onClick={() => setEditing(false)}>Cancelar</button>
       </div>
-      <SubTabBar tab={subTab} setTab={setSubTab} />
+      <SubTabBar tab={subTab} setTab={setSubTab} porChequear={porChequear} />
       {saveError && <p style={{ color: "var(--red)", fontSize: 12.5, marginBottom: 8 }}>{saveError}</p>}
 
       {/* UN solo formulario para las tres sub-pestañas: los paneles inactivos se
@@ -906,47 +912,45 @@ export function FincaEudrEditor({
           </div>
           <div className={styles.field}>
             <label>Áreas de legislación verificadas</label>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              {LEGAL_AREAS.map(([key, label]) => (
-                <label key={key} style={{ display: "inline-flex", gap: 6, fontSize: 13, fontWeight: 400 }}>
-                  <input type="checkbox" name="eudr_legal_areas" value={key} defaultChecked={values.eudr_legal_areas?.includes(key)} /> {label}
-                </label>
+            {/* V5.128 (owner): no solo la marca — la solicitud del productor, una NOTA de CTCx y la EVIDENCIA, por ítem. */}
+            <input type="hidden" name="atributos_notas_presente" value="1" />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 8 }}>
+              {AREAS_DE_LEGISLACION.map((o) => (
+                <AtributoEditable
+                  key={o.key}
+                  grupo="legal"
+                  opcion={o}
+                  on={legal.includes(o.key)}
+                  onToggle={(v) => toggle(legal, setLegal, o.key, v)}
+                  checkboxName="eudr_legal_areas"
+                  fileField={`areas_file_${o.key}`}
+                  solicitud={solicitudes[claveDeChequeo("legal", o.key)]}
+                  nota={notasDeAtributos[claveDeChequeo("legal", o.key)]}
+                  file={legalFiles[o.key]}
+                  fileUrls={fileUrls}
+                />
               ))}
             </div>
           </div>
 
           <div className={styles.field}>
             <label>Sostenibilidad y enfoque social</label>
-            <div style={{ display: "grid", gap: 8 }}>
-              {SUSTAINABILITY_TAGS.map(([key, label]) => {
-                const on = sustain.includes(key);
-                const existing = sustainabilityFiles[key];
-                return (
-                  <div key={key}>
-                    <label style={{ display: "inline-flex", gap: 6, fontSize: 13, fontWeight: 400 }}>
-                      <input
-                        type="checkbox"
-                        name="eudr_sustainability_tags"
-                        value={key}
-                        checked={on}
-                        onChange={(e) => toggle(sustain, setSustain, key, e.target.checked)}
-                      />{" "}
-                      {label}
-                    </label>
-                    {on && (
-                      <div style={{ margin: "4px 0 0 24px", fontSize: 12 }}>
-                        {existing && (
-                          <p className={styles.meta} style={{ margin: "0 0 3px" }}>
-                            ✓ {existing.fileName}
-                            {fileUrls[existing.assetId] && <> · <a href={fileUrls[existing.assetId]} target="_blank" rel="noopener noreferrer">ver</a></>}
-                          </p>
-                        )}
-                        <input type="file" name={`sustainability_file_${key}`} accept="image/*,application/pdf" style={{ fontSize: 12 }} />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 8 }}>
+              {SOSTENIBILIDAD_Y_ENFOQUE_SOCIAL.map((o) => (
+                <AtributoEditable
+                  key={o.key}
+                  grupo="sost"
+                  opcion={o}
+                  on={sustain.includes(o.key)}
+                  onToggle={(v) => toggle(sustain, setSustain, o.key, v)}
+                  checkboxName="eudr_sustainability_tags"
+                  fileField={`sustainability_file_${o.key}`}
+                  solicitud={solicitudes[claveDeChequeo("sost", o.key)]}
+                  nota={notasDeAtributos[claveDeChequeo("sost", o.key)]}
+                  file={sustainabilityFiles[o.key]}
+                  fileUrls={fileUrls}
+                />
+              ))}
             </div>
             <textarea name="eudr_sustainability_notes" defaultValue={values.eudr_sustainability_notes ?? ""} style={{ marginTop: 8 }} />
             <p className={styles.meta} style={{ margin: "4px 0 0" }}>Puede adjuntar un archivo de respaldo (≤ 5 MB) por cada ítem marcado.</p>

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrDeclaracion, MAX_CHEQUEO_FILES, parcelaGeoOk, parcelasGeoComplete, type FincaEudrFields } from "@/lib/eudr";
 import { PAISES_FUERA_DE_COLOMBIA } from "@/lib/geo/departamentos";
+import { GRUPOS_DE_ATRIBUTOS, claveDeChequeo } from "@/lib/eudrAtributos";
 import { deriveArchetype, composicionDeVariedades, deriveClaims, CUSTODY_MODEL, type ContributionInput } from "@/lib/lotComposition";
 import { deriveCertSchemes } from "@/components/kaffetal-regal/ficha/fichaData";
 import { lotInscriptionSettled } from "@/lib/arena/inscriptions";
@@ -23,7 +24,7 @@ type KeyedFiles = Record<string, { assetId: string; fileName: string }>;
 // "{group}_asset_{key}" / "{group}_name_{key}".
 function collectKeyedAttachments(
   formData: FormData,
-  group: "evidence" | "sustainability",
+  group: "evidence" | "sustainability" | "areas", // V5.128: `areas` = evidencia por área de legislación (`legal_file_doc` ya era el SICA)
   checkedKeys: string[],
   existing: KeyedFiles
 ): KeyedFiles {
@@ -622,6 +623,11 @@ const FINCA_EUDR_FIELD_LABEL: Record<string, string> = {
   eudr_evidence_types: "Evidencia disponible",
   eudr_evidence_notes: "Notas de evidencia",
   eudr_legal_areas: "Áreas legales verificadas",
+  eudr_legal_files: "Evidencia de las áreas legales",
+  eudr_atributos_notas: "Notas de legislación y sostenibilidad",
+  eudr_evidence_files: "Adjuntos de evidencia",
+  eudr_sustainability_files: "Adjuntos de sostenibilidad",
+  pais: "País",
   eudr_tenure: "Tenencia de la tierra",
   eudr_sustainability_tags: "Sostenibilidad",
   eudr_sustainability_notes: "Notas de sostenibilidad",
@@ -644,7 +650,20 @@ function valuesDiffer(a: unknown, b: unknown): boolean {
   if (Array.isArray(a) || Array.isArray(b)) {
     return JSON.stringify([...((a as string[]) ?? [])].sort()) !== JSON.stringify([...((b as string[]) ?? [])].sort());
   }
+  // V5.128: los jsonb (adjuntos por clave, notas por ítem) se comparan por CONTENIDO. Por referencia «cambiaban» en cada
+  // guardado, y la nota automática al productor listaba `eudr_evidence_files` y compañía sin que nada hubiera cambiado.
+  if ((a && typeof a === "object") || (b && typeof b === "object")) return estable(a ?? {}) !== estable(b ?? {});
   return (a ?? null) !== (b ?? null);
+}
+
+/** JSON con las claves ordenadas: dos objetos iguales dan el mismo texto, venga como venga el jsonb. */
+function estable(v: unknown): string {
+  if (Array.isArray(v)) return `[${v.map(estable).join(",")}]`;
+  if (v && typeof v === "object") {
+    const o = v as Record<string, unknown>;
+    return `{${Object.keys(o).sort().map((k) => `${JSON.stringify(k)}:${estable(o[k])}`).join(",")}}`;
+  }
+  return JSON.stringify(v ?? null);
 }
 
 export async function updateFincaEudr(fincaId: string, formData: FormData) {
@@ -656,7 +675,7 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
   const { data: before } = await service
     .from("fincas")
     .select(
-      "name, producer_id, vereda, municipio, departamento, altitude_m, history_text, characteristics_text, eudr_local_infra, eudr_polygon_geojson, eudr_legal_docs_asset_id, eudr_legal_docs_filename, eudr_support_doc_type, eudr_producer_answers, hectares, eudr_lat, eudr_lng, eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types, eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files, eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_product_risk_factors, eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme, eudr_mitigation_actions, eudr_mitigation_responsible, eudr_mitigation_effective, eudr_chequeo_notas, eudr_chequeo_files"
+      "name, producer_id, eudr_legal_files, eudr_atributos_notas, vereda, municipio, departamento, altitude_m, history_text, characteristics_text, eudr_local_infra, eudr_polygon_geojson, eudr_legal_docs_asset_id, eudr_legal_docs_filename, eudr_support_doc_type, eudr_producer_answers, hectares, eudr_lat, eudr_lng, eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types, eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files, eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_product_risk_factors, eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme, eudr_mitigation_actions, eudr_mitigation_responsible, eudr_mitigation_effective, eudr_chequeo_notas, eudr_chequeo_files"
     )
     .eq("id", fincaId)
     .single();
@@ -668,6 +687,9 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
   // record any newly-uploaded attachment, otherwise carry the existing one over.
   const evidenceFiles = collectKeyedAttachments(formData, "evidence", evidenceTypes, (before.eudr_evidence_files as KeyedFiles) ?? {});
   const sustainabilityFiles = collectKeyedAttachments(formData, "sustainability", sustainabilityTags, (before.eudr_sustainability_files as KeyedFiles) ?? {});
+  // V5.128 (owner): evidencia de CTCx por área de legislación — la misma mecánica: solo de las marcadas.
+  const legalAreas = formData.getAll("eudr_legal_areas").map(String);
+  const legalFiles = collectKeyedAttachments(formData, "areas", legalAreas, (before.eudr_legal_files as KeyedFiles) ?? {});
 
   // Cuestionario de riesgo (trasladado del lote a la finca 2026-07-24). El
   // "Responsable" lleva el mismo sello nombre · fecha que el lote: se estampa la
@@ -710,7 +732,8 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
     eudr_evidence_types: evidenceTypes,
     eudr_evidence_notes: textOrNull(formData, "eudr_evidence_notes"),
     eudr_evidence_files: evidenceFiles,
-    eudr_legal_areas: formData.getAll("eudr_legal_areas").map(String),
+    eudr_legal_areas: legalAreas,
+    eudr_legal_files: legalFiles,
     eudr_tenure: textOrNull(formData, "eudr_tenure"),
     // eudr_legal_docs_asset_id/filename are NOT set here -- that's the
     // producer's own PDF upload (uploadFincaLegalDoc in KaffetalExperience.tsx),
@@ -752,6 +775,17 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
     const pais = String(formData.get("pais") ?? "").trim();
     patch.pais = PAISES_FUERA_DE_COLOMBIA.includes(pais) ? pais : null;
     if (patch.pais) patch.departamento = null;
+  }
+  // V5.128 (owner): la NOTA de CTCx por ítem de legislación y de sostenibilidad. Solo si el formulario la trae.
+  if (formData.has("atributos_notas_presente")) {
+    const notas: Record<string, string> = {};
+    for (const g of GRUPOS_DE_ATRIBUTOS) {
+      for (const o of g.opciones) {
+        const texto = textOrNull(formData, `atributo_nota_${g.grupo}_${o.key}`);
+        if (texto) notas[claveDeChequeo(g.grupo, o.key)] = texto;
+      }
+    }
+    patch.eudr_atributos_notas = notas;
   }
   if (formData.has("altitude_m")) {
     const alt = String(formData.get("altitude_m") ?? "").trim();

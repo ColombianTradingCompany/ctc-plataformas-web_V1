@@ -73,6 +73,10 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   «Borrar» de su pantalla de edición (y desde la tarjeta de «Mis Fincas»); nunca con `window.confirm`. La regla de qué se puede borrar
   sigue en `isLotCommitted` / `fincaSelfDeletable` (`data.ts`, espejo de las RLS `lots_delete_own_before_mue` y
   `fincas_delete_own_not_committed`); los DELETE piden `.select("id")` porque una RLS que filtra devuelve cero filas, no error.
+- **El productor SOLICITA los chequeos de CTCx** (owner, 2026-10-01, V5.128). Legislación y sostenibilidad siguen siendo material de
+  la revisión de CTCx (no determinan el Pasaporte), pero el productor los marca y los pide desde la pestaña 3 de la finca, con nota e
+  imagen por ítem (`ChequeosCtcx.tsx` → `fincas.eudr_chequeo_solicitudes`; catálogo en `src/lib/eudrAtributos.ts`). Es un envío
+  propio, fuera del guardado de la finca y del fieldset de solo lectura: funciona con la finca aprobada.
 - **La finca puede estar FUERA de Colombia** (owner, 2026-10-01, V5.127). El Departamento se elige de la lista completa (32 y
   Bogotá D.C., `src/lib/geo/departamentos.ts`); el interruptor «Fuera de Colombia» lo congela y pide el país (Perú, Ecuador,
   Venezuela, Panamá, Costa Rica, Guatemala, El Salvador) → `fincas.pais` (null = Colombia; con país, sin departamento). Quien

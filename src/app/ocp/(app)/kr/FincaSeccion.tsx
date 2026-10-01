@@ -8,6 +8,7 @@ import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { fincaCode } from "@/components/kaffetal-regal/data";
 import { daneCodeFor } from "@/lib/daneCodes";
+import { leerChequeosSolicitados } from "@/lib/eudrAtributos";
 import { EudrStatusBadge } from "@/components/kaffetal-regal/EudrStatusBadge";
 import { approveFinca, rejectFinca, updateFincaEudr, setFincaCertShared, deleteAbandonedFinca } from "../actions";
 import { logProducerComm } from "../commActions";
@@ -57,6 +58,9 @@ type FincaRow = {
   eudr_chequeo_files: { assetId: string; fileName: string }[] | null;
   eudr_evidence_files: Record<string, { assetId: string; fileName: string }> | null;
   eudr_sustainability_files: Record<string, { assetId: string; fileName: string }> | null;
+  eudr_chequeo_solicitudes: unknown;
+  eudr_legal_files: Record<string, { assetId: string; fileName: string }> | null;
+  eudr_atributos_notas: Record<string, string> | null;
   eudr_cert_shared: boolean | null;
   eudr_producer_answers: Record<string, unknown> | null;
   eudr_local_infra: string[] | null;
@@ -137,7 +141,7 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
        requires_eudr_polygon, eudr_polygon_geojson, eudr_lat, eudr_lng,
        eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types,
        eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_legal_docs_asset_id, eudr_legal_docs_filename,
-       eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_chequeo_notas, eudr_chequeo_files, eudr_evidence_files, eudr_sustainability_files, eudr_cert_shared, eudr_producer_answers, eudr_local_infra,
+       eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_chequeo_notas, eudr_chequeo_files, eudr_evidence_files, eudr_sustainability_files, eudr_chequeo_solicitudes, eudr_legal_files, eudr_atributos_notas, eudr_cert_shared, eudr_producer_answers, eudr_local_infra,
        eudr_support_doc_type, eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_product_risk_factors, eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme, eudr_mitigation_actions, eudr_mitigation_responsible, eudr_mitigation_effective, created_at`
     )
     .eq("id", fincaId);
@@ -152,6 +156,9 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
     f.video_asset_id,
     ...Object.values(f.eudr_evidence_files ?? {}).map((v) => v.assetId),
     ...Object.values(f.eudr_sustainability_files ?? {}).map((v) => v.assetId),
+    // V5.128: la evidencia de CTCx por área de legislación y las imágenes que el productor adjuntó al pedir un chequeo.
+    ...Object.values(f.eudr_legal_files ?? {}).map((v) => v.assetId),
+    ...Object.values(leerChequeosSolicitados(f.eudr_chequeo_solicitudes)).map((v) => v.assetId),
     ...(f.eudr_chequeo_files ?? []).map((v) => v.assetId),
   ]);
   const [signedUrls, producers, { data: comms }, { data: lotsRaw }, { data: parcelasRaw }, { data: certsRaw }] = await Promise.all([
@@ -384,6 +391,8 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
                               [
                                 ...Object.values(finca.eudr_evidence_files ?? {}),
                                 ...Object.values(finca.eudr_sustainability_files ?? {}),
+                                ...Object.values(finca.eudr_legal_files ?? {}),
+                                ...Object.values(leerChequeosSolicitados(finca.eudr_chequeo_solicitudes)).flatMap((v) => (v.assetId ? [{ assetId: v.assetId }] : [])),
                                 ...(finca.eudr_chequeo_files ?? []),
                               ]
                                 .map((v) => [v.assetId, signedUrls.get(v.assetId)])

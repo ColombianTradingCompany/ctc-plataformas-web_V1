@@ -227,7 +227,7 @@ const completa = (extra = {}) => ({
   check("las afirmaciones del producto se pintan al derecho y los indicios con «bien = No»", editor.includes("opciones={PRODUCT_RISK_AFFIRMATIONS}") && editor.includes("bienSi={false}"));
   check("la evidencia del chequeo admite hasta 4 archivos (tope en la fuente y en la acción)", lee("src/lib/eudr.ts").includes("export const MAX_CHEQUEO_FILES = 4") && editor.includes("MAX_CHEQUEO_FILES - (values.eudr_chequeo_files ?? []).length") && lee("src/app/ocp/(app)/actions.ts").includes(".slice(0, MAX_CHEQUEO_FILES)"));
   // V5.124: el grupo `legal` (el SICA que CTCx adjunta en nombre del productor) se suma a los que suben al Storage y no viajan por la acción.
-  check("y el submit no manda Files (chequeo, SICA…) por la acción", editor.includes("/^(evidence|sustainability|chequeo|legal)_file_/.test(k)) fd.delete(k)"));
+  check("y el submit no manda Files (chequeo, SICA…) por la acción", editor.includes("/^(evidence|sustainability|chequeo|legal|areas)_file_/.test(k)) fd.delete(k)"));
   const certs = lee("src/lib/registro/certificados.ts");
   check("corroborar admite un archivo por certificación y el guard lo protege", certs.includes("corroboracion_asset_id: adjunto.assetId") && editor.includes("cert-corroboracion/${certId}") && lee("docs/migraciones/2026-10-01_finca_certificates_corroboracion.sql").includes("new.corroboracion_asset_id is distinct from old.corroboracion_asset_id"));
 }
@@ -284,6 +284,27 @@ const completa = (extra = {}) => ({
   check("el Pasaporte declara el país de la finca y su nivel de riesgo (Costa Rica es bajo)", lee("src/components/kaffetal-regal/EudrDossierDoc.tsx").includes('countryRiskFor(finca.pais || "Colombia")') && lee("src/lib/eudr.ts").includes('"Costa Rica": "Bajo"'));
   check("el OCP lo lee y lo edita en nombre del productor; el DANE no aplica fuera de Colombia", lee("src/app/ocp/(app)/kr/FincaEudrEditor.tsx").includes('name="pais"') && lee("src/app/ocp/(app)/actions.ts").includes('formData.has("pais")') && lee("src/app/ocp/(app)/kr/FincaSeccion.tsx").includes("finca.pais ? null : daneCodeFor("));
   check("el acta de la migración `fincas.pais` existe", lee("docs/migraciones/2026-10-01_fincas_pais.sql").includes("add column if not exists pais text"));
+}
+
+// ── V5.128 (owner, 2026-10-01) · el productor SOLICITA el chequeo de legislación/sostenibilidad; CTCx anota y adjunta por ítem ──
+{
+  const lib = lee("src/lib/eudrAtributos.ts");
+  const bloque = lee("src/components/kaffetal-regal/ChequeosCtcx.tsx");
+  const modal = lee("src/components/kaffetal-regal/FincaModal.tsx");
+  const ke = lee("src/components/kaffetal-regal/KaffetalExperience.tsx");
+  const editor = lee("src/app/ocp/(app)/kr/FincaEudrEditor.tsx");
+  const piezas = lee("src/app/ocp/(app)/kr/AtributosChequeo.tsx");
+  const acciones = lee("src/app/ocp/(app)/actions.ts");
+  check("una sola lista: 5 áreas de legislación y 4 de sostenibilidad, con las claves de siempre", ["suelo", "ambiental", "laboral", "clpi", "fiscal", "sa8000", "familiar", "inclusion", "paisaje"].every((k) => lib.includes(`key: "${k}"`)) && !editor.includes("const LEGAL_AREAS") && editor.includes("AREAS_DE_LEGISLACION"));
+  check("KR: el aviso «no requieren acción suya» ya no está; el bloque de chequeos vive FUERA del fieldset de solo lectura", !modal.includes("los completa CTC como parte de su propia revisión") && /<\/fieldset>\s*\{\/\* V5\.128[\s\S]{0,800}<ChequeosCtcx/.test(modal));
+  check("KR: por ítem, nota e imagen opcionales y el botón «Solicitar chequeo»", bloque.includes('accept="image/*"') && bloque.includes("Nota para CTCx (opcional)") && bloque.includes("Solicitar chequeo") && bloque.includes("✓ Verificado por CTCx"));
+  check("KR: la solicitud escribe SOLO `eudr_chequeo_solicitudes`, comprueba la fila y avisa a CTCx en el hilo", ke.includes(".update({ eudr_chequeo_solicitudes: mapa }).eq(\"id\", finca.id).select(\"id\")") && ke.includes("Solicitud de chequeo — ${finca.name}") && !/payload\.eudr_chequeo_solicitudes|eudr_chequeo_solicitudes: f\./.test(ke));
+  check("OCP: cada ítem enseña la solicitud del productor, la nota de CTCx y la evidencia", piezas.includes("El productor pidió este chequeo") && piezas.includes("Nota de CTCx:") && piezas.includes("Evidencia:") && editor.includes('<AtributosLectura grupo="legal"') && editor.includes('<AtributosLectura grupo="sost"'));
+  check("OCP: al editar, marca + nota + adjunto por ítem, y el sub-tab cuenta lo que falta por chequear", piezas.includes("name={`atributo_nota_${grupo}_${opcion.key}`}") && editor.includes("fileField={`areas_file_${o.key}`}") && editor.includes("(evidence|sustainability|chequeo|legal|areas)_file_") && editor.includes("por chequear"));
+  check("la acción guarda la evidencia de las áreas y las notas por ítem", acciones.includes('collectKeyedAttachments(formData, "areas", legalAreas') && acciones.includes("patch.eudr_atributos_notas = notas;") && acciones.includes("eudr_legal_files: legalFiles,"));
+  check("los jsonb se comparan por contenido (la nota al productor ya no lista columnas crudas)", acciones.includes("return estable(a ?? {}) !== estable(b ?? {});") && acciones.includes('eudr_evidence_files: "Adjuntos de evidencia"'));
+  const acta = lee("docs/migraciones/2026-10-01_fincas_chequeo_de_atributos.sql");
+  check("el acta de la migración trae las tres columnas y las dos líneas del guard", ["eudr_chequeo_solicitudes", "eudr_legal_files", "eudr_atributos_notas"].every((c) => acta.includes(`add column if not exists ${c} jsonb`)) && acta.includes("or new.eudr_atributos_notas is distinct from old.eudr_atributos_notas"));
 }
 
 if (fallos.length) {

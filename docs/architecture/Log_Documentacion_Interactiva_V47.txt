@@ -343,3 +343,11 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `ocp/kr/FincaSeccion.tsx`, `FincaPanel.tsx`, `FincaEudrEditor.tsx`, `carga.ts`, `LoteSeccion.tsx` (país; DANE «no aplica»).
   Guardianes: `qa-visa` +7, `qa-asistencia` (check ajustado). Acta: `docs/migraciones/2026-10-01_fincas_pais.sql`.
 (commit: 1267d44)
+
+## [2026-10-01] V5.128 · Kaffetal Regal + Consolas — el productor solicita el chequeo de legislación/sostenibilidad; CTCx anota y adjunta por ítem
+- ADD `src/lib/eudrAtributos.ts` (catálogo único, `ChequeosSolicitados`, `chequeosPendientes`), `kaffetal-regal/ChequeosCtcx.tsx`, `ocp/kr/AtributosChequeo.tsx`.
+- ADD columnas `fincas.eudr_chequeo_solicitudes` (productor) · `eudr_legal_files` · `eudr_atributos_notas` (solo CTC, en el guard).
+- ANN `FincaModal.tsx` (bloque fuera del fieldset), `KaffetalExperience.tsx` (`solicitarChequeosFinca`), `data.ts`, `FincaEudrEditor.tsx`,
+  `FincaSeccion.tsx`, `ocp/actions.ts` (`updateFincaEudr`: evidencia `areas_*`, notas por ítem; `valuesDiffer` por contenido).
+  Guardián: `qa-visa` +9. Acta: `docs/migraciones/2026-10-01_fincas_chequeo_de_atributos.sql`.
+(commit: pendiente)

@@ -1,6 +1,7 @@
 import type { FichaFormData } from "./ficha/fichaData";
 import type { PuntoSca } from "@/lib/arena/homologacion";
 import type { EstadoDeMora } from "@/lib/trato/mesAMes";
+import type { ChequeosSolicitados } from "@/lib/eudrAtributos";
 
 export type Finca = {
   id: string;
@@ -40,6 +41,8 @@ export type Finca = {
   eudrLegalDocsUrl: string | null;
   eudrSustainabilityTags: string[];
   eudrSustainabilityNotes: string;
+  /** V5.128 (owner): lo que el productor pidió que CTCx chequee de legislación y sostenibilidad (`fincas.eudr_chequeo_solicitudes`). */
+  eudrChequeoSolicitudes: ChequeosSolicitados;
   // Tipo de documento de respaldo legal subido (escritura, contrato de
   // arrendamiento, Registro SICA / cédula cafetera, …) — admite documentación SICA.
   eudrSupportDocType: string;

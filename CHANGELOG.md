@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.122] — 2026-10-01 (commit pendiente)
+## [V5.122] — 2026-10-01 (commit e78f98c)
 
 - **Corregido**: en Kaffetal Regal, el área escrita a mano del Cafetal 1 (obligatoria con 4 ha o menos) **se perdía** al guardar la
   finca (el owner lo topó en `CTC-F-54657EF2` con 3 ha): solo la guardaba el botón del cafetal, y el espejo de la parcela no escribía

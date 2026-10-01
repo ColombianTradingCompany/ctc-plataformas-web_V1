@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.124] — 2026-10-01 (commit pendiente)
+## [V5.124] — 2026-10-01 (commit acf8be2)
 
 - **Cambiado**: en Kaffetal Regal, **una finca aprobada ya no se edita: se revisa** (owner, 2026-10-01). El botón de la tarjeta dice
   «Revisar» y la página abre en solo lectura (sin autosave ni «Guardar Finca»), con un aviso que remite a la solicitud de revisión.

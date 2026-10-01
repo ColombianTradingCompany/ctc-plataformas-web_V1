@@ -322,4 +322,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   `kr/FincaEudrEditor.tsx` (generales, polígono, infraestructura, SICA), `ocp/(app)/actions.ts` (`updateFincaEudr`: nombre del productor,
   espejo de la parcela 1), `kr/FincaPanel.tsx` (Comunicación con punto y adjunto).
 - DICT `producer_comm_log.seccion/adjunto_asset_id/adjunto_filename` (acta 2026-10-01). Guardián: `qa-visa` +5.
-(commit: pendiente)
+(commit: acf8be2)

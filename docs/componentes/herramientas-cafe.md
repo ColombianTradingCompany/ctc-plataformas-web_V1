@@ -17,7 +17,7 @@ cuenta de KR, CP o Directorio), el **Taller** (Cover Flow en dos estantes: abier
 **trabajos guardados** gracias al puente `ctc-bridge.js`. El inventario **vive en la base** (`tools` +
 `tool_versions`): una versión nueva se sube y publica desde el BCP sin desplegar.
 
-## El inventario (tabla `tools`, 2026-09-21)
+## El inventario (tabla `tools`, 2026-10-01)
 
 > **V5.66: una carpeta por herramienta.** Todo vive en `public/tools/<id>/` (la carpeta se llama como el
 > `tools.id`; lista en `src/lib/tools/carpetas.ts`, 308 desde las URLs planas viejas). El **recuento con
@@ -28,6 +28,7 @@ cuenta de KR, CP o Directorio), el **Taller** (Cover Flow en dos estantes: abier
 |---|---|---|---|---|---|
 | `agtron` | Disco Agtron | default | en (+ es, de en la propia herramienta, V5.93) | sí (esquema propio, V5.93) | `agtron-dial.html` (**V8**; fuente `reference/html_tools/agtron/agtron_dial_metre-V8.html`) |
 | `catacion` | Rueda de catación (rueda del sabor) | default | es | sí | `rueda-catacion.html` (+ `rueda-del-cafe-v23.html`) |
+| `coffee-datasheet` | **CTCx Coffee Datasheet Tool** (evaluación SCA 2004 o CVA) | default | es (+ en, de en la propia herramienta) | sí (esquema propio) | `ctcx-coffee-datasheet-tool.html` (V5.132: nace de combinar `catacion` y `green-datasheet`; catálogos GENERADOS con `scripts/build-coffee-datasheet.mjs`) |
 | `cogs-verde` | Calculadora CoGS · Café verde | **plus** | es | sí | `cogs-cafe-verde.html` (copia **V19** en `public/ocp-apps/`) |
 | `cool-pdf` | Cool PDF · dale cuerpo a un PDF | default | en | sí | `cool-pdf.html` |
 | `costo-empaque` | Costo de empaque por kilo | default | es | sí | `costo-empaque.html` (referencia viva del puente) |
@@ -80,7 +81,10 @@ SUPERFICIE, no de una consola — gotcha 12) · `/tools/<id>/*.html` y `/tools/h
 - `src/components/tools/` — `CoverFlow`, `ConchaHerramienta`, `SesionHerramienta` (Home Menu de trabajos),
   `BarraHerramienta`, `TallerBarra`, `ObtenerPlus`, `SolicitarHerramienta`, `ToolIcons`, `CapturaMiniatura`.
 - `src/components/services/{HerramientasLanding,CarruselHerramientas}.tsx`; `scripts/build-tool-shots.mjs`
-  (capturas con Playwright, comiteadas), `scripts/vendor-tool-assets.mjs` (fuentes/CDN a local — offline).
+  (capturas con Playwright, comiteadas; V5.132: `node scripts/build-tool-shots.mjs <id>` captura solo esa), `scripts/vendor-tool-assets.mjs` (fuentes/CDN a local — offline).
+- **CTCx Coffee Datasheet Tool** (V5.132) · **guía: `docs/componentes/herramientas-cafe/coffee-datasheet/README.md`** · un solo HTML con cinco
+  bloques marcados: catálogos GENERADOS (`scripts/build-coffee-datasheet.mjs`), textos `TX` (ES · EN · DE), botones «i» `INFO`, **núcleo puro**
+  (`/*<NUCLEO-PURO>*/`: las fórmulas, con los nombres de campo de `src/lib/arena/labEvaluation.ts`) y la lógica de pantalla.
 
 ## Tablas que posee
 
@@ -90,10 +94,13 @@ SUPERFICIE, no de una consola — gotcha 12) · `/tools/<id>/*.html` y `/tools/h
 
 ## Guardianes
 
-`qa-tools-carpetas.mjs` (165, `node --experimental-strip-types`: carpeta ↔ lista ↔ disco ↔ 308, y nadie escribe una ruta plana) ·
-`qa-taller-check.mjs` · `qa-herramientas-acceso-check.mjs` (26) · `qa-concha-herramientas-check.mjs` (42,
-once vectores de ataque) · `qa-tools-puente-conformance.mjs` (12/12) · `qa-tools-seo-check.mjs` (241, recorre las carpetas) ·
+`qa-tools-carpetas.mjs` (175, `node --experimental-strip-types`: carpeta ↔ lista ↔ disco ↔ 308, y nadie escribe una ruta plana) ·
+`qa-taller-check.mjs` (66) · `qa-herramientas-acceso-check.mjs` (31) · `qa-concha-herramientas-check.mjs` (42,
+once vectores de ataque) · `qa-tools-puente-conformance.mjs` (14/14; las de esquema propio —`agtron`, `coffee-datasheet`— con sonda) · `qa-tools-seo-check.mjs` (257, recorre las carpetas) ·
 `qa-tools-seo-espejo.mjs` (86, toca la base: columna = archivo; `noindex` en archivadas y en `FUERA_DEL_INDICE`) ·
+`qa-coffee-datasheet-check.mjs` (1.197, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`: catálogos generados al día,
+**paridad de las fórmulas SCA 2004 y CVA con la planilla de la plataforma** sobre 1.200 planillas, los dos métodos sin mezclar, tres idiomas
+completos, sin CDN) ·
 `qa-cromatografia-check.mjs` (294, puro) · `qa-cromatografia-modelo.mjs` (manual, gasta: estabilidad del modelo; acepta
 `[idioma] [lab]`) ·
 `cromatografia-recorrido.mjs` y `cromatografia-calibrar.mjs` (manuales: recorrido visual y calibración de la compuerta).
@@ -107,6 +114,9 @@ once vectores de ataque) · `qa-tools-puente-conformance.mjs` (12/12) · `qa-too
 - **La caducidad de un permiso se filtra en código** (`expires_at` nulo = no caduca); nunca `.lt()` a secas.
 - **`?volver=` solo acepta rutas relativas de ESA superficie** — un redirect abierto dentro del dominio es
   phishing servido por la casa.
+- **Un catálogo que ya tiene dueño en el repo no se copia dentro de un HTML: se GENERA** (V5.132). Una herramienta autocontenida no
+  puede importar, pero sí llevar un bloque entre marcas que un script escribe desde la fuente y un guardián compara (`build-coffee-datasheet.mjs`
+  → la rueda, los municipios y las variedades de `coffee-datasheet`). Lo mismo con una fórmula: el núcleo puro se ejecuta en Node contra la de la plataforma.
 - Una herramienta nueva: `.html` a **`public/tools/<id>/`** + su línea en `carpetas.ts` + su ficha en `herramientas-cafe/<id>/` → `vendor-tool-assets.mjs` → alta en `tools` desde el BCP
   → línea del puente si guarda trabajo → captura con `build-tool-shots.mjs` → `qa-tools-carpetas` y `qa-tools-seo-*` verdes.
 - **Una pieza que otra parte reutiliza se EXTRAE a una fuente única** (datos puros en `src/lib/tools/<id>/`, o la
@@ -121,6 +131,18 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 
 ## Pendientes
 
+- **V5.132 · CTCx Coffee Datasheet Tool** (owner, 2026-10-01; ficha `herramientas-cafe/coffee-datasheet/README.md`). Hecho: herramienta
+  NUEVA que combina la Rueda del Café y la Ficha de café verde para evaluar **uno o varios lotes** con **SCA 2004 o CVA** —el método se
+  elige primero y manda en toda la pantalla (cinta fija, casillas, ficha, archivo)—, en tres partes que se pueden apagar: Perfil de
+  Sabores · Granulometría · Caracterización Extrínseca; 49 botones «i» que citan su estándar (SCA 102–105 y protocolo 2004); ES · EN · DE;
+  memoria con esquema propio; sin CDN. Sus catálogos (rueda, municipios, variedades) se GENERAN de sus fuentes y sus fórmulas se comparan
+  con las de la planilla del Centro de Calidad. Abierto, **con decisión del owner**: (a) **qué pasa con `catacion` y `green-datasheet`**
+  —siguen vivas; la Rueda V23 es además la fuente de la taxonomía—; (b) **revisión de un Q Grader** de cuatro reglas que el estándar no
+  fija o que no están en los PDF entregados (conteo de casillas CATA, defectos completos solo enteros, la referencia de clasificación de
+  café verde con sus umbrales de humedad y aw, el mapa rueda → casilla); (c) inglés y alemán escritos por la IA; (d) la lectura del total
+  SCA difiere de la de la Ficha de KR (`scaClassFor`) — anotado en la ficha, no armonizado; (e) superficies puestas por defecto en KR · web ·
+  DC (se cambian en BCP · Herramientas sin desplegar). Y sigue abierto el paso corto hacia la planilla: `CTC.emitir` con el lote, que ya usa
+  los nombres de campo de `LabEvaluation` (transcribir FT2, folio 11).
 - **V5.93 · Disco Agtron V8** (owner, 2026-09-26; ficha `herramientas-cafe/agtron/README.md`). Hecho: lectura por foto por
   luminosidad, blanco de referencia, 7 puntos o áreas con % en vivo y mínimo del 10 %, instrucciones de luz de día o blanca a 12 cm,
   aplicado único a los 10 s, ventana de catación SCA, alemán, apertura en el idioma de la superficie y memoria con esquema propio.

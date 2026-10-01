@@ -372,3 +372,16 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   (`RuedaDeSabores` con la geometría, los matices y las agujas de la herramienta), `LabEvalEditor.tsx` (rueda a lo ancho, marcas por camino),
   `planillaI18n.ts`, `nominados/CircuitoVista.tsx` y `socios/…/evaluacion/page.tsx` (`rutaDe`). Guardián: `qa-centro-calidad` +11.
 (commit: be4f2b4)
+
+## [2026-10-01] V5.132 · Herramientas del Café — CTCx Coffee Datasheet Tool: evaluar lotes con SCA 2004 o con CVA, sin mezclarlos
+- ADD `public/tools/coffee-datasheet/ctcx-coffee-datasheet-tool.html` (herramienta nueva, id `coffee-datasheet`: método → sesión → lotes → tres partes
+  → ficha; ES · EN · DE; puente con esquema propio), `scripts/build-coffee-datasheet.mjs` (GENERA dentro del HTML la rueda de
+  `catacion/rueda-del-cafe-v23.html` y `DEP_MUNI` · `VARIETIES` · `HS_CODES` de `ficha/fichaData.ts`; `--check`), `scripts/qa-coffee-datasheet-check.mjs`
+  (1.197; ejecuta el núcleo puro y lo compara con `computeCva` · `computeSca2004` · `computeFactor`), `public/images/herramientas/shots/coffee-datasheet.jpg`.
+- ANN `src/lib/tools/carpetas.ts` (+1 carpeta, +1 redirección 308), `components/tools/ToolIcons.tsx` (icono), `scripts/build-tool-shots.mjs` (ids por
+  argumento), `scripts/qa-tools-puente-conformance.mjs` (sonda), `scripts/qa-taller-check.mjs`.
+- NODO nuevo en Herramientas del Café: «CTCx Coffee Datasheet Tool» (default · KR · web · DC). DICT: entrada `coffee-datasheet` — «evaluación SCA 2004 o
+  CVA de uno o varios lotes; consume la Rueda (catacion) y la Ficha de KR (fichaData); sus fórmulas son las de `labEvaluation.ts`». TRAZA: Rueda V23 →
+  build-coffee-datasheet → herramienta; fichaData → build-coffee-datasheet → herramienta; labEvaluation ⇄ qa-coffee-datasheet (paridad).
+- DATOS: fila en `tools` + `tool_versions` (origen repo), insertada con el archivo ya desplegado.
+(commit: pendiente)

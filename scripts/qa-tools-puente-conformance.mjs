@@ -27,6 +27,7 @@ const HERRAMIENTAS = {
   "cool-pdf": "/tools/cool-pdf/cool-pdf.html",
   catacion: "/tools/catacion/rueda-del-cafe-v23.html",
   "green-datasheet": "/tools/green-datasheet/green-coffee-datasheet.html",
+  "coffee-datasheet": "/tools/coffee-datasheet/ctcx-coffee-datasheet-tool.html",
   qr: "/tools/qr/generador-qr.html",
   "formula-calidad": "/tools/formula-calidad/formula-calidad.html",
   "viaje-cafe": "/tools/viaje-cafe/viaje-cafe.html",
@@ -46,6 +47,20 @@ const CAMPO = { "cromatografia-suelo": "#municipio" };
 // Disco Agtron (V5.93): hasta la V7 el puente por defecto solo guardaba el
 // matiz y el zoom de la foto, nunca el número; SIN-CAMPOS lo dejaba pasar.
 const SONDA = {
+  // CTCx Coffee Datasheet Tool (V5.132): el trabajo es el estado entero —método, sesión y lotes—. La sonda elige CVA,
+  // califica una sección afectiva y nombra el lote; exige que las tres cosas lleguen al estado y vuelvan a la pantalla.
+  "coffee-datasheet": {
+    actuar: async (marco) => {
+      await marco.locator('[data-a="metodo"][data-v="cva"]').click();
+      await marco.locator('[data-a="aff"][data-v="flavor"][data-i="8"]').click();
+      await marco.locator('[data-k="nombre"]').fill("QA-PUENTE-77");
+    },
+    capturado: (estado) => !!estado && estado.metodo === "cva" && estado.lotes?.[0]?.cva_flavor === "8" && estado.lotes[0].nombre === "QA-PUENTE-77",
+    restaurado: async (marco) =>
+      (await marco.locator("#cinta .sello").innerText()).trim() === "CVA" &&
+      (await marco.locator('[data-k="nombre"]').inputValue()) === "QA-PUENTE-77" &&
+      (await marco.locator('[data-a="aff"][data-v="flavor"][data-i="8"]').getAttribute("aria-pressed")) === "true",
+  },
   agtron: {
     actuar: async (marco) => {
       await marco.locator("#dialThumb").focus();

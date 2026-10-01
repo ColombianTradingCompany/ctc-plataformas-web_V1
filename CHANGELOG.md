@@ -19,6 +19,31 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.132] — 2026-10-01 (commit pendiente)
+
+- **Añadido**: **CTCx Coffee Datasheet Tool** (`herramientas.ctcexport.com`, id `coffee-datasheet`), una herramienta NUEVA que combina la
+  Rueda del Café y la Ficha de café verde (owner, 2026-10-01) para evaluar **uno o varios lotes** con **SCA 2004 o con CVA**, llenando
+  una o varias de tres partes: **Perfil de Sabores · Granulometría · Caracterización Extrínseca**.
+- **Añadido**: **el método se elige primero y manda en toda la pantalla** — «es FUNDAMENTAL hacer esta distinción». Una cinta fija dice
+  cuál se está usando (azul marino «SCA 2004» · dorada «CVA»), las casillas son las de ese método y la ficha impresa, el HTML exportado y
+  el nombre del archivo lo llevan. SCA 2004: siete atributos de 6,00 a 10,00 al 0,25, tres por taza, defectos que restan. CVA: cada
+  sección en dos columnas que no se copian — descriptiva (intensidad 0–15 y casillas CATA, SCA 103) y afectiva (1–9, SCA 104) —, las
+  cinco tazas con su tipo de defecto, la física del formato CVA (mallas 10 a 23) y la extrínseca del SCA 105 con sus casillas oficiales.
+- **Añadido**: **49 botones «i»** que explican cada casilla y citan su estándar (SCA 102–105 y protocolo de 2004), una guía de preparación
+  de la muestra, y tres idiomas (ES · EN · DE). La rueda de sabores marca por el usuario la casilla CATA de cada nota.
+- **Añadido**: trabajos guardados con esquema propio, borrador en el navegador fuera de la concha, archivo `.json` que se vuelve a
+  cargar, CSV resumen, ficha por lote o de todos, y tabla de comparación entre lotes. Sin CDN: abre sin internet.
+- **Cambiado**: los catálogos de la herramienta **se generan, no se copian** — `scripts/build-coffee-datasheet.mjs` escribe dentro del
+  HTML la rueda (de la Rueda del Café publicada) y los municipios, variedades y partidas arancelarias (de la Ficha de Kaffetal Regal).
+- **Corregido** (frente a las dos herramientas de origen, que siguen vivas): la intensidad ya no es por nota sino por sección, como pide
+  el SCA 103; una evaluación afectiva incompleta no da puntaje (antes arrancaba en 5); el «puntaje SCA» ya no acepta un atributo fuera
+  de 6–10.
+- **Seguridad**: todo lo que escribe el usuario o llega de un archivo cargado se escapa al pintarse y se normaliza al entrar.
+- **Datos**: alta de `coffee-datasheet` en `tools` + `tool_versions` (default · KR · web · DC · con memoria), hecha con el archivo ya en vivo.
+- **Docs**: ficha `herramientas-cafe/coffee-datasheet`, charter y recuento de `herramientas-cafe`, fichas de `catacion` y
+  `green-datasheet`, ALINEACION §3. Guardián nuevo `qa-coffee-datasheet` (1.197: paridad de las dos fórmulas con la planilla del
+  Centro de Calidad sobre 1.200 planillas). `build-tool-shots` acepta ids para capturar una sola herramienta.
+
 ## [V5.131] — 2026-10-01 (commit be4f2b4)
 
 - **Corregido**: la **rueda de la planilla de evaluación ES la Rueda del Café del taller** (owner, 2026-10-01: «no entiendo por qué

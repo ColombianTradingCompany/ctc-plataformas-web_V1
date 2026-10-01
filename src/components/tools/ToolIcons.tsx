@@ -86,6 +86,16 @@ export const TOOL_ICON: Record<ToolId, React.ReactNode> = {
       <path d="M8.5 11h7M8.5 14h7M8.5 17h4" />
     </LineIcon>
   ),
+  // Coffee Datasheet Tool: la hoja técnica con la rueda encima — la ficha que nace de la catación.
+  "coffee-datasheet": (
+    <LineIcon>
+      <path d="M6 3h8l4 4v14H6V3Z" />
+      <path d="M14 3v4h4" />
+      <circle cx="12" cy="13.5" r="3.6" />
+      <path d="M12 9.9v7.2M8.4 13.5h7.2" />
+      <path d="M8.5 19.5h7" />
+    </LineIcon>
+  ),
   // Fórmula de calidad: un matraz de laboratorio — la "fórmula" que define la calidad.
   "formula-calidad": (
     <LineIcon>

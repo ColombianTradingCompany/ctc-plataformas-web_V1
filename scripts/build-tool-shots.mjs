@@ -1,7 +1,8 @@
 // ── Las capturas del carrusel de Herramientas (A8, 2026-08-19) ───────────────
 //
 //   1. npm run dev   (en otra terminal — las capturas se toman del server local)
-//   2. node scripts/build-tool-shots.mjs
+//   2. node scripts/build-tool-shots.mjs            (todas)
+//      node scripts/build-tool-shots.mjs <id> [<id>…] (solo esas: una herramienta nueva no reescribe las demás)
 //   3. comitear public/images/herramientas/shots/
 //
 // El MISMO modelo que scripts/build-og-cards.mjs: se corre a mano y el
@@ -33,6 +34,7 @@ const HERRAMIENTAS = {
   "cool-pdf": "/tools/cool-pdf/cool-pdf.html",
   catacion: "/tools/catacion/rueda-del-cafe-v23.html", // V23 del owner (V5.7) — la captura sigue al publicado
   "green-datasheet": "/tools/green-datasheet/green-coffee-datasheet.html",
+  "coffee-datasheet": "/tools/coffee-datasheet/ctcx-coffee-datasheet-tool.html?lang=es", // V5.132 — abre en la elección de método; ?lang=es porque sin él sigue al navegador (y el de la captura habla inglés)
   qr: "/tools/qr/generador-qr.html",
   "formula-calidad": "/tools/formula-calidad/formula-calidad.html",
   "viaje-cafe": "/tools/viaje-cafe/viaje-cafe.html",
@@ -46,8 +48,17 @@ mkdirSync(SALIDA, { recursive: true });
 const navegador = await chromium.launch();
 const pagina = await navegador.newPage({ viewport: { width: 1200, height: 800 }, deviceScaleFactor: 1 });
 
+// V5.132: con ids por argumento se capturan solo esas (un id desconocido se dice y se sale: no se captura «nada» en silencio).
+const pedidas = process.argv.slice(2);
+const desconocidas = pedidas.filter((id) => !(id in HERRAMIENTAS));
+if (desconocidas.length) {
+  console.error(`✗ id(s) fuera del mapa: ${desconocidas.join(", ")}`);
+  process.exit(1);
+}
+const lista = Object.entries(HERRAMIENTAS).filter(([id]) => !pedidas.length || pedidas.includes(id));
+
 let ok = 0;
-for (const [id, ruta] of Object.entries(HERRAMIENTAS)) {
+for (const [id, ruta] of lista) {
   try {
     await pagina.goto(BASE + ruta, { waitUntil: "networkidle", timeout: 30000 });
     // Un respiro para animaciones de entrada: la captura debe parecer la
@@ -65,5 +76,5 @@ for (const [id, ruta] of Object.entries(HERRAMIENTAS)) {
 }
 
 await navegador.close();
-console.log(`${ok}/${Object.keys(HERRAMIENTAS).length} capturas en public/images/herramientas/shots/`);
+console.log(`${ok}/${lista.length} capturas en public/images/herramientas/shots/`);
 process.exit(ok === Object.keys(HERRAMIENTAS).length ? 0 : 1);

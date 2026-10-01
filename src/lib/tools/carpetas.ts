@@ -34,6 +34,9 @@ export const CARPETAS_HERRAMIENTAS: CarpetaHerramienta[] = [
   // dibuja con ella el extracto de rueda del reverso del Sneak Peek.
   { id: "catacion", archivos: ["rueda-del-cafe-v23.html", "rueda-catacion.html"] },
   { id: "cogs-verde", archivos: ["cogs-cafe-verde.html"] },
+  // V5.132: nace de combinar `catacion` (la rueda) y `green-datasheet` (la ficha), que siguen vivas. Sus catálogos se
+  // GENERAN desde esas fuentes con `scripts/build-coffee-datasheet.mjs`.
+  { id: "coffee-datasheet", archivos: ["ctcx-coffee-datasheet-tool.html"] },
   { id: "cool-pdf", archivos: ["cool-pdf.html"] },
   { id: "costo-empaque", archivos: ["costo-empaque.html"] },
   { id: "cromatografia-suelo", archivos: ["cromatografia-suelo.html"] },

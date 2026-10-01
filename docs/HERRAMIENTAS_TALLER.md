@@ -82,6 +82,19 @@ conformidad se comprueba con `scripts/qa-tools-puente-conformance.mjs`
 (playwright, contra el dev server): ready / captura / restauración por
 herramienta.
 
+## Una herramienta que usa lo que ya tiene dueño (V5.132)
+
+Un HTML autocontenido no puede importar nada del repo, pero tampoco debe traer una **copia** de algo que ya vive en
+otra parte (la rueda de sabores, los municipios, una fórmula). El patrón, estrenado por `coffee-datasheet`:
+
+- **Catálogos**: el HTML lleva un bloque entre marcas (`/*<CATALOGOS-GENERADOS>*/ … /*</CATALOGOS-GENERADOS>*/`) que
+  ESCRIBE un script desde la fuente única (`scripts/build-coffee-datasheet.mjs`, con modo `--check`).
+- **Fórmulas**: la aritmética vive en un bloque puro (`/*<NUCLEO-PURO>*/`), sin DOM, con los nombres de campo de la
+  plataforma; el guardián lo ejecuta en Node y lo compara con el código real (`qa-coffee-datasheet-check.mjs`).
+
+Así la herramienta sigue abriendo suelta y sin internet, y si la fuente cambia sin regenerar, falla un guardián en
+vez de separarse en silencio.
+
 ## Las capturas del carrusel
 
 `scripts/build-tool-shots.mjs` (playwright, devDependency): con `npm run dev`

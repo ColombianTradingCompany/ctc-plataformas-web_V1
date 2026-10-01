@@ -47,7 +47,22 @@ con los ids de la herramienta (`frutal-citricos|lima`). `qa-centro-calidad` fall
 **Al publicar una versión nueva**: cambiar `HERRAMIENTA` en el script, `node scripts/build-rueda-datos.mjs`, y correr el guardián.
 Lo que la planilla no trae: girar, la lupa, y la etapa e intensidad de cada marca.
 
+## V5.132 · la rueda también vive dentro de `coffee-datasheet` (2026-10-01)
+
+El owner pidió combinar esta herramienta con la Ficha de café verde en una nueva: **CTCx Coffee Datasheet Tool**
+(`../coffee-datasheet/README.md`). La nueva trae la taxonomía de ESTA —generada por `scripts/build-coffee-datasheet.mjs` desde el
+mismo `const DATA`, con ES · EN · DE y las descripciones—, las rondas de varios lotes y la evaluación afectiva. **Esta sigue viva y
+sigue siendo la FUENTE**: no se puede borrar sin mover antes la taxonomía. Al publicar otra versión hay ahora DOS scripts que
+reapuntar y regenerar: `build-rueda-datos.mjs` (`HERRAMIENTA`) y `build-coffee-datasheet.mjs` (`RUEDA_FUENTE`); los dos guardianes
+(`qa-centro-calidad`, `qa-coffee-datasheet`) fallan si no.
+
+Lo que la nueva NO heredó de aquí, y por qué: la **intensidad por nota** (el SCA 103 califica la intensidad total de cada sección, no
+la de cada descriptor), los 5 por defecto de la afectiva, girar y la lupa, el PDF oficial embebido y las librerías de CDN.
+
 ## Abierto
+
+- **Decisión del owner (V5.132)**: con `coffee-datasheet` viva, ¿esta queda como herramienta de exploración de la rueda, o se archiva
+  cuando la taxonomía tenga otra casa?
 
 - **Dos versiones conviven**: la publicada (V23) y la que usa el Sneak Peek (V10). Para ser interfaz tiene que haber UNA taxonomía (sectores, notas, colores) y UN dibujante, leídos por la herramienta y por las superficies React.
 - Carga fuentes/librerías de CDN (no funciona offline) — `vendor-tool-assets.mjs` lo resolvería (pendiente del charter).

@@ -94,6 +94,7 @@ for (const f of [
   "green-datasheet/green-coffee-datasheet", "qr/generador-qr", "formula-calidad/formula-calidad",
   "viaje-cafe/viaje-cafe",
   "catacion/rueda-del-cafe-v23", "mapa-variedades/mapa-variedades", // V5.7: la V23 del owner y la herramienta nueva
+  "coffee-datasheet/ctcx-coffee-datasheet-tool", // V5.132: SCA 2004 · CVA, con esquema propio (CTC.usarEstado)
 ]) {
   check(`${f} incluye el puente`, lee(`public/tools/${f}.html`).includes('src="/tools/ctc-bridge.js"'));
 }

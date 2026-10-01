@@ -1,4 +1,4 @@
-# Herramientas del Café · recuento y carpetas (2026-09-21, V5.66)
+# Herramientas del Café · recuento y carpetas (2026-09-21, V5.66 · al día en la V5.132)
 
 > El índice de las herramientas del componente `herramientas-cafe`, una carpeta por herramienta. Se lee
 > después del charter (`../herramientas-cafe.md`). Cada carpeta de aquí tiene la **ficha** de su herramienta
@@ -22,11 +22,12 @@
   `PVC_Tablero_de_Control_CTC_V1.html` (`herramientas-internas`; lo cita `docs/PVC_BCP_PLAN.md`) y
   `CTCx VL1 - Herramienta de Guion.html` (`consolas`). Moverlos es de sus sesiones.
 
-## El recuento — 15 en la base + 1 candidata
+## El recuento — 16 en la base + 1 candidata
 
 | id | Nombre | Estado | Nivel | Idioma | Superficies | Memoria | Trabajos |
 |---|---|---|---|---|---|---|---|
 | [`catacion`](catacion/README.md) | Rueda del Café (rueda de catación / rueda del sabor) | Viva | default | es | KR | sí (puente) | 4 |
+| [`coffee-datasheet`](coffee-datasheet/README.md) | **CTCx Coffee Datasheet Tool** (evaluación SCA 2004 o CVA) | Viva · **nueva** (V5.132): combina `catacion` + `green-datasheet` | default | es (+ en, de) | KR · web · DC | sí (esquema propio) | 0 |
 | [`defectos-cafe`](defectos-cafe/README.md) | Defectos del Café | Viva | default | es | web | **no** | 0 |
 | [`agtron`](agtron/README.md) | Disco Agtron (Agtron Dial) | Viva · **V8** (V5.93) | default | en (+ es, de) | KR · CP · web | sí (esquema propio) | 1 |
 | [`green-datasheet`](green-datasheet/README.md) | Ficha de café verde (Green Coffee Datasheet) | Viva | default | es | KR | sí (puente) | 0 |
@@ -45,7 +46,8 @@
 
 Datos de la base leídos el 2026-09-21 (`tools`, `tool_versions`, `tool_sessions`). «Superficies» son las
 columnas de reparto (`kr`·`cp`·`web`·`dc`); el Taller lista TODO el catálogo compartible sin mirar `web`.
-Las 13 vivas y la archivada son `clase: compartible`. En `public/tools/` quedan **14 carpetas** (la archivada ya no tiene archivo); ninguna es interna.
+Las 14 vivas y la archivada son `clase: compartible`. En `public/tools/` quedan **15 carpetas** (la archivada ya no tiene archivo); ninguna es interna.
+`coffee-datasheet` se dio de alta el 2026-10-01 (V5.132).
 
 ## Las herramientas como interfaz de otras partes
 
@@ -55,6 +57,8 @@ va a usar. **Tres ya se reutilizan hoy, y dos de ellas como COPIA** — que es j
 | Herramienta | Quién la usa hoy | Cómo | Candidata a |
 |---|---|---|---|
 | **Rueda del Café** (`catacion`) | Sneak Peek del catálogo (cherry-picked) | Extracto SVG generado con la **V10**, mientras la publicada es la V23 | **Centro de Calidad** (EVA: perfil sensorial del Q-Grader sobre la rueda) · ficha del lote · CTCx Public Catalogue |
+| **Rueda del Café** (`catacion`) y Ficha de KR (`fichaData.ts`) | **`coffee-datasheet`** (V5.132) | **Generado, no copiado**: `scripts/build-coffee-datasheet.mjs` escribe la rueda, los municipios y las variedades dentro del HTML; `qa-coffee-datasheet` falla si se despegan | — |
+| `coffee-datasheet` | — (sus fórmulas se comparan con las de la planilla del Centro de Calidad) | Paridad por guardián contra `labEvaluation.ts` | **Transcribir FT2** / llevar un lote a `lot_evaluations` (`CTC.emitir`; el estado ya usa los nombres de `LabEvaluation`) |
 | `costo-empaque` | Cotizador de empaque (herramientas-internas) | Embebida **tal cual** por mismo origen; lee y escribe sus `<input>` | Master Roaster / Papagayo Beans® |
 | `mermas-ctc` | Cotizador de lotes (herramientas-internas) | **Copia** en `public/ocp-apps/cotizador-lotes.html` (Mermas V15) | Ficha de KR (factor × almendra), Modelo de Procesamiento |
 | `cogs-verde` | Cotizador logístico (herramientas-internas) | **Copia** en `public/ocp-apps/cotizador-logistico.html` (CoGS **V19**; la pública es V18) | Modelo Económico (PVC) |
@@ -78,7 +82,8 @@ línea en `docs/ALINEACION.md` §3.
 1. **`catacion`** — la del Centro de Calidad: unificar V10/V23 en una sola taxonomía + dibujante.
 2. **`defectos-cafe`** — la otra mitad de la EVA (defectos y granulometría); decidir superficies y memoria.
 3. **`mermas-ctc` + `cogs-verde`** — deshacer las dos copias de `public/ocp-apps/` con `herramientas-internas`.
-4. **`green-datasheet`** — dos fichas del café verde.
+4. **`green-datasheet`** — dos fichas del café verde. *(V5.132: su trabajo y el de la rueda viven juntos en **`coffee-datasheet`**; falta que el
+   owner decida si `green-datasheet` se archiva y qué queda de la Rueda como herramienta suelta.)*
 5. **`mapa-variedades`**, **`agtron`**, **`qr`**, **`cool-pdf`** — idiomas (tres están solo en inglés) y fuente única.
    `agtron` hecha en la V5.93 (V8: ES · EN · DE, lectura por luminosidad, memoria propia); le quedan decisiones del owner (ficha).
 6. **`formula-calidad`**, **`viaje-cafe`** — alinear con Grados CTC y la narrativa v3.

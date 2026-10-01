@@ -33,7 +33,18 @@
 > `src/lib/tools/green-datasheet/`, o la herramienta embebida tal cual) — nunca una copia que se separa. Tocar el
 > componente que la consume exige línea en `docs/ALINEACION.md` §3.
 
+## V5.132 · su trabajo lo hace entero `coffee-datasheet` (2026-10-01)
+
+El owner pidió combinar esta herramienta con la Rueda del Café en una nueva: **CTCx Coffee Datasheet Tool**
+(`../coffee-datasheet/README.md`). La nueva trae de aquí el radar vivo con el puntaje, la granulometría con barras, el factor de
+rendimiento, los extrínsecos, la ficha imprimible y los botones «i» — y corrige lo que aquí estaba flojo: la tabla «SCA» aceptaba de
+0 a 10 sin dominio (ahora es el formulario 2004 de verdad: 6,00–10,00 al 0,25, tres atributos por taza, defectos que restan) y no
+distinguía SCA 2004 de CVA. **Esta sigue viva** (combinar no fue retirar): archivarla es decisión del owner.
+
 ## Abierto
+
+- **Decisión del owner (V5.132)**: archivar esta herramienta ahora que `coffee-datasheet` cubre todo lo que hace (y más). Si se
+  archiva: `noindex` en su `<head>` (archivar no retira) y avisar a quien tenga trabajos guardados — hoy hay 0.
 
 - **Dos fichas del café verde** (la herramienta y la generada): decidir si la herramienta pasa a ser la plantilla de la generada o si es solo el formulario libre para quien no tiene lote.
 

@@ -365,3 +365,10 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   `lib/arena/labEvaluation.ts` y `homologacion.ts` (`lang` opcional en los errores y en `rotuloDelPunto`; por defecto español),
   `socios/[partner]/panel/evaluacion/PlanillaCentro.tsx` (el idioma traduce también lo que rodea a la hoja). Guardián: `qa-centro-calidad` +10.
 (commit: a279d4e)
+
+## [2026-10-01] V5.131 · Consolas + Herramientas del Café — la rueda de la planilla ES la Rueda del Café del taller (una sola taxonomía)
+- ADD `scripts/build-rueda-datos.mjs` (lee `const DATA` de `public/tools/catacion/rueda-del-cafe-v23.html`; `--check`), `src/lib/catacion/ruedaDatos.ts` (GENERADO: 9 → 22 → 85).
+- ANN `src/lib/catacion/rueda.ts` (tres niveles, `idDeNota`, `rutaDe`, `descriptorDe`; los 28 ids resumidos se traducen), `components/bcp/PlanillaPiezas.tsx`
+  (`RuedaDeSabores` con la geometría, los matices y las agujas de la herramienta), `LabEvalEditor.tsx` (rueda a lo ancho, marcas por camino),
+  `planillaI18n.ts`, `nominados/CircuitoVista.tsx` y `socios/…/evaluacion/page.tsx` (`rutaDe`). Guardián: `qa-centro-calidad` +11.
+(commit: pendiente)

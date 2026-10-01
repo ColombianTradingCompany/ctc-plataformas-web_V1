@@ -137,7 +137,10 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
   por su URL del taller. **V5.130 (owner, 2026-10-01)**: la planilla tomó las PIEZAS de la Datasheet Tool —el radar vivo con el
   puntaje, la granulometría con barras— y dibuja la rueda como rueda sobre `rueda.ts` (`components/bcp/PlanillaPiezas.tsx`, SVG
   nativo, ES · EN). No se embebió el HTML: no es dual ni bilingüe. Lo del Q-Grader queda cubierto; sigue abierto transcribir FT2
-  a ese formato, y que la Rueda del Café del taller lea la misma taxonomía.
+  a ese formato. **V5.131 (owner: «deben ser iguales»)**: la taxonomía única es ahora la de ESTA herramienta —
+  `scripts/build-rueda-datos.mjs` la saca de `rueda-del-cafe-v23.html` y genera `src/lib/catacion/ruedaDatos.ts`; `qa-centro-calidad`
+  falla si dejan de coincidir—, y la planilla dibuja la misma rueda (tres anillos, banda, agujas). Al publicar otra versión de la
+  Rueda: cambiar la ruta en el script y regenerar.
 - **V5.66 · una carpeta por herramienta, y una conversación por herramienta** (owner, 2026-09-21). El orden
   sugerido y la línea «Hoy:» de cada una están en `herramientas-cafe/README.md` y en cada ficha. Lo que el recuento
   destapó: **(a)** la Rueda del Café vive en DOS versiones y el Sneak Peek dibuja con la vieja (V10) — es la

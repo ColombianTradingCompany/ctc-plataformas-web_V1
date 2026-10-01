@@ -242,7 +242,9 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
   supera) o **devuelve**; el circuito gana «evaluado». Registrar a mano sigue como recurso plegado. **Diferido de la fase 4**: el
   «uso directo» de la credencial (Ficha sin bache), la variante interna de la Datasheet Tool (`herramientas-cafe`; **V5.130**: la
   planilla `LabEvalEditor` se rehízo con sus piezas —radar, rueda, granulometría con barras— en dos columnas y con idioma ES · EN,
-  `components/bcp/PlanillaPiezas.tsx` + `lib/arena/planillaI18n.ts`; vale para el Centro, «Registrar a mano» y la Arena), y que KR
+  `components/bcp/PlanillaPiezas.tsx` + `lib/arena/planillaI18n.ts`; vale para el Centro, «Registrar a mano» y la Arena; **V5.131**: su
+  rueda ES la Rueda del Café del taller —misma taxonomía, generada del HTML por `scripts/build-rueda-datos.mjs`, misma geometría—),
+  y que KR
   alimente `evaluacionPendiente` a la barra (hoy el productor ve «en evaluación» hasta que CTCx confirma). ~~⚠️ La fórmula del
   CVA está en constantes con nombre (`CVA` en `labEvaluation.ts`): la valida el Q-Grader de la casa.~~ — **el Q-Grader la
   corroboró y la corrigió; en código desde la V5.92** (abajo). **Fase 5 EJECUTADA en la

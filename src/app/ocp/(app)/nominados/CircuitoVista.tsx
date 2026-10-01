@@ -7,7 +7,7 @@ import { segmentPostulacion } from "@/lib/bcp/producerSegments";
 import { cargarCarrilDePago } from "@/lib/arena/carrilServidor";
 import type { FacturaData } from "@/lib/arena/factura";
 import { TIPO_LABEL, type TipoDeMuestra } from "@/lib/muestras/particion";
-import { descriptorLabel } from "@/lib/catacion/rueda";
+import { rutaDe } from "@/lib/catacion/rueda";
 import { puntoDeFila, rotuloDelPunto } from "@/lib/arena/homologacion";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import type { FichaFormData } from "@/components/kaffetal-regal/ficha/fichaData";
@@ -477,7 +477,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
                             punto: puntoDeFila(pendiente),
                             qGrader: pendiente.q_grader_reference,
                             fecha: fecha(pendiente.created_at),
-                            rueda: Array.isArray(pendiente.rueda) ? (pendiente.rueda as string[]).map((id) => descriptorLabel(id)) : [],
+                            rueda: Array.isArray(pendiente.rueda) ? (pendiente.rueda as string[]).map((id) => rutaDe(id)) : [],
                             notas: pendiente.notes,
                           }}
                         />

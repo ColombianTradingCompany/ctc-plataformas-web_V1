@@ -19,6 +19,23 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.131] — 2026-10-01 (commit pendiente)
+
+- **Corregido**: la **rueda de la planilla de evaluación ES la Rueda del Café del taller** (owner, 2026-10-01: «no entiendo por qué
+  la rueda es diferente… ¡deben ser iguales!»). La V5.130 dibujaba una rueda de dos anillos sobre una taxonomía resumida escrita a
+  mano (28 descriptores). Ahora trae la de la herramienta: **9 familias → 22 subcategorías → 85 notas**, sus colores, sus iconos, los
+  tres anillos y la banda exterior, con la misma geometría. Se **marca en cualquier nivel** y cada marca deja su aguja, como en el
+  modo Catar.
+- **Cambiado**: **una sola taxonomía**. `scripts/build-rueda-datos.mjs` la saca del HTML de la herramienta y genera
+  `src/lib/catacion/ruedaDatos.ts`; el guardián falla si dejan de coincidir. Los ids que se guardan son los de la herramienta
+  (`frutal` · `frutal-citricos` · `frutal-citricos|lima`); los 28 ids viejos se traducen (ningún dato vivo los usaba).
+- **Cambiado**: en la planilla la rueda va **a lo ancho** para que se lea, con las marcas listadas por su camino («Frutal › Cítricos ›
+  Lima») y las notas descriptivas al lado; los protocolos SCA/CVA quedan arriba, a todo el ancho. El OCP y el Centro leen las marcas
+  con ese mismo camino.
+- **Cambiado**: de la herramienta **no se traen** girar la rueda y la lupa (un renglón dice lo que hay bajo el cursor), ni la etapa e intensidad
+  de cada marca.
+- **Docs**: charters `consolas` y `herramientas-cafe`, ficha `catacion`, ALINEACION §3. `qa-centro-calidad` 105 → 116.
+
 ## [V5.130] — 2026-10-01 (commit a279d4e)
 
 - **Cambiado**: la **planilla de evaluación** (Centro de Calidad · «Registrar a mano» del OCP · apreciación de la Arena) se rehízo

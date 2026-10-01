@@ -5,7 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { PARTNERS } from "@/lib/partners/partners";
 import { requirePartner } from "@/lib/partners/requirePartner";
-import { descriptorLabel } from "@/lib/catacion/rueda";
+import { rutaDe } from "@/lib/catacion/rueda";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { puntoDeFila, rotuloDelPunto } from "@/lib/arena/homologacion";
 import { BUILD_SHA, VERSION_LABEL } from "@/lib/version";
@@ -143,7 +143,7 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
                         )}
                         {pendiente && Array.isArray(pendiente.rueda) && pendiente.rueda.length > 0 && (
                           <span className={styles.orgLine} style={{ width: "100%" }}>
-                            Rueda: {(pendiente.rueda as string[]).map((id) => descriptorLabel(id)).join(" · ")}
+                            Rueda: {(pendiente.rueda as string[]).map((id) => rutaDe(id)).join(" · ")}
                           </span>
                         )}
                       </div>

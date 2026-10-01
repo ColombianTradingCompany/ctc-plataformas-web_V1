@@ -13,7 +13,8 @@
 // Q-Grader (los vectores se LEEN de la tabla del §10.2) y el Punto homologado obedece R1–R8 (banda k 1–2, piso, Tyrian nativo).
 
 import { readFileSync } from "node:fs";
-import { RUEDA, DESCRIPTORES, normalizaRueda, descriptorLabel } from "../src/lib/catacion/rueda.ts";
+import { RUEDA, DESCRIPTORES, normalizaRueda, descriptorLabel, rutaDe, familiaDe } from "../src/lib/catacion/rueda.ts";
+import { generar as generarRuedaDatos, leerDatosDeLaHerramienta } from "./build-rueda-datos.mjs";
 import { CVA, CVA_SECCIONES, SCA2004, computeCva, computeSca2004, EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, protocoloDelPunto, puntoDeLaPlanilla, toLabEvaluation } from "../src/lib/arena/labEvaluation.ts";
 import { BANDA_SIN_CALIBRAR, CVA_PROPOSITO, LOTES_PARA_CALIBRAR, admiteTyrian, decidirPorPunto, gradoFirme, homologarCva, puntoDeFila, puntoHomologado, puntoNativo, rotuloDelPunto, techoDelPunto } from "../src/lib/arena/homologacion.ts";
 import { PL, SCA_ATTR_LABEL, CVA_SECCION_LABEL, MALLA_LABEL } from "../src/lib/arena/planillaI18n.ts";
@@ -118,13 +119,14 @@ const gate = lee("src/lib/partners/requirePartner.ts");
 
 // ── 6. La rueda: UNA taxonomía, solo ids en la base ─────────────────────────
 {
-  check("nueve familias de la rueda SCA / WCR", RUEDA.length === 9 && RUEDA.map((f) => f.id).join(",") === "frutal,acido_fermentado,verde_vegetal,otros,tostado,especias,nuez_cacao,dulce,floral");
+  check("nueve familias de la rueda SCA / WCR", RUEDA.length === 9 && RUEDA.map((f) => f.id).join(",") === "floral,frutal,acido,verde,otros,especias,tostado,cacao,dulce"); // V5.131: el orden y los ids de la herramienta
   check("todos los descriptores tienen id único y dos idiomas", new Set(DESCRIPTORES.map((x) => x.id)).size === DESCRIPTORES.length && DESCRIPTORES.every((x) => x.es && x.en));
-  check("normalizaRueda tira lo que no existe y ordena como la rueda", JSON.stringify(normalizaRueda(["floral", "inventado", "berry", "berry", 3])) === JSON.stringify(["berry", "floral"]));
+  check("normalizaRueda tira lo que no existe y ordena como la rueda", JSON.stringify(normalizaRueda(["frutal-bayas", "inventado", "floral", "floral", 3])) === JSON.stringify(["floral", "frutal-bayas"]));
   check("un id viejo no revienta una etiqueta", descriptorLabel("inventado") === "inventado" && descriptorLabel("cocoa", "en") === "Cocoa");
   check("la rueda se guarda normalizada (solo ids)", acciones.includes("rueda: normalizaRueda(ev.rueda)") && nominados.includes("rueda: normalizaRueda(lastEval.rueda)"));
   const rueda = lee("src/lib/catacion/rueda.ts").replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
-  check("rueda.ts es pura (no importa nada)", !/^\s*import\s/m.test(rueda));
+  // V5.131: lo único que importa es su hoja de datos, generada de la herramienta — y esa no importa nada.
+  check("rueda.ts es pura (solo importa su hoja de datos generada)", (rueda.match(/^\s*import\s.*$/gm) ?? []).every((l) => l.includes('from "./ruedaDatos"')) && !/^\s*import\s/m.test(lee("src/lib/catacion/ruedaDatos.ts")));
 }
 
 // ── 7. El veredicto del Q-Grader (2026-09-25, plan §10): la fórmula CVA, el SCA 2004 y el Punto homologado ──
@@ -187,9 +189,9 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   const i18n = lee("src/lib/arena/planillaI18n.ts");
   const centro = lee("src/app/socios/[partner]/panel/evaluacion/PlanillaCentro.tsx");
   check("la hoja abre con el radar vivo y el puntaje grande (la cabecera de Intrínsecos de la Datasheet Tool)", editor.includes("<RadarDeTaza ejes={ejes}") && piezas.includes("export function RadarDeTaza") && editor.includes("CLASE_LABEL[lang][clase]"));
-  check("la rueda es una RUEDA sobre la taxonomía única (no una lista de botones), y se marca tocándola", editor.includes("<RuedaDeSabores elegidos={value.rueda} onToggle={toggleDescriptor}") && piezas.includes('import { RUEDA } from "@/lib/catacion/rueda";') && piezas.includes('role="checkbox"') && !editor.includes("{RUEDA.map((f) => ("));
+  check("la rueda es una RUEDA sobre la taxonomía única (no una lista de botones), y se marca tocándola", editor.includes("<RuedaDeSabores elegidos={value.rueda} onToggle={toggleDescriptor}") && piezas.includes('import { RUEDA, idDeNota, rutaDe } from "@/lib/catacion/rueda";') && piezas.includes('role="checkbox"') && !editor.includes("{RUEDA.map((f) => ("));
   check("la granulometría lleva una barra por malla, el total y su estado", editor.includes("<BarraDeMalla pct={r.pct}") && editor.includes("ESTADO_DE_MALLAS[lang][mesh.state]") && editor.includes("t.totalMallas"));
-  check("dos columnas donde caben: los protocolos junto a la rueda, los pesos junto a las mallas", (editor.match(/<div style=\{S\.dosCol\}>/g) ?? []).length === 2 && editor.includes('gridTemplateColumns: "repeat(auto-fit, minmax(330px, 1fr))"') && editor.includes("style={S.pares}"));
+  check("dos columnas donde caben: SCA y CVA lado a lado con Ambas, los pesos junto a las mallas", editor.includes("<div style={S.dosCol}>") && editor.includes("verSca && verCva ? S.dosCol") && editor.includes('gridTemplateColumns: "repeat(auto-fit, minmax(330px, 1fr))"') && editor.includes("style={S.pares}"));
   check("el conmutador ES · EN está en la planilla y quien la aloja puede controlarlo", editor.includes("IDIOMAS_DE_PLANILLA.map") && editor.includes("onLang ? onLang(l) : setLangPropio(l)") && centro.includes("lang={lang} onLang={setLang}"));
   check("el inglés tiene las MISMAS claves que el español (lo exige el tipo) y ningún rótulo vacío", i18n.includes("const EN: typeof ES = {") && Object.keys(PL.es).join() === Object.keys(PL.en).join() && [SCA_ATTR_LABEL, CVA_SECCION_LABEL, MALLA_LABEL].every((m) => Object.keys(m.es).join() === Object.keys(m.en).join() && Object.values(m.en).every(Boolean)));
   const conError = toLabEvaluation({ vista: "sca", sca_fragrance: "8", sca_flavor: "8", sca_aftertaste: "8", sca_acidity: "8", sca_body: "5.5", sca_balance: "8", sca_uniformity: "10", sca_clean_cup: "10", sca_sweetness: "10", sca_cuppers: "8" });
@@ -197,6 +199,29 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("el rótulo del Punto también: nunca un homologado se lee como un SCA catado, en ninguno de los dos", rotuloDelPunto(puntoNativo(86)) === "SCA 2004 nativo 86.00" && rotuloDelPunto(puntoNativo(86), "en") === "Native SCA 2004 86.00" && /not cupped in SCA/.test(rotuloDelPunto(puntoHomologado(88), "en")) && /no catado en SCA/.test(rotuloDelPunto(puntoHomologado(88))));
   check("el idioma no toca los datos ni las fórmulas: el mismo total en los dos", computeCva(toLabEvaluation({ vista: "cva", cva_fragrance: "7", cva_aroma: "7", cva_flavor: "7", cva_aftertaste: "7", cva_acidity: "7", cva_sweetness: "7", cva_mouthfeel: "7", cva_overall: "7" }), "en").total === computeCva(toLabEvaluation({ vista: "cva", cva_fragrance: "7", cva_aroma: "7", cva_flavor: "7", cva_aftertaste: "7", cva_acidity: "7", cva_sweetness: "7", cva_mouthfeel: "7", cva_overall: "7" })).total);
   check("sigue sin embeber herramientas: las piezas son SVG nativo", !/<iframe/.test(piezas) && !/<iframe/.test(editor));
+}
+
+// ── 9. V5.131 (owner, 2026-10-01 — «deben ser iguales») · la rueda de la planilla ES la Rueda del Café del taller ──
+{
+  const herramienta = lee("public/tools/catacion/rueda-del-cafe-v23.html");
+  const piezas = lee("src/components/bcp/PlanillaPiezas.tsx");
+  const editor = lee("src/components/bcp/LabEvalEditor.tsx");
+  const enDisco = lee("src/lib/catacion/ruedaDatos.ts").replace(/\r\n/g, "\n");
+  check("la hoja de datos es la que sale HOY de la herramienta (si no: node scripts/build-rueda-datos.mjs)", enDisco === generarRuedaDatos());
+  check("la taxonomía es la de la herramienta, nota por nota: mismos ids, nombres ES/EN, colores e iconos", JSON.stringify(RUEDA) === JSON.stringify(leerDatosDeLaHerramienta()));
+  const subs = RUEDA.flatMap((f) => f.subs);
+  check("nueve familias → 22 subcategorías → 85 notas", RUEDA.length === 9 && subs.length === 22 && subs.reduce((n, s) => n + s.hojas.length, 0) === 85);
+  check("se marca en cualquier nivel: 116 puntos con id único (la nota lleva su subcategoría: hay familia «verde» y nota «verde»)", DESCRIPTORES.length === 116 && new Set(DESCRIPTORES.map((x) => x.id)).size === 116 && DESCRIPTORES.some((x) => x.id === "verde" && x.nivel === 1) && DESCRIPTORES.some((x) => x.id === "verde-vegetal|verde" && x.nivel === 3));
+  check("una marca se lee del centro al borde, en los dos idiomas", rutaDe("frutal-citricos|lima") === "Frutal › Cítricos › Lima" && rutaDe("frutal-citricos|lima", "en") === "Fruity › Citrus Fruit › Lime" && rutaDe("floral-te|te-negro") === "Floral › Té negro" && rutaDe("dulce") === "Dulce" && familiaDe("frutal-citricos|lima")?.color === "#e2434b");
+  check("los ids de la rueda resumida (V5.81–V5.130) se traducen, no se pierden", JSON.stringify(normalizaRueda(["citrus", "vanilla", "berry"])) === JSON.stringify(["frutal-bayas", "frutal-citricos", "dulce-vainilla|vainilla"]) && descriptorLabel("citrus") === "Cítricos");
+  // La geometría: los mismos radios, separaciones y matices que el «GEOMETRY ENGINE» y el «RENDER» de la herramienta.
+  const numero = (texto, nombre) => Number((texto.match(new RegExp(`\\b${nombre}\\s*=\\s*([0-9.]+)`)) ?? [])[1]);
+  const medidas = ["R0", "R1", "R2", "R3", "OB0", "OB1", "GAP_FAM", "GAP_SUB", "GAP_LEAF"];
+  check("los radios y las separaciones son los de la herramienta", medidas.every((m) => Number.isFinite(numero(piezas, m)) && numero(piezas, m) === numero(herramienta, m)), medidas.map((m) => `${m}: ${numero(piezas, m)} vs ${numero(herramienta, m)}`).join(" · "));
+  check("los matices también: subcategoría +16 %, nota +34 %, banda −22 %", ["shade(fam.color, 0.16)", "shade(fam.color, 0.34)", "shade(fam.color, -0.22)"].every((x) => herramienta.includes(x)) && ["matiz(fam.f.color, 0.16)", "matiz(fam.f.color, 0.34)", "matiz(fam.f.color, -0.22)"].every((x) => piezas.includes(x)));
+  check("tres anillos y la banda exterior, con el icono de la familia y los rótulos donde caben (los mismos umbrales)", piezas.includes("sector(R0, R1,") && piezas.includes("sector(R1, R2,") && piezas.includes("sector(R2, R3,") && piezas.includes("sector(OB0, OB1,") && piezas.includes("{fam.f.icono}") && piezas.includes("sub.a1 - sub.a0 > 9") && piezas.includes("hoja.a1 - hoja.a0 > 3.4") && herramienta.includes("(sub.endAngle - sub.startAngle) > 9") && herramienta.includes("(leaf.endAngle - leaf.startAngle) > 3.4"));
+  check("cada marca deja su aguja, del centro al borde de su anillo (como el modo Catar)", piezas.includes("polar(blanco.radio + 16, blanco.angulo)") && herramienta.includes("polar(radius + 16, angle)") && piezas.includes('role="checkbox"'));
+  check("la planilla la pinta a tamaño de lectura, con las marcas listadas por su camino", editor.includes('flex: "4 1 620px"') && editor.includes("normalizaRueda(value.rueda).map((id) => (") && editor.includes("{rutaDe(id, lang)}"));
 }
 
 if (fallos.length) {

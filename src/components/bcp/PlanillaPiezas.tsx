@@ -7,10 +7,11 @@
 // lista de botones por rueda. Estas son esas piezas, nativas (React + SVG, sin iframe: la planilla es DUAL —SCA 2004 y
 // CVA— y bilingüe, y la Datasheet Tool no lo es), leyendo la MISMA aritmética y la taxonomía única de la rueda:
 //   · `RadarDeTaza`     el radar («spider») de la Datasheet Tool, para los diez atributos SCA o las ocho secciones CVA.
-//   · `RuedaDeSabores`  la rueda de verdad: nueve familias dentro, sus descriptores fuera; se toca para marcar.
+//   · `RuedaDeSabores`  la Rueda del Café del taller, tal cual (V5.131): tres anillos y la banda; se marca en cualquier nivel.
 //   · `BarraDeMalla`    la barra de cada malla en la tabla de granulometría.
 
-import { RUEDA } from "@/lib/catacion/rueda";
+import { useState } from "react";
+import { RUEDA, idDeNota, rutaDe } from "@/lib/catacion/rueda";
 import type { IdiomaDePlanilla } from "@/lib/arena/planillaI18n";
 
 // ── El radar ─────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -61,55 +62,107 @@ export function RadarDeTaza({ ejes, min, max, color = "#3C0A86" }: { ejes: EjeDe
 }
 
 // ── La rueda ─────────────────────────────────────────────────────────────────────────────────────────────────────────
-const C = 240; // el centro del lienzo de 480
-const R_CENTRO = 62;
-const R_FAMILIA: [number, number] = [66, 138];
-const R_DESCRIPTOR: [number, number] = [141, 236];
+// V5.131 (owner, 2026-10-01 — «deben ser iguales»): ESTA es la Rueda del Café del taller, no una parecida. La taxonomía
+// es la de la herramienta (`rueda.ts` ← `ruedaDatos.ts`, generado de su HTML) y la geometría, los colores y las marcas
+// están copiados de su «GEOMETRY ENGINE» y su «RENDER» (`public/tools/catacion/rueda-del-cafe-v23.html`):
+//   · tres anillos — familia (icono) → subcategoría → nota — y la banda exterior con el nombre de la familia;
+//   · el color de la familia, aclarado un 16 % en la subcategoría y un 34 % en la nota, y oscurecido un 22 % en la banda;
+//   · se marca en CUALQUIER nivel, y cada marca deja su AGUJA del centro al borde, como en el «modo Catar».
+// Lo que NO se trae: girar la rueda y la lupa (son de la exploración; aquí la rueda se pinta a tamaño de lectura y el
+// renglón de arriba dice lo que hay bajo el cursor), el vapor animado, y la etapa e intensidad de cada marca.
 
-/** Cada familia con el índice de su primer descriptor: la rueda es estática, la posición se calcula una vez. */
-const FAMILIAS_EN_LA_RUEDA = RUEDA.map((f, i) => ({ f, inicio: RUEDA.slice(0, i).reduce((s, x) => s + x.descriptores.length, 0) }));
-const TOTAL_DESCRIPTORES = RUEDA.reduce((s, f) => s + f.descriptores.length, 0);
+const CX = 450;
+const CY = 450;
+const R0 = 60; // el núcleo
+const R1 = 144; // familia
+const R2 = 236; // subcategoría
+const R3 = 362; // nota
+const OB0 = 372; // la banda exterior
+const OB1 = 420;
+const GAP_FAM = 0.55;
+const GAP_SUB = 0.28;
+const GAP_LEAF = 0.12;
+const MORADO = "#2c1a52"; // `--purple-deep` de la herramienta: el trazo de las marcas y las agujas
 
 const polar = (r: number, grados: number): [number, number] => {
   const a = ((grados - 90) * Math.PI) / 180;
-  return [C + r * Math.cos(a), C + r * Math.sin(a)];
+  return [CX + r * Math.cos(a), CY + r * Math.sin(a)];
 };
 /** Un sector de anillo entre dos radios y dos ángulos (grados, 0 = arriba, en sentido horario). */
-function sector(r0: number, r1: number, a0: number, a1: number): string {
-  const [x0, y0] = polar(r1, a0);
-  const [x1, y1] = polar(r1, a1);
-  const [x2, y2] = polar(r0, a1);
-  const [x3, y3] = polar(r0, a0);
+function sector(rInterno: number, rExterno: number, a0: number, a1: number): string {
   const largo = a1 - a0 > 180 ? 1 : 0;
+  const [x1, y1] = polar(rExterno, a0);
+  const [x2, y2] = polar(rExterno, a1);
+  const [x3, y3] = polar(rInterno, a1);
+  const [x4, y4] = polar(rInterno, a0);
   const f = (n: number) => n.toFixed(2);
-  return `M${f(x0)},${f(y0)} A${r1},${r1} 0 ${largo} 1 ${f(x1)},${f(y1)} L${f(x2)},${f(y2)} A${r0},${r0} 0 ${largo} 0 ${f(x3)},${f(y3)} Z`;
+  return `M ${f(x1)} ${f(y1)} A ${rExterno} ${rExterno} 0 ${largo} 1 ${f(x2)} ${f(y2)} L ${f(x3)} ${f(y3)} A ${rInterno} ${rInterno} 0 ${largo} 0 ${f(x4)} ${f(y4)} Z`;
 }
-/** Parte un rótulo largo en dos renglones: por « / » si lo trae; si no, por el espacio más cercano al medio. */
-function renglones(texto: string, maximo: number): string[] {
-  if (texto.length <= maximo) return [texto];
-  if (texto.includes(" / ")) {
-    const [a, b] = texto.split(" / ");
-    return [`${a} /`, b];
+/** `pct` de −1 a 1: negativo oscurece, positivo aclara (la `shade` de la herramienta). */
+function matiz(hex: string, pct: number): string {
+  const n = hex.replace("#", "");
+  const mezcla = (c: number) => Math.round(c + ((pct >= 0 ? 255 : 0) - c) * Math.abs(pct));
+  return `#${[0, 2, 4].map((i) => mezcla(parseInt(n.slice(i, i + 2), 16)).toString(16).padStart(2, "0")).join("")}`;
+}
+/** Tinta oscura o blanco, lo que más contraste con el fondo del sector. */
+function tintaSobre(hex: string): string {
+  const n = hex.replace("#", "");
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(n.slice(i, i + 2), 16));
+  return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? "#211632" : "#ffffff";
+}
+
+/** Cada familia, subcategoría y nota con su arco: la rueda es estática, los ángulos se calculan una vez. */
+const TOTAL_DE_NOTAS = RUEDA.reduce((n, f) => n + f.subs.reduce((m, sub) => m + sub.hojas.length, 0), 0);
+const GRADOS_POR_NOTA = 360 / TOTAL_DE_NOTAS;
+const ARCOS = (() => {
+  let cursor = 0;
+  return RUEDA.map((f) => {
+    const a0 = cursor;
+    const subs = f.subs.map((sub) => {
+      const s0 = cursor;
+      const hojas = sub.hojas.map((h) => {
+        const h0 = cursor;
+        cursor += GRADOS_POR_NOTA;
+        return { h, id: idDeNota(sub.id, h.id), a0: h0, a1: cursor };
+      });
+      return { sub, a0: s0, a1: cursor, hojas };
+    });
+    return { f, a0, a1: cursor, subs };
+  });
+})();
+
+/** Hacia dónde apunta la aguja de una marca: el medio de su arco, en el borde de su anillo. */
+function blancoDe(id: string): { angulo: number; radio: number; color: string } | null {
+  for (const fam of ARCOS) {
+    if (fam.f.id === id) return { angulo: (fam.a0 + fam.a1) / 2, radio: R1, color: fam.f.color };
+    for (const sub of fam.subs) {
+      if (sub.sub.id === id) return { angulo: (sub.a0 + sub.a1) / 2, radio: R2, color: fam.f.color };
+      for (const hoja of sub.hojas) if (hoja.id === id) return { angulo: (hoja.a0 + hoja.a1) / 2, radio: R3, color: fam.f.color };
+    }
   }
-  const espacios = [...texto].map((ch, i) => (ch === " " ? i : -1)).filter((i) => i > 0);
-  if (!espacios.length) return [texto];
-  const medio = texto.length / 2;
-  const corte = espacios.reduce((mejor, i) => (Math.abs(i - medio) < Math.abs(mejor - medio) ? i : mejor), espacios[0]);
-  return [texto.slice(0, corte), texto.slice(corte + 1)];
+  return null;
 }
-/** El rótulo va sobre el radio: en la mitad derecha se lee hacia afuera; en la izquierda se voltea para no quedar de cabeza. */
-function Rotulo({ texto, radio, angulo, size, color, bold, maximo }: { texto: string; radio: number; angulo: number; size: number; color: string; bold?: boolean; maximo: number }) {
-  const lineas = renglones(texto, maximo);
-  const izquierda = angulo > 180;
-  const giro = angulo - 90 + (izquierda ? 180 : 0);
-  const [x, y] = polar(radio, angulo);
+
+/** El rótulo de un sector: radial (sobre el radio) o tangencial (la banda). Nunca queda de cabeza. */
+function Etiqueta({ texto, radio, a0, a1, tipo, fill, size, weight, banda }: { texto: string; radio: number; a0: number; a1: number; tipo: "radial" | "tangencial"; fill: string; size: number; weight: number; banda?: boolean }) {
+  const medio = (a0 + a1) / 2;
+  const [x, y] = polar(radio, medio);
+  const base = tipo === "tangencial" ? medio : medio - 90;
+  const total = ((base % 360) + 360) % 360;
+  const giro = total > 90 && total < 270 ? base + 180 : base;
   return (
-    <text transform={`translate(${x.toFixed(2)},${y.toFixed(2)}) rotate(${giro.toFixed(2)})`} textAnchor="middle" fontSize={size} fontWeight={bold ? 800 : 500} fill={color} style={{ pointerEvents: "none", userSelect: "none" }}>
-      {lineas.map((l, k) => (
-        <tspan key={k} x={0} dy={k === 0 ? (lineas.length === 1 ? "0.35em" : "-0.2em") : "1.1em"}>
-          {l}
-        </tspan>
-      ))}
+    <text
+      transform={`translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${giro.toFixed(2)})`}
+      textAnchor="middle"
+      dominantBaseline="central"
+      fill={fill}
+      fontSize={size}
+      fontWeight={weight}
+      stroke="rgba(0,0,0,.15)"
+      strokeWidth={0.4}
+      style={{ pointerEvents: "none", userSelect: "none", paintOrder: "stroke", ...(banda ? { fontFamily: "ui-monospace, 'JetBrains Mono', monospace", letterSpacing: ".05em", textTransform: "uppercase" as const } : {}) }}
+    >
+      {texto}
     </text>
   );
 }
@@ -120,67 +173,132 @@ export function RuedaDeSabores({
   lang,
   disabled,
   rotuloCentro,
+  pista,
 }: {
   elegidos: string[];
   onToggle: (id: string) => void;
   lang: IdiomaDePlanilla;
   disabled?: boolean;
-  /** Lo que dice el centro bajo la cifra («elegidos» · «selected»). */
+  /** El rótulo del núcleo: «CENTRO → BORDE» · «CENTER → EDGE». */
   rotuloCentro: string;
+  /** Lo que dice el renglón de lectura cuando el cursor no está sobre la rueda. */
+  pista: string;
 }) {
-  const paso = 360 / TOTAL_DESCRIPTORES;
+  const [bajoElCursor, setBajoElCursor] = useState<string | null>(null);
   const marcados = new Set(elegidos);
+
+  // Un sector de cualquier nivel: se marca al tocarlo (o con Enter / espacio) y avisa qué hay bajo el cursor.
+  const sectorMarcable = (id: string, d: string, fill: string, clave: string) => {
+    const on = marcados.has(id);
+    return (
+      <path
+        key={clave}
+        d={d}
+        fill={fill}
+        stroke={on ? MORADO : "#ffffff"}
+        strokeWidth={on ? 5 : 1.6}
+        role="checkbox"
+        aria-checked={on}
+        aria-label={rutaDe(id, lang)}
+        tabIndex={disabled ? -1 : 0}
+        onClick={() => !disabled && onToggle(id)}
+        onKeyDown={(e) => {
+          if (disabled || (e.key !== "Enter" && e.key !== " ")) return;
+          e.preventDefault();
+          onToggle(id);
+        }}
+        onMouseEnter={() => setBajoElCursor(id)}
+        onMouseLeave={() => setBajoElCursor((actual) => (actual === id ? null : actual))}
+        onFocus={() => setBajoElCursor(id)}
+        style={{
+          cursor: disabled ? "default" : "pointer",
+          outline: "none",
+          filter: on ? "saturate(1.35) brightness(1.02) drop-shadow(0 0 7px rgba(75,42,134,.55))" : bajoElCursor === id ? "brightness(1.1) saturate(1.12)" : undefined,
+          transition: "filter .18s ease, stroke .18s ease, stroke-width .18s ease",
+        }}
+      />
+    );
+  };
+
+  const familiaBajoElCursor = bajoElCursor ? ARCOS.find((fam) => fam.f.id === bajoElCursor || fam.subs.some((sub) => sub.sub.id === bajoElCursor || sub.hojas.some((h) => h.id === bajoElCursor))) : null;
+
   return (
-    <svg viewBox="0 0 480 480" role="group" aria-label={lang === "en" ? "Flavor wheel" : "Rueda de sabores"} style={{ width: "100%", maxWidth: 520, display: "block", margin: "0 auto" }}>
-      {FAMILIAS_EN_LA_RUEDA.map(({ f, inicio }) => {
-        const a0 = inicio * paso;
-        const a1 = (inicio + f.descriptores.length) * paso;
-        const algunoMarcado = f.descriptores.some((x) => marcados.has(x.id));
-        return (
-          <g key={f.id}>
-            <path d={sector(R_FAMILIA[0], R_FAMILIA[1], a0 + 0.35, a1 - 0.35)} fill={f.color} fillOpacity={algunoMarcado ? 1 : 0.82} />
-            <Rotulo texto={f[lang]} radio={(R_FAMILIA[0] + R_FAMILIA[1]) / 2} angulo={(a0 + a1) / 2} size={9.6} color="#fff" bold maximo={11} />
-            {f.descriptores.map((x, k) => {
-              const d0 = (inicio + k) * paso;
-              const d1 = d0 + paso;
-              const on = marcados.has(x.id);
-              return (
-                <g key={x.id}>
-                  <path
-                    d={sector(R_DESCRIPTOR[0], R_DESCRIPTOR[1], d0 + 0.35, d1 - 0.35)}
-                    fill={f.color}
-                    fillOpacity={on ? 1 : 0.14}
-                    stroke={f.color}
-                    strokeWidth={on ? 2 : 0.8}
-                    role="checkbox"
-                    aria-checked={on}
-                    aria-label={`${f[lang]} · ${x[lang]}`}
-                    tabIndex={disabled ? -1 : 0}
-                    onClick={() => !disabled && onToggle(x.id)}
-                    onKeyDown={(e) => {
-                      if (disabled || (e.key !== "Enter" && e.key !== " ")) return;
-                      e.preventDefault();
-                      onToggle(x.id);
-                    }}
-                    style={{ cursor: disabled ? "default" : "pointer", outlineOffset: -2 }}
-                  >
-                    <title>{`${f[lang]} · ${x[lang]}`}</title>
-                  </path>
-                  <Rotulo texto={x[lang]} radio={(R_DESCRIPTOR[0] + R_DESCRIPTOR[1]) / 2} angulo={(d0 + d1) / 2} size={9.4} color={on ? "#fff" : "var(--ink)"} bold={on} maximo={15} />
+    <div>
+      {/* El renglón de lectura: lo que hay bajo el cursor, del centro al borde (hace las veces de la lupa de la herramienta). */}
+      <div aria-live="polite" style={{ minHeight: 24, display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>
+        {bajoElCursor && familiaBajoElCursor ? (
+          <>
+            <span aria-hidden style={{ width: 12, height: 12, borderRadius: "50%", background: familiaBajoElCursor.f.color, flex: "0 0 auto" }} />
+            {rutaDe(bajoElCursor, lang)}
+          </>
+        ) : (
+          <span style={{ fontWeight: 400, fontSize: 11.5, color: "var(--muted)" }}>{pista}</span>
+        )}
+      </div>
+      <svg viewBox="22 22 856 856" role="group" aria-label={lang === "en" ? "Coffee flavor wheel" : "Rueda del sabor del café"} style={{ width: "100%", display: "block", margin: "0 auto" }}>
+        {ARCOS.map((fam) => {
+          const colorSub = matiz(fam.f.color, 0.16);
+          const colorNota = matiz(fam.f.color, 0.34);
+          const [ix, iy] = polar((R0 + R1) / 2, (fam.a0 + fam.a1) / 2);
+          return (
+            <g key={fam.f.id}>
+              {/* Nivel 1 — el icono (el nombre ya va escrito en la banda exterior). */}
+              {sectorMarcable(fam.f.id, sector(R0, R1, fam.a0 + GAP_FAM / 2, fam.a1 - GAP_FAM / 2), fam.f.color, "n1")}
+              <text x={ix} y={iy} textAnchor="middle" dominantBaseline="central" fontSize={26} style={{ pointerEvents: "none", userSelect: "none" }}>
+                {fam.f.icono}
+              </text>
+              {fam.subs.map((sub) => (
+                <g key={sub.sub.id}>
+                  {sectorMarcable(sub.sub.id, sector(R1, R2, sub.a0 + GAP_SUB / 2, sub.a1 - GAP_SUB / 2), colorSub, "n2")}
+                  {sub.a1 - sub.a0 > 9 && <Etiqueta texto={sub.sub[lang]} radio={(R1 + R2) / 2} a0={sub.a0} a1={sub.a1} tipo="radial" fill={tintaSobre(colorSub)} size={11.5} weight={700} />}
+                  {sub.hojas.map((hoja) => (
+                    <g key={hoja.id}>
+                      {sectorMarcable(hoja.id, sector(R2, R3, hoja.a0 + GAP_LEAF / 2, hoja.a1 - GAP_LEAF / 2), colorNota, "n3")}
+                      {hoja.a1 - hoja.a0 > 3.4 && <Etiqueta texto={hoja.h[lang]} radio={(R2 + R3) / 2 + 4} a0={hoja.a0} a1={hoja.a1} tipo="radial" fill={tintaSobre(colorNota)} size={10} weight={600} />}
+                    </g>
+                  ))}
                 </g>
-              );
-            })}
-          </g>
-        );
-      })}
-      <circle cx={C} cy={C} r={R_CENTRO} fill="var(--paper)" stroke="var(--line)" strokeWidth={1.5} />
-      <text x={C} y={C - 2} textAnchor="middle" fontSize={34} fontWeight={800} fill="var(--ink)">
-        {elegidos.length}
-      </text>
-      <text x={C} y={C + 18} textAnchor="middle" fontSize={10} fill="var(--muted)">
-        {rotuloCentro}
-      </text>
-    </svg>
+              ))}
+            </g>
+          );
+        })}
+
+        {/* La banda exterior repite el nombre de cada familia: quien lee de afuera hacia adentro la identifica sin mirar el centro. */}
+        {ARCOS.map((fam) => {
+          const colorBanda = matiz(fam.f.color, -0.22);
+          return (
+            <g key={fam.f.id}>
+              {sectorMarcable(fam.f.id, sector(OB0, OB1, fam.a0 + GAP_FAM / 2, fam.a1 - GAP_FAM / 2), colorBanda, "banda")}
+              {fam.a1 - fam.a0 > 6 && <Etiqueta texto={fam.f[lang]} radio={(OB0 + OB1) / 2} a0={fam.a0} a1={fam.a1} tipo="tangencial" fill={tintaSobre(colorBanda)} size={13} weight={700} banda />}
+            </g>
+          );
+        })}
+
+        {/* Las agujas: cada marca, del centro al borde de su anillo. */}
+        <g style={{ pointerEvents: "none" }}>
+          {elegidos.map((id) => {
+            const blanco = blancoDe(id);
+            if (!blanco) return null;
+            const [tx, ty] = polar(blanco.radio + 16, blanco.angulo);
+            return (
+              <g key={id} style={{ filter: "drop-shadow(0 1px 2px rgba(43,26,82,.35))" }}>
+                <line x1={CX} y1={CY} x2={tx} y2={ty} stroke={MORADO} strokeWidth={3} strokeLinecap="round" />
+                <circle cx={tx} cy={ty} r={6} fill={blanco.color} stroke={MORADO} strokeWidth={2.5} />
+              </g>
+            );
+          })}
+        </g>
+
+        {/* El núcleo. */}
+        <circle cx={CX} cy={CY} r={R0} fill="#f5f2fc" stroke="#e6e1f2" strokeWidth={1.5} style={{ pointerEvents: "none" }} />
+        <text x={CX} y={CY - 10} textAnchor="middle" fontSize={36} style={{ pointerEvents: "none", userSelect: "none" }}>
+          ☕
+        </text>
+        <text x={CX} y={CY + 22} textAnchor="middle" fontSize={9.5} fill="#8b84a0" style={{ pointerEvents: "none", fontFamily: "ui-monospace, 'JetBrains Mono', monospace", letterSpacing: ".08em" }}>
+          {rotuloCentro}
+        </text>
+      </svg>
+    </div>
   );
 }
 

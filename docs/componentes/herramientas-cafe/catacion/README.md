@@ -37,6 +37,16 @@
 > `src/lib/tools/catacion/`, o la herramienta embebida tal cual) — nunca una copia que se separa. Tocar el
 > componente que la consume exige línea en `docs/ALINEACION.md` §3.
 
+## V5.131 · la herramienta es la fuente de la taxonomía (2026-10-01)
+
+El owner puso esta rueda junto a la de la planilla del Q-Grader: «deben ser iguales». Desde la V5.131 lo son:
+`scripts/build-rueda-datos.mjs` lee el bloque `const DATA` de `rueda-del-cafe-v23.html` y genera
+`src/lib/catacion/ruedaDatos.ts` (9 familias → 22 subcategorías → 85 notas, ES/EN, color, icono); la planilla
+(`components/bcp/PlanillaPiezas.tsx` · `RuedaDeSabores`) la dibuja con la misma geometría, matices y agujas, y guarda las marcas
+con los ids de la herramienta (`frutal-citricos|lima`). `qa-centro-calidad` falla si la herramienta y la hoja dejan de coincidir.
+**Al publicar una versión nueva**: cambiar `HERRAMIENTA` en el script, `node scripts/build-rueda-datos.mjs`, y correr el guardián.
+Lo que la planilla no trae: girar, la lupa, y la etapa e intensidad de cada marca.
+
 ## Abierto
 
 - **Dos versiones conviven**: la publicada (V23) y la que usa el Sneak Peek (V10). Para ser interfaz tiene que haber UNA taxonomía (sectores, notas, colores) y UN dibujante, leídos por la herramienta y por las superficies React.

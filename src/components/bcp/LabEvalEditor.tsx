@@ -17,6 +17,8 @@
 //      a lado; B3 con los pesos a la izquierda y la granulometría (con barras) a la derecha. Los atributos van en dos
 //      columnas: cada cifra queda junto a su rótulo, no al otro lado de la pantalla.
 //   2. La rueda es una RUEDA (`RuedaDeSabores`, la taxonomía única de `rueda.ts`), no una lista de botones.
+//      V5.131 (owner: «deben ser iguales»): ES la Rueda del Café del taller — sus tres anillos, sus 85 notas, sus colores y sus
+//      agujas —, a lo ancho de la hoja para que se lea, con las marcas y las notas descriptivas al lado.
 //   3. El idioma: ES · EN (`planillaI18n.ts`). Sin `lang`, el editor lleva el suyo; quien lo aloja puede controlarlo
 //      (`lang` + `onLang`) para traducir también lo que rodea a la planilla (el Centro de Calidad lo hace).
 
@@ -40,7 +42,7 @@ import {
   type VistaDePlanilla,
 } from "@/lib/arena/labEvaluation";
 import { CVA_PROPOSITO, decidirPorPunto, rotuloDelPunto } from "@/lib/arena/homologacion";
-import { RUEDA, descriptorLabel, familiaDe } from "@/lib/catacion/rueda";
+import { familiaDe, normalizaRueda, rutaDe } from "@/lib/catacion/rueda";
 import { scaClassFor } from "@/components/kaffetal-regal/ficha/fichaCalculations";
 import {
   CLASE_LABEL,
@@ -76,7 +78,8 @@ const S = {
   input: { width: "100%", padding: "6px 8px", border: "1.5px solid var(--line)", borderRadius: 7, fontSize: 12.5, background: "var(--paper)" } as const,
   total: { display: "flex", gap: 10, alignItems: "baseline", marginTop: 8, fontSize: 13, flexWrap: "wrap" } as const,
   pill: { fontSize: 11.5, border: "1px solid var(--line)", borderRadius: 999, padding: "2px 10px", color: "var(--muted)" } as const,
-  chip: { display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, padding: "3px 9px", borderRadius: 999, border: "1.5px solid var(--line)", cursor: "pointer", color: "#fff" } as const,
+// Una marca de la rueda en la lista: su camino («Frutal › Cítricos › Lima») con el color de la familia al borde.
+  marca: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, textAlign: "left", fontSize: 12, padding: "4px 8px", borderRadius: 7, border: "1px solid var(--line)", borderLeft: "5px solid var(--ink)", background: "var(--paper)", color: "var(--ink)", cursor: "pointer" } as const,
   bloque: { border: "1px solid var(--line)", borderRadius: 10, padding: "10px 12px" } as const,
   // Dos columnas cuando caben (≥ 2 × 330 px); una sola en un teléfono o dentro de una tarjeta estrecha.
   dosCol: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(330px, 1fr))", gap: 12, alignItems: "start" } as const,
@@ -229,9 +232,9 @@ export function LabEvalEditor({
         </div>
       </div>
 
-      <div style={S.dosCol}>
-        {/* ── Columna 1: los protocolos ── */}
-        <div style={{ display: "grid", gap: 12 }}>
+      {/* ── Los protocolos, a lo ancho; lado a lado solo cuando se llenan los dos («Ambas») ── */}
+      <div>
+        <div style={verSca && verCva ? S.dosCol : { display: "grid", gap: 12 }}>
           {verSca && (
             <div style={S.bloque}>
               <h6 style={S.h6}>{t.scaTitulo}</h6>
@@ -320,31 +323,40 @@ export function LabEvalEditor({
               ))}
             </div>
           )}
-
-          {/* Las notas descriptivas, bajo los protocolos: la columna queda a la altura de la rueda. */}
-          <div style={S.bloque}>
-            <label style={S.lbl}>{t.perfil}</label>
-            <textarea rows={5} value={value.cupping_profile} onChange={(e) => onChange({ cupping_profile: e.target.value })} disabled={disabled} style={{ ...S.input, fontFamily: "inherit" }} placeholder={t.perfilPh} />
-          </div>
         </div>
 
-        {/* ── Columna 2: la rueda (la taxonomía única de `rueda.ts`) y las notas ── */}
-        <div style={S.bloque}>
+        {/* ── La rueda (V5.131): la Rueda del Café del taller, a tamaño de lectura, con sus marcas y las notas al lado ── */}
+        <div style={{ ...S.bloque, marginTop: 12 }}>
           <h6 style={S.h6}>{t.ruedaTitulo}</h6>
           <p style={S.hint}>{t.ruedaHint}</p>
-          <RuedaDeSabores elegidos={value.rueda} onToggle={toggleDescriptor} lang={lang} disabled={disabled} rotuloCentro={t.elegidos(value.rueda.length).replace(/^\d+\s*/, "")} />
-          <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 8, minHeight: 26 }}>
-            {value.rueda.length === 0 ? (
-              <span style={{ fontSize: 12, color: "var(--muted)" }}>{t.ninguno}</span>
-            ) : (
-              RUEDA.flatMap((f) => f.descriptores)
-                .filter((x) => value.rueda.includes(x.id))
-                .map((x) => (
-                  <button key={x.id} type="button" disabled={disabled} onClick={() => toggleDescriptor(x.id)} title={t.quitar} style={{ ...S.chip, background: familiaDe(x.id)?.color ?? "var(--ink)", borderColor: familiaDe(x.id)?.color ?? "var(--ink)" }}>
-                    {descriptorLabel(x.id, lang)} <span aria-hidden>×</span>
-                  </button>
-                ))
-            )}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 14, alignItems: "flex-start" }}>
+            <div style={{ flex: "4 1 620px", minWidth: 0, maxWidth: 880 }}>
+              <RuedaDeSabores elegidos={value.rueda} onToggle={toggleDescriptor} lang={lang} disabled={disabled} rotuloCentro={t.ruedaCentro} pista={t.ruedaPista} />
+            </div>
+            <div style={{ flex: "1 1 240px", minWidth: 0, display: "grid", gap: 10 }}>
+              <div>
+                <div style={{ ...S.lbl, display: "flex", justifyContent: "space-between", gap: 8 }}>
+                  <span>{t.marcadas}</span>
+                  <span style={{ fontWeight: 400, color: "var(--muted)" }}>{t.elegidos(value.rueda.length)}</span>
+                </div>
+                {value.rueda.length === 0 ? (
+                  <span style={{ fontSize: 12, color: "var(--muted)" }}>{t.ninguno}</span>
+                ) : (
+                  <div style={{ display: "grid", gap: 4 }}>
+                    {normalizaRueda(value.rueda).map((id) => (
+                      <button key={id} type="button" disabled={disabled} onClick={() => toggleDescriptor(id)} title={t.quitar} style={{ ...S.marca, borderLeftColor: familiaDe(id)?.color ?? "var(--ink)" }}>
+                        <span>{rutaDe(id, lang)}</span>
+                        <span aria-hidden style={{ color: "var(--muted)" }}>×</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div>
+                <label style={S.lbl}>{t.perfil}</label>
+                <textarea rows={6} value={value.cupping_profile} onChange={(e) => onChange({ cupping_profile: e.target.value })} disabled={disabled} style={{ ...S.input, fontFamily: "inherit" }} placeholder={t.perfilPh} />
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -358,3 +358,10 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   `producerActions.ts` (`carrilDePagoAction`), `panel/EvaluacionesTab.tsx`, `ocp/solicitudesActions.ts` (`guardarCarrilDePago`, emite),
   `nominados/NominadosClient.tsx` (`CarrilDePagoForm`), `nominados/CircuitoVista.tsx`. Guardián: `qa-solicitud-evaluacion` +7.
 (commit: 6218778)
+
+## [2026-10-01] V5.130 · Consolas + Socios — la planilla de evaluación con las piezas de la Datasheet Tool, sin espacio muerto y en ES · EN
+- ADD `components/bcp/PlanillaPiezas.tsx` (`RadarDeTaza`, `RuedaDeSabores`, `BarraDeMalla`; SVG nativo), `lib/arena/planillaI18n.ts` (`PL`, rótulos ES/EN).
+- ANN `components/bcp/LabEvalEditor.tsx` (reescrito: radar + puntaje, dos columnas, rueda, granulometría con barras, conmutador de idioma),
+  `lib/arena/labEvaluation.ts` y `homologacion.ts` (`lang` opcional en los errores y en `rotuloDelPunto`; por defecto español),
+  `socios/[partner]/panel/evaluacion/PlanillaCentro.tsx` (el idioma traduce también lo que rodea a la hoja). Guardián: `qa-centro-calidad` +10.
+(commit: pendiente)

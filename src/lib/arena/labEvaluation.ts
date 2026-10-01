@@ -29,6 +29,7 @@ import {
 } from "@/components/kaffetal-regal/ficha/fichaCalculations";
 import { normalizaRueda } from "@/lib/catacion/rueda";
 import { alGrid, puntoHomologado, puntoNativo, type PuntoSca } from "./homologacion";
+import { CVA_SECCION_LABEL, PL, SCA_ATTR_LABEL, type IdiomaDePlanilla } from "./planillaI18n";
 
 /** El protocolo que RIGE el Punto (derivado de la planilla; ver `protocoloDelPunto`). */
 export type EscalaSensorial = "sca" | "cva";
@@ -172,22 +173,24 @@ export function labEvaluationHasData(ev: LabEvaluation): boolean {
 // se redondea al 0,25 más cercano. Menos de ocho secciones → INCOMPLETO, sin puntaje. Fuera de 1–9 o con decimales → error,
 // no se recorta. (Así lo corrigió el Q-Grader el 2026-09-25 sobre la V5.81, que fundía Fragancia/Aroma y doblaba la general.)
 
-export function contarTazas(tazas: readonly CvaTaza[]): { u: number; d: number; errores: string[] } {
+// V5.130: los mensajes salen en el idioma de la planilla (`planillaI18n.ts`); por defecto, español, como siempre.
+export function contarTazas(tazas: readonly CvaTaza[], lang: IdiomaDePlanilla = "es"): { u: number; d: number; errores: string[] } {
   const t = tazas.slice(0, CVA.tazas);
   const d = t.filter((x) => x.defectuosa).length;
   const u = d === CVA.tazas ? 0 : t.filter((x) => x.noUniforme || x.defectuosa).length;
-  const errores = t.some((x) => x.defectuosa && !x.defecto) ? ["Cada taza defectuosa lleva el tipo de defecto (moho, fenol, papa…)."] : [];
+  const errores = t.some((x) => x.defectuosa && !x.defecto) ? [PL[lang].errTazaSinTipo] : [];
   return { u, d, errores };
 }
 
 export type ResultadoCva = { suma: number; calificadas: number; completa: boolean; errores: string[]; u: number; d: number; total: number | null; cls: string };
 
-export function computeCva(ev: CvaFields): ResultadoCva {
+export function computeCva(ev: CvaFields, lang: IdiomaDePlanilla = "es"): ResultadoCva {
   let suma = 0;
   let calificadas = 0;
   const errores: string[] = [];
   const faltan: string[] = [];
-  for (const [key, label] of CVA_SECCIONES) {
+  for (const [key] of CVA_SECCIONES) {
+    const label = CVA_SECCION_LABEL[lang][key];
     const raw = String(ev[`cva_${key}` as keyof CvaFields] ?? "").trim();
     if (!raw) {
       faltan.push(label);
@@ -195,15 +198,15 @@ export function computeCva(ev: CvaFields): ResultadoCva {
     }
     const n = numOr(raw);
     if (n == null || !Number.isInteger(n) || n < CVA.min || n > CVA.max) {
-      errores.push(`«${label}»: un entero de ${CVA.min} a ${CVA.max} (recibió ${raw}).`);
+      errores.push(PL[lang].errCvaEntero(label, CVA.min, CVA.max, raw));
       continue;
     }
     calificadas++;
     suma += n;
   }
-  const tazas = contarTazas(Array.isArray(ev.cva_tazas) ? ev.cva_tazas : []);
+  const tazas = contarTazas(Array.isArray(ev.cva_tazas) ? ev.cva_tazas : [], lang);
   errores.push(...tazas.errores);
-  if (calificadas > 0 && faltan.length) errores.push(`CVA incompleto: faltan ${faltan.length} de ${CVA_SECCIONES.length} secciones (${faltan.join(", ")}).`);
+  if (calificadas > 0 && faltan.length) errores.push(PL[lang].errCvaIncompleto(faltan.length, CVA_SECCIONES.length, faltan.join(", ")));
   const completa = calificadas === CVA_SECCIONES.length && errores.length === 0;
   const total = completa ? Math.max(0, alGrid(CVA.coeficiente * suma + CVA.base - CVA.castigoNoUniforme * tazas.u - CVA.castigoDefectuosa * tazas.d, "cerca")) : null;
   return { suma, calificadas, completa, errores, u: tazas.u, d: tazas.d, total, cls: total != null ? scaClassFor(total) : "Sin puntaje" };
@@ -218,11 +221,13 @@ export const SCA2004_POR_TAZAS: readonly string[] = ["uniformity", "clean_cup", 
 
 export type ResultadoSca2004 = { total: number | null; completa: boolean; calificados: number; errores: string[]; taint: number; fault: number; defectos: number };
 
-export function computeSca2004(ev: ScaFields & Sca2004Extra): ResultadoSca2004 {
+export function computeSca2004(ev: ScaFields & Sca2004Extra, lang: IdiomaDePlanilla = "es"): ResultadoSca2004 {
   const errores: string[] = [];
   const faltan: string[] = [];
   let calificados = 0;
-  for (const [key, label] of SCA_ATTRS) {
+  for (const [key, etiqueta] of SCA_ATTRS) {
+    // En español se conserva el rótulo del formulario (`SCA_ATTRS`, el de la Ficha); en inglés, el de la planilla.
+    const label = lang === "es" ? etiqueta : SCA_ATTR_LABEL[lang][key];
     const raw = String(ev[`sca_${key}` as keyof ScaFields] ?? "").trim();
     if (!raw) {
       faltan.push(label);
@@ -230,16 +235,16 @@ export function computeSca2004(ev: ScaFields & Sca2004Extra): ResultadoSca2004 {
     }
     const n = numOr(raw);
     if (n == null) {
-      errores.push(`«${label}»: no es un número (${raw}).`);
+      errores.push(PL[lang].errNoNumero(label, raw));
       continue;
     }
     if (SCA2004_POR_TAZAS.includes(key)) {
       if (n < 0 || n > SCA2004.max || Math.abs(n / SCA2004.porTaza - Math.round(n / SCA2004.porTaza)) > 1e-9) {
-        errores.push(`«${label}»: ${SCA2004.porTaza} puntos por taza (0 · 2 · 4 · 6 · 8 · 10); recibió ${raw}.`);
+        errores.push(PL[lang].errPorTaza(label, SCA2004.porTaza, raw));
         continue;
       }
     } else if (n < SCA2004.min || n > SCA2004.max || Math.abs(n / SCA2004.paso - Math.round(n / SCA2004.paso)) > 1e-9) {
-      errores.push(`«${label}»: de ${SCA2004.min.toFixed(2)} a ${SCA2004.max.toFixed(2)} en pasos de ${SCA2004.paso}; recibió ${raw}.`);
+      errores.push(PL[lang].errEscalado(label, SCA2004.min.toFixed(2), SCA2004.max.toFixed(2), SCA2004.paso, raw));
       continue;
     }
     calificados++;
@@ -247,14 +252,14 @@ export function computeSca2004(ev: ScaFields & Sca2004Extra): ResultadoSca2004 {
   const tazasDe = (v: string, nombre: string) => {
     const n = numOr(v) ?? 0;
     if (!Number.isInteger(n) || n < 0 || n > SCA2004.tazas) {
-      errores.push(`«${nombre}»: tazas de 0 a ${SCA2004.tazas}.`);
+      errores.push(PL[lang].errTazas(nombre, SCA2004.tazas));
       return 0;
     }
     return n;
   };
-  const taint = tazasDe(ev.sca_taint_cups, "Tazas con taint");
-  const fault = tazasDe(ev.sca_fault_cups, "Tazas con fault");
-  if (calificados > 0 && faltan.length) errores.push(`SCA 2004 incompleto: faltan ${faltan.length} de ${SCA_ATTRS.length} atributos (${faltan.join(", ")}).`);
+  const taint = tazasDe(ev.sca_taint_cups, PL[lang].nombreTaint);
+  const fault = tazasDe(ev.sca_fault_cups, PL[lang].nombreFault);
+  if (calificados > 0 && faltan.length) errores.push(PL[lang].errScaIncompleto(faltan.length, SCA_ATTRS.length, faltan.join(", ")));
   const completa = calificados === SCA_ATTRS.length && errores.length === 0;
   const defectos = SCA2004.castigoTaint * taint + SCA2004.castigoFault * fault;
   const total = completa ? r2(computeSca(ev).total - defectos) : null;
@@ -278,17 +283,17 @@ export function puntoDeLaPlanilla(ev: LabEvaluation): PuntoSca | null {
 }
 
 /** Por qué la planilla todavía no tiene Punto (para la pantalla y para el rechazo de la acción). */
-export function erroresDePlanilla(ev: LabEvaluation): string[] {
+export function erroresDePlanilla(ev: LabEvaluation, lang: IdiomaDePlanilla = "es"): string[] {
   const out: string[] = [];
   if (cuentaSca(ev)) {
-    const sca = computeSca2004(ev);
-    if (sca.total == null) out.push(...(sca.errores.length ? sca.errores : [`Complete los ${SCA_ATTRS.length} atributos del SCA 2004.`]));
+    const sca = computeSca2004(ev, lang);
+    if (sca.total == null) out.push(...(sca.errores.length ? sca.errores : [PL[lang].completeSca(SCA_ATTRS.length)]));
   }
   if (cuentaCva(ev)) {
-    const cva = computeCva(ev);
-    if (cva.total == null) out.push(...(cva.errores.length ? cva.errores : [`Complete las ${CVA_SECCIONES.length} secciones del CVA.`]));
+    const cva = computeCva(ev, lang);
+    if (cva.total == null) out.push(...(cva.errores.length ? cva.errores : [PL[lang].completeCva(CVA_SECCIONES.length)]));
   }
-  if (ev.vista === "ambas" && out.length) out.unshift("Con «Ambas», el SCA 2004 (rige) y el CVA (banco comparativo) tienen que estar completos.");
+  if (ev.vista === "ambas" && out.length) out.unshift(PL[lang].errAmbas);
   return out;
 }
 

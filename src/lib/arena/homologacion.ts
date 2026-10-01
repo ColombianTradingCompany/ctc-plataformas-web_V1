@@ -9,6 +9,7 @@
 // Puro: no importa nada del servidor. Lo leen `labEvaluation.ts`, las acciones que escriben `lot_evaluations` y el guardián.
 
 import { GRADO_POR_ID, SCA_MINIMO, gradoPorPuntaje, type Grado } from "@/lib/grados/definicion";
+import { PL, type IdiomaDePlanilla } from "./planillaI18n";
 
 export type ProtocoloDeTaza = "sca2004" | "cva";
 export type OrigenDelPunto = "nativo" | "homologado";
@@ -130,7 +131,9 @@ export function decidirPorPunto(p: PuntoSca): DecisionDePunto {
 const f2 = (n: number) => n.toFixed(2);
 
 /** El rótulo que enseñan todas las pantallas: nunca un homologado se lee como un SCA catado. */
-export function rotuloDelPunto(p: PuntoSca): string {
-  if (p.origen === "nativo") return `SCA 2004 nativo ${f2(p.valor)}${p.cvaTotal != null ? ` · CVA ${f2(p.cvaTotal)} registrado (banco comparativo)` : ""}`;
-  return `Punto homologado desde CVA ${p.cvaTotal != null ? f2(p.cvaTotal) : "—"}: ${f2(p.bajo)}–${f2(p.alto)} (rige el piso ${f2(p.bajo)}; ${p.modelo ?? BANDA_SIN_CALIBRAR.modelo}, sin calibrar; no catado en SCA)`;
+/** V5.130: `lang` es el idioma de la planilla del Q-Grader; las notas, la auditoría y las consolas lo piden en español (el valor por defecto). */
+export function rotuloDelPunto(p: PuntoSca, lang: IdiomaDePlanilla = "es"): string {
+  const t = PL[lang];
+  if (p.origen === "nativo") return `${t.puntoNativo(f2(p.valor))}${p.cvaTotal != null ? t.puntoCvaRegistrado(f2(p.cvaTotal)) : ""}`;
+  return t.puntoHomologado(p.cvaTotal != null ? f2(p.cvaTotal) : "—", f2(p.bajo), f2(p.alto), p.modelo ?? BANDA_SIN_CALIBRAR.modelo);
 }

@@ -15,7 +15,8 @@
 import { readFileSync } from "node:fs";
 import { RUEDA, DESCRIPTORES, normalizaRueda, descriptorLabel } from "../src/lib/catacion/rueda.ts";
 import { CVA, CVA_SECCIONES, SCA2004, computeCva, computeSca2004, EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, protocoloDelPunto, puntoDeLaPlanilla, toLabEvaluation } from "../src/lib/arena/labEvaluation.ts";
-import { BANDA_SIN_CALIBRAR, CVA_PROPOSITO, LOTES_PARA_CALIBRAR, admiteTyrian, decidirPorPunto, gradoFirme, homologarCva, puntoDeFila, puntoHomologado, puntoNativo, techoDelPunto } from "../src/lib/arena/homologacion.ts";
+import { BANDA_SIN_CALIBRAR, CVA_PROPOSITO, LOTES_PARA_CALIBRAR, admiteTyrian, decidirPorPunto, gradoFirme, homologarCva, puntoDeFila, puntoHomologado, puntoNativo, rotuloDelPunto, techoDelPunto } from "../src/lib/arena/homologacion.ts";
+import { PL, SCA_ATTR_LABEL, CVA_SECCION_LABEL, MALLA_LABEL } from "../src/lib/arena/planillaI18n.ts";
 import { estadoDelCircuito } from "../src/lib/ocp/circuito.ts";
 
 let ok = 0;
@@ -111,7 +112,7 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("el CVA no se guarda como total tecleado: sale de las secciones (cva_total = el del Punto)", !/cva_total:\s*(raw|Number\(|formData)/.test(acciones) && acciones.includes("cva_total: punto.cvaTotal"));
   check("dar de alta exige un Punto (planilla completa) y guarda su procedencia y el protocolo que rige", acciones.includes("const punto = puntoDeLaPlanilla(ev);") && acciones.includes("erroresDePlanilla(ev)") && acciones.includes("escala: protocoloDelPunto(ev),") && /^\s*punto,$/m.test(acciones) && acciones.includes("vista: ev.vista"));
   const editor = lee("src/components/bcp/LabEvalEditor.tsx");
-  check("el editor tiene el conmutador de VISTA (SCA · CVA · Ambas), la fórmula y el propósito de la casa", editor.includes('type="radio" name="vista"') && editor.includes("CVA.coeficiente") && editor.includes("CVA_PROPOSITO") && editor.includes("rotuloDelPunto(punto)"));
+  check("el editor tiene el conmutador de VISTA (SCA · CVA · Ambas), la fórmula y el propósito de la casa", editor.includes('type="radio" name="vista"') && editor.includes("CVA.coeficiente") && editor.includes("CVA_PROPOSITO") && editor.includes("rotuloDelPunto(punto, lang)"));
   check("y enlaza (no embebe) Defectos y el Varieties Map (folio 11)", /defectos-cafe/.test(editor) && /mapa-variedades/.test(editor) && !/<iframe/.test(editor));
 }
 
@@ -177,6 +178,25 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   const acta = lee("docs/migraciones/2026-09-25_evaluaciones_punto_homologado.sql").replace(/^--.*$/gm, "");
   check("la base guarda la procedencia y el CVA (banco comparativo); sca_total sigue siendo lo que leen todos", /add column if not exists punto jsonb/.test(acta) && /add column if not exists cva_total numeric/.test(acta) && !/drop column sca_total/.test(acta));
   check("el propósito CVA de la casa y el presupuesto de calibración son los del plan §10.4", CVA_PROPOSITO.length > 10 && s10.includes(`«${CVA_PROPOSITO}»`) && new RegExp(`\\*\\*${LOTES_PARA_CALIBRAR} lotes catados en las dos escalas\\*\\*`).test(s10));
+}
+
+// ── 8. V5.130 (owner, 2026-10-01) · la planilla con las piezas de la Datasheet Tool, sin espacio muerto y en dos idiomas ──
+{
+  const editor = lee("src/components/bcp/LabEvalEditor.tsx");
+  const piezas = lee("src/components/bcp/PlanillaPiezas.tsx");
+  const i18n = lee("src/lib/arena/planillaI18n.ts");
+  const centro = lee("src/app/socios/[partner]/panel/evaluacion/PlanillaCentro.tsx");
+  check("la hoja abre con el radar vivo y el puntaje grande (la cabecera de Intrínsecos de la Datasheet Tool)", editor.includes("<RadarDeTaza ejes={ejes}") && piezas.includes("export function RadarDeTaza") && editor.includes("CLASE_LABEL[lang][clase]"));
+  check("la rueda es una RUEDA sobre la taxonomía única (no una lista de botones), y se marca tocándola", editor.includes("<RuedaDeSabores elegidos={value.rueda} onToggle={toggleDescriptor}") && piezas.includes('import { RUEDA } from "@/lib/catacion/rueda";') && piezas.includes('role="checkbox"') && !editor.includes("{RUEDA.map((f) => ("));
+  check("la granulometría lleva una barra por malla, el total y su estado", editor.includes("<BarraDeMalla pct={r.pct}") && editor.includes("ESTADO_DE_MALLAS[lang][mesh.state]") && editor.includes("t.totalMallas"));
+  check("dos columnas donde caben: los protocolos junto a la rueda, los pesos junto a las mallas", (editor.match(/<div style=\{S\.dosCol\}>/g) ?? []).length === 2 && editor.includes('gridTemplateColumns: "repeat(auto-fit, minmax(330px, 1fr))"') && editor.includes("style={S.pares}"));
+  check("el conmutador ES · EN está en la planilla y quien la aloja puede controlarlo", editor.includes("IDIOMAS_DE_PLANILLA.map") && editor.includes("onLang ? onLang(l) : setLangPropio(l)") && centro.includes("lang={lang} onLang={setLang}"));
+  check("el inglés tiene las MISMAS claves que el español (lo exige el tipo) y ningún rótulo vacío", i18n.includes("const EN: typeof ES = {") && Object.keys(PL.es).join() === Object.keys(PL.en).join() && [SCA_ATTR_LABEL, CVA_SECCION_LABEL, MALLA_LABEL].every((m) => Object.keys(m.es).join() === Object.keys(m.en).join() && Object.values(m.en).every(Boolean)));
+  const conError = toLabEvaluation({ vista: "sca", sca_fragrance: "8", sca_flavor: "8", sca_aftertaste: "8", sca_acidity: "8", sca_body: "5.5", sca_balance: "8", sca_uniformity: "10", sca_clean_cup: "10", sca_sweetness: "10", sca_cuppers: "8" });
+  check("los errores de la aritmética salen en el idioma pedido; sin idioma, en español como siempre", computeSca2004(conError, "en").errores.some((e) => /from 6\.00 to 10\.00/.test(e)) && computeSca2004(conError).errores.some((e) => /de 6\.00 a 10\.00/.test(e)) && computeSca2004(conError, "en").total === null);
+  check("el rótulo del Punto también: nunca un homologado se lee como un SCA catado, en ninguno de los dos", rotuloDelPunto(puntoNativo(86)) === "SCA 2004 nativo 86.00" && rotuloDelPunto(puntoNativo(86), "en") === "Native SCA 2004 86.00" && /not cupped in SCA/.test(rotuloDelPunto(puntoHomologado(88), "en")) && /no catado en SCA/.test(rotuloDelPunto(puntoHomologado(88))));
+  check("el idioma no toca los datos ni las fórmulas: el mismo total en los dos", computeCva(toLabEvaluation({ vista: "cva", cva_fragrance: "7", cva_aroma: "7", cva_flavor: "7", cva_aftertaste: "7", cva_acidity: "7", cva_sweetness: "7", cva_mouthfeel: "7", cva_overall: "7" }), "en").total === computeCva(toLabEvaluation({ vista: "cva", cva_fragrance: "7", cva_aroma: "7", cva_flavor: "7", cva_aftertaste: "7", cva_acidity: "7", cva_sweetness: "7", cva_mouthfeel: "7", cva_overall: "7" })).total);
+  check("sigue sin embeber herramientas: las piezas son SVG nativo", !/<iframe/.test(piezas) && !/<iframe/.test(editor));
 }
 
 if (fallos.length) {

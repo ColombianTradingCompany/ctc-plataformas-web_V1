@@ -19,6 +19,19 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.130] — 2026-10-01 (commit pendiente)
+
+- **Cambiado**: la **planilla de evaluación** (Centro de Calidad · «Registrar a mano» del OCP · apreciación de la Arena) se rehízo
+  con las piezas de la **CTCx Datasheet Tool** (owner, 2026-10-01): abre con el **radar** vivo de los atributos de taza junto al
+  puntaje grande y su franja; la **rueda de sabores es una rueda** que se toca (nueve familias, sus descriptores), no una lista de
+  botones; la **granulometría** lleva una barra por malla, el total y su estado. Son SVG nativo sobre la misma aritmética y la
+  taxonomía única de la rueda — la herramienta HTML no se embebe porque no es dual (SCA 2004 + CVA) ni bilingüe.
+- **Cambiado**: **sin el espacio muerto**. Los protocolos quedan junto a la rueda y los pesos junto a las mallas (dos columnas
+  donde caben, una en teléfono); cada cifra va al lado de su rótulo. Se añade la merma de trilla, derivada.
+- **Añadido**: conmutador **ES · EN** en la planilla. Traduce los rótulos, la rueda, las mallas, los mensajes de error y el rótulo
+  del Punto; en el Centro de Calidad también lo que rodea a la hoja. No toca un dato ni una fórmula.
+- **Docs**: charters `consolas`, `socios` y `herramientas-cafe`, ALINEACION §3. `qa-centro-calidad` 95 → 105.
+
 ## [V5.129] — 2026-10-01 (commit 6218778)
 
 - **Cambiado**: en Kaffetal Regal, «Solicitudes de Evaluación» dice **cuánto y dónde se paga** (owner, 2026-10-01). El párrafo de

@@ -134,7 +134,10 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
   leer de ahí cuando se rehaga (el owner la quiere en el Centro de Calidad). Y la **variante interna de la Datasheet Tool**
   (`green-datasheet` para CTCx: transcribir FT2 y caracterizar varios lotes, embebida con el puente `CTC_TOOL`; folio 11)
   sigue sin hacerse — la planilla del Q-Grader es React (`LabEvalEditor`, SCA o CVA) y enlaza Defectos y el Varieties Map
-  por su URL del taller.
+  por su URL del taller. **V5.130 (owner, 2026-10-01)**: la planilla tomó las PIEZAS de la Datasheet Tool —el radar vivo con el
+  puntaje, la granulometría con barras— y dibuja la rueda como rueda sobre `rueda.ts` (`components/bcp/PlanillaPiezas.tsx`, SVG
+  nativo, ES · EN). No se embebió el HTML: no es dual ni bilingüe. Lo del Q-Grader queda cubierto; sigue abierto transcribir FT2
+  a ese formato, y que la Rueda del Café del taller lea la misma taxonomía.
 - **V5.66 · una carpeta por herramienta, y una conversación por herramienta** (owner, 2026-09-21). El orden
   sugerido y la línea «Hoy:» de cada una están en `herramientas-cafe/README.md` y en cada ficha. Lo que el recuento
   destapó: **(a)** la Rueda del Café vive en DOS versiones y el Sneak Peek dibuja con la vieja (V10) — es la

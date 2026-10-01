@@ -117,7 +117,9 @@ fórmula del CVA y la rueda única). Lo tocan también `qa-recuperacion-check.mj
   `src/lib/arena/homologacion.ts` (de `consolas`); `lot_evaluations.punto` · `cva_total`; el Centro enseña el Punto con su procedencia
   (`rotuloDelPunto`). `qa-centro-calidad` §5 y §7 (los vectores del informe se leen del plan). **Queda**: el «uso
   directo» (emitir una Ficha Técnica o un reporte sin bache — respuesta 5), `Procesamiento de Lotes` (Etapa 3), la variante
-  interna de la Datasheet Tool (charter `herramientas-cafe`), y **nadie ha conducido el módulo en vivo** con la credencial
+  interna de la Datasheet Tool (charter `herramientas-cafe`; **V5.130**: la planilla ya trae su radar, la rueda como rueda y la
+  granulometría con barras, sin espacio muerto y con conmutador ES · EN — el idioma lo lleva `PlanillaCentro` y traduce también
+  lo que rodea a la hoja), y **nadie ha conducido el módulo en vivo** con la credencial
   (se verificó por `tsc`, build y guardianes; la credencial interna existe y tiene Evaluación activa).
 
 - **Plan de ejecución de la narrativa** (`docs/PLAN_NARRATIVA_2026-09-17.md`): **SO-1** (narrativa de los nodos; ola 1)

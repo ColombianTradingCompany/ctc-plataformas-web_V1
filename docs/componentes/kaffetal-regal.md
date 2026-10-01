@@ -76,6 +76,10 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 - **Cuánto y dónde se paga la evaluación** (owner, 2026-10-01, V5.129). «Solicitudes de Evaluación» abre con tres cifras y cuatro
   pasos (`panel/PagoDeEvaluacion.tsx`); cada solicitud trae su cuenta y el estado de la factura. El medio de pago NO vive en el
   código: lo escribe CTCx en el OCP (`platform_settings.carril_de_pago_evaluacion`) y llega por `carrilDePagoAction`.
+- **Un lote o una finca pueden desaparecer por un borrado nuclear de CTCx** (owner, 2026-10-01, V5.134). Lo hace el OCP, no el productor;
+  a él le llega una nota en su hilo (sin lote ni finca: ya no existen) y un correo que dicen que fue una operación unilateral por
+  razones del sistema. Kaffetal Regal no tiene que hacer nada: al recargar, el lote o la finca ya no vienen. Lo que no se borra así
+  y el archivo, en el charter `consolas`.
 - **El productor SOLICITA los chequeos de CTCx** (owner, 2026-10-01, V5.128). Legislación y sostenibilidad siguen siendo material de
   la revisión de CTCx (no determinan el Pasaporte), pero el productor los marca y los pide desde la pestaña 3 de la finca, con nota e
   imagen por ítem (`ChequeosCtcx.tsx` → `fincas.eudr_chequeo_solicitudes`; catálogo en `src/lib/eudrAtributos.ts`). Es un envío

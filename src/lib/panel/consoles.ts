@@ -221,6 +221,9 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // cuenta que CTCx crea sin buzón y lleva por el dueño del café que no va a usar la plataforma.
           { href: "/ocp/asistencia", label: "Asistencia a Proveedores" },
           { href: "/ocp/desacoplado", label: "Proveedor Desacoplado" },
+          // V5.134 (owner, 2026-10-01): el archivo de los BORRADOS NUCLEARES — lotes y fincas que CTCx retiró «como si no
+          // hubiesen existido» desde su vista en `/ocp/kr`. Aquí queda la copia de lo borrado, el motivo y el aviso al productor.
+          { href: "/ocp/borrados", label: "Archivo de Borrados" },
         ],
       },
       {

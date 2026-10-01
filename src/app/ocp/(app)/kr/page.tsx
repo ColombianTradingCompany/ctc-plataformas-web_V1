@@ -7,6 +7,7 @@ import { AnclasViejas } from "./AnclasViejas";
 import { LoteSeccion } from "./LoteSeccion";
 import { FincaSeccion } from "./FincaSeccion";
 import { ProductorSeccion } from "./ProductorSeccion";
+import { BotonNuclear } from "./BotonNuclear";
 import styles from "@/components/panel/shared.module.css";
 
 export const dynamic = "force-dynamic";
@@ -97,12 +98,16 @@ export default async function KrPage({ searchParams }: { searchParams: Promise<P
           <section style={{ marginBottom: 36 }}>
             <h2 className={styles.sectionHead}>Lote</h2>
             <LoteSeccion service={service} loteId={loteId} />
+            {/* V5.134 (owner): el borrado nuclear del lote, con doble confirmación. Solo en SU vista (`?lote=`). */}
+            {nombreLote && <BotonNuclear tipo="lote" id={loteId} />}
           </section>
         )}
         {fincaId && protagonista !== "productor" && (
           <section style={{ marginBottom: 36 }}>
             <h2 className={styles.sectionHead}>Finca{protagonista === "lote" ? " de origen" : ""}</h2>
             <FincaSeccion service={service} fincaId={fincaId} />
+            {/* V5.134: el de la finca solo cuando la finca ES la protagonista (`?finca=`), no cuando se ve como origen de un lote. */}
+            {protagonista === "finca" && nombreFinca && <BotonNuclear tipo="finca" id={fincaId} />}
           </section>
         )}
         {productorId && (

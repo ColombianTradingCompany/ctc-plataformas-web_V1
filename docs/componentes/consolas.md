@@ -139,7 +139,7 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
 documento SICA; «Guardar en nombre del productor» sincroniza su respuesta; la parcela 1 se espeja) y la Comunicación enseña las
 solicitudes de revisión de datos con su punto y su adjunto. **`qa-visa-check.mjs`** desde la V5.119 vigila también la revisión EUDR intuitiva de la finca (barra de área contra 4 ha con tope de 30,
 línea de tiempo contra el corte EUDR, Sí/No en color, fichas, coordenada copiable, evidencia del chequeo ×4, archivo de corroboración por
-certificación). **`qa-inactividad-check.mjs`** (26, V5.103 — la regla pura del barrido de inactividad contra el código; el sello solo si el correo salió;
+certificación). **`qa-borrado-nuclear-check.mjs`** (32, V5.134 — el borrado nuclear: clase `emite`, doble confirmación revalidada en el servidor, archivar antes de borrar, los cinco bloqueos, el aviso sin el motivo, el archivo de solo lectura). **`qa-inactividad-check.mjs`** (26, V5.103 — la regla pura del barrido de inactividad contra el código; el sello solo si el correo salió;
 la única rutina de borrado; el cron con tres barridos; las acciones del OCP con clase `emite`; las cuentas protegidas del owner en el acta).
 `qa-direccionamiento` y `qa-anclas` pasaron a `herramientas-internas` el 2026-09-19.
 
@@ -337,6 +337,17 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
   etapa, circuito, pasos de la Ficha, grado, temporada, muestra, oferta, trato; Arena: fase, pago, puntaje, decisión; contrato: estado,
   kg, $/kg, meses, firma). Lo derivado sale de `cargarKr(service, { productorId })`, la misma fuente que la tabla, que desde esta
   versión sabe cargar un solo productor. `qa-asistencia` +3.
+- **EL BORRADO NUCLEAR (owner, 2026-10-01) — EJECUTADO en la V5.134.** «Una manera desde OCP para poder borrar Lotes y Fincas, incluso
+  después de haber procesado todo, […] como si no hubiese existido […] con doble confirmación y [que] le mande un mensaje al Productor
+  […]. Agreguemos un módulo que guarde esta info como archivo.» El botón vive en `/ocp/kr?lote=` y `?finca=` (`kr/BotonNuclear.tsx`):
+  1.ª confirmación = inventario + motivo interno + casilla; 2.ª = escribir «BORRAR <código>». Borra la base, en UNA transacción
+  (`nuclear_borrar`: archiva en `borrados_nucleares` y después borra; `docs/migraciones/2026-10-01_borrado_nuclear.sql`); el servidor
+  (`src/lib/ocp/borradoNuclear.ts`) quita después los objetos de Storage y avisa al productor (nota + correo), y anota cada resultado.
+  **Se niega** con pedidos, reservas o pujas de compradores, con una compra del lote dentro de una mezcla o de Sample Kits, y con una
+  finca que aporta a un lote de otra. Clase `emite`. Módulo «Archivo de Borrados» (`/ocp/borrados`, solo lectura, con la instantánea
+  en JSON). Guardián `qa-borrado-nuclear` (32). **Probado** contra datos reales en una transacción revertida (una finca con dos lotes y
+  un lote suelto); **nadie lo ha usado todavía en vivo**. **Queda**: los códigos de subvención que usó el lote siguen marcados como
+  usados (sin lote); un bache de evaluación puede quedar vacío; no hay «restaurar».
 - **LA INACTIVIDAD DE LAS CUENTAS «MARCHITANDO» (owner, 2026-09-30) — EJECUTADA en la V5.103.** «Los productores Marchitando sin
   finca ni lote reciben un correo recordándoles la cuenta y cómo acceder; un mes después otro avisando que la inactividad borrará la
   cuenta automáticamente en un mes (SOLO si no tiene lote ni finca); y un botón para eliminar una cuenta de este tipo». Es el TERCER

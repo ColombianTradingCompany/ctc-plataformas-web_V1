@@ -19,6 +19,25 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.134] — 2026-10-01 (commit pendiente)
+
+- **Añadido**: **borrado nuclear** de un lote o una finca desde el OCP (owner, 2026-10-01), aunque ya haya pasado por todo el circuito:
+  desaparece «como si no hubiese existido» — solicitud y factura, muestras, evaluaciones, ofertas, contratos y sus meses, compras,
+  fichas, archivos, mensajes y rastro de auditoría. Vive en la vista del lote y en la de la finca (`/ocp/kr?lote=` · `?finca=`); el de
+  una finca se lleva sus lotes.
+- **Añadido**: **doble confirmación**. Primera: el inventario de lo que se va a borrar, tabla por tabla, el motivo (interno) y una
+  casilla. Segunda: escribir la frase «BORRAR <código>». El servidor vuelve a comprobar las tres cosas.
+- **Añadido**: el **productor recibe un aviso** —nota en su hilo y correo— de que CTCx retiró su lote o su finca en una operación
+  unilateral por razones del sistema, sin el motivo interno. El resultado de cada envío queda registrado.
+- **Añadido**: módulo **«Archivo de Borrados»** (`/ocp/borrados`, solo lectura): por cada operación, quién, cuándo, el motivo, lo
+  borrado, qué pasó con los archivos, el aviso al productor y la instantánea completa descargable en JSON.
+- **Seguridad**: el borrado corre en la base en una sola transacción (primero archiva, después borra) y **se niega** si el lote tiene
+  pedidos, reservas o pujas de compradores, si una compra suya ya está en una mezcla o en Sample Kits, o si la finca aporta a un lote
+  de otra finca. Solo quien administra el OCP puede hacerlo; las funciones de la base solo las llama el servidor.
+- **Datos**: migraciones `borrado_nuclear` y `borrado_nuclear_jsonpath_solo_objetos` — tabla `borrados_nucleares` y funciones
+  `nuclear_inventario` · `nuclear_borrar`. Acta en `docs/migraciones/`.
+- **Docs**: charters `consolas` y `kaffetal-regal`, ALINEACION §3. Guardián nuevo `qa-borrado-nuclear` (32).
+
 ## [V5.133] — 2026-10-01 (commit caf2410)
 
 - **Añadido**: en la planilla de evaluación, **cada marca de la rueda lleva su etapa y su intensidad** (owner, 2026-10-01), como el

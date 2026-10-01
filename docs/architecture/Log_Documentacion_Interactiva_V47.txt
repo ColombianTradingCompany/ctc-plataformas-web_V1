@@ -393,3 +393,11 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   `socios/…/evaluacionActions.ts`, `ocp/nominadosActions.ts` (se guarda), `nominados/CircuitoVista.tsx`, `socios/…/evaluacion/page.tsx` (se lee).
   Guardián: `qa-centro-calidad` +11. Acta: `docs/migraciones/2026-10-01_lot_evaluations_rueda_detalle.sql`.
 (commit: caf2410)
+
+## [2026-10-01] V5.134 · Consolas (OCP) — el borrado nuclear de un lote o una finca, con doble confirmación, aviso al productor y Archivo de Borrados
+- ADD tabla `borrados_nucleares` (service-role-only) y funciones `_nuclear_recoger` · `nuclear_inventario` · `nuclear_borrar` (una transacción: archiva y borra).
+- ADD `src/lib/ocp/borradoNuclearTexto.ts` (puro: frase, rótulos, aviso), `src/lib/ocp/borradoNuclear.ts` (base → Storage → aviso),
+  `ocp/(app)/nuclearActions.ts` (emite), `ocp/(app)/kr/BotonNuclear.tsx`, módulo `ocp/(app)/borrados/` (página + `[id]/json/route.ts`).
+- ANN `ocp/(app)/kr/page.tsx` (el botón en la vista del lote y de la finca), `lib/panel/consoles.ts` (rail: «Archivo de Borrados»).
+  Guardián nuevo: `qa-borrado-nuclear-check.mjs` (32). Acta: `docs/migraciones/2026-10-01_borrado_nuclear.sql`.
+(commit: pendiente)

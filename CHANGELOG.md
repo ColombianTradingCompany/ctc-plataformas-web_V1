@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.140] — 2026-10-02 (commit pendiente)
+## [V5.140] — 2026-10-02 (commit cca64a3)
 
 - **Cambiado**: en la planilla de evaluación (Centro de Calidad, OCP «Registrar a mano» y Arena), **una nota de la rueda se resalta
   en una o varias etapas** —Fragancia, Aroma, Sabor, Sabor residual— (owner, 2026-10-02; antes era una sola). Cada etapa es una

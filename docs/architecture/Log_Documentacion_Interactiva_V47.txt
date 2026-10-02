@@ -446,4 +446,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `public/tools/coffee-datasheet/ctcx-coffee-datasheet-tool.html` (lo mismo en la herramienta del taller).
 - ANN `scripts/qa-centro-calidad-check.mjs`, `scripts/qa-coffee-datasheet-check.mjs`.
 - ANN `docs/componentes/herramientas-cafe/coffee-datasheet/README.md`, `docs/componentes/herramientas-cafe.md`, `docs/componentes/consolas.md`, `docs/ALINEACION.md`.
-(commit: pendiente)
+(commit: cca64a3)

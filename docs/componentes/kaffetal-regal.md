@@ -64,7 +64,7 @@ no lo cambia (guard trigger) — una cuenta congelada no acepta ofertas ni retir
 base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 `qa-reportado-productor-check.mjs` (**45**) · `qa-evaluaciones-check.mjs` (**50**, lado productor + vocabulario) ·
 `qa-ofertas-check.mjs` (36, `respondToOffer`) · `qa-fichas-check.mjs` (31, panes B2/B3) ·
-`qa-solicitudes-kr-check.mjs` (22) · `qa-visa-check.mjs` (30) · `qa-area-check.mjs` · `qa-claims-check.mjs` ·
+`qa-solicitudes-kr-check.mjs` (22) · `qa-visa-check.mjs` (30) · `qa-area-check.mjs` (39, con `--import ./scripts/ts-resolve.mjs`) · `qa-claims-check.mjs` ·
 `qa-recuperacion-check.mjs` (puerta KR).
 
 ## Reglas propias
@@ -152,6 +152,16 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.139 · polígono opcional con 4 ha o menos, y franja «Sesión asistida»** (owner, 2026-10-02; ejecutado desde la conversación
+  de `consolas`). **La regla del punto** (`src/lib/geo/referencia.ts`): con más de 4 ha el polígono ES la geolocalización y el
+  punto es el centro que declara el productor; con 4 ha o menos la geolocalización es el PUNTO y, si el productor dibuja además
+  su polígono, el punto es el **centro geométrico** del polígono (se calcula al guardar el polígono, al arrastrar una esquina y
+  al pasar de «sí» a «no»; el pin no se arrastra y «Estoy aquí» no lo pisa) y el polígono viaja como información adicional. El
+  expediente EUDR lo dice así (`poligonoAdicionalDe`). Sin cambio de esquema. **La franja** (`FranjaAsistida.tsx`): solo la ve
+  CTCx, cuando la sesión es la que abrió el OCP (`src/lib/asistencia/marca.ts`). `qa-area` (39) y `qa-asistencia` §10.
+  Verificado en el navegador con el editor montado aparte (dibujar, quitar, cambiar la respuesta, GPS). Abierto: (a) el KML del
+  OCP exporta el polígono adicional como un polígono más, sin rótulo; (b) los cafetales guardados ANTES con 4 ha o menos y
+  polígono (hay uno: «Mirador del pino», 0,36 ha) conservan su punto marcado a mano; el editor ofrece «Usar el centro del polígono».
 - ~~**⚠️ El OCP todavía dice «EVA» por el veredicto documental — dueño: `consolas`.**~~ — **cerrado en la V5.74** (`consolas`):
   columna «Visa», «Pasaporte EUDR», «Veredicto de Visa»; `qa-evaluaciones` (53) vigila las dos caras. La segunda tanda del brief
   [`briefs/consolas-simplificar-ocp-al-circuito.md`](briefs/consolas-simplificar-ocp-al-circuito.md) (bandejas) ~~sigue esperando al owner~~

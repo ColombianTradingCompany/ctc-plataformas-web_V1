@@ -19,7 +19,7 @@ export async function dossierParcelasAndCerts(
   const [{ data: parcelaRows }, { data: certRows }] = await Promise.all([
     client
       .from("finca_parcelas")
-      .select("name, area_ha, lat, lng, polygon_geojson, position")
+      .select("name, area_ha, lat, lng, polygon_geojson, requires_polygon, position")
       .eq("finca_id", fincaId)
       .order("position", { ascending: true }),
     client
@@ -35,6 +35,7 @@ export async function dossierParcelasAndCerts(
       lat: p.lat != null ? String(p.lat) : "",
       lng: p.lng != null ? String(p.lng) : "",
       polygonPoints: Array.isArray(p.polygon_geojson) ? p.polygon_geojson.length : 0,
+      requierePoligono: (p.requires_polygon as boolean | null) ?? null,
     })),
     certificates: (certRows ?? []).map((c) => ({
       schemeLabel: SCHEME_LABEL[c.scheme as string] ?? (c.scheme as string),

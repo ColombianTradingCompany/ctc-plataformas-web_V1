@@ -7,6 +7,7 @@ import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import { FileDrop } from "./FileDrop";
 import { fincaReferencePoint, lookupElevation } from "@/lib/geo/elevation";
 import { polygonAreaHa } from "@/lib/geo/area";
+import { poligonoEsAdicional, puntoDelPoligono, puntoEsElCentro } from "@/lib/geo/referencia";
 import { checkFileSizeMb } from "@/lib/fileSize";
 import { fincaEudrStatus, deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, PRODUCT_RISK_AFFIRMATIONS, type ParcelaGeoFields } from "@/lib/eudr";
 import { fincaLevelSchemes, CERT_REGISTRY } from "@/lib/certRegistry";
@@ -381,6 +382,12 @@ export function FincaEditorBody({
     if (geoBusy) return;
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       setGeoErr("Este dispositivo no permite ubicación automática. Marque el punto a mano en el mapa.");
+      return;
+    }
+    // V5.139: con polígono opcional (4 ha o menos) el punto de referencia ES el centro del polígono; el GPS no lo pisa.
+    if (poligonoEsAdicional(needsPolygon, eudr.eudrPolygon)) {
+      setGeoPrecision(null);
+      setGeoErr("Este cafetal tiene polígono: su punto de referencia es el centro del polígono. Quite el polígono (abajo, en el mapa) si prefiere marcar el punto con el GPS.");
       return;
     }
     setGeoBusy(true);
@@ -1504,6 +1511,23 @@ function CafetalEditor({
   const [altErr, setAltErr] = useState<string | null>(null);
 
   const necesitaPoligono = mayor4ha === true;
+  // V5.139 (owner): con 4 ha o menos el polígono es opcional. Si está, el punto de referencia es SU CENTRO geométrico
+  // (no se marca a mano) y el polígono viaja como información adicional. La regla vive en `lib/geo/referencia.ts`.
+  const poligonoAdicional = poligonoEsAdicional(necesitaPoligono, polygon);
+  const alPoligono = (pts: { lat: number; lng: number }[] | null) => {
+    onPolygon(pts);
+    if (necesitaPoligono) return; // con más de 4 ha el punto es el centro que DECLARA el productor: no se toca
+    const centro = puntoDelPoligono(pts);
+    if (centro) onPoint(centro.lat, centro.lng);
+  };
+  const alResponder = (v: boolean) => {
+    onMayor4ha(v);
+    // Pasar de «sí» a «no» con el polígono ya dibujado: se conserva como adicional y el punto se va a su centro.
+    const centro = v ? null : puntoDelPoligono(polygon);
+    if (centro) onPoint(centro.lat, centro.lng);
+  };
+  const centroDelPoligono = poligonoAdicional ? puntoDelPoligono(polygon) : null;
+  const puntoFueraDelCentro = poligonoAdicional && !puntoEsElCentro(lat, lng, polygon);
   const refPoint = fincaReferencePoint(lat, lng, polygon);
   const areaDelPoligono = polygonAreaHa(polygon);
   const ubicado = necesitaPoligono ? (polygon?.length ?? 0) >= 3 : lat.trim() !== "" && lng.trim() !== "";
@@ -1567,7 +1591,7 @@ function CafetalEditor({
           <button
             type="button"
             className={mayor4ha === true ? styles.siNoOn : undefined}
-            onClick={() => !locked && onMayor4ha(true)}
+            onClick={() => !locked && alResponder(true)}
             aria-pressed={mayor4ha === true}
             disabled={locked}
           >
@@ -1576,7 +1600,7 @@ function CafetalEditor({
           <button
             type="button"
             className={mayor4ha === false ? styles.siNoOn : undefined}
-            onClick={() => !locked && onMayor4ha(false)}
+            onClick={() => !locked && alResponder(false)}
             aria-pressed={mayor4ha === false}
             disabled={locked}
           >
@@ -1593,7 +1617,9 @@ function CafetalEditor({
           <p className={styles.cafetalHint}>
             {necesitaPoligono
               ? "Toque «Marcar el polígono en el mapa» y marque cada esquina del cafetal. Verá el primer punto desde que lo ponga, y puede arrastrar cualquiera para corregirlo."
-              : "Marque el punto de ESTE cafetal — no el de la casa ni el del cafetal vecino. Puede usar su ubicación actual si está parado en él."}
+              : poligonoAdicional
+                ? "Este cafetal tiene polígono: su punto de referencia es el centro del polígono. Para moverlo, arrastre las esquinas o vuelva a dibujarlo."
+                : "Marque el punto de ESTE cafetal — no el de la casa ni el del cafetal vecino. Puede usar su ubicación actual si está parado en él."}
           </p>
 
           {/* ── 2 · El mapa, ya en el modo correcto ──────────────────────── */}
@@ -1602,8 +1628,9 @@ function CafetalEditor({
             lng={lng}
             polygon={polygon}
             needsPolygon={necesitaPoligono}
+            polygonOptional={mayor4ha === false && !locked}
             onChangePoint={onPoint}
-            onChangePolygon={onPolygon}
+            onChangePolygon={alPoligono}
             otras={otras}
             nombreActual={nombre.trim() || titulo}
           />
@@ -1619,7 +1646,7 @@ function CafetalEditor({
               </label>
               <div className={styles.fieldRow}>
                 <input value={areaHa} onChange={(e) => onAreaHa(e.target.value)} type="number" step="0.1" placeholder="3.5" disabled={locked} />
-                {necesitaPoligono && (
+                {(necesitaPoligono || poligonoAdicional) && (
                   <button
                     type="button"
                     className="btn btn-sm"
@@ -1632,12 +1659,17 @@ function CafetalEditor({
                 )}
               </div>
               <p style={{ fontSize: 11, color: "var(--muted)", margin: "3px 0 0" }}>
-                {necesitaPoligono
+                {necesitaPoligono || poligonoAdicional
                   ? areaDelPoligono != null
                     ? `El polígono guardado mide ${areaDelPoligono} ha.`
                     : "Guarde el polígono para poder calcularla, o escríbala a mano."
                   : "Escríbala a mano."}
               </p>
+              {poligonoAdicional && areaDelPoligono != null && areaDelPoligono > 4 && (
+                <p style={{ fontSize: 11, color: "var(--red)", margin: "3px 0 0" }}>
+                  El polígono mide más de 4 ha: con esa área el EUDR exige el polígono. Cambie arriba la respuesta a «sí».
+                </p>
+              )}
             </div>
             <div>
               <label>
@@ -1670,6 +1702,19 @@ function CafetalEditor({
               <b>Puntos de Geo-Referencia</b>
               <span>Lat {lat.trim() ? Number(lat).toFixed(6) : "—"}</span>
               <span>Lon {lng.trim() ? Number(lng).toFixed(6) : "—"}</span>
+              {poligonoAdicional && puntoFueraDelCentro && <span>· marcado a mano</span>}
+              {poligonoAdicional && !puntoFueraDelCentro && <span>· centro del polígono ({polygon?.length} vértices, información adicional)</span>}
+            </p>
+          )}
+
+          {/* Un cafetal guardado ANTES de la V5.139 con 4 ha o menos y polígono trae su punto marcado a mano: se ofrece
+              llevarlo al centro en un toque, en vez de cambiarle el dato sin que nadie lo vea. */}
+          {puntoFueraDelCentro && !locked && (
+            <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "6px 0 0", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              Este cafetal tiene polígono y su punto se marcó a mano. Con 4 ha o menos, el punto de referencia es el centro del polígono.
+              <button type="button" className="btn btn-sm" onClick={() => centroDelPoligono && onPoint(centroDelPoligono.lat, centroDelPoligono.lng)}>
+                Usar el centro del polígono
+              </button>
             </p>
           )}
 
@@ -1677,7 +1722,7 @@ function CafetalEditor({
           {onGuardar && (
             <div className={styles.cafetalAcciones}>
               <button type="button" className="btn btn-sm btn-solid" onClick={onGuardar} disabled={guardando || locked}>
-                {guardando ? "Guardando…" : necesitaPoligono ? "Guardar polígono" : "Guardar Punto"}
+                {guardando ? "Guardando…" : necesitaPoligono ? "Guardar polígono" : poligonoAdicional ? "Guardar punto y polígono" : "Guardar Punto"}
               </button>
             </div>
           )}

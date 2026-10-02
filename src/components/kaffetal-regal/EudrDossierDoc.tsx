@@ -86,7 +86,15 @@ const isImage = (name: string) => /\.(png|jpe?g|webp|gif)$/i.test(name);
 // certificacion/[id]); each route resolves the data with its own client.
 // F1 (2026-07-29): el dossier lista las PARCELAS (el átomo del Art. 9) y los
 // certificados de la finca con número + vigencia (nota "¿Finca o Lote?").
-export type DossierParcela = { name: string; areaHa: string; lat: string; lng: string; polygonPoints: number };
+/** `requierePoligono`: lo que declaró el productor (`finca_parcelas.requires_polygon`); sin declarar, decide el área (> 4 ha). */
+export type DossierParcela = { name: string; areaHa: string; lat: string; lng: string; polygonPoints: number; requierePoligono?: boolean | null };
+
+/** V5.139 (owner): con 4 ha o menos la geolocalización es el PUNTO; un polígono, si lo hay, es información adicional. */
+export function poligonoAdicionalDe(p: Pick<DossierParcela, "areaHa" | "lat" | "lng" | "polygonPoints" | "requierePoligono">): boolean {
+  const area = Number(p.areaHa.replace(",", "."));
+  const requiere = p.requierePoligono ?? (!isNaN(area) && area > 4);
+  return !requiere && p.polygonPoints >= 3 && p.lat !== "" && p.lng !== "";
+}
 export type DossierCert = {
   schemeLabel: string;
   certNumber: string;
@@ -220,7 +228,9 @@ export function EudrDossierDoc({
           <p style={{ color: "#555" }}>Sin coordenadas capturadas.</p>
         )}
         <p style={{ fontSize: 12, color: "#555" }}>
-          {finca.eudr_polygon_geojson?.length
+          {finca.eudr_polygon_geojson?.length && finca.eudr_lat && finca.eudr_lng && (parcelas[0] ? poligonoAdicionalDe(parcelas[0]) : Number(finca.hectares) <= 4)
+            ? `Punto de referencia: ${finca.eudr_lat}, ${finca.eudr_lng} — el centro geométrico del polígono de ${finca.eudr_polygon_geojson.length} vértices que dibujó el productor. Con 4 ha o menos la geolocalización es el punto; el polígono es información adicional.`
+            : finca.eudr_polygon_geojson?.length
             ? `Polígono de ${finca.eudr_polygon_geojson.length} vértices.`
             : finca.eudr_lat && finca.eudr_lng
             ? `Punto: ${finca.eudr_lat}, ${finca.eudr_lng}.`
@@ -236,7 +246,9 @@ export function EudrDossierDoc({
                     <td style={{ padding: "4px 12px 4px 0", color: "#555", width: 220 }}>{i + 1}. {p.name}</td>
                     <td style={{ padding: "4px 0", fontWeight: 600 }}>
                       {p.areaHa ? `${p.areaHa} ha · ` : ""}
-                      {p.polygonPoints >= 3
+                      {poligonoAdicionalDe(p)
+                        ? `punto ${p.lat}, ${p.lng} (centro del polígono adicional de ${p.polygonPoints} vértices)`
+                        : p.polygonPoints >= 3
                         ? `polígono de ${p.polygonPoints} vértices`
                         : p.lat && p.lng
                           ? `punto ${p.lat}, ${p.lng}`

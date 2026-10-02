@@ -1,6 +1,7 @@
 "use client";
 
 import { useReducer, useRef, useState, useTransition, type ReactNode } from "react";
+import { poligonoEsAdicional } from "@/lib/geo/referencia";
 import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
 import { mapPreviewUrl, deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, MAX_CHEQUEO_FILES, PRODUCT_RISK_AFFIRMATIONS, PRODUCT_RISK_QUESTIONS } from "@/lib/eudr";
 import { earthWebUrl, buildFincaGeoJson, fincaCenter } from "@/lib/earthKml";
@@ -527,7 +528,7 @@ export function FincaEudrEditor({
               <div>
                 Ubicación:{" "}
                 {values.eudr_polygon_geojson?.length
-                  ? `Polígono de ${values.eudr_polygon_geojson.length} vértices`
+                  ? `Polígono de ${values.eudr_polygon_geojson.length} vértices${poligonoEsAdicional(Number(values.hectares ?? 0) > 4, values.eudr_polygon_geojson) ? " (adicional: con 4 ha o menos la geolocalización es el punto de abajo, su centro)" : ""}`
                   : values.eudr_lat && values.eudr_lng
                     ? `${values.eudr_lat}, ${values.eudr_lng}`
                     : "no capturada"}
@@ -575,7 +576,9 @@ export function FincaEudrEditor({
                 return (
                   <div key={p.id}>
                     {i + 1}. {p.name} · {p.areaHa ? `${p.areaHa} ha` : "área sin definir"} ·{" "}
-                    {p.polygonPoints >= 3 ? `polígono de ${p.polygonPoints} vértices` : p.lat && p.lng ? `punto ${p.lat}, ${p.lng}` : "sin ubicar"}{" "}
+                    {p.polygonPoints >= 3 && !needsPoly && p.lat && p.lng
+                      ? `punto ${p.lat}, ${p.lng} · polígono adicional de ${p.polygonPoints} vértices`
+                      : p.polygonPoints >= 3 ? `polígono de ${p.polygonPoints} vértices` : p.lat && p.lng ? `punto ${p.lat}, ${p.lng}` : "sin ubicar"}{" "}
                     <b style={{ color: ok ? "var(--green, #2E7D52)" : "var(--red)" }}>{ok ? "✓" : needsPoly ? "· falta polígono (>4 ha)" : "· incompleta"}</b>
                   </div>
                 );

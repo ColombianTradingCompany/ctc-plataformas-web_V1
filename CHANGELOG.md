@@ -19,6 +19,27 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.139] — 2026-10-02 (commit pendiente)
+
+- **Añadido**: franja **«Sesión asistida · productor · código»** en Kaffetal Regal (owner, 2026-10-02). Sale fija arriba, por encima
+  de todo, cuando la sesión cargada es la que abrió el OCP con «Entrar como el productor»; dice como quién se está trabajando y
+  trae «Salir». La enciende una marca (`ctc-sesion-asistida`, `src/lib/asistencia/marca.ts`) que el OCP escribe al abrir la sesión y
+  borra al cerrarla; solo cuenta si dice el mismo productor que la sesión cargada, y no autoriza nada. El productor de verdad, en
+  su navegador, nunca la ve. No se imprime.
+- **Añadido**: **polígono opcional con 4 ha o menos** (owner, 2026-10-02). En el mapa del cafetal, con la respuesta «no» a «área
+  mayor a 4 ha», aparece «＋ Dibujar el polígono (opcional)». Si el productor lo dibuja, el **punto de referencia pasa a ser el
+  centro geométrico del polígono** —se calcula solo, el pin deja de arrastrarse y el GPS no lo pisa— y el polígono se guarda como
+  información adicional. Vale para el Cafetal 1 y para los adicionales. Avisa si el polígono mide más de 4 ha (ahí el EUDR sí lo
+  exige). Un cafetal ya guardado con polígono y su punto marcado a mano no se cambia solo: el editor ofrece «Usar el centro del
+  polígono». La regla vive en `src/lib/geo/referencia.ts`.
+- **Cambiado**: el expediente EUDR y el OCP distinguen las dos cosas: con 4 ha o menos presentan el **punto** como geolocalización
+  y nombran el polígono como información adicional; con más de 4 ha, el polígono, como hasta ahora.
+- **Datos**: sin cambios de esquema — `fincas.eudr_polygon_geojson` y `finca_parcelas.polygon_geojson` ya admitían un polígono con
+  cualquier área. Cruce del registro de sesiones asistidas (2026-09-30 a 2026-10-02) contra lo cargado: ninguna finca, lote,
+  cafetal, archivo ni solicitud quedó bajo un productor distinto del de la sesión abierta.
+- **Seguridad**: `qa-asistencia` (88 → 105: la marca y la franja) y `qa-area` (10 → 39: el centro geométrico y el editor).
+- **Docs**: ALINEACION §3, charters `kaffetal-regal` y `consolas`.
+
 ## [V5.138] — 2026-10-02 (commit 9727285)
 
 - **Corregido**: **la sesión asistida abría Kaffetal Regal como el productor ANTERIOR, o vacío** (owner, 2026-10-02: «La Asistencia a

@@ -14,6 +14,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { createServerClient } from "@supabase/ssr";
 import { borradoHostOnly, esUsuarioInexistente, unaPorNombre } from "../src/lib/supabase/cookiesDeSesion.ts";
+import { COOKIE_SESION_ASISTIDA, SEGUNDOS_DE_LA_MARCA, borradoDeLaMarca, esSesionAsistida, leerMarcaAsistida } from "../src/lib/asistencia/marca.ts";
 import {
   correoEtiquetaDesacoplado,
   correoRealValido,
@@ -292,6 +293,36 @@ const lee = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
     h.append("set-cookie", borradoHostOnly("a"));
     check("Next · un encabezado crudo puesto ANTES de `.set()` se pierde; puesto después, llega", antes === 1 && h.getSetCookie().length === 2, JSON.stringify(h.getSetCookie()));
   }
+}
+
+// ── 10. La franja «Sesión asistida · <productor>» (V5.139, owner 2026-10-02) ───────────────────────────────────────────
+// Kaffetal Regal dice COMO QUIÉN está entrado el operador. La enciende una marca que el OCP escribe al abrir la sesión
+// y borra al cerrarla; solo cuenta si dice el MISMO id que la sesión cargada.
+{
+  const A = "632ba841-e2d7-4802-93b9-3474a916b065", B = "78337ec3-21f4-4c2c-8b8d-700771883c88";
+  const tarro = `otra=1; ${COOKIE_SESION_ASISTIDA}=${A}; sb-x-auth-token=abc`;
+  check("marca · se lee entre las demás cookies", leerMarcaAsistida(tarro) === A);
+  check("marca · sin cookie no hay marca", leerMarcaAsistida("otra=1") === null && leerMarcaAsistida("") === null && leerMarcaAsistida(null) === null);
+  check("marca · un valor que no es un id no cuenta", leerMarcaAsistida(`${COOKIE_SESION_ASISTIDA}=<script>`) === null && leerMarcaAsistida(`${COOKIE_SESION_ASISTIDA}=`) === null);
+  check("marca · una cookie de nombre parecido no cuenta", leerMarcaAsistida(`x-${COOKIE_SESION_ASISTIDA}=${A}`) === null);
+  check("franja · sale cuando la marca dice el id de la sesión cargada", esSesionAsistida(tarro, A) && esSesionAsistida(tarro, A.toUpperCase()));
+  check("franja · NO sale con la marca de OTRO productor (la marca vieja no enciende nada)", !esSesionAsistida(tarro, B));
+  check("franja · NO sale sin sesión ni sin marca", !esSesionAsistida(tarro, null) && !esSesionAsistida("otra=1", A));
+  check("marca · dura una jornada, no para siempre", SEGUNDOS_DE_LA_MARCA > 0 && SEGUNDOS_DE_LA_MARCA <= 24 * 3600);
+  check("marca · se borra en el mismo ámbito en que se escribió", borradoDeLaMarca(".ctcexport.com") === `${COOKIE_SESION_ASISTIDA}=; Path=/; Max-Age=0; Domain=.ctcexport.com` && borradoDeLaMarca(undefined) === `${COOKIE_SESION_ASISTIDA}=; Path=/; Max-Age=0`);
+
+  const acciones = lee("src/lib/asistencia/actions.ts").replace(/\r\n/g, "\n"), kr = lee("src/components/kaffetal-regal/KaffetalExperience.tsx").replace(/\r\n/g, "\n");
+  const abrir = acciones.slice(acciones.indexOf("export async function abrirSesionAsistida"), acciones.indexOf("export async function cerrarSesionAsistida"));
+  const cerrar = acciones.slice(acciones.indexOf("export async function cerrarSesionAsistida"), acciones.indexOf("export async function crearProveedorDesacoplado"));
+  check("OCP · abrir la sesión escribe la marca, y solo DESPUÉS de que Auth la abrió", abrir.indexOf("await marcarSesionAsistida(producerId);") > abrir.indexOf("compartida.auth.verifyOtp("));
+  check("OCP · cerrar la sesión borra la marca", cerrar.includes("await marcarSesionAsistida(null);"));
+  check("OCP · la marca va en el dominio compartido y la puede leer el navegador (es un rótulo, no un permiso)", acciones.includes("const domain = sharedCookieDomain(host);") && acciones.includes("httpOnly: false") && acciones.includes("maxAge: producerId ? SEGUNDOS_DE_LA_MARCA : 0"));
+  check("KR · la franja se decide al cargar la sesión y al entrar (los dos caminos)", (kr.match(/setAsistida\(esSesionAsistida\(document\.cookie, uid\)\);/g) ?? []).length === 2);
+  check("KR · al cerrar sesión la marca se borra y la franja se apaga", /event === "SIGNED_OUT"\) \{[\s\S]{0,260}document\.cookie = borradoDeLaMarca\(sharedCookieDomain\(window\.location\.hostname\)\);\s*setAsistida\(false\);/.test(kr));
+  check("KR · la franja dice el nombre y el código del productor, y «Salir» cierra la sesión", kr.includes("{asistida && userId && <FranjaAsistida nombre={") && kr.includes("codigo={supplierCode(userId)} onSalir={logout} />"));
+  const franja = lee("src/components/kaffetal-regal/FranjaAsistida.tsx"), css = lee("src/components/kaffetal-regal/FranjaAsistida.module.css");
+  check("franja · dice «Sesión asistida» y se anuncia a un lector de pantalla", franja.includes("<b>Sesión asistida</b>") && franja.includes('role="status"'));
+  check("franja · va fija por encima de todo y no sale en lo que se imprime", css.includes("position:fixed") && /z-index:40[01]/.test(css) && css.includes("@media print{.linea,.franja{display:none}}"));
 }
 
 if (fallos.length) {

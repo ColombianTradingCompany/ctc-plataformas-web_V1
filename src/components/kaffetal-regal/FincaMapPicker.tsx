@@ -41,6 +41,7 @@ export function FincaMapPicker({
   lng,
   polygon,
   needsPolygon,
+  polygonOptional = false,
   onChangePoint,
   onChangePolygon,
   otras = [],
@@ -50,6 +51,9 @@ export function FincaMapPicker({
   lng: string;
   polygon: PolygonPoint[] | null;
   needsPolygon: boolean;
+  /** V5.139 (owner): con 4 ha o menos el polígono es OPCIONAL. Si el productor lo dibuja, quien monta este mapa pone
+   *  el punto en su centro (`puntoDelPoligono`) y aquí el pin deja de moverse a mano: se mueve el polígono. */
+  polygonOptional?: boolean;
   onChangePoint: (lat: string, lng: string) => void;
   onChangePolygon: (points: PolygonPoint[] | null) => void;
   /** V5.64 (owner): las OTRAS parcelas de la finca, en el MISMO mapa, bloqueadas.
@@ -81,6 +85,10 @@ export function FincaMapPicker({
   // GPS or another app, or wants to walk each corner and capture it directly.
   const [manualPoints, setManualPoints] = useState<{ lat: string; lng: string }[] | null>(null);
   const manualMode = manualPoints !== null;
+  // El mapa está «en modo polígono» cuando el EUDR lo exige (> 4 ha) o cuando, siendo opcional, el productor lo está
+  // dibujando o ya lo tiene. Sin polígono y sin exigirlo, es el mapa de punto de siempre.
+  const conPoligono = needsPolygon || (polygonOptional && (drawing || manualMode || (polygon?.length ?? 0) >= 3));
+  const esOpcional = conPoligono && !needsPolygon;
 
   const parsedLat = Number(lat);
   const parsedLng = Number(lng);
@@ -122,7 +130,7 @@ export function FincaMapPicker({
     (e: google.maps.MapMouseEvent) => {
       if (!e.latLng) return;
       const point = { lat: e.latLng.lat(), lng: e.latLng.lng() };
-      if (needsPolygon) {
+      if (conPoligono) {
         if (manualMode) return;
         if (drawing) {
           setDraftPoints((pts) => [...(pts ?? []), point]);
@@ -136,7 +144,7 @@ export function FincaMapPicker({
       }
       onChangePoint(String(point.lat), String(point.lng));
     },
-    [needsPolygon, drawing, manualMode, onChangePoint]
+    [conPoligono, drawing, manualMode, onChangePoint]
   );
 
   const handleMarkerDragEnd = useCallback(
@@ -175,7 +183,7 @@ export function FincaMapPicker({
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const point = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        if (needsPolygon) {
+        if (conPoligono) {
           if (drawing) setDraftPoints((pts) => [...(pts ?? []), point]);
           else mapRef.current?.panTo(point);
         } else {
@@ -210,7 +218,7 @@ export function FincaMapPicker({
       }
       const loc = results[0].geometry.location;
       const point = { lat: loc.lat(), lng: loc.lng() };
-      if (!needsPolygon) onChangePoint(String(point.lat), String(point.lng));
+      if (!conPoligono) onChangePoint(String(point.lat), String(point.lng));
       mapRef.current?.panTo(point);
       mapRef.current?.setZoom(16);
     });
@@ -308,8 +316,12 @@ export function FincaMapPicker({
           );
         })}
 
-        {!needsPolygon && markerPos && <Marker position={markerPos} draggable onDragEnd={handleMarkerDragEnd} zIndex={3} />}
-        {needsPolygon && shownPolygon && shownPolygon.length > 0 && (
+        {!conPoligono && markerPos && <Marker position={markerPos} draggable onDragEnd={handleMarkerDragEnd} zIndex={3} />}
+        {/* Polígono opcional: el pin es el punto de referencia —el centro del polígono— y no se arrastra. */}
+        {esOpcional && !drawing && markerPos && (
+          <Marker position={markerPos} clickable={false} title="Punto de referencia: el centro del polígono" zIndex={3} />
+        )}
+        {conPoligono && shownPolygon && shownPolygon.length > 0 && (
           <Polygon
             path={shownPolygon}
             editable={!drawing}
@@ -331,7 +343,7 @@ export function FincaMapPicker({
             reaccionaba y parecía que el clic no había funcionado (owner,
             2026-09-20). Ahora cada esquina es un marcador numerado desde la
             primera, y se puede arrastrar para corregirla sin deshacer. */}
-        {needsPolygon &&
+        {conPoligono &&
           drawing &&
           (draftPoints ?? []).map((p, i) => (
             <Marker
@@ -376,12 +388,21 @@ export function FincaMapPicker({
         </p>
       )}
 
-      {!needsPolygon && (
+      {!conPoligono && (
         <p style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 6 }}>
           Busque su dirección, use su ubicación actual, o haga clic en el mapa / arrastre el pin para ajustar.
         </p>
       )}
-      {needsPolygon && !manualMode && (
+      {/* V5.139 (owner): con 4 ha o menos basta el punto, pero quien quiera puede dibujar también su lindero. */}
+      {!conPoligono && polygonOptional && (
+        <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+          <button type="button" className="btn btn-sm" onClick={() => setDraftPoints([])}>
+            ＋ Dibujar el polígono (opcional)
+          </button>
+          <FieldInfo text="Con 4 ha o menos el EUDR solo pide un punto. Si quiere, dibuje también el lindero de su cafetal: el punto de referencia pasa a ser el centro del polígono (se calcula solo) y el polígono se guarda como información adicional, para que se vea en los mapas." />
+        </div>
+      )}
+      {conPoligono && !manualMode && (
         <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           {!drawing ? (
             <>
@@ -401,12 +422,12 @@ export function FincaMapPicker({
               </span>
               {polygon && polygon.length > 0 && (
                 <button type="button" className="btn btn-sm" onClick={() => onChangePolygon(null)}>
-                  Borrar
+                  {esOpcional ? "Quitar el polígono" : "Borrar"}
                 </button>
               )}
               <p style={{ fontSize: 11.5, color: "var(--muted)", margin: 0 }}>
                 {polygon?.length
-                  ? `${polygon.length} vértices${committedArea != null ? ` · ${committedArea} ha` : ""} — arrastre cualquier esquina del polígono dorado para ajustarla`
+                  ? `${polygon.length} vértices${committedArea != null ? ` · ${committedArea} ha` : ""} — arrastre cualquier esquina del polígono dorado para ajustarla${esOpcional ? "; el pin es su punto de referencia: el centro del polígono" : ""}`
                   : "Predio > 4 ha: el EUDR pide el lindero completo. Toque el botón y marque las esquinas en el mapa."}
               </p>
             </>
@@ -439,7 +460,7 @@ export function FincaMapPicker({
           )}
         </div>
       )}
-      {needsPolygon && manualMode && (
+      {conPoligono && manualMode && (
         <div style={{ marginTop: 10 }}>
           <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "0 0 6px" }}>
             Ingrese cada vértice del lote en orden alrededor del perímetro (mínimo 3).

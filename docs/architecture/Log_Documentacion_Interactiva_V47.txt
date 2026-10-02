@@ -430,3 +430,12 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `scripts/qa-asistencia-check.mjs` (sección 9: la librería real contra las cookies reales de Next).
 - ANN `docs/ALINEACION.md`, `docs/componentes/consolas.md`.
 (commit: 9727285)
+
+## [2026-10-02] V5.139 · Kaffetal Regal — franja «Sesión asistida» y polígono opcional con 4 ha o menos
+- ADD `src/lib/asistencia/marca.ts` (la marca `ctc-sesion-asistida`), `src/components/kaffetal-regal/FranjaAsistida.tsx` (+ `.module.css`).
+- ADD `src/lib/geo/referencia.ts` (`poligonoEsAdicional`, `puntoDelPoligono`, `puntoEsElCentro`).
+- ANN `src/lib/asistencia/actions.ts` (escribe y borra la marca), `components/kaffetal-regal/KaffetalExperience.tsx` (la franja).
+- ANN `components/kaffetal-regal/FincaMapPicker.tsx` (`polygonOptional`), `FincaModal.tsx` (el punto pasa al centro del polígono),
+  `EudrDossierDoc.tsx`, `src/lib/dossierExtras.ts`, `app/ocp/(app)/kr/FincaEudrEditor.tsx` (el polígono adicional, rotulado).
+- ANN `scripts/qa-asistencia-check.mjs` (§10), `scripts/qa-area-check.mjs`.
+(commit: pendiente)

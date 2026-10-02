@@ -1,6 +1,6 @@
 "use server";
 
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
 import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
@@ -10,6 +10,8 @@ import { anularVale, emitirVale } from "@/lib/auth/recuperacion";
 import { enviarCorreoRecuperacion } from "@/lib/email/recuperacionEmails";
 import type { ActionResult } from "@/components/panel/ActionForm";
 import { correoEtiquetaDesacoplado, correoRealValido, slugDesacoplado, type Gestion } from "./desacoplado";
+import { sharedCookieDomain } from "@/lib/supabase/cookieDomain";
+import { COOKIE_SESION_ASISTIDA, SEGUNDOS_DE_LA_MARCA } from "./marca";
 
 // ── Asistencia a Proveedores · Proveedor Desacoplado (V5.75, owner 2026-09-23) ──
 // Los dos módulos son UN mecanismo con dos puertas: «entrar al perfil de un
@@ -51,6 +53,22 @@ async function origenDeKaffetalRegal(): Promise<string> {
   return `${origenDeSuperficie("/kaffetal-regal")}/kaffetal-regal`;
 }
 
+/** La MARCA de la sesión asistida (V5.139, `marca.ts`): con ella Kaffetal Regal pinta la franja «Sesión asistida ·
+ *  <productor>». Va en el mismo ámbito que la cookie compartida y la lee el navegador (no es `httpOnly`): es un
+ *  rótulo, no autoriza nada. `null` la borra. */
+async function marcarSesionAsistida(producerId: string | null): Promise<void> {
+  const host = (await headers()).get("host");
+  const domain = sharedCookieDomain(host);
+  (await cookies()).set(COOKIE_SESION_ASISTIDA, producerId ?? "", {
+    domain,
+    path: "/",
+    sameSite: "lax",
+    secure: !!domain,
+    httpOnly: false,
+    maxAge: producerId ? SEGUNDOS_DE_LA_MARCA : 0,
+  });
+}
+
 type ProfileRow = { id: string; role: string | null; email: string | null; full_name: string | null };
 
 export type AperturaAsistida = { ok: true; url: string } | { ok: false; error: string };
@@ -78,6 +96,7 @@ export async function abrirSesionAsistida(producerId: string): Promise<AperturaA
   const compartida = await createSessionClient();
   const { data: sesion, error: otpErr } = await compartida.auth.verifyOtp({ type: "magiclink", token_hash: tokenHash });
   if (otpErr || !sesion.user) return { ok: false, error: `No se pudo abrir la sesión del productor${otpErr ? `: ${otpErr.message}` : "."}` };
+  await marcarSesionAsistida(producerId);
 
   await service.from("audit_log").insert({
     entity_type: "producer",
@@ -105,6 +124,7 @@ export async function cerrarSesionAsistida(): Promise<ActionResult> {
     data: { user },
   } = await compartida.auth.getUser();
   await compartida.auth.signOut({ scope: "local" });
+  await marcarSesionAsistida(null);
   if (user) {
     await createServiceRoleClient().from("audit_log").insert({
       entity_type: "producer",

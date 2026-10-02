@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ToastProvider, useToast } from "@/components/Toast";
 import { puedoSer } from "@/lib/identidad/matriz";
 import { createClient } from "@/lib/supabase/client";
+import { sharedCookieDomain } from "@/lib/supabase/cookieDomain";
+import { borradoDeLaMarca, esSesionAsistida } from "@/lib/asistencia/marca";
 import { uploadKaffetalMediaWithProgress, signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { ordenaFichas, rowToLotFicha, type LotFicha } from "@/lib/fichas/tipos";
 
@@ -14,6 +16,7 @@ import { evaluacionQueRige, officialAverages, type EvaluationRow } from "@/lib/e
 import { puntoDeFila, type PuntoSca } from "@/lib/arena/homologacion";
 import { moraDelMes, resumenDelTrato } from "@/lib/trato/mesAMes";
 import { Landing } from "./Landing";
+import { FranjaAsistida } from "./FranjaAsistida";
 import { LoginModal } from "./LoginModal";
 import { AppDashboard } from "./AppDashboard";
 import { LEGACY_MODULE_TO_DRILL, LEGACY_MODULE_TO_TAB, esModuloLegado, type PanelDrill, type PanelTab } from "./panel/panelTabs";
@@ -35,6 +38,7 @@ import {
   type Parcela,
   type EudrProducerAnswers,
   ctcLotReferenceShort,
+  supplierCode,
   fincaSelfDeletable,
   isLotCommitted,
   pendingLotsOfFinca,
@@ -339,6 +343,8 @@ function Experience() {
   const [view, setView] = useState<View>("landing");
   const [userId, setUserId] = useState<string | null>(null);
   const [userName, setUserName] = useState("productor");
+  // V5.139 (owner): la sesión cargada es la que abrió el OCP con «Entrar como el productor» → franja «Sesión asistida».
+  const [asistida, setAsistida] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
 
   const [gi, setGi] = useState<GeneralInfo>(EMPTY_GI);
@@ -801,6 +807,7 @@ function Experience() {
       gateMatriz().then((ok) => {
         if (!ok || !active) return;
         setUserId(uid);
+        setAsistida(esSesionAsistida(document.cookie, uid));
         setView((v) => (v === "landing" ? "app" : v));
         loadData(uid);
       });
@@ -812,11 +819,15 @@ function Experience() {
         gateMatriz().then((ok) => {
           if (!ok) return;
           setUserId(uid);
+          setAsistida(esSesionAsistida(document.cookie, uid));
           setLoginOpen(false);
           setView((v) => (v === "landing" ? "app" : v));
           loadData(uid);
         });
       } else if (event === "SIGNED_OUT") {
+        // La marca de la sesión asistida se va con la sesión: si después entra el productor de verdad, no hay franja.
+        document.cookie = borradoDeLaMarca(sharedCookieDomain(window.location.hostname));
+        setAsistida(false);
         setUserId(null);
         setFincas([]);
         setLots([]);
@@ -2009,6 +2020,7 @@ function Experience() {
 
   return (
     <div data-theme="kaffetal-regal">
+      {asistida && userId && <FranjaAsistida nombre={gi.agri !== "—" && gi.agri.trim() ? gi.agri : "productor sin nombre"} codigo={supplierCode(userId)} onSalir={logout} />}
       {view === "landing" && <Landing onLogin={() => (userId ? setView("app") : setLoginOpen(true))} />}
 
       {view === "app" && (

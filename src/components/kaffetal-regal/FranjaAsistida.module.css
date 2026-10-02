@@ -1,0 +1,12 @@
+/* La franja «Sesión asistida» (V5.139). Ámbar de aviso: no es el dorado de la marca ni el rojo de un error. */
+.linea{position:fixed;top:0;left:0;right:0;height:3px;background:#B45309;z-index:400;pointer-events:none}
+.franja{position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:401;display:flex;align-items:center;gap:8px;
+  max-width:calc(100vw - 16px);padding:3px 6px 4px 12px;border-radius:0 0 10px 10px;background:#B45309;color:#fff;
+  font-size:11.5px;line-height:1.3;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.texto{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.codigo{font-family:var(--font-spline-mono),monospace;font-size:10.5px;opacity:.92}
+.salir{flex:none;border:1px solid rgba(255,255,255,.7);background:transparent;color:#fff;border-radius:6px;padding:1px 8px;
+  font-size:11px;font-weight:700;cursor:pointer}
+.salir:hover{background:#fff;color:#B45309}
+/* La Ficha y el expediente se imprimen desde aquí: el aviso de modo no es parte del documento. */
+@media print{.linea,.franja{display:none}}

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.143] — 2026-10-02 (commit pendiente)
+## [V5.143] — 2026-10-02 (commit 8133062)
 
 - **Cambiado**: en la Ficha del lote (Kaffetal Regal), **las fotos y los videos de B4 son todos opcionales** (owner, 2026-10-02;
   antes se exigían dos fotos). Si el productor cierra el paso sin ninguno, la Ficha le avisa que las imágenes son parte del

@@ -465,4 +465,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `PaneB4.tsx`, `FichaView.tsx`, `FichaNav.tsx`, `KaffetalExperience.tsx`, `panel/PerfilTab.tsx`, `ficha/fichaData.ts`.
 - ANN `app/ocp/(app)/kr/LoteSeccion.tsx`, `EvaReviewCard.tsx`, `evaChecklist.ts`, `app/ocp/(app)/evaluationActions.ts` (`revisarReferencia`), `src/lib/ocp/borradoNuclearTexto.ts`.
 - ANN `scripts/qa-guard-check.mjs`, `qa-kr-ficha-check.mjs`, `qa-borrado-nuclear-check.mjs`.
-(commit: pendiente)
+(commit: 8133062)

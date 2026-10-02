@@ -42,7 +42,7 @@ import {
   type EstadoDeTazaSca,
   type LabEvaluation,
   type ScaTaza,
-  type VistaDePlanilla, NOTA_DESCRIPTIVA_MAX } from "@/lib/arena/labEvaluation";
+  type VistaDePlanilla, NOTA_DESCRIPTIVA_MAX, TAZAS_SCA, normalizaScaTazas, tazasUsadas } from "@/lib/arena/labEvaluation";
 import { CVA_PROPOSITO, decidirPorPunto, rotuloDelPunto } from "@/lib/arena/homologacion";
 import { ETAPAS_DE_LA_RUEDA, ETAPA_LABEL, INTENSIDAD, NOTA_MAX, ZONA_LABEL, ajustaIntensidad, alternaEtapa, detalleDe, etapasLabel, familiaDe, fmtIntensidad, normalizaRueda, rutaDe, zonaDeIntensidad, type DetalleDeMarca } from "@/lib/catacion/rueda";
 import { scaClassFor } from "@/components/kaffetal-regal/ficha/fichaCalculations";
@@ -176,7 +176,14 @@ export function LabEvalEditor({
     }
     onChange({ rueda: [...set], rueda_detalle: detalle });
   };
-  // V5.135 (owner): las cinco tazas del SCA 2004. Los contadores de taint y fault que lee la fórmula se derivan de ellas.
+  // V5.147 (owner): el catador elige cuántas tazas usó. Las que sobran se quitan; las que faltan nacen limpias.
+  const setNumTazas = (v: string) => {
+    const n = tazasUsadas(v);
+    const next = normalizaScaTazas(value.sca_tazas, undefined, undefined, n);
+    const cuenta = contarScaTazas(next);
+    onChange({ sca_num_tazas: String(n), sca_tazas: next, sca_taint_cups: cuenta.taint ? String(cuenta.taint) : "", sca_fault_cups: cuenta.fault ? String(cuenta.fault) : "" });
+  };
+  // V5.135 (owner): las tazas del SCA 2004. Los contadores de taint y fault que lee la fórmula se derivan de ellas.
   const setScaTaza = (i: number, cambio: Partial<ScaTaza>) => {
     const next = value.sca_tazas.map((x, j) => (j === i ? { ...x, ...cambio, ...(cambio.estado === "" ? { defecto: "" } : {}) } : x));
     const n = contarScaTazas(next);
@@ -327,6 +334,15 @@ export function LabEvalEditor({
                   con su «i». Los dos contadores que lee la fórmula se derivan de aquí. */}
               <div style={{ ...S.lbl, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", margin: "10px 0 4px" }}>
                 <span>{t.tazasSca}</span>
+                {/* V5.147 (owner): «permite elegir el número de tazas usadas» — cinco por protocolo, de 1 a 10. */}
+                <label style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 400 }}>
+                  {t.tazasUsadas}
+                  <select value={value.sca_num_tazas} onChange={(e) => setNumTazas(e.target.value)} disabled={disabled} aria-label={t.tazasUsadas} style={{ ...S.sel, width: 58, fontSize: 11.5 }}>
+                    {Array.from({ length: TAZAS_SCA.max - TAZAS_SCA.min + 1 }, (_, k) => TAZAS_SCA.min + k).map((n) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
+                </label>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 400 }}>
                   taint <Info texto={t.infoTaint} />
                 </span>

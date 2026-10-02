@@ -19,6 +19,20 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.147] — 2026-10-02 (commit pendiente)
+
+- **Cambiado**: en el Centro de Calidad, **el código interno de la muestra pasa arriba a la derecha de la planilla y llega
+  plegado** (owner, 2026-10-02: «que se despliegue si se elige usarlo»): un botón «＋ Usar mi código interno (opcional)» abre
+  la casilla; si queda vacía se vuelve a plegar, y un borrador que ya lo traía la muestra abierta.
+- **Añadido**: en «Defectos de taza, taza a taza» (SCA 2004) se elige **el número de tazas usadas** (1 a 10; cinco por
+  protocolo). Al cambiarlo, las tazas para marcar se ajustan —las que sobran se quitan, las que faltan nacen limpias— y el
+  tope de tazas con defecto es ese número (`sca_num_tazas`, `tazasUsadas`, `TAZAS_SCA`). Una planilla anterior, sin el dato,
+  se lee con cinco. Las cinco tazas del CVA no cambian.
+- **Añadido**: el mismo selector en la **Coffee Datasheet Tool** (ES · EN · DE), con el mismo cálculo que la planilla.
+- **Seguridad**: `qa-centro-calidad` (186 → 194) y `qa-coffee-datasheet` (1.300 → 1.305: el puntaje con N tazas es el de la
+  plataforma, caso a caso).
+- **Docs**: charters `consolas` y `herramientas-cafe`.
+
 ## [V5.146] — 2026-10-02 (commit 23112c7)
 
 - **Añadido**: en «Lotes en Evaluación» y «Lotes a Evaluar» (OCP), **el nombre de cada lote es el enlace a su perfil**

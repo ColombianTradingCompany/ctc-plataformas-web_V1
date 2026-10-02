@@ -498,6 +498,7 @@ const TX = {
   fault:["Defecto grave (fault) · 4 puntos por taza","Fault · 4 points per cup","Schwerer Fehler (Fault) · 4 Punkte pro Tasse"],
   tazasAfect:["tazas afectadas","cups affected","betroffene Tassen"],
   /* V5.137 · los mismos campos que la planilla del Centro de Calidad */
+  tazasUsadas:["Tazas usadas","Cups used","Verwendete Tassen"],
   tzTaint:["Leve · taint −2","Taint −2","Leicht · Taint −2"], tzFault:["Grave · fault −4","Fault −4","Schwer · Fault −4"],
   scaDefTaza:["Marca cada taza con defecto: leve (taint) o grave (fault), y di cuál es. Una taza sin marcar está limpia.","Mark each defective cup: taint or fault, and say which defect. An unmarked cup is clean.","Markieren Sie jede fehlerhafte Tasse: leicht (Taint) oder schwer (Fault), und nennen Sie den Fehler. Eine unmarkierte Tasse ist sauber."],
   scaDefRes:["leves: {0} · graves: {1} → {2}","taints: {0} · faults: {1} → {2}","leicht: {0} · schwer: {1} → {2}"],
@@ -1001,6 +1002,8 @@ function calcCva(ev){
 }
 
 /** SCA 2004: siete atributos 6,00–10,00 al 0,25, tres por taza (2 puntos cada una), menos taint×2 y fault×4. Diez completos o no hay puntaje. */
+/** V5.147 · cuántas tazas usó el catador: un entero de 1 a 10; cualquier otra cosa, las 5 del protocolo (como la planilla). */
+function tazasUsadas(v){ const n = Number(String(v==null?"":v).replace(",",".")); return Number.isInteger(n) && n>=1 && n<=10 ? n : SCA_K.tazas; }
 function calcSca2004(ev){
   const faltan = [], errores = []; let cal = 0, suma = 0;
   SCA_ATR.forEach(function(k){
@@ -1015,7 +1018,8 @@ function calcSca2004(ev){
   });
   SCA_ATR.forEach(function(k){ suma += Math.min(10, Math.max(0, num0(ev["sca_"+k]))); });
   suma = r2(suma);
-  function tazasDe(v, nombre){ const n = numO(v); const x = n==null ? 0 : n; if(!Number.isInteger(x) || x<0 || x>SCA_K.tazas){ errores.push("tazas:"+nombre); return 0; } return x; }
+  const tope = tazasUsadas(ev.sca_num_tazas); /* V5.147: el tope es el número de tazas usadas */
+  function tazasDe(v, nombre){ const n = numO(v); const x = n==null ? 0 : n; if(!Number.isInteger(x) || x<0 || x>tope){ errores.push("tazas:"+nombre); return 0; } return x; }
   const taint = tazasDe(ev.sca_taint_cups,"taint"), fault = tazasDe(ev.sca_fault_cups,"fault");
   if(cal>0 && faltan.length) errores.push("incompleta");
   const completa = cal === SCA_ATR.length && errores.length === 0;
@@ -1129,7 +1133,7 @@ function loteVacio(i){
     codigo:"L"+String(i+1).padStart(2,"0"), nombre:"", tueste:"",
     sca_fragrance:"", sca_flavor:"", sca_aftertaste:"", sca_acidity:"", sca_body:"", sca_balance:"", sca_cuppers:"",
     sca_uniformity:"", sca_clean_cup:"", sca_sweetness:"",
-    sca_tazas:cinco(0).map(function(){ return { estado:"", defecto:"" }; }),
+    sca_tazas:cinco(0).map(function(){ return { estado:"", defecto:"" }; }), sca_num_tazas:"5",
     sca_taint_cups:"", sca_fault_cups:"", sca_acidity_int:"", sca_body_level:"", sca_rueda:[], sca_notas:"", rueda_detalle:{},
     cva_int:{ fragrance:"", aroma:"", flavor:"", aftertaste:"", acidity:"", sweetness:"", mouthfeel:"" },
     cva_fragrance:"", cva_aroma:"", cva_flavor:"", cva_aftertaste:"", cva_acidity:"", cva_sweetness:"", cva_mouthfeel:"", cva_overall:"",
@@ -1175,8 +1179,10 @@ function normLote(l, i){
   SCA_TAZ.forEach(function(k){ if(viejas && Array.isArray(viejas[k]) && String(o["sca_"+k]).trim()==="") o["sca_"+k] = String(SCA_K.porTaza * [0,1,2,3,4].filter(function(j){ return viejas[k][j]!==0; }).length); });
   // Los defectos de taza, taza a taza (limpia · taint · fault, con su tipo). Los dos contadores de antes se reparten.
   const tzs = Array.isArray(crudo.sca_tazas) ? crudo.sca_tazas : null;
-  const nF = tzs ? 0 : Math.min(5, Math.max(0, Math.floor(num0(o.sca_fault_cups)))), nT = tzs ? 0 : Math.min(5-nF, Math.max(0, Math.floor(num0(o.sca_taint_cups))));
-  o.sca_tazas = [0,1,2,3,4].map(function(j){
+  // V5.147 · tantas tazas como el catador dijo que usó (5 si no lo dijo): la lista se recorta o se completa con tazas limpias.
+  const nTz = tazasUsadas(o.sca_num_tazas); o.sca_num_tazas = String(nTz);
+  const nF = tzs ? 0 : Math.min(nTz, Math.max(0, Math.floor(num0(o.sca_fault_cups)))), nT = tzs ? 0 : Math.min(nTz-nF, Math.max(0, Math.floor(num0(o.sca_taint_cups))));
+  o.sca_tazas = Array.from({ length:nTz }, function(_, j){ return j; }).map(function(j){
     if(!tzs) return { estado: j<nF ? "fault" : j<nF+nT ? "taint" : "", defecto:"" };
     const x = tzs[j] || {}, es = x.estado==="taint" || x.estado==="fault" ? x.estado : "";
     return { estado:es, defecto: es && DEF_CVA.indexOf(x.defecto)>=0 ? x.defecto : "" };
@@ -1206,11 +1212,17 @@ function normalizar(e){
   return o;
 }
 function evSca(l){
-  const o = { sca_taint_cups:l.sca_taint_cups, sca_fault_cups:l.sca_fault_cups };
+  const o = { sca_taint_cups:l.sca_taint_cups, sca_fault_cups:l.sca_fault_cups, sca_num_tazas:l.sca_num_tazas };
   SCA_ATR.forEach(function(k){ o["sca_"+k] = l["sca_"+k]; });
   return o;
 }
 // V5.137 · los dos contadores que lee la fórmula salen de las cinco tazas.
+// V5.147 · al cambiar el número de tazas usadas, las que sobran se quitan y las que faltan nacen limpias.
+function ajustaTazasSca(l){
+  const n = tazasUsadas(l.sca_num_tazas); l.sca_num_tazas = String(n);
+  l.sca_tazas = Array.from({ length:n }, function(_, j){ return l.sca_tazas[j] || { estado:"", defecto:"" }; });
+  sincScaTazas(l);
+}
 function sincScaTazas(l){
   const nt = l.sca_tazas.filter(function(x){ return x.estado==="taint"; }).length, nf0 = l.sca_tazas.filter(function(x){ return x.estado==="fault"; }).length;
   l.sca_taint_cups = nt ? String(nt) : ""; l.sca_fault_cups = nf0 ? String(nf0) : "";
@@ -1537,7 +1549,8 @@ function saborSca(){
     return "<div class=\"t\"><b>"+t("tazaN", i+1)+"</b>"+b("taint","tzTaint")+b("fault","tzFault")+
       (tz.estado ? "<select data-k=\"sca_tazas."+i+".defecto\" aria-label=\""+esc(t("tipoDef"))+"\"><option value=\"\">"+t("tipoDef")+"</option>"+DEF_CVA.map(function(d){ return "<option value=\""+d+"\""+(tz.defecto===d?" selected":"")+">"+t("d_"+d)+"</option>"; }).join("")+"</select>" : "")+"</div>";
   }).join("")+"</div>";
-  const cabDef = "<div class=\"nota-m\">"+t("scaDefTaza")+"<br>"+t("taint")+" "+ib("sca_taint")+" &nbsp;·&nbsp; "+t("fault")+" "+ib("sca_fault")+"</div>";
+  const cabDef = "<div class=\"nota-m\">"+t("scaDefTaza")+"<br>"+t("taint")+" "+ib("sca_taint")+" &nbsp;·&nbsp; "+t("fault")+" "+ib("sca_fault")+
+    " &nbsp;·&nbsp; <label>"+t("tazasUsadas")+" <select data-k=\"sca_num_tazas\" aria-label=\""+esc(t("tazasUsadas"))+"\">"+[1,2,3,4,5,6,7,8,9,10].map(function(n){ return "<option value=\""+n+"\""+(String(n)===l.sca_num_tazas?" selected":"")+">"+n+"</option>"; }).join("")+"</select></label></div>";
   return "<div class=\"puntaje\" data-o=\"puntaje\"></div>"+
     caja("1", t("fiMuestra"), "SCA 2004", "", tuesteCampo())+
     caja("2", t("scaEsc"), "SCA 2004", "sca_esc", SCA_ESC.map(filaEsc).join(""))+
@@ -2041,7 +2054,9 @@ document.addEventListener("input", function(ev){
 });
 document.addEventListener("change", function(ev){
   const el = ev.target; if(!el || !el.dataset || el.dataset.k==null || el.tagName!=="SELECT") return;
-  poner(lote(), el.dataset.k, el.value); refrescar(); cambio();
+  poner(lote(), el.dataset.k, el.value);
+  if(el.dataset.k==="sca_num_tazas"){ ajustaTazasSca(lote()); pintarPanel(); cambio(); return; } /* V5.147: cambia cuántas tazas se pintan */
+  refrescar(); cambio();
 });
 document.addEventListener("keydown", function(ev){
   if(ev.key==="Escape"){ cerrarModal(); return; }

@@ -177,6 +177,11 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.147 · el código interno plegado arriba a la derecha, y el número de tazas usadas** (owner, 2026-10-02). `PlanillaCentro`
+  (`codigoAbierto`); `sca_num_tazas` en la planilla (1–10, cinco por defecto) gobierna cuántas tazas hay en «Defectos de taza,
+  taza a taza» y el tope de `computeSca2004`. Vale para toda planilla que use `LabEvalEditor` (Centro, «Registrar a mano»,
+  Arena). Abierto, **con decisión del owner**: las tazas del CVA siguen siendo cinco; y Uniformidad, Taza limpia y Dulzor del
+  SCA 2004 se siguen digitando como puntaje (no se derivan del número de tazas).
 - **V5.146 · el nombre del lote lleva a su perfil en el circuito, y tres lotes renombrados en la base** (owner, 2026-10-02).
   `EnlaceAlLote` en `CircuitoVista` (Lotes a Evaluar y Lotes en Evaluación). Los tres «Castillo 2026» se renombraron por SQL
   (`lots.name` + `datasheet.product_name`; rastro `lote_renombrado` en `audit_log`). Abierto, **con decisión del owner**: el

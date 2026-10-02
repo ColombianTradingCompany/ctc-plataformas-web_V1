@@ -258,6 +258,15 @@ for (const v of [-3, 0, 0.2, 7.3, 7.75, 12.5, 15, 99, "8,5"]) check(`planilla ·
   check("planilla · rueda: etapas y comentario sobreviven a guardar y volver a abrir", igual(l2.rueda_detalle[idsHerramienta[3]], { etapas: ["fragancia", "sabor"], intensidad: "9", nota: "a cáscara" }));
 }
 
+// V5.147 (owner, 2026-10-02): el número de tazas usadas (1–10; cinco por protocolo) — el mismo tope en la herramienta y en la planilla.
+{
+  const diez = Object.fromEntries(M.SCA_ATR.map((k) => [`sca_${k}`, "8"]));
+  const casos = [["3", "3", ""], ["3", "4", ""], ["8", "", "7"], ["10", "10", ""], ["", "", "6"], ["", "5", ""], ["x", "2", "1"], ["1", "", "1"], ["1", "1", "1"]];
+  check("planilla · tazas: el puntaje con N tazas es el de la planilla, y pasarse del tope lo anula igual", casos.every(([n, t, f]) => { const ev = { ...diez, sca_num_tazas: n, sca_taint_cups: t, sca_fault_cups: f }; return M.calcSca2004(ev).total === computeSca2004(ev).total; }), casos.map(([n, t, f]) => { const ev = { ...diez, sca_num_tazas: n, sca_taint_cups: t, sca_fault_cups: f }; return `${M.calcSca2004(ev).total}/${computeSca2004(ev).total}`; }).join(" "));
+  check("planilla · tazas: el lote guarda tantas tazas como se eligieron; sin dato o con uno inválido, cinco", E.normLote({ sca_num_tazas: "3" }, 0).sca_tazas.length === 3 && E.normLote({ sca_num_tazas: "9", sca_tazas: [{ estado: "taint" }] }, 0).sca_tazas.length === 9 && E.normLote({}, 0).sca_tazas.length === 5 && E.normLote({ sca_num_tazas: "40" }, 0).sca_num_tazas === "5");
+  check("planilla · tazas: el selector está junto a los defectos de taza y al cambiarlo se repinta", js.includes('<select data-k=\\"sca_num_tazas\\"') && js.includes('if(el.dataset.k==="sca_num_tazas"){ ajustaTazasSca(lote()); pintarPanel(); cambio(); return; }') && js.includes("sca_num_tazas:l.sca_num_tazas"));
+}
+
 // El radar: el centro es 0 (antes el 6 del formulario quedaba en el centro y la figura se deformaba).
 check("planilla · radar: el centro es 0 en los dos métodos", js.includes("return n/10;") && !js.includes("(n-5)/5") && js.includes("n/9") && js.includes("n/15"));
 

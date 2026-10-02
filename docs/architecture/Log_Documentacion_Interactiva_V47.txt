@@ -486,3 +486,10 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `src/app/ocp/(app)/nominados/CircuitoVista.tsx` (`EnlaceAlLote`), `scripts/qa-solicitud-evaluacion-check.mjs`.
 - DATOS `lots.name` + `datasheet.product_name` de tres lotes (rastro en `audit_log`).
 (commit: 23112c7)
+
+## [2026-10-02] V5.147 · Planilla — código interno plegado arriba a la derecha; número de tazas usadas en los defectos de taza
+- ANN `src/lib/arena/labEvaluation.ts` (`sca_num_tazas`, `TAZAS_SCA`, `tazasUsadas`, `normalizaScaTazas(…, n)`, `computeSca2004`), `src/lib/arena/planillaI18n.ts`.
+- ANN `src/components/bcp/LabEvalEditor.tsx` (`setNumTazas`), `src/app/socios/[partner]/panel/evaluacion/PlanillaCentro.tsx` (`codigoAbierto`).
+- ANN `public/tools/coffee-datasheet/ctcx-coffee-datasheet-tool.html` (`tazasUsadas`, `ajustaTazasSca`).
+- ANN `scripts/qa-centro-calidad-check.mjs`, `scripts/qa-coffee-datasheet-check.mjs`, `docs/componentes/{consolas,herramientas-cafe}.md`.
+(commit: pendiente)

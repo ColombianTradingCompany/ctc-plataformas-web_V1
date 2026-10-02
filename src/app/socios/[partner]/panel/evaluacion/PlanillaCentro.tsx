@@ -13,7 +13,7 @@ import styles from "../../socios.module.css";
 // V5.130 (owner, 2026-10-01): el idioma de la planilla (ES · EN) lo lleva ESTE componente y se lo pasa al editor, para que
 // el toggle traduzca también lo que rodea a la hoja: la muestra, las notas y el botón de dar de alta.
 
-const TXT: Record<IdiomaDePlanilla, { muestra: string; ciegas: string; notas: string; notasPh: string; falta: string; deriva: string; dando: string; dar: string; cancelar: string; codigo: string; codigoPh: string; codigoAyuda: string; despues: string; guardando: string; guardado: string; continuar: string }> = {
+const TXT: Record<IdiomaDePlanilla, { muestra: string; ciegas: string; notas: string; notasPh: string; falta: string; deriva: string; dando: string; dar: string; cancelar: string; codigo: string; codigoBoton: string; codigoPh: string; codigoAyuda: string; despues: string; guardando: string; guardado: string; continuar: string }> = {
   es: {
     muestra: "Muestra",
     ciegas: "Evaluación a ciegas: solo el código. Al dar de alta, CTC recibe la planilla y confirma el resultado.",
@@ -24,7 +24,8 @@ const TXT: Record<IdiomaDePlanilla, { muestra: string; ciegas: string; notas: st
     dando: "Dando de alta…",
     dar: "Dar de alta el lote",
     cancelar: "Cancelar",
-    codigo: "Su código interno de la muestra (opcional)",
+    codigo: "Su código interno de la muestra",
+    codigoBoton: "Usar mi código interno (opcional)",
     codigoPh: "Ej. LAB-2026-0147",
     codigoAyuda: "El código con que su laboratorio lleva esta muestra. Es suyo: no reemplaza al código de CTCx.",
     despues: "Guardar y terminar más tarde",
@@ -42,7 +43,8 @@ const TXT: Record<IdiomaDePlanilla, { muestra: string; ciegas: string; notas: st
     dando: "Submitting…",
     dar: "Submit the lot",
     cancelar: "Cancel",
-    codigo: "Your internal sample code (optional)",
+    codigo: "Your internal sample code",
+    codigoBoton: "Use my internal code (optional)",
     codigoPh: "E.g. LAB-2026-0147",
     codigoAyuda: "The code your lab uses for this sample. It is yours: it does not replace the CTCx code.",
     despues: "Save and finish later",
@@ -82,6 +84,7 @@ export function DarDeAltaButton({ lotId, uid, borrador }: { lotId: string; uid: 
   const [notas, setNotas] = useState(borrador?.notas ?? "");
   // V5.144 (owner): el código con que el LABORATORIO lleva la muestra — suyo, independiente del de CTCx.
   const [codigoInterno, setCodigoInterno] = useState(borrador?.codigoInterno ?? "");
+  const [codigoAbierto, setCodigoAbierto] = useState(!!borrador?.codigoInterno);
   const [guardado, setGuardado] = useState(false);
   const [lang, setLang] = useState<IdiomaDePlanilla>("es");
   const tx = TXT[lang];
@@ -99,17 +102,36 @@ export function DarDeAltaButton({ lotId, uid, borrador }: { lotId: string; uid: 
             <button className="close" onClick={() => setOpen(false)} aria-label="Cerrar">
               ×
             </button>
-            <h3>
-              {tx.muestra} <span className="mono">{uid}</span>
-            </h3>
+            {/* V5.147 (owner): el código interno va ARRIBA A LA DERECHA y plegado — un botón que lo despliega solo si el
+                evaluador decide usarlo. Si el borrador ya trae uno, llega desplegado. */}
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 12, flexWrap: "wrap", paddingRight: 34 }}>
+              <h3 style={{ margin: 0, flex: 1, minWidth: 220 }}>
+                {tx.muestra} <span className="mono">{uid}</span>
+              </h3>
+              {codigoAbierto ? (
+                <label style={{ display: "grid", gap: 2, fontSize: 12, width: 250, maxWidth: "100%" }} title={tx.codigoAyuda}>
+                  <span style={{ fontWeight: 600 }}>{tx.codigo}</span>
+                  <input
+                    value={codigoInterno}
+                    onChange={(e) => { setCodigoInterno(e.target.value.slice(0, 80)); setGuardado(false); }}
+                    onBlur={() => { if (!codigoInterno.trim()) setCodigoAbierto(false); }}
+                    maxLength={80}
+                    placeholder={tx.codigoPh}
+                    disabled={pending}
+                    autoFocus={!borrador?.codigoInterno}
+                    className="mono"
+                    style={{ width: "100%" }}
+                  />
+                </label>
+              ) : (
+                <button type="button" className="btn btn-sm" onClick={() => setCodigoAbierto(true)} title={tx.codigoAyuda} disabled={pending}>
+                  ＋ {tx.codigoBoton}
+                </button>
+              )}
+            </div>
             <p className={styles.orgLine} style={{ marginTop: 2 }}>
               {tx.ciegas}
             </p>
-            <div className={styles.field} style={{ margin: "8px 0 10px", maxWidth: 420 }}>
-              <label>{tx.codigo}</label>
-              <input value={codigoInterno} onChange={(e) => { setCodigoInterno(e.target.value.slice(0, 80)); setGuardado(false); }} maxLength={80} placeholder={tx.codigoPh} disabled={pending} className="mono" style={{ width: "100%" }} />
-              <small style={{ color: "var(--muted)" }}>{tx.codigoAyuda}</small>
-            </div>
             <LabEvalEditor value={ev} onChange={(patch) => { setEv((v) => ({ ...v, ...patch })); setGuardado(false); }} disabled={pending} lang={lang} onLang={setLang} />
             <div className={styles.field} style={{ marginTop: 12 }}>
               <label>{tx.notas}</label>

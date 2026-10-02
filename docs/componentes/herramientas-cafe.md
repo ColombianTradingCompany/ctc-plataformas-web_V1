@@ -98,7 +98,7 @@ SUPERFICIE, no de una consola — gotcha 12) · `/tools/<id>/*.html` y `/tools/h
 `qa-taller-check.mjs` (66) · `qa-herramientas-acceso-check.mjs` (31) · `qa-concha-herramientas-check.mjs` (42,
 once vectores de ataque) · `qa-tools-puente-conformance.mjs` (14/14; las de esquema propio —`agtron`, `coffee-datasheet`— con sonda) · `qa-tools-seo-check.mjs` (257, recorre las carpetas) ·
 `qa-tools-seo-espejo.mjs` (92, toca la base: columna = archivo; `noindex` en archivadas y en `FUERA_DEL_INDICE`) ·
-`qa-coffee-datasheet-check.mjs` (1.300, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`: catálogos generados al día,
+`qa-coffee-datasheet-check.mjs` (1.305, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`: catálogos generados al día,
 **paridad de las fórmulas SCA 2004 y CVA con la planilla de la plataforma** sobre 1.200 planillas, los dos métodos sin mezclar, tres idiomas
 completos, sin CDN) ·
 `qa-cromatografia-check.mjs` (294, puro) · `qa-cromatografia-modelo.mjs` (manual, gasta: estabilidad del modelo; acepta
@@ -131,6 +131,10 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 
 ## Pendientes
 
+- **V5.147 · Coffee Datasheet Tool: número de tazas usadas** (owner, 2026-10-02; ejecutado desde `consolas`). El selector
+  `sca_num_tazas` (1–10, cinco por defecto) junto a los defectos de taza del SCA 2004; `tazasUsadas` y `ajustaTazasSca` en la
+  herramienta, con el mismo tope que `computeSca2004` de la plataforma (`qa-coffee-datasheet`, 1.305). La regla sigue: la
+  planilla y la herramienta cambian juntas.
 - **V5.140 · una nota de la rueda en varias etapas, con comentario** (owner, 2026-10-02; ejecutado desde la conversación de
   `consolas`, junto con la planilla). La Coffee Datasheet Tool guarda `{ etapas, intensidad, nota }` por nota —antes `etapa`, una—;
   los archivos anteriores se leen igual. `qa-coffee-datasheet` §8 compara la normalización con la de la planilla (`rueda.ts`).

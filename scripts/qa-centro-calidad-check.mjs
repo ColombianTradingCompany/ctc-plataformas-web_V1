@@ -40,6 +40,7 @@ const paginaCodigo = sinComentarios(pagina);
 const accionesCodigo = sinComentarios(acciones);
 const planilla = lee("src/app/socios/[partner]/panel/evaluacion/PlanillaCentro.tsx");
 const PLANILLA_TXT = (texto) => planilla.includes(`"${texto}"`);
+const SCA_ATTRS_KEYS = () => ["fragrance", "flavor", "aftertaste", "acidity", "body", "balance", "uniformity", "clean_cup", "sweetness", "cuppers"];
 const nominados = lee("src/app/ocp/(app)/nominadosActions.ts");
 const gate = lee("src/lib/partners/requirePartner.ts");
 
@@ -316,7 +317,9 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("la página del Centro sigue sin leer nombres (el borrador tampoco los trae)", !/full_name|producer_id|fincas\(|ficha_variedad/.test(paginaCodigo));
 
   // El código interno de la muestra
-  check("código interno: casilla arriba de la planilla, opcional y con tope", planilla.indexOf("<label>{tx.codigo}</label>") > 0 && planilla.indexOf("<label>{tx.codigo}</label>") < planilla.indexOf("<LabEvalEditor") && planilla.includes("maxLength={80}"));
+  // V5.147 (owner): «arriba a la derecha, que se despliegue si se elige usarlo».
+  check("código interno: arriba a la derecha del título, PLEGADO; un botón lo despliega y con borrador llega abierto", planilla.includes("{codigoAbierto ? (") && planilla.indexOf("{codigoAbierto ? (") < planilla.indexOf("<LabEvalEditor") && planilla.includes("useState(!!borrador?.codigoInterno)") && planilla.includes("onClick={() => setCodigoAbierto(true)}") && planilla.includes("{tx.codigoBoton}") && planilla.includes("maxLength={80}"));
+  check("código interno: vacío se vuelve a plegar; el botón existe en los dos idiomas", planilla.includes("if (!codigoInterno.trim()) setCodigoAbierto(false);") && PLANILLA_TXT("Usar mi código interno (opcional)") && PLANILLA_TXT("Use my internal code (optional)"));
   check("código interno: viaja con el alta y con el borrador, limpio", reg.includes("codigo_interno: codigoLimpio(codigoInterno)") && borr.includes("codigo_interno: codigoLimpio(codigoInterno)") && acciones.includes('.replace(/\\s+/g, " ").trim().slice(0, 80)'));
   check("código interno: es del laboratorio — el código de CTCx sigue siendo el que identifica el lote", reg.includes("uid_anonimo: ctcLotReferenceShort(lotId)") && acta.includes("add column if not exists codigo_interno text"));
   check("código interno: lo ven el Centro en su lista y CTCx en «Lotes en Evaluación»", pagina.includes("su código:") && lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").includes("código del laboratorio:"));
@@ -410,6 +413,22 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   const minutos = Number(/MINUTOS_ENTRE_LATIDOS = (\d+)/.exec(viva)?.[1]);
   check("latido · la pantalla del Centro mantiene viva la sesión (cada menos de una hora, y al volver a la pestaña)", minutos > 0 && minutos < 60 && viva.includes("latidoDeSocio()") && viva.includes('"visibilitychange"') && pagina.includes('<SesionViva acceso="/socios/centro-calidad/acceso" />'));
   check("latido · si la sesión se cerró, avisa sin perder lo digitado; un corte de red no cuenta como cierre", viva.includes("Su sesión se cerró.") && viva.includes("} catch {") && lee("src/app/socios/[partner]/panel/actions.ts").includes("export async function latidoDeSocio(): Promise<{ viva: boolean }>"));
+}
+
+// ── V5.147 (owner, 2026-10-02) · el número de tazas usadas en «Defectos de taza, taza a taza» ─────────────────────────
+{
+  const { TAZAS_SCA, tazasUsadas } = await import("../src/lib/arena/labEvaluation.ts");
+  const editor = lee("src/components/bcp/LabEvalEditor.tsx").replace(/\r\n/g, "\n");
+  check("tazas: de 1 a 10, cinco por protocolo; lo que no es un entero en rango cae a cinco", TAZAS_SCA.min === 1 && TAZAS_SCA.max === 10 && TAZAS_SCA.porDefecto === SCA2004.tazas && [["3", 3], [10, 10], ["", 5], ["0", 5], ["11", 5], ["2.5", 5], [null, 5], ["x", 5]].every(([v, n]) => tazasUsadas(v) === n));
+  check("tazas: una planilla anterior (sin el dato) sigue con cinco", toLabEvaluation({}).sca_num_tazas === "5" && toLabEvaluation({}).sca_tazas.length === 5 && EMPTY_LAB_EVALUATION.sca_num_tazas === "5");
+  const tres = toLabEvaluation({ sca_num_tazas: "3", sca_tazas: [{ estado: "taint", defecto: "moho" }, { estado: "" }, { estado: "fault", defecto: "papa" }, { estado: "fault" }, { estado: "fault" }] });
+  check("tazas: con 3 hay 3 tazas para marcar — las que sobran se quitan y los contadores salen de las que quedan", tres.sca_tazas.length === 3 && tres.sca_taint_cups === "1" && tres.sca_fault_cups === "1");
+  const ocho = toLabEvaluation({ sca_num_tazas: 8, sca_tazas: [{ estado: "taint" }] });
+  check("tazas: con 8 hay 8 — las que faltan nacen limpias", ocho.sca_tazas.length === 8 && ocho.sca_tazas.slice(1).every((x) => x.estado === "") && ocho.sca_taint_cups === "1");
+  const diez = Object.fromEntries(SCA_ATTRS_KEYS().map((k) => [`sca_${k}`, "8"]));
+  check("tazas: el tope de tazas con defecto es el número de tazas usadas", computeSca2004({ ...diez, sca_num_tazas: "3", sca_taint_cups: "3", sca_fault_cups: "" }).total === 80 - 6 && computeSca2004({ ...diez, sca_num_tazas: "3", sca_taint_cups: "4", sca_fault_cups: "" }).total === null && computeSca2004({ ...diez, sca_num_tazas: "8", sca_taint_cups: "", sca_fault_cups: "7" }).total === 80 - 28 && computeSca2004({ ...diez, sca_taint_cups: "", sca_fault_cups: "6" }).total === null);
+  check("tazas: elegir el número no cuenta como dato (una planilla vacía sigue vacía)", labEvaluationHasData(toLabEvaluation({ sca_num_tazas: "8" })) === false);
+  check("tazas: el editor trae el selector junto a «Defectos de taza» y ajusta las tazas al cambiarlo", editor.includes("{t.tazasUsadas}") && editor.includes("onChange={(e) => setNumTazas(e.target.value)}") && editor.includes("normalizaScaTazas(value.sca_tazas, undefined, undefined, n)") && PL.es.tazasUsadas === "Tazas usadas" && PL.en.tazasUsadas === "Cups used");
 }
 
 if (fallos.length) {

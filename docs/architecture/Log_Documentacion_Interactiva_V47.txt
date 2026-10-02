@@ -496,4 +496,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-02] V5.148 · Centro de Calidad — la planilla no enseña el grado
 - ANN `src/components/bcp/LabEvalEditor.tsx` (`ocultaGrado`), `src/app/socios/[partner]/panel/evaluacion/PlanillaCentro.tsx`, `scripts/qa-centro-calidad-check.mjs`, `docs/componentes/consolas.md`.
-(commit: pendiente)
+(commit: 3efd095)

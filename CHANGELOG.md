@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.148] — 2026-10-02 (commit pendiente)
+## [V5.148] — 2026-10-02 (commit 3efd095)
 
 - **Cambiado**: la planilla del **Centro de Calidad ya no enseña el grado** (owner, 2026-10-02: «el grado depende también de
   otros factores que son parte del B1, que aquí no se reflejan»). Bajo el puntaje queda el Punto que rige y su procedencia; se

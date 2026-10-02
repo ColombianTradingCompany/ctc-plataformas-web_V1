@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.139] — 2026-10-02 (commit pendiente)
+## [V5.139] — 2026-10-02 (commit 99c4ebd)
 
 - **Añadido**: franja **«Sesión asistida · productor · código»** en Kaffetal Regal (owner, 2026-10-02). Sale fija arriba, por encima
   de todo, cuando la sesión cargada es la que abrió el OCP con «Entrar como el productor»; dice como quién se está trabajando y

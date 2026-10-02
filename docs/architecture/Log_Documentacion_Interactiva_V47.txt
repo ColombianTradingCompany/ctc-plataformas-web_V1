@@ -438,4 +438,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `components/kaffetal-regal/FincaMapPicker.tsx` (`polygonOptional`), `FincaModal.tsx` (el punto pasa al centro del polígono),
   `EudrDossierDoc.tsx`, `src/lib/dossierExtras.ts`, `app/ocp/(app)/kr/FincaEudrEditor.tsx` (el polígono adicional, rotulado).
 - ANN `scripts/qa-asistencia-check.mjs` (§10), `scripts/qa-area-check.mjs`.
-(commit: pendiente)
+(commit: 99c4ebd)

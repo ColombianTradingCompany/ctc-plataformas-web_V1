@@ -429,4 +429,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
   borrado host-only después de los `.set()`; cierre de la sesión de una cuenta que ya no existe).
 - ANN `scripts/qa-asistencia-check.mjs` (sección 9: la librería real contra las cookies reales de Next).
 - ANN `docs/ALINEACION.md`, `docs/componentes/consolas.md`.
-(commit: pendiente)
+(commit: 9727285)

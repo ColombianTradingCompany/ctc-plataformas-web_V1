@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.138] — 2026-10-02 (commit pendiente)
+## [V5.138] — 2026-10-02 (commit 9727285)
 
 - **Corregido**: **la sesión asistida abría Kaffetal Regal como el productor ANTERIOR, o vacío** (owner, 2026-10-02: «La Asistencia a
   Proveedores no está cargando nada de la información correspondiente»). Al cerrar una sesión o cambiarla por otra, `@supabase/ssr`

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
+import { createPartnerSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
 import type { PartnerSlug } from "./partners";
 
 export type PartnerModulos = { evaluacion?: boolean; procesamiento?: boolean };
@@ -19,9 +19,10 @@ export type PartnerIdentity = {
  * abre nada más (el corte grueso de la matriz v3). `partner_accounts` es solo service role, así que la fila se
  * lee con el cliente de servicio tras comprobar la sesión. Las Server Actions usan ESTA función (devuelven un
  * resultado en vez de redirigir); las páginas usan `requirePartner`, que redirige.
+ * V5.145: la sesión del socio se lee de SU cookie (`ctc-socios-auth`), no de la compartida.
  */
 export async function getPartnerIdentity(slug: PartnerSlug): Promise<PartnerIdentity | null> {
-  const session = await createSessionClient();
+  const session = await createPartnerSessionClient();
   const {
     data: { user },
   } = await session.auth.getUser();

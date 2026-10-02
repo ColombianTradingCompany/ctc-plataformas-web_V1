@@ -177,6 +177,13 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.145 · la sesión de los socios vive en su propia cookie** (owner, 2026-10-02: «que la sesión del Centro de Calidad dure al
+  menos 10 horas»). Hecho: `ctc-socios-auth` (`createPartnerSessionClient`), renovada por el proxy en `/socios`, más el latido
+  `SesionViva` en Evaluación de Lotes. No vence por tiempo. `qa-centro-calidad` lo prueba con la librería real. Abierto: (a)
+  nadie lo ha conducido con la credencial real del Centro (lo confirma el owner al entrar); (b) el latido está solo en
+  Evaluación de Lotes — los talleres del Estudio de Contenido (RT Scriptor, Datawave, Source Wrapper) no lo tienen; (c) si el
+  proyecto de Supabase tuviera configurado un cierre por inactividad o un tope de sesión, eso se ve en su panel de Auth, no
+  en el código (las sesiones actuales no traen fecha de corte: `auth.sessions.not_after` está vacío).
 - **V5.144 · la planilla y el Centro de Calidad: borrador, código interno, comentarios, humedad del verde y la base de las
   mallas** (owner, 2026-10-02; código de `socios` y de `kaffetal-regal` tocado). (1) **La base de las mallas es el trillado
   verde restante** (`computeMesh(…, factor.remainder)` en `LabEvalEditor` y en `FichaView`): los defectos ya van dentro del

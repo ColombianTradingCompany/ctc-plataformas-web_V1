@@ -1,5 +1,5 @@
 import "server-only";
-import { createPanelSessionClient, createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
+import { createPanelSessionClient, createPartnerSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { getPanelUser, grantedConsoles, nivelDeConsola } from "@/lib/panel/panelUsers";
 import { puede, type ClaseDeAccion } from "@/lib/panel/niveles";
 import { consolaDelModulo } from "@/lib/panel/consoles";
@@ -14,7 +14,7 @@ import { consolaDelModulo } from "@/lib/panel/consoles";
  * compuerta no abre el Muro ni la Identidad de marca, solo las apps de taller.
  *
  * Abre para DOS identidades, a propósito:
- *   · el socio `estudio-contenido` (cookie PÚBLICA, `createSessionClient`)
+ *   · el socio `estudio-contenido` (cookie de los SOCIOS, `ctc-socios-auth` — V5.145; antes la pública)
  *   · un operador interno con grant de `ecp` (cookie del panel, `ctc-panel-auth`)
  *
  * El segundo caso no es un atajo: sin él, el día que la credencial del socio se
@@ -58,7 +58,7 @@ export async function studioGate(clase: ClaseDeAccion = "emite"): Promise<Studio
   }
 
   // 2. Socio Estudio de Contenido, credencial activa para ESE nodo.
-  const session = await createSessionClient();
+  const session = await createPartnerSessionClient();
   const {
     data: { user },
   } = await session.auth.getUser();

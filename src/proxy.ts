@@ -26,6 +26,10 @@ const AUTH_COOKIE_HINT = /^sb-.*-auth-token/;
 // PANEL_AUTH_COOKIE en lib/supabase/server.ts) — se renueva aparte, con la
 // misma mecánica, para que el BCP tampoco caduque a la hora.
 const PANEL_COOKIE_HINT = /^ctc-panel-auth/;
+// V5.145: la sesión de los SOCIOS también tiene su cookie (PARTNER_AUTH_COOKIE). Se renueva SOLO en las rutas de
+// `/socios`: la cookie viaja a todos los subdominios, y renovarla en cada petición de la web pública sería una
+// llamada a Auth por página para alguien que no está usando su panel de socio.
+const PARTNER_COOKIE_HINT = /^ctc-socios-auth/;
 
 // ── Rutas que se sirven desde la RAÍZ en TODOS los hosts (2026-08-20, V5.12) ─
 // `/recuperar-acceso` es UNA pantalla para las once puertas de la red. Sin esta
@@ -81,7 +85,9 @@ export async function proxy(request: NextRequest) {
   // web pública no paga ni una llamada extra a Supabase.
   const hasAuthCookie = request.cookies.getAll().some((c) => AUTH_COOKIE_HINT.test(c.name));
   const hasPanelCookie = request.cookies.getAll().some((c) => PANEL_COOKIE_HINT.test(c.name));
-  if (!hasAuthCookie && !hasPanelCookie) return build();
+  const rutaEfectiva = rewriteUrl?.pathname ?? path;
+  const hasPartnerCookie = (rutaEfectiva === "/socios" || rutaEfectiva.startsWith("/socios/")) && request.cookies.getAll().some((c) => PARTNER_COOKIE_HINT.test(c.name));
+  if (!hasAuthCookie && !hasPanelCookie && !hasPartnerCookie) return build();
 
   let response = build();
 
@@ -135,6 +141,7 @@ export async function proxy(request: NextRequest) {
 
   if (hasAuthCookie) await renew(undefined); // cookie compartida sb-…-auth-token
   if (hasPanelCookie) await renew("ctc-panel-auth"); // sesión de las consolas internas
+  if (hasPartnerCookie) await renew("ctc-socios-auth"); // sesión de los socios (V5.145)
 
   // UNA escritura por nombre (V5.138, `cookiesDeSesion.ts`): @supabase/ssr manda cada borrado dos veces —con dominio y
   // host-only— y `response.cookies` es un mapa por nombre: sin esto, el host-only reemplazaba al que sí borra la

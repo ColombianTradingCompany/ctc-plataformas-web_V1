@@ -280,7 +280,7 @@ const lee = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
 
   // Y los tres sitios que escriben cookies de sesión la usan.
   const servidor = lee("src/lib/supabase/server.ts"), proxy = lee("src/proxy.ts");
-  check("server.ts · los dos clientes (compartida y consolas) pasan por `unaPorNombre`", (servidor.match(/unaPorNombre\(cookiesToSet\)\.forEach/g) ?? []).length === 2 && !/cookiesToSet\.forEach\(\(\{ name, value, options \}\) => cookieStore\.set/.test(servidor));
+  check("server.ts · los tres clientes (compartida, consolas y —V5.145— socios) pasan por `unaPorNombre`", (servidor.match(/unaPorNombre\(cookiesToSet\)\.forEach/g) ?? []).length === 3 && !/cookiesToSet\.forEach\(\(\{ name, value, options \}\) => cookieStore\.set/.test(servidor));
   check("proxy · escribe una por nombre", proxy.includes("const finales = unaPorNombre(pending);") && !proxy.includes("of pending)"));
   check("proxy · el borrado host-only va DESPUÉS de los `.set()` (antes se perdía) y nunca en el dominio raíz", proxy.indexOf("response.cookies.set(n, value, options)") < proxy.indexOf("borradoHostOnly(n)") && proxy.includes("cookieDomain && !enLaRaiz"));
   check("proxy · cierra la sesión de una cuenta que ya no existe", proxy.includes('if (esUsuarioInexistente(error)) await supabase.auth.signOut({ scope: "local" });'));

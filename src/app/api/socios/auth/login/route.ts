@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { createEphemeralClient, createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
+import { createEphemeralClient, createPartnerSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { isPartnerSlug } from "@/lib/partners/partners";
 
 // ── Partner login (single factor, like Kaffetal/Cherry Picked) ──────────────
@@ -38,7 +38,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: GENERIC_ERROR }, { status: 401 });
   }
 
-  const sessionClient = await createSessionClient();
+  // V5.145: la sesión del socio va a SU cookie (`ctc-socios-auth`); la compartida de las plataformas públicas no se toca.
+  const sessionClient = await createPartnerSessionClient();
   const { error: setErr } = await sessionClient.auth.setSession({
     access_token: signInData.session.access_token,
     refresh_token: signInData.session.refresh_token,

@@ -19,6 +19,21 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.145] — 2026-10-02 (commit pendiente)
+
+- **Corregido**: **la sesión del Centro de Calidad (y de todos los socios) ya no se cierra sola** (owner, 2026-10-02: «que dure al
+  menos 10 horas sin cerrarse automáticamente»). No había un límite de tiempo: la sesión del socio vivía en la cookie compartida
+  de las plataformas públicas, y se la llevaba cualquier otra cosa del mismo navegador —una sesión asistida la reemplazaba,
+  Kaffetal Regal la cerraba al ver una cuenta que no es de productor, y salir de cualquier plataforma la borraba—. Ahora vive en
+  **su propia cookie** (`ctc-socios-auth`), como la de las consolas. No vence por tiempo: dura hasta que el socio sale.
+- **Añadido**: mientras la pantalla de Evaluación de Lotes está abierta, un **latido** cada 15 minutos (y al volver a la pestaña)
+  mantiene fresca la sesión. Si aun así se cerró, un aviso lo dice arriba, sin perder lo digitado, con el enlace para entrar de
+  nuevo en otra pestaña.
+- **Cambiado**: el proxy renueva también la cookie de los socios, solo en las rutas de `/socios`.
+- **Seguridad**: `qa-centro-calidad` (173 → 186) ejecuta la librería real: la sesión del socio se escribe en su cookie, sobrevive
+  al cierre de una sesión asistida, las plataformas públicas no la ven y su vida supera las 10 horas.
+- **Docs**: ALINEACION (contrato «Sesiones y cookies»: son tres) y §3, charter `consolas`.
+
 ## [V5.144] — 2026-10-02 (commit 56abe7c)
 
 - **Corregido**: en B3, **la suma de las mallas se compara con el trillado verde restante, no con el grano sano** (owner,

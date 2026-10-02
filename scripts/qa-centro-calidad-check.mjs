@@ -339,6 +339,79 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("los avisos nombran el trillado verde restante, no el grano sano", ["es", "en"].every((l) => !/grano sano|sound beans/.test(ESTADO_DE_MALLAS[l].sin_base + ESTADO_DE_MALLAS[l].excede)) && ESTADO_DE_MALLAS.es.excede.includes("trillado verde restante"));
 }
 
+// ── V5.145 (owner, 2026-10-02) · «que la sesión del Centro de Calidad dure al menos 10 horas sin cerrarse» ─────────────
+// No había un límite de tiempo: la sesión del socio vivía en la cookie COMPARTIDA de las plataformas públicas y cualquier
+// otra cosa del navegador se la llevaba (una sesión asistida, Kaffetal Regal, un cierre de sesión). Ahora vive en SU
+// cookie. Aquí se ejecuta la librería REAL contra el almacén de cookies REAL de Next, con Auth simulado.
+{
+  const { createRequire } = await import("node:module");
+  const { createServerClient } = await import("@supabase/ssr");
+  const { unaPorNombre } = await import("../src/lib/supabase/cookiesDeSesion.ts");
+  const { ResponseCookies } = createRequire(import.meta.url)("next/dist/compiled/@edge-runtime/cookies");
+  const servidor = lee("src/lib/supabase/server.ts"), proxy = lee("src/proxy.ts").replace(/\r\n/g, "\n");
+  const COOKIE = /export const PARTNER_AUTH_COOKIE = "([^"]+)";/.exec(servidor)?.[1];
+  const URL_SB = "https://abcdefghijklmnop.supabase.co", COMPARTIDA = "sb-abcdefghijklmnop-auth-token", DOMINIO = ".ctcexport.com";
+  const b64 = (o) => Buffer.from(JSON.stringify(o)).toString("base64url");
+  const jwt = (sub) => `${b64({ alg: "HS256", typ: "JWT" })}.${b64({ sub, exp: Math.floor(Date.now() / 1000) + 3600 })}.${Buffer.from("firma-de-prueba").toString("base64url")}`;
+  const sesionDe = (sub) => ({ access_token: jwt(sub), refresh_token: `r-${sub}`, token_type: "bearer", expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600, user: { id: sub, aud: "authenticated", email: `${sub}@ctc-qa-test.co` } });
+  const enCookie = (sesion) => "base64-" + Buffer.from(JSON.stringify(sesion)).toString("base64url");
+  const responde = (status, cuerpo) => async () => new Response(JSON.stringify(cuerpo), { status, headers: { "content-type": "application/json" } });
+  // El navegador en miniatura: una cookie es (nombre, dominio); Max-Age=0 la borra.
+  const tarro = new Map();
+  const recibe = (cabeceras) => {
+    for (const h of cabeceras) {
+      const [par, ...attrs] = h.split("; ");
+      const name = par.slice(0, par.indexOf("=")), value = decodeURIComponent(par.slice(par.indexOf("=") + 1));
+      const domain = (attrs.find((a) => a.startsWith("Domain=")) ?? "Domain=centro-calidad.ctcexport.com").slice(7);
+      if (attrs.includes("Max-Age=0")) tarro.delete(`${name}|${domain}`);
+      else tarro.set(`${name}|${domain}`, { name, value, maxAge: Number((attrs.find((a) => a.startsWith("Max-Age=")) ?? "Max-Age=0").slice(8)) });
+    }
+  };
+  const envia = () => [...tarro.values()].map(({ name, value }) => ({ name, value }));
+  const cliente = (nombre, fetch, salida) =>
+    createServerClient(URL_SB, "anon", {
+      global: { fetch },
+      cookieOptions: { ...(nombre ? { name: nombre } : {}), domain: DOMINIO, path: "/" },
+      cookies: { getAll: () => envia(), setAll: (lista) => { const h = new Headers(), jar = new ResponseCookies(h); unaPorNombre(lista).forEach(({ name, value, options }) => jar.set(name, value, options)); const out = h.getSetCookie(); salida?.push(...out); recibe(out); } },
+    });
+  const silencio = async (f) => { const w = console.warn; console.warn = () => {}; try { return await f(); } finally { console.warn = w; } };
+  const tokenDe = async (nombre) => (await cliente(nombre, responde(200, {})).auth.getSession()).data.session?.user?.id ?? (await cliente(nombre, responde(200, {})).auth.getSession()).data.session?.access_token ?? null;
+
+  await silencio(async () => {
+    // (a) El socio entra: su sesión va a SU cookie, con vida de sobra para una jornada.
+    const escritas = [];
+    const socio = sesionDe("socio");
+    await cliente(COOKIE, responde(200, socio.user), escritas).auth.setSession({ access_token: socio.access_token, refresh_token: socio.refresh_token });
+    const nombres = [...tarro.values()].map((x) => x.name);
+    check("socio · la cookie tiene nombre propio y no es la del panel ni la compartida", COOKIE === "ctc-socios-auth" && COOKIE !== "ctc-panel-auth" && !COOKIE.startsWith("sb-"));
+    check("socio · al entrar, la sesión se escribe en SU cookie y NO en la compartida", nombres.length > 0 && nombres.every((n) => n.startsWith(COOKIE)) && !nombres.some((n) => n.startsWith("sb-")), nombres.join(","));
+    check("socio · la cookie viaja a todos los subdominios y vive mucho más de 10 horas", escritas.every((h) => h.includes(`Domain=${DOMINIO}`)) && [...tarro.values()].every((x) => x.maxAge >= 10 * 3600), [...tarro.values()].map((x) => x.maxAge).join(","));
+    // (b) En el MISMO navegador se abre una sesión asistida de un productor (la cookie compartida) y luego se cierra.
+    tarro.set(`${COMPARTIDA}|${DOMINIO}`, { name: COMPARTIDA, value: enCookie(sesionDe("productor")), maxAge: 1 });
+    await cliente(undefined, responde(403, { code: 403, error_code: "user_not_found", msg: "x" })).auth.signOut({ scope: "local" });
+    check("socio · cerrar una sesión asistida (o salir de Kaffetal Regal) borra la compartida y deja la del socio", ![...tarro.values()].some((x) => x.name.startsWith("sb-")) && [...tarro.values()].some((x) => x.name.startsWith(COOKIE)));
+    const quien = (await cliente(COOKIE, responde(200, {})).auth.getSession()).data.session;
+    check("socio · su sesión sigue siendo la suya", quien?.access_token === socio.access_token);
+    // (c) Y al revés: lo público no ve al socio (Kaffetal Regal ya no lo encuentra para cerrarlo).
+    const publico = (await cliente(undefined, responde(200, {})).auth.getSession()).data.session;
+    check("socio · las plataformas públicas no ven la sesión del socio", publico === null);
+    // (d) El socio sale: se borra SU cookie.
+    await cliente(COOKIE, responde(200, {})).auth.signOut();
+    check("socio · al salir se borra su cookie", ![...tarro.values()].some((x) => x.name.startsWith(COOKIE)), [...tarro.keys()].join(","));
+  });
+
+  // Quién la usa
+  const usa = (ruta) => lee(ruta).includes("createPartnerSessionClient()");
+  check("socios · entrar, salir, la compuerta, cambiar la contraseña y el taller del Estudio leen la cookie del socio", ["src/app/api/socios/auth/login/route.ts", "src/app/api/socios/auth/logout/route.ts", "src/lib/partners/requirePartner.ts", "src/app/socios/[partner]/panel/actions.ts", "src/lib/coffeed/studioGate.ts"].every(usa));
+  check("socios · ninguno de ellos toca ya la cookie compartida", ["src/app/api/socios/auth/login/route.ts", "src/app/api/socios/auth/logout/route.ts", "src/lib/partners/requirePartner.ts", "src/app/socios/[partner]/panel/actions.ts", "src/lib/coffeed/studioGate.ts"].every((r) => !/\bcreateSessionClient\b/.test(lee(r))));
+  check("socios · la factoría pasa por `unaPorNombre` (un cierre en el servidor sí borra la cookie)", /export async function createPartnerSessionClient\(\)[\s\S]{0,520}name: PARTNER_AUTH_COOKIE[\s\S]{0,260}unaPorNombre\(cookiesToSet\)/.test(servidor));
+  check("proxy · renueva la cookie del socio, y solo en las rutas de /socios", proxy.includes('if (hasPartnerCookie) await renew("ctc-socios-auth");') && proxy.includes('(rutaEfectiva === "/socios" || rutaEfectiva.startsWith("/socios/"))') && proxy.includes("if (!hasAuthCookie && !hasPanelCookie && !hasPartnerCookie) return build();"));
+  const viva = lee("src/app/socios/[partner]/panel/SesionViva.tsx");
+  const minutos = Number(/MINUTOS_ENTRE_LATIDOS = (\d+)/.exec(viva)?.[1]);
+  check("latido · la pantalla del Centro mantiene viva la sesión (cada menos de una hora, y al volver a la pestaña)", minutos > 0 && minutos < 60 && viva.includes("latidoDeSocio()") && viva.includes('"visibilitychange"') && pagina.includes('<SesionViva acceso="/socios/centro-calidad/acceso" />'));
+  check("latido · si la sesión se cerró, avisa sin perder lo digitado; un corte de red no cuenta como cierre", viva.includes("Su sesión se cerró.") && viva.includes("} catch {") && lee("src/app/socios/[partner]/panel/actions.ts").includes("export async function latidoDeSocio(): Promise<{ viva: boolean }>"));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-centro-calidad: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("  - " + f);

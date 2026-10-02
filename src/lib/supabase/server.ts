@@ -59,6 +59,34 @@ export async function createPanelSessionClient() {
   });
 }
 
+// ── La sesión de los SOCIOS vive en SU PROPIA cookie (V5.145, owner 2026-10-02) ───────────────────────────────────────
+// «Haz que la sesión del Centro de Calidad dure al menos 10 horas sin cerrarse automáticamente.» No había un límite de
+// tiempo: la sesión del socio vivía en la cookie COMPARTIDA (`sb-…`), que es UN solo cupo para todas las plataformas
+// públicas. Se la llevaba por delante cualquier otra cosa del mismo navegador:
+//   · una sesión asistida («Entrar como el productor») la reemplazaba;
+//   · Kaffetal Regal, al ver una cuenta que no puede ser productor, la cerraba (`gateMatriz` → signOut);
+//   · «Cerrar sesión asistida» o salir de cualquier plataforma pública la borraba.
+// Es el mismo problema que tuvieron las consolas el 2026-07-29, y la misma solución: cookie propia. Con
+// `ctc-socios-auth`, nada de lo público la toca; el proxy la renueva en las rutas de `/socios` (el token de acceso
+// vence a la hora y un Server Component no puede escribir cookies) y `SesionViva` la mantiene fresca mientras el
+// evaluador tiene la planilla abierta. No vence por tiempo: dura hasta que el socio sale.
+export const PARTNER_AUTH_COOKIE = "ctc-socios-auth";
+
+/** El cliente de sesión de un SOCIO (los cinco nodos de `/socios`). Misma mecánica que los otros dos; cookie propia. */
+export async function createPartnerSessionClient() {
+  const cookieStore = await cookies();
+  const host = (await headers()).get("host");
+  return createServerClient(url, anonKey, {
+    cookieOptions: { name: PARTNER_AUTH_COOKIE, domain: sharedCookieDomain(host), path: "/" },
+    cookies: {
+      getAll: () => cookieStore.getAll(),
+      setAll: (cookiesToSet) => {
+        unaPorNombre(cookiesToSet).forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+      },
+    },
+  });
+}
+
 /**
  * A throwaway client with no session persistence at all -- used to verify a
  * password during the BCP login flow's first factor without writing any

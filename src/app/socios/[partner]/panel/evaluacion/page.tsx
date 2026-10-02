@@ -10,6 +10,7 @@ import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { puntoDeFila, rotuloDelPunto } from "@/lib/arena/homologacion";
 import { BUILD_SHA, VERSION_LABEL } from "@/lib/version";
 import { AnularAltaButton, DarDeAltaButton } from "./PlanillaCentro";
+import { SesionViva } from "../SesionViva";
 import styles from "../../socios.module.css";
 
 export const metadata: Metadata = { title: "Evaluación de Lotes · Centro de Calidad", robots: { index: false, follow: false } };
@@ -84,6 +85,8 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
   return (
     <div className={styles.page} style={{ "--p-accent": p.accent } as React.CSSProperties}>
       <div className={styles.stripe} />
+      {/* V5.145: mantiene viva la sesión mientras el evaluador trabaja, y avisa si se cerró. */}
+      <SesionViva acceso="/socios/centro-calidad/acceso" />
       <div className={styles.wrap}>
         <div className={styles.topbar}>
           <div className={styles.brandline}>

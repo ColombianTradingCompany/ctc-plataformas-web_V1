@@ -474,3 +474,10 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `components/kaffetal-regal/FichaView.tsx`, `ficha/fichaCalculations.ts` (la misma base de mallas), `app/ocp/(app)/nominados/CircuitoVista.tsx`.
 - ANN `scripts/qa-centro-calidad-check.mjs`, `scripts/qa-kr-ficha-check.mjs`.
 (commit: 56abe7c)
+
+## [2026-10-02] V5.145 · Identidad — la sesión de los socios vive en su propia cookie (`ctc-socios-auth`)
+- ANN `src/lib/supabase/server.ts` (`PARTNER_AUTH_COOKIE`, `createPartnerSessionClient`), `src/proxy.ts` (la renueva en `/socios`).
+- ANN `src/lib/partners/requirePartner.ts`, `app/api/socios/auth/{login,logout}/route.ts`, `app/socios/[partner]/panel/actions.ts` (`latidoDeSocio`), `src/lib/coffeed/studioGate.ts`.
+- ADD `app/socios/[partner]/panel/SesionViva.tsx`; ANN `evaluacion/page.tsx`.
+- ANN `scripts/qa-centro-calidad-check.mjs`, `docs/ALINEACION.md`, `docs/componentes/consolas.md`.
+(commit: pendiente)

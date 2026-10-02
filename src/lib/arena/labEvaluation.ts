@@ -138,7 +138,12 @@ export type LabEvaluation = ScaFields &
     acidez_tipo: string;
     boca_intensidad: string;
     boca_texturas: string[];
+    /** V5.144 (owner): un comentario opcional en la acidez y en la sensación en boca (una línea; no entra en el puntaje). */
+    acidez_nota: string;
+    boca_nota: string;
     fa_parch_hum: string;
+    /** V5.144 (owner): la humedad del café VERDE ya trillado — el mismo campo de la Ficha (`b3_humedad_verde`). */
+    b3_humedad_verde: string;
     cupping_profile: string;
     analysis_notes: string;
   };
@@ -155,11 +160,11 @@ export const EMPTY_LAB_EVALUATION: LabEvaluation = {
   rueda_detalle: {},
   sca_tazas: scaTazasLimpias(),
   fa_color: "", defectos_detalle: {},
-  acidez_intensidad: "", acidez_tipo: "", boca_intensidad: "", boca_texturas: [],
+  acidez_intensidad: "", acidez_tipo: "", boca_intensidad: "", boca_texturas: [], acidez_nota: "", boca_nota: "",
   fa_start: "", fa_green_remainder: "", fa_primary_defect: "", fa_secondary_defect: "",
   mesh_supremo_plus: "", mesh_supremo: "", mesh_extra: "", mesh_europa: "",
   mesh_ugq: "", mesh_peaberry: "", mesh_residue: "",
-  fa_parch_hum: "", cupping_profile: "", analysis_notes: "",
+  fa_parch_hum: "", b3_humedad_verde: "", cupping_profile: "", analysis_notes: "",
 };
 
 const numOr = (v: string | number | null | undefined): number | null => {
@@ -187,6 +192,10 @@ export function normalizaTazas(raw: unknown, uViejo?: unknown, dViejo?: unknown)
   return out;
 }
 
+/** El comentario de la acidez o de la sensación en boca: texto, con tope (mientras se escribe no se recorta más que eso). */
+export const NOTA_DESCRIPTIVA_MAX = 240;
+const notaDescriptiva = (v: unknown): string => (typeof v === "string" ? v.slice(0, NOTA_DESCRIPTIVA_MAX) : "");
+
 /** Merge seguro sobre el vacío: campos nuevos nunca rompen datos viejos; escala, vista, tazas y rueda se normalizan. */
 export function toLabEvaluation(raw: unknown): LabEvaluation {
   const { cva_nonuniform, cva_defective, ...r } = ((raw as (Partial<LabEvaluation> & { cva_nonuniform?: unknown; cva_defective?: unknown }) | null | undefined) ?? {});
@@ -211,6 +220,9 @@ export function toLabEvaluation(raw: unknown): LabEvaluation {
     defectos_detalle: normalizaDefectos(r.defectos_detalle),
     acidez_tipo: esAcidez(r.acidez_tipo) ? r.acidez_tipo : "",
     boca_texturas: normalizaTexturas(r.boca_texturas),
+    acidez_nota: notaDescriptiva(r.acidez_nota),
+    boca_nota: notaDescriptiva(r.boca_nota),
+    b3_humedad_verde: typeof r.b3_humedad_verde === "string" || typeof r.b3_humedad_verde === "number" ? String(r.b3_humedad_verde) : "",
   };
 }
 

@@ -19,6 +19,26 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.144] — 2026-10-02 (commit pendiente)
+
+- **Corregido**: en B3, **la suma de las mallas se compara con el trillado verde restante, no con el grano sano** (owner,
+  2026-10-02: «los defectos primarios y secundarios hacen parte del trillado verde restante… ya estaban incluidos allí»). Un
+  análisis bien hecho —207,0 g de mallas sobre 207,7 g de verde— salía como «las mallas pesan más que el grano sano»; ahora
+  cuadra, con 0,7 g de residuo. El factor de rendimiento no cambia: sigue sobre el grano sano. Vale para la planilla del Centro
+  de Calidad, «Registrar a mano» del OCP, la Arena y la Ficha del productor (una fórmula, no dos).
+- **Añadido**: en el Centro de Calidad, **«Guardar y terminar más tarde»** — la planilla a medio llenar queda guardada y se retoma
+  después, en ese u otro equipo, con «Continuar evaluación…». No exige la planilla completa, CTCx no la ve y se borra al dar de
+  alta el lote.
+- **Añadido**: arriba de la planilla del Centro, **«Su código interno de la muestra»** (opcional): el código con que el laboratorio
+  lleva esa muestra, independiente del de CTCx. Viaja con el alta y con el borrador; lo ve el Centro en su lista y CTCx en «Lotes
+  en Evaluación».
+- **Añadido**: **comentario opcional** en Acidez y en Sensación en boca (una línea cada uno; no entra en el puntaje).
+- **Añadido**: en B3, **Humedad verde (%)**, junto a la del pergamino (el mismo campo de la Ficha del productor).
+- **Datos**: migración `evaluacion_borradores_y_codigo_interno` — tabla `evaluacion_borradores` (una por lote y credencial; solo
+  service role) y columna `lot_evaluations.codigo_interno`.
+- **Seguridad**: `qa-centro-calidad` (152 → 173), con el caso de la captura del owner.
+- **Docs**: acta de la migración, charters `consolas` y `kaffetal-regal`, ALINEACION §3.
+
 ## [V5.143] — 2026-10-02 (commit 8133062)
 
 - **Cambiado**: en la Ficha del lote (Kaffetal Regal), **las fotos y los videos de B4 son todos opcionales** (owner, 2026-10-02;

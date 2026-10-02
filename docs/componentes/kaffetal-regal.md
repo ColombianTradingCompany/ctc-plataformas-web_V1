@@ -152,6 +152,9 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.144 · la granulometría de la Ficha se compara con el trillado verde restante** (owner, 2026-10-02; ejecutado desde la
+  conversación de `consolas`). `FichaView` pasa `factor.remainder` a `computeMesh` (antes el grano sano): los porcentajes y el
+  residuo de la vista final cambian para los lotes que digitaron mallas. El factor de rendimiento no cambia.
 - **V5.143 · fotos y video opcionales, imagen por defecto y «Agregar Referencias, Fotos y Videos»** (owner, 2026-10-02; ejecutado
   desde la conversación de `consolas`). (1) B4 ya no exige fotos: al cerrar el paso sin fotos ni video, `FichaView` avisa
   (`AVISO_SIN_MEDIOS`) y deja seguir; el guard trigger `guard_lot_fotos_intake` se retiró. (2) `src/lib/imagenDeOrigen.ts` es la

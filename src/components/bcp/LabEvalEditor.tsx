@@ -42,8 +42,7 @@ import {
   type EstadoDeTazaSca,
   type LabEvaluation,
   type ScaTaza,
-  type VistaDePlanilla,
-} from "@/lib/arena/labEvaluation";
+  type VistaDePlanilla, NOTA_DESCRIPTIVA_MAX } from "@/lib/arena/labEvaluation";
 import { CVA_PROPOSITO, decidirPorPunto, rotuloDelPunto } from "@/lib/arena/homologacion";
 import { ETAPAS_DE_LA_RUEDA, ETAPA_LABEL, INTENSIDAD, NOTA_MAX, ZONA_LABEL, ajustaIntensidad, alternaEtapa, detalleDe, etapasLabel, familiaDe, fmtIntensidad, normalizaRueda, rutaDe, zonaDeIntensidad, type DetalleDeMarca } from "@/lib/catacion/rueda";
 import { scaClassFor } from "@/components/kaffetal-regal/ficha/fichaCalculations";
@@ -131,7 +130,10 @@ export function LabEvalEditor({
   const sca = computeSca2004(value, lang);
   const cva = computeCva(value, lang);
   const factor = computeFactor(value);
-  const mesh = computeMesh(value, factor.healthy);
+  // V5.144 (owner, 2026-10-02): «los defectos primarios y secundarios hacen parte del trillado verde restante… no se suman con el
+  // total de mallas: ya estaban incluidos allí». El verde ENTERO pasa por las mallas y los defectos se apartan de ahí: la suma de
+  // mallas se compara con el TRILLADO VERDE RESTANTE, no con el grano sano. El grano sano sigue siendo la base del factor.
+  const mesh = computeMesh(value, factor.remainder);
   const punto = puntoDeLaPlanilla(value);
   const errores = erroresDePlanilla(value, lang);
   const decision = punto ? decidirPorPunto(punto) : null;
@@ -184,6 +186,19 @@ export function LabEvalEditor({
   const [detalleAbierto, setDetalleAbierto] = useState<1 | 2 | null>(null);
   const defectos = calcDefectos(value.defectos_detalle);
   // La intensidad descriptiva (0–15) de la acidez y de la sensación en boca: «sin registrar» hasta que se mueve.
+  // V5.144 (owner): «quiero poder tener también un comentario opcional en Acidez y Sensación en boca».
+  const comentarioDe = (campo: "acidez_nota" | "boca_nota", de: string) => (
+    <input
+      type="text"
+      value={value[campo]}
+      maxLength={NOTA_DESCRIPTIVA_MAX}
+      disabled={disabled}
+      placeholder={t.comentarioPh}
+      aria-label={`${t.comentario}: ${de}`}
+      onChange={(e) => onChange({ [campo]: e.target.value.slice(0, NOTA_DESCRIPTIVA_MAX) } as Partial<LabEvaluation>)}
+      style={{ width: "100%", marginTop: 6, fontSize: 12, padding: "5px 8px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--card, #fff)", color: "var(--ink)" }}
+    />
+  );
   const intensidadDe = (campo: "acidez_intensidad" | "boca_intensidad") => {
     const v = numOrNull(value[campo]);
     return (
@@ -511,6 +526,7 @@ export function LabEvalEditor({
                     <input type="checkbox" checked={value.acidez_tipo === o.key} disabled={disabled} onChange={(e) => onChange({ acidez_tipo: e.target.checked ? o.key : "" })} /> {o[lang]}
                   </label>
                 ))}
+                {comentarioDe("acidez_nota", t.acidez)}
               </div>
               <div style={S.descriptivo}>
                 <div style={S.lbl}>
@@ -531,6 +547,7 @@ export function LabEvalEditor({
                     </label>
                   );
                 })}
+                {comentarioDe("boca_nota", t.boca)}
               </div>
               <div>
                 <label style={S.lbl}>{t.perfil}</label>
@@ -563,6 +580,11 @@ export function LabEvalEditor({
             <label style={S.par}>
               <span>{t.humedad}</span>
               {numInput("fa_parch_hum")}
+            </label>
+            {/* V5.144 (owner): faltaba la humedad del café VERDE (el mismo campo de la Ficha, `b3_humedad_verde`). */}
+            <label style={S.par}>
+              <span>{t.humedadVerde}</span>
+              {numInput("b3_humedad_verde")}
             </label>
             {/* V5.135 (owner): los gramos se quedan («me gusta por simplicidad»); la (R) abre el detalle — cuál defecto es cuál. */}
             {([1, 2] as const).map((cat) => (
@@ -680,7 +702,7 @@ export function LabEvalEditor({
                     <td style={S.td}>{MALLA_LABEL[lang][r.key] ?? r.label}</td>
                     <td style={{ ...S.td, textAlign: "right" }}>
                       {isResidue ? (
-                        <input readOnly tabIndex={-1} value={factor.healthy > 0 ? mesh.residueGrams.toFixed(1) : ""} placeholder="auto" style={{ ...S.num, background: "var(--line)" }} />
+                        <input readOnly tabIndex={-1} value={factor.remainder > 0 ? mesh.residueGrams.toFixed(1) : ""} placeholder="auto" style={{ ...S.num, background: "var(--line)" }} />
                       ) : (
                         numInput(r.key as keyof LabEvaluation)
                       )}
@@ -696,8 +718,8 @@ export function LabEvalEditor({
             <tfoot>
               <tr>
                 <td style={{ ...S.td, fontWeight: 700, borderBottom: "none" }}>{t.totalMallas}</td>
-                <td style={{ ...S.td, textAlign: "right", fontWeight: 700, borderBottom: "none" }}>{factor.healthy > 0 ? `${mesh.sum.toFixed(1)} g` : "—"}</td>
-                <td style={{ ...S.td, textAlign: "right", fontWeight: 700, borderBottom: "none" }}>{factor.healthy > 0 ? `${mesh.totalPct.toFixed(0)}%` : "—"}</td>
+                <td style={{ ...S.td, textAlign: "right", fontWeight: 700, borderBottom: "none" }}>{factor.remainder > 0 ? `${mesh.sum.toFixed(1)} g` : "—"}</td>
+                <td style={{ ...S.td, textAlign: "right", fontWeight: 700, borderBottom: "none" }}>{factor.remainder > 0 ? `${mesh.totalPct.toFixed(0)}%` : "—"}</td>
                 <td style={{ ...S.td, borderBottom: "none" }} />
               </tr>
             </tfoot>

@@ -245,11 +245,11 @@ export function FichaView({
   }
 
   const factor = useMemo(() => computeFactor(data), [data]);
-  // Granulometry is sieved from the healthy beans only -- defects are
-  // physically sorted out before mesh sizing, so the mesh weights should sum
-  // to (and their percentages should be relative to) Grano Sano, not the
-  // full Trillado Verde Restante (which still includes the defects).
-  const mesh = useMemo(() => computeMesh(data, factor.healthy), [data, factor.healthy]);
+  // V5.144 (owner, 2026-10-02): la granulometría se compara con el TRILLADO VERDE RESTANTE, no con el grano sano — el
+  // verde entero pasa por las mallas y los defectos se apartan de ahí («ya estaban incluidos allí»). Antes se asumía lo
+  // contrario y un análisis correcto salía como «las mallas pesan más». La misma base que la planilla del Centro de
+  // Calidad (`LabEvalEditor`): una fórmula, no dos. El grano sano sigue siendo la base del factor de rendimiento.
+  const mesh = useMemo(() => computeMesh(data, factor.remainder), [data, factor.remainder]);
   const sca = useMemo(() => computeSca(data), [data]);
   const vTotal = useMemo(() => varietyTotal(data), [data]);
 

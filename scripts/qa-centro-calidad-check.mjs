@@ -39,6 +39,7 @@ const sinComentarios = (s) => s.replace(/\{\/\*[\s\S]*?\*\/\}|\/\*[\s\S]*?\*\/|^
 const paginaCodigo = sinComentarios(pagina);
 const accionesCodigo = sinComentarios(acciones);
 const planilla = lee("src/app/socios/[partner]/panel/evaluacion/PlanillaCentro.tsx");
+const PLANILLA_TXT = (texto) => planilla.includes(`"${texto}"`);
 const nominados = lee("src/app/ocp/(app)/nominadosActions.ts");
 const gate = lee("src/lib/partners/requirePartner.ts");
 
@@ -75,7 +76,9 @@ const gate = lee("src/lib/partners/requirePartner.ts");
 {
   const reg = cuerpoDe(acciones, "registrarEvaluacion");
   check("dar de alta inserta una lot_evaluations PENDIENTE con procedencia q_grader_batch", reg.includes('source: "q_grader_batch"') && reg.includes('status: "pending"'));
-  check("solo de un bache en_centro asignado a ESA credencial", reg.includes('batch.status !== "en_centro"') && reg.includes("batch.centro_calidad_account_id !== identity.userId"));
+  // V5.144: la comprobación del bache vive en `bacheEnMisManos`, que usan el alta Y el borrador.
+  const enMisManos = acciones.slice(acciones.indexOf("async function bacheEnMisManos("), acciones.indexOf("export async function guardarBorrador("));
+  check("solo de un bache en_centro asignado a ESA credencial", reg.includes("await bacheEnMisManos(service, lotId, identity.userId)") && enMisManos.includes('batch.status !== "en_centro"') && enMisManos.includes("batch.centro_calidad_account_id !== userId") && enMisManos.includes('ins.phase !== "sondeo"'));
   check("una sola alta pendiente por lote y bache", reg.includes("Este lote ya está dado de alta"));
   check("sin Punto (planilla completa) no hay alta (V5.92)", reg.includes("if (!punto) return"));
   check("con rastro", reg.includes('action: "evaluacion_registrada_centro"'));
@@ -292,6 +295,48 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("la planilla normaliza lo nuevo y una vacía sigue sin datos", llena.fa_color === "verde" && JSON.stringify(llena.defectos_detalle) === JSON.stringify({ negro: "2" }) && llena.boca_texturas.length === 2 && toLabEvaluation({ fa_color: "morado", acidez_tipo: "x" }).fa_color === "" && labEvaluationHasData(toLabEvaluation({})) === false && labEvaluationHasData(toLabEvaluation({ fa_color: "verde" })) === true && labEvaluationHasData(toLabEvaluation({ sca_tazas: [{ estado: "taint" }] })) === true);
   check("fisico.ts es puro (no importa nada)", !/^\s*import\s/m.test(fisicoTs.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "")));
   check("todo lo nuevo está en los dos idiomas", ["tazasSca", "infoTaint", "infoFault", "color", "detalle", "thGranos", "thCompletos", "totalDefectos", "acidez", "boca", "elijaUna", "hastaDos", "sinRegistrar"].every((k) => PL.es[k] && PL.en[k]) && F.DEFECTOS_FISICOS.every((d) => d.es && d.en));
+}
+
+// ── V5.144 (owner, 2026-10-02) · borrador, código interno, comentarios, humedad del verde y la base de las mallas ───────
+{
+  const { computeFactor, computeMesh } = await import("../src/components/kaffetal-regal/ficha/fichaCalculations.ts");
+  const { ESTADO_DE_MALLAS } = await import("../src/lib/arena/planillaI18n.ts");
+  const editor = lee("src/components/bcp/LabEvalEditor.tsx").replace(/\r\n/g, "\n");
+  const acta = lee("docs/migraciones/2026-10-02_evaluacion_borradores_y_codigo_interno.sql");
+  const borr = cuerpoDe(acciones, "guardarBorrador"), reg = cuerpoDe(acciones, "registrarEvaluacion");
+
+  // «Guardar y terminar más tarde»
+  check("borrador: misma compuerta que el alta (credencial + módulo + bache en sus manos)", borr.includes("await identidadConModulo()") && borr.includes("await bacheEnMisManos(service, lotId, auth.identity.userId)"));
+  check("borrador: uno por lote y credencial (guardar otra vez lo reemplaza)", borr.includes('.from("evaluacion_borradores").upsert(') && borr.includes('onConflict: "lot_id,account_id"') && acta.includes("primary key (lot_id, account_id)"));
+  check("borrador: NO es un alta — no escribe lot_evaluations ni exige la planilla completa", !borr.includes("lot_evaluations") && !borr.includes("puntoDeLaPlanilla") && !borr.includes("labEvaluationHasData"));
+  check("borrador: el alta lo borra", reg.includes('.from("evaluacion_borradores").delete().eq("lot_id", lotId).eq("account_id", identity.userId)'));
+  check("borrador: la tabla es solo del service role (RLS sin políticas) y se va con el lote", acta.includes("alter table public.evaluacion_borradores enable row level security;") && !/create policy/.test(acta) && acta.includes("references public.lots(id) on delete cascade"));
+  check("borrador: la página carga SOLO los de esta credencial y la planilla arranca con lo guardado", pagina.includes('.from("evaluacion_borradores").select("lot_id, planilla, notas, codigo_interno, updated_at").eq("account_id", identity.userId)') && planilla.includes("borrador ? toLabEvaluation(borrador.planilla) : EMPTY_LAB_EVALUATION") && pagina.includes('key={borrador?.guardadoEl ?? "nuevo"}'));
+  check("borrador: el botón existe en los dos idiomas y se enciende con cualquier dato", PLANILLA_TXT("Guardar y terminar más tarde") && PLANILLA_TXT("Save and finish later") && planilla.includes("guardarBorrador(lotId, ev, notas, codigoInterno)"));
+  check("la página del Centro sigue sin leer nombres (el borrador tampoco los trae)", !/full_name|producer_id|fincas\(|ficha_variedad/.test(paginaCodigo));
+
+  // El código interno de la muestra
+  check("código interno: casilla arriba de la planilla, opcional y con tope", planilla.indexOf("<label>{tx.codigo}</label>") > 0 && planilla.indexOf("<label>{tx.codigo}</label>") < planilla.indexOf("<LabEvalEditor") && planilla.includes("maxLength={80}"));
+  check("código interno: viaja con el alta y con el borrador, limpio", reg.includes("codigo_interno: codigoLimpio(codigoInterno)") && borr.includes("codigo_interno: codigoLimpio(codigoInterno)") && acciones.includes('.replace(/\\s+/g, " ").trim().slice(0, 80)'));
+  check("código interno: es del laboratorio — el código de CTCx sigue siendo el que identifica el lote", reg.includes("uid_anonimo: ctcLotReferenceShort(lotId)") && acta.includes("add column if not exists codigo_interno text"));
+  check("código interno: lo ven el Centro en su lista y CTCx en «Lotes en Evaluación»", pagina.includes("su código:") && lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").includes("código del laboratorio:"));
+
+  // Comentarios y humedad del verde
+  const conNotas = toLabEvaluation({ acidez_nota: "cítrica, viva", boca_nota: "x".repeat(400), b3_humedad_verde: 10.8 });
+  check("comentario opcional en Acidez y en Sensación en boca, con tope", conNotas.acidez_nota === "cítrica, viva" && conNotas.boca_nota.length === 240 && toLabEvaluation({}).acidez_nota === "" && toLabEvaluation({ boca_nota: 7 }).boca_nota === "");
+  check("el editor trae los dos comentarios", editor.includes('{comentarioDe("acidez_nota", t.acidez)}') && editor.includes('{comentarioDe("boca_nota", t.boca)}') && ["es", "en"].every((l) => PL[l].comentarioPh));
+  check("B3 trae la humedad del VERDE además de la del pergamino (el campo de la Ficha)", conNotas.b3_humedad_verde === "10.8" && editor.includes('{numInput("b3_humedad_verde")}') && editor.includes('{numInput("fa_parch_hum")}') && PL.es.humedadVerde === "Humedad verde (%)" && reg.includes("b3_humedad_verde: ev.b3_humedad_verde"));
+  check("un comentario solo ya cuenta como dato de la planilla", labEvaluationHasData(toLabEvaluation({ acidez_nota: "viva" })));
+
+  // La base de las mallas: el trillado verde restante (los defectos ya van dentro)
+  const caso = { fa_start: "250", fa_green_remainder: "207.7", fa_primary_defect: "", fa_secondary_defect: "5", mesh_supremo_plus: "39.4", mesh_supremo: "76", mesh_extra: "47", mesh_europa: "31.5", mesh_ugq: "9.8", mesh_peaberry: "3.3", mesh_residue: "" };
+  const f = computeFactor(caso);
+  const bien = computeMesh(caso, f.remainder), antes = computeMesh(caso, f.healthy);
+  check("el caso del owner: 207,0 g de mallas contra 207,7 g de trillado verde CUADRA (residuo 0,7 g)", bien.state === "ok" && bien.residueGrams === 0.7 && Math.round(bien.totalPct) === 100, `${bien.state} · ${bien.residueGrams}`);
+  check("contra el grano sano (202,7 g) ese mismo análisis salía como «las mallas pesan más» (el fallo que se arregló)", antes.state === "excede" && f.healthy === 202.7);
+  check("el factor de rendimiento NO cambia: sigue sobre el grano sano", Math.round(f.yieldFactor * 100) / 100 === 86.33);
+  check("la planilla y la Ficha del productor usan la MISMA base", editor.includes("const mesh = computeMesh(value, factor.remainder);") && lee("src/components/kaffetal-regal/FichaView.tsx").includes("computeMesh(data, factor.remainder)") && !editor.includes("computeMesh(value, factor.healthy)"));
+  check("los avisos nombran el trillado verde restante, no el grano sano", ["es", "en"].every((l) => !/grano sano|sound beans/.test(ESTADO_DE_MALLAS[l].sin_base + ESTADO_DE_MALLAS[l].excede)) && ESTADO_DE_MALLAS.es.excede.includes("trillado verde restante"));
 }
 
 if (fallos.length) {

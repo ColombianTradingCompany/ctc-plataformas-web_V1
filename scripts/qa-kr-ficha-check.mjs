@@ -153,7 +153,8 @@ const lee = (r) => readFileSync(new URL(`../${r}`, import.meta.url), "utf8");
 // ── 6. La granulometría avisa en LOS DOS sentidos ──────────────────────────
 {
   const vacio = { mesh_supremo_plus: "", mesh_supremo: "", mesh_extra: "", mesh_europa: "", mesh_ugq: "", mesh_peaberry: "", mesh_residue: "" };
-  const sano = 200; // gramos de grano sano
+  // V5.144 (owner): la BASE de las mallas es el trillado verde restante (los defectos ya van dentro), no el grano sano.
+  const sano = 200; // gramos de la base (el trillado verde restante)
 
   check("sin grano sano no se juzga nada", computeMesh(vacio, 0).state === "sin_base");
   check("con grano sano y ninguna malla pesada: vacío", computeMesh(vacio, sano).state === "vacio");

@@ -59,8 +59,13 @@ export function computeFactor(data: FactorFields) {
 }
 
 // El Residuo no se digita: es el "solucionador de diferencia" que lleva la
-// suma de mallas siempre a 100% del grano sano -- lo que no quedó retenido en
+// suma de mallas siempre a 100% de la BASE -- lo que no quedó retenido en
 // ninguna malla ES el residuo, por definición.
+//
+// LA BASE (`remainder`) ES EL TRILLADO VERDE RESTANTE (V5.144, owner 2026-10-02): el verde entero pasa por las mallas y
+// los defectos primarios y secundarios se apartan de ahí, así que YA ESTÁN dentro de las mallas. Hasta la V5.143 las
+// dos pantallas pasaban el grano sano (restante − defectos) y un análisis bien hecho salía como «las mallas pesan más».
+// Abajo, donde un comentario viejo dice «grano sano», léase «la base».
 //
 // ── El defecto que arregla el `state` de abajo (owner, 2026-08-20) ──────────
 // «No creo que esté funcionando bien; tampoco es fácil entender qué debo poner,

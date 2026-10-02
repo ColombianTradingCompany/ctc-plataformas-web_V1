@@ -34,8 +34,47 @@ async function identidadConModulo() {
   return { ok: true as const, identity };
 }
 
+/** El código interno de la muestra en el laboratorio: texto corto, del evaluador (V5.144). */
+const codigoLimpio = (v: unknown): string | null => (typeof v === "string" && v.trim() ? v.replace(/\s+/g, " ").trim().slice(0, 80) : null);
+
+/** El bache de ESTE lote, si está en manos de esta credencial. Nada más se lee del lote. */
+async function bacheEnMisManos(service: ReturnType<typeof createServiceRoleClient>, lotId: string, userId: string): Promise<{ ok: true; batchId: string } | { ok: false; error: string }> {
+  const { data: ins } = await service.from("arena_inscriptions").select("id, phase, sondeo_batch_id").eq("lot_id", lotId).maybeSingle();
+  if (!ins || ins.phase !== "sondeo" || !ins.sondeo_batch_id) return { ok: false, error: "Este lote no está en un Bache de Evaluación." };
+  const { data: batch } = await service.from("sondeo_batches").select("id, status, centro_calidad_account_id").eq("id", ins.sondeo_batch_id).maybeSingle();
+  if (!batch || batch.status !== "en_centro" || batch.centro_calidad_account_id !== userId) return { ok: false, error: "Ese bache no está en manos de su Centro." };
+  return { ok: true, batchId: batch.id as string };
+}
+
+// ── V5.144 (owner, 2026-10-02) · «Guardar y terminar más tarde» ────────────────────────────────────────────────────────
+// La planilla a medio llenar se guarda en `evaluacion_borradores` (una por lote y credencial) y se retoma después, en
+// este u otro equipo. Un borrador NO es un alta: no tiene puntaje ni estado, CTCx no lo ve y no pide que la planilla esté
+// completa. Se borra al dar de alta el lote.
+export async function guardarBorrador(lotId: string, raw: LabEvaluation, notas: string, codigoInterno: string): Promise<Result> {
+  const auth = await identidadConModulo();
+  if (!auth.ok) return auth;
+  const service = createServiceRoleClient();
+  const bache = await bacheEnMisManos(service, lotId, auth.identity.userId);
+  if (!bache.ok) return bache;
+  const { error } = await service.from("evaluacion_borradores").upsert(
+    {
+      lot_id: lotId,
+      account_id: auth.identity.userId,
+      batch_id: bache.batchId,
+      planilla: toLabEvaluation(raw),
+      notas: notas.trim().slice(0, 4000) || null,
+      codigo_interno: codigoLimpio(codigoInterno),
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "lot_id,account_id" }
+  );
+  if (error) return { ok: false, error: "No se pudo guardar el borrador: " + error.message };
+  revalidatePath("/socios/centro-calidad/panel/evaluacion");
+  return { ok: true };
+}
+
 /** «Dar de alta» un lote: la planilla del Q-Grader queda registrada, pendiente de la confirmación de CTCx. */
-export async function registrarEvaluacion(lotId: string, raw: LabEvaluation, notas: string): Promise<Result> {
+export async function registrarEvaluacion(lotId: string, raw: LabEvaluation, notas: string, codigoInterno = ""): Promise<Result> {
   const auth = await identidadConModulo();
   if (!auth.ok) return auth;
   const { identity } = auth;
@@ -49,12 +88,9 @@ export async function registrarEvaluacion(lotId: string, raw: LabEvaluation, not
   const puntaje = punto.bajo;
 
   // Solo un lote de un bache EN el Centro y asignado a ESTA credencial. Nada más se lee del lote.
-  const { data: ins } = await service.from("arena_inscriptions").select("id, phase, sondeo_batch_id").eq("lot_id", lotId).maybeSingle();
-  if (!ins || ins.phase !== "sondeo" || !ins.sondeo_batch_id) return { ok: false, error: "Este lote no está en un Bache de Evaluación." };
-  const { data: batch } = await service.from("sondeo_batches").select("id, status, centro_calidad_account_id").eq("id", ins.sondeo_batch_id).maybeSingle();
-  if (!batch || batch.status !== "en_centro" || batch.centro_calidad_account_id !== identity.userId) {
-    return { ok: false, error: "Ese bache no está en manos de su Centro." };
-  }
+  const bache = await bacheEnMisManos(service, lotId, identity.userId);
+  if (!bache.ok) return bache;
+  const batch = { id: bache.batchId };
   const { count: yaRegistrada } = await service
     .from("lot_evaluations")
     .select("id", { count: "exact", head: true })
@@ -81,6 +117,7 @@ export async function registrarEvaluacion(lotId: string, raw: LabEvaluation, not
       fa_primary_defect: ev.fa_primary_defect,
       fa_secondary_defect: ev.fa_secondary_defect,
       fa_parch_hum: ev.fa_parch_hum,
+      b3_humedad_verde: ev.b3_humedad_verde, // V5.144: la humedad del verde
       mesh_supremo_plus: ev.mesh_supremo_plus,
       mesh_supremo: ev.mesh_supremo,
       mesh_extra: ev.mesh_extra,
@@ -100,9 +137,12 @@ export async function registrarEvaluacion(lotId: string, raw: LabEvaluation, not
     uid_anonimo: ctcLotReferenceShort(lotId),
     q_grader_reference: identity.contactName?.trim() || identity.orgName,
     notes: notas.trim() || null,
+    codigo_interno: codigoLimpio(codigoInterno), // V5.144: el código de la muestra en el laboratorio
     submitted_by: identity.userId,
   });
   if (error) return { ok: false, error: "No se pudo dar de alta el lote: " + error.message };
+  // El borrador cumplió: el alta lo reemplaza.
+  await service.from("evaluacion_borradores").delete().eq("lot_id", lotId).eq("account_id", identity.userId);
 
   await service.from("audit_log").insert({
     entity_type: "lot",

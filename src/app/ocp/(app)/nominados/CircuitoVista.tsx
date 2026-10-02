@@ -80,7 +80,7 @@ type BatchRow = {
   centro_calidad_account_id: string | null;
 };
 type MuestraRow = { id: string; lot_id: string; tipo: TipoDeMuestra; kg: number; ubicacion: string | null };
-type AltaRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; escala: string; rueda: unknown; rueda_detalle: unknown; q_grader_reference: string | null; notes: string | null; created_at: string };
+type AltaRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; escala: string; rueda: unknown; rueda_detalle: unknown; q_grader_reference: string | null; notes: string | null; created_at: string; codigo_interno: string | null };
 // V5.92: el alta se enseña con su Punto y su procedencia (nunca un homologado como un SCA catado).
 const rotuloDeAlta = (a: AltaRow) => {
   const p = puntoDeFila(a);
@@ -138,7 +138,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
     // V5.81: las altas del Centro de Calidad (pendientes o devueltas) de los lotes en bache.
     service
       .from("lot_evaluations")
-      .select("id, lot_id, batch_id, status, sca_total, punto, escala, rueda, rueda_detalle, q_grader_reference, notes, created_at")
+      .select("id, lot_id, batch_id, status, sca_total, punto, escala, rueda, rueda_detalle, q_grader_reference, notes, created_at, codigo_interno")
       .eq("source", "q_grader_batch")
       .in("status", ["pending", "rejected"])
       .in("lot_id", enBache.map((i) => i.lot_id))
@@ -466,6 +466,8 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
                         <p className={styles.meta} style={{ margin: "4px 0 0" }}>
                           <span className={`${styles.badge} ${styles.badgeWarn}`}>Alta del Centro pendiente</span> <b>{rotuloDeAlta(pendiente)}</b> ·{" "}
                           {pendiente.q_grader_reference ?? "—"} · {fecha(pendiente.created_at)}
+                          {/* V5.144: el código con que el laboratorio lleva la muestra (suyo, independiente del de CTCx). */}
+                          {pendiente.codigo_interno && <> · código del laboratorio: <span className="mono">{pendiente.codigo_interno}</span></>}
                         </p>
                         <ConfirmarCentroControls
                           lotId={i.lot_id}

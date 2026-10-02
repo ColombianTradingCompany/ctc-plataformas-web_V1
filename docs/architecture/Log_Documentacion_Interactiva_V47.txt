@@ -466,3 +466,11 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `app/ocp/(app)/kr/LoteSeccion.tsx`, `EvaReviewCard.tsx`, `evaChecklist.ts`, `app/ocp/(app)/evaluationActions.ts` (`revisarReferencia`), `src/lib/ocp/borradoNuclearTexto.ts`.
 - ANN `scripts/qa-guard-check.mjs`, `qa-kr-ficha-check.mjs`, `qa-borrado-nuclear-check.mjs`.
 (commit: 8133062)
+
+## [2026-10-02] V5.144 · Centro de Calidad — borrador, código interno, comentarios, humedad del verde y la base de las mallas
+- ADD tabla `evaluacion_borradores`, columna `lot_evaluations.codigo_interno` (acta `docs/migraciones/2026-10-02_evaluacion_borradores_y_codigo_interno.sql`).
+- ANN `src/lib/arena/labEvaluation.ts` (`acidez_nota`, `boca_nota`, `b3_humedad_verde`), `planillaI18n.ts`, `components/bcp/LabEvalEditor.tsx` (mallas contra el trillado verde restante).
+- ANN `app/socios/[partner]/panel/evaluacionActions.ts` (`guardarBorrador`, `bacheEnMisManos`), `evaluacion/PlanillaCentro.tsx`, `evaluacion/page.tsx`.
+- ANN `components/kaffetal-regal/FichaView.tsx`, `ficha/fichaCalculations.ts` (la misma base de mallas), `app/ocp/(app)/nominados/CircuitoVista.tsx`.
+- ANN `scripts/qa-centro-calidad-check.mjs`, `scripts/qa-kr-ficha-check.mjs`.
+(commit: pendiente)

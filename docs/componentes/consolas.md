@@ -177,6 +177,14 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.144 · la planilla y el Centro de Calidad: borrador, código interno, comentarios, humedad del verde y la base de las
+  mallas** (owner, 2026-10-02; código de `socios` y de `kaffetal-regal` tocado). (1) **La base de las mallas es el trillado
+  verde restante** (`computeMesh(…, factor.remainder)` en `LabEvalEditor` y en `FichaView`): los defectos ya van dentro del
+  verde; el grano sano queda solo para el factor. (2) `evaluacion_borradores` + `guardarBorrador`: «Guardar y terminar más
+  tarde», uno por lote y credencial. (3) `lot_evaluations.codigo_interno`: el código del laboratorio. (4) `acidez_nota`,
+  `boca_nota`, `b3_humedad_verde` en la planilla. Abierto: (a) la Coffee Datasheet Tool ya comparaba las mallas contra la
+  muestra de verde entera y ya trae notas por sección y humedad: no se tocó, pero su comentario de acidez/boca vive en las
+  notas descriptivas de la sección (CVA), no en un campo propio; (b) «Registrar a mano» del OCP y la Arena no tienen borrador.
 - **V5.143 · el OCP ve y revisa lo que el productor agrega a un lote cerrado** (owner, 2026-10-02). `LoteSeccion` lista
   `lot_referencias` con sus archivos firmados y «Marcar revisada» (`revisarReferencia`, clase `emite`, en
   `evaluationActions.ts`; deja una nota en el feed del productor). El bloque B4 de la EVA ya no pinta en rojo un lote sin

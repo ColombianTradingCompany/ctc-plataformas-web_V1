@@ -24,7 +24,7 @@ export const dynamic = "force-dynamic";
 
 type BatchRow = { id: string; label: string; shipped_at: string | null; q_grader_name: string | null };
 type InsRow = { lot_id: string; sondeo_batch_id: string | null; phase: string };
-type EvalRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; cva_total: number | string | null; escala: string; rueda: unknown; rueda_detalle: unknown; created_at: string; reviewed_at: string | null; notes: string | null; submitted_by: string | null };
+type EvalRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; cva_total: number | string | null; escala: string; rueda: unknown; rueda_detalle: unknown; created_at: string; reviewed_at: string | null; notes: string | null; submitted_by: string | null; codigo_interno: string | null };
 // V5.92: nunca un homologado se lee como un SCA catado.
 const rotulo = (e: EvalRow) => {
   const p = puntoDeFila(e);
@@ -56,7 +56,7 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
         service.from("arena_inscriptions").select("lot_id, sondeo_batch_id, phase").in("sondeo_batch_id", batchIds),
         service
           .from("lot_evaluations")
-          .select("id, lot_id, batch_id, status, sca_total, punto, cva_total, escala, rueda, rueda_detalle, created_at, reviewed_at, notes, submitted_by")
+          .select("id, lot_id, batch_id, status, sca_total, punto, cva_total, escala, rueda, rueda_detalle, created_at, reviewed_at, notes, submitted_by, codigo_interno")
           .in("batch_id", batchIds)
           .eq("source", "q_grader_batch")
           .order("created_at", { ascending: false }),
@@ -64,6 +64,16 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
       ])
     : [{ data: [] }, { data: [] }, { data: [] }];
   const inscripciones = (insRaw as InsRow[] | null) ?? [];
+  // V5.144: lo que este evaluador dejó a medias («Guardar y terminar más tarde»). Solo los SUYOS.
+  const { data: borrRaw } = batchIds.length
+    ? await service.from("evaluacion_borradores").select("lot_id, planilla, notas, codigo_interno, updated_at").eq("account_id", identity.userId).in("batch_id", batchIds)
+    : { data: [] };
+  const borradores = new Map(
+    ((borrRaw as { lot_id: string; planilla: unknown; notas: string | null; codigo_interno: string | null; updated_at: string }[] | null) ?? []).map((b) => [
+      b.lot_id,
+      { planilla: b.planilla, notas: b.notas, codigoInterno: b.codigo_interno, guardadoEl: b.updated_at },
+    ])
+  );
   const evaluaciones = (evalRaw as EvalRow[] | null) ?? [];
   const kgPorLote = new Map<string, number>();
   for (const m of (movRaw as MovRow[] | null) ?? []) {
@@ -117,10 +127,18 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
                     const devuelta = !pendiente ? propias.find((e) => e.status === "rejected") : null;
                     const confirmada = propias.find((e) => e.status === "accepted");
                     const kg = kgPorLote.get(l.lot_id);
+                    const borrador = borradores.get(l.lot_id) ?? null;
+                    // El código interno del laboratorio: el del alta, o el que va en el borrador.
+                    const codigoInterno = (pendiente ?? confirmada ?? devuelta)?.codigo_interno ?? borrador?.codigoInterno ?? null;
                     return (
                       <div key={l.lot_id} style={{ borderTop: "1px dashed var(--line)", paddingTop: 8, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
                         <span className="mono" style={{ fontWeight: 700, fontSize: 15 }}>{uid}</span>
                         <span className={styles.orgLine}>{kg ? `${kg} kg de muestra` : "muestra de evaluación"}</span>
+                        {codigoInterno && (
+                          <span className={styles.orgLine} title="Su código interno de la muestra">
+                            · su código: <span className="mono">{codigoInterno}</span>
+                          </span>
+                        )}
                         <span style={{ flex: 1 }} />
                         {confirmada || l.phase !== "sondeo" ? (
                           <span className={styles.orgLine}>✓ Confirmado por CTC</span>
@@ -138,7 +156,9 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
                                 Devuelta por CTC{devuelta.notes ? `: ${devuelta.notes}` : ""} — evalúe de nuevo.
                               </span>
                             )}
-                            <DarDeAltaButton lotId={l.lot_id} uid={uid} />
+                            {borrador && <span className={styles.orgLine}>Borrador guardado el {fecha(borrador.guardadoEl)}</span>}
+                            {/* La `key` cambia con el borrador: al guardar y volver a abrir, la planilla arranca con lo guardado. */}
+                            <DarDeAltaButton key={borrador?.guardadoEl ?? "nuevo"} lotId={l.lot_id} uid={uid} borrador={borrador} />
                           </>
                         )}
                         {pendiente && Array.isArray(pendiente.rueda) && pendiente.rueda.length > 0 && (

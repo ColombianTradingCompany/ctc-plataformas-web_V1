@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { sharedCookieDomain } from "@/lib/supabase/cookieDomain";
+import { borradoHostOnly, esUsuarioInexistente, unaPorNombre } from "@/lib/supabase/cookiesDeSesion";
 // El mapa subdominio → ruta se mudó a `@/lib/red/subdominios` el 2026-08-13:
 // los metadatos Open Graph necesitan el mismo mapa al revés para firmar cada
 // tarjeta de enlace con su origen absoluto, y tenerlo dos veces era garantizar
@@ -119,7 +120,13 @@ export async function proxy(request: NextRequest) {
     // el resultado a propósito: aquí NO se autoriza nada — de eso siguen
     // encargándose requireConsoleAccess / requireActiveAdmin en cada ruta y acción.
     try {
-      await supabase.auth.getUser();
+      const { error } = await supabase.auth.getUser();
+      // V5.138 · La cuenta del token se BORRÓ con la sesión abierta (pasó con una sesión asistida: se eliminó al
+      // productor desde el OCP con su Kaffetal Regal todavía abierto). Auth responde 403 `user_not_found`, que
+      // supabase-js NO trata como sesión cerrada: la cookie quedaba viva hasta vencer, cada petición repetía la
+      // llamada y la superficie pintaba un panel vacío. Se cierra aquí, en este navegador (`local`): el 403 del
+      // logout se ignora y la cookie se borra.
+      if (esUsuarioInexistente(error)) await supabase.auth.signOut({ scope: "local" });
     } catch {
       // Un fallo de red con el servidor de Auth no debe tumbar la navegación:
       // se sirve la página y el guard de la ruta decidirá con lo que haya.
@@ -129,16 +136,19 @@ export async function proxy(request: NextRequest) {
   if (hasAuthCookie) await renew(undefined); // cookie compartida sb-…-auth-token
   if (hasPanelCookie) await renew("ctc-panel-auth"); // sesión de las consolas internas
 
-  for (const { name: n, value, options } of pending) {
-    // Migración: al escribir la variante compartida (Domain=…), se expira la
-    // vieja cookie host-only del mismo nombre en ESTE host — si quedara viva,
-    // el navegador enviaría ambas y la vieja podría "taparle" la sesión nueva
-    // al servidor. OJO (2026-07-29): tiene que ir como header crudo —
-    // ResponseCookies es un mapa por nombre y un segundo .set() del mismo
-    // nombre TRAGABA el borrado (verificado contra el Next instalado).
-    if (cookieDomain) response.headers.append("set-cookie", `${n}=; Path=/; Max-Age=0`);
-    response.cookies.set(n, value, options);
-  }
+  // UNA escritura por nombre (V5.138, `cookiesDeSesion.ts`): @supabase/ssr manda cada borrado dos veces —con dominio y
+  // host-only— y `response.cookies` es un mapa por nombre: sin esto, el host-only reemplazaba al que sí borra la
+  // cookie compartida.
+  const finales = unaPorNombre(pending);
+  for (const { name: n, value, options } of finales) response.cookies.set(n, value, options);
+  // Migración: al escribir la variante compartida (Domain=…), se expira la vieja cookie host-only del mismo nombre en
+  // ESTE host — si quedara viva, el navegador enviaría ambas y la vieja podría "taparle" la sesión nueva al servidor.
+  // Va como header crudo y DESPUÉS de todos los `.set()` (V5.138): cada `.set()` reescribe los `set-cookie` desde su
+  // mapa y se llevaba por delante los crudos puestos antes (verificado contra Next 16.3: no llegaba ninguno).
+  // En el dominio raíz NO: allí la cookie host-only y la compartida tienen el mismo (nombre, dominio, ruta) y el borrado
+  // se llevaría la sesión recién escrita.
+  const enLaRaiz = cookieDomain === `.${host.split(":")[0].toLowerCase()}`;
+  if (cookieDomain && !enLaRaiz) for (const { name: n } of finales) response.headers.append("set-cookie", borradoHostOnly(n));
 
   return response;
 }

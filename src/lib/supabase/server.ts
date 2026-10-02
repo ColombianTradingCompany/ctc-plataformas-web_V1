@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies, headers } from "next/headers";
 import { sharedCookieDomain } from "./cookieDomain";
+import { unaPorNombre } from "./cookiesDeSesion";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -18,7 +19,9 @@ export async function createSessionClient() {
     cookies: {
       getAll: () => cookieStore.getAll(),
       setAll: (cookiesToSet) => {
-        cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+        // `cookies()` es un mapa por nombre: sin `unaPorNombre`, el borrado host-only que @supabase/ssr manda
+        // DESPUÉS del borrado con dominio lo reemplazaba, y la cookie compartida no se borraba nunca (V5.138).
+        unaPorNombre(cookiesToSet).forEach(({ name, value, options }) => cookieStore.set(name, value, options));
       },
     },
   });
@@ -48,7 +51,9 @@ export async function createPanelSessionClient() {
     cookies: {
       getAll: () => cookieStore.getAll(),
       setAll: (cookiesToSet) => {
-        cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+        // `cookies()` es un mapa por nombre: sin `unaPorNombre`, el borrado host-only que @supabase/ssr manda
+        // DESPUÉS del borrado con dominio lo reemplazaba, y la cookie compartida no se borraba nunca (V5.138).
+        unaPorNombre(cookiesToSet).forEach(({ name, value, options }) => cookieStore.set(name, value, options));
       },
     },
   });

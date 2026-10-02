@@ -11,6 +11,9 @@
 // Cada comprobación cita la condición de la que sale; ninguna copia el código que vigila.
 
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { createServerClient } from "@supabase/ssr";
+import { borradoHostOnly, esUsuarioInexistente, unaPorNombre } from "../src/lib/supabase/cookiesDeSesion.ts";
 import {
   correoEtiquetaDesacoplado,
   correoRealValido,
@@ -171,6 +174,124 @@ const lee = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
   check("el CHECK solo admite desacoplado · entregado", sql.includes("check (gestion in ('desacoplado', 'entregado'))"));
   const handoff = lee("docs/HANDOFF.md");
   check("HANDOFF · la tabla de guards nombra `gestion`", /guard_producer_protected_columns[^\n]*`gestion`/.test(handoff));
+}
+
+// ── 9. La cookie compartida se CIERRA y se CAMBIA de verdad (V5.138, owner 2026-10-02) ─────────────────────────────────
+// «La Asistencia a Proveedores no está cargando nada de la información correspondiente.» Kaffetal Regal seguía con la
+// sesión de una cuenta ya borrada: @supabase/ssr pide cada borrado dos veces (con dominio y host-only), `cookies()` de
+// Next guarda UNO por nombre y se quedaba con el host-only, que no borra la cookie compartida. Aquí se ejecuta la
+// librería REAL contra el almacén de cookies REAL de Next, con Auth simulado, y se mira qué le llega al navegador.
+{
+  const { ResponseCookies } = createRequire(import.meta.url)("next/dist/compiled/@edge-runtime/cookies");
+  const URL_SB = "https://abcdefghijklmnop.supabase.co", CLAVE = "sb-abcdefghijklmnop-auth-token", DOMINIO = ".ctcexport.com";
+  const enCookie = (sesion) => "base64-" + Buffer.from(JSON.stringify(sesion)).toString("base64url");
+  const sesionDe = (token, relleno = 0) => ({
+    access_token: token, refresh_token: `r-${token}`, token_type: "bearer", expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600,
+    user: { id: `u-${token}`, aud: "authenticated", email: `${token}@ctc-qa-test.co`, user_metadata: { relleno: "x".repeat(relleno) } },
+  });
+  const responde = (status, cuerpo) => async () => new Response(JSON.stringify(cuerpo), { status, headers: { "content-type": "application/json" } });
+  /** El navegador en miniatura: una cookie es (nombre, dominio); Max-Age=0 la borra. */
+  const navegador = (inicial) => {
+    const tarro = new Map(inicial.map((c) => [`${c.name}|${c.domain}`, c]));
+    return {
+      recibe(cabeceras, host) {
+        for (const h of cabeceras) {
+          const [par, ...attrs] = h.split("; ");
+          const name = par.slice(0, par.indexOf("=")), value = decodeURIComponent(par.slice(par.indexOf("=") + 1));
+          const domain = (attrs.find((a) => a.startsWith("Domain=")) ?? `Domain=${host}`).slice(7);
+          if (attrs.includes("Max-Age=0")) tarro.delete(`${name}|${domain}`);
+          else tarro.set(`${name}|${domain}`, { name, value, domain });
+        }
+      },
+      envia: () => [...tarro.values()].map(({ name, value }) => ({ name, value })),
+      nombres: () => [...tarro.values()].map((c) => `${c.name}@${c.domain}`).sort(),
+    };
+  };
+  /** Lo que hace una Server Action: el cliente de sesión de `server.ts`, con o sin la regla, sobre el `cookies()` de Next. */
+  const accion = async (nav, fetch, conRegla, hacer) => {
+    const cabeceras = new Headers(), almacen = new ResponseCookies(cabeceras);
+    const cliente = createServerClient(URL_SB, "anon", {
+      global: { fetch },
+      cookieOptions: { domain: DOMINIO, path: "/" },
+      cookies: {
+        getAll: () => nav.envia(),
+        setAll: (lista) => (conRegla ? unaPorNombre(lista) : lista).forEach(({ name, value, options }) => almacen.set(name, value, options)),
+      },
+    });
+    await hacer(cliente);
+    const out = cabeceras.getSetCookie();
+    nav.recibe(out, "ocp.ctcexport.com");
+    return out;
+  };
+  const tokenQueVe = async (nav) => {
+    const lector = createServerClient(URL_SB, "anon", { cookies: { getAll: () => nav.envia(), setAll: () => {} } });
+    return (await lector.auth.getSession()).data.session?.access_token ?? null;
+  };
+  const silencio = async (f) => { const w = console.warn; console.warn = () => {}; try { return await f(); } finally { console.warn = w; } };
+  const vieja = { name: CLAVE, value: enCookie(sesionDe("viejo")), domain: DOMINIO };
+  const noExiste = responde(403, { code: 403, error_code: "user_not_found", msg: "User from sub claim in JWT does not exist" });
+
+  await silencio(async () => {
+    // (a) «Cerrar sesión asistida», con la cuenta ya borrada (Auth responde 403 al logout).
+    for (const conRegla of [false, true]) {
+      const nav = navegador([vieja]);
+      const out = await accion(nav, noExiste, conRegla, (c) => c.auth.signOut({ scope: "local" }));
+      const delNombre = out.filter((h) => h.startsWith(`${CLAVE}=`));
+      if (!conRegla) check("cerrar · SIN la regla el borrado llega sin dominio y la cookie compartida sobrevive (el fallo que se arregló)", delNombre.length === 1 && !delNombre[0].includes("Domain=") && nav.nombres().length === 1, JSON.stringify(out));
+      else {
+        check("cerrar · llega UN borrado y lleva el dominio compartido", delNombre.length === 1 && delNombre[0].includes(`Domain=${DOMINIO}`) && delNombre[0].includes("Max-Age=0"), JSON.stringify(out));
+        check("cerrar · el navegador se queda sin la sesión del productor", nav.nombres().length === 0 && (await tokenQueVe(nav)) === null, nav.nombres().join(","));
+      }
+    }
+    // (b) Entrar como OTRO productor cuya sesión ocupa otros trozos (la vieja cabía en una cookie; la nueva va en .0 y .1).
+    const nueva = sesionDe("nuevo", 3200);
+    for (const conRegla of [false, true]) {
+      const nav = navegador([vieja]);
+      const out = await accion(nav, responde(200, nueva), conRegla, (c) => c.auth.verifyOtp({ type: "magiclink", token_hash: "x" }));
+      const trozos = out.filter((h) => /^sb-[a-z]+-auth-token\.\d+=/.test(h));
+      check(`cambiar · la sesión nueva se escribe en trozos con el dominio compartido (${conRegla ? "con" : "sin"} la regla)`, trozos.length >= 2 && trozos.every((h) => h.includes(`Domain=${DOMINIO}`)), String(trozos.length));
+      const ve = await tokenQueVe(nav);
+      if (!conRegla) check("cambiar · SIN la regla Kaffetal Regal sigue viendo al productor ANTERIOR (el fallo que se arregló)", ve === "viejo" && nav.nombres().includes(`${CLAVE}@${DOMINIO}`), String(ve));
+      else {
+        check("cambiar · la cookie vieja se borra en el dominio compartido", !nav.nombres().includes(`${CLAVE}@${DOMINIO}`), nav.nombres().join(","));
+        check("cambiar · Kaffetal Regal ve al productor NUEVO", ve === "nuevo", String(ve));
+      }
+    }
+    // (c) El proxy: la cuenta del token ya no existe → la sesión se cierra sola en la siguiente petición.
+    const nav = navegador([vieja]);
+    const out = await accion(nav, noExiste, true, async (c) => {
+      const { error } = await c.auth.getUser();
+      check("cuenta borrada · Auth responde `user_not_found` y la librería NO cierra la sesión por su cuenta", esUsuarioInexistente(error) && nav.nombres().length === 1);
+      if (esUsuarioInexistente(error)) await c.auth.signOut({ scope: "local" });
+    });
+    check("cuenta borrada · con el cierre del proxy la cookie compartida se borra", nav.nombres().length === 0 && out.some((h) => h.includes(`Domain=${DOMINIO}`) && h.includes("Max-Age=0")), JSON.stringify(out));
+  });
+
+  // La regla, sola.
+  const b = (name, domain) => ({ name, value: "", options: { path: "/", maxAge: 0, ...(domain ? { domain } : {}) } });
+  const v = (name, value) => ({ name, value, options: { path: "/", domain: DOMINIO } });
+  check("regla · de dos borrados del mismo nombre queda el que lleva dominio (en cualquier orden)", unaPorNombre([b("a", DOMINIO), b("a")])[0].options.domain === DOMINIO && unaPorNombre([b("a"), b("a", DOMINIO)])[0].options.domain === DOMINIO);
+  check("regla · un valor le gana a un borrado, antes o después", unaPorNombre([b("a", DOMINIO), v("a", "1")])[0].value === "1" && unaPorNombre([v("a", "1"), b("a")])[0].value === "1");
+  check("regla · de dos valores queda el último", unaPorNombre([v("a", "1"), v("a", "2")])[0].value === "2");
+  check("regla · nombres distintos no se tocan y conservan el orden", unaPorNombre([v("a", "1"), b("b", DOMINIO), b("b"), v("c", "3")]).map((c) => c.name).join("") === "abc");
+  check("regla · solo `user_not_found` cuenta como cuenta borrada", esUsuarioInexistente({ code: "user_not_found" }) && !esUsuarioInexistente({ code: "session_not_found" }) && !esUsuarioInexistente(null) && !esUsuarioInexistente(new Error("red")));
+  check("regla · el borrado host-only no lleva dominio", borradoHostOnly("a") === "a=; Path=/; Max-Age=0");
+
+  // Y los tres sitios que escriben cookies de sesión la usan.
+  const servidor = lee("src/lib/supabase/server.ts"), proxy = lee("src/proxy.ts");
+  check("server.ts · los dos clientes (compartida y consolas) pasan por `unaPorNombre`", (servidor.match(/unaPorNombre\(cookiesToSet\)\.forEach/g) ?? []).length === 2 && !/cookiesToSet\.forEach\(\(\{ name, value, options \}\) => cookieStore\.set/.test(servidor));
+  check("proxy · escribe una por nombre", proxy.includes("const finales = unaPorNombre(pending);") && !proxy.includes("of pending)"));
+  check("proxy · el borrado host-only va DESPUÉS de los `.set()` (antes se perdía) y nunca en el dominio raíz", proxy.indexOf("response.cookies.set(n, value, options)") < proxy.indexOf("borradoHostOnly(n)") && proxy.includes("cookieDomain && !enLaRaiz"));
+  check("proxy · cierra la sesión de una cuenta que ya no existe", proxy.includes('if (esUsuarioInexistente(error)) await supabase.auth.signOut({ scope: "local" });'));
+  {
+    // El supuesto del proxy, contra el Next instalado: un `.set()` posterior se lleva los encabezados crudos anteriores.
+    const h = new Headers(), jar = new ResponseCookies(h);
+    h.append("set-cookie", borradoHostOnly("a"));
+    jar.set("a", "1", { domain: DOMINIO, path: "/" });
+    const antes = h.getSetCookie().length;
+    h.append("set-cookie", borradoHostOnly("a"));
+    check("Next · un encabezado crudo puesto ANTES de `.set()` se pierde; puesto después, llega", antes === 1 && h.getSetCookie().length === 2, JSON.stringify(h.getSetCookie()));
+  }
 }
 
 if (fallos.length) {

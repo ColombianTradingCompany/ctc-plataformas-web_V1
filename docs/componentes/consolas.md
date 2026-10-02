@@ -122,7 +122,7 @@ portal y el peso de las imágenes) ·
 `qa-moneda-check.mjs` (24 — la moneda de cara al comprador: USD en la tienda, EUR declarado en la subasta) ·
 `qa-guard-check.mjs` (seguridad, con cuentas QA) · **`qa-niveles-check.mjs`** (36 — el nivel `viewer`: la regla y la lista
 blanca de borradores se leen DEL PLAN) · `qa-transcripciones-check.mjs` (50, con `ts-resolve`) ·
-`qa-transcripciones-nube.mjs` (20, toca AssemblyAI, ~US$0,002) · **`qa-asistencia-check.mjs`** (57 — la sesión asistida solo para
+`qa-transcripciones-nube.mjs` (20, toca AssemblyAI, ~US$0,002) · **`qa-asistencia-check.mjs`** (88 — la sesión asistida solo para
 productores y siempre con rastro; la etiqueta del desacoplado no recibe correos; el guard de `gestion`) · **`qa-registro-check.mjs`**
 (67 — la regla de los recordatorios desde el folio 7, rastro en cada movimiento de una certificación, el cron con secreto, el
 chequeo EUDR y la transcripción de FT2 en la vista del lote; y el lado de KR) · **`qa-solicitud-evaluacion-check.mjs`** (78, V5.80 — la
@@ -177,6 +177,15 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.138 · la sesión asistida mostraba al productor anterior (o nada)** (owner, 2026-10-02). Hecho: las cookies de sesión que
+  escribe el servidor pasan por `unaPorNombre` (`src/lib/supabase/cookiesDeSesion.ts`) — `cookies()` de Next guarda una por
+  nombre y se quedaba con el borrado host-only de `@supabase/ssr`, así que «Cerrar sesión asistida» no cerraba y el cambio de
+  productor dejaba el trozo viejo tapando la sesión nueva—; el proxy cierra la sesión de una cuenta ya borrada. `qa-asistencia`
+  §9 lo reproduce con la librería real. **Regla para quien toque `server.ts` o el proxy**: nunca `cookieStore.set` directo sobre
+  la lista de `setAll`. Abierto: (a) nadie ha conducido el arreglo con la consola real (OTP) — lo confirma el owner en su
+  siguiente sesión asistida; (b) Kaffetal Regal no dice en pantalla COMO QUIÉN está entrado el operador: una franja «Sesión
+  asistida · <productor>» evitaría trabajar sobre el productor equivocado (dueño: `kaffetal-regal`, decisión del owner);
+  (c) borrar una cuenta desde el OCP con su sesión asistida abierta sigue siendo posible — hoy ya no deja nada pegado.
 - **El wrap V47 y el hito V6.0 (owner, 2026-09-25, al cerrar esta sesión).** El wrap V47 del mapa lo llama WRAP-COMMIT-PUSH y compila
   V5.71–V5.92 (los 22 asientos del log V46) con la plataforma en **V5.92**. **La V6.0 NO se declara en ese wrap**: el owner la declarará
   al cerrar la **Etapa 2** (correr el circuito del lote de punta a punta con Asistencia a Proveedores y Proveedor Desacoplado, afinando el

@@ -19,6 +19,25 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.138] — 2026-10-02 (commit pendiente)
+
+- **Corregido**: **la sesión asistida abría Kaffetal Regal como el productor ANTERIOR, o vacío** (owner, 2026-10-02: «La Asistencia a
+  Proveedores no está cargando nada de la información correspondiente»). Al cerrar una sesión o cambiarla por otra, `@supabase/ssr`
+  pide borrar cada cookie vieja dos veces —con `Domain=.ctcexport.com` y host-only— y `cookies()` de Next guarda UNA por nombre: se
+  quedaba con el borrado host-only, que no borra la cookie compartida. «Cerrar sesión asistida» no cerraba, y al entrar como otro
+  productor el trozo viejo de la cookie le tapaba la sesión nueva. Ese día la sesión pegada era la de una cuenta ya eliminada, y
+  Kaffetal Regal pintaba un panel sin datos. Ahora las escrituras pasan por `unaPorNombre` (`src/lib/supabase/cookiesDeSesion.ts`):
+  un valor le gana a un borrado y, entre dos borrados, queda el que lleva dominio. Vale para los dos clientes de servidor (cookie
+  compartida y cookie de las consolas) y para el proxy.
+- **Corregido**: una sesión cuya cuenta se **borró** con el navegador abierto quedaba viva hasta vencer (Auth responde
+  `user_not_found`, que la librería no trata como sesión cerrada) y cada petición repetía la llamada. El proxy la cierra en la
+  siguiente petición.
+- **Corregido**: el borrado de la cookie host-only heredada que el proxy mandaba como encabezado crudo **no llegaba** con Next 16.3
+  (cada `.set()` posterior reescribe los `set-cookie`); ahora va después de los `.set()`, y nunca en el dominio raíz.
+- **Seguridad**: `qa-asistencia` (67 → 88) ejecuta la librería real contra el almacén de cookies real de Next y comprueba qué le
+  llega al navegador al cerrar, al cambiar de productor y con una cuenta borrada — con y sin la regla.
+- **Docs**: ALINEACION §3 (contrato «Sesiones y cookies»), charter `consolas`.
+
 ## [V5.137] — 2026-10-01 (commit d9bc732)
 
 - **Cambiado**: la **CTCx Coffee Datasheet Tool** del taller tiene los MISMOS campos que la planilla del Centro de Calidad (owner,

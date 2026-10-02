@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.145] — 2026-10-02 (commit pendiente)
+## [V5.145] — 2026-10-02 (commit b0a2ad1)
 
 - **Corregido**: **la sesión del Centro de Calidad (y de todos los socios) ya no se cierra sola** (owner, 2026-10-02: «que dure al
   menos 10 horas sin cerrarse automáticamente»). No había un límite de tiempo: la sesión del socio vivía en la cookie compartida

@@ -480,4 +480,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `src/lib/partners/requirePartner.ts`, `app/api/socios/auth/{login,logout}/route.ts`, `app/socios/[partner]/panel/actions.ts` (`latidoDeSocio`), `src/lib/coffeed/studioGate.ts`.
 - ADD `app/socios/[partner]/panel/SesionViva.tsx`; ANN `evaluacion/page.tsx`.
 - ANN `scripts/qa-centro-calidad-check.mjs`, `docs/ALINEACION.md`, `docs/componentes/consolas.md`.
-(commit: pendiente)
+(commit: b0a2ad1)

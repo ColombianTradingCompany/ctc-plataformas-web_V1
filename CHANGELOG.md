@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.144] — 2026-10-02 (commit pendiente)
+## [V5.144] — 2026-10-02 (commit 56abe7c)
 
 - **Corregido**: en B3, **la suma de las mallas se compara con el trillado verde restante, no con el grano sano** (owner,
   2026-10-02: «los defectos primarios y secundarios hacen parte del trillado verde restante… ya estaban incluidos allí»). Un

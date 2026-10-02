@@ -473,4 +473,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `app/socios/[partner]/panel/evaluacionActions.ts` (`guardarBorrador`, `bacheEnMisManos`), `evaluacion/PlanillaCentro.tsx`, `evaluacion/page.tsx`.
 - ANN `components/kaffetal-regal/FichaView.tsx`, `ficha/fichaCalculations.ts` (la misma base de mallas), `app/ocp/(app)/nominados/CircuitoVista.tsx`.
 - ANN `scripts/qa-centro-calidad-check.mjs`, `scripts/qa-kr-ficha-check.mjs`.
-(commit: pendiente)
+(commit: 56abe7c)

@@ -19,6 +19,24 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.140] — 2026-10-02 (commit pendiente)
+
+- **Cambiado**: en la planilla de evaluación (Centro de Calidad, OCP «Registrar a mano» y Arena), **una nota de la rueda se resalta
+  en una o varias etapas** —Fragancia, Aroma, Sabor, Sabor residual— (owner, 2026-10-02; antes era una sola). Cada etapa es una
+  píldora que se enciende y se apaga por separado; la última encendida no se apaga, porque una nota sin etapa no dice dónde se
+  percibió. La insignia de la marca y las líneas que leen el OCP y el Centro dicen todas: «Frutal · Fragancia + Sabor · 10/15».
+- **Añadido**: **comentario opcional por nota** (una línea, hasta 240 caracteres). Se ve bajo la marca cuando está cerrada y viaja
+  con la evaluación: «… · 10/15 — «ciruela pasa al enfriar»».
+- **Cambiado**: la **CTCx Coffee Datasheet Tool** del taller hace lo mismo —varias etapas y comentario por nota, en ES · EN · DE—,
+  y lo lleva a la ficha y al archivo. En CVA las etapas de una nota siguen siendo las de donde se marcó (nariz: fragancia · aroma;
+  boca: sabor · residual), ahora una o las dos.
+- **Datos**: sin cambio de esquema. `lot_evaluations.rueda_detalle` guarda `{ etapas, intensidad, nota }` por nota; lo guardado con
+  una sola `etapa` (V5.133) se lee como una lista de una, igual que los archivos anteriores de la herramienta.
+- **Corregido**: las píldoras de etapa mezclaban `border` y `borderColor`; al apagar una podía quedarle el borde encendido.
+- **Seguridad**: `qa-centro-calidad` (144 → 152) y `qa-coffee-datasheet` (1.291 → 1.300) comparan la normalización de etapas, el
+  alternado y el tope del comentario entre la planilla y la herramienta.
+- **Docs**: guía de `coffee-datasheet`, charters `herramientas-cafe` y `consolas`, ALINEACION §3.
+
 ## [V5.139] — 2026-10-02 (commit 99c4ebd)
 
 - **Añadido**: franja **«Sesión asistida · productor · código»** en Kaffetal Regal (owner, 2026-10-02). Sale fija arriba, por encima

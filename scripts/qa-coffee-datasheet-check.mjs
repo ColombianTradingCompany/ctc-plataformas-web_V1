@@ -28,7 +28,7 @@
 import { readFileSync } from "node:fs";
 import { HERRAMIENTA, aplicar, leerRueda } from "./build-coffee-datasheet.mjs";
 import { leerDatosDeLaHerramienta } from "./build-rueda-datos.mjs";
-import { RUEDA as RUEDA_PLATAFORMA, ETAPAS_DE_LA_RUEDA, INTENSIDAD, MARCA_POR_DEFECTO, ajustaIntensidad } from "../src/lib/catacion/rueda.ts";
+import { RUEDA as RUEDA_PLATAFORMA, ETAPAS_DE_LA_RUEDA, INTENSIDAD, MARCA_POR_DEFECTO, NOTA_MAX, ajustaIntensidad, alternaEtapa, normalizaEtapas } from "../src/lib/catacion/rueda.ts";
 import { CVA as CVA_PLATAFORMA, SCA2004, SCA2004_POR_TAZAS, CVA_DEFECTOS, computeCva, computeSca2004, computeFactor, contarScaTazas, normalizaScaTazas } from "../src/lib/arena/labEvaluation.ts";
 import { DEFECTOS_FISICOS, COLORES_DEL_VERDE, TEXTURAS_EN_BOCA, MAX_TEXTURAS, TIPOS_DE_ACIDEZ } from "../src/lib/catacion/fisico.ts";
 import { CARPETAS_HERRAMIENTAS } from "../src/lib/tools/carpetas.ts";
@@ -196,7 +196,7 @@ const E = new Function(
    ${tramo("const GUSTOS = [", "const PAISES = [")}
    ${tramo("const RUEDA_A_CATA = {", "const UI = {")}
    ${tramo("function hoy(){", "let tBorrador = null;")}
-   return { DEF_CVA, ETAPAS, ACIDECES, TEXTURAS, loteVacio, estadoVacio, normLote, normalizar, evSca, normDetalle, etapasDe };`,
+   return { DEF_CVA, ETAPAS, ACIDECES, TEXTURAS, NOTA_MAX, loteVacio, estadoVacio, normLote, normalizar, evSca, normDetalle, etapasDe, alternaEtapa };`,
 )(Object.fromEntries(idsHerramienta.map((id) => [id, true])));
 const igual = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const vacio = E.loteVacio(0);
@@ -233,16 +233,29 @@ check("planilla · CVA: las texturas en boca y su tope son los de la planilla", 
 // La rueda — cada nota marcada lleva su etapa y su intensidad.
 check("planilla · rueda: las cuatro etapas", igual(E.ETAPAS, ETAPAS_DE_LA_RUEDA) && E.ETAPAS.every((e) => `et_${e}` in M.TX));
 check("planilla · rueda: en CVA la etapa sale de dónde se marcó (nariz: fragancia · aroma; boca: sabor · residual)", igual(E.etapasDe("nariz"), ["fragancia", "aroma"]) && igual(E.etapasDe("boca"), ["sabor", "residual"]) && igual(E.etapasDe(""), ETAPAS_DE_LA_RUEDA));
-check("planilla · rueda: la marca nace como en la planilla (sabor · 10)", igual(E.normDetalle(null, ""), { etapa: MARCA_POR_DEFECTO.etapa, intensidad: String(MARCA_POR_DEFECTO.intensidad) }));
+check("planilla · rueda: la marca nace como en la planilla (sabor · 10)", igual(E.normDetalle(null, ""), { etapas: [...MARCA_POR_DEFECTO.etapas], intensidad: String(MARCA_POR_DEFECTO.intensidad), nota: MARCA_POR_DEFECTO.nota }));
 check("planilla · rueda: la intensidad va de 0 a 15 al 0,5", INTENSIDAD.min === 0 && INTENSIDAD.max === 15 && INTENSIDAD.paso === 0.5 && js.includes('type=\\"range\\" min=\\"0\\" max=\\"15\\" step=\\"0.5\\" data-k=\\"rueda_detalle."'));
 for (const v of [-3, 0, 0.2, 7.3, 7.75, 12.5, 15, 99, "8,5"]) check(`planilla · rueda: la intensidad ${v} se ajusta igual`, Number(E.normDetalle({ intensidad: v }, "").intensidad) === ajustaIntensidad(v));
 {
   const id = idsHerramienta[3], otro = idsHerramienta[7];
   const l = E.normLote({ sca_rueda: [id], cva_desc_boca: [otro], rueda_detalle: { [id]: { etapa: "aroma", intensidad: "12.5" }, [`boca:${otro}`]: { etapa: "fragancia", intensidad: 3 }, fantasma: { etapa: "sabor", intensidad: 5 } } }, 0);
-  check("planilla · rueda: el detalle se conserva al abrir un archivo", igual(l.rueda_detalle[id], { etapa: "aroma", intensidad: "12.5" }));
-  check("planilla · rueda: una etapa que no es de la boca vuelve a «sabor»", igual(l.rueda_detalle[`boca:${otro}`], { etapa: "sabor", intensidad: "3" }));
+  check("planilla · rueda: el detalle se conserva al abrir un archivo", igual(l.rueda_detalle[id], { etapas: ["aroma"], intensidad: "12.5", nota: "" }));
+  check("planilla · rueda: una etapa que no es de la boca vuelve a «sabor»", igual(l.rueda_detalle[`boca:${otro}`], { etapas: ["sabor"], intensidad: "3", nota: "" }));
   check("planilla · rueda: no queda detalle de una nota que no está marcada", igual(Object.keys(l.rueda_detalle).sort(), [id, `boca:${otro}`].sort()));
   check("planilla · rueda: quitar o cambiar una nota poda su detalle", (js.match(/podaDetalle\(l\)/g) ?? []).length >= 3);
+}
+
+// V5.140 (owner, 2026-10-02): una nota se resalta en UNA O VARIAS etapas y puede llevar un comentario — igual que en la planilla.
+{
+  const combos = [[], ["sabor"], ["sabor", "fragancia"], ["residual", "aroma", "aroma"], ["inventada"], [...ETAPAS_DE_LA_RUEDA].reverse()];
+  check("planilla · rueda: varias etapas se normalizan igual (orden de la cata, sin repetir, nunca vacía)", combos.every((x) => igual(E.normDetalle({ etapas: x }, "").etapas, normalizaEtapas(x))), combos.map((x) => E.normDetalle({ etapas: x }, "").etapas.join("+")).join(" | "));
+  check("planilla · rueda: la `etapa` suelta de un archivo anterior se lee como una lista de una", igual(E.normDetalle({ etapa: "residual" }, "").etapas, normalizaEtapas(undefined, "residual")));
+  check("planilla · rueda: alternar una etapa hace lo mismo, y la última no se apaga", [[["sabor"], "fragancia"], [["fragancia", "sabor"], "sabor"], [["sabor"], "sabor"], [["aroma", "residual"], "sabor"]].every(([de, e]) => igual(E.alternaEtapa(de, e), alternaEtapa(de, e))));
+  check("planilla · rueda: en CVA las etapas de una nota son las de donde se marcó, una o las dos", igual(E.normDetalle({ etapas: ["aroma", "fragancia", "sabor"] }, "nariz").etapas, ["fragancia", "aroma"]) && igual(E.normDetalle({ etapas: ["residual", "fragancia"] }, "boca").etapas, ["residual"]));
+  check("planilla · rueda: el comentario de cada nota, con el mismo tope", E.NOTA_MAX === NOTA_MAX && E.normDetalle({ nota: "x".repeat(NOTA_MAX + 9) }, "").nota.length === NOTA_MAX && E.normDetalle({ nota: 7 }, "").nota === "");
+  check("planilla · rueda: la pantalla enciende las etapas por separado y trae el campo del comentario", js.includes("x.etapas = alternaEtapa(x.etapas, d.i);") && js.includes('aria-pressed=\\""+(d.etapas.indexOf(e)>=0)+"\\"') && js.includes('data-k=\\"rueda_detalle."+esc(clave)+".nota\\"') && !js.includes("d.etapa===e"));
+  const l2 = E.normLote({ sca_rueda: [idsHerramienta[3]], rueda_detalle: { [idsHerramienta[3]]: { etapas: ["sabor", "fragancia"], intensidad: 9, nota: "a cáscara" } } }, 0);
+  check("planilla · rueda: etapas y comentario sobreviven a guardar y volver a abrir", igual(l2.rueda_detalle[idsHerramienta[3]], { etapas: ["fragancia", "sabor"], intensidad: "9", nota: "a cáscara" }));
 }
 
 // El radar: el centro es 0 (antes el 6 del formulario quedaba en el centro y la figura se deformaba).

@@ -350,6 +350,9 @@ body[data-m="cva"] .btn.lleno{background:#3C0A86}
 .rnota .md{margin-top:6px;display:grid;gap:6px}
 .rnota .md .int{grid-template-columns:minmax(70px,auto) 1fr 54px}
 .rnota .md .zonas{margin:-4px 63px 0 79px}
+.rnota .md .mn{width:100%;min-height:32px;padding:5px 8px;border:1px solid var(--line);border-radius:4px;background:#fff;font-size:12.5px}
+.rnota .mq{font-size:11px;color:var(--soft);font-style:italic;margin-top:2px}
+.rnota .mt{height:auto}
 .pista-m{font-size:10.5px;color:var(--faint);font-family:var(--mono);line-height:1.4;margin-top:6px}
 </style>
 </head>
@@ -504,7 +507,8 @@ const TX = {
   ac_seca:["Acidez seca (herbal, a pasto, agria)","Dry acidity (herby, grassy, tart)","Trockene Säure (kräuterig, grasig, herb)"],
   ac_dulce:["Acidez dulce (jugosa, frutal, brillante)","Sweet acidity (juicy, fruit-like, bright)","Süße Säure (saftig, fruchtig, lebhaft)"],
   et_fragancia:["Fragancia","Fragrance","Fragrance"], et_aroma:["Aroma","Aroma","Aroma"], et_sabor:["Sabor","Flavor","Geschmack"], et_residual:["Sabor residual","Aftertaste","Nachgeschmack"],
-  marcaAyuda:["Toca una nota marcada para decir en qué etapa la percibiste y con qué intensidad (0–15).","Tap a marked note to say at which stage you perceived it and how intensely (0–15).","Tippen Sie auf eine markierte Note, um anzugeben, in welcher Phase und wie intensiv (0–15) Sie sie wahrgenommen haben."],
+  marcaAyuda:["Toca una nota marcada para decir en qué etapas la percibiste (una o varias), con qué intensidad (0–15) y, si quieres, un comentario.","Tap a marked note to say at which stages you perceived it (one or several), how intensely (0–15) and, if you wish, a comment.","Tippen Sie auf eine markierte Note, um anzugeben, in welchen Phasen (eine oder mehrere) und wie intensiv (0–15) Sie sie wahrgenommen haben – auf Wunsch mit Kommentar."],
+  marcaNota:["Comentario (opcional): a qué recuerda, cómo evoluciona…","Comment (optional): what it recalls, how it evolves…","Kommentar (optional): woran sie erinnert, wie sie sich entwickelt…"],
   pBasico:["Variedades y básicos","Varieties & basics","Sorten & Grunddaten"],
   tBasico:["B1 · caracterización básica","B1 · basic characterisation","B1 · Grundcharakterisierung"],
   b1Tit:["Variedades y caracterización básica","Varieties and basic characterisation","Sorten und Grundcharakterisierung"],
@@ -1217,12 +1221,26 @@ function marcasDe(l){
     .concat(l.cva_desc_nariz.map(function(id){ return { id:id, clave:"nariz:"+id, et:"nariz" }; }), l.cva_desc_boca.map(function(id){ return { id:id, clave:"boca:"+id, et:"boca" }; }));
 }
 function etapasDe(et){ return et==="nariz" ? ["fragancia","aroma"] : et==="boca" ? ["sabor","residual"] : ETAPAS; }
-function normDetalle(x, et){
-  const o = x && typeof x==="object" ? x : {}, n = numO(o.intensidad), ops = etapasDe(et);
-  return { etapa: ops.indexOf(o.etapa)>=0 ? o.etapa : (et==="nariz" ? "fragancia" : "sabor"), intensidad: String(n==null ? 10 : Math.round(Math.max(0, Math.min(15, n))*2)/2) };
+// V5.140 (owner) · una nota puede resaltarse en VARIAS etapas y llevar un comentario, como en la planilla (`rueda.ts`):
+// `etapas` es una lista en el orden de la cata, sin repetir y nunca vacía; lo guardado antes (`etapa`, una) se lee igual.
+const NOTA_MAX = 240;
+function normEtapas(o, et){
+  const ops = etapasDe(et), dichas = (Array.isArray(o.etapas) ? o.etapas : []).concat([o.etapa]);
+  const out = ops.filter(function(e){ return dichas.indexOf(e)>=0; });
+  return out.length ? out : [et==="nariz" ? "fragancia" : "sabor"];
 }
+function alternaEtapa(etapas, e){
+  const tiene = etapas.indexOf(e)>=0;
+  if(tiene && etapas.length===1) return etapas.slice(); // la última no se apaga: una nota sin etapa no dice dónde se percibió
+  return ETAPAS.filter(function(x){ return x===e ? !tiene : etapas.indexOf(x)>=0; });
+}
+function normDetalle(x, et){
+  const o = x && typeof x==="object" ? x : {}, n = numO(o.intensidad);
+  return { etapas: normEtapas(o, et), intensidad: String(n==null ? 10 : Math.round(Math.max(0, Math.min(15, n))*2)/2), nota: typeof o.nota==="string" ? o.nota.slice(0, NOTA_MAX) : "" };
+}
+function etapasTx(d){ return d.etapas.map(function(e){ return t("et_"+e); }).join(" + "); }
 function podaDetalle(l){ const vivas = {}; marcasDe(l).forEach(function(m){ vivas[m.clave] = normDetalle(l.rueda_detalle[m.clave], m.et); }); l.rueda_detalle = vivas; }
-function detalleTx(l, clave){ const d = l.rueda_detalle[clave]; return d ? " · "+t("et_"+d.etapa)+" · "+d.intensidad+"/15" : ""; }
+function detalleTx(l, clave){ const d = l.rueda_detalle[clave], n = d ? d.nota.replace(/\s+/g," ").trim() : ""; return d ? " · "+etapasTx(d)+" · "+d.intensidad+"/15"+(n ? " — «"+n+"»" : "") : ""; }
 let tBorrador = null;
 function cambio(){
   if(window.CTC && window.CTC.tocado) window.CTC.tocado();
@@ -1339,11 +1357,13 @@ function chipQuita(id, lista){
 }
 function filaMarca(id, lista, et){
   const l = lote(), clave = (et ? et+":" : "")+id, d = l.rueda_detalle[clave] || normDetalle(null, et), ab = UI.marca===clave, x = IDX[id];
-  return "<div class=\"rnota\" style=\"border-left-color:"+x.f.c+"\"><div class=\"mc\"><button class=\"mt\" data-a=\"marca\" data-v=\""+esc(clave)+"\" aria-expanded=\""+ab+"\" title=\""+esc(rutaId(id))+"\"><span>"+esc(rutaId(id))+"</span><span class=\"mb\">"+t("et_"+d.etapa)+" · <span data-o=\"mi."+esc(clave)+"\"></span></span></button>"+
+  return "<div class=\"rnota\" style=\"border-left-color:"+x.f.c+"\"><div class=\"mc\"><button class=\"mt\" data-a=\"marca\" data-v=\""+esc(clave)+"\" aria-expanded=\""+ab+"\" title=\""+esc(rutaId(id))+"\"><span>"+esc(rutaId(id))+"</span><span class=\"mb\">"+etapasTx(d)+" · <span data-o=\"mi."+esc(clave)+"\"></span>"+(d.nota.trim() ? " · 💬" : "")+"</span></button>"+
     "<button class=\"x\" data-a=\"quita\" data-v=\""+id+"\" data-i=\""+lista+"\" aria-label=\"×\">×</button></div>"+
-    (ab ? "<div class=\"md\"><span class=\"seg\">"+etapasDe(et).map(function(e){ return "<button class=\""+(d.etapa===e?"on":"")+"\" data-a=\"mEtapa\" data-v=\""+esc(clave)+"\" data-i=\""+e+"\" aria-pressed=\""+(d.etapa===e)+"\">"+t("et_"+e)+"</button>"; }).join("")+"</span>"+
+    (ab ? "<div class=\"md\"><span class=\"seg\">"+etapasDe(et).map(function(e){ return "<button class=\""+(d.etapas.indexOf(e)>=0?"on":"")+"\" data-a=\"mEtapa\" data-v=\""+esc(clave)+"\" data-i=\""+e+"\" aria-pressed=\""+(d.etapas.indexOf(e)>=0)+"\">"+t("et_"+e)+"</button>"; }).join("")+"</span>"+
       "<div class=\"int\"><span class=\"nm\">"+t("intens")+"</span><input type=\"range\" min=\"0\" max=\"15\" step=\"0.5\" data-k=\"rueda_detalle."+esc(clave)+".intensidad\" value=\""+esc(d.intensidad)+"\" aria-label=\""+esc(t("intens"))+"\"><output data-o=\"mi."+esc(clave)+"\"></output></div>"+
-      "<div class=\"zonas\"><span>"+t("zBaja")+"</span><span>"+t("zMedia")+"</span><span>"+t("zAlta")+"</span></div></div>" : "")+"</div>";
+      "<div class=\"zonas\"><span>"+t("zBaja")+"</span><span>"+t("zMedia")+"</span><span>"+t("zAlta")+"</span></div>"+
+      "<input class=\"mn\" type=\"text\" maxlength=\""+NOTA_MAX+"\" data-k=\"rueda_detalle."+esc(clave)+".nota\" value=\""+esc(d.nota)+"\" placeholder=\""+esc(t("marcaNota"))+"\" aria-label=\""+esc(t("marcaNota"))+"\"></div>" :
+      d.nota.trim() ? "<div class=\"mq\">«"+esc(d.nota.trim())+"»</div>" : "")+"</div>";
 }
 function marcadasHTML(){
   const l = lote(), ayuda = "<div class=\"pista-m\">"+t("marcaAyuda")+"</div>";
@@ -1977,7 +1997,7 @@ function accion(a, d, el, ev){
     case "borra": poner(l, d.v, ""); pintarPanel(); cambio(); break;
     case "scaTz": { const tz = l.sca_tazas[+d.v]; tz.estado = tz.estado===d.i ? "" : d.i; if(!tz.estado) tz.defecto = ""; sincScaTazas(l); pintarPanel(); cambio(); break; }
     case "marca": UI.marca = UI.marca===d.v ? "" : d.v; pintarPanel(); break;
-    case "mEtapa": { const x = l.rueda_detalle[d.v]; if(x){ x.etapa = d.i; pintarPanel(); cambio(); } break; }
+    case "mEtapa": { const x = l.rueda_detalle[d.v]; if(x){ x.etapas = alternaEtapa(x.etapas, d.i); pintarPanel(); cambio(); } break; }
     case "aff": l["cva_"+d.v] = numO(l["cva_"+d.v])===+d.i ? "" : String(+d.i); pintarPanel(); cambio(); break;
     case "caja": tocarCaja(d.i, d.v); podaDetalle(l); pintarPanel(); cambio(); break;
     // «Elija una» (tope 1): tocar otra la reemplaza; tocar la misma la quita.

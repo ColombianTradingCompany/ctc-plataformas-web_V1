@@ -98,7 +98,7 @@ SUPERFICIE, no de una consola — gotcha 12) · `/tools/<id>/*.html` y `/tools/h
 `qa-taller-check.mjs` (66) · `qa-herramientas-acceso-check.mjs` (31) · `qa-concha-herramientas-check.mjs` (42,
 once vectores de ataque) · `qa-tools-puente-conformance.mjs` (14/14; las de esquema propio —`agtron`, `coffee-datasheet`— con sonda) · `qa-tools-seo-check.mjs` (257, recorre las carpetas) ·
 `qa-tools-seo-espejo.mjs` (92, toca la base: columna = archivo; `noindex` en archivadas y en `FUERA_DEL_INDICE`) ·
-`qa-coffee-datasheet-check.mjs` (1.291, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`: catálogos generados al día,
+`qa-coffee-datasheet-check.mjs` (1.300, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`: catálogos generados al día,
 **paridad de las fórmulas SCA 2004 y CVA con la planilla de la plataforma** sobre 1.200 planillas, los dos métodos sin mezclar, tres idiomas
 completos, sin CDN) ·
 `qa-cromatografia-check.mjs` (294, puro) · `qa-cromatografia-modelo.mjs` (manual, gasta: estabilidad del modelo; acepta
@@ -131,6 +131,10 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 
 ## Pendientes
 
+- **V5.140 · una nota de la rueda en varias etapas, con comentario** (owner, 2026-10-02; ejecutado desde la conversación de
+  `consolas`, junto con la planilla). La Coffee Datasheet Tool guarda `{ etapas, intensidad, nota }` por nota —antes `etapa`, una—;
+  los archivos anteriores se leen igual. `qa-coffee-datasheet` §8 compara la normalización con la de la planilla (`rueda.ts`).
+  La **Rueda del Café V23** (`catacion`) sigue con UNA etapa por nota en su modo Catar: es otra herramienta y nadie pidió cambiarla.
 - **V5.137 · la Coffee Datasheet Tool es la misma herramienta que la planilla, más B1** (owner, 2026-10-01; ejecutado desde la
   conversación de `consolas`). Hecho: mismos campos que la planilla del Centro de Calidad —tres atributos por taza como número, taint y
   fault taza a taza con su tipo, CVA en cuartos de punto, tipo de acidez, etapa e intensidad por nota, radar con centro en 0— y la

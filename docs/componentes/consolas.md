@@ -177,6 +177,12 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.140 · la planilla: una nota de la rueda en varias etapas, con comentario** (owner, 2026-10-02). Hecho: `DetalleDeMarca` pasó
+  de `{ etapa, intensidad }` a `{ etapas, intensidad, nota }` (`src/lib/catacion/rueda.ts`), sin migración —`rueda_detalle` es
+  jsonb y lo viejo se lee como una lista de una—; `LabEvalEditor` enciende las etapas por separado y trae el comentario; la
+  Coffee Datasheet Tool, lo mismo. La intensidad sigue siendo UNA por nota. Abierto, **con decisión del owner**: (a) intensidad
+  distinta por etapa (hoy no); (b) redactar solo el «perfil de taza» desde las marcas («En fragancia y aroma se perciben notas
+  a…»), que es como lo escribe el informe del catador que el owner mostró.
 - **V5.138 · la sesión asistida mostraba al productor anterior (o nada)** (owner, 2026-10-02). Hecho: las cookies de sesión que
   escribe el servidor pasan por `unaPorNombre` (`src/lib/supabase/cookiesDeSesion.ts`) — `cookies()` de Next guarda una por
   nombre y se quedaba con el borrado host-only de `@supabase/ssr`, así que «Cerrar sesión asistida» no cerraba y el cambio de

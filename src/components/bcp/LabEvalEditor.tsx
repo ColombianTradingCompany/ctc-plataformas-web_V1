@@ -45,7 +45,7 @@ import {
   type VistaDePlanilla,
 } from "@/lib/arena/labEvaluation";
 import { CVA_PROPOSITO, decidirPorPunto, rotuloDelPunto } from "@/lib/arena/homologacion";
-import { ETAPAS_DE_LA_RUEDA, ETAPA_LABEL, INTENSIDAD, MARCA_POR_DEFECTO, ZONA_LABEL, ajustaIntensidad, detalleDe, familiaDe, fmtIntensidad, normalizaRueda, rutaDe, zonaDeIntensidad, type DetalleDeMarca } from "@/lib/catacion/rueda";
+import { ETAPAS_DE_LA_RUEDA, ETAPA_LABEL, INTENSIDAD, NOTA_MAX, ZONA_LABEL, ajustaIntensidad, alternaEtapa, detalleDe, etapasLabel, familiaDe, fmtIntensidad, normalizaRueda, rutaDe, zonaDeIntensidad, type DetalleDeMarca } from "@/lib/catacion/rueda";
 import { scaClassFor } from "@/components/kaffetal-regal/ficha/fichaCalculations";
 import {
   CLASE_LABEL,
@@ -169,7 +169,7 @@ export function LabEvalEditor({
       if (marcaAbierta === id) setMarcaAbierta(null);
     } else {
       set.add(id);
-      detalle[id] = { ...MARCA_POR_DEFECTO };
+      detalle[id] = detalleDe(null, id); // la marca nace como en la herramienta: sabor · 10, sin comentario
       setMarcaAbierta(id);
     }
     onChange({ rueda: [...set], rueda_detalle: detalle });
@@ -429,7 +429,8 @@ export function LabEvalEditor({
                             <button type="button" aria-expanded={abierta} onClick={() => setMarcaAbierta(abierta ? null : id)} style={S.marcaBoton}>
                               <span>{rutaDe(id, lang)}</span>
                               <span style={S.marcaInsignia}>
-                                {ETAPA_LABEL[lang][d.etapa]} · {fmtIntensidad(d.intensidad)}
+                                {etapasLabel(d.etapas, lang)} · {fmtIntensidad(d.intensidad)}
+                                {d.nota.trim() ? " · 💬" : ""}
                               </span>
                             </button>
                             <button type="button" disabled={disabled} onClick={() => toggleDescriptor(id)} title={t.quitar} aria-label={`${t.quitar}: ${rutaDe(id, lang)}`} style={S.marcaQuitar}>
@@ -438,16 +439,17 @@ export function LabEvalEditor({
                           </div>
                           {abierta && (
                             <div style={{ display: "grid", gap: 6, marginTop: 6 }}>
-                              <div role="radiogroup" aria-label={t.etapa} style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                              {/* V5.140 (owner): una nota puede resaltarse en VARIAS etapas — cada píldora se enciende y se apaga
+                                  por separado; la última encendida no se apaga (una nota sin etapa no dice dónde se percibió). */}
+                              <div role="group" aria-label={t.etapa} style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                                 {ETAPAS_DE_LA_RUEDA.map((etapa) => (
                                   <button
                                     key={etapa}
                                     type="button"
-                                    role="radio"
-                                    aria-checked={d.etapa === etapa}
+                                    aria-pressed={d.etapas.includes(etapa)}
                                     disabled={disabled}
-                                    onClick={() => setDetalle(id, { etapa })}
-                                    style={{ ...S.etapa, ...(d.etapa === etapa ? { background: "var(--primary, #3C0A86)", borderColor: "var(--primary, #3C0A86)", color: "#fff" } : {}) }}
+                                    onClick={() => setDetalle(id, { etapas: alternaEtapa(d.etapas, etapa) })}
+                                    style={{ ...S.etapa, ...(d.etapas.includes(etapa) ? { background: "var(--primary, #3C0A86)", border: "1.5px solid var(--primary, #3C0A86)", color: "#fff" } : {}) }}
                                   >
                                     {ETAPA_LABEL[lang][etapa]}
                                   </button>
@@ -476,8 +478,20 @@ export function LabEvalEditor({
                                   </span>
                                 ))}
                               </div>
+                              {/* V5.140 (owner): un comentario opcional por nota — una línea, no el perfil de taza. */}
+                              <input
+                                type="text"
+                                value={d.nota}
+                                maxLength={NOTA_MAX}
+                                disabled={disabled}
+                                placeholder={t.notaDeMarcaPh}
+                                aria-label={`${t.notaDeMarca}: ${rutaDe(id, lang)}`}
+                                onChange={(e) => setDetalle(id, { nota: e.target.value.slice(0, NOTA_MAX) })}
+                                style={{ width: "100%", fontSize: 12, padding: "5px 8px", borderRadius: 6, border: "1px solid var(--line)", background: "var(--card, #fff)", color: "var(--ink)" }}
+                              />
                             </div>
                           )}
+                          {!abierta && d.nota.trim() && <div style={{ fontSize: 11, color: "var(--muted)", fontStyle: "italic", marginTop: 2 }}>«{d.nota.trim()}»</div>}
                         </div>
                       );
                     })}

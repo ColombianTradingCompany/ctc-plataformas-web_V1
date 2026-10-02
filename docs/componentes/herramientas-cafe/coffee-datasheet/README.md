@@ -11,7 +11,7 @@
 | Idioma | es (+ en, de en la propia herramienta) |
 | Superficies (`tools.kr/cp/web/dc`) | KR · web · DC |
 | Memoria | sí (esquema propio, `CTC.usarEstado`) |
-| Guardián | `scripts/qa-coffee-datasheet-check.mjs` (1.291) |
+| Guardián | `scripts/qa-coffee-datasheet-check.mjs` (1.300) |
 
 ## Qué es
 
@@ -151,7 +151,7 @@ taller, o la herramienta dentro de la consola), es otra decisión y otro lote.
 | CVA afectiva | 1–9 al 0,25 (`CVA.pasoSeccion`) | nueve botones + casilla fina `cva_<sección>` |
 | Tipo de acidez | `acidez_tipo` (seca · dulce) | `cva_acidez` (lista de una) |
 | Texturas en boca | `boca_texturas`, tope 2 | `cva_boca`, tope 2 (ya estaba) |
-| Etapa e intensidad por nota | `rueda_detalle` (4 etapas; 0–15 al 0,5; nace «sabor · 10») | `rueda_detalle`; clave = id de la nota en SCA, `nariz:<id>` · `boca:<id>` en CVA |
+| Etapas, intensidad y comentario por nota | `rueda_detalle[id] = { etapas, intensidad, nota }` (V5.140: UNA O VARIAS de las 4 etapas, en el orden de la cata y nunca vacía; 0–15 al 0,5; comentario de una línea, 240; nace «sabor · 10») | `rueda_detalle`, igual; clave = id de la nota en SCA, `nariz:<id>` · `boca:<id>` en CVA (ahí las etapas son las dos de su lado) |
 | Defectos físicos y color | `defectos_detalle`, `fa_color` | `fis_def`, `fis_color` (ya estaban; de aquí salieron) |
 | Radar | centro en 0 | centro en 0 |
 

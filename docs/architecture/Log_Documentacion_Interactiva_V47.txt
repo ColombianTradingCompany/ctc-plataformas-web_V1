@@ -457,3 +457,12 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `src/app/ocp/(app)/kr/FincaEudrEditor.tsx` (selector de parcela; tablas), `AtributosChequeo.tsx` (`TablaDeAtributos`), `EudrPiezas.tsx`.
 - ANN `scripts/qa-visa-check.mjs`, `docs/componentes/consolas.md`, `docs/ALINEACION.md`.
 (commit: 5c1d669)
+
+## [2026-10-02] V5.143 · Kaffetal Regal — fotos y video opcionales, imagen por defecto, y «Agregar Referencias, Fotos y Videos»
+- ADD tabla `lot_referencias` + función `solicitar_revision_de_referencia` (acta `docs/migraciones/2026-10-02_lot_referencias_y_fotos_opcionales.sql`); DEL guard trigger `guard_lot_fotos_intake`.
+- ADD `src/lib/imagenDeOrigen.ts`, `public/images/kaffetal-regal/origen-respaldado.webp`; DEL `public/images/kaffetal-regal/finca-placeholder.jpg`.
+- ADD `src/lib/kaffetal/referencias.ts`, `components/kaffetal-regal/ficha/panes/PaneReferencias.tsx`.
+- ANN `PaneB4.tsx`, `FichaView.tsx`, `FichaNav.tsx`, `KaffetalExperience.tsx`, `panel/PerfilTab.tsx`, `ficha/fichaData.ts`.
+- ANN `app/ocp/(app)/kr/LoteSeccion.tsx`, `EvaReviewCard.tsx`, `evaChecklist.ts`, `app/ocp/(app)/evaluationActions.ts` (`revisarReferencia`), `src/lib/ocp/borradoNuclearTexto.ts`.
+- ANN `scripts/qa-guard-check.mjs`, `qa-kr-ficha-check.mjs`, `qa-borrado-nuclear-check.mjs`.
+(commit: pendiente)

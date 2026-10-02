@@ -202,6 +202,43 @@ const lee = (r) => readFileSync(new URL(`../${r}`, import.meta.url), "utf8");
   check("el hilo llama al productor por su nombre", rp.includes("nombreProductor") && !rp.includes('? "Usted" : "CTC"'));
 }
 
+// ── V5.143 (owner, 2026-10-02) · fotos y video OPCIONALES, imagen por defecto y «Agregar Referencias, Fotos y Videos» ──
+{
+  const { existsSync, readFileSync: leeArchivo } = await import("node:fs");
+  const leeTexto = (ruta) => leeArchivo(new URL(`../${ruta}`, import.meta.url), "utf8").replace(/\r\n/g, "\n");
+  const { IMAGEN_DE_ORIGEN_POR_DEFECTO, imagenDeOrigen } = await import("../src/lib/imagenDeOrigen.ts");
+  const R = await import("../src/lib/kaffetal/referencias.ts");
+  const b4 = leeTexto("src/components/kaffetal-regal/ficha/panes/PaneB4.tsx"), vista = leeTexto("src/components/kaffetal-regal/FichaView.tsx");
+  const nav = leeTexto("src/components/kaffetal-regal/ficha/FichaNav.tsx"), pane = leeTexto("src/components/kaffetal-regal/ficha/panes/PaneReferencias.tsx");
+  const ke = leeTexto("src/components/kaffetal-regal/KaffetalExperience.tsx"), acta = leeTexto("docs/migraciones/2026-10-02_lot_referencias_y_fotos_opcionales.sql");
+
+  check("B4: las fotos ya no detienen la Ficha (ni mínimo, ni compuerta)", !b4.includes("B4_FOTOS_MINIMO") && !vista.includes("B4_FOTOS_MINIMO") && vista.includes("const fotosReady = true;") && b4.includes("Las fotos y el video son opcionales"));
+  check("B4: sin fotos ni video se AVISA que son parte del atractivo y se recomienda subir algo, y se deja seguir", b4.includes("parte del atractivo de su café") && b4.includes("Le recomendamos subir al menos una foto") && vista.includes("if (!conMedios && !window.confirm(AVISO_SIN_MEDIOS)) return;"));
+  check("B4: el productor ve cuál es la imagen por defecto antes de decidir", b4.includes("{!hayMedios && (") && b4.includes("src={IMAGEN_DE_ORIGEN_POR_DEFECTO}"));
+  check("la base ya no exige las dos fotos (el trigger se retiró)", acta.includes("drop trigger if exists trg_guard_lot_fotos_intake on public.lots;") && acta.includes("drop function if exists public.guard_lot_fotos_intake();"));
+  check("la imagen por defecto existe en /public y es UNA constante", existsSync(new URL(`../public${IMAGEN_DE_ORIGEN_POR_DEFECTO}`, import.meta.url)) && imagenDeOrigen(null) === IMAGEN_DE_ORIGEN_POR_DEFECTO && imagenDeOrigen("  ") === IMAGEN_DE_ORIGEN_POR_DEFECTO && imagenDeOrigen("https://x/y.jpg") === "https://x/y.jpg");
+  check("la finca sin foto de perfil usa la misma imagen (ya no el placeholder viejo)", leeTexto("src/components/kaffetal-regal/panel/PerfilTab.tsx").includes("src={imagenDeOrigen(f.profilePhotoUrl)}") && !existsSync(new URL("../public/images/kaffetal-regal/finca-placeholder.jpg", import.meta.url)));
+  check("el OCP dice cuándo lo que ve es la imagen por defecto y no una foto del productor", leeTexto("src/app/ocp/(app)/kr/LoteSeccion.tsx").includes("Sin fotos del productor — el lote se muestra con la imagen por defecto de CTCx") && !leeTexto("src/app/ocp/(app)/kr/EvaReviewCard.tsx").includes("mínimo 2"));
+
+  check("menú: «Agregar Referencias, Fotos y Videos» va justo debajo de «Ficha (vista final)» y se abre con la Ficha cerrada", /\{ id: "ficha", [^\n]*substage: 4 \},\n[^\n]*\n\s*\{ id: "refs", idx: "＋", label: "Agregar Referencias, Fotos y Videos", substage: 4 \},/.test(nav) && vista.includes("refs: 4 }"));
+  check("vista final: el botón nuevo, solo con la Ficha cerrada", vista.includes('{effectiveIntakeStep >= 4 && (') && vista.includes('onClick={() => setActive("refs")}') && vista.includes("＋ Agregar Referencias, Fotos y Videos"));
+  check("la pantalla ofrece los cuatro bloques (taza, físico, fotos, videos)", ["taza", "fisico", "foto", "video"].every((t) => pane.includes(`<Bloque tipo="${t}"`)));
+  check("la pantalla SOLO agrega: no hay botón de quitar ni de reemplazar", !/Quitar|Eliminar|Borrar|Reemplazar/.test(pane.replace(/\/\/[^\n]*/g, "").replace(/\{\/\*[\s\S]*?\*\/\}/g, "")) && pane.includes("no se puede retirar"));
+  check("de un reporte se puede pedir revisión (al agregarlo o después); de una foto o un video, no", R.esReporte("taza") && R.esReporte("fisico") && !R.esReporte("foto") && !R.esReporte("video") && pane.includes("Pedir a CTCx que revise este reporte") && pane.includes('estado === "sin_pedir"') && ke.includes('supabase.rpc("solicitar_revision_de_referencia", { p_id: ref.id })'));
+  const fila = R.filaDeReferencia("L", "P", { tipo: "taza", assetId: "A", fileName: "r.pdf", emisor: " Lab ", puntaje: "85,75", escala: "sca", factor: "92", nota: " ok ", pedirRevision: true }, "2026-10-02T00:00:00Z");
+  check("la fila de un reporte de taza: emisor, puntaje y escala; sin factor; con la revisión pedida", fila.emisor === "Lab" && fila.puntaje === 85.75 && fila.escala === "sca" && fila.factor === null && fila.nota === "ok" && fila.revision_solicitada_at === "2026-10-02T00:00:00Z" && fila.lot_id === "L" && fila.producer_id === "P");
+  const foto = R.filaDeReferencia("L", "P", { tipo: "foto", assetId: "A", fileName: "f.jpg", emisor: "x", puntaje: "90", pedirRevision: true }, "t");
+  check("la fila de una foto no lleva datos de reporte ni revisión", foto.emisor === null && foto.puntaje === null && foto.escala === null && foto.factor === null && foto.revision_solicitada_at === null);
+  check("un reporte pide quién lo emitió, y sus cifras van en rango", R.errorDeReferencia({ tipo: "taza", emisor: "" }) !== null && R.errorDeReferencia({ tipo: "taza", emisor: "Lab", puntaje: "101" }) !== null && R.errorDeReferencia({ tipo: "fisico", emisor: "Lab", factor: "20" }) !== null && R.errorDeReferencia({ tipo: "taza", emisor: "Lab", puntaje: "86.5" }) === null && R.errorDeReferencia({ tipo: "foto" }) === null);
+  const leida = R.rowToReferencia({ id: "1", lot_id: "L", tipo: "fisico", asset_id: "A", file_name: "g.pdf", emisor: "Lab", puntaje: null, escala: null, factor: "92.5", nota: null, revision_solicitada_at: "t", revisada_at: null, nota_ctc: null, created_at: "t" });
+  check("una fila de la base se lee con su estado; un tipo desconocido se descarta", leida.factor === 92.5 && R.estadoDeReferencia(leida) === "en_revision" && R.estadoDeReferencia({ ...leida, revisadaAt: "t" }) === "revisada" && R.estadoDeReferencia({ ...leida, revisionSolicitadaAt: null }) === "sin_pedir" && R.estadoDeReferencia({ ...leida, tipo: "foto" }) === "no_aplica" && R.rowToReferencia({ ...leida, tipo: "otro" }) === null);
+  check("el resumen de una referencia, en una línea", R.resumenDeReferencia({ tipo: "taza", emisor: "Lab X", puntaje: 86.5, escala: "sca", factor: null }) === "Reporte de perfil de taza · Lab X · 86.5 (SCA)");
+  check("los archivos suben a la carpeta del lote (el borrado nuclear los recoge por patrón)", pane.includes("`lots/${lot.id}/refs/${tipo}-${Date.now()}`"));
+  check("la tabla es de solo AGREGAR: políticas de SELECT e INSERT, ninguna de UPDATE ni DELETE", (acta.match(/create policy /g) ?? []).length === 2 && acta.includes("for select to authenticated") && acta.includes("for insert to authenticated") && !/for (update|delete|all) /.test(acta) && acta.includes("enable row level security"));
+  check("solo sobre un lote propio con la Ficha cerrada y un archivo propio; sin tocar los campos de CTCx", acta.includes("(coalesce(l.intake_step, 0) >= 4 or l.stage::text <> 'borrador')") && acta.includes("m.uploaded_by = (select auth.uid())") && acta.includes("revisada_at is null and revisada_por is null and nota_ctc is null"));
+  check("el OCP lista lo agregado y CTCx lo marca revisado (acción `emite`, con nota al productor)", leeTexto("src/app/ocp/(app)/kr/LoteSeccion.tsx").includes("revisarReferencia.bind(null, r.id)") && /export async function revisarReferencia[\s\S]{0,260}permisoDeEscritura\("ocp", "emite"\)/.test(leeTexto("src/app/ocp/(app)/evaluationActions.ts")) && leeTexto("src/app/ocp/(app)/evaluationActions.ts").includes('context_label: "Referencia revisada"'));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-kr-ficha: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("   " + f);

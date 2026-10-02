@@ -177,6 +177,11 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.143 · el OCP ve y revisa lo que el productor agrega a un lote cerrado** (owner, 2026-10-02). `LoteSeccion` lista
+  `lot_referencias` con sus archivos firmados y «Marcar revisada» (`revisarReferencia`, clase `emite`, en
+  `evaluationActions.ts`; deja una nota en el feed del productor). El bloque B4 de la EVA ya no pinta en rojo un lote sin
+  fotos: son opcionales, y la miniatura por defecto dice que no es una foto del productor. El borrado nuclear archiva la
+  tabla nueva. Abierto: las referencias por revisar no aparecen todavía en el Tablero de Ejecución (`/ecp`).
 - **V5.142 · revisión EUDR de la finca: cada parcela en el mapa, y Atributos Complementarios como tabla** (owner, 2026-10-02).
   Hecho: `mapaDeParcelasUrl` (`src/lib/eudr.ts`) pinta todas las parcelas ubicadas o la elegida; el selector vive en el bloque del
   mapa de `FincaEudrEditor`. Los atributos pasan a `TablaDeAtributos` (`AtributosChequeo.tsx`): estado, dónde verificar, nota y

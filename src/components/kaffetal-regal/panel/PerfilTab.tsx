@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { imagenDeOrigen } from "@/lib/imagenDeOrigen";
 import { GRADES, STAGES, ctcLotReference, ctcLotReferenceShort, fincaCode, fincaSelfDeletable, isLotCommitted, type Finca, type GeneralInfo, type Lot, type Parcela, type ProducerContract, type ProducerOffer } from "../data";
 import { ShipmentInstructionsModal } from "../ficha/ShipmentInstructionsModal";
 import { mapPreviewUrl, fincaEudrStatus, lotEudrStatus, type EudrStatus, type ParcelaGeoFields } from "@/lib/eudr";
@@ -125,7 +126,7 @@ export function PerfilTab({
       <div className={styles.fincaCard} key={f.name + i}>
         <div className={styles.fincaImgs}>
           {/* eslint-disable-next-line @next/next/no-img-element -- signed Supabase URL or local placeholder */}
-          <img src={f.profilePhotoUrl || "/images/kaffetal-regal/finca-placeholder.jpg"} alt={f.name} className={styles.fincaThumb} />
+          <img src={imagenDeOrigen(f.profilePhotoUrl)} alt={f.name} className={styles.fincaThumb} />
           {mapUrl && (
             // eslint-disable-next-line @next/next/no-img-element -- Google Static Maps URL, not a local asset
             <img src={mapUrl} alt={`Ubicación de ${f.name}`} className={styles.fincaThumb} />

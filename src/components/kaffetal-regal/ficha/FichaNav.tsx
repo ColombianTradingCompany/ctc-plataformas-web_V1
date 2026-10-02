@@ -1,6 +1,6 @@
 import styles from "./FichaNav.module.css";
 
-export type PaneId = "a1" | "a2" | "a3" | "a4" | "a5" | "b1" | "b2" | "b3" | "b4" | "ficha";
+export type PaneId = "a1" | "a2" | "a3" | "a4" | "a5" | "b1" | "b2" | "b3" | "b4" | "ficha" | "refs";
 
 // `substage` mirrors `lots.intake_step`'s 0-4 progression (FT, FT2, FOTO,
 // EUDR, done — V5.79: A5 es el último paso) -- see FichaView.tsx for what actually gates advancing past
@@ -18,10 +18,12 @@ const PANES: { id: PaneId; idx: string; label: string; substage: number }[] = [
   { id: "b4", idx: "B4", label: "Fotos y Video del Café", substage: 2 },
   { id: "a5", idx: "A5", label: "EUDR / Debida Diligencia", substage: 3 },
   { id: "ficha", idx: "→", label: "Ficha (vista final)", substage: 4 },
+  // V5.143 (owner): con la Ficha cerrada, el productor agrega fotos, videos y otros reportes SIN pedir revisión.
+  { id: "refs", idx: "＋", label: "Agregar Referencias, Fotos y Videos", substage: 4 },
 ];
-// FOTO (antes «Video»): fase 5 del overhaul, V5.64 — el paso 4 pide DOS fotos
-// obligatorias y deja el video en opcional. El rótulo del grupo es el mismo chip
-// que la barra del lote pinta como FOTO (LotKanbanStepper).
+// FOTO (antes «Video»): fase 5 del overhaul, V5.64. Desde la V5.143 fotos y video son
+// opcionales. El rótulo del grupo es el mismo chip que la barra del lote pinta como FOTO
+// (LotKanbanStepper).
 const SUBSTAGE_LABEL = ["FT · Identidad y Origen", "FT2 · Certificados y Análisis", "FOTO · Fotos y video", "EUDR · Debida Diligencia", "Exportar"];
 
 export function FichaNav({
@@ -48,7 +50,7 @@ export function FichaNav({
               className={`${styles.item} ${active === p.id ? styles.active : ""} ${locked ? styles.locked : ""} ${!reachable ? styles.disabled : ""}`}
               onClick={() => reachable && onSelect(p.id)}
               disabled={!reachable}
-              title={!reachable ? "Complete la sección anterior primero" : locked ? "Ya enviado a CTC" : undefined}
+              title={!reachable ? (p.id === "refs" ? "Disponible cuando su Ficha esté enviada a CTC" : "Complete la sección anterior primero") : locked ? "Ya enviado a CTC" : undefined}
             >
               <span className={styles.idx}>{p.idx}</span>
               <span className={styles.label}>{p.label}</span>

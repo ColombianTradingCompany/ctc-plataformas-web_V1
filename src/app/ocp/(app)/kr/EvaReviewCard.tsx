@@ -532,13 +532,14 @@ export function EvaReviewCard({
           {openPanel === "video" && (
             <>
               <h4 style={{ margin: "0 0 8px", fontSize: 13.5 }}>Fotos y video (B4)</h4>
-              {/* V5.120: el mínimo son DOS fotos (V5.64) — el conteo en verde o rojo lo dice antes de abrir la lista. */}
+              {/* V5.143 (owner): fotos y video son OPCIONALES — ya no hay mínimo ni rojo. Sin fotos del productor, el lote se
+                  muestra con la imagen por defecto de CTCx (la primera miniatura lo dice en su rótulo). */}
               {(() => {
                 const fotos = videoLinks.filter((f) => f.label.startsWith("Foto")).length;
-                const videos = videoLinks.length - fotos;
+                const videos = videoLinks.filter((f) => f.tipo === "video").length;
                 return (
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
-                    <span className={`${styles.badge} ${fotos >= 2 ? styles.badgeGood : styles.badgeBad}`}>{fotos} foto(s) · mínimo 2</span>
+                    <span className={`${styles.badge} ${fotos > 0 ? styles.badgeGood : ""}`}>{fotos > 0 ? `${fotos} foto(s)` : "sin fotos · imagen por defecto"} · opcional</span>
                     <span className={styles.badge}>{videos} video(s) · opcional</span>
                   </div>
                 );
@@ -564,7 +565,7 @@ export function EvaReviewCard({
                     )}
                 </div>
               )}
-              {fileList(videoLinks, "El productor todavía no sube las fotos del lote (dos como mínimo; el video es opcional).")}
+              {fileList(videoLinks, "El productor no subió fotos ni video (son opcionales).")}
             </>
           )}
 

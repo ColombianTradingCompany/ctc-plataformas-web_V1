@@ -6,30 +6,32 @@ import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import { FileDrop } from "../../FileDrop";
 import { ReportFiles } from "./ReportFiles";
 import type { PaneProps } from "./types";
+import { ALT_DE_LA_IMAGEN_POR_DEFECTO, IMAGEN_DE_ORIGEN_POR_DEFECTO } from "@/lib/imagenDeOrigen";
 import styles from "../../FichaView.module.css";
 
-// ── B4 · Fotos y Video del Café (fase 5 del overhaul, V5.64) ────────────────
-// El paso 4 del intake dejó de ser «Video» y pasó a «Fotos y video»:
-//   · DOS fotos del lote son obligatorias — es lo que cualquier productor puede
-//     dar con el teléfono que ya tiene, y es lo que la vitrina necesita sí o sí.
-//   · El video pasó a OPCIONAL. Antes era obligatorio y solo se exigía en el
-//     cliente, así que el requisito era a la vez más duro de cumplir y más fácil
-//     de saltarse. Ahora manda menos y se verifica mejor.
-// La regla se exige TAMBIÉN en el servidor: el guard trigger
-// `guard_lot_fotos_intake` sobre `lots` rechaza el paso a `ficha_completa` sin
-// las dos fotos en el datasheet (migración `lots_fotos_obligatorias`). El
-// productor escribe directo contra Supabase (patrón KR), así que el servidor ES
-// el trigger — no hay Server Action donde poner la validación.
+// ── B4 · Fotos y Video del Café ─────────────────────────────────────────────
+// V5.64: el paso 4 pasó a «Fotos y video» con DOS fotos obligatorias (y un guard trigger que lo exigía en la base).
+// V5.143 (owner, 2026-10-02): «Las fotos y videos del café en B4 deben ser todas siempre OPCIONALES; si no se incluye
+// ninguna, el productor es notificado de que esto hace parte del atractivo y se recomienda subir algo. De lo contrario,
+// se usa por defecto la imagen [de CTCx].» El trigger `guard_lot_fotos_intake` se retiró (acta
+// `docs/migraciones/2026-10-02_lot_referencias_y_fotos_opcionales.sql`); el aviso lo da la Ficha al cerrar el paso
+// (`FichaView.submitCurrentStage`) y la imagen por defecto vive en `src/lib/imagenDeOrigen.ts`.
+// Lo que no suba ahora lo puede agregar después, con la Ficha ya cerrada: «Agregar Referencias, Fotos y Videos».
 
-export const B4_FOTOS_MINIMO = 2;
 export const B4_FOTOS_MAXIMO = 7;
 
-/** ¿Cumple este datasheet la regla de fotos del paso 4? Lo comparten el gate de
- *  la Ficha y el guardián `qa-kr-ficha`; el trigger repite la misma cuenta en
- *  SQL para que el navegador no sea la única autoridad. */
-export function fotosDelLoteCompletas(fotos: { assetId: string }[] | undefined): boolean {
-  return (fotos?.length ?? 0) >= B4_FOTOS_MINIMO;
+/** ¿El lote trae ALGÚN medio propio (foto o video)? Sin ninguno se pinta la imagen por defecto y la Ficha lo avisa. */
+export function hayMediosDelLote(fotos: { assetId: string }[] | undefined, videos: { assetId: string }[] | undefined, videoPrincipal: string | null | undefined): boolean {
+  return (fotos?.length ?? 0) > 0 || (videos?.length ?? 0) > 0 || !!videoPrincipal;
 }
+
+/** El aviso al cerrar el paso sin fotos ni video: es parte del atractivo del lote, y se recomienda subir algo. */
+export const AVISO_SIN_MEDIOS =
+  "Su lote no tiene fotos ni video.\n\n" +
+  "Las imágenes son parte del atractivo de su café: es lo primero que mira un comprador. Le recomendamos subir al menos una foto.\n\n" +
+  "Si continúa sin ninguna, su lote se mostrará con la imagen de CTCx «Fincas y lotes de origen respaldado». " +
+  "Podrá agregar fotos y videos después, desde «Agregar Referencias, Fotos y Videos».\n\n" +
+  "¿Continuar sin fotos ni video?";
 
 // Videos de referencia (YouTube Shorts) que muestran el tipo de toma que
 // esperamos: cortos, continuos y estables.
@@ -86,36 +88,44 @@ export function PaneB4({
 
   const extras = data.extra_video_assets ?? [];
   const fotos = data.b4_files_foto ?? [];
-  const fotosOk = fotosDelLoteCompletas(fotos);
+  const hayMedios = hayMediosDelLote(fotos, extras, lot.videoUrl);
 
   return (
     <div className={styles.fsec}>
       <h3><span className={styles.fn}>B4</span> Fotos y Video del Café</h3>
       <p className={styles.fexample} style={{ marginTop: 8 }}>
-        La cara visible de este lote. <b>Las fotos son obligatorias</b> ({B4_FOTOS_MINIMO} como mínimo); el video es
-        opcional y suma mucho, pero ya no lo detiene.
+        La cara visible de este lote. <b>Las fotos y el video son opcionales</b>, pero son parte del atractivo de su
+        café: es lo primero que mira un comprador. Le recomendamos subir al menos una foto.
       </p>
 
-      {/* ── Fotos · obligatorias ─────────────────────────────────────────── */}
+      {/* ── Fotos · opcionales (V5.143) ──────────────────────────────────── */}
       <div
         style={{
           marginTop: 16,
-          border: `2px solid ${fotosOk ? "var(--line)" : "var(--primary)"}`,
+          border: "1px solid var(--line)",
           borderRadius: 10,
           padding: "12px 14px",
           background: "var(--paper)",
         }}
       >
-        <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: fotosOk ? "#2E7D52" : "var(--primary-deep)" }}>
-          {fotosOk
-            ? `✓ ${fotos.length} foto${fotos.length === 1 ? "" : "s"} — listo para continuar`
-            : `Faltan ${B4_FOTOS_MINIMO - fotos.length} foto${B4_FOTOS_MINIMO - fotos.length === 1 ? "" : "s"} de ${B4_FOTOS_MINIMO}`}
+        <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: fotos.length ? "#2E7D52" : "var(--ink)" }}>
+          {fotos.length ? `✓ ${fotos.length} foto${fotos.length === 1 ? "" : "s"} del lote` : "Fotos del lote (opcionales)"}
         </p>
+        {/* Sin fotos ni video, el lote se ve con la imagen por defecto: se le enseña cuál, para que decida. */}
+        {!hayMedios && (
+          <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", marginTop: 10 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- miniatura fija de /public */}
+            <img src={IMAGEN_DE_ORIGEN_POR_DEFECTO} alt={ALT_DE_LA_IMAGEN_POR_DEFECTO} width={96} height={96} style={{ borderRadius: 8, border: "1px solid var(--line)" }} />
+            <p className={styles.fexample} style={{ margin: 0, flex: 1, minWidth: 200 }}>
+              Sin fotos ni video, su lote se mostrará con esta imagen de CTCx. Con una foto suya, su café se presenta mucho mejor.
+            </p>
+          </div>
+        )}
         <ul style={{ margin: "10px 0 0", paddingLeft: 20, fontSize: 13, color: "var(--ink)", lineHeight: 1.7 }}>
           {FOTO_TIPS.map((t) => <li key={t}>{t}</li>)}
         </ul>
         <ReportFiles
-          titulo={`Fotos del lote (mínimo ${B4_FOTOS_MINIMO}, hasta ${B4_FOTOS_MAXIMO})`}
+          titulo={`Fotos del lote (opcionales, hasta ${B4_FOTOS_MAXIMO})`}
           pdfs={[]}
           fotos={fotos}
           soloFotos

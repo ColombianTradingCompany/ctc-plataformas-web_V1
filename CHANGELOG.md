@@ -19,6 +19,28 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.143] — 2026-10-02 (commit pendiente)
+
+- **Cambiado**: en la Ficha del lote (Kaffetal Regal), **las fotos y los videos de B4 son todos opcionales** (owner, 2026-10-02;
+  antes se exigían dos fotos). Si el productor cierra el paso sin ninguno, la Ficha le avisa que las imágenes son parte del
+  atractivo de su café y le recomienda subir al menos una; si continúa, su lote se muestra con la **imagen por defecto** de CTCx
+  («Fincas y lotes de origen respaldado», `src/lib/imagenDeOrigen.ts`). La misma imagen es ahora la de una finca sin foto de perfil.
+- **Añadido**: **«Agregar Referencias, Fotos y Videos»**, debajo de «Ficha (vista final)» y en el menú de la Ficha. Con la Ficha ya
+  cerrada, el productor suma material nuevo **sin pedir una revisión de la Ficha**: otro reporte de perfil de taza, otro análisis
+  físico o granulometría, más fotos y más videos. Solo agrega: lo enviado no se puede retirar ni reemplazar, y la Ficha no cambia.
+  De un reporte se puede pedir revisión a CTCx, al agregarlo o después.
+- **Añadido**: en el OCP, la vista del lote lista lo que el productor agregó, con sus archivos, lo que está por revisar y
+  «Marcar revisada» con una nota que el productor lee bajo su referencia y en su feed.
+- **Datos**: migraciones `lot_referencias_y_fotos_opcionales` y `lot_referencias_ficha_cerrada_por_etapa` — se retira el guard
+  trigger `guard_lot_fotos_intake`; tabla nueva `lot_referencias` (RLS: el productor solo lee e inserta lo suyo; sin UPDATE ni
+  DELETE) y función `solicitar_revision_de_referencia`; el borrado nuclear la incluye en su instantánea. Las 7 imágenes de relleno
+  «Paisaje de finca.jpg» se desvincularon de tres lotes y de una finca, que pasan a mostrar la imagen por defecto; los archivos
+  se conservan en Storage.
+- **Seguridad**: `qa-guard-check` (se corre a mano contra producción: 20 de 20) comprueba que la Ficha cierra sin fotos y que una
+  referencia no se agrega con la Ficha abierta, ni se edita, ni se retira, ni se firma como revisada por el productor.
+  `qa-kr-ficha` (228 → 250), `qa-borrado-nuclear` (32 → 33).
+- **Docs**: acta de la migración, charters `kaffetal-regal` y `consolas`, ALINEACION §3.
+
 ## [V5.142] — 2026-10-02 (commit 5c1d669)
 
 - **Añadido**: en la revisión EUDR de una finca (OCP), **cada parcela se puede ver en el mapa** (owner, 2026-10-02: «si una finca

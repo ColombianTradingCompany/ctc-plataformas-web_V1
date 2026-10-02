@@ -169,7 +169,7 @@ check("y avanza la inscripción a la fila", acciones.includes("recibirMuestra(se
   const eva = lee("src/app/ocp/(app)/kr/EvaReviewCard.tsx");
   const lote = lee("src/app/ocp/(app)/kr/LoteSeccion.tsx");
   check("la EVA usa las piezas (fichas, Sí/No) y pinta las filas como grilla", eva.includes('from "./EudrPiezas"') && eva.includes("<Fichas opciones={CUSTODY_STAGES}") && eva.includes("<SiNo v={f.illegality} bienSi={false}") && eva.includes('gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))"'));
-  check("B2/B3 en fichas: camino, puntaje con escala, emisor, soportes; las fotos con su mínimo de 2", eva.includes('ficha("Puntaje reportado"') && eva.includes('ficha("Factor de rendimiento"') && eva.includes("fotos >= 2 ? styles.badgeGood : styles.badgeBad"));
+  check("B2/B3 en fichas: camino, puntaje con escala, emisor, soportes; las fotos, opcionales desde la V5.143 (sin mínimo ni rojo)", eva.includes('ficha("Puntaje reportado"') && eva.includes('ficha("Factor de rendimiento"') && eva.includes("fotos > 0 ? styles.badgeGood : \"\"") && !eva.includes("fotos >= 2"));
   check("un blend lista todas sus variedades (con %) y el proceso de cada una", lote.includes("const variedadTexto = variedades.length") && lote.includes('row("Variedad", variedadTexto)') && lote.includes('row("Proceso", procesoTexto)') && lote.includes("`${v.name.trim()}: ${procesos[i] || \"—\"}`"));
 }
 

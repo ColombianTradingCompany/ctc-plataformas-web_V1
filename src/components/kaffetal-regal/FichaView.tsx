@@ -17,7 +17,9 @@ import { PaneA5Eudr } from "./ficha/panes/PaneA5Eudr";
 import { PaneB1 } from "./ficha/panes/PaneB1";
 import { PaneB2 } from "./ficha/panes/PaneB2";
 import { PaneB3 } from "./ficha/panes/PaneB3";
-import { PaneB4, fotosDelLoteCompletas, B4_FOTOS_MINIMO } from "./ficha/panes/PaneB4";
+import { PaneB4, AVISO_SIN_MEDIOS, hayMediosDelLote } from "./ficha/panes/PaneB4";
+import { PaneReferencias } from "./ficha/panes/PaneReferencias";
+import type { LotReferencia, NuevaReferencia } from "@/lib/kaffetal/referencias";
 import { FichaPreview } from "./ficha/FichaPreview";
 import { ShipmentInstructionsModal } from "./ficha/ShipmentInstructionsModal";
 import { OfficialScoreBanner } from "./ficha/OfficialScoreBanner";
@@ -32,7 +34,7 @@ export type { PaneProps } from "./ficha/panes/types";
 // paralelo; es decir, el último paso es A5». El orden es FT · FT2 · FOTO · EUDR: la finca completa su Pasaporte
 // mientras el productor termina el lote, y la Visa se hereda al final.
 const FIRST_PANE_BY_STEP: PaneId[] = ["a1", "a3", "b4", "a5", "ficha"];
-const PANE_SUBSTAGE: Record<PaneId, number> = { a1: 0, a2: 0, b1: 0, a3: 1, a4: 1, b2: 1, b3: 1, b4: 2, a5: 3, ficha: 4 };
+const PANE_SUBSTAGE: Record<PaneId, number> = { a1: 0, a2: 0, b1: 0, a3: 1, a4: 1, b2: 1, b3: 1, b4: 2, a5: 3, ficha: 4, refs: 4 };
 // FT2 escape hatches: A3/A4/B2 can be declared "no lo sé / no aplica" instead
 // of filled in (fichaData's ft2_*_na). B3 YA NO (V5.20): su escape es el camino
 // «Solo sé información básica» dentro del propio pane — ft2_b3_na queda en el
@@ -141,6 +143,9 @@ export function FichaView({
   onUploadLotVideo,
   onRequestHelp,
   onSubmitOfficializationClaim,
+  referencias = [],
+  onAddReferencia,
+  onSolicitarRevisionDeReferencia,
 }: {
   lot: Lot;
   /** V5.23: el set de Fichas Técnicas del lote (las compila CTCx en
@@ -163,6 +168,10 @@ export function FichaView({
   onGetFileUrl: (assetId: string) => Promise<string | null>;
   onUploadLotVideo: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
   onRequestHelp: (text: string) => Promise<boolean>;
+  /** V5.143: lo que el productor agregó a este lote con la Ficha ya cerrada, y cómo agrega más (`lot_referencias`). */
+  referencias?: LotReferencia[];
+  onAddReferencia: (d: NuevaReferencia) => Promise<boolean>;
+  onSolicitarRevisionDeReferencia: (ref: LotReferencia) => Promise<boolean>;
   /** V5.109: la solicitud de oficialización sale SOLA al enviar la FT2 con «Tengo un reporte»; el adjunto es un soporte ya subido. */
   onSubmitOfficializationClaim: (qGraderRef: string, adjunto: File | { assetId: string } | null, scaTotal: number | null, factorRendimiento: number | null, onProgress?: (fraction: number) => void) => void | Promise<void>;
 }) {
@@ -295,8 +304,9 @@ export function FichaView({
       // O al menos un soporte; el Trillado Verde legado sigue contando.
       b2: b2Reportado || sca.total > 0,
       b3: b3Reportado || factor.remainder > 0,
-      // Fase 5 (V5.64): el paso 4 se cierra con las FOTOS, no con el video.
-      b4: fotosDelLoteCompletas(data.b4_files_foto),
+      // V5.143 (owner): fotos y video son OPCIONALES. El punto del menú se enciende cuando hay algún medio, pero el paso
+      // se puede cerrar sin ninguno (con aviso: ver `submitCurrentStage`).
+      b4: hayMediosDelLote(data.b4_files_foto, data.extra_video_assets, lot.videoUrl),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- b2Reportado/b3Reportado derivan de `data`, ya en la lista
     [data, vTotal, sca.total, factor.remainder, sourceFincas.length]
@@ -325,7 +335,7 @@ export function FichaView({
   // (ver el confirm en submitCurrentStage) -- la finca completa lo suyo en
   // paralelo sin frenar la Ficha.
   const eudrReady = !!completed.a5;
-  const fotosReady = !!completed.b4;
+  const fotosReady = true; // V5.143: las fotos y el video ya no detienen la Ficha
   const STAGE_READY = [ftReady, ft2Ready, fotosReady, eudrReady];
   const currentStepReady = effectiveIntakeStep < 4 ? STAGE_READY[effectiveIntakeStep] : true;
 
@@ -510,25 +520,23 @@ export function FichaView({
       setCelebrate({
         emoji: "🏅",
         title: "¡FT2 enviada a CTC!",
-        body: "Su café ya tiene perfil y análisis. Siguen dos fotos del café — con las del teléfono basta; el video es opcional.",
+        body: "Su café ya tiene perfil y análisis. Siguen las fotos del café — son opcionales, pero con las del teléfono basta y ayudan mucho.",
       });
       setActive("b4");
       return;
     }
     if (step === 2) {
-      if (!fotosReady) {
-        setNotice(
-          `En B4: suba al menos ${B4_FOTOS_MINIMO} fotos del lote antes de continuar. El video es opcional — las fotos no.`
-        );
-        return;
-      }
+      // V5.143 (owner): sin fotos ni video se AVISA —son parte del atractivo del lote y se recomienda subir algo— y se
+      // deja seguir: el lote se mostrará con la imagen por defecto de CTCx.
+      const conMedios = hayMediosDelLote(data.b4_files_foto, data.extra_video_assets, lot.videoUrl);
+      if (!conMedios && !window.confirm(AVISO_SIN_MEDIOS)) return;
       setSaving(true);
       const ok = await onSave(buildUpdate(withRevisionDate(), 3));
       setSaving(false);
       if (!ok) return;
       setCelebrate({
         emoji: "📷",
-        title: "¡Fotos recibidas!",
+        title: conMedios ? "¡Fotos recibidas!" : "Paso de fotos cerrado",
         body: "Último paso: el EUDR (A5) — señale la finca de origen; la Visa del lote se hereda del Pasaporte de su finca.",
       });
       setActive("a5");
@@ -673,9 +681,23 @@ export function FichaView({
               {active === "b2" && <PaneB2 {...paneProps} onUploadFile={onUploadFile} onGetFileUrl={onGetFileUrl} fichas={fichas} />}
               {active === "b3" && <PaneB3 {...paneProps} onUploadFile={onUploadFile} onGetFileUrl={onGetFileUrl} fichas={fichas} />}
               {active === "b4" && <PaneB4 {...paneProps} onUploadFile={onUploadFile} onGetFileUrl={onGetFileUrl} />}
+              {active === "refs" && (
+                <PaneReferencias lot={lot} referencias={referencias} onUploadFile={onUploadFile} onGetFileUrl={onGetFileUrl} onAdd={onAddReferencia} onSolicitarRevision={onSolicitarRevisionDeReferencia} />
+              )}
               {active === "ficha" && (
                 <>
                   <FichaPreview data={data} factor={factor} mesh={mesh} sca={sca} varTotal={vTotal} scorings={lot.scaScorings} />
+                  {/* V5.143 (owner): «debajo de Ficha (vista final) debe haber un botón nuevo». */}
+                  {effectiveIntakeStep >= 4 && (
+                    <div style={{ marginTop: 14 }}>
+                      <button type="button" className="btn btn-sm btn-solid" onClick={() => setActive("refs")}>
+                        ＋ Agregar Referencias, Fotos y Videos{referencias.length ? ` (${referencias.length})` : ""}
+                      </button>
+                      <p className={styles.fexample} style={{ marginTop: 6 }}>
+                        ¿Tiene fotos nuevas, un video u otro reporte de taza o de análisis físico? Agréguelos aquí sin pedir una revisión de la Ficha.
+                      </p>
+                    </div>
+                  )}
                   {lotIsEudrReady && (
                     <div style={{ marginTop: 14 }}>
                       <a className="btn btn-sm btn-solid" href={`/kaffetal-regal/certificacion-lote/${lot.id}`} target="_blank" rel="noopener noreferrer">

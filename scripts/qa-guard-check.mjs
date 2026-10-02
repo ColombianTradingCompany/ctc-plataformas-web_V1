@@ -63,12 +63,37 @@ const prod = createClient(url, anon, { auth: { persistSession: false } });
   const selfCode = await prod.from("lots").update({ public_code: "CTCX-HACK-HACK" }).eq("id", lot.id).select();
   check("producer CANNOT set public_code", !!selfCode.error, selfCode.error?.message ?? "(no error!)");
 
-  // V5.64: cerrar la Ficha exige DOS fotos (guard trigger `guard_lot_fotos_intake`, solo en la transición). Sin fotos se rechaza;
-  // con dos entradas en `datasheet.b4_files_foto` el productor SÍ puede cerrarla (el resto de columnas protegidas siguen cerradas).
+  // V5.143 (owner, 2026-10-02): con la Ficha ABIERTA no se agregan referencias — eso es para después de cerrarla.
+  const { data: activo } = await prod.from("media_assets").insert({ bucket: "kaffetal-media", path: `${uid}/lots/${lot.id}/refs/qa-guard-${Date.now()}`, mime_type: "image/jpeg", size_bytes: 1, uploaded_by: uid }).select("id").single();
+  check("producer can register a media asset of their own", !!activo);
+  if (activo) deshacer.push(async () => { await limpieza.from("media_assets").delete().eq("id", activo.id); });
+  const ref = (extra = {}) => ({ lot_id: lot.id, producer_id: uid, tipo: "taza", asset_id: activo?.id, file_name: "qa-guard.pdf", emisor: "QA", ...extra });
+  const antesDeCerrar = await prod.from("lot_referencias").insert(ref()).select();
+  check("producer CANNOT add a reference while the Ficha is still open (borrador)", !!antesDeCerrar.error, antesDeCerrar.error?.message ?? "(no error!)");
+
+  // V5.143: las fotos son OPCIONALES — el guard trigger `guard_lot_fotos_intake` (V5.64) se retiró. El productor cierra la Ficha
+  // sin fotos; el resto de columnas protegidas siguen cerradas.
   const sinFotos = await prod.from("lots").update({ stage: "ficha_completa", name: "QA Guard Lot v2" }).eq("id", lot.id).select();
-  check("producer CANNOT close the Ficha without 2 photos (guard_lot_fotos_intake)", !!sinFotos.error && /2 fotos/.test(sinFotos.error?.message ?? ""), sinFotos.error?.message ?? "(no error!)");
-  const conFotos = await prod.from("lots").update({ stage: "ficha_completa", name: "QA Guard Lot v2", datasheet: { b4_files_foto: [{ assetId: "qa-guard-1", fileName: "a.jpg" }, { assetId: "qa-guard-2", fileName: "b.jpg" }] } }).eq("id", lot.id).select();
-  check("producer CAN still save ficha (borrador->ficha_completa) with 2 photos", !conFotos.error && conFotos.data.length === 1, conFotos.error?.message);
+  check("producer CAN close the Ficha without photos (V5.143: photos are optional)", !sinFotos.error && sinFotos.data.length === 1, sinFotos.error?.message);
+
+  // V5.143: `lot_referencias` es de solo AGREGAR para el productor.
+  const agregada = await prod.from("lot_referencias").insert(ref()).select().single();
+  check("producer CAN add a reference once the Ficha is closed", !agregada.error && !!agregada.data, agregada.error?.message);
+  const refId = agregada.data?.id;
+  const conNotaCtc = await prod.from("lot_referencias").insert(ref({ nota_ctc: "aprobado", revisada_at: new Date().toISOString() })).select();
+  check("producer CANNOT write CTC's review fields on insert", !!conNotaCtc.error, conNotaCtc.error?.message ?? "(no error!)");
+  const ajena = await prod.from("lot_referencias").insert(ref({ producer_id: "00000000-0000-0000-0000-000000000000" })).select();
+  check("producer CANNOT add a reference as someone else", !!ajena.error, ajena.error?.message ?? "(no error!)");
+  const cambiada = await prod.from("lot_referencias").update({ file_name: "otro.pdf", nota_ctc: "aprobado" }).eq("id", refId).select();
+  check("producer CANNOT edit a reference already sent (no UPDATE policy)", !!cambiada.error || (cambiada.data ?? []).length === 0, JSON.stringify(cambiada.data));
+  const borrada = await prod.from("lot_referencias").delete().eq("id", refId).select();
+  const { data: sigue } = await limpieza.from("lot_referencias").select("id, file_name, nota_ctc").eq("id", refId).maybeSingle();
+  check("producer CANNOT withdraw a reference already sent (no DELETE policy)", (!!borrada.error || (borrada.data ?? []).length === 0) && sigue?.file_name === "qa-guard.pdf" && sigue?.nota_ctc === null, JSON.stringify(sigue));
+  const pedida = await prod.rpc("solicitar_revision_de_referencia", { p_id: refId });
+  check("producer CAN request the review of their own report", !pedida.error && !!pedida.data, pedida.error?.message);
+  const foto = await prod.from("lot_referencias").insert(ref({ tipo: "foto", emisor: null })).select().single();
+  const pedidaFoto = await prod.rpc("solicitar_revision_de_referencia", { p_id: foto.data?.id });
+  check("a photo CAN be added but its review CANNOT be requested (only reports)", !foto.error && !!pedidaFoto.error, pedidaFoto.error?.message ?? "(no error!)");
 
   const nameSave = await prod.from("profiles").update({ full_name: "QA Guard Renamed" }).eq("id", uid).select();
   check("producer CAN update own full_name (F1 fixed)", !nameSave.error && nameSave.data.length === 1, nameSave.error?.message);

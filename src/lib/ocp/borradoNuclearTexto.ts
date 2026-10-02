@@ -38,6 +38,7 @@ export const ROTULO_DE_TABLA: Record<string, string> = {
   lots: "Lotes",
   lot_contributions: "Aportes de finca al lote",
   lot_fichas: "Fichas técnicas emitidas",
+  lot_referencias: "Referencias, fotos y videos agregados por el productor",
   ficha_completion_snapshots: "Avances de la Ficha",
   arena_inscriptions: "Solicitudes de evaluación (con su factura y su pago)",
   arena_entry_codes: "Códigos de subvención usados (quedan sin lote)",

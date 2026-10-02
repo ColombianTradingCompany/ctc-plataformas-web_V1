@@ -6,7 +6,9 @@ import { ConfirmReceiptButton } from "./ConfirmReceiptButton";
 import { RegisterDdsButton, RevertNoAptoButton } from "./LotePiezas";
 import { PostularOnBehalfButton } from "../nominados/NominadosClient";
 import { ActionForm } from "@/components/panel/ActionForm";
-import { reviewEvaluationClaim } from "../evaluationActions";
+import { reviewEvaluationClaim, revisarReferencia } from "../evaluationActions";
+import { IMAGEN_DE_ORIGEN_POR_DEFECTO } from "@/lib/imagenDeOrigen";
+import { esReporte, estadoDeReferencia, resumenDeReferencia, rowToReferencia, type LotReferencia, type LotReferenciaRow } from "@/lib/kaffetal/referencias";
 import { LotFichasCard } from "./FichasClient";
 import { soportesDe, tieneReporte } from "@/lib/fichas/soportes";
 import { ordenaFichas, rowToLotFicha, type LotFicha } from "@/lib/fichas/tipos";
@@ -275,6 +277,10 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
     commsByLot.set(c.lot_id, [...(commsByLot.get(c.lot_id) ?? []), c]);
   }
   const lot = lotRows[0];
+  // V5.143 (owner): lo que el productor AGREGÓ con la Ficha ya cerrada — fotos, videos y otros reportes (`lot_referencias`).
+  const { data: refRowsRaw } = await service.from("lot_referencias").select("*").eq("lot_id", lot.id).order("created_at", { ascending: false });
+  const referencias = ((refRowsRaw as LotReferenciaRow[] | null) ?? []).map(rowToReferencia).filter((r): r is LotReferencia => r !== null);
+  const refUrls = await signedKaffetalMediaUrls(service, referencias.map((r) => r.assetId));
   const ARENA_PATH_STAGES = new Set(["apto", "fila_arena", "evaluado", "galardonado"]);
 
   return (
@@ -295,6 +301,8 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
         producer={producers.get(lot.producer_id)}
         comms={commsByLot.get(lot.id) ?? []}
         signedUrls={signedUrls}
+        referencias={referencias}
+        refUrls={refUrls}
         // El recibo «a mano» es solo de los lotes que el BCP registró por su cuenta (su muestra ya está en
         // manos de CTC y no pasan por el veredicto de la EVA).
         showConfirmReceipt={lot.source === "bcp_manual_entry"}
@@ -352,6 +360,8 @@ function LotCard({
   derivedClaimRows,
   archetypeLabel,
   eudrFincas,
+  referencias,
+  refUrls,
 }: {
   lot: LotRow;
   producer: ProducerContact | undefined;
@@ -370,6 +380,9 @@ function LotCard({
   archetypeLabel: string | null;
   /** V5.125: la debida diligencia de la(s) finca(s) de origen, que es lo que la EVA enseña en su panel EUDR. */
   eudrFincas: EvaEudrFinca[];
+  /** V5.143: lo que el productor agregó con la Ficha ya cerrada, y sus enlaces firmados. */
+  referencias: LotReferencia[];
+  refUrls: Map<string, string>;
 }) {
   const finca = toFincaEudrFields(lot.fincas);
   const eudrStatus: EudrStatus = lotEudrStatus(lot, finca ? [finca] : []);
@@ -515,8 +528,12 @@ function LotCard({
     notas: lot.ficha_notas_cata || ds.analysis_notes || "",
   };
 
-  // V5.97: B4 son fotos (obligatorias desde la V5.64) y video; la checklist las revisa juntas.
+  // V5.97: B4 son fotos y video; la checklist las revisa juntas. V5.143: son OPCIONALES — sin fotos, el lote se muestra
+  // con la imagen por defecto de CTCx, y aquí se dice para que el revisor no la tome por una foto del productor.
   const videoLinks: FileLink[] = [
+    ...((ds.b4_files_foto ?? []).length === 0
+      ? [{ label: "Sin fotos del productor — el lote se muestra con la imagen por defecto de CTCx", url: IMAGEN_DE_ORIGEN_POR_DEFECTO, tipo: "foto" as const }]
+      : []),
     ...(ds.b4_files_foto ?? []).map((f) => ({ label: `Foto del lote — ${f.fileName}`, url: signedUrls.get(f.assetId) ?? null, tipo: "foto" as const })),
     ...(lot.video_asset_id
       ? [{ label: "Video principal del lote (B4)", url: signedUrls.get(lot.video_asset_id) ?? null, tipo: "video" as const }]
@@ -529,6 +546,8 @@ function LotCard({
   ];
 
   const naCerts = [ds.ft2_a3_na && "A3 Cert. Origen", ds.ft2_a4_na && "A4 Cert. Intl."].filter(Boolean) as string[];
+
+  const refsPorRevisar = referencias.filter((r) => estadoDeReferencia(r) === "en_revision").length;
 
   const eudrFields: EvaEudrFields = {
     custodyStages: lot.eudr_custody_stages ?? [],
@@ -555,6 +574,39 @@ function LotCard({
       </div>
       <ProducerContactLine producer={producer} />
       <p className={styles.meta}>Finca: {lot.fincas?.name ?? "—"}</p>
+
+      {referencias.length > 0 && (
+        <div className={styles.card} style={{ display: "block", margin: "10px 0" }}>
+          <h4 style={{ margin: "0 0 6px", fontSize: 13.5 }}>
+            Referencias, fotos y videos agregados por el productor ({referencias.length})
+            {refsPorRevisar > 0 && <span className={`${styles.badge} ${styles.badgeWarn}`} style={{ marginLeft: 8 }}>{refsPorRevisar} por revisar</span>}
+          </h4>
+          <p className={styles.meta} style={{ margin: "0 0 8px" }}>
+            Lo sumó después de cerrar la Ficha, sin pedir revisión de la Ficha. No reemplaza lo que ya envió ni cambia el puntaje del lote. De un reporte puede pedir revisión.
+          </p>
+          {referencias.map((r) => {
+            const estado = estadoDeReferencia(r);
+            const url = refUrls.get(r.assetId);
+            return (
+              <div key={r.id} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", borderTop: "1px dashed var(--line)", padding: "8px 0" }}>
+                <span style={{ flex: 1, minWidth: 220, fontSize: 13 }}>
+                  <b>{resumenDeReferencia(r)}</b> · {new Date(r.createdAt).toLocaleDateString("es-CO")} ·{" "}
+                  {url ? <a href={url} target="_blank" rel="noopener noreferrer">📎 {r.fileName}</a> : `📎 ${r.fileName}`}
+                  {r.nota && <span style={{ display: "block", color: "var(--muted)" }}>«{r.nota}»</span>}
+                  {r.notaCtc && <span style={{ display: "block" }}><b>Nota de CTCx:</b> {r.notaCtc}</span>}
+                </span>
+                {estado === "revisada" && <span className={`${styles.badge} ${styles.badgeGood}`}>revisada · {new Date(r.revisadaAt!).toLocaleDateString("es-CO")}</span>}
+                {estado === "en_revision" && <span className={`${styles.badge} ${styles.badgeWarn}`}>revisión solicitada</span>}
+                {esReporte(r.tipo) && estado !== "revisada" && (
+                  <ActionForm action={revisarReferencia.bind(null, r.id)} submitLabel="Marcar revisada" pendingLabel="Guardando…" buttonClassName="btn btn-sm" style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+                    <input name="nota_ctc" maxLength={1200} placeholder="Nota para el productor (opcional)" style={{ fontSize: 12.5, minWidth: 220 }} />
+                  </ActionForm>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {claims.length > 0 && (
         <div className={styles.card} style={{ display: "block", margin: "10px 0" }}>

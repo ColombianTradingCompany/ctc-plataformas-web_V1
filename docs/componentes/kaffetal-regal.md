@@ -152,6 +152,17 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.143 · fotos y video opcionales, imagen por defecto y «Agregar Referencias, Fotos y Videos»** (owner, 2026-10-02; ejecutado
+  desde la conversación de `consolas`). (1) B4 ya no exige fotos: al cerrar el paso sin fotos ni video, `FichaView` avisa
+  (`AVISO_SIN_MEDIOS`) y deja seguir; el guard trigger `guard_lot_fotos_intake` se retiró. (2) `src/lib/imagenDeOrigen.ts` es la
+  imagen de una finca o un lote sin foto — se PINTA, nunca se guarda como foto del productor. (3) `lot_referencias`
+  (`src/lib/kaffetal/referencias.ts`, `PaneReferencias.tsx`): con la Ficha cerrada (`intake_step >= 4` o etapa posterior a
+  borrador) el productor agrega reportes de taza y físicos, fotos y videos; es de solo agregar (RLS sin UPDATE ni DELETE) y de
+  un reporte puede pedir revisión. **La Ficha congelada no se toca**: nada de esto entra en `lots.datasheet`, en el puntaje ni
+  en el grado. Abierto, **con decisión del owner**: (a) el botón sale con la Ficha cerrada, no solo con la Visa ya emitida —
+  si debe esperar a la Visa, es una línea; (b) las fotos agregadas después no pasan a ser «las fotos del lote» en la vitrina
+  (hoy la vitrina no pinta fotos de lote; cuando lo haga, decidir si toma B4, las agregadas o ambas); (c) un reporte
+  revisado no dispara una evaluación nueva: sigue su circuito aparte.
 - **V5.139 · polígono opcional con 4 ha o menos, y franja «Sesión asistida»** (owner, 2026-10-02; ejecutado desde la conversación
   de `consolas`). **La regla del punto** (`src/lib/geo/referencia.ts`): con más de 4 ha el polígono ES la geolocalización y el
   punto es el centro que declara el productor; con 4 ha o menos la geolocalización es el PUNTO y, si el productor dibuja además

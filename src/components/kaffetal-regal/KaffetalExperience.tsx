@@ -8,6 +8,7 @@ import { sharedCookieDomain } from "@/lib/supabase/cookieDomain";
 import { borradoDeLaMarca, esSesionAsistida } from "@/lib/asistencia/marca";
 import { uploadKaffetalMediaWithProgress, signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { ordenaFichas, rowToLotFicha, type LotFicha } from "@/lib/fichas/tipos";
+import { filaDeReferencia, resumenDeReferencia, rowToReferencia, type LotReferencia, type LotReferenciaRow, type NuevaReferencia } from "@/lib/kaffetal/referencias";
 
 // A 0..1 progress reporter threaded from a child input's useUpload() ring down
 // into these upload handlers, so the byte-level % shows next to the input.
@@ -359,6 +360,8 @@ function Experience() {
   // V5.23: el set de Fichas Técnicas de los lotes (RLS select-own; las compila
   // CTCx en /ocp/kr?lote= (la vista del lote)). Solo lectura — se listan en los panes B2/B3.
   const [lotFichas, setLotFichas] = useState<LotFicha[]>([]);
+  // V5.143: lo que el productor agregó a sus lotes con la Ficha ya cerrada (`lot_referencias`, solo agregar).
+  const [referencias, setReferencias] = useState<LotReferencia[]>([]);
   const [feedback, setFeedback] = useState<FeedbackNote[]>([]);
   const [curLotId, setCurLotId] = useState<string | null>(null);
 
@@ -731,6 +734,10 @@ function Experience() {
       );
 
       setLotFichas((((fichaRows as Parameters<typeof rowToLotFicha>[0][] | null) ?? []).map(rowToLotFicha)));
+      // RLS (lot_referencias_select_own) deja ver solo las propias. Va aparte del lote de consultas de arriba: si la tabla
+      // fallara, el panel carga igual y solo esta lista queda vacía.
+      const { data: refRows } = await supabase.from("lot_referencias").select("*").order("created_at", { ascending: false });
+      setReferencias(((refRows as LotReferenciaRow[] | null) ?? []).map(rowToReferencia).filter((r): r is LotReferencia => r !== null));
 
       setGi({
         razon: producerProfile?.company_name || "—",
@@ -834,6 +841,7 @@ function Experience() {
         setContracts([]);
         setOffers([]);
         setLotFichas([]);
+        setReferencias([]);
         setFeedback([]);
         setGi(EMPTY_GI);
         setCurLotId(null);
@@ -1272,6 +1280,36 @@ function Experience() {
 
   // Mismo canal que requestFincaHelp pero con el LOTE como contexto -- lo usa
   // el FAB "Ayuda" de la Ficha Técnica.
+  // ── V5.143 · Agregar Referencias, Fotos y Videos ─────────────────────────────────────────────────────────────────
+  // El archivo ya subió a Storage (carpeta del lote); aquí se escribe la fila. La tabla es de solo AGREGAR: no hay
+  // política de UPDATE ni de DELETE para el productor, así que nada de lo enviado se puede retirar desde aquí.
+  async function addReferencia(lot: Lot, d: NuevaReferencia): Promise<boolean> {
+    if (!userId) return false;
+    const { data, error } = await supabase.from("lot_referencias").insert(filaDeReferencia(lot.id, userId, d, new Date().toISOString())).select("*").single();
+    const ref = data ? rowToReferencia(data as LotReferenciaRow) : null;
+    if (error || !ref) {
+      showToast(`No se pudo registrar el archivo${error ? `: ${error.message}` : "."}`);
+      return false;
+    }
+    setReferencias((prev) => [ref, ...prev]);
+    // Si pidió la revisión al agregarlo, CTCx se entera por el hilo del lote (lo ve en «Comunicación»).
+    if (ref.revisionSolicitadaAt) await requestLotHelp(lot, `Solicito la revisión de una referencia que agregué al lote: ${resumenDeReferencia(ref)} — «${ref.fileName}».`);
+    return true;
+  }
+
+  /** Pedir a CTCx que revise un reporte ya agregado: lo único que el productor puede cambiar de una referencia, y una vez. */
+  async function solicitarRevisionDeReferencia(lot: Lot, ref: LotReferencia): Promise<boolean> {
+    const { data, error } = await supabase.rpc("solicitar_revision_de_referencia", { p_id: ref.id });
+    if (error || !data) {
+      showToast(`No se pudo pedir la revisión${error ? `: ${error.message}` : "."}`);
+      return false;
+    }
+    setReferencias((prev) => prev.map((r) => (r.id === ref.id ? { ...r, revisionSolicitadaAt: String(data) } : r)));
+    await requestLotHelp(lot, `Solicito la revisión de una referencia que agregué al lote: ${resumenDeReferencia(ref)} — «${ref.fileName}».`);
+    showToast("Revisión solicitada ✓ · CTCx la verá en el expediente del lote");
+    return true;
+  }
+
   async function requestLotHelp(lot: Lot, text: string): Promise<boolean> {
     if (!userId) return false;
     const body = text.trim();
@@ -2087,6 +2125,9 @@ function Experience() {
           onGetFileUrl={getFileUrl}
           onUploadLotVideo={(file, onProgress) => uploadLotVideo(curLot.id, file, onProgress)}
           onRequestHelp={(text) => requestLotHelp(curLot, text)}
+          referencias={referencias.filter((r) => r.lotId === curLot.id)}
+          onAddReferencia={(d) => addReferencia(curLot, d)}
+          onSolicitarRevisionDeReferencia={(ref) => solicitarRevisionDeReferencia(curLot, ref)}
           onSubmitOfficializationClaim={(qGraderRef, adjunto, scaTotal, factorRendimiento, onProgress) =>
             submitOfficializationClaim(curLot.id, qGraderRef, adjunto, scaTotal, factorRendimiento, onProgress)
           }

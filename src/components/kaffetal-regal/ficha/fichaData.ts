@@ -399,8 +399,8 @@ export type FichaFormData = {
   // dejó de ser «Video» y pasó a «Fotos y video», con DOS fotos obligatorias y
   // el video opcional. Default seguro `[]`: un lote guardado antes de que este
   // campo existiera lo recibe vacío y no revienta (regla del charter).
-  // La obligatoriedad se exige también en el servidor — guard trigger
-  // `guard_lot_fotos_intake` sobre `lots` (migración `lots_fotos_obligatorias`).
+  // V5.143 (owner, 2026-10-02): las fotos pasaron a OPCIONALES y el guard trigger `guard_lot_fotos_intake` se retiró;
+  // sin fotos, el lote se muestra con la imagen por defecto (`src/lib/imagenDeOrigen.ts`).
   b4_files_foto: { assetId: string; fileName: string }[];
   // A5 — confirmación POSITIVA de trazabilidad (no cuenta como factor de
   // riesgo; es el reverso tranquilizador de las casillas de riesgo).

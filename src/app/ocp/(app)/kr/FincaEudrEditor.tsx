@@ -3,7 +3,7 @@
 import { useReducer, useRef, useState, useTransition, type ReactNode } from "react";
 import { poligonoEsAdicional } from "@/lib/geo/referencia";
 import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
-import { mapPreviewUrl, deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, MAX_CHEQUEO_FILES, PRODUCT_RISK_AFFIRMATIONS, PRODUCT_RISK_QUESTIONS } from "@/lib/eudr";
+import { mapPreviewUrl, mapaDeParcelasUrl, deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, MAX_CHEQUEO_FILES, PRODUCT_RISK_AFFIRMATIONS, PRODUCT_RISK_QUESTIONS } from "@/lib/eudr";
 import { earthWebUrl, buildFincaGeoJson, fincaCenter } from "@/lib/earthKml";
 import { BarraArea, Coordenada, Documento, Fichas, LineaDeTiempo, SiNo } from "./EudrPiezas";
 import { createClient } from "@/lib/supabase/client";
@@ -13,7 +13,7 @@ import { LOCAL_INFRA, fincaCode } from "@/components/kaffetal-regal/data";
 import { CERT_REGISTRY } from "@/lib/certRegistry";
 import { DEPARTAMENTOS_DE_COLOMBIA, PAISES_FUERA_DE_COLOMBIA } from "@/lib/geo/departamentos";
 import { AREAS_DE_LEGISLACION, SOSTENIBILIDAD_Y_ENFOQUE_SOCIAL, chequeosPendientes, claveDeChequeo, leerChequeosSolicitados } from "@/lib/eudrAtributos";
-import { AtributoEditable, AtributosLectura } from "./AtributosChequeo";
+import { AtributoEditable, AtributosLectura, TablaDeAtributos } from "./AtributosChequeo";
 import { ORIGIN_CERTS, INTL_CERTS } from "@/components/kaffetal-regal/ficha/fichaData";
 import { corroborarCertificado, pedirEvidenciaCertificado, reabrirCertificado, retirarCertificado } from "../certificadosActions";
 import { ESTADO_CERTIFICACION_LABEL, MAX_RECORDATORIOS, type EstadoCertificacion } from "@/lib/registro/reglas";
@@ -311,6 +311,13 @@ export function FincaEudrEditor({
   const [supabase] = useState(() => createClient());
   const [editing, setEditing] = useState(false);
   const [subTab, setSubTab] = useState<SubTab>("declaracion");
+  // V5.142: qué parcela enseña el mapa — «todas» o el id de una.
+  const [parcelaVista, setParcelaVista] = useState<string>("todas");
+  const mapaRef = useRef<HTMLDivElement>(null);
+  const verParcela = (id: string) => {
+    setParcelaVista(id);
+    mapaRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  };
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   // Aggregate ring for the (possibly several) evidence/sustainability files
@@ -349,7 +356,19 @@ export function FincaEudrEditor({
   function toggle(list: string[], set: (v: string[]) => void, key: string, on: boolean) {
     set(on ? [...list, key] : list.filter((k) => k !== key));
   }
-  const mapUrl = mapPreviewUrl({ lat: values.eudr_lat, lng: values.eudr_lng, polygon: values.eudr_polygon_geojson });
+  // V5.142 (owner): «si una finca reportó varios cafetales, solo aparece uno; quiero poder tocar cada uno para verlo».
+  // El mapa de la FINCA es el de su Cafetal 1. Con varias parcelas ubicadas, el revisor elige: todas, o una a la vez.
+  const parcelasUbicadas = parcelas.map((p, i) => ({ ...p, n: i + 1 })).filter((p) => p.polygonPoints >= 3 || (p.lat !== "" && p.lng !== ""));
+  const variasParcelas = parcelasUbicadas.length > 1;
+  const parcelaElegida = parcelasUbicadas.find((p) => p.id === parcelaVista) ?? null;
+  const centroDeLaElegida = parcelaElegida
+    ? parcelaElegida.lat !== "" && parcelaElegida.lng !== ""
+      ? fincaCenter(parcelaElegida.lat, parcelaElegida.lng, null)
+      : fincaCenter(null, null, parcelaElegida.polygon)
+    : null;
+  const mapUrl = variasParcelas
+    ? mapaDeParcelasUrl((parcelaElegida ? [parcelaElegida] : parcelasUbicadas).map((p) => ({ n: p.n, lat: p.lat, lng: p.lng, polygon: p.polygon })))
+    : mapPreviewUrl({ lat: values.eudr_lat, lng: values.eudr_lng, polygon: values.eudr_polygon_geojson });
   // El polígono también cuenta: una finca solo-polígono (>4 ha sin punto
   // marcado) enlaza a Earth por su centroide.
   const earthUrl = earthWebUrl(values.eudr_lat, values.eudr_lng, values.eudr_polygon_geojson);
@@ -462,12 +481,48 @@ export function FincaEudrEditor({
   // el enlace directo abre Earth web centrado en el predio para revisar las
   // imágenes satelitales (históricas incluidas — la fecha de corte es 31/12/2020).
   const mapBlock = (
-    <div style={{ marginTop: 4, marginBottom: 12 }}>
+    <div ref={mapaRef} style={{ marginTop: 4, marginBottom: 12 }}>
+      {variasParcelas && (
+        <div role="group" aria-label="Parcela que enseña el mapa" style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+          <button type="button" className={`btn btn-sm ${parcelaElegida ? "" : "btn-solid"}`} aria-pressed={!parcelaElegida} onClick={() => setParcelaVista("todas")}>
+            Todas ({parcelasUbicadas.length})
+          </button>
+          {parcelasUbicadas.map((p) => (
+            <button key={p.id} type="button" className={`btn btn-sm ${parcelaElegida?.id === p.id ? "btn-solid" : ""}`} aria-pressed={parcelaElegida?.id === p.id} onClick={() => setParcelaVista(p.id)}>
+              {p.n} · {p.name}
+            </button>
+          ))}
+        </div>
+      )}
       {mapUrl ? (
         // eslint-disable-next-line @next/next/no-img-element -- Google Static Maps URL, not a local asset
         <img src={mapUrl} alt={`Mapa de ${fincaName}`} style={{ borderRadius: 8, border: "1px solid var(--line)", display: "block" }} />
       ) : (
         <p className={styles.meta} style={{ margin: 0 }}>Sin coordenadas capturadas todavía.</p>
+      )}
+      {variasParcelas && (
+        <p className={styles.meta} style={{ margin: "6px 0 0", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          {parcelaElegida ? (
+            <>
+              <b>
+                {parcelaElegida.n} · {parcelaElegida.name}
+              </b>
+              {parcelaElegida.areaHa ? `${parcelaElegida.areaHa} ha` : "área sin definir"}
+              {parcelaElegida.polygonPoints >= 3 ? ` · polígono de ${parcelaElegida.polygonPoints} vértices` : ""}
+              {centroDeLaElegida && <Coordenada lat={centroDeLaElegida.la} lng={centroDeLaElegida.ln} origen={parcelaElegida.lat !== "" && parcelaElegida.lng !== "" ? "punto marcado" : "centro del polígono"} />}
+              {(() => {
+                const url = earthWebUrl(parcelaElegida.lat || null, parcelaElegida.lng || null, parcelaElegida.polygon);
+                return url ? (
+                  <a href={url} target="_blank" rel="noopener noreferrer">
+                    Ver esta parcela en Google Earth ↗
+                  </a>
+                ) : null;
+              })()}
+            </>
+          ) : (
+            `Las ${parcelasUbicadas.length} parcelas ubicadas de la finca, cada una con su número. Toque una —arriba o en la lista— para verla sola.`
+          )}
+        </p>
       )}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
         {earthUrl && (
@@ -574,8 +629,17 @@ export function FincaEudrEditor({
                 const needsPoly = (area ?? 0) > 4;
                 const ok = (p.lat !== "" && p.lng !== "" && (!needsPoly || p.polygonPoints >= 3)) || p.polygonPoints >= 3;
                 return (
-                  <div key={p.id}>
-                    {i + 1}. {p.name} · {p.areaHa ? `${p.areaHa} ha` : "área sin definir"} ·{" "}
+                  <div key={p.id} style={parcelaElegida?.id === p.id ? { fontWeight: 700 } : undefined}>
+                    {variasParcelas && (p.polygonPoints >= 3 || (p.lat !== "" && p.lng !== "")) ? (
+                      <button type="button" onClick={() => verParcela(p.id)} title="Ver esta parcela en el mapa" style={{ all: "unset", cursor: "pointer", color: "var(--primary)", textDecoration: "underline" }}>
+                        {i + 1}. {p.name}
+                      </button>
+                    ) : (
+                      <>
+                        {i + 1}. {p.name}
+                      </>
+                    )}{" "}
+                    · {p.areaHa ? `${p.areaHa} ha` : "área sin definir"} ·{" "}
                     {p.polygonPoints >= 3 && !needsPoly && p.lat && p.lng
                       ? `punto ${p.lat}, ${p.lng} · polígono adicional de ${p.polygonPoints} vértices`
                       : p.polygonPoints >= 3 ? `polígono de ${p.polygonPoints} vértices` : p.lat && p.lng ? `punto ${p.lat}, ${p.lng}` : "sin ubicar"}{" "}
@@ -589,13 +653,14 @@ export function FincaEudrEditor({
 
         {subTab === "certs" && <FincaCertsPanel certificates={certificates} producerId={producerId} />}
 
-        {/* V5.119 (owner): fichas verdes/rojas — la legislación no verificada es una falta (rojo); la sostenibilidad es
-            opcional (gris); la infraestructura, las mismas fichas del cuestionario del productor. */}
+        {/* V5.142 (owner): legislación y sostenibilidad son TABLAS —una fila por atributo, con dónde verificarlo, la nota y la
+            evidencia—; lo que nadie pidió va en gris. Ya no hay X rojas: no verificar no es una falta. La infraestructura
+            sigue con las fichas del cuestionario del productor. */}
         {subTab === "atributos" && (
           <div style={{ display: "grid", gap: 14 }}>
             {/* V5.128 (owner): cada ítem enseña lo que el productor pidió chequear, la nota de CTCx y la evidencia. */}
-            {fila("Áreas de legislación verificadas", <AtributosLectura grupo="legal" opciones={AREAS_DE_LEGISLACION} activas={values.eudr_legal_areas} faltante="rojo" solicitudes={solicitudes} notas={notasDeAtributos} files={legalFiles} fileUrls={fileUrls} />)}
-            {fila("Sostenibilidad y enfoque social", <AtributosLectura grupo="sost" opciones={SOSTENIBILIDAD_Y_ENFOQUE_SOCIAL} activas={values.eudr_sustainability_tags} solicitudes={solicitudes} notas={notasDeAtributos} files={sustainabilityFiles} fileUrls={fileUrls} />)}
+            {fila("Áreas de legislación", <AtributosLectura grupo="legal" opciones={AREAS_DE_LEGISLACION} activas={values.eudr_legal_areas} solicitudes={solicitudes} notas={notasDeAtributos} files={legalFiles} fileUrls={fileUrls} onAdjuntar={() => setEditing(true)} />)}
+            {fila("Sostenibilidad y enfoque social", <AtributosLectura grupo="sost" opciones={SOSTENIBILIDAD_Y_ENFOQUE_SOCIAL} activas={values.eudr_sustainability_tags} solicitudes={solicitudes} notas={notasDeAtributos} files={sustainabilityFiles} fileUrls={fileUrls} onAdjuntar={() => setEditing(true)} />)}
             {values.eudr_sustainability_notes && fila("Notas de sostenibilidad", <span className={styles.meta}>{values.eudr_sustainability_notes}</span>)}
             {fila("Infraestructura local (declarada por el productor)", <Fichas opciones={INFRA_DICT} activas={values.eudr_local_infra} titulos={INFRA_TITULOS} />)}
           </div>
@@ -914,10 +979,10 @@ export function FincaEudrEditor({
             </div>
           </div>
           <div className={styles.field}>
-            <label>Áreas de legislación verificadas</label>
+            <label>Áreas de legislación</label>
             {/* V5.128 (owner): no solo la marca — la solicitud del productor, una NOTA de CTCx y la EVIDENCIA, por ítem. */}
             <input type="hidden" name="atributos_notas_presente" value="1" />
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 8 }}>
+            <TablaDeAtributos editable>
               {AREAS_DE_LEGISLACION.map((o) => (
                 <AtributoEditable
                   key={o.key}
@@ -933,12 +998,12 @@ export function FincaEudrEditor({
                   fileUrls={fileUrls}
                 />
               ))}
-            </div>
+            </TablaDeAtributos>
           </div>
 
           <div className={styles.field}>
             <label>Sostenibilidad y enfoque social</label>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 8 }}>
+            <TablaDeAtributos editable>
               {SOSTENIBILIDAD_Y_ENFOQUE_SOCIAL.map((o) => (
                 <AtributoEditable
                   key={o.key}
@@ -954,7 +1019,7 @@ export function FincaEudrEditor({
                   fileUrls={fileUrls}
                 />
               ))}
-            </div>
+            </TablaDeAtributos>
             <textarea name="eudr_sustainability_notes" defaultValue={values.eudr_sustainability_notes ?? ""} style={{ marginTop: 8 }} />
             <p className={styles.meta} style={{ margin: "4px 0 0" }}>Puede adjuntar un archivo de respaldo (≤ 5 MB) por cada ítem marcado.</p>
           </div>

@@ -451,3 +451,9 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-10-02] V5.141 · OCP · revisión EUDR — los rótulos de la línea de tiempo ya no se pisan
 - ANN `src/app/ocp/(app)/kr/EudrPiezas.tsx` (`LineaDeTiempo` en dos renglones; `anclaDelRotulo`), `scripts/qa-visa-check.mjs`.
 (commit: 157b843)
+
+## [2026-10-02] V5.142 · OCP · revisión EUDR — cada parcela en el mapa, y los Atributos Complementarios como tabla
+- ANN `src/lib/eudr.ts` (`mapaDeParcelasUrl`), `src/lib/eudrAtributos.ts` (`fuentes` por atributo, `estadoDelAtributo`).
+- ANN `src/app/ocp/(app)/kr/FincaEudrEditor.tsx` (selector de parcela; tablas), `AtributosChequeo.tsx` (`TablaDeAtributos`), `EudrPiezas.tsx`.
+- ANN `scripts/qa-visa-check.mjs`, `docs/componentes/consolas.md`, `docs/ALINEACION.md`.
+(commit: pendiente)

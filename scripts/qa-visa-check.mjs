@@ -38,7 +38,8 @@
 //      qué DEVUELVE con los datos que el caller de verdad le pasa.
 
 import { readFileSync } from "node:fs";
-import { fincaEudrStatus, fincaEudrDeclaracion, lotEudrStatus } from "../src/lib/eudr.ts";
+import { fincaEudrStatus, fincaEudrDeclaracion, lotEudrStatus, mapaDeParcelasUrl } from "../src/lib/eudr.ts";
+import { AREAS_DE_LEGISLACION, SOSTENIBILIDAD_Y_ENFOQUE_SOCIAL, estadoDelAtributo } from "../src/lib/eudrAtributos.ts";
 
 let ok = 0;
 const fallos = [];
@@ -302,7 +303,27 @@ const completa = (extra = {}) => ({
   check("KR: el aviso «no requieren acción suya» ya no está; el bloque de chequeos vive FUERA del fieldset de solo lectura", !modal.includes("los completa CTC como parte de su propia revisión") && /<\/fieldset>\s*\{\/\* V5\.128[\s\S]{0,800}<ChequeosCtcx/.test(modal));
   check("KR: por ítem, nota e imagen opcionales y el botón «Solicitar chequeo»", bloque.includes('accept="image/*"') && bloque.includes("Nota para CTCx (opcional)") && bloque.includes("Solicitar chequeo") && bloque.includes("✓ Verificado por CTCx"));
   check("KR: la solicitud escribe SOLO `eudr_chequeo_solicitudes`, comprueba la fila y avisa a CTCx en el hilo", ke.includes(".update({ eudr_chequeo_solicitudes: mapa }).eq(\"id\", finca.id).select(\"id\")") && ke.includes("Solicitud de chequeo — ${finca.name}") && !/payload\.eudr_chequeo_solicitudes|eudr_chequeo_solicitudes: f\./.test(ke));
-  check("OCP: cada ítem enseña la solicitud del productor, la nota de CTCx y la evidencia", piezas.includes("El productor pidió este chequeo") && piezas.includes("Nota de CTCx:") && piezas.includes("Evidencia:") && editor.includes('<AtributosLectura grupo="legal"') && editor.includes('<AtributosLectura grupo="sost"'));
+  check("OCP: cada ítem enseña la solicitud del productor, la nota de CTCx y la evidencia", piezas.includes("El productor pidió este chequeo") && piezas.includes("<th style={cabecera}>Nota de CTCx</th>") && piezas.includes("<th style={cabecera}>Evidencia</th>") && editor.includes('<AtributosLectura grupo="legal"') && editor.includes('<AtributosLectura grupo="sost"'));
+  // V5.142 (owner, 2026-10-02): «las X rojas dan la impresión de que algo está mal o falta» → una tabla, una fila por atributo.
+  check("OCP: tres estados y ninguno es «mal» — verificada · por chequear (la pidió el productor) · no solicitada", estadoDelAtributo(true, false) === "verificada" && estadoDelAtributo(true, true) === "verificada" && estadoDelAtributo(false, true) === "por_chequear" && estadoDelAtributo(false, false) === "no_solicitada");
+  check("OCP: los atributos son una TABLA (legislación y sostenibilidad, la misma) con «Dónde verificar», nota y evidencia", piezas.includes("export function TablaDeAtributos") && piezas.includes("<th style={cabecera}>Dónde verificar</th>") && (editor.match(/<TablaDeAtributos editable>/g) ?? []).length === 2 && (editor.match(/onAdjuntar=\{\(\) => setEditing\(true\)\}/g) ?? []).length === 2);
+  check("OCP: sin X rojas — lo que nadie pidió ni verificó va en gris, no en rojo", !piezas.includes("✗") && !piezas.includes("ROJO") && !/<AtributosLectura[^>]*faltante=/.test(editor) && piezas.includes('estado === "no_solicitada" ? { opacity: 0.55 }') && piezas.includes("No solicitada"));
+  check("cada atributo dice DÓNDE se verifica: enlaces https, sin repetir, y solo «inclusión» sin registro que consultar", [...AREAS_DE_LEGISLACION, ...SOSTENIBILIDAD_Y_ENFOQUE_SOCIAL].every((o) => Array.isArray(o.fuentes) && o.fuentes.every((f) => f.label.trim() && /^https:\/\/[^\s]+$/.test(f.url)) && new Set(o.fuentes.map((f) => f.url)).size === o.fuentes.length) && [...AREAS_DE_LEGISLACION, ...SOSTENIBILIDAD_Y_ENFOQUE_SOCIAL].filter((o) => o.fuentes.length === 0).map((o) => o.key).join() === "inclusion");
+  check("OCP: los enlaces abren en otra pestaña y no pasan el origen", piezas.includes('<a key={f.url} href={f.url} target="_blank" rel="noopener noreferrer"'));
+  // V5.142: una finca con varios cafetales enseñaba solo el primero.
+  {
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ??= "clave-de-prueba";
+    const cuadro = (la, ln) => [{ lat: la, lng: ln }, { lat: la + 0.001, lng: ln }, { lat: la + 0.001, lng: ln + 0.001 }];
+    const tres = [{ n: 1, lat: "6.47", lng: "-73.04", polygon: cuadro(6.47, -73.04) }, { n: 2, lat: "6.46", lng: "-73.05", polygon: null }, { n: 3, lat: "", lng: "", polygon: cuadro(6.45, -73.06) }, { n: 4, lat: "", lng: "", polygon: null }];
+    const u = new URL(mapaDeParcelasUrl(tres));
+    check("el mapa de parcelas pinta TODAS las ubicadas: un polígono por cada una que lo tiene y un pin numerado por parcela", u.searchParams.getAll("path").length === 2 && u.searchParams.getAll("markers").map((m) => m.split("|")[1]).join() === "label:1,label:2,label:3" && !u.searchParams.has("zoom"));
+    check("una parcela de solo polígono lleva su pin en el centro; una sin geometría no se pinta", u.searchParams.getAll("markers")[2].endsWith(`${(6.45 + 6.451 + 6.451) / 3},${(-73.06 - 73.06 - 73.059) / 3}`));
+    const una = new URL(mapaDeParcelasUrl([tres[1]]));
+    check("una sola parcela de solo punto se centra con zoom; conserva SU número", una.searchParams.get("zoom") === "15" && una.searchParams.get("center") === "6.46,-73.05" && una.searchParams.get("markers") === "color:red|label:2|6.46,-73.05");
+    check("sin ninguna parcela ubicada no hay mapa; del 10 en adelante el pin va sin rótulo", mapaDeParcelasUrl([tres[3]]) === null && mapaDeParcelasUrl([]) === null && new URL(mapaDeParcelasUrl([{ n: 12, lat: 1, lng: 2 }])).searchParams.get("markers") === "color:red|1,2");
+    check("OCP: con varias parcelas el revisor elige «Todas» o una a la vez, arriba del mapa y desde la lista", editor.includes("const variasParcelas = parcelasUbicadas.length > 1;") && editor.includes("Todas ({parcelasUbicadas.length})") && editor.includes("onClick={() => verParcela(p.id)}") && editor.includes("Ver esta parcela en Google Earth ↗") && editor.includes("(parcelaElegida ? [parcelaElegida] : parcelasUbicadas)"));
+    check("OCP: con una sola parcela el mapa sigue siendo el de la finca", /: mapPreviewUrl\(\{ lat: values\.eudr_lat, lng: values\.eudr_lng, polygon: values\.eudr_polygon_geojson \}\);/.test(editor));
+  }
   check("OCP: al editar, marca + nota + adjunto por ítem, y el sub-tab cuenta lo que falta por chequear", piezas.includes("name={`atributo_nota_${grupo}_${opcion.key}`}") && editor.includes("fileField={`areas_file_${o.key}`}") && editor.includes("(evidence|sustainability|chequeo|legal|areas)_file_") && editor.includes("por chequear"));
   check("la acción guarda la evidencia de las áreas y las notas por ítem", acciones.includes('collectKeyedAttachments(formData, "areas", legalAreas') && acciones.includes("patch.eudr_atributos_notas = notas;") && acciones.includes("eudr_legal_files: legalFiles,"));
   check("los jsonb se comparan por contenido (la nota al productor ya no lista columnas crudas)", acciones.includes("return estable(a ?? {}) !== estable(b ?? {});") && acciones.includes('eudr_evidence_files: "Adjuntos de evidencia"'));

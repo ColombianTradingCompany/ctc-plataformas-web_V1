@@ -81,7 +81,9 @@ export function LineaDeTiempo({ fecha }: { fecha: string | null | undefined }) {
   const inicio = Math.min(siembra, corte) - 365 * 86_400_000; // un año de aire antes de lo más antiguo
   const fin = hoy;
   const frac = (t: number) => Math.max(0, Math.min(1, (t - inicio) / (fin - inicio)));
-  const pos = (t: number) => `${frac(t) * 100}%`;
+  // Dos decimales: el servidor y el navegador toman «hoy» con milisegundos de diferencia, y sin redondear la posición
+  // salía distinta en el decimal 12 — un aviso de hidratación en cada carga, sin nada que ver en pantalla.
+  const pos = (t: number) => `${(frac(t) * 100).toFixed(2)}%`;
   const despuesDelCorte = siembra > corte;
   const anos = Math.floor((hoy - siembra) / (365.25 * 86_400_000));
   const fmt = (t: number) => new Date(t).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });

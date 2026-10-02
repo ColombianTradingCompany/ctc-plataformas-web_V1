@@ -19,6 +19,23 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.142] — 2026-10-02 (commit pendiente)
+
+- **Añadido**: en la revisión EUDR de una finca (OCP), **cada parcela se puede ver en el mapa** (owner, 2026-10-02: «si una finca
+  reportó varios cafetales, solo aparece uno»). Con más de una parcela ubicada, arriba del mapa hay un selector —«Todas (N)» y una
+  por cafetal— y los renglones de la lista «Parcelas» también se tocan. «Todas» pinta cada polígono y un pin numerado por parcela;
+  una sola la encuadra y trae su área, su coordenada con «Copiar» y su enlace a Google Earth. Con una sola parcela, el mapa sigue
+  siendo el de la finca.
+- **Cambiado**: **Atributos Complementarios es ahora una tabla**, una fila por atributo, igual para «Áreas de legislación» y para
+  «Sostenibilidad y enfoque social» (owner: «las X rojas dan la impresión de que algo está mal o falta»). Columnas: el atributo, su
+  estado —verificada · por chequear (la pidió el productor) · no solicitada—, **dónde verificar** (enlaces a las fuentes de
+  consulta), la nota de CTCx y la evidencia, con «Adjuntar…» que abre el formulario. Lo que nadie pidió ni verificó va en gris. Ya
+  no hay X rojas: estos atributos documentan la revisión de CTCx, no son faltas del productor. El formulario usa la misma tabla.
+- **Corregido**: la línea de tiempo del cultivo daba un aviso de hidratación en cada carga (el servidor y el navegador calculan
+  «hoy» con milisegundos de diferencia); la posición se redondea a dos decimales.
+- **Seguridad**: `qa-visa` (78 → 89).
+- **Docs**: charter `consolas`, ALINEACION §3.
+
 ## [V5.141] — 2026-10-02 (commit 157b843)
 
 - **Corregido**: en la revisión EUDR de una finca (OCP · Productores, Fincas y Lotes), los rótulos **«siembra» y «corte EUDR

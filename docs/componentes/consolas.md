@@ -177,6 +177,14 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.142 · revisión EUDR de la finca: cada parcela en el mapa, y Atributos Complementarios como tabla** (owner, 2026-10-02).
+  Hecho: `mapaDeParcelasUrl` (`src/lib/eudr.ts`) pinta todas las parcelas ubicadas o la elegida; el selector vive en el bloque del
+  mapa de `FincaEudrEditor`. Los atributos pasan a `TablaDeAtributos` (`AtributosChequeo.tsx`): estado, dónde verificar, nota y
+  evidencia; sin X rojas. **Los enlaces de «Dónde verificar» viven en `src/lib/eudrAtributos.ts` (`fuentes`)** y son una primera
+  lista: tres sitios oficiales (MinTrabajo, MinInterior, Procuraduría) no respondieron desde la máquina de desarrollo —está
+  fuera de Colombia— y quedaron sin comprobar. Abierto, **con decisión del owner**: (a) revisar y corregir esa lista de fuentes;
+  (b) si «Adjuntar» debe subir el archivo sin entrar al formulario (hoy lo abre); (c) el expediente EUDR impreso sigue
+  listando «Áreas de legislación verificadas» en una línea.
 - **V5.140 · la planilla: una nota de la rueda en varias etapas, con comentario** (owner, 2026-10-02). Hecho: `DetalleDeMarca` pasó
   de `{ etapa, intensidad }` a `{ etapas, intensidad, nota }` (`src/lib/catacion/rueda.ts`), sin migración —`rueda_detalle` es
   jsonb y lo viejo se lee como una lista de una—; `LabEvalEditor` enciende las etapas por separado y trae el comentario; la

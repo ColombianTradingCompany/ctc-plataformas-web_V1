@@ -424,6 +424,46 @@ export function mapPreviewUrl(
   return null;
 }
 
+/** Lo que el mapa de parcelas necesita de cada una: su número (el rótulo del pin), su punto y su polígono. */
+export type ParcelaEnMapaEstatico = { n: number; lat?: string | number | null; lng?: string | number | null; polygon?: { lat: number; lng: number }[] | null };
+
+/**
+ * V5.142 (owner, 2026-10-02): «si una finca reportó varios cafetales, solo aparece uno». `mapPreviewUrl` pinta la
+ * geometría de la FINCA, que es la de su Cafetal 1. Este pinta las PARCELAS que se le pasen —todas, o la que el
+ * revisor eligió—: cada polígono en dorado y un pin rojo numerado en su punto (o en el centro del polígono si no tiene
+ * punto). Sin centro ni zoom, Google encuadra todo lo que se le da; una sola parcela de solo punto sí los necesita.
+ */
+export function mapaDeParcelasUrl(parcelas: readonly ParcelaEnMapaEstatico[], size = "560x320"): string | null {
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  if (!apiKey) return null;
+  const params = new URLSearchParams({ size, maptype: "terrain", key: apiKey });
+  let pintadas = 0;
+  let hayPoligono = false;
+  let ultimo: { lat: number; lng: number } | null = null;
+  for (const p of parcelas) {
+    const poly = p.polygon && p.polygon.length >= 3 ? p.polygon : null;
+    const tienePunto = p.lat != null && p.lng != null && p.lat !== "" && p.lng !== "";
+    if (!poly && !tienePunto) continue;
+    if (poly) {
+      params.append("path", "color:0xFFCD00FF|weight:3|fillcolor:0xFFCD0033|" + [...poly, poly[0]].map((v) => `${v.lat},${v.lng}`).join("|"));
+      hayPoligono = true;
+    }
+    const punto = tienePunto
+      ? { lat: Number(p.lat), lng: Number(p.lng) }
+      : { lat: poly!.reduce((s, v) => s + v.lat, 0) / poly!.length, lng: poly!.reduce((s, v) => s + v.lng, 0) / poly!.length };
+    // El rótulo de un pin es UN carácter: del 1 al 9 lleva su número; del 10 en adelante va sin rótulo.
+    params.append("markers", `color:red|${p.n >= 1 && p.n <= 9 ? `label:${p.n}|` : ""}${punto.lat},${punto.lng}`);
+    pintadas += 1;
+    ultimo = punto;
+  }
+  if (!pintadas || !ultimo) return null;
+  if (pintadas === 1 && !hayPoligono) {
+    params.set("center", `${ultimo.lat},${ultimo.lng}`);
+    params.set("zoom", "15");
+  }
+  return `https://maps.googleapis.com/maps/api/staticmap?${params.toString()}`;
+}
+
 // F2 (2026-07-29): el origen del lote son APORTES (lot_contributions /
 // datasheet.contributions) — este es el resolver nuevo; resolveSourceFincas
 // queda como fallback legacy para datasheets pre-F2 sin aportes sembrados.

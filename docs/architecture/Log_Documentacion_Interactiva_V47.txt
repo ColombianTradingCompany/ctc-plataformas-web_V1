@@ -492,4 +492,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `src/components/bcp/LabEvalEditor.tsx` (`setNumTazas`), `src/app/socios/[partner]/panel/evaluacion/PlanillaCentro.tsx` (`codigoAbierto`).
 - ANN `public/tools/coffee-datasheet/ctcx-coffee-datasheet-tool.html` (`tazasUsadas`, `ajustaTazasSca`).
 - ANN `scripts/qa-centro-calidad-check.mjs`, `scripts/qa-coffee-datasheet-check.mjs`, `docs/componentes/{consolas,herramientas-cafe}.md`.
-(commit: pendiente)
+(commit: aae7731)

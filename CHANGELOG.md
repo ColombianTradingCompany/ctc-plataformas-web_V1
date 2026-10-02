@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.147] — 2026-10-02 (commit pendiente)
+## [V5.147] — 2026-10-02 (commit aae7731)
 
 - **Cambiado**: en el Centro de Calidad, **el código interno de la muestra pasa arriba a la derecha de la planilla y llega
   plegado** (owner, 2026-10-02: «que se despliegue si se elige usarlo»): un botón «＋ Usar mi código interno (opcional)» abre

@@ -222,6 +222,9 @@ const completa = (extra = {}) => ({
   const editor = lee("src/app/ocp/(app)/kr/FincaEudrEditor.tsx");
   check("la barra de área se mide contra 4 ha y se corta a 30", piezas.includes("EUDR_HA_REFERENCIA = 4") && piezas.includes("EUDR_HA_TOPE_VISUAL = 30") && piezas.includes("la barra se corta"));
   check("la línea de tiempo marca la siembra, el corte EUDR (31/12/2020) y hoy", piezas.includes('EUDR_FECHA_CORTE = "2020-12-31"') && piezas.includes('label: "hoy"'));
+  // V5.141 (owner, 2026-10-02): «siembra» y «corte EUDR» se pisaban cuando las dos fechas quedan cerca.
+  check("la línea de tiempo no pisa sus rótulos: la siembra va ARRIBA de la línea; el corte y «hoy», debajo", /label: "siembra",[^\n]*arriba: true/.test(piezas) && /label: "corte EUDR 31\/12\/2020",[^\n]*arriba: false/.test(piezas) && /label: "hoy",[^\n]*arriba: false, ancla: "fin"/.test(piezas) && piezas.includes("top: m.arriba ? 0 : 30"));
+  check("y cada rótulo se ancla hacia adentro cerca de un borde (no se sale ni choca con «hoy»)", piezas.includes('return fraccion < bordeIzq ? "inicio" : fraccion > bordeDer ? "fin" : "centro";') && piezas.includes("anclaDelRotulo(frac(corte), 0.2, 0.7)") && piezas.includes('m.ancla === "fin" ? "translateX(-100%)" : "translateX(-50%)"'));
   check("Sí/No en verde o rojo según la buena respuesta; el documento en rojo si falta", piezas.includes("const bien = v === bienSi;") && piezas.includes("styles.badgeBad}`}>{vacio}"));
   check("la lectura usa las piezas: área, fecha, Sí/No, documento, fichas, coordenada copiable", ["<BarraArea", "<LineaDeTiempo", "<SiNo", "<Documento", "<Fichas", "<Coordenada"].every((t) => editor.includes(t)));
   check("las afirmaciones del producto se pintan al derecho y los indicios con «bien = No»", editor.includes("opciones={PRODUCT_RISK_AFFIRMATIONS}") && editor.includes("bienSi={false}"));

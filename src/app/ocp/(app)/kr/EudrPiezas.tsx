@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import styles from "@/components/panel/shared.module.css";
 
 // ── Piezas visuales de la revisión EUDR de una finca (V5.119, owner 2026-10-01) ───────────────────────────────────
@@ -65,6 +65,11 @@ export function BarraArea({ ha }: { ha: number | string | null | undefined }) {
   );
 }
 
+/** Hacia dónde crece el rótulo de un punto de la línea: centrado, o hacia adentro si el punto cae cerca de un borde. */
+export function anclaDelRotulo(fraccion: number, bordeIzq: number, bordeDer: number): "inicio" | "centro" | "fin" {
+  return fraccion < bordeIzq ? "inicio" : fraccion > bordeDer ? "fin" : "centro";
+}
+
 export function LineaDeTiempo({ fecha }: { fecha: string | null | undefined }) {
   const [hoyAlMontar] = useState(() => Date.now());
   if (!fecha) return <span className={`${styles.badge} ${styles.badgeBad}`}>Fecha sin definir</span>;
@@ -75,7 +80,8 @@ export function LineaDeTiempo({ fecha }: { fecha: string | null | undefined }) {
   const hoy = hoyAlMontar;
   const inicio = Math.min(siembra, corte) - 365 * 86_400_000; // un año de aire antes de lo más antiguo
   const fin = hoy;
-  const pos = (t: number) => `${Math.max(0, Math.min(1, (t - inicio) / (fin - inicio))) * 100}%`;
+  const frac = (t: number) => Math.max(0, Math.min(1, (t - inicio) / (fin - inicio)));
+  const pos = (t: number) => `${frac(t) * 100}%`;
   const despuesDelCorte = siembra > corte;
   const anos = Math.floor((hoy - siembra) / (365.25 * 86_400_000));
   const fmt = (t: number) => new Date(t).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
@@ -87,18 +93,38 @@ export function LineaDeTiempo({ fecha }: { fecha: string | null | undefined }) {
           {despuesDelCorte ? "sembrado DESPUÉS del corte EUDR · exige evidencia de no deforestación" : `sembrado antes del corte EUDR · ${anos} año${anos === 1 ? "" : "s"} hasta hoy`}
         </span>
       </div>
-      <div style={{ position: "relative", height: 34, marginTop: 6 }} aria-label={`Línea de tiempo: siembra ${fecha}, corte EUDR ${EUDR_FECHA_CORTE}, hoy`}>
-        <div style={{ position: "absolute", left: 0, right: 0, top: 8, height: 4, background: "var(--line)", borderRadius: 2 }} />
-        <div style={{ position: "absolute", left: pos(siembra), right: 0, top: 8, height: 4, background: despuesDelCorte ? "#D97706" : "#16A34A", borderRadius: 2 }} />
-        {[
-          { t: siembra, label: "siembra", color: despuesDelCorte ? "#D97706" : "#16A34A" },
-          { t: corte, label: "corte EUDR 31/12/2020", color: "var(--ink)" },
-          { t: hoy, label: "hoy", color: "var(--primary)" },
-        ].map((m) => (
-          <div key={m.label} style={{ position: "absolute", left: pos(m.t), top: 2, transform: "translateX(-50%)", textAlign: "center" }}>
-            <div style={{ width: 12, height: 12, borderRadius: "50%", background: m.color, border: "2px solid #fff", margin: "0 auto", boxShadow: "0 0 0 1px var(--line)" }} />
-            <div style={{ fontSize: 10, color: "var(--muted)", whiteSpace: "nowrap", marginTop: 2, fontFamily: "var(--font-spline-mono), monospace" }}>{m.label}</div>
-          </div>
+      {/* V5.141 (owner, 2026-10-02): «siembra» y «corte EUDR» se pisaban cuando las dos fechas quedan cerca (un cultivo de
+          2020). Los rótulos van en DOS renglones —la siembra ARRIBA de la línea; el corte y «hoy», debajo— y cada uno se
+          ancla hacia adentro cuando su punto cae cerca de un borde, para que no se salga ni choque con «hoy». */}
+      <div style={{ position: "relative", height: 46, marginTop: 6 }} aria-label={`Línea de tiempo: siembra ${fecha}, corte EUDR ${EUDR_FECHA_CORTE}, hoy`}>
+        <div style={{ position: "absolute", left: 0, right: 0, top: 20, height: 4, background: "var(--line)", borderRadius: 2 }} />
+        <div style={{ position: "absolute", left: pos(siembra), right: 0, top: 20, height: 4, background: despuesDelCorte ? "#D97706" : "#16A34A", borderRadius: 2 }} />
+        {(
+          [
+            { t: siembra, label: "siembra", color: despuesDelCorte ? "#D97706" : "#16A34A", arriba: true, ancla: anclaDelRotulo(frac(siembra), 0.12, 0.88) },
+            { t: corte, label: "corte EUDR 31/12/2020", color: "var(--ink)", arriba: false, ancla: anclaDelRotulo(frac(corte), 0.2, 0.7) },
+            { t: hoy, label: "hoy", color: "var(--primary)", arriba: false, ancla: "fin" },
+          ] as const
+        ).map((m) => (
+          <Fragment key={m.label}>
+            <div style={{ position: "absolute", left: pos(m.t), top: 14, width: 12, height: 12, transform: "translateX(-50%)", borderRadius: "50%", background: m.color, border: "2px solid #fff", boxShadow: "0 0 0 1px var(--line)" }} />
+            <div
+              data-rotulo={m.arriba ? "arriba" : "abajo"}
+              style={{
+                position: "absolute",
+                top: m.arriba ? 0 : 30,
+                left: m.ancla === "inicio" ? `calc(${pos(m.t)} - 6px)` : m.ancla === "fin" ? `calc(${pos(m.t)} + 6px)` : pos(m.t),
+                transform: m.ancla === "inicio" ? undefined : m.ancla === "fin" ? "translateX(-100%)" : "translateX(-50%)",
+                fontSize: 10,
+                lineHeight: "13px",
+                color: "var(--muted)",
+                whiteSpace: "nowrap",
+                fontFamily: "var(--font-spline-mono), monospace",
+              }}
+            >
+              {m.label}
+            </div>
+          </Fragment>
         ))}
       </div>
     </div>

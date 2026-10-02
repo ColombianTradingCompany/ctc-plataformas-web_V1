@@ -19,6 +19,15 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.141] — 2026-10-02 (commit pendiente)
+
+- **Corregido**: en la revisión EUDR de una finca (OCP · Productores, Fincas y Lotes), los rótulos **«siembra» y «corte EUDR
+  31/12/2020» de la línea de tiempo se pisaban** cuando las dos fechas quedan cerca —un cultivo establecido en 2020 o 2021— (owner,
+  2026-10-02). Ahora van en dos renglones: la siembra arriba de la línea; el corte y «hoy», debajo. Cada rótulo se ancla hacia
+  adentro cuando su punto cae cerca de un borde, así que tampoco se sale ni choca con «hoy» en un cultivo antiguo. Probado con
+  ocho fechas, de 1960 al mes pasado.
+- **Seguridad**: `qa-visa` (76 → 78).
+
 ## [V5.140] — 2026-10-02 (commit cca64a3)
 
 - **Cambiado**: en la planilla de evaluación (Centro de Calidad, OCP «Registrar a mano» y Arena), **una nota de la rueda se resalta

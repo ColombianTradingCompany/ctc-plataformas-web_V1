@@ -447,3 +447,7 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `scripts/qa-centro-calidad-check.mjs`, `scripts/qa-coffee-datasheet-check.mjs`.
 - ANN `docs/componentes/herramientas-cafe/coffee-datasheet/README.md`, `docs/componentes/herramientas-cafe.md`, `docs/componentes/consolas.md`, `docs/ALINEACION.md`.
 (commit: cca64a3)
+
+## [2026-10-02] V5.141 · OCP · revisión EUDR — los rótulos de la línea de tiempo ya no se pisan
+- ANN `src/app/ocp/(app)/kr/EudrPiezas.tsx` (`LineaDeTiempo` en dos renglones; `anclaDelRotulo`), `scripts/qa-visa-check.mjs`.
+(commit: pendiente)

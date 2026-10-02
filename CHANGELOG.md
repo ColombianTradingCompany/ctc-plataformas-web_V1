@@ -19,6 +19,17 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.146] — 2026-10-02 (commit pendiente)
+
+- **Añadido**: en «Lotes en Evaluación» y «Lotes a Evaluar» (OCP), **el nombre de cada lote es el enlace a su perfil**
+  (`/ocp/kr?lote=`): en los baches, las altas del Centro, los que no superaron y los reembolsos pendientes (owner, 2026-10-02).
+  En Solicitudes el renglón sigue siendo el acordeón, con el enlace dentro.
+- **Datos**: tres lotes que se llamaban «Castillo 2026» cambiaron de nombre en la base, a pedido del owner —`lots.name` y el
+  `product_name` de su Ficha—, con rastro en `audit_log` (`lote_renombrado`): CTC-L-7E360302 → «Castillo Lavado Alto de Reinas
+  2026»; CTC-L-323FEDE6 → «Castillo Honey + Fermentación anaerobica alcohólica La Floresta 2026»; CTC-L-016DF280 → «Castillo
+  Lavado Ruiyeñores 2026». Ninguno tenía fichas emitidas, ofertas, contratos ni publicación que llevaran el nombre viejo.
+- **Seguridad**: `qa-solicitud-evaluacion` (93 → 95).
+
 ## [V5.145] — 2026-10-02 (commit b0a2ad1)
 
 - **Corregido**: **la sesión del Centro de Calidad (y de todos los socios) ya no se cierra sola** (owner, 2026-10-02: «que dure al

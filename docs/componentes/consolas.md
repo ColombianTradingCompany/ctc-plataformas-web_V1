@@ -177,6 +177,11 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.146 · el nombre del lote lleva a su perfil en el circuito, y tres lotes renombrados en la base** (owner, 2026-10-02).
+  `EnlaceAlLote` en `CircuitoVista` (Lotes a Evaluar y Lotes en Evaluación). Los tres «Castillo 2026» se renombraron por SQL
+  (`lots.name` + `datasheet.product_name`; rastro `lote_renombrado` en `audit_log`). Abierto, **con decisión del owner**: el
+  OCP no tiene un botón para renombrar un lote ya cerrado — hoy se hace en la base; y a los tres productores no se les avisó
+  del cambio de nombre.
 - **V5.145 · la sesión de los socios vive en su propia cookie** (owner, 2026-10-02: «que la sesión del Centro de Calidad dure al
   menos 10 horas»). Hecho: `ctc-socios-auth` (`createPartnerSessionClient`), renovada por el proxy en `/socios`, más el latido
   `SesionViva` en Evaluación de Lotes. No vence por tiempo. `qa-centro-calidad` lo prueba con la librería real. Abierto: (a)

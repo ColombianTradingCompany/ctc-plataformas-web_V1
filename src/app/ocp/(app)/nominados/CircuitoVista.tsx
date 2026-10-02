@@ -89,6 +89,18 @@ const rotuloDeAlta = (a: AltaRow) => {
 
 const fecha = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString("es-CO") : "—");
 
+// V5.146 (owner, 2026-10-02): «en "Lotes en Evaluación" quiero poder dar clic a los lotes e ir a su perfil». El nombre del
+// lote es el enlace a su vista completa (`/ocp/kr?lote=`) en Lotes a Evaluar y en Lotes en Evaluación (los baches, las altas
+// del Centro, los que no superaron y los reembolsos). En Solicitudes el renglón es un acordeón y el enlace va dentro.
+// `suave` = dentro de un renglón en gris (sin negrita).
+function EnlaceAlLote({ id, nombre, suave = false }: { id: string; nombre: string; suave?: boolean }) {
+  return (
+    <Link href={`/ocp/kr?lote=${id}`} title="Abrir el perfil del lote" style={{ color: suave ? "inherit" : "var(--ink)", fontWeight: suave ? 600 : 700, textDecoration: "underline", textDecorationColor: "var(--line)", textUnderlineOffset: 3 }}>
+      {nombre}
+    </Link>
+  );
+}
+
 export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
   const service = createServiceRoleClient();
 
@@ -237,6 +249,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
         <summary style={{ cursor: "pointer", listStyle: "none" }}>
           <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
             <span aria-hidden style={{ fontSize: 11, color: "var(--muted)" }}>▸</span>
+            {/* Aquí NO es enlace: el renglón entero abre el acordeón (V5.118), y dentro está «Abrir la vista completa del lote». */}
             <b>{i.lot!.name}</b>
             <span className={styles.meta} style={{ margin: 0 }}>
               {name(i.producer_id)} · <span className="mono">{ctcLotReferenceShort(i.lot_id)}</span> · código <span className="mono">{i.entry_code ?? "—"}</span>
@@ -359,7 +372,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
             count: aEvaluar.length,
             body: aEvaluar.map((i) => (
               <div key={i.id} className={styles.card} style={{ flexDirection: "column", alignItems: "stretch" }}>
-                <b>{i.lot!.name}</b>
+                <EnlaceAlLote id={i.lot_id} nombre={i.lot!.name} />
                 <p className={styles.meta}>
                   {name(i.producer_id)} · <span className="mono">{ctcLotReferenceShort(i.lot_id)}</span> · pago {i.status} · recibida {fecha(i.lot!.sample_2kg_confirmed_at)}
                 </p>
@@ -405,7 +418,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
                     {batchLots(b).map((i) => (
                       <p key={i.id} className={styles.meta} style={{ margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
                         <span style={{ flex: 1 }}>
-                          {i.lot!.name} · {name(i.producer_id)} · <span className="mono">{ctcLotReferenceShort(i.lot_id)}</span>
+                          <EnlaceAlLote id={i.lot_id} nombre={i.lot!.name} suave /> · {name(i.producer_id)} · <span className="mono">{ctcLotReferenceShort(i.lot_id)}</span>
                         </span>
                         <RemoveFromBatchButton lotId={i.lot_id} />
                       </p>
@@ -457,7 +470,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
                 return (
                   <div key={i.id} style={{ borderTop: "1px dashed var(--line)", paddingTop: 6 }}>
                     <p className={styles.meta} style={{ margin: 0 }}>
-                      <b style={{ color: "var(--ink)" }}>{i.lot!.name}</b> · {name(i.producer_id)} ·{" "}
+                      <EnlaceAlLote id={i.lot_id} nombre={i.lot!.name} /> · {name(i.producer_id)} ·{" "}
                       <span className="mono">{ctcLotReferenceShort(i.lot_id)}</span>
                     </p>
                     {pendiente ? (
@@ -538,7 +551,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
           <div style={{ display: "grid", gap: 10 }}>
             {noSuperaron.map((i) => (
               <div key={i.id} className={styles.card} style={{ flexDirection: "column", alignItems: "stretch" }}>
-                <b>{i.lot!.name}</b>
+                <EnlaceAlLote id={i.lot_id} nombre={i.lot!.name} />
                 <p className={styles.meta}>
                   {name(i.producer_id)} · puntaje {i.sondeo_score ?? "—"}{i.reevaluaciones ? ` · re-evaluación n.º ${i.reevaluaciones}` : ""}
                   {i.sondeo_result_notes && <> · «{i.sondeo_result_notes}»</>}
@@ -560,7 +573,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
           <div style={{ display: "grid", gap: 10 }}>
             {reembolsosPend.map((i) => (
               <div key={i.id} className={styles.card}>
-                <b>{i.lot!.name}</b>
+                <EnlaceAlLote id={i.lot_id} nombre={i.lot!.name} />
                 <p className={styles.meta}>
                   {name(i.producer_id)} · 80% de {formatCop(i.amount_due_cop)} = <b>{formatCop(i.cashback_cop ?? 0)}</b>
                 </p>

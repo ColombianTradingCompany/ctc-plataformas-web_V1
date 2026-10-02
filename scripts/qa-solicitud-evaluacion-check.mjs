@@ -109,6 +109,9 @@ const plan = lee("docs/PLAN_CIRCUITO_DEL_LOTE.md");
   check("sin número de Nequi la factura manda a escribir a CTC", factura.includes("Escríbanos a"));
   const vista = lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx");
   const evalTab = lee("src/components/kaffetal-regal/panel/EvaluacionesTab.tsx");
+  // V5.146 (owner, 2026-10-02): en «Lotes en Evaluación» (y en «Lotes a Evaluar») el nombre del lote lleva a su perfil.
+  check("el nombre del lote es el enlace a su perfil (`/ocp/kr?lote=`) en los baches, las altas, los que no superaron y los reembolsos", vista.includes("<Link href={`/ocp/kr?lote=${id}`} title=\"Abrir el perfil del lote\"") && (vista.match(/<EnlaceAlLote id=\{i\.lot_id\} nombre=\{i\.lot!\.name\}/g) ?? []).length === 5);
+  check("en Solicitudes el renglón sigue siendo el acordeón (el enlace al lote va dentro)", /<summary[\s\S]{0,420}<b>\{i\.lot!\.name\}<\/b>/.test(vista) && vista.includes("Abrir la vista completa del lote →"));
   check("el OCP y el productor abren la MISMA factura", vista.includes("VerFacturaButton") && evalTab.includes("openFactura({"));
   check("el productor no ve instrucciones de pago sin factura emitida", /paymentsDue = lots\.filter\([^\n]*facturaRef\)/.test(evalTab));
 }

@@ -431,6 +431,17 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("tazas: el editor trae el selector junto a «Defectos de taza» y ajusta las tazas al cambiarlo", editor.includes("{t.tazasUsadas}") && editor.includes("onChange={(e) => setNumTazas(e.target.value)}") && editor.includes("normalizaScaTazas(value.sca_tazas, undefined, undefined, n)") && PL.es.tazasUsadas === "Tazas usadas" && PL.en.tazasUsadas === "Cups used");
 }
 
+// ── V5.148 (owner, 2026-10-02) · la planilla del Centro de Calidad no enseña el grado (depende también de B1) ──────────────
+{
+  const editor = lee("src/components/bcp/LabEvalEditor.tsx").replace(/\r\n/g, "\n");
+  const uso = (ruta) => lee(ruta).split("\n").filter((l) => l.includes("<LabEvalEditor "));
+  const centro = uso("src/app/socios/[partner]/panel/evaluacion/PlanillaCentro.tsx");
+  const deCtcx = [...uso("src/app/ocp/(app)/nominados/NominadosClient.tsx"), ...uso("src/app/bcp/(app)/arena/ArenaClient.tsx")];
+  check("grado: el editor lo oculta a pedido — ni «grado firme» ni «sin grado»; el Punto que rige se sigue enseñando", editor.includes("ocultaGrado = false,") && editor.includes('{!ocultaGrado && decision?.tipo === "galardon" && (') && editor.includes('{!ocultaGrado && decision?.tipo === "sin_grado" &&') && editor.includes("{t.puntoQueRige}: <b"));
+  check("grado: la planilla del Centro de Calidad lo pide oculto", centro.length === 1 && centro[0].includes(" ocultaGrado "));
+  check("grado: CTCx («Registrar a mano») y la Arena lo siguen viendo", deCtcx.length === 2 && deCtcx.every((l) => !l.includes("ocultaGrado")));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-centro-calidad: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("  - " + f);

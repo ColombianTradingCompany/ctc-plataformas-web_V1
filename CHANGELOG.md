@@ -19,6 +19,15 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.148] — 2026-10-02 (commit pendiente)
+
+- **Cambiado**: la planilla del **Centro de Calidad ya no enseña el grado** (owner, 2026-10-02: «el grado depende también de
+  otros factores que son parte del B1, que aquí no se reflejan»). Bajo el puntaje queda el Punto que rige y su procedencia; se
+  quitan «grado firme …», el «hasta … con recata» y «sin grado». El aviso de recata pendiente (cuando el intervalo cruza los
+  80) se conserva: habla del puntaje, no del grado. CTCx lo sigue viendo en «Registrar a mano» y en la Arena, y la Coffee
+  Datasheet Tool —que sí lleva B1— no cambia (`ocultaGrado` en `LabEvalEditor`).
+- **Seguridad**: `qa-centro-calidad` (194 → 197).
+
 ## [V5.147] — 2026-10-02 (commit aae7731)
 
 - **Cambiado**: en el Centro de Calidad, **el código interno de la muestra pasa arriba a la derecha de la planilla y llega

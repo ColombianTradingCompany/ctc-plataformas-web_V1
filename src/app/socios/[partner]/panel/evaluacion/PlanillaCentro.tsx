@@ -132,7 +132,7 @@ export function DarDeAltaButton({ lotId, uid, borrador }: { lotId: string; uid: 
             <p className={styles.orgLine} style={{ marginTop: 2 }}>
               {tx.ciegas}
             </p>
-            <LabEvalEditor value={ev} onChange={(patch) => { setEv((v) => ({ ...v, ...patch })); setGuardado(false); }} disabled={pending} lang={lang} onLang={setLang} />
+            <LabEvalEditor value={ev} onChange={(patch) => { setEv((v) => ({ ...v, ...patch })); setGuardado(false); }} disabled={pending} lang={lang} onLang={setLang} ocultaGrado />
             <div className={styles.field} style={{ marginTop: 12 }}>
               <label>{tx.notas}</label>
               <textarea rows={2} value={notas} onChange={(e) => { setNotas(e.target.value); setGuardado(false); }} placeholder={tx.notasPh} style={{ width: "100%" }} />

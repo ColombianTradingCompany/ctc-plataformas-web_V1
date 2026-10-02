@@ -114,6 +114,7 @@ export function LabEvalEditor({
   disabled,
   lang: langProp,
   onLang,
+  ocultaGrado = false,
 }: {
   value: LabEvaluation;
   onChange: (patch: Partial<LabEvaluation>) => void;
@@ -121,6 +122,8 @@ export function LabEvalEditor({
   /** V5.130: el idioma de la planilla. Sin él, el editor lleva el suyo (español al abrir). */
   lang?: IdiomaDePlanilla;
   onLang?: (lang: IdiomaDePlanilla) => void;
+  /** V5.148 (owner, 2026-10-02): el Centro de Calidad no ve el grado — depende también de B1, que su planilla no refleja. El Punto sí se enseña. */
+  ocultaGrado?: boolean;
 }) {
   const [langPropio, setLangPropio] = useState<IdiomaDePlanilla>("es");
   const lang = langProp ?? langPropio;
@@ -295,14 +298,14 @@ export function LabEvalEditor({
             {punto ? (
               <span>
                 {t.puntoQueRige}: <b style={{ fontSize: 17 }}>{punto.bajo.toFixed(2)}</b> · {rotuloDelPunto(punto, lang)}
-                {decision?.tipo === "galardon" && (
+                {!ocultaGrado && decision?.tipo === "galardon" && (
                   <>
                     {" "}· {t.gradoFirme} <b>{decision.grado.nombre}</b>
                     {decision.techo && <> {t.hastaConRecata(decision.techo.nombre)}</>}
                   </>
                 )}
                 {decision?.tipo === "pendiente_recata" && <> · {t.pendienteRecata}</>}
-                {decision?.tipo === "sin_grado" && <> · {t.sinGrado}</>}
+                {!ocultaGrado && decision?.tipo === "sin_grado" && <> · {t.sinGrado}</>}
               </span>
             ) : (
               <span style={{ fontSize: 12, color: "var(--muted)" }}>

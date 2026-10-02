@@ -177,6 +177,9 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.148 · la planilla del Centro de Calidad no enseña el grado** (owner, 2026-10-02: depende también de B1, que allí no se
+  refleja). `LabEvalEditor` recibe `ocultaGrado`; solo `PlanillaCentro` lo pasa. Se conserva el Punto que rige y el aviso de
+  recata pendiente. El grado lo sigue derivando CTCx al confirmar (`decidirPorPunto`), sin cambios.
 - **V5.147 · el código interno plegado arriba a la derecha, y el número de tazas usadas** (owner, 2026-10-02). `PlanillaCentro`
   (`codigoAbierto`); `sca_num_tazas` en la planilla (1–10, cinco por defecto) gobierna cuántas tazas hay en «Defectos de taza,
   taza a taza» y el tope de `computeSca2004`. Vale para toda planilla que use `LabEvalEditor` (Centro, «Registrar a mano»,

@@ -450,4 +450,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-02] V5.141 · OCP · revisión EUDR — los rótulos de la línea de tiempo ya no se pisan
 - ANN `src/app/ocp/(app)/kr/EudrPiezas.tsx` (`LineaDeTiempo` en dos renglones; `anclaDelRotulo`), `scripts/qa-visa-check.mjs`.
-(commit: pendiente)
+(commit: 157b843)

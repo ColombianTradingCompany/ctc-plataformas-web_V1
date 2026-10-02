@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.141] — 2026-10-02 (commit pendiente)
+## [V5.141] — 2026-10-02 (commit 157b843)
 
 - **Corregido**: en la revisión EUDR de una finca (OCP · Productores, Fincas y Lotes), los rótulos **«siembra» y «corte EUDR
   31/12/2020» de la línea de tiempo se pisaban** cuando las dos fechas quedan cerca —un cultivo establecido en 2020 o 2021— (owner,

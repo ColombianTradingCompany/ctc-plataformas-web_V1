@@ -485,4 +485,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-10-02] V5.146 · OCP · Lotes en Evaluación — el nombre del lote lleva a su perfil; tres lotes renombrados
 - ANN `src/app/ocp/(app)/nominados/CircuitoVista.tsx` (`EnlaceAlLote`), `scripts/qa-solicitud-evaluacion-check.mjs`.
 - DATOS `lots.name` + `datasheet.product_name` de tres lotes (rastro en `audit_log`).
-(commit: pendiente)
+(commit: 23112c7)

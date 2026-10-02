@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.146] — 2026-10-02 (commit pendiente)
+## [V5.146] — 2026-10-02 (commit 23112c7)
 
 - **Añadido**: en «Lotes en Evaluación» y «Lotes a Evaluar» (OCP), **el nombre de cada lote es el enlace a su perfil**
   (`/ocp/kr?lote=`): en los baches, las altas del Centro, los que no superaron y los reembolsos pendientes (owner, 2026-10-02).

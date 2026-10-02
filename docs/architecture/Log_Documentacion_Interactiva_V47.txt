@@ -456,4 +456,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `src/lib/eudr.ts` (`mapaDeParcelasUrl`), `src/lib/eudrAtributos.ts` (`fuentes` por atributo, `estadoDelAtributo`).
 - ANN `src/app/ocp/(app)/kr/FincaEudrEditor.tsx` (selector de parcela; tablas), `AtributosChequeo.tsx` (`TablaDeAtributos`), `EudrPiezas.tsx`.
 - ANN `scripts/qa-visa-check.mjs`, `docs/componentes/consolas.md`, `docs/ALINEACION.md`.
-(commit: pendiente)
+(commit: 5c1d669)

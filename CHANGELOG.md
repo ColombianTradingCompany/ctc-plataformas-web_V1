@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.142] — 2026-10-02 (commit pendiente)
+## [V5.142] — 2026-10-02 (commit 5c1d669)
 
 - **Añadido**: en la revisión EUDR de una finca (OCP), **cada parcela se puede ver en el mapa** (owner, 2026-10-02: «si una finca
   reportó varios cafetales, solo aparece uno»). Con más de una parcela ubicada, arriba del mapa hay un selector —«Todas (N)» y una

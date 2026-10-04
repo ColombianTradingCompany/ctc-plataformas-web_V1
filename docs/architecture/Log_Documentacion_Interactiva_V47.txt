@@ -504,4 +504,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `src/lib/tools/carpetas.ts`, `src/components/tools/ToolIcons.tsx`, `scripts/build-tool-shots.mjs` (`PREPARAR`), `scripts/qa-tools-puente-conformance.mjs` (sonda + `error`).
 - DATOS `tools` (id `gulliver`, plus, kr·web·dc, `soporta_memoria`) + `tool_versions` (repo) + `version_publicada`.
 - Doc impact when wrapped: nodo de Herramientas del Café (17 en la base); el patrón «en un iframe no se toca localStorage» para herramientas con esquema propio.
-(commit: pendiente)
+(commit: b119409)

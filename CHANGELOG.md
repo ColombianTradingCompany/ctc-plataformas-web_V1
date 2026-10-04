@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.149] — 2026-10-04 (commit pendiente)
+## [V5.149] — 2026-10-04 (commit b119409)
 
 - **Añadido**: **Gulliver · 7 días a Tokio** (`gulliver`, Plus), herramienta NUEVA del taller: japonés de bolsillo para
   hispanohablantes del café que van a SCAJ 2026 (Tokyo Big Sight, 14–17 oct) — siete misiones con voz, misión extra «Negocios»,

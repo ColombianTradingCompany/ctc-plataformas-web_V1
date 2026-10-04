@@ -58,5 +58,12 @@ la más dura la del bucket `kaffetal-media` (la ruta `{producer_id}/…` no cont
 
 **Cotizador Courier (FedEx)** (`herramientas-internas`, 2026-09-23). Lo trajo el owner con el acuerdo de precios firmado con FedEx: calculadora de envíos courier (tarifa base publicada − descuentos del acuerdo + recargos a lista), modalidad courier del Modelo Logístico. ⚠️ El acuerdo es confidencial y el repo es público: las cifras viven solo en la base. [`herramientas-internas-cotizador-courier.md`](herramientas-internas-cotizador-courier.md) · **APROBADO y construido en la V5.68** (2026-09-23): vive en `/ecp/cotizador-courier`.
 
+**Gulliver · 7 días a Tokio** (`herramientas-cafe`, 2026-10-04). Herramienta NUEVA del owner, nivel Plus: japonés de bolsillo
+para hispanohablantes del café que van a SCAJ 2026 (Tokio, 14–17 oct). Sin servidor ni IA ni tablas nuevas; lo que pide es la
+memoria de la red (puente con esquema propio — con una trampa: un trabajo nuevo heredaría el `localStorage` del navegador) y los
+descargos de la casa (pie legal + panel «Acerca de» + avisos junto al dato). [`herramientas-cafe-gulliver.md`](herramientas-cafe-gulliver.md) ·
+**APROBADO** («sí a todo», 2026-10-04) y **construido en la V5.149** el mismo día; ficha `herramientas-cafe/gulliver/README.md`.
+Le quedan al owner los permisos Plus y la revisión del japonés por un hablante nativo.
+
 Orden recomendado si se aprueban todos: **Pagos → Muestras → Producción → Logístico → Compras**; Temas, cuando el owner diga qué es.
 Las cuatro primeras tandas no se pisan entre sí y ninguna cambia un precio ni una regla.

@@ -19,6 +19,26 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.149] — 2026-10-04 (commit pendiente)
+
+- **Añadido**: **Gulliver · 7 días a Tokio** (`gulliver`, Plus), herramienta NUEVA del taller: japonés de bolsillo para
+  hispanohablantes del café que van a SCAJ 2026 (Tokyo Big Sight, 14–17 oct) — siete misiones con voz, misión extra «Negocios»,
+  repaso, números y conversor de monedas sin conexión, libro de 98 frases para enseñar en pantalla. V1.1 sobre la V1.0 del owner
+  (brief `docs/componentes/briefs/herramientas-cafe-gulliver.md`, aprobado con «sí a todo»). Superficies KR · web · DC.
+- **Añadido**: memoria con **esquema propio** y tres modos (suelta · trabajo · marco). **Dentro de un iframe la herramienta no lee
+  ni escribe `localStorage`**: un trabajo nuevo llega con `init` sin estado y el puente no llama a `poner()`; con la V1.0, ese
+  trabajo abría con el avance del último abierto en el navegador (verificado: 999 granos y un sello ajenos).
+- **Añadido**: los **descargos de la casa** — pie legal en la bienvenida, la Ruta y En la feria; «Acerca de esta herramienta» en
+  pop-up (Qué es · Límites · La feria · Monedas · Tus datos · Créditos); la hoja impresa con la línea legal y el NIT. La voz
+  prefiere una voz japonesa local (una en línea manda el texto, con el nombre de la persona, a su proveedor).
+- **Cambiado**: la fecha de la feria vive en UN bloque (`/*<EVENTO>*/`); antes «14 de octubre» estaba en cuatro sitios.
+- **Cambiado**: `build-tool-shots.mjs` puede preparar un estado de ejemplo antes de capturar (`PREPARAR`) y, con ids por
+  argumento, mide el éxito contra las pedidas.
+- **Seguridad**: `qa-gulliver-check.mjs` (63, nuevo); `qa-tools-puente-conformance` con sonda para Gulliver (15/15) y ahora
+  **falla si una sonda revienta** (antes aprobaba con una nota); `qa-tools-carpetas` (175 → 185), `qa-tools-seo-check` (257 → 273).
+- **Datos**: alta de `gulliver` en `tools` + `tool_versions` (origen `repo`) con el archivo ya desplegado.
+- **Docs**: ficha `herramientas-cafe/gulliver/README.md`; charter, recuento y briefs al día.
+
 ## [V5.148] — 2026-10-02 (commit 3efd095)
 
 - **Cambiado**: la planilla del **Centro de Calidad ya no enseña el grado** (owner, 2026-10-02: «el grado depende también de

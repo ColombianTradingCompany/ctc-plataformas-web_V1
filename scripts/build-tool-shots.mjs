@@ -41,6 +41,24 @@ const HERRAMIENTAS = {
   "mapa-variedades": "/tools/mapa-variedades/mapa-variedades.html",
   "defectos-cafe": "/tools/defectos-cafe/defectos-cafe.html",
   "cromatografia-suelo": "/tools/cromatografia-suelo/cromatografia-suelo.html",
+  gulliver: "/tools/gulliver/gulliver-7-dias-a-tokio.html", // V5.149 — con un avance de ejemplo (PREPARAR): sin él sale la bienvenida
+};
+
+/** Herramientas que se capturan con un estado de ejemplo: se escribe en su localStorage y se recarga.
+ *  La captura debe enseñar la herramienta EN USO, no su formulario vacío. */
+const PREPARAR = {
+  gulliver: {
+    clave: "nihongo-scaj-2026-v1",
+    estado: {
+      v: 1,
+      profile: { name: "Ana", country: "co", role: "prod", set: true },
+      beans: 85,
+      days: { 1: { learn: true, quiz: 90, build: 80 }, 2: { learn: true, quiz: 75, build: 70 }, 3: { learn: true } },
+      ph: {},
+      sound: true,
+      updatedAt: 0,
+    },
+  },
 };
 
 mkdirSync(SALIDA, { recursive: true });
@@ -61,6 +79,11 @@ let ok = 0;
 for (const [id, ruta] of lista) {
   try {
     await pagina.goto(BASE + ruta, { waitUntil: "networkidle", timeout: 30000 });
+    const prep = PREPARAR[id];
+    if (prep) {
+      await pagina.evaluate(([k, v]) => localStorage.setItem(k, v), [prep.clave, JSON.stringify(prep.estado)]);
+      await pagina.reload({ waitUntil: "networkidle", timeout: 30000 });
+    }
     // Un respiro para animaciones de entrada: la captura debe parecer la
     // herramienta en uso, no su esqueleto a medio pintar.
     await pagina.waitForTimeout(1800);
@@ -77,4 +100,4 @@ for (const [id, ruta] of lista) {
 
 await navegador.close();
 console.log(`${ok}/${lista.length} capturas en public/images/herramientas/shots/`);
-process.exit(ok === Object.keys(HERRAMIENTAS).length ? 0 : 1);
+process.exit(ok === lista.length ? 0 : 1);

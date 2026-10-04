@@ -43,6 +43,9 @@ export const CARPETAS_HERRAMIENTAS: CarpetaHerramienta[] = [
   { id: "defectos-cafe", archivos: ["defectos-cafe.html"] },
   { id: "formula-calidad", archivos: ["formula-calidad.html"] },
   { id: "green-datasheet", archivos: ["green-coffee-datasheet.html"] },
+  // V5.149 (2026-10-04): japonés de bolsillo para SCAJ 2026. Plus, memoria con esquema propio; el
+  // evento vive en UN bloque del HTML (`/*<EVENTO>*/`) — lo vigila scripts/qa-gulliver-check.mjs.
+  { id: "gulliver", archivos: ["gulliver-7-dias-a-tokio.html"] },
   { id: "mapa-variedades", archivos: ["mapa-variedades.html"] },
   // ⚠️ Los ids de mermas están cruzados con sus nombres: `mermas-ctc` es la
   // DETALLADA y `mermas-detallada` era el «Reporte de proceso» (borrado, abajo). La

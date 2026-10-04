@@ -42,6 +42,7 @@ cuenta de KR, CP o Directorio), el **Taller** (Cover Flow en dos estantes: abier
 | `viaje-cafe` | El viaje del café | default | es | sí | `viaje-cafe.html` |
 | `mermas-detallada` | Reporte de proceso de café | — | es | no | **archivada** (2026-08-15) y **archivo borrado** (owner, 2026-09-22, V5.67): sus dos URLs van con 308 a `mermas-ctc`; la fila de `tools` se queda como registro; la fuente, en `reference/html_tools/mermas-detallada/` |
 | `cromatografia-suelo` | Lector de Cromatografía de Suelo | **plus** | es (+ en, de en la propia herramienta, V5.39) | sí (esquema propio) | `cromatografia-suelo.html` (V5.32–V5.41) · primera con servidor: `api/herramientas/cromatografia` (+ `/fincas`, `/estado`) · brief en `briefs/` |
+| `gulliver` | **Gulliver · 7 días a Tokio** (japonés de bolsillo para SCAJ 2026) | **plus** | es | sí (esquema propio; en un marco no toca `localStorage`) | `gulliver-7-dias-a-tokio.html` (**V1.1**, V5.149; brief aprobado 2026-10-04 en `briefs/`, ficha `herramientas-cafe/gulliver/`; fuentes `reference/html_tools/gulliver/`) |
 
 Candidata sin registrar: **Atlas cafetero de Colombia** (ficha en `herramientas-cafe/_candidatas/atlas-cafetero/`).
 
@@ -86,6 +87,10 @@ SUPERFICIE, no de una consola — gotcha 12) · `/tools/<id>/*.html` y `/tools/h
   bloques marcados: catálogos GENERADOS (`scripts/build-coffee-datasheet.mjs`), textos `TX` (ES · EN · DE), botones «i» `INFO`, **núcleo puro**
   (`/*<NUCLEO-PURO>*/`: las fórmulas, con los nombres de campo de `src/lib/arena/labEvaluation.ts`) y la lógica de pantalla.
 
+- **Gulliver · 7 días a Tokio** (V5.149) · **ficha: `docs/componentes/herramientas-cafe/gulliver/README.md`** · un HTML autocontenido
+  (tipografías en base64) con el evento en UN bloque (`/*<EVENTO>*/`) y tres modos de memoria (suelta · trabajo · marco): dentro de un
+  iframe jamás lee `localStorage`, porque el puente no llama a `poner()` con un trabajo nuevo.
+
 ## Tablas que posee
 
 `tools` · `tool_versions` · `tool_user_grants` · `tool_access_requests` · `tool_sessions` ·
@@ -94,9 +99,11 @@ SUPERFICIE, no de una consola — gotcha 12) · `/tools/<id>/*.html` y `/tools/h
 
 ## Guardianes
 
-`qa-tools-carpetas.mjs` (175, `node --experimental-strip-types`: carpeta ↔ lista ↔ disco ↔ 308, y nadie escribe una ruta plana) ·
+`qa-tools-carpetas.mjs` (185, `node --experimental-strip-types`: carpeta ↔ lista ↔ disco ↔ 308, y nadie escribe una ruta plana) ·
 `qa-taller-check.mjs` (66) · `qa-herramientas-acceso-check.mjs` (31) · `qa-concha-herramientas-check.mjs` (42,
-once vectores de ataque) · `qa-tools-puente-conformance.mjs` (14/14; las de esquema propio —`agtron`, `coffee-datasheet`— con sonda) · `qa-tools-seo-check.mjs` (257, recorre las carpetas) ·
+once vectores de ataque) · `qa-tools-puente-conformance.mjs` (15/15; las de esquema propio —`agtron`, `coffee-datasheet`, `gulliver`— con sonda;
+V5.149: una sonda que revienta ya no aprueba en silencio) · `qa-tools-seo-check.mjs` (273, recorre las carpetas) ·
+`qa-gulliver-check.mjs` (63, puro: el evento en un solo bloque, la trampa del `localStorage` ejecutada en Node, descargos y NIT) ·
 `qa-tools-seo-espejo.mjs` (92, toca la base: columna = archivo; `noindex` en archivadas y en `FUERA_DEL_INDICE`) ·
 `qa-coffee-datasheet-check.mjs` (1.305, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`: catálogos generados al día,
 **paridad de las fórmulas SCA 2004 y CVA con la planilla de la plataforma** sobre 1.200 planillas, los dos métodos sin mezclar, tres idiomas
@@ -130,6 +137,14 @@ completos, sin CDN) ·
 cualquiera de esos campos se ve en las tres superficies al instante — sin desplegar.
 
 ## Pendientes
+
+- **V5.149 · Gulliver · 7 días a Tokio** (owner, 2026-10-04: «sí a todo» al brief `briefs/herramientas-cafe-gulliver.md`; ficha
+  `herramientas-cafe/gulliver/README.md`). Hecho: herramienta NUEVA, Plus, japonés de bolsillo para SCAJ 2026; V1.1 sobre la V1.0 del
+  owner con memoria de esquema propio (y la trampa del `localStorage` cerrada), el evento en un bloque, los descargos de la casa (pie
+  legal + «Acerca de» + hoja impresa con NIT) y voz local preferida; `qa-gulliver` (63) + sonda en la conformidad del puente; alta en
+  `tools` por SQL con el archivo desplegado. Abierto, **del owner**: (a) **dar los permisos Plus** a quienes vayan a SCAJ (BCP ·
+  Herramientas) — sin ellos nadie la abre; (b) **revisión del japonés por un hablante nativo** antes del 10-oct (el panel dice que
+  falta; al hacerse, texto + comprobación); (c) el **18-oct**: archivar o reeditar para la próxima feria (bloque `EVENTO`).
 
 - **V5.147 · Coffee Datasheet Tool: número de tazas usadas** (owner, 2026-10-02; ejecutado desde `consolas`). El selector
   `sca_num_tazas` (1–10, cinco por defecto) junto a los defectos de taza del SCA 2004; `tazasUsadas` y `ajustaTazasSca` en la

@@ -33,6 +33,7 @@ const HERRAMIENTAS = {
   "viaje-cafe": "/tools/viaje-cafe/viaje-cafe.html",
   "mapa-variedades": "/tools/mapa-variedades/mapa-variedades.html",
   "cromatografia-suelo": "/tools/cromatografia-suelo/cromatografia-suelo.html",
+  gulliver: "/tools/gulliver/gulliver-7-dias-a-tokio.html",
 };
 
 // El campo donde escribir el centinela, cuando el primero de texto NO debe
@@ -46,7 +47,41 @@ const CAMPO = { "cromatografia-suelo": "#municipio" };
 // sonda actúa como una persona y exige que el dato llegue al estado y vuelva.
 // Disco Agtron (V5.93): hasta la V7 el puente por defecto solo guardaba el
 // matiz y el zoom de la foto, nunca el número; SIN-CAMPOS lo dejaba pasar.
+//
+// Gulliver (V5.149): la trampa del navegador. Un trabajo NUEVO llega con init sin estado y el puente no
+// llama a poner(); si la herramienta leyera localStorage dentro de la concha, ese trabajo heredaría el
+// avance de otro. La sonda siembra un avance ajeno, recarga y exige la bienvenida en blanco.
+let gulliverEnBlanco = null;
 const SONDA = {
+  gulliver: {
+    actuar: async (marco) => {
+      await marco.evaluate(() =>
+        localStorage.setItem(
+          "nihongo-scaj-2026-v1",
+          JSON.stringify({ v: 1, profile: { name: "HEREDADO", country: "co", role: "fan", set: true }, beans: 999, days: { 1: { learn: true, quiz: 100, build: 100 } }, ph: {} })
+        )
+      );
+      await marco.evaluate(() => location.reload()).catch(() => {});
+      await marco.waitForLoadState("load");
+      await marco.page().waitForTimeout(1500);
+      gulliverEnBlanco =
+        (await marco.locator(".onb").count()) > 0 && !(await marco.evaluate(() => document.getElementById("app").textContent.includes("HEREDADO")));
+      await marco.page().evaluate(() => {
+        document.getElementById("f").contentWindow.postMessage({ ctc: "init", nombre: "qa", estado: null }, "*");
+      });
+      await marco.page().waitForTimeout(400);
+      await marco.locator(".onb input[type=text]").fill("QA-PUENTE-77");
+      await marco.locator(".onb select").first().selectOption("co");
+      await marco.locator(".onb .btn").click();
+    },
+    capturado: (estado) =>
+      gulliverEnBlanco === true && !!estado && estado.profile?.name === "QA-PUENTE-77" && estado.profile.set === true && estado.profile.country === "co",
+    restaurado: async (marco) => {
+      if ((await marco.locator(".card").count()) === 0) return false;
+      await marco.locator("nav.nav button").nth(3).click();
+      return marco.evaluate(() => { const t = document.getElementById("app").textContent; return t.includes("QA-PUENTE-77") && !t.includes("HEREDADO"); });
+    },
+  },
   // CTCx Coffee Datasheet Tool (V5.132): el trabajo es el estado entero —método, sesión y lotes—. La sonda elige CVA,
   // califica una sección afectiva y nombra el lote; exige que las tres cosas lleguen al estado y vuelvan a la pantalla.
   "coffee-datasheet": {
@@ -104,7 +139,8 @@ const pagina = await navegador.newPage({ viewport: { width: 1200, height: 820 } 
 const filas = [];
 
 for (const [id, ruta] of Object.entries(HERRAMIENTAS)) {
-  const fila = { id, ready: false, campos: 0, captura: "—", restaura: "—", nota: "" };
+  // `error`: una sonda que revienta no aprueba en silencio (V5.149 — antes una excepción solo dejaba la nota).
+  const fila = { id, ready: false, campos: 0, captura: "—", restaura: "—", nota: "", error: false };
   try {
     // setContent sobre about:blank basta — la primera versión hacía un goto de
     // «limpieza» a /lab que compilaba lento, resolvía TARDE y navegaba la
@@ -195,6 +231,7 @@ for (const [id, ruta] of Object.entries(HERRAMIENTAS)) {
     }
   } catch (e) {
     fila.nota = e.message.split("\n")[0].slice(0, 70);
+    fila.error = true;
   }
   filas.push(fila);
   console.log(
@@ -203,6 +240,6 @@ for (const [id, ruta] of Object.entries(HERRAMIENTAS)) {
 }
 
 await navegador.close();
-const mal = filas.filter((f) => !f.ready || f.captura === "✗" || f.restaura === "✗");
+const mal = filas.filter((f) => !f.ready || f.error || f.captura === "✗" || f.restaura === "✗");
 console.log(mal.length ? `\n✗ ${mal.length} herramienta(s) con fallos: ${mal.map((f) => f.id).join(", ")}` : "\n✓ conformidad: todas en orden");
 process.exit(mal.length ? 1 : 0);

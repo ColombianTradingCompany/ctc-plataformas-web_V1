@@ -96,6 +96,15 @@ export const TOOL_ICON: Record<ToolId, React.ReactNode> = {
       <path d="M8.5 19.5h7" />
     </LineIcon>
   ),
+  // Gulliver: un bocadillo de diálogo con un torii dentro — hablar japonés en el viaje.
+  gulliver: (
+    <LineIcon>
+      <path d="M4 4.5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-9l-4 3.5v-3.5H4a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1Z" />
+      <path d="M6.6 7.8c3.5.6 7.3.6 10.8 0" />
+      <path d="M8 10h8" />
+      <path d="M9.3 8.3v6M14.7 8.3v6" />
+    </LineIcon>
+  ),
   // Fórmula de calidad: un matraz de laboratorio — la "fórmula" que define la calidad.
   "formula-calidad": (
     <LineIcon>

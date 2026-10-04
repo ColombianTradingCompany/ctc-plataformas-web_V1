@@ -497,3 +497,11 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-10-02] V5.148 · Centro de Calidad — la planilla no enseña el grado
 - ANN `src/components/bcp/LabEvalEditor.tsx` (`ocultaGrado`), `src/app/socios/[partner]/panel/evaluacion/PlanillaCentro.tsx`, `scripts/qa-centro-calidad-check.mjs`, `docs/componentes/consolas.md`.
 (commit: 3efd095)
+
+## [2026-10-04] V5.149 · Herramientas del Café — Gulliver · 7 días a Tokio (nueva, Plus)
+- ADD `public/tools/gulliver/gulliver-7-dias-a-tokio.html` (V1.1: bloque `/*<EVENTO>*/`, modos suelta · trabajo · marco con `EN_MARCO`, `CTC.usarEstado`/`usarResumen`, pie legal + «Acerca de», `print-legal`, voz local).
+- ADD `scripts/qa-gulliver-check.mjs`, `docs/componentes/herramientas-cafe/gulliver/README.md`, `docs/componentes/briefs/herramientas-cafe-gulliver.md`, `public/images/herramientas/shots/gulliver.jpg`.
+- ANN `src/lib/tools/carpetas.ts`, `src/components/tools/ToolIcons.tsx`, `scripts/build-tool-shots.mjs` (`PREPARAR`), `scripts/qa-tools-puente-conformance.mjs` (sonda + `error`).
+- DATOS `tools` (id `gulliver`, plus, kr·web·dc, `soporta_memoria`) + `tool_versions` (repo) + `version_publicada`.
+- Doc impact when wrapped: nodo de Herramientas del Café (17 en la base); el patrón «en un iframe no se toca localStorage» para herramientas con esquema propio.
+(commit: pendiente)

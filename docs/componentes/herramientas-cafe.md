@@ -178,6 +178,8 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
   mínimo por decidir (columna de texto para el slug, o DDL con acta) y que el insert compruebe su error. Además: **una versión `repo` no se
   puede crear desde el BCP** (solo sube a Storage), así que el alta de una herramienta del repositorio se hace por SQL con el archivo ya
   desplegado — `tools` → `tool_versions` (origen `repo`, `src_publico`) → `version_publicada` — y `qa-tools-seo-espejo` la comprueba.
+  ⚠️ El `version_publicada` va en una sentencia APARTE: un `update` no ve las filas que un CTE `insert` de la misma sentencia acaba
+  de crear (V5.149, `gulliver`: devolvió cero filas sin ningún error).
 - **V5.93 · Disco Agtron V8** (owner, 2026-09-26; ficha `herramientas-cafe/agtron/README.md`). Hecho: lectura por foto por
   luminosidad, blanco de referencia, 7 puntos o áreas con % en vivo y mínimo del 10 %, instrucciones de luz de día o blanca a 12 cm,
   aplicado único a los 10 s, ventana de catación SCA, alemán, apertura en el idioma de la superficie y memoria con esquema propio.

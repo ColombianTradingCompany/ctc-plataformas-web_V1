@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.159] — 2026-10-06 (commit pendiente)
+## [V5.159] — 2026-10-06 (commit 01b2451)
 
 - **Cambiado**: en el informe del Centro, **las dos reglas quedan rotuladas** (owner, 2026-10-06: «no entiendo por qué en un
   lado sale Blue y abajo sale Red»): «1 · Grado que la plataforma asigna hoy — solo el Punto de la taza» (la franja,

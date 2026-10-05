@@ -29,6 +29,7 @@ import { decidirSubvencion, emitirFactura, guardarCarrilDePago, recibirMuestraAc
 import { carrilConfigurado, type CarrilDePago } from "@/lib/arena/payment";
 import { LabEvalEditor } from "@/components/bcp/LabEvalEditor";
 import { AdjuntoReporteQGrader } from "@/components/bcp/AdjuntoReporteQGrader";
+import { FranjaDeGrados } from "@/components/bcp/FranjaDeGrados";
 import type { ReporteAdjunto } from "@/lib/evaluaciones/reporteReglas";
 import { decidirPorPunto, rotuloDelPunto, type PuntoSca } from "@/lib/arena/homologacion";
 import { EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, computeSca, type LabEvaluation } from "@/lib/arena/labEvaluation";
@@ -483,14 +484,31 @@ export function EnviarAlCentroForm({
 }
 
 /** V5.81 · el alta del Centro de Calidad, pendiente: CTCx la CONFIRMA (galardona con el grado derivado / no supera) o la devuelve. */
+/** V5.157: lo que el productor declaró en B1 — la otra mitad de la Ficha, para leerla junto a la planilla del Centro. */
+export type B1DelLote = {
+  finca: string | null;
+  variedades: { nombre: string; pct: string; proceso: string }[];
+  proceso: string | null;
+  altitud: number | null;
+  especie: string | null;
+  humedad: string | null;
+  densidad: string | null;
+  aw: string | null;
+  factorProductor: string | null;
+  noLoSabe: boolean;
+  puntajeEstimado: string | null;
+};
+
 export function ConfirmarCentroControls({
   lotId,
   lotName,
   alta,
+  b1,
 }: {
   lotId: string;
   lotName: string;
   alta: { id: string; escala: string; puntaje: number | null; punto: PuntoSca | null; qGrader: string | null; fecha: string; rueda: string[]; notas: string | null; planilla: LabEvaluation; codigoInterno: string | null; reporte: { fileName: string; url: string | null } | null };
+  b1?: B1DelLote;
 }) {
   const { pending, error, run } = useAction();
   const [open, setOpen] = useState(false);
@@ -528,9 +546,31 @@ export function ConfirmarCentroControls({
                 📎 Reporte original del Q-Grader: {alta.reporte.url ? <a href={alta.reporte.url} target="_blank" rel="noopener noreferrer">{alta.reporte.fileName}</a> : alta.reporte.fileName}
               </p>
             )}
+            {/* V5.157 (owner): el B1 del lote — con la planilla del Centro, la Ficha Técnica completa. */}
+            {b1 && (
+              <div style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "8px 12px", margin: "8px 0", background: "var(--paper)" }} aria-label="B1 del lote">
+                <p className={styles.meta} style={{ margin: "0 0 4px", fontWeight: 700, color: "var(--ink)" }}>B1 · Variedades & Caracterización básica (lo que declaró el productor)</p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "2px 14px", fontSize: 12.5 }}>
+                  {b1.finca && <span><b>Finca:</b> {b1.finca}</span>}
+                  {b1.variedades.length > 0 && (
+                    <span>
+                      <b>Variedades:</b> {b1.variedades.map((v) => `${v.nombre}${v.pct ? ` ${v.pct} %` : ""}${v.proceso ? ` · ${v.proceso}` : ""}`).join(" — ")}
+                    </span>
+                  )}
+                  {b1.especie && <span><b>Especie:</b> {b1.especie}</span>}
+                  {b1.altitud != null && <span><b>Altitud:</b> {b1.altitud} msnm</span>}
+                  {b1.humedad && <span><b>Humedad (productor):</b> {b1.humedad} %</span>}
+                  {b1.densidad && <span><b>Densidad (productor):</b> {b1.densidad} g/L</span>}
+                  {b1.aw && <span><b>aw (productor):</b> {b1.aw}</span>}
+                  {b1.factorProductor && <span><b>Factor (productor):</b> {b1.factorProductor}</span>}
+                  {b1.puntajeEstimado && <span><b>Puntaje estimado (productor):</b> {b1.puntajeEstimado}</span>}
+                  {b1.noLoSabe && <span style={{ color: "var(--muted)" }}>El productor marcó «No lo sé» en la caracterización básica.</span>}
+                </div>
+              </div>
+            )}
             <div style={{ margin: "8px 0" }}>
               <button type="button" className="btn btn-sm" onClick={() => setVerInforme((v) => !v)} aria-expanded={verInforme}>
-                {verInforme ? "Ocultar la planilla" : "Ver la planilla completa (solo lectura)"}
+                {verInforme ? "Ocultar la planilla" : "Ver la planilla completa (solo lectura) · B2 y B3 del Centro"}
               </button>
             </div>
             {verInforme && (
@@ -541,6 +581,10 @@ export function ConfirmarCentroControls({
             <div className={styles.field} style={{ marginTop: 10 }}>
               <label>Resumen del resultado (el productor lo verá)</label>
               <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Resultado de la evaluación…" />
+            </div>
+            {/* V5.157 (owner): «la combinación y el punto donde cae en la franja correspondiente». */}
+            <div style={{ margin: "10px 0 6px" }}>
+              <FranjaDeGrados punto={alta.punto} />
             </div>
             {/* El puntaje manda: el grado se DERIVA del alta del Centro; nadie lo digita. */}
             <p className={styles.meta} style={{ margin: "8px 0 6px" }}>

@@ -525,6 +525,17 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("centro · completado = todos los lotes dados de alta y confirmados (ninguno sigue en sondeo) o cerrado por CTC; la página carga también los cerrados", pagina.includes('b.status === "cerrado" || (lotesDe(b).length > 0 && lotesDe(b).every((l) => l.phase !== "sondeo"))') && pagina.includes('.in("status", ["en_centro", "cerrado"])'));
 }
 
+// ── V5.157 (owner, 2026-10-06) · el informe del OCP trae el B1 del lote (Ficha completa) y el Punto sobre la franja de grados
+{
+  const ocpUi = lee("src/app/ocp/(app)/nominados/NominadosClient.tsx").replace(/\r\n/g, "\n");
+  const vista = lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").replace(/\r\n/g, "\n");
+  const franja = lee("src/components/bcp/FranjaDeGrados.tsx").replace(/\r\n/g, "\n");
+  const { GRADOS } = await import("../src/lib/grados/definicion.ts");
+  check("informe · el B1 del lote viaja al informe (finca, variedades con proceso, especie, altitud, humedad, densidad, aw, factor y puntaje del productor)", vista.includes("const b1DelLote = (l: LotJoin) => {") && vista.includes("b1={b1DelLote(i.lot!)}") && ["finca", "variedades", "especie", "altitud", "humedad", "densidad", "aw", "factorProductor", "puntajeEstimado", "noLoSabe"].every((k) => ocpUi.includes(`b1.${k}`)) && ocpUi.includes("B1 · Variedades & Caracterización básica (lo que declaró el productor)"));
+  check("informe · la franja de grados pinta la escalera de `definicion.ts` (los cinco grados, en orden) con la aguja en el piso del Punto y el intervalo del homologado", ocpUi.includes("<FranjaDeGrados punto={alta.punto} />") && franja.includes("{GRADOS.map((g) => (") && franja.includes('punto.origen === "homologado" && punto.alto > punto.bajo') && franja.includes("left: `calc(${pct(punto.bajo)} - 2px)`") && GRADOS.length === 5 && GRADOS[0].scaMin === 80);
+  check("informe · la lectura dice la combinación: el grado firme y lo que ese grado espera de la variedad y del lote", franja.includes("{firme.nombre} espera: {firme.variedad.toLowerCase()} · {firme.claseLote.toLowerCase()}.") && franja.includes("pendiente de recata SCA 2004 nativa") && franja.includes("por debajo de 80, sin grado"));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-centro-calidad: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("  - " + f);

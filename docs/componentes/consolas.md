@@ -177,6 +177,10 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.157 · el informe del Centro trae el B1 y la franja de grados** (owner, 2026-10-06). `FranjaDeGrados` (pura: `GRADOS` +
+  `decidirPorPunto`) y `B1DelLote` desde `lots.datasheet`. Abierto, **con decisión del owner**: la «combinación» hoy es
+  lectura (el grado firme + lo que espera de la variedad); CTCx sigue decidiendo si la variedad cumple — no hay una lista de
+  variedades «comunes / exóticas / raras» en el código para derivarlo.
 - **V5.155 · el OCP abre el informe del Centro antes de decidir** (owner, 2026-10-06). `ConfirmarCentroControls` recibe la
   planilla (`physical_data.planilla`), el código interno y el reporte adjunto; la enseña con `LabEvalEditor` deshabilitado y
   desde ahí galardona, registra «No supera» o devuelve al Centro con nota (`devolverEvaluacionAlCentro`). Abierto: las

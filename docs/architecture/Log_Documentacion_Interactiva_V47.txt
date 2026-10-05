@@ -545,3 +545,7 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-10-06] V5.156 · Planilla — una «i» por cada defecto físico (no doble junto a la R)
 - ANN `public/tools/coffee-datasheet/ctcx-coffee-datasheet-tool.html` (INFO `def_*` ×16), `src/lib/arena/planillaInfo.ts` (regenerado), `src/components/bcp/LabEvalEditor.tsx`, `scripts/qa-centro-calidad-check.mjs`.
 (commit: cd52a57)
+
+## [2026-10-06] V5.157 · OCP — el informe del Centro con el B1 del lote (Ficha completa) y el Punto sobre la franja de grados
+- ADD `src/components/bcp/FranjaDeGrados.tsx`; ANN `app/ocp/(app)/nominados/{NominadosClient,CircuitoVista}.tsx` (`B1DelLote`, `b1DelLote`), `scripts/qa-centro-calidad-check.mjs`, `docs/componentes/consolas.md`.
+(commit: pendiente)

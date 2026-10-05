@@ -205,6 +205,27 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
   // ── V5.117 (owner, 2026-09-30): la Ficha del lote, desplegable dentro de la solicitud ──────────────────────────────
   // Un vistazo, no la Ficha entera (para eso está la vista completa): origen y Pasaporte de la finca, variedades y proceso,
   // los cuatro pasos, lo reportado en B2/B3 (o «No lo sé»), las fotos, y el enlace a `/ocp/kr?lote=`.
+  // V5.157 (owner, 2026-10-06): «en el OCP quiero que aparezca el B1 correspondiente a ese lote, lo que creará una vista
+  // completa de la Ficha Técnica» — lo que el productor declaró en B1 (variedades, proceso, origen, caracterización básica),
+  // para leerlo junto a la planilla del Centro antes de decidir el grado.
+  const b1DelLote = (l: LotJoin) => {
+    const ds = l.datasheet ?? {};
+    const finca = Array.isArray(l.fincas) ? l.fincas[0] : l.fincas;
+    const variedades = (ds.varieties ?? []).filter((v) => v.name?.trim()).map((v) => ({ nombre: v.name.trim(), pct: v.pct?.trim() || "", proceso: [v.base?.trim(), v.special?.trim()].filter(Boolean).join(" + ") }));
+    return {
+      finca: finca ? `${finca.name}${[finca.municipio, finca.departamento].filter(Boolean).length ? ` · ${[finca.municipio, finca.departamento].filter(Boolean).join(", ")}` : ""}` : null,
+      variedades: variedades.length ? variedades : l.ficha_variedad ? [{ nombre: l.ficha_variedad, pct: "", proceso: l.ficha_proceso ?? "" }] : [],
+      proceso: l.ficha_proceso,
+      altitud: l.ficha_altitud_m,
+      especie: ds.species || null,
+      humedad: ds.green_bean_humidity || null,
+      densidad: ds.green_bean_density || null,
+      aw: ds.water_activity || null,
+      factorProductor: ds.yield_factor_producer || null,
+      noLoSabe: !!ds.b1_unknown,
+      puntajeEstimado: l.ficha_puntaje_estimado != null ? String(l.ficha_puntaje_estimado) : null,
+    };
+  };
   const fichaDelLote = (l: LotJoin) => {
     const ds = l.datasheet ?? {};
     const finca = Array.isArray(l.fincas) ? l.fincas[0] : l.fincas;
@@ -512,6 +533,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
                             codigoInterno: pendiente.codigo_interno,
                             reporte: (() => { const rep = reporteDeFila(pendiente); return rep ? { fileName: rep.fileName, url: urlDeReporte.get(rep.assetId) ?? null } : null; })(),
                           }}
+                          b1={b1DelLote(i.lot!)}
                         />
                       </>
                     ) : (

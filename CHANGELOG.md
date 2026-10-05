@@ -19,6 +19,16 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.157] — 2026-10-06 (commit pendiente)
+
+- **Añadido**: el informe del Centro en el OCP trae **el B1 del lote** —finca, variedades con su proceso, especie, altitud,
+  humedad, densidad, aw, factor y puntaje estimado que declaró el productor— y con la planilla del Centro (B2 y B3) forma
+  **la vista completa de la Ficha Técnica** antes de decidir (owner, 2026-10-06).
+- **Añadido**: **la franja de grados con el Punto encima** (`FranjaDeGrados`): la escalera de `definicion.ts` (Black · Red ·
+  Blue · Gold · Tyrian, con «< 80 · sin grado»), la aguja en el piso del Punto, el intervalo sombreado si es homologado, y la
+  lectura de **la combinación**: en qué grado cae y qué espera ese grado de la variedad y del lote.
+- **Seguridad**: `qa-centro-calidad` (227 → 230).
+
 ## [V5.156] — 2026-10-06 (commit cd52a57)
 
 - **Cambiado**: en el detalle de defectos de la planilla, **una «i» en frente de cada defecto** (los 16: qué es, de dónde viene,

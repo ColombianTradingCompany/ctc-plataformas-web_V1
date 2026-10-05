@@ -522,4 +522,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-05] V5.152 · Evaluaciones — el adjunto del reporte del Q-Grader es un botón
 - ANN `src/components/bcp/AdjuntoReporteQGrader.tsx`, `scripts/qa-centro-calidad-check.mjs`.
-(commit: pendiente)
+(commit: 36b5ccd)

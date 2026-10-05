@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.152] — 2026-10-05 (commit pendiente)
+## [V5.152] — 2026-10-05 (commit 36b5ccd)
 
 - **Cambiado**: el adjunto del reporte original del Q-Grader **se ve como un botón** (owner, 2026-10-05: «no parece un botón
   para hacer una acción»): «📎 Adjuntar el reporte original del Q-Grader (opcional)», como «Usar mi código interno»; abre

@@ -536,6 +536,22 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("informe · la lectura dice la combinación: el grado firme y lo que ese grado espera de la variedad y del lote", franja.includes("{firme.nombre} espera: {firme.variedad.toLowerCase()} · {firme.claseLote.toLowerCase()}.") && franja.includes("pendiente de recata SCA 2004 nativa") && franja.includes("por debajo de 80, sin grado"));
 }
 
+// ── V5.158 (owner, 2026-10-06) · el informe trae la Ficha completa (todos los datos) y la tríada A·B·C del lote ─────────
+{
+  const { triadaDeLaFicha, nivelDeVariedad, nivelDeProceso, nivelDeReconocimiento } = await import("../src/lib/pvc/triadaDelLote.ts");
+  const { letras, puntosCtc } = await import("../src/lib/pvc/escala.ts");
+  check("tríada · variedad: catálogo semilla con sinónimos — Gesha A · Maragogipe B · Castillo (General) C · Bourbon Rosado B · desconocida null", nivelDeVariedad("Gesha") === "A" && nivelDeVariedad("Maragogipe") === "B" && nivelDeVariedad("Castillo (General)") === "C" && nivelDeVariedad("Bourbon Rosado") === "B" && nivelDeVariedad("Variedad Inventada XYZ") === null);
+  check("tríada · proceso: Lavado C · Honey/Natural B · fermentación anaeróbica A · infusión B", nivelDeProceso("Lavado", "").nivel === "C" && nivelDeProceso("Honey", "").nivel === "B" && nivelDeProceso("Natural", "").nivel === "B" && nivelDeProceso("Honey", "Fermentación anaeróbica alcohólica").nivel === "A" && nivelDeProceso("Lavado", "Infusión de frutas").nivel === "B");
+  check("tríada · reconocimiento: 0 → C, 1–3 → B, 4+ → A (una línea o «;» por premio; «·» no separa)", nivelDeReconocimiento("").nivel === "C" && nivelDeReconocimiento("Cup of Excellence 2024 · Top 10").nivel === "B" && nivelDeReconocimiento("Cup of Excellence 2024 · Top 10").por.startsWith("1 reconocimiento") && nivelDeReconocimiento("a\nb\nc").nivel === "B" && nivelDeReconocimiento("a; b; c; d").nivel === "A");
+  const gesha = triadaDeLaFicha({ varieties: [{ name: "Gesha", pct: "100", base: "Lavado", special: "" }], awards: "" });
+  const mezcla = triadaDeLaFicha({ varieties: [{ name: "Maragogipe", pct: "50", base: "Lavado", special: "" }, { name: "Castillo (General)", pct: "50", base: "Lavado", special: "" }], awards: "" });
+  check("tríada · del lote: la variedad DOMINANTE (en empate, la primera) y su proceso; fuera del catálogo cae a C con el porqué", letras(gesha.triada) === "ACC" && letras(mezcla.triada) === "BCC" && /dominante/.test(mezcla.variedad.por) && triadaDeLaFicha({ varieties: [{ name: "Inventada", pct: "100" }] }).variedad.por.includes("catálogo semilla") && letras(triadaDeLaFicha(null).triada) === "CCC");
+  check("tríada · los puntos salen de la escala (ACC a 86 ≈ 1540 × 1,0854; CCC a 86 = 1540)", puntosCtc(86, gesha.triada).puntos === Math.round(1540 * (1 + ((2500 / 1990 - 1) / 6) * 2)) && puntosCtc(86, { variedad: "C", proceso: "C", reconocimiento: "C" }).puntos === 1540);
+  const ocpUi = lee("src/app/ocp/(app)/nominados/NominadosClient.tsx").replace(/\r\n/g, "\n");
+  check("informe · la Ficha Técnica COMPLETA de solo lectura (mismo renderizador que la Vista de Ficha), abierta por defecto", ocpUi.includes("<FichaCompletaLectura datasheet={ficha} />") && ocpUi.includes("const [verFicha, setVerFicha] = useState(true);") && lee("src/components/bcp/FichaCompletaLectura.tsx").includes("renderFichaHtml(data, factor, mesh, sca, varietyTotal(data)") && lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").includes("ficha={i.lot!.datasheet ?? null}"));
+  check("informe · la tríada A·B·C por parámetro, con la elegida encendida, los puntos y la MISMA curva del Modelo Económico", ocpUi.includes("<TriadaDelLote ficha={ficha} sca={alta.punto?.bajo ?? null} />") && lee("src/components/bcp/TriadaDelLote.tsx").includes("{NIVELES.map((n) => (") && lee("src/components/bcp/TriadaDelLote.tsx").includes('<CurvaDeEscala t={d.triada} sca={sca} puntos={r.puntos} />') && lee("src/components/panel/pvc/EscalaBoard.tsx").includes('import { CurvaDeEscala } from "./CurvaDeEscala";'));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-centro-calidad: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("  - " + f);

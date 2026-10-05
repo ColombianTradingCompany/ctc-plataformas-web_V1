@@ -19,6 +19,22 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.158] — 2026-10-06 (commit pendiente)
+
+- **Cambiado**: el informe del Centro en el OCP muestra **la Ficha Técnica completa del lote** (owner, 2026-10-06: «quiero que
+  se vean todos los datos») — A1 identidad, A2 origen, A3 certificados y reconocimientos, variedades, caracterización básica,
+  B2/B3 y notas — de solo lectura, con el mismo renderizador de la «Vista de Ficha» del productor (`FichaCompletaLectura`),
+  abierta por defecto y plegable. El resumen B1 de la V5.157 queda solo cuando la Ficha está plegada.
+- **Añadido**: **la tríada A · B · C del lote** (owner: «debe salir la escala A B C para cada parámetro de la tríada en la que
+  cae»), derivada de su Ficha (`src/lib/pvc/triadaDelLote.ts`): variedad dominante contra el catálogo semilla (sinónimos:
+  Gesha, Maragogipe, Castillo (General)…; fuera del catálogo, C con el porqué), proceso (Lavado C · Honey/Natural/infusiones
+  B · fermentaciones/experimental A) y reconocimientos declarados en A3 (0 · 1–3 · 4+). Cada parámetro con sus tres letras
+  y la elegida encendida, los puntos de la escala con el Punto de la taza, y **la misma curva del Modelo Económico**
+  (`CurvaDeEscala`, que sale de `EscalaBoard` a su propio archivo). La escala sigue siendo referencia: el grado firme sale
+  del Punto.
+- **Seguridad**: `qa-centro-calidad` (230 → 237).
+- **Docs**: charters `consolas` y `herramientas-internas`, ALINEACION §3.
+
 ## [V5.157] — 2026-10-06 (commit cd71847)
 
 - **Añadido**: el informe del Centro en el OCP trae **el B1 del lote** —finca, variedades con su proceso, especie, altitud,

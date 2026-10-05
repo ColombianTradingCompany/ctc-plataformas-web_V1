@@ -177,6 +177,11 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.158 · el informe del Centro trae la Ficha completa y la tríada A·B·C** (owner, 2026-10-06). `FichaCompletaLectura`
+  (= `renderFichaHtml`, una sola forma de pintar la Ficha) y `TriadaDelLote` sobre `triadaDeLaFicha` + `puntosCtc` +
+  `CurvaDeEscala`. Abierto, **con decisión del owner**: la tríada se DERIVA con reglas de texto (catálogo semilla con sinónimos,
+  palabras del proceso, conteo de premios) y es referencia — no se guarda ni decide el grado; si el comité publica el marco
+  de mercado (§11.2 del plan PVC) la variedad debe leerse de ahí.
 - **V5.157 · el informe del Centro trae el B1 y la franja de grados** (owner, 2026-10-06). `FranjaDeGrados` (pura: `GRADOS` +
   `decidirPorPunto`) y `B1DelLote` desde `lots.datasheet`. Abierto, **con decisión del owner**: la «combinación» hoy es
   lectura (el grado firme + lo que espera de la variedad); CTCx sigue decidiendo si la variedad cumple — no hay una lista de

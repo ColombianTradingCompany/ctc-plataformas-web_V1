@@ -549,3 +549,8 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-10-06] V5.157 · OCP — el informe del Centro con el B1 del lote (Ficha completa) y el Punto sobre la franja de grados
 - ADD `src/components/bcp/FranjaDeGrados.tsx`; ANN `app/ocp/(app)/nominados/{NominadosClient,CircuitoVista}.tsx` (`B1DelLote`, `b1DelLote`), `scripts/qa-centro-calidad-check.mjs`, `docs/componentes/consolas.md`.
 (commit: cd71847)
+
+## [2026-10-06] V5.158 · OCP — la Ficha Técnica completa en el informe del Centro y la tríada A·B·C del lote con la curva de la escala
+- ADD `src/lib/pvc/triadaDelLote.ts`, `src/components/bcp/{FichaCompletaLectura,TriadaDelLote}.tsx`, `src/components/panel/pvc/CurvaDeEscala.tsx`.
+- ANN `src/components/panel/pvc/EscalaBoard.tsx` (importa la curva), `app/ocp/(app)/nominados/{NominadosClient,CircuitoVista}.tsx`, `scripts/qa-centro-calidad-check.mjs`, `docs/componentes/{consolas,herramientas-internas}.md`, `docs/ALINEACION.md`.
+(commit: pendiente)

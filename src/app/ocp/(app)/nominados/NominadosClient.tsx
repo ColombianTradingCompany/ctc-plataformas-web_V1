@@ -30,6 +30,9 @@ import { carrilConfigurado, type CarrilDePago } from "@/lib/arena/payment";
 import { LabEvalEditor } from "@/components/bcp/LabEvalEditor";
 import { AdjuntoReporteQGrader } from "@/components/bcp/AdjuntoReporteQGrader";
 import { FranjaDeGrados } from "@/components/bcp/FranjaDeGrados";
+import { FichaCompletaLectura } from "@/components/bcp/FichaCompletaLectura";
+import { TriadaDelLote } from "@/components/bcp/TriadaDelLote";
+import type { FichaFormData } from "@/components/kaffetal-regal/ficha/fichaData";
 import type { ReporteAdjunto } from "@/lib/evaluaciones/reporteReglas";
 import { decidirPorPunto, rotuloDelPunto, type PuntoSca } from "@/lib/arena/homologacion";
 import { EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, computeSca, type LabEvaluation } from "@/lib/arena/labEvaluation";
@@ -504,12 +507,17 @@ export function ConfirmarCentroControls({
   lotName,
   alta,
   b1,
+  ficha,
 }: {
   lotId: string;
   lotName: string;
   alta: { id: string; escala: string; puntaje: number | null; punto: PuntoSca | null; qGrader: string | null; fecha: string; rueda: string[]; notas: string | null; planilla: LabEvaluation; codigoInterno: string | null; reporte: { fileName: string; url: string | null } | null };
   b1?: B1DelLote;
+  /** V5.158: la Ficha Técnica entera del lote (datasheet), para la vista completa de solo lectura y la tríada. */
+  ficha?: Partial<FichaFormData> | null;
 }) {
+  // V5.158 (owner): «quiero que se vean todos los datos» — la Ficha completa, abierta por defecto; se puede plegar.
+  const [verFicha, setVerFicha] = useState(true);
   const { pending, error, run } = useAction();
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState("");
@@ -546,8 +554,21 @@ export function ConfirmarCentroControls({
                 📎 Reporte original del Q-Grader: {alta.reporte.url ? <a href={alta.reporte.url} target="_blank" rel="noopener noreferrer">{alta.reporte.fileName}</a> : alta.reporte.fileName}
               </p>
             )}
-            {/* V5.157 (owner): el B1 del lote — con la planilla del Centro, la Ficha Técnica completa. */}
-            {b1 && (
+            {/* V5.158 (owner): «quiero que se vean todos los datos» — la Ficha Técnica completa (A1–B4), de solo lectura. */}
+            {ficha && (
+              <div style={{ margin: "8px 0" }}>
+                <button type="button" className="btn btn-sm" onClick={() => setVerFicha((v) => !v)} aria-expanded={verFicha}>
+                  {verFicha ? "Ocultar la Ficha Técnica" : "Ver la Ficha Técnica completa (A1–B4, lo que declaró el productor)"}
+                </button>
+                {verFicha && (
+                  <div style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "10px 12px", marginTop: 8, maxHeight: 520, overflowY: "auto" }} aria-label="Ficha Técnica del lote, solo lectura">
+                    <FichaCompletaLectura datasheet={ficha} />
+                  </div>
+                )}
+              </div>
+            )}
+            {/* V5.157 (owner): el B1 del lote, resumido — con la planilla del Centro, la Ficha Técnica completa. */}
+            {b1 && !verFicha && (
               <div style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "8px 12px", margin: "8px 0", background: "var(--paper)" }} aria-label="B1 del lote">
                 <p className={styles.meta} style={{ margin: "0 0 4px", fontWeight: 700, color: "var(--ink)" }}>B1 · Variedades & Caracterización básica (lo que declaró el productor)</p>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "2px 14px", fontSize: 12.5 }}>
@@ -585,6 +606,11 @@ export function ConfirmarCentroControls({
             {/* V5.157 (owner): «la combinación y el punto donde cae en la franja correspondiente». */}
             <div style={{ margin: "10px 0 6px" }}>
               <FranjaDeGrados punto={alta.punto} />
+            </div>
+            {/* V5.158 (owner): «debe salir la escala A B C para cada parámetro de la tríada en la que cae». */}
+            <div style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "10px 12px", margin: "8px 0" }} aria-label="Tríada del lote">
+              <p className={styles.meta} style={{ margin: "0 0 8px", fontWeight: 700, color: "var(--ink)" }}>La tríada del lote · variedad · proceso · reconocimiento (de su Ficha) con el Punto de la taza</p>
+              <TriadaDelLote ficha={ficha} sca={alta.punto?.bajo ?? null} />
             </div>
             {/* El puntaje manda: el grado se DERIVA del alta del Centro; nadie lo digita. */}
             <p className={styles.meta} style={{ margin: "8px 0 6px" }}>

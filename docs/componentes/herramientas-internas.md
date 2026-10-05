@@ -111,6 +111,9 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
 
 ## Pendientes
 
+- **V5.158 · `CurvaDeEscala` sale de `EscalaBoard` a `src/components/panel/pvc/CurvaDeEscala.tsx`** (ejecutado desde
+  `consolas`): la pinta también el informe del Centro en el OCP con la tríada del lote (`src/lib/pvc/triadaDelLote.ts`).
+  Sin cambio de comportamiento en `/ecp/pvc`.
 - **V5.91 (2026-09-25, desde la sesión `consolas` con el «continúa» del owner — decisión 4 del brief de Compras)**: `lectura.ts` perdió la
   regla «3 a 4 productores, una carga por productor, Red de una sola variedad» (owner: «retiremos esta lógica de raíz») —
   `MOQ_CARGAS_BLACK_RED = 3` (el MOQ de compra: una demanda de al menos tres cargas), `TIPOS_DE_MEZCLA` (Single Origin ·

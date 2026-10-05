@@ -534,6 +534,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
                             reporte: (() => { const rep = reporteDeFila(pendiente); return rep ? { fileName: rep.fileName, url: urlDeReporte.get(rep.assetId) ?? null } : null; })(),
                           }}
                           b1={b1DelLote(i.lot!)}
+                          ficha={i.lot!.datasheet ?? null}
                         />
                       </>
                     ) : (

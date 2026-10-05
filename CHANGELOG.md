@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.157] — 2026-10-06 (commit pendiente)
+## [V5.157] — 2026-10-06 (commit cd71847)
 
 - **Añadido**: el informe del Centro en el OCP trae **el B1 del lote** —finca, variedades con su proceso, especie, altitud,
   humedad, densidad, aw, factor y puntaje estimado que declaró el productor— y con la planilla del Centro (B2 y B3) forma

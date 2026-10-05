@@ -548,4 +548,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-06] V5.157 · OCP — el informe del Centro con el B1 del lote (Ficha completa) y el Punto sobre la franja de grados
 - ADD `src/components/bcp/FranjaDeGrados.tsx`; ANN `app/ocp/(app)/nominados/{NominadosClient,CircuitoVista}.tsx` (`B1DelLote`, `b1DelLote`), `scripts/qa-centro-calidad-check.mjs`, `docs/componentes/consolas.md`.
-(commit: pendiente)
+(commit: cd71847)

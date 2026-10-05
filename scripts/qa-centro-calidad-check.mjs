@@ -462,6 +462,8 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("centro: la página enseña el reporte del alta con URL firmada", pagina.includes("urlsDeReportes(service, evaluaciones.map((e) => e.reference_asset_id))") && pagina.includes("reporte: reporteDeFila(b)") && pagina.includes('rel="noopener noreferrer">{rep.fileName}</a>'));
   const pieza = lee("src/components/bcp/AdjuntoReporteQGrader.tsx").replace(/\r\n/g, "\n");
   check("pieza: valida antes de subir, sube con URL firmada y solo guarda {assetId, fileName}; siempre opcional", pieza.includes("const motivo = motivoDeRechazo(meta);") && pieza.includes("putSignedUrlWithProgress(prep.path, prep.token, file, up.progress)") && pieza.includes("onChange(res.reporte)") && pieza.includes("(opcional)") && pieza.includes("(optional)"));
+  // V5.152 (owner): es un BOTÓN que abre el selector; el input nativo va oculto.
+  check("pieza: se ve como un botón (abre el selector de archivos; el input nativo está oculto)", pieza.includes("onClick={() => input.current?.click()}") && pieza.includes('style={{ display: "none" }}') && pieza.includes("📎 ${t.boton}"));
   // OCP: lo mismo desde «Registrar a mano»
   const ocpAcc = lee("src/app/ocp/(app)/nominadosActions.ts").replace(/\r\n/g, "\n");
   const ocpUi = lee("src/app/ocp/(app)/nominados/NominadosClient.tsx").replace(/\r\n/g, "\n");

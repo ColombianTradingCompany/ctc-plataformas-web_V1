@@ -15,8 +15,8 @@ export type PrepararReporte = (meta: MetaDeArchivo) => Promise<{ ok: true; path:
 export type ConfirmarReporte = (path: string, meta: MetaDeArchivo) => Promise<{ ok: true; reporte: ReporteAdjunto } | { ok: false; error: string }>;
 
 const TXT = {
-  es: { label: "Reporte original del Q-Grader (opcional)", ayuda: `El reporte en el formato de su laboratorio, si lo tiene: PDF, imagen u Office, hasta ${REPORTE_MAX_MB} MB. No reemplaza la planilla.`, subiendo: "Subiendo…", quitar: "Quitar", adjunto: "Adjunto:" },
-  en: { label: "Q-Grader's original report (optional)", ayuda: `The report in your lab's own format, if you have one: PDF, image or Office, up to ${REPORTE_MAX_MB} MB. It does not replace the sheet.`, subiendo: "Uploading…", quitar: "Remove", adjunto: "Attached:" },
+  es: { label: "Reporte original del Q-Grader (opcional)", boton: "Adjuntar el reporte original del Q-Grader (opcional)", ayuda: `El reporte en el formato de su laboratorio, si lo tiene: PDF, imagen u Office, hasta ${REPORTE_MAX_MB} MB. No reemplaza la planilla.`, subiendo: "Subiendo el reporte…", quitar: "Quitar", adjunto: "Reporte original del Q-Grader:" },
+  en: { label: "Q-Grader's original report (optional)", boton: "Attach the Q-Grader's original report (optional)", ayuda: `The report in your lab's own format, if you have one: PDF, image or Office, up to ${REPORTE_MAX_MB} MB. It does not replace the sheet.`, subiendo: "Uploading the report…", quitar: "Remove", adjunto: "Q-Grader's original report:" },
 };
 
 export function AdjuntoReporteQGrader({
@@ -77,38 +77,40 @@ export function AdjuntoReporteQGrader({
     }
   }
 
+  // V5.152 (owner): «no parece un botón para hacer una acción» — es un BOTÓN, como «Usar mi código interno»: abre el
+  // selector de archivos; el <input type="file"> nativo queda oculto. Adjunto, se enseña el nombre con «Quitar».
   return (
-    <div style={{ marginTop: 10 }}>
-      <label style={{ display: "block", fontSize: 12.5, fontWeight: 600, marginBottom: 4 }} title={t.ayuda}>
-        {t.label}
-      </label>
+    <div style={{ marginTop: 10, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+      <input
+        ref={input}
+        type="file"
+        accept={REPORTE_ACCEPT}
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) void subir(f);
+        }}
+        disabled={disabled || busy}
+        aria-label={t.label}
+        style={{ display: "none" }}
+      />
       {value ? (
-        <p style={{ margin: 0, fontSize: 13, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          <span>
+        <>
+          <span style={{ fontSize: 13 }}>
             📎 {t.adjunto} <b>{value.fileName}</b>
           </span>
           <button type="button" className="btn btn-sm" onClick={() => onChange(null)} disabled={disabled || busy}>
             {t.quitar}
           </button>
-        </p>
+        </>
       ) : (
-        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-          <input
-            ref={input}
-            type="file"
-            accept={REPORTE_ACCEPT}
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) void subir(f);
-            }}
-            disabled={disabled || busy}
-            aria-label={t.label}
-          />
-          {busy && <span style={{ fontSize: 12, color: "var(--muted)" }}>{t.subiendo}</span>}
-          <UploadProgressRing state={up.state} size={24} />
-        </div>
+        <>
+          <button type="button" className="btn btn-sm" onClick={() => input.current?.click()} disabled={disabled || busy} title={t.ayuda}>
+            {busy ? t.subiendo : `📎 ${t.boton}`}
+          </button>
+          {busy && <UploadProgressRing state={up.state} size={24} />}
+        </>
       )}
-      <p style={{ fontSize: 11, color: error ? "var(--red)" : "var(--muted)", margin: "3px 0 0" }}>{error ?? t.ayuda}</p>
+      {error && <span style={{ fontSize: 12, color: "var(--red)", width: "100%" }}>{error}</span>}
     </div>
   );
 }

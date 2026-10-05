@@ -19,6 +19,13 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.152] — 2026-10-05 (commit pendiente)
+
+- **Cambiado**: el adjunto del reporte original del Q-Grader **se ve como un botón** (owner, 2026-10-05: «no parece un botón
+  para hacer una acción»): «📎 Adjuntar el reporte original del Q-Grader (opcional)», como «Usar mi código interno»; abre
+  el selector de archivos y el campo nativo queda oculto. Adjunto, enseña el nombre con «Quitar». En el Centro y en el OCP.
+- **Seguridad**: `qa-centro-calidad` (208 → 209).
+
 ## [V5.151] — 2026-10-05 (commit 6027e6a)
 
 - **Añadido**: en cada evaluación de lote, **el reporte original del Q-Grader en su propio formato institucional**, como

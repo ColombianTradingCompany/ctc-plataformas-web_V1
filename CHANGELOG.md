@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.154] — 2026-10-06 (commit pendiente)
+## [V5.154] — 2026-10-06 (commit 754ecc0)
 
 - **Añadido**: en B3 de la planilla, **«% de almendra defectuosa»**, derivado — (defecto primario + secundario) ÷ trillado
   verde restante × 100 — junto al grano sano (owner, 2026-10-06). Misma aritmética en la Ficha (`computeFactor.defectivePct`) y

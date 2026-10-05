@@ -465,7 +465,7 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   const deCtcx = [...uso("src/app/ocp/(app)/nominados/NominadosClient.tsx"), ...uso("src/app/bcp/(app)/arena/ArenaClient.tsx")];
   check("grado: el editor lo oculta a pedido — ni «grado firme» ni «sin grado»; el Punto que rige se sigue enseñando", editor.includes("ocultaGrado = false,") && editor.includes('{!ocultaGrado && decision?.tipo === "galardon" && (') && editor.includes('{!ocultaGrado && decision?.tipo === "sin_grado" &&') && editor.includes("{t.puntoQueRige}: <b"));
   check("grado: la planilla del Centro de Calidad lo pide oculto", centro.length === 1 && centro[0].includes(" ocultaGrado "));
-  check("grado: CTCx («Registrar a mano») y la Arena lo siguen viendo", deCtcx.length === 2 && deCtcx.every((l) => !l.includes("ocultaGrado")));
+  check("grado: CTCx («Registrar a mano» y el informe del Centro, V5.155) y la Arena lo siguen viendo", deCtcx.length === 3 && deCtcx.every((l) => !l.includes("ocultaGrado")));
 }
 
 // ── V5.151 (owner, 2026-10-05) · el reporte ORIGINAL del Q-Grader, adjunto a la evaluación (opcional) ──────────────────
@@ -510,6 +510,18 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   const datasheet = lee("public/tools/coffee-datasheet/ctcx-coffee-datasheet-tool.html");
   const primarios = F.DEFECTOS_FISICOS.filter((d) => d.cat === 1);
   check("la broca va de primera en los primarios, con su nombre, en la plataforma y en la herramienta", primarios[0].key === "insecto_grave" && primarios[0].es === "Daño por insecto grave (Broca)" && /borer/.test(primarios[0].en) && datasheet.includes('["insecto_grave",1,5],["negro",1,1]') && datasheet.includes('df_insecto_grave:["Daño por insecto grave (Broca)"'));
+}
+
+// ── V5.155 (owner, 2026-10-06) · el OCP abre el informe del Centro (solo lectura) antes de decidir; el Centro tiene dos
+//    pestañas (Baches en Fila · Baches completados) con baches desplegables ────────────────────────────────────────────
+{
+  const ocpUi = lee("src/app/ocp/(app)/nominados/NominadosClient.tsx").replace(/\r\n/g, "\n");
+  const vista = lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").replace(/\r\n/g, "\n");
+  check("ocp · el alta pendiente abre el INFORME: la planilla completa, deshabilitada, con código interno y reporte adjunto", ocpUi.includes("Abrir el informe del Centro y decidir…") && ocpUi.includes("<LabEvalEditor value={alta.planilla} onChange={() => {}} disabled />") && ocpUi.includes("Ver la planilla completa (solo lectura)") && vista.includes("planilla: toLabEvaluation(pendiente.physical_data?.planilla)") && vista.includes("codigo_interno, reference_asset_id, reference_file_name, physical_data"));
+  check("ocp · desde el informe se confirma (galardonar / no supera) o se devuelve al Centro con una nota", ocpUi.includes("Enviar de vuelta al Centro para revisión") && ocpUi.includes('placeholder="Nota para el Centro: qué revisar"') && ocpUi.includes("devolverEvaluacionAlCentro(alta.id, motivo)") && ocpUi.includes('centroEvaluationId: alta.id'));
+  const pestanas = lee("src/app/socios/[partner]/panel/evaluacion/PestanasDeBaches.tsx");
+  check("centro · dos pestañas: Baches en Fila · Baches completados; cada bache es un bloque desplegable", pestanas.includes('"Baches en Fila"') && pestanas.includes('"Baches completados"') && pagina.includes("<PestanasDeBaches enFila={pinta(enFila, true)} completados={pinta(completados, false)}") && pagina.includes("<details key={b.id}") && pagina.includes("<summary"));
+  check("centro · completado = todos los lotes dados de alta y confirmados (ninguno sigue en sondeo) o cerrado por CTC; la página carga también los cerrados", pagina.includes('b.status === "cerrado" || (lotesDe(b).length > 0 && lotesDe(b).every((l) => l.phase !== "sondeo"))') && pagina.includes('.in("status", ["en_centro", "cerrado"])'));
 }
 
 if (fallos.length) {

@@ -10,6 +10,7 @@ import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { puntoDeFila, rotuloDelPunto } from "@/lib/arena/homologacion";
 import { BUILD_SHA, VERSION_LABEL } from "@/lib/version";
 import { AnularAltaButton, DarDeAltaButton } from "./PlanillaCentro";
+import { PestanasDeBaches } from "./PestanasDeBaches";
 import { SesionViva } from "../SesionViva";
 import styles from "../../socios.module.css";
 
@@ -26,7 +27,7 @@ export const dynamic = "force-dynamic";
 import { reporteDeFila } from "@/lib/evaluaciones/reporteReglas";
 import { urlsDeReportes } from "@/lib/evaluaciones/reporte";
 
-type BatchRow = { id: string; label: string; shipped_at: string | null; q_grader_name: string | null };
+type BatchRow = { id: string; label: string; shipped_at: string | null; q_grader_name: string | null; status: string; cerrado_at: string | null };
 type InsRow = { lot_id: string; sondeo_batch_id: string | null; phase: string };
 type EvalRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; cva_total: number | string | null; escala: string; rueda: unknown; rueda_detalle: unknown; created_at: string; reviewed_at: string | null; notes: string | null; submitted_by: string | null; codigo_interno: string | null; reference_asset_id: string | null; reference_file_name: string | null };
 // V5.92: nunca un homologado se lee como un SCA catado.
@@ -48,8 +49,9 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
   const service = createServiceRoleClient();
   const { data: batchesRaw } = await service
     .from("sondeo_batches")
-    .select("id, label, shipped_at, q_grader_name")
-    .eq("status", "en_centro")
+    // V5.155: también los cerrados — van a «Baches completados».
+    .select("id, label, shipped_at, q_grader_name, status, cerrado_at")
+    .in("status", ["en_centro", "cerrado"])
     .eq("centro_calidad_account_id", identity.userId)
     .order("shipped_at", { ascending: true });
   const batches = (batchesRaw as BatchRow[] | null) ?? [];
@@ -116,17 +118,29 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
           </div>
         </div>
 
-        {batches.length === 0 && <p className={styles.soon}>Ningún bache en sus manos ahora mismo.</p>}
-
+        {/* V5.155 (owner): dos pestañas —Baches en Fila · Baches completados— y cada bache es un bloque desplegable.
+            Un bache está COMPLETADO cuando todos sus lotes fueron dados de alta y CTC los confirmó (ya ninguno sigue en
+            sondeo), o cuando CTC lo cerró. */}
+        {(() => {
+          const lotesDe = (b: BatchRow) => inscripciones.filter((i) => i.sondeo_batch_id === b.id);
+          const completado = (b: BatchRow) => b.status === "cerrado" || (lotesDe(b).length > 0 && lotesDe(b).every((l) => l.phase !== "sondeo"));
+          const enFila = batches.filter((b) => !completado(b));
+          const completados = batches.filter(completado).sort((a, b) => (b.cerrado_at ?? b.shipped_at ?? "").localeCompare(a.cerrado_at ?? a.shipped_at ?? ""));
+          const pinta = (lista: BatchRow[], abiertos: boolean) => (
         <div style={{ display: "grid", gap: 14 }}>
-          {batches.map((b) => {
-            const lotes = inscripciones.filter((i) => i.sondeo_batch_id === b.id);
+          {lista.map((b) => {
+            const lotes = lotesDe(b);
+            const altas = lotes.filter((l) => l.phase !== "sondeo" || evaluaciones.some((e) => e.lot_id === l.lot_id && e.batch_id === b.id && e.status === "pending")).length;
             return (
-              <div key={b.id} className={styles.card} style={{ display: "block" }}>
-                <div style={{ display: "flex", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}>
+              <details key={b.id} className={styles.card} style={{ display: "block" }} open={abiertos}>
+                <summary style={{ display: "flex", gap: 10, alignItems: "baseline", flexWrap: "wrap", cursor: "pointer", listStyle: "none" }}>
                   <strong style={{ fontSize: 15 }}>{b.label}</strong>
-                  <span className={styles.orgLine}>recibido {fecha(b.shipped_at)} · {lotes.length} lote(s)</span>
-                </div>
+                  <span className={styles.orgLine}>
+                    recibido {fecha(b.shipped_at)} · {lotes.length} lote(s) · {completado(b) ? `completado${b.cerrado_at ? ` el ${fecha(b.cerrado_at)}` : ""}` : `${altas} de ${lotes.length} dados de alta`}
+                  </span>
+                  <span style={{ flex: 1 }} />
+                  <span className={styles.orgLine} aria-hidden>▾</span>
+                </summary>
                 <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
                   {lotes.map((l) => {
                     const uid = ctcLotReferenceShort(l.lot_id);
@@ -189,10 +203,13 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
                   })}
                   {lotes.length === 0 && <p className={styles.orgLine}>Este bache no tiene lotes pendientes.</p>}
                 </div>
-              </div>
+              </details>
             );
           })}
         </div>
+          );
+          return <PestanasDeBaches enFila={pinta(enFila, true)} completados={pinta(completados, false)} nFila={enFila.length} nCompletados={completados.length} />;
+        })()}
 
         <div className={styles.foot}>
           <span>Red orquestada · Colombian Trading Company</span>

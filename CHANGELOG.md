@@ -19,6 +19,19 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.155] — 2026-10-06 (commit pendiente)
+
+- **Cambiado**: en el OCP, «Lotes en Evaluación», el alta del Centro ya no se confirma a ciegas (owner, 2026-10-06: «no hay
+  forma de ver el trabajo hecho»): el botón es ahora **«Abrir el informe del Centro y decidir…»** — Q-Grader, Punto, código
+  del laboratorio, notas, reporte original adjunto y **la planilla completa de solo lectura** (la misma hoja, deshabilitada)
+  — y desde ahí se galardona, se registra «No supera» o se **envía de vuelta al Centro para revisión con una nota**.
+- **Añadido**: en el Centro de Calidad, «01 Evaluación de Lotes» tiene **dos pestañas: Baches en Fila · Baches completados**
+  (un bache está completado cuando todos sus lotes fueron dados de alta y confirmados por CTC, o cuando CTC lo cerró), y
+  **cada bache es un bloque desplegable** (los de la fila abiertos; los completados plegados). La página sigue sin leer
+  nombres.
+- **Seguridad**: `qa-centro-calidad` (223 → 227).
+- **Docs**: charters `consolas` y `socios`.
+
 ## [V5.154] — 2026-10-06 (commit 754ecc0)
 
 - **Añadido**: en B3 de la planilla, **«% de almendra defectuosa»**, derivado — (defecto primario + secundario) ÷ trillado

@@ -98,6 +98,9 @@ fórmula del CVA y la rueda única). Lo tocan también `qa-recuperacion-check.mj
 
 ## Pendientes
 
+- **V5.155 · Evaluación de Lotes con dos pestañas y baches desplegables** (owner, 2026-10-06; ejecutado desde `consolas`).
+  `PestanasDeBaches` (cliente, solo elige qué lista se ve) sobre dos listas armadas en el servidor; «completado» = todos los
+  lotes fuera de sondeo (confirmados) o bache `cerrado`. La página carga ahora `en_centro` y `cerrado`. Sigue sin nombres.
 - **V5.151 · el reporte original del Q-Grader, adjunto opcional en la planilla del Centro** (owner, 2026-10-05; ejecutado
   desde `consolas`). `AdjuntoReporteQGrader` bajo las notas; `prepararReporteQGrader`/`confirmarReporteQGrader` pasan por la
   credencial y el bache en sus manos; viaja con el borrador (`evaluacion_borradores.reference_asset_id`) y con el alta.

@@ -535,3 +535,9 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `src/components/kaffetal-regal/ficha/fichaCalculations.ts` (`defectivePct`), `src/lib/catacion/fisico.ts`, `src/lib/arena/{planillaI18n,planillaInfo}.ts`, `src/components/bcp/LabEvalEditor.tsx`.
 - ANN `public/tools/coffee-datasheet/ctcx-coffee-datasheet-tool.html` (INFO `f_registro`, `defPct`, broca de primera), `scripts/qa-{centro-calidad,coffee-datasheet}-check.mjs`.
 (commit: 754ecc0)
+
+## [2026-10-06] V5.155 · OCP abre el informe del Centro (solo lectura) antes de decidir; Centro con pestañas y baches desplegables
+- ANN `app/ocp/(app)/nominados/{NominadosClient,CircuitoVista}.tsx` (`ConfirmarCentroControls` con `planilla`, `codigoInterno`, `reporte`).
+- ADD `app/socios/[partner]/panel/evaluacion/PestanasDeBaches.tsx`; ANN `evaluacion/page.tsx` (también los baches cerrados; `<details>`).
+- ANN `scripts/qa-centro-calidad-check.mjs`, `docs/componentes/{consolas,socios}.md`.
+(commit: pendiente)

@@ -177,6 +177,10 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.155 · el OCP abre el informe del Centro antes de decidir** (owner, 2026-10-06). `ConfirmarCentroControls` recibe la
+  planilla (`physical_data.planilla`), el código interno y el reporte adjunto; la enseña con `LabEvalEditor` deshabilitado y
+  desde ahí galardona, registra «No supera» o devuelve al Centro con nota (`devolverEvaluacionAlCentro`). Abierto: las
+  altas anteriores a la V5.81 sin `planilla` en `physical_data` abren la hoja vacía (hoy no hay ninguna pendiente así).
 - **V5.153 · B3 reporta factor, aw y densidad; «i» en todos los conceptos; tazas 1–5 en SCA y CVA** (owner, 2026-10-05).
   `factorDeLaPlanilla` decide el `factor_rendimiento` guardado (derivado de los pesos; reportado si no hay pesos). Los textos
   de las «i» vienen de la Coffee Datasheet Tool (`planillaInfo.ts`, generado: no se editan a mano). Abierto, **con decisión

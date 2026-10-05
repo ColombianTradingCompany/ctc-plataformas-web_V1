@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { formatCop, MAX_BATCH_LOTS, type ArenaInscription } from "@/lib/arena/inscriptions";
-import { toLabEvaluationList } from "@/lib/arena/labEvaluation";
+import { toLabEvaluation, toLabEvaluationList } from "@/lib/arena/labEvaluation";
 import { segmentPostulacion } from "@/lib/bcp/producerSegments";
 import { cargarCarrilDePago } from "@/lib/arena/carrilServidor";
 import type { FacturaData } from "@/lib/arena/factura";
@@ -83,7 +83,7 @@ type MuestraRow = { id: string; lot_id: string; tipo: TipoDeMuestra; kg: number;
 import { reporteDeFila } from "@/lib/evaluaciones/reporteReglas";
 import { urlsDeReportes } from "@/lib/evaluaciones/reporte";
 
-type AltaRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; escala: string; rueda: unknown; rueda_detalle: unknown; q_grader_reference: string | null; notes: string | null; created_at: string; codigo_interno: string | null; reference_asset_id: string | null; reference_file_name: string | null };
+type AltaRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; escala: string; rueda: unknown; rueda_detalle: unknown; q_grader_reference: string | null; notes: string | null; created_at: string; codigo_interno: string | null; reference_asset_id: string | null; reference_file_name: string | null; physical_data: { planilla?: unknown } | null };
 // V5.92: el alta se enseña con su Punto y su procedencia (nunca un homologado como un SCA catado).
 const rotuloDeAlta = (a: AltaRow) => {
   const p = puntoDeFila(a);
@@ -153,7 +153,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
     // V5.81: las altas del Centro de Calidad (pendientes o devueltas) de los lotes en bache.
     service
       .from("lot_evaluations")
-      .select("id, lot_id, batch_id, status, sca_total, punto, escala, rueda, rueda_detalle, q_grader_reference, notes, created_at, codigo_interno, reference_asset_id, reference_file_name")
+      .select("id, lot_id, batch_id, status, sca_total, punto, escala, rueda, rueda_detalle, q_grader_reference, notes, created_at, codigo_interno, reference_asset_id, reference_file_name, physical_data")
       .eq("source", "q_grader_batch")
       .in("status", ["pending", "rejected"])
       .in("lot_id", enBache.map((i) => i.lot_id))
@@ -507,6 +507,10 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
                             // V5.133: cada marca con su etapa y su intensidad («Frutal › Cítricos › Lima · Sabor · 10/15»).
                             rueda: normalizaRueda(pendiente.rueda).map((id, _i, ids) => marcaLabel(id, normalizaDetalle(pendiente.rueda_detalle, ids))),
                             notas: pendiente.notes,
+                            // V5.155 (owner): el informe completo, de solo lectura, antes de decidir.
+                            planilla: toLabEvaluation(pendiente.physical_data?.planilla),
+                            codigoInterno: pendiente.codigo_interno,
+                            reporte: (() => { const rep = reporteDeFila(pendiente); return rep ? { fileName: rep.fileName, url: urlDeReporte.get(rep.assetId) ?? null } : null; })(),
                           }}
                         />
                       </>

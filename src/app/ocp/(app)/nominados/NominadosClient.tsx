@@ -490,12 +490,16 @@ export function ConfirmarCentroControls({
 }: {
   lotId: string;
   lotName: string;
-  alta: { id: string; escala: string; puntaje: number | null; punto: PuntoSca | null; qGrader: string | null; fecha: string; rueda: string[]; notas: string | null };
+  alta: { id: string; escala: string; puntaje: number | null; punto: PuntoSca | null; qGrader: string | null; fecha: string; rueda: string[]; notas: string | null; planilla: LabEvaluation; codigoInterno: string | null; reporte: { fileName: string; url: string | null } | null };
 }) {
   const { pending, error, run } = useAction();
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [motivo, setMotivo] = useState("");
+  // V5.155 (owner, 2026-10-06): «no hay forma de ver el trabajo hecho… debo poder ver la información con un botón (abrir el
+  // informe, no editable), y después elegir confirmar o enviar de vuelta al Centro con una nota». El informe es la misma
+  // planilla, deshabilitada; la decisión va debajo.
+  const [verInforme, setVerInforme] = useState(false);
   const puntaje = alta.puntaje != null ? redondeaPuntaje(alta.puntaje) : null;
   // V5.92: el grado FIRME sale del Punto (piso; un homologado nunca da Tyrian); si el intervalo cruza los 80, recata.
   const decision = alta.punto ? decidirPorPunto(alta.punto) : null;
@@ -504,7 +508,7 @@ export function ConfirmarCentroControls({
   return (
     <div style={{ marginTop: 6 }}>
       <button className="btn btn-sm btn-solid" onClick={() => setOpen(true)}>
-        Confirmar el alta del Centro…
+        Abrir el informe del Centro y decidir…
       </button>
       {open && (
         <div className="modal-bg open" onClick={() => setOpen(false)}>
@@ -512,12 +516,28 @@ export function ConfirmarCentroControls({
             <button className="close" onClick={() => setOpen(false)} aria-label="Cerrar">
               ×
             </button>
-            <h3>Alta del Centro de Calidad · {lotName}</h3>
+            <h3>Informe del Centro de Calidad · {lotName}</h3>
             <p className={styles.meta} style={{ marginTop: 2 }}>
               Q-Grader <b>{alta.qGrader ?? "—"}</b> · <b>{alta.punto ? rotuloDelPunto(alta.punto) : "—"}</b> · dada de alta el {alta.fecha}
+              {alta.codigoInterno && <> · código del laboratorio: <span className="mono">{alta.codigoInterno}</span></>}
               {alta.rueda.length > 0 && <> · rueda: {alta.rueda.join(" — ")}</>}
             </p>
             {alta.notas && <p className={styles.meta}>Notas del Q-Grader: {alta.notas}</p>}
+            {alta.reporte && (
+              <p className={styles.meta}>
+                📎 Reporte original del Q-Grader: {alta.reporte.url ? <a href={alta.reporte.url} target="_blank" rel="noopener noreferrer">{alta.reporte.fileName}</a> : alta.reporte.fileName}
+              </p>
+            )}
+            <div style={{ margin: "8px 0" }}>
+              <button type="button" className="btn btn-sm" onClick={() => setVerInforme((v) => !v)} aria-expanded={verInforme}>
+                {verInforme ? "Ocultar la planilla" : "Ver la planilla completa (solo lectura)"}
+              </button>
+            </div>
+            {verInforme && (
+              <div style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "10px 12px", marginBottom: 10 }} aria-label="Planilla del Centro, solo lectura">
+                <LabEvalEditor value={alta.planilla} onChange={() => {}} disabled />
+              </div>
+            )}
             <div className={styles.field} style={{ marginTop: 10 }}>
               <label>Resumen del resultado (el productor lo verá)</label>
               <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Resultado de la evaluación…" />
@@ -545,9 +565,9 @@ export function ConfirmarCentroControls({
               </button>
             </div>
             <div style={{ borderTop: "1px dashed var(--line)", marginTop: 12, paddingTop: 10, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-              <input placeholder="Motivo para devolverla al Centro" value={motivo} onChange={(e) => setMotivo(e.target.value)} style={{ maxWidth: 300 }} />
+              <input placeholder="Nota para el Centro: qué revisar" value={motivo} onChange={(e) => setMotivo(e.target.value)} style={{ maxWidth: 360 }} aria-label="Nota para el Centro" />
               <button className="btn btn-sm" disabled={pending || !motivo.trim()} onClick={() => run(() => devolverEvaluacionAlCentro(alta.id, motivo))}>
-                Devolver al Centro
+                Enviar de vuelta al Centro para revisión
               </button>
             </div>
             <ErrorLine error={error} />

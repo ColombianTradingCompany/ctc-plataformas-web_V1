@@ -603,14 +603,21 @@ export function ConfirmarCentroControls({
               <label>Resumen del resultado (el productor lo verá)</label>
               <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Resultado de la evaluación…" />
             </div>
-            {/* V5.157 (owner): «la combinación y el punto donde cae en la franja correspondiente». */}
+            {/* V5.157 (owner): «la combinación y el punto donde cae en la franja correspondiente». V5.159 (owner: «no entiendo por qué
+                en un lado sale Blue y abajo sale Red»): son DOS reglas. Esta franja es la que la plataforma aplica HOY al galardonar
+                (`definicion.ts`: solo el Punto). La escala de la tríada, abajo, es la que viene (§9.1 del plan PVC): se exhibe para
+                validarla, no gobierna. Cuando no coinciden, se dice en una línea. */}
             <div style={{ margin: "10px 0 6px" }}>
+              <p className={styles.meta} style={{ margin: "0 0 4px", fontWeight: 700, color: "var(--ink)" }}>1 · Grado que la plataforma asigna hoy — solo el Punto de la taza (`definicion.ts`)</p>
               <FranjaDeGrados punto={alta.punto} />
             </div>
             {/* V5.158 (owner): «debe salir la escala A B C para cada parámetro de la tríada en la que cae». */}
             <div style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "10px 12px", margin: "8px 0" }} aria-label="Tríada del lote">
-              <p className={styles.meta} style={{ margin: "0 0 8px", fontWeight: 700, color: "var(--ink)" }}>La tríada del lote · variedad · proceso · reconocimiento (de su Ficha) con el Punto de la taza</p>
-              <TriadaDelLote ficha={ficha} sca={alta.punto?.bajo ?? null} />
+              <p className={styles.meta} style={{ margin: "0 0 2px", fontWeight: 700, color: "var(--ink)" }}>2 · Escala de puntos CTC «El Punto y la Tríada» — en validación, todavía no gobierna el grado</p>
+              <p className={styles.meta} style={{ margin: "0 0 8px" }}>
+                La misma taza vale distinto según la variedad, el proceso y los reconocimientos: un café común (CCC) necesita más puntaje para la misma banda que uno con surplus. Por eso puede no coincidir con la franja de arriba.
+              </p>
+              <TriadaDelLote ficha={ficha} sca={alta.punto?.bajo ?? null} gradoHoy={grado?.nombre ?? null} />
             </div>
             {/* El puntaje manda: el grado se DERIVA del alta del Centro; nadie lo digita. */}
             <p className={styles.meta} style={{ margin: "8px 0 6px" }}>

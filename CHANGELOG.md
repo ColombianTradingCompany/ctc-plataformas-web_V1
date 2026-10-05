@@ -19,6 +19,15 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.159] — 2026-10-06 (commit pendiente)
+
+- **Cambiado**: en el informe del Centro, **las dos reglas quedan rotuladas** (owner, 2026-10-06: «no entiendo por qué en un
+  lado sale Blue y abajo sale Red»): «1 · Grado que la plataforma asigna hoy — solo el Punto de la taza» (la franja,
+  `definicion.ts`, lo que de verdad se galardona) y «2 · Escala de puntos CTC “El Punto y la Tríada” — en validación, todavía
+  no gobierna el grado» (§9.1 del plan PVC: la misma taza vale distinto según variedad, proceso y reconocimientos). Cuando
+  no coinciden, una línea lo dice con los dos grados y aclara que vale la de arriba.
+- **Seguridad**: `qa-centro-calidad` (237 → 239).
+
 ## [V5.158] — 2026-10-06 (commit 37a5997)
 
 - **Cambiado**: el informe del Centro en el OCP muestra **la Ficha Técnica completa del lote** (owner, 2026-10-06: «quiero que

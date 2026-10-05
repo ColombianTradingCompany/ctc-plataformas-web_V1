@@ -549,7 +549,15 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("tríada · los puntos salen de la escala (ACC a 86 ≈ 1540 × 1,0854; CCC a 86 = 1540)", puntosCtc(86, gesha.triada).puntos === Math.round(1540 * (1 + ((2500 / 1990 - 1) / 6) * 2)) && puntosCtc(86, { variedad: "C", proceso: "C", reconocimiento: "C" }).puntos === 1540);
   const ocpUi = lee("src/app/ocp/(app)/nominados/NominadosClient.tsx").replace(/\r\n/g, "\n");
   check("informe · la Ficha Técnica COMPLETA de solo lectura (mismo renderizador que la Vista de Ficha), abierta por defecto", ocpUi.includes("<FichaCompletaLectura datasheet={ficha} />") && ocpUi.includes("const [verFicha, setVerFicha] = useState(true);") && lee("src/components/bcp/FichaCompletaLectura.tsx").includes("renderFichaHtml(data, factor, mesh, sca, varietyTotal(data)") && lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").includes("ficha={i.lot!.datasheet ?? null}"));
-  check("informe · la tríada A·B·C por parámetro, con la elegida encendida, los puntos y la MISMA curva del Modelo Económico", ocpUi.includes("<TriadaDelLote ficha={ficha} sca={alta.punto?.bajo ?? null} />") && lee("src/components/bcp/TriadaDelLote.tsx").includes("{NIVELES.map((n) => (") && lee("src/components/bcp/TriadaDelLote.tsx").includes('<CurvaDeEscala t={d.triada} sca={sca} puntos={r.puntos} />') && lee("src/components/panel/pvc/EscalaBoard.tsx").includes('import { CurvaDeEscala } from "./CurvaDeEscala";'));
+  check("informe · la tríada A·B·C por parámetro, con la elegida encendida, los puntos y la MISMA curva del Modelo Económico", ocpUi.includes("<TriadaDelLote ficha={ficha} sca={alta.punto?.bajo ?? null} gradoHoy={grado?.nombre ?? null} />") && lee("src/components/bcp/TriadaDelLote.tsx").includes("{NIVELES.map((n) => (") && lee("src/components/bcp/TriadaDelLote.tsx").includes('<CurvaDeEscala t={d.triada} sca={sca} puntos={r.puntos} />') && lee("src/components/panel/pvc/EscalaBoard.tsx").includes('import { CurvaDeEscala } from "./CurvaDeEscala";'));
+}
+
+// ── V5.159 (owner, 2026-10-06: «no entiendo por qué en un lado sale Blue y abajo sale Red») · las dos reglas, rotuladas ──
+{
+  const ocpUi = lee("src/app/ocp/(app)/nominados/NominadosClient.tsx").replace(/\r\n/g, "\n");
+  const tri = lee("src/components/bcp/TriadaDelLote.tsx").replace(/\r\n/g, "\n");
+  check("informe · la franja dice que es el grado que la plataforma asigna HOY (solo el Punto) y la escala que está en validación", ocpUi.includes("1 · Grado que la plataforma asigna hoy — solo el Punto de la taza (`definicion.ts`)") && ocpUi.includes("2 · Escala de puntos CTC «El Punto y la Tríada» — en validación, todavía no gobierna el grado"));
+  check("informe · cuando no coinciden, lo dice en una línea con los dos grados y aclara cuál vale", ocpUi.includes("gradoHoy={grado?.nombre ?? null}") && tri.includes("const difieren = !!(gradoHoy && r?.banda && r.banda.nombre !== gradoHoy);") && tri.includes("<b>No coinciden:</b> hoy la plataforma galardonaría <b>{gradoHoy}</b>") && tri.includes("Mientras la escala no gobierne, vale lo de arriba."));
 }
 
 if (fallos.length) {

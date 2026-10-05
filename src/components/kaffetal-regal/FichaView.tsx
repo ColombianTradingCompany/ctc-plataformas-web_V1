@@ -203,9 +203,17 @@ export function FichaView({
     // `lots` row (not the datasheet blob), specifically so that BCP filling them
     // in on the producer's behalf (the "aided by BCP" edit path) always shows up
     // here even if the producer's local datasheet copy predates that edit.
+    // V5.150 (owner, 2026-10-05): la altura de A2 es «desde la finca» (solo lectura), pero se copiaba UNA vez, al elegir la
+    // finca — si la finca aún no tenía altura, la Ficha quedaba sin ella para siempre (Alto de Reinas). La finca primaria
+    // es la dueña del dato: cada apertura lo vuelve a tomar de ahí (y la geo-referencia, si la Ficha no la tenía).
+    const primaria = base.contributions.length ? fincas.find((f) => f.id === base.contributions[0].finca_id) ?? null : null;
+    const maslDeFinca = primaria && primaria.alt !== "—" && primaria.alt.trim() ? primaria.alt : "";
+    const geoDeFinca = primaria && primaria.lat && primaria.lng ? `${primaria.lat}, ${primaria.lng}` : "";
     return {
       ...base,
       product_name: lot.name !== "Lote nuevo · sin nombre" ? lot.name : base.product_name,
+      masl: maslDeFinca || base.masl,
+      geo_ref: base.geo_ref || geoDeFinca,
       razon_social: gi.razon !== "—" ? gi.razon : "",
       nit_rut: gi.nit !== "—" ? gi.nit : "",
       productor: gi.agri !== "—" ? gi.agri : "",

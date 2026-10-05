@@ -505,3 +505,10 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - DATOS `tools` (id `gulliver`, plus, kr·web·dc, `soporta_memoria`) + `tool_versions` (repo) + `version_publicada`.
 - Doc impact when wrapped: nodo de Herramientas del Café (17 en la base); el patrón «en un iframe no se toca localStorage» para herramientas con esquema propio.
 (commit: b119409)
+
+## [2026-10-05] V5.150 · Fincas — la altura se trae sola del mapa (punto o promedio de vértices); la Ficha y el OCP la leen de la finca; renombrar el Producto desde el OCP
+- ANN `src/lib/geo/elevation.ts` (`lookupElevations`, `alturaDeLaGeometria`, `claveDeLaGeometria`), `src/components/kaffetal-regal/FincaModal.tsx` (`CafetalEditor`: efecto sobre la geometría), `src/components/kaffetal-regal/FichaView.tsx` (msnm desde la finca primaria al abrir).
+- ADD `src/app/ocp/(app)/kr/RenombrarProducto.tsx`; ANN `src/app/ocp/(app)/actions.ts` (`renombrarProducto`), `kr/EvaReviewCard.tsx`, `kr/LoteSeccion.tsx` (Altitud cae a la finca).
+- ANN `scripts/qa-area-check.mjs`, `scripts/qa-visa-check.mjs`, `docs/componentes/{kaffetal-regal,consolas}.md`, `docs/ALINEACION.md`.
+- DATOS `lots.ficha_altitud_m` + `datasheet.masl` de dos lotes (rastro `altitud_completada`).
+(commit: pendiente)

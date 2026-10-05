@@ -116,7 +116,7 @@ owner desde `declararRuptura` · `descongelarCuenta`, V5.84), `buyer_profiles`,
 filtre por el estado del productor DE LA FUENTE y pinte su correo) · `qa-docs-check.mjs` ·
 `qa-evaluaciones-check.mjs` (51 — el veredicto Q-Grader, el vocabulario Pasaporte · Visa · EVA por las dos caras y, desde la V5.77,
 que el Club no existe y la Arena no toca el circuito; `qa-jornada-check` se retiró con la jornada) · `qa-ofertas-check.mjs` (36) · `qa-fichas-check.mjs`
-(31) · `qa-subastas-check.mjs` (30, lado OCP) · `qa-visa-check.mjs` (30) · `qa-consumo-check.mjs` (22 — las tarifas contra la tabla publicada, no contra el código) ·
+(31) · `qa-subastas-check.mjs` (30, lado OCP) · `qa-visa-check.mjs` (97) · `qa-consumo-check.mjs` (22 — las tarifas contra la tabla publicada, no contra el código) ·
 `qa-catalogo-publico-check.mjs` (119 — el código público del lote, «Find my Lot», las rutas SOLO-www, la marca del
 portal y el peso de las imágenes) ·
 `qa-moneda-check.mjs` (24 — la moneda de cara al comprador: USD en la tienda, EUR declarado en la subasta) ·
@@ -177,6 +177,11 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.150 · renombrar el Producto desde el OCP; la Altitud cae a la de la finca** (owner, 2026-10-05). `RenombrarProducto`
+  en «FT · Identidad y Origen» → `renombrarProducto` (`emite`; `lots.name` + `datasheet.product_name`, `lote_renombrado`,
+  aviso al productor). Con esto el pendiente de la V5.146 («el OCP no tiene botón para renombrar») queda cerrado. La fila
+  «Altitud» de la FT cae a `fincas.altitude_m` cuando la Ficha se cerró sin ella. Abierto, **con decisión del owner**: el
+  renombrado no toca fichas emitidas, ofertas ni contratos que ya lleven el nombre viejo (hoy ninguno lo lleva).
 - **V5.148 · la planilla del Centro de Calidad no enseña el grado** (owner, 2026-10-02: depende también de B1, que allí no se
   refleja). `LabEvalEditor` recibe `ocultaGrado`; solo `PlanillaCentro` lo pasa. Se conserva el Punto que rige y el aviso de
   recata pendiente. El grado lo sigue derivando CTCx al confirmar (`decidirPorPunto`), sin cambios.

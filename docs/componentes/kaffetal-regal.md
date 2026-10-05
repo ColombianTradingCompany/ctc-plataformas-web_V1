@@ -64,7 +64,7 @@ no lo cambia (guard trigger) — una cuenta congelada no acepta ofertas ni retir
 base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 `qa-reportado-productor-check.mjs` (**45**) · `qa-evaluaciones-check.mjs` (**50**, lado productor + vocabulario) ·
 `qa-ofertas-check.mjs` (36, `respondToOffer`) · `qa-fichas-check.mjs` (31, panes B2/B3) ·
-`qa-solicitudes-kr-check.mjs` (22) · `qa-visa-check.mjs` (30) · `qa-area-check.mjs` (39, con `--import ./scripts/ts-resolve.mjs`) · `qa-claims-check.mjs` ·
+`qa-solicitudes-kr-check.mjs` (22) · `qa-visa-check.mjs` (97) · `qa-area-check.mjs` (55, con `--import ./scripts/ts-resolve.mjs`) · `qa-claims-check.mjs` ·
 `qa-recuperacion-check.mjs` (puerta KR).
 
 ## Reglas propias
@@ -152,6 +152,11 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.150 · la altura del cafetal se trae sola del mapa** (owner, 2026-10-05; ejecutado desde `consolas`). `CafetalEditor`
+  consulta Open-Meteo al cambiar la geometría: la del punto o el promedio de los vértices del polígono
+  (`alturaDeLaGeometria`); respeta la escrita a mano después de ubicar y la ya guardada. La Ficha toma `masl` de la finca
+  primaria al abrir (antes se copiaba una sola vez). Abierto: la altura de la FINCA sigue siendo la del Cafetal 1 (V5.122),
+  no el promedio de todos sus cafetales — si el owner quiere el promedio, es una línea en `FincaModal` (`alt`).
 - **V5.144 · la granulometría de la Ficha se compara con el trillado verde restante** (owner, 2026-10-02; ejecutado desde la
   conversación de `consolas`). `FichaView` pasa `factor.remainder` a `computeMesh` (antes el grano sano): los porcentajes y el
   residuo de la vista final cambian para los lotes que digitaron mallas. El factor de rendimiento no cambia.

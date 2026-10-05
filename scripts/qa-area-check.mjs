@@ -91,5 +91,48 @@ check("coordenadas inválidas", polygonAreaHa([{ lat: NaN, lng: 1 }, { lat: 2, l
   check("el OCP rotula el polígono adicional", ocp.includes("poligonoEsAdicional(Number(values.hectares ?? 0) > 4, values.eudr_polygon_geojson)") && ocp.includes("polígono adicional de"), true);
 }
 
+// ── V5.150 (owner, 2026-10-05) · «asegúrate de que el sistema tome la acción de Traer del mapa: la altura del punto o
+//    el promedio de puntos declarados». Open-Meteo se SIMULA: un guardián no sale a la red.
+{
+  const { alturaDeLaGeometria, claveDeLaGeometria, lookupElevations } = await import("../src/lib/geo/elevation.ts");
+  const llamadas = [];
+  const fetchReal = globalThis.fetch;
+  // La altura simulada de un punto es 1000 + 10 × (lat − lat0) en km + 1 × (lng − lng0) en km, redondeada: distinta por punto.
+  globalThis.fetch = async (url) => {
+    const u = new URL(String(url));
+    const lats = u.searchParams.get("latitude").split(",").map(Number);
+    const lngs = u.searchParams.get("longitude").split(",").map(Number);
+    llamadas.push(lats.length);
+    const elevation = lats.map((la, i) => 1000 + 10 * ((la - lat0) / dLat) + ((lngs[i] - lng0) / dLng) + 0.4);
+    return new Response(JSON.stringify({ elevation }), { status: 200, headers: { "content-type": "application/json" } });
+  };
+  try {
+    const punto = await alturaDeLaGeometria(String(lat0 + dLat * 2), String(lng0), null);
+    check("altura: sin polígono, la del punto marcado (redondeada)", punto, 1020);
+    check("altura: el punto va en UNA llamada con UNA coordenada", llamadas.at(-1), 1);
+    const cuadro = rect(4, 2); // vértices: 1000, 1040, 1042, 1002 (+0.4) → promedio 1021.4 → 1021
+    const poli = await alturaDeLaGeometria("", "", cuadro);
+    check("altura: con polígono, el PROMEDIO de la altura de sus vértices (no la del centro)", poli, 1021);
+    check("altura: los vértices van en UNA llamada (tantas coordenadas como vértices)", llamadas.at(-1), 4);
+    check("altura: con polígono Y punto manda el polígono", await alturaDeLaGeometria(String(lat0), String(lng0), cuadro), 1021);
+    check("altura: sin geometría no hay altura", await alturaDeLaGeometria("", "", null), null);
+    check("altura: dos vértices no son polígono — vale el punto", await alturaDeLaGeometria(String(lat0), String(lng0), cuadro.slice(0, 2)), 1000);
+    globalThis.fetch = async () => new Response("", { status: 500 });
+    check("altura: si el servicio falla, null (nunca lanza)", await alturaDeLaGeometria(String(lat0), String(lng0), cuadro), null);
+    check("altura: lookupElevations tampoco lanza", await lookupElevations([{ lat: lat0, lng: lng0 }]), null);
+  } finally {
+    globalThis.fetch = fetchReal;
+  }
+  check("clave: cambia al mover el punto", claveDeLaGeometria("1", "2", null) !== claveDeLaGeometria("1", "2.1", null), true);
+  check("clave: con polígono manda el polígono (el punto derivado no la cambia)", claveDeLaGeometria("1", "2", rect(1, 1)) === claveDeLaGeometria("9", "9", rect(1, 1)), true);
+  check("clave: cambia al mover un vértice", claveDeLaGeometria("", "", rect(1, 1)) !== claveDeLaGeometria("", "", rect(1, 1.01)), true);
+
+  const editor = readFileSync(new URL("../src/components/kaffetal-regal/FincaModal.tsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
+  check("el cafetal: la altura se trae SOLA cuando cambia la geometría (efecto sobre la clave)", /useEffect\(\(\) => \{[\s\S]*?alturaDeLaGeometria\(lat, lng, polygon\)[\s\S]*?\}, \[claveGeo, locked\]\);/.test(editor), true);
+  check("el cafetal: una altura escrita a mano después de ubicar se respeta; una guardada no se pisa al abrir", editor.includes("if (primeraVez && alturaMsnm.trim()) return;") && editor.includes("if (!primeraVez && alturaManual && alturaMsnm.trim()) return;") && editor.includes("setAlturaManual(true); setAltErr(null);"), true);
+  check("el cafetal: «Traer del mapa» usa la misma regla (promedio de vértices o punto)", /async function traerAltura\(\) \{[\s\S]*?alturaDeLaGeometria\(lat, lng, polygon\)/.test(editor) && !editor.includes("lookupElevation("), true);
+  check("el cafetal: con la finca aprobada (candado) no se consulta nada", editor.includes("if (locked || !refPoint || !geoCambio) return;"), true);
+}
+
 console.log(`\n${pass} pasaron, ${fail} fallaron.`);
 process.exit(fail === 0 ? 0 : 1);

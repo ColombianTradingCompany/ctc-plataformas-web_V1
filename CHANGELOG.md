@@ -19,6 +19,26 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.150] — 2026-10-05 (commit pendiente)
+
+- **Corregido**: **la altura de un cafetal se trae sola del mapa** (owner, 2026-10-05: «no siempre se está guardando la
+  altura… asegúrate de que el sistema tome la acción de Traer del mapa»). Antes solo llegaba si el productor pulsaba el
+  botón. Ahora, en cuanto se marca la ubicación, se consulta: **la del punto** o, con polígono, **el promedio de la altura
+  de sus vértices** (`alturaDeLaGeometria`, `lookupElevations`). Una altura escrita a mano después de ubicar se respeta y
+  una ya guardada no se pisa al abrir; con la finca aprobada no se consulta nada. El botón sigue para traerla de nuevo.
+- **Corregido**: la Ficha copiaba la altura de la finca **una sola vez**, al elegirla en A2 — si la finca aún no la tenía,
+  la Ficha quedaba sin altura para siempre (Alto de Reinas, CTC-L-7E360302). Ahora la toma de la finca primaria cada vez
+  que se abre (y la geo-referencia, si no la tenía), y en el OCP la fila «Altitud» cae a la de la finca cuando la Ficha
+  se cerró sin ella.
+- **Añadido**: en el OCP, en «FT · Identidad y Origen», **«✎ Cambiar el nombre»** del Producto (owner, 2026-10-05).
+  `renombrarProducto` (acción `emite`) escribe `lots.name` y `datasheet.product_name` juntos, deja `lote_renombrado` en
+  `audit_log` y avisa al productor en su feed — lo que la V5.146 hizo por SQL y sin aviso.
+- **Datos**: dos lotes cuya Ficha no tenía altura se completaron con la de su finca (`ficha_altitud_m` + `datasheet.masl`;
+  rastro `altitud_completada` en `audit_log`): CTC-L-7E360302 (1624 msnm) y CTC-L-37E426A3 (992 msnm).
+- **Seguridad**: `qa-area` (39 → 55: Open-Meteo simulado — promedio de vértices, punto, fallos sin lanzar; atrapó que
+  `lookupElevation` dejaba de redondear) y `qa-visa` (89 → 97; su chequeo de orden ya tolera CRLF).
+- **Docs**: charters `kaffetal-regal` y `consolas`, ALINEACION §3.
+
 ## [V5.149] — 2026-10-04 (commit b119409)
 
 - **Añadido**: **Gulliver · 7 días a Tokio** (`gulliver`, Plus), herramienta NUEVA del taller: japonés de bolsillo para

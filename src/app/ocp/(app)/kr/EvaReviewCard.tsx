@@ -7,6 +7,7 @@ import { logProducerComm } from "../commActions";
 import { Q_GRADER_REGISTRY } from "@/lib/certRegistry";
 import { EVA_CHECKLIST_ITEMS, type EvaChecklist, type EvaChecklistKey } from "./evaChecklist";
 import { Fichas, SiNo } from "./EudrPiezas";
+import { RenombrarProducto } from "./RenombrarProducto";
 import { PRODUCT_RISK_AFFIRMATIONS } from "@/lib/eudr";
 import styles from "@/components/panel/shared.module.css";
 
@@ -343,6 +344,8 @@ export function EvaReviewCard({
           {openPanel === "ft" && (
             <>
               <h4 style={{ margin: "0 0 8px", fontSize: 13.5 }}>FT · Identidad y Origen</h4>
+              {/* V5.150 (owner, 2026-10-05): «desde OCP pueda cambiar directamente el nombre del Producto en FT». */}
+              <RenombrarProducto lotId={lotId} nombre={lotName} />
               {fincaDeclared && (
                 <p className={styles.meta} style={{ margin: "3px 0", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   Finca declarada: <b style={{ color: "var(--ink)" }}>{fincaDeclared.name}</b>

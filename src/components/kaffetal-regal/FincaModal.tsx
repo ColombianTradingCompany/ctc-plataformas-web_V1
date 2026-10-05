@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useToast } from "@/components/Toast";
 import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
 import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import { FileDrop } from "./FileDrop";
-import { fincaReferencePoint, lookupElevation } from "@/lib/geo/elevation";
+import { alturaDeLaGeometria, claveDeLaGeometria, fincaReferencePoint } from "@/lib/geo/elevation";
 import { polygonAreaHa } from "@/lib/geo/area";
 import { poligonoEsAdicional, puntoDelPoligono, puntoEsElCentro } from "@/lib/geo/referencia";
 import { checkFileSizeMb } from "@/lib/fileSize";
@@ -1024,10 +1024,10 @@ export function FincaEditorBody({
             <div>
               <label>
                 Altura de la finca (msnm)
-                <FieldInfo text="La del Cafetal 1: tráigala del mapa en su bloque («Traer del mapa») o escríbala allí." />
+                <FieldInfo text="La del Cafetal 1: se trae sola del mapa al marcar su ubicación (o escríbala allí)." />
               </label>
               <input value={alt} readOnly placeholder="—" aria-label="Altura calculada" />
-              <p style={{ fontSize: 11, color: "var(--muted)", margin: "3px 0 0" }}>{alt ? "Tomada del Cafetal 1." : "Traiga o escriba la altura en el bloque del Cafetal 1."}</p>
+              <p style={{ fontSize: 11, color: "var(--muted)", margin: "3px 0 0" }}>{alt ? "Tomada del Cafetal 1." : "Marque la ubicación del Cafetal 1 y la altura se trae sola."}</p>
             </div>
           </div>
 
@@ -1536,14 +1536,48 @@ function CafetalEditor({
     if (!refPoint || altBusy) return;
     setAltBusy(true);
     setAltErr(null);
-    const m = await lookupElevation(refPoint.point);
+    const m = await alturaDeLaGeometria(lat, lng, polygon);
     setAltBusy(false);
     if (m == null) {
       setAltErr("No se pudo obtener la altura; escríbala a mano.");
       return;
     }
+    setAlturaManual(false);
     onAltura(String(m));
   }
+
+  // V5.150 (owner, 2026-10-05): «no siempre se está guardando la altura… asegúrate de que el sistema tome la acción de
+  // Traer del mapa». Antes la altura solo llegaba si el productor pulsaba el botón; ahora se trae SOLA cada vez que la
+  // geometría cambia (el punto, o el promedio de los vértices del polígono). Una altura escrita a mano DESPUÉS de marcar la
+  // ubicación se respeta; y una que ya venía guardada no se pisa al abrir — solo se completa si está vacía.
+  const [alturaManual, setAlturaManual] = useState(false);
+  const claveGeo = claveDeLaGeometria(lat, lng, polygon);
+  const claveVista = useRef<string | null>(null);
+  useEffect(() => {
+    const primeraVez = claveVista.current === null;
+    const geoCambio = claveVista.current !== claveGeo;
+    claveVista.current = claveGeo;
+    if (locked || !refPoint || !geoCambio) return;
+    if (primeraVez && alturaMsnm.trim()) return; // ya venía con altura: se respeta
+    if (!primeraVez && alturaManual && alturaMsnm.trim()) return; // la escribió a mano después de ubicar: se respeta
+    let viva = true;
+    setAltBusy(true);
+    setAltErr(null);
+    void alturaDeLaGeometria(lat, lng, polygon).then((m) => {
+      if (!viva) return;
+      setAltBusy(false);
+      if (m == null) {
+        if (!alturaMsnm.trim()) setAltErr("No se pudo traer la altura del mapa; toque «Traer del mapa» o escríbala a mano.");
+        return;
+      }
+      setAlturaManual(false);
+      onAltura(String(m));
+    });
+    return () => {
+      viva = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo la geometría (y el candado) disparan la consulta
+  }, [claveGeo, locked]);
 
   // El resumen que el dibujo pone junto al nombre en cuanto el cafetal existe.
   const resumen = [areaHa.trim() ? `${areaHa} ha` : null, alturaMsnm.trim() ? `${alturaMsnm} msnm` : null].filter(Boolean).join(" · ");
@@ -1674,22 +1708,22 @@ function CafetalEditor({
             <div>
               <label>
                 Altura (msnm)
-                <FieldInfo text="Tráigala del mapa: usa el centro del polígono cuando lo hay, o el punto marcado. También puede escribirla a mano si conoce el dato exacto." />
+                <FieldInfo text="Se trae sola del mapa al marcar la ubicación: la del punto o, con polígono, el promedio de la altura de sus vértices. Puede volver a traerla o escribirla a mano si conoce el dato exacto." />
               </label>
               <div className={styles.fieldRow}>
-                <input value={alturaMsnm} onChange={(e) => { onAltura(e.target.value); setAltErr(null); }} type="number" placeholder="1680" disabled={locked} />
+                <input value={alturaMsnm} onChange={(e) => { onAltura(e.target.value); setAlturaManual(true); setAltErr(null); }} type="number" placeholder="1680" disabled={locked} />
                 <button
                   type="button"
                   className="btn btn-sm"
                   onClick={traerAltura}
                   disabled={!refPoint || altBusy || locked}
-                  title={refPoint ? "Traer la altura del punto o del centro del polígono" : "Marque primero la ubicación en el mapa"}
+                  title={refPoint ? "Traer la altura del punto, o el promedio de los vértices del polígono" : "Marque primero la ubicación en el mapa"}
                 >
                   {altBusy ? "Calculando…" : "Traer del mapa ⛰"}
                 </button>
               </div>
               <p style={{ fontSize: 11, color: altErr ? "var(--red)" : "var(--muted)", margin: "3px 0 0" }}>
-                {altErr ?? (refPoint ? "Toque «Traer del mapa» o escríbala a mano." : "Marque la ubicación para poder traerla.")}
+                {altErr ?? (refPoint ? (altBusy ? "Trayendo la altura del mapa…" : alturaMsnm.trim() ? "Traída del mapa; puede corregirla a mano." : "Toque «Traer del mapa» o escríbala a mano.") : "Marque la ubicación y la altura se trae sola.")}
               </p>
             </div>
           </div>

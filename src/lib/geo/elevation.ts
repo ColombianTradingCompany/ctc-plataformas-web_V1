@@ -79,16 +79,46 @@ export function fincaReferencePoint(
  * una finca.
  */
 export async function lookupElevation(point: LatLng): Promise<number | null> {
-  const { lat, lng } = point;
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  const lista = await lookupElevations([point]);
+  return lista ? Math.round(lista[0]) : null;
+}
+
+/** Hasta 100 puntos por llamada (el tope de Open-Meteo). Devuelve null si alguno falla o el servicio no responde. */
+export async function lookupElevations(points: LatLng[]): Promise<number[] | null> {
+  const validos = points.filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng)).slice(0, 100);
+  if (!validos.length) return null;
   try {
-    const url = `https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`;
+    const url = `https://api.open-meteo.com/v1/elevation?latitude=${validos.map((p) => p.lat).join(",")}&longitude=${validos.map((p) => p.lng).join(",")}`;
     const res = await fetch(url);
     if (!res.ok) return null;
     const data: { elevation?: unknown } = await res.json();
-    const m = Array.isArray(data.elevation) ? data.elevation[0] : null;
-    return typeof m === "number" && Number.isFinite(m) ? Math.round(m) : null;
+    if (!Array.isArray(data.elevation) || data.elevation.length !== validos.length) return null;
+    const lista = data.elevation.map((m) => (typeof m === "number" && Number.isFinite(m) ? m : null));
+    return lista.every((m): m is number => m != null) ? lista : null;
   } catch {
     return null;
   }
+}
+
+/**
+ * V5.150 (owner, 2026-10-05): «la altura del punto o el promedio de puntos declarados». La altura de un cafetal se
+ * deriva SOLA de su geometría: con polígono, el PROMEDIO de la altura de sus vértices (los puntos que el productor
+ * declaró); sin polígono, la del punto marcado. Redondeada a metros. null si no hay geometría o el servicio no responde.
+ */
+export async function alturaDeLaGeometria(
+  lat: string | number | null | undefined,
+  lng: string | number | null | undefined,
+  polygon: LatLng[] | null | undefined
+): Promise<number | null> {
+  if (polygon && polygon.length >= 3) {
+    const alturas = await lookupElevations(polygon);
+    if (alturas) return Math.round(alturas.reduce((s, m) => s + m, 0) / alturas.length);
+  }
+  const ref = fincaReferencePoint(lat, lng, polygon);
+  return ref ? lookupElevation(ref.point) : null;
+}
+
+/** La clave de la geometría: cambia cuando cambia el punto o algún vértice — es lo que dispara traer la altura de nuevo. */
+export function claveDeLaGeometria(lat: string, lng: string, polygon: LatLng[] | null | undefined): string {
+  return polygon && polygon.length >= 3 ? polygon.map((p) => `${p.lat},${p.lng}`).join(";") : `${lat.trim()},${lng.trim()}`;
 }

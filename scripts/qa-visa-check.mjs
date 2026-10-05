@@ -255,7 +255,7 @@ const completa = (extra = {}) => ({
 
 // ── V5.123 (owner) · el cafetal y los Totales en el mismo orden: Área a la izquierda, Altura a la derecha ──
 {
-  const modal = lee("src/components/kaffetal-regal/FincaModal.tsx");
+  const modal = lee("src/components/kaffetal-regal/FincaModal.tsx").replace(/\r\n/g, "\n"); // V5.150: el archivo puede venir con CRLF (autocrlf)
   const enOrden = (area, altura) => modal.indexOf(area) > 0 && modal.indexOf(area) < modal.indexOf(altura);
   check("en el cafetal, Área va antes que Altura; en los Totales, igual", enOrden("                Área en café (ha)\n", "                Altura (msnm)\n") && enOrden("Área en café de TODA la finca (ha)", "Altura de la finca (msnm)"));
 }
@@ -329,6 +329,24 @@ const completa = (extra = {}) => ({
   check("los jsonb se comparan por contenido (la nota al productor ya no lista columnas crudas)", acciones.includes("return estable(a ?? {}) !== estable(b ?? {});") && acciones.includes('eudr_evidence_files: "Adjuntos de evidencia"'));
   const acta = lee("docs/migraciones/2026-10-01_fincas_chequeo_de_atributos.sql");
   check("el acta de la migración trae las tres columnas y las dos líneas del guard", ["eudr_chequeo_solicitudes", "eudr_legal_files", "eudr_atributos_notas"].every((c) => acta.includes(`add column if not exists ${c} jsonb`)) && acta.includes("or new.eudr_atributos_notas is distinct from old.eudr_atributos_notas"));
+}
+
+// ── V5.150 (owner, 2026-10-05) · la altura llega a la Ficha y al OCP aunque la finca la haya recibido después; y el
+//    nombre del «Producto» de la FT se cambia desde el OCP ──────────────────────────────────────────────────────────
+{
+  const ficha = lee("src/components/kaffetal-regal/FichaView.tsx").replace(/\r\n/g, "\n");
+  check("ficha · al abrir, la altura (msnm) se toma de la finca primaria — la finca es la dueña del dato", ficha.includes("const maslDeFinca = primaria && primaria.alt !== \"—\" && primaria.alt.trim() ? primaria.alt : \"\";") && ficha.includes("masl: maslDeFinca || base.masl,"));
+  check("ficha · la geo-referencia se completa de la finca solo si la Ficha no la tenía", ficha.includes("geo_ref: base.geo_ref || geoDeFinca,"));
+  const lote = lee("src/app/ocp/(app)/kr/LoteSeccion.tsx").replace(/\r\n/g, "\n");
+  check("ocp · la Altitud de la FT cae a la de la finca cuando la Ficha se cerró sin ella", lote.includes("fincas(name, status, hectares, altitude_m,") && lote.includes("lot.fincas?.altitude_m ? `${lot.fincas.altitude_m} msnm (de la finca)` : \"\""));
+  const acciones = lee("src/app/ocp/(app)/actions.ts").replace(/\r\n/g, "\n");
+  const accion = acciones.slice(acciones.indexOf("export async function renombrarProducto"));
+  check("ocp · `renombrarProducto` es una acción `emite` (el nombre lo ven el productor y el catálogo)", accion.startsWith("export async function renombrarProducto(lotId: string, nombre: string)") && accion.includes('permisoDeEscritura("ocp", "emite")'));
+  check("ocp · escribe las DOS copias del nombre: `lots.name` y `datasheet.product_name`", accion.includes("product_name: nuevo };") && accion.includes(".update({ name: nuevo, datasheet })"));
+  check("ocp · deja rastro (`lote_renombrado`) y avisa al productor en su feed (la V5.146 no avisó)", accion.includes('action: "lote_renombrado"') && accion.includes('context_label: "Nombre del producto"') && accion.includes("CTCx cambió el nombre de su lote"));
+  check("ocp · rechaza nombres de menos de 3 o más de 120 caracteres con `ok:false` (nunca lanza)", accion.includes("if (nuevo.length < 3) return { ok: false") && accion.includes("if (nuevo.length > 120) return { ok: false"));
+  const pieza = lee("src/app/ocp/(app)/kr/RenombrarProducto.tsx").replace(/\r\n/g, "\n");
+  check("ocp · el botón vive en FT · Identidad y Origen, en línea, con Enter/Escape", lee("src/app/ocp/(app)/kr/EvaReviewCard.tsx").includes("<RenombrarProducto lotId={lotId} nombre={lotName} />") && pieza.includes("✎ Cambiar el nombre") && pieza.includes('if (e.key === "Enter") guardar();') && pieza.includes("maxLength={120}"));
 }
 
 if (fallos.length) {

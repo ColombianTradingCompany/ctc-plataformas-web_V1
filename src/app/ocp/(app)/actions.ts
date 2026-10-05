@@ -1105,3 +1105,39 @@ export async function rejectFinca(fincaId: string, notes: string) {
   revalidatePath("/ocp/kr");
   revalidatePath("/bcp");
 }
+
+// ── V5.150 (owner, 2026-10-05): «desde OCP pueda cambiar directamente el nombre del Producto en FT» ───────────────────
+// El nombre vive en DOS copias que siempre van juntas: `lots.name` (lo que ven el OCP, el circuito, el catálogo) y
+// `datasheet.product_name` (lo que la Ficha vuelve a leer). Hasta la V5.146 esto se hacía por SQL; ahora es una acción
+// con rastro en `audit_log` y aviso al productor en su feed (la V5.146 no avisó, y el owner lo anotó).
+export async function renombrarProducto(lotId: string, nombre: string): Promise<{ ok: true; nombre: string } | { ok: false; error: string }> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const nuevo = nombre.replace(/\s+/g, " ").trim();
+  if (nuevo.length < 3) return { ok: false, error: "El nombre del producto necesita al menos 3 caracteres." };
+  if (nuevo.length > 120) return { ok: false, error: "El nombre del producto no puede pasar de 120 caracteres." };
+  const service = createServiceRoleClient();
+  const { data: lot } = await service.from("lots").select("id, name, producer_id, datasheet").eq("id", lotId).single();
+  if (!lot) return { ok: false, error: "Lote no encontrado." };
+  const viejo = String(lot.name ?? "");
+  if (viejo === nuevo) return { ok: true, nombre: nuevo };
+  const datasheet = { ...((lot.datasheet as Record<string, unknown> | null) ?? {}), product_name: nuevo };
+  const { error } = await service.from("lots").update({ name: nuevo, datasheet }).eq("id", lotId);
+  if (error) return { ok: false, error: `No se pudo renombrar: ${error.message}` };
+  await service.from("audit_log").insert({
+    entity_type: "lot",
+    entity_id: lotId,
+    action: "lote_renombrado",
+    performed_by: permiso.userId,
+    notes: `Nombre del producto cambiado desde el OCP: «${viejo}» → «${nuevo}».`,
+  });
+  await service.from("producer_comm_log").insert({
+    producer_id: lot.producer_id,
+    lot_id: lotId,
+    context_label: "Nombre del producto",
+    note: `CTCx cambió el nombre de su lote: «${viejo}» ahora se llama «${nuevo}».`,
+    created_by: permiso.userId,
+  });
+  revalidatePath("/ocp/kr");
+  return { ok: true, nombre: nuevo };
+}

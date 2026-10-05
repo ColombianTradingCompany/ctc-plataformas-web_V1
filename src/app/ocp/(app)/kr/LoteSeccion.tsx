@@ -42,6 +42,7 @@ type FincaJoin = {
   name: string | null;
   status: string | null;
   hectares: string | number | null;
+  altitude_m: number | null;
   vereda: string | null;
   municipio: string | null;
   departamento: string | null;
@@ -133,7 +134,7 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
          eudr_product_risk, eudr_product_risk_factors,
          eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme, eudr_risk_level, eudr_mitigation_actions,
          eudr_mitigation_effective, eudr_mitigation_responsible, cert_verifications,
-         fincas(name, status, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, eudr_cert_shared)`
+         fincas(name, status, hectares, altitude_m, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, eudr_cert_shared)`
       )
       // CUALQUIER etapa: la vista completa abre también un apto, un no apto o un galardonado.
       .eq("id", loteId),
@@ -420,7 +421,8 @@ function LotCard({
     row("Tipo de lote (calculado)", archetypeLabel ?? ds.origin_category),
     row("Recolección", lot.harvest_from && lot.harvest_to ? `${lot.harvest_from} → ${lot.harvest_to}` : ""),
     row("Región", [ds.region_dep, ds.county_muni_text || ds.county_muni].filter(Boolean).join(" · ")),
-    row("Altitud", ds.masl ? `${ds.masl} msnm` : lot.ficha_altitud_m ? `${lot.ficha_altitud_m} msnm` : ""),
+    // V5.150: si la Ficha se cerró antes de que la finca tuviera altura, vale la de la finca (es su dueña).
+    row("Altitud", ds.masl ? `${ds.masl} msnm` : lot.ficha_altitud_m ? `${lot.ficha_altitud_m} msnm` : lot.fincas?.altitude_m ? `${lot.fincas.altitude_m} msnm (de la finca)` : ""),
     row("Edad del cultivo", ds.plantation_age),
     // V5.120 (owner, 2026-10-01): un blend tiene VARIAS variedades y el proceso es de CADA una (V5.65) — `ficha_variedad` y
     // `base_processing` son solo la proyección de la dominante, y la EVA mostraba únicamente la primera.

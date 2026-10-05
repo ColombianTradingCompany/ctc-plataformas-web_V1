@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.150] — 2026-10-05 (commit pendiente)
+## [V5.150] — 2026-10-05 (commit fae0f0f)
 
 - **Corregido**: **la altura de un cafetal se trae sola del mapa** (owner, 2026-10-05: «no siempre se está guardando la
   altura… asegúrate de que el sistema tome la acción de Traer del mapa»). Antes solo llegaba si el productor pulsaba el

@@ -511,4 +511,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ADD `src/app/ocp/(app)/kr/RenombrarProducto.tsx`; ANN `src/app/ocp/(app)/actions.ts` (`renombrarProducto`), `kr/EvaReviewCard.tsx`, `kr/LoteSeccion.tsx` (Altitud cae a la finca).
 - ANN `scripts/qa-area-check.mjs`, `scripts/qa-visa-check.mjs`, `docs/componentes/{kaffetal-regal,consolas}.md`, `docs/ALINEACION.md`.
 - DATOS `lots.ficha_altitud_m` + `datasheet.masl` de dos lotes (rastro `altitud_completada`).
-(commit: pendiente)
+(commit: fae0f0f)

@@ -19,6 +19,17 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.154] — 2026-10-06 (commit pendiente)
+
+- **Añadido**: en B3 de la planilla, **«% de almendra defectuosa»**, derivado — (defecto primario + secundario) ÷ trillado
+  verde restante × 100 — junto al grano sano (owner, 2026-10-06). Misma aritmética en la Ficha (`computeFactor.defectivePct`) y
+  en la Coffee Datasheet Tool (`calcFactor.defPct`, en el renglón del factor).
+- **Añadido**: la **R** de «Registrar detalle» lleva su «i» (`f_registro`: qué es el detalle y qué no cambia), también en las
+  tablas de defectos de la herramienta.
+- **Cambiado**: en los defectos primarios, **«Daño por insecto grave (Broca)» va de primero**, en la plataforma y en la
+  herramienta (una sola lista; `fisico.ts` y `DEFECTOS`/`df_insecto_grave`).
+- **Seguridad**: `qa-centro-calidad` (219 → 223), `qa-coffee-datasheet` (1.340 → 1.346).
+
 ## [V5.153] — 2026-10-05 (commit 759f70f)
 
 - **Añadido**: en la planilla de evaluación (Centro de Calidad, «Registrar a mano» del OCP y la Arena) **B3 reporta también

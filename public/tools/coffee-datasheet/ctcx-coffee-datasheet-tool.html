@@ -608,7 +608,7 @@ const TX = {
   thDef:["Defecto","Defect","Defekt"], thEq:["Equivalencia","Equivalence","Äquivalenz"], thGranos:["N.º de granos","No. of beans","Anzahl Bohnen"], thComp:["Defectos completos","Full defects","Volle Defekte"],
   totCat:["Total categoría {0}","Category {0} total","Summe Kategorie {0}"],
   totDef:["Total de defectos en verde","Total green defects","Gesamtzahl Rohkaffeedefekte"],
-  df_negro:["Grano negro","Full black","Schwarze Bohne"], df_agrio:["Grano agrio","Full sour","Saure Bohne"], df_cereza:["Cereza seca","Dried cherry / pod","Getrocknete Kirsche"], df_hongos:["Daño por hongos","Fungus damaged","Pilzbefall"], df_extrana:["Materia extraña","Foreign matter","Fremdkörper"], df_insecto_grave:["Daño por insecto grave","Severe insect damage","Starker Insektenschaden"],
+  df_negro:["Grano negro","Full black","Schwarze Bohne"], df_agrio:["Grano agrio","Full sour","Saure Bohne"], df_cereza:["Cereza seca","Dried cherry / pod","Getrocknete Kirsche"], df_hongos:["Daño por hongos","Fungus damaged","Pilzbefall"], df_extrana:["Materia extraña","Foreign matter","Fremdkörper"], df_insecto_grave:["Daño por insecto grave (Broca)","Severe insect damage (coffee berry borer)","Schwerer Insektenschaden (Kaffeekirschenkäfer)"],
   df_negro_parcial:["Grano negro parcial","Partial black","Teilweise schwarz"], df_agrio_parcial:["Grano agrio parcial","Partial sour","Teilweise sauer"], df_pergamino:["Pergamino","Parchment","Pergamino"], df_flotador:["Flotador","Floater","Schwimmer"], df_inmaduro:["Inmaduro","Immature / unripe","Unreif"], df_averanado:["Averanado","Withered","Verwelkt"], df_concha:["Concha","Shell","Muschelbohne"], df_partido:["Partido / mordido / cortado","Broken / chipped / cut","Bruch / angeschlagen / geschnitten"], df_cascarilla:["Cascarilla","Hull / husk","Schale / Hülse"], df_insecto_leve:["Daño por insecto leve","Slight insect damage","Leichter Insektenschaden"],
   verDefectos:["¿No reconoces un defecto? Abre «Defectos del Café»","Not sure about a defect? Open “Coffee Defects”","Unsicher bei einem Defekt? «Kaffeedefekte» öffnen"],
   quakers:["Quakers en 100 g de café tostado","Quakers in 100 g of roasted coffee","Quaker in 100 g Röstkaffee"],
@@ -634,7 +634,7 @@ const TX = {
   faP:["Defecto primario (g)","Primary defects (g)","Primärdefekte (g)"],
   faS:["Defecto secundario (g)","Secondary defects (g)","Sekundärdefekte (g)"],
   faHum:["Humedad del pergamino (%)","Parchment moisture (%)","Feuchte des Pergamino (%)"],
-  faRes:["Factor de rendimiento: <b>{0}</b> · grano sano {1} g · merma de trilla {2} g","Yield factor: <b>{0}</b> · sound beans {1} g · hulling loss {2} g","Ausbeutefaktor: <b>{0}</b> · gesunde Bohnen {1} g · Schälverlust {2} g"],
+  faRes:["Factor de rendimiento: <b>{0}</b> · grano sano {1} g · merma de trilla {2} g · almendra defectuosa {3} %","Yield factor: <b>{0}</b> · sound beans {1} g · hulling loss {2} g · defective beans {3} %","Ausbeutefaktor: <b>{0}</b> · gesunde Bohnen {1} g · Schälverlust {2} g · defekte Bohnen {3} %"],
   faVacio:["Escribe la muestra de pergamino y el verde tras la trilla.","Enter the parchment sample and the green weight after hulling.","Geben Sie die Pergamino-Probe und das Rohkaffeegewicht nach dem Schälen ein."],
   fNotas:["Notas del análisis físico","Physical analysis notes","Notizen zur physischen Analyse"],
 
@@ -924,6 +924,10 @@ const INFO = {
     es:["Densidad del grano verde","<p>Masa por volumen del café verde, en <b>gramos por litro</b> (densidad aparente, medida en una probeta). Rango habitual: <b>650–800 g/L</b>.</p><p>Un grano más denso suele venir de mayor altitud y de maduración lenta: es más firme y aguanta mejor el tueste. Es un dato físico que acompaña a la taza, no la reemplaza.</p>"],
     en:["Green bean density","<p>Mass per volume of the green coffee, in <b>grams per litre</b> (bulk density, measured in a graduated cylinder). Usual range: <b>650–800 g/L</b>.</p><p>A denser bean usually comes from higher altitude and slower ripening: it is firmer and stands up better to roasting. It is a physical datum that accompanies the cup; it does not replace it.</p>"],
     de:["Dichte des Rohkaffees","<p>Masse pro Volumen des Rohkaffees in <b>Gramm pro Liter</b> (Schüttdichte, im Messzylinder gemessen). Üblicher Bereich: <b>650–800 g/L</b>.</p><p>Eine dichtere Bohne stammt meist aus größerer Höhe und langsamerer Reifung: Sie ist fester und verträgt die Röstung besser. Ein physischer Wert, der die Tasse begleitet, nicht ersetzt.</p>"] },
+  f_registro:{ std:"Formato físico CVA · SCA café verde",
+    es:["Registrar el detalle · cuál defecto es cuál","<p>Los gramos de defecto primario y secundario bastan para el factor. El detalle dice <b>qué</b> había: cuántos granos de cada defecto, y cuántos defectos completos hacen según su equivalencia (1:1, 3:1, 5:1, 10:1).</p><p>Es lo que pide el formato físico: con 350 g de muestra, los primarios (negro, agrio, cereza seca, hongos, materia extraña, broca) y los secundarios (parciales, pergamino, flotador, inmaduro, averanado, concha, partido, cascarilla, insecto leve). El detalle <b>no cambia</b> los gramos ni el factor: documenta la muestra y sostiene la clasificación del verde.</p>"],
+    en:["Record the detail · which defect is which","<p>The grams of primary and secondary defects are enough for the factor. The detail says <b>what</b> was there: how many beans of each defect, and how many full defects they make by their equivalence (1:1, 3:1, 5:1, 10:1).</p><p>It is what the physical form asks for: on a 350 g sample, the primaries (black, sour, dried cherry, fungus, foreign matter, borer) and the secondaries (partials, parchment, floater, immature, withered, shell, broken, hull, slight insect). The detail <b>does not change</b> the grams or the factor: it documents the sample and supports the green grading.</p>"],
+    de:["Das Detail erfassen · welcher Defekt welcher ist","<p>Die Gramm an primären und sekundären Defekten reichen für den Faktor. Das Detail sagt, <b>was</b> vorhanden war: wie viele Bohnen je Defekt und wie viele volle Defekte sie nach ihrer Äquivalenz ergeben (1:1, 3:1, 5:1, 10:1).</p><p>Das verlangt das physische Formular: bei 350 g Probe die primären (schwarz, sauer, trockene Kirsche, Pilz, Fremdkörper, Käfer) und die sekundären (teilweise, Pergamino, Schwimmer, unreif, welk, Schale, gebrochen, Hülse, leichter Insektenschaden). Das Detail <b>ändert nicht</b> die Gramm oder den Faktor: Es dokumentiert die Probe und stützt die Rohkaffee-Klassifizierung.</p>"] },
   f_factor_rep:{ std:"Práctica colombiana (FNC) · CTCx",
     es:["Factor de rendimiento reportado","<p>Si su laboratorio ya calculó el factor con su propio procedimiento, escríbalo aquí tal cual lo reporta. Es opcional.</p><p>Cuando hay pesos de trilla (muestra de pergamino, verde restante y defectos), <b>manda el factor derivado de esos pesos</b>; el reportado vale cuando no los hay. Los dos quedan en la planilla.</p>"],
     en:["Reported yield factor","<p>If your lab has already calculated the factor with its own procedure, enter it here as reported. It is optional.</p><p>When hulling weights exist (parchment sample, remaining green and defects), <b>the factor derived from those weights governs</b>; the reported one counts when they are missing. Both stay on the sheet.</p>"],
@@ -975,7 +979,7 @@ const SCA_TAZ = ["uniformity","clean_cup","sweetness"];
 const SCA_K = { min:6, max:10, paso:0.25, porTaza:2, tazas:5, taint:2, fault:4 };
 // [clave, categoría, granos por defecto completo] — formato de Evaluación Física del CVA (alfa V1, mayo de 2025).
 const DEFECTOS = [
-  ["negro",1,1],["agrio",1,1],["cereza",1,1],["hongos",1,1],["extrana",1,1],["insecto_grave",1,5],
+  ["insecto_grave",1,5],["negro",1,1],["agrio",1,1],["cereza",1,1],["hongos",1,1],["extrana",1,1], /* V5.154: la broca, de primera */
   ["negro_parcial",2,3],["agrio_parcial",2,3],["pergamino",2,5],["flotador",2,5],["inmaduro",2,5],
   ["averanado",2,5],["concha",2,5],["partido",2,5],["cascarilla",2,5],["insecto_leve",2,10]
 ];
@@ -1089,11 +1093,13 @@ function calcFactor(f){
   const start = num0(f.fa_start), rem = num0(f.fa_green_remainder);
   const merma = Math.max(0, start - rem);
   const sano = rem>0 ? Math.max(0, rem - num0(f.fa_primary_defect) - num0(f.fa_secondary_defect)) : 0;
-  return { start:start, rem:rem, merma:merma, sano:sano, factor: sano>0 ? (70*start)/sano : null };
+  /* V5.154 (owner): % de almendra defectuosa = (primarios + secundarios) ÷ trillado verde restante × 100 (derivado, como la planilla). */
+  const defPct = rem>0 ? Math.min(100, Math.max(0, (num0(f.fa_primary_defect) + num0(f.fa_secondary_defect)) / rem * 100)) : null;
+  return { start:start, rem:rem, merma:merma, sano:sano, factor: sano>0 ? (70*start)/sano : null, defPct:defPct };
 }
 /** V5.153 · el factor que vale: el derivado de los pesos; si no hay pesos, el que el laboratorio reportó (`fa_factor_reportado`). */
 function factorQueVale(l){ const f = calcFactor(l); if(f.factor!=null) return f.factor; const r = numO(l.fa_factor_reportado); return r!=null && r>0 ? r2(r) : null; }
-function textoFactor(l, f){ if(f.factor!=null) return t("faRes", nf(f.factor), nf(f.sano,1), nf(f.merma,1)); const r = factorQueVale(l); return r!=null ? t("faRepRes", nf(r)) : t("faVacio"); }
+function textoFactor(l, f){ if(f.factor!=null) return t("faRes", nf(f.factor), nf(f.sano,1), nf(f.merma,1), nf(f.defPct==null?0:f.defPct,1)); const r = factorQueVale(l); return r!=null ? t("faRepRes", nf(r)) : t("faVacio"); }
 /** Cuántas casillas CATA cuentan: la madre con una hija marcada va implícita. */
 function cataCuenta(lista){
   const set = {}; (lista||[]).forEach(function(x){ set[x] = 1; });
@@ -1655,7 +1661,7 @@ function saborCva(){
 function fisico(){
   const l = lote(), sca = S.metodo==="sca";
   const tablaDef = function(cat){
-    return "<table class=\"tbl\"><thead><tr><th>"+t("cat"+cat)+"</th><th class=\"n\">"+t("thGranos")+"</th><th class=\"n\">"+t("thComp")+"</th></tr></thead><tbody>"+
+    return "<table class=\"tbl\"><thead><tr><th>"+t("cat"+cat)+" "+ib("f_registro")+"</th><th class=\"n\">"+t("thGranos")+"</th><th class=\"n\">"+t("thComp")+"</th></tr></thead><tbody>"+
       DEFECTOS.filter(function(d){ return d[1]===cat; }).map(function(d){
         return "<tr><td>"+t("df_"+d[0])+" <span class=\"eq\">("+d[2]+":1)</span></td><td class=\"n\"><input type=\"number\" min=\"0\" step=\"1\" inputmode=\"numeric\" data-k=\"fis_def."+d[0]+"\" value=\""+esc(l.fis_def[d[0]]==null?"":l.fis_def[d[0]])+"\" aria-label=\""+esc(t("df_"+d[0]))+"\"></td><td class=\"n\" data-o=\"dc."+d[0]+"\"></td></tr>";
       }).join("")+"</tbody><tfoot><tr><td colspan=\"2\">"+t("totCat", cat)+"</td><td class=\"n\" data-o=\"dt"+cat+"\"></td></tr></tfoot></table>";

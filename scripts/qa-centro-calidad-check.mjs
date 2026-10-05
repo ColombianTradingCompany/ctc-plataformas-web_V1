@@ -497,6 +497,21 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("ocp: «Registrar a mano» monta la misma pieza y lista el adjunto de cada planilla; Lotes en Evaluación enseña el del alta del Centro", ocpUi.includes("<AdjuntoReporteQGrader") && ocpUi.includes("preparar={(meta) => prepararReporteQGraderOcp(lotId, meta)}") && ocpUi.includes("addSondeoEvaluation(lotId, ev, reporte)") && ocpUi.includes("{adjunto && <> · 📎 {adjunto}</>}") && lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").includes("{enlaceDeReporte(pendiente)}"));
 }
 
+// ── V5.154 (owner, 2026-10-06) · % de almendra defectuosa (derivado); la «i» en la R; la broca de primera ──────────────
+{
+  const { computeFactor } = await import("../src/components/kaffetal-regal/ficha/fichaCalculations.ts");
+  const { INFO_PLANILLA } = await import("../src/lib/arena/planillaInfo.ts");
+  const editor = lee("src/components/bcp/LabEvalEditor.tsx").replace(/\r\n/g, "\n");
+  const f = computeFactor({ fa_start: "250", fa_green_remainder: "207.7", fa_primary_defect: "2.3", fa_secondary_defect: "3" });
+  check("almendra defectuosa: (primarios + secundarios) ÷ verde restante × 100; sin verde, nada; nunca pasa de 100", Math.abs(f.defectivePct - 2.5518) < 0.001 && computeFactor({ fa_start: "250", fa_green_remainder: "", fa_primary_defect: "2", fa_secondary_defect: "" }).defectivePct === null && computeFactor({ fa_start: "250", fa_green_remainder: "10", fa_primary_defect: "20", fa_secondary_defect: "" }).defectivePct === 100);
+  check("almendra defectuosa: el editor la enseña derivada, junto al grano sano", editor.includes("{t.almendraDefectuosa} {info(\"f_def\")}") && editor.includes("factor.defectivePct != null ? factor.defectivePct.toFixed(1)") && PL.es.almendraDefectuosa === "% de almendra defectuosa" && PL.en.almendraDefectuosa === "% defective beans");
+  check("la R lleva su «i» (f_registro, en el catálogo generado)", editor.includes('{info("f_registro")}') && INFO_PLANILLA.es.f_registro && INFO_PLANILLA.en.f_registro && /Registrar el detalle/.test(INFO_PLANILLA.es.f_registro.titulo));
+  const F = await import("../src/lib/catacion/fisico.ts");
+  const datasheet = lee("public/tools/coffee-datasheet/ctcx-coffee-datasheet-tool.html");
+  const primarios = F.DEFECTOS_FISICOS.filter((d) => d.cat === 1);
+  check("la broca va de primera en los primarios, con su nombre, en la plataforma y en la herramienta", primarios[0].key === "insecto_grave" && primarios[0].es === "Daño por insecto grave (Broca)" && /borer/.test(primarios[0].en) && datasheet.includes('["insecto_grave",1,5],["negro",1,1]') && datasheet.includes('df_insecto_grave:["Daño por insecto grave (Broca)"'));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-centro-calidad: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("  - " + f);

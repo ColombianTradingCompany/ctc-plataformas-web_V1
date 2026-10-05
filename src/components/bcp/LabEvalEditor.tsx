@@ -644,6 +644,8 @@ export function LabEvalEditor({
               <div key={cat} style={S.par}>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                   {cat === 1 ? t.defPrimario : t.defSecundario} {info("f_def")}
+                  {/* V5.154 (owner): la «i» de la R — qué es registrar el detalle. */}
+                  {info("f_registro")}
                   <button type="button" onClick={() => setDetalleAbierto(detalleAbierto === cat ? null : cat)} aria-expanded={detalleAbierto === cat} title={t.detalle} aria-label={`${t.detalle}: ${cat === 1 ? t.defPrimario : t.defSecundario}`} style={{ ...S.r, ...(detalleAbierto === cat ? { background: "var(--primary, #3C0A86)", color: "#fff" } : {}) }}>
                     R
                   </button>
@@ -672,6 +674,13 @@ export function LabEvalEditor({
                 {t.granoSano} <small style={{ color: "var(--muted)" }}>· {t.derivado}</small>
               </span>
               <input readOnly tabIndex={-1} value={factor.remainder > 0 ? factor.healthy.toFixed(1) : ""} placeholder="auto" style={{ ...S.num, background: "var(--line)" }} />
+            </div>
+            {/* V5.154 (owner): «agreguemos el número derivado de % de almendra defectuosa» — (primarios + secundarios) ÷ verde restante. */}
+            <div style={S.par}>
+              <span>
+                {t.almendraDefectuosa} {info("f_def")} <small style={{ color: "var(--muted)" }}>· {t.derivado}</small>
+              </span>
+              <input readOnly tabIndex={-1} value={factor.defectivePct != null ? factor.defectivePct.toFixed(1) : ""} placeholder="auto" aria-label={t.almendraDefectuosa} style={{ ...S.num, background: "var(--line)" }} />
             </div>
           </div>
           {detalleAbierto && (

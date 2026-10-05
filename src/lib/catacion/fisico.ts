@@ -13,12 +13,13 @@ export type CategoriaDeDefecto = 1 | 2;
 export type DefectoFisico = { key: string; cat: CategoriaDeDefecto; granos: number; es: string; en: string };
 
 export const DEFECTOS_FISICOS: readonly DefectoFisico[] = [
+  // V5.154 (owner, 2026-10-06): la broca, de primera y con su nombre — es el defecto que más se cuenta en Colombia.
+  { key: "insecto_grave", cat: 1, granos: 5, es: "Daño por insecto grave (Broca)", en: "Severe insect damage (coffee berry borer)" },
   { key: "negro", cat: 1, granos: 1, es: "Grano negro", en: "Full black" },
   { key: "agrio", cat: 1, granos: 1, es: "Grano agrio", en: "Full sour" },
   { key: "cereza", cat: 1, granos: 1, es: "Cereza seca", en: "Dried cherry / pod" },
   { key: "hongos", cat: 1, granos: 1, es: "Daño por hongos", en: "Fungus damaged" },
   { key: "extrana", cat: 1, granos: 1, es: "Materia extraña", en: "Foreign matter" },
-  { key: "insecto_grave", cat: 1, granos: 5, es: "Daño por insecto grave", en: "Severe insect damage" },
   { key: "negro_parcial", cat: 2, granos: 3, es: "Grano negro parcial", en: "Partial black" },
   { key: "agrio_parcial", cat: 2, granos: 3, es: "Grano agrio parcial", en: "Partial sour" },
   { key: "pergamino", cat: 2, granos: 5, es: "Pergamino", en: "Parchment" },

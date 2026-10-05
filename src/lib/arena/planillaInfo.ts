@@ -54,6 +54,7 @@ export type ClaveDeInfo =
   | "f_hum"
   | "f_aw"
   | "f_dens"
+  | "f_registro"
   | "f_factor_rep"
   | "f_factor"
   | "e_que"
@@ -311,6 +312,11 @@ export const INFO_PLANILLA: Record<IdiomaDePlanilla, Record<ClaveDeInfo, InfoDeP
       "titulo": "Densidad del grano verde",
       "texto": "Masa por volumen del café verde, en gramos por litro (densidad aparente, medida en una probeta). Rango habitual: 650–800 g/L.\nUn grano más denso suele venir de mayor altitud y de maduración lenta: es más firme y aguanta mejor el tueste. Es un dato físico que acompaña a la taza, no la reemplaza.",
       "std": "Práctica de laboratorio · café verde"
+    },
+    "f_registro": {
+      "titulo": "Registrar el detalle · cuál defecto es cuál",
+      "texto": "Los gramos de defecto primario y secundario bastan para el factor. El detalle dice qué había: cuántos granos de cada defecto, y cuántos defectos completos hacen según su equivalencia (1:1, 3:1, 5:1, 10:1).\nEs lo que pide el formato físico: con 350 g de muestra, los primarios (negro, agrio, cereza seca, hongos, materia extraña, broca) y los secundarios (parciales, pergamino, flotador, inmaduro, averanado, concha, partido, cascarilla, insecto leve). El detalle no cambia los gramos ni el factor: documenta la muestra y sostiene la clasificación del verde.",
+      "std": "Formato físico CVA · SCA café verde"
     },
     "f_factor_rep": {
       "titulo": "Factor de rendimiento reportado",
@@ -598,6 +604,11 @@ export const INFO_PLANILLA: Record<IdiomaDePlanilla, Record<ClaveDeInfo, InfoDeP
       "titulo": "Green bean density",
       "texto": "Mass per volume of the green coffee, in grams per litre (bulk density, measured in a graduated cylinder). Usual range: 650–800 g/L.\nA denser bean usually comes from higher altitude and slower ripening: it is firmer and stands up better to roasting. It is a physical datum that accompanies the cup; it does not replace it.",
       "std": "Práctica de laboratorio · café verde"
+    },
+    "f_registro": {
+      "titulo": "Record the detail · which defect is which",
+      "texto": "The grams of primary and secondary defects are enough for the factor. The detail says what was there: how many beans of each defect, and how many full defects they make by their equivalence (1:1, 3:1, 5:1, 10:1).\nIt is what the physical form asks for: on a 350 g sample, the primaries (black, sour, dried cherry, fungus, foreign matter, borer) and the secondaries (partials, parchment, floater, immature, withered, shell, broken, hull, slight insect). The detail does not change the grams or the factor: it documents the sample and supports the green grading.",
+      "std": "Formato físico CVA · SCA café verde"
     },
     "f_factor_rep": {
       "titulo": "Reported yield factor",

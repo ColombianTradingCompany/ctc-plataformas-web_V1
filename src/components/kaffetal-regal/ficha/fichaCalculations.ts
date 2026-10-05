@@ -55,7 +55,9 @@ export function computeFactor(data: FactorFields) {
   const secondary = num(data.fa_secondary_defect);
   const healthy = remainder > 0 ? Math.max(0, remainder - primary - secondary) : 0;
   const yieldFactor = healthy > 0 ? (70 * start) / healthy : null;
-  return { start, remainder, yieldLoss, healthy, yieldFactor };
+  // V5.154 (owner, 2026-10-06): % de almendra defectuosa = (primarios + secundarios) ÷ trillado verde restante × 100.
+  const defectivePct = remainder > 0 ? Math.min(100, Math.max(0, ((primary + secondary) / remainder) * 100)) : null;
+  return { start, remainder, yieldLoss, healthy, yieldFactor, defectivePct };
 }
 
 // El Residuo no se digita: es el "solucionador de diferencia" que lleva la

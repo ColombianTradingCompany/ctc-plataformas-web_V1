@@ -125,6 +125,7 @@ check("SCA 2004: nueve de diez atributos no dan puntaje", M.calcSca2004({ ...Obj
 check("SCA 2004: clasificación del total (90 · 85 · 80)", M.claseSca(90) === "cls90" && M.claseSca(89.75) === "cls85" && M.claseSca(84.75) === "cls80" && M.claseSca(79.75) === "cls0");
 const fa = { fa_start: "250", fa_green_remainder: "201", fa_primary_defect: "2", fa_secondary_defect: "6" };
 check("factor de rendimiento: la aritmética de la Ficha de Kaffetal Regal", M.calcFactor(fa).factor === computeFactor(fa).yieldFactor && M.calcFactor(fa).sano === computeFactor(fa).healthy);
+check("factor de rendimiento: % de almendra defectuosa, el mismo derivado que la plataforma (V5.154)", Math.abs(M.calcFactor(fa).defPct - computeFactor(fa).defectivePct) < 1e-9 && M.calcFactor({ fa_start: "250", fa_green_remainder: "" }).defPct === null);
 
 // ── 4. Lo físico: equivalencias del formato y la referencia de café verde ─────────────────────────────────────────────
 const eq = Object.fromEntries(M.DEFECTOS.map((d) => [d[0], d[2]]));

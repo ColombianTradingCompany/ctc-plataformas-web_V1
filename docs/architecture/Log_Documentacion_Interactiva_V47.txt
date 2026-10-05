@@ -518,4 +518,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `app/socios/[partner]/panel/evaluacionActions.ts` (`prepararReporteQGrader`, `confirmarReporteQGrader`), `evaluacion/{PlanillaCentro,page}.tsx`.
 - ANN `app/ocp/(app)/nominadosActions.ts` (`prepararReporteQGraderOcp`, `confirmarReporteQGraderOcp`, `addSondeoEvaluation`), `nominados/{NominadosClient,CircuitoVista}.tsx`.
 - ANN `scripts/qa-centro-calidad-check.mjs`, `docs/componentes/{consolas,socios}.md`.
-(commit: pendiente)
+(commit: 6027e6a)

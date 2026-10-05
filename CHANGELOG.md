@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.151] — 2026-10-05 (commit pendiente)
+## [V5.151] — 2026-10-05 (commit 6027e6a)
 
 - **Añadido**: en cada evaluación de lote, **el reporte original del Q-Grader en su propio formato institucional**, como
   adjunto opcional (owner, 2026-10-05): PDF, imagen u Office, hasta 20 MB. Está en la planilla del **Centro de Calidad**

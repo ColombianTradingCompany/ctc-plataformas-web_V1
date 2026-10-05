@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.156] — 2026-10-06 (commit pendiente)
+## [V5.156] — 2026-10-06 (commit cd52a57)
 
 - **Cambiado**: en el detalle de defectos de la planilla, **una «i» en frente de cada defecto** (los 16: qué es, de dónde viene,
   qué hace en la taza y su equivalencia) y ya no una «i» doble junto a la R (owner, 2026-10-06). Los textos viven en el

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.153] — 2026-10-05 (commit pendiente)
+## [V5.153] — 2026-10-05 (commit 759f70f)
 
 - **Añadido**: en la planilla de evaluación (Centro de Calidad, «Registrar a mano» del OCP y la Arena) **B3 reporta también
   el factor de rendimiento, la actividad de agua (aw) y la densidad (g/L)** (owner, 2026-10-05) — los mismos campos de la

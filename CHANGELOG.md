@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.158] — 2026-10-06 (commit pendiente)
+## [V5.158] — 2026-10-06 (commit 37a5997)
 
 - **Cambiado**: el informe del Centro en el OCP muestra **la Ficha Técnica completa del lote** (owner, 2026-10-06: «quiero que
   se vean todos los datos») — A1 identidad, A2 origen, A3 certificados y reconocimientos, variedades, caracterización básica,

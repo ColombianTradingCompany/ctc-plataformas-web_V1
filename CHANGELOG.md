@@ -19,6 +19,14 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.156] — 2026-10-06 (commit pendiente)
+
+- **Cambiado**: en el detalle de defectos de la planilla, **una «i» en frente de cada defecto** (los 16: qué es, de dónde viene,
+  qué hace en la taza y su equivalencia) y ya no una «i» doble junto a la R (owner, 2026-10-06). Los textos viven en el
+  catálogo INFO de la Coffee Datasheet Tool (`def_<clave>`, ES · EN · DE), que también los enseña en sus tablas de defectos;
+  `planillaInfo.ts` regenerado (58 → 74 conceptos).
+- **Seguridad**: `qa-centro-calidad` (227), `qa-coffee-datasheet` (1.346 → 1.410).
+
 ## [V5.155] — 2026-10-06 (commit 41178b8)
 
 - **Cambiado**: en el OCP, «Lotes en Evaluación», el alta del Centro ya no se confirma a ciegas (owner, 2026-10-06: «no hay

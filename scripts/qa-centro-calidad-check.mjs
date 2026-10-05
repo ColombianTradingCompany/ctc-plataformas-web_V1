@@ -505,7 +505,8 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   const f = computeFactor({ fa_start: "250", fa_green_remainder: "207.7", fa_primary_defect: "2.3", fa_secondary_defect: "3" });
   check("almendra defectuosa: (primarios + secundarios) ÷ verde restante × 100; sin verde, nada; nunca pasa de 100", Math.abs(f.defectivePct - 2.5518) < 0.001 && computeFactor({ fa_start: "250", fa_green_remainder: "", fa_primary_defect: "2", fa_secondary_defect: "" }).defectivePct === null && computeFactor({ fa_start: "250", fa_green_remainder: "10", fa_primary_defect: "20", fa_secondary_defect: "" }).defectivePct === 100);
   check("almendra defectuosa: el editor la enseña derivada, junto al grano sano", editor.includes("{t.almendraDefectuosa} {info(\"f_def\")}") && editor.includes("factor.defectivePct != null ? factor.defectivePct.toFixed(1)") && PL.es.almendraDefectuosa === "% de almendra defectuosa" && PL.en.almendraDefectuosa === "% defective beans");
-  check("la R lleva su «i» (f_registro, en el catálogo generado)", editor.includes('{info("f_registro")}') && INFO_PLANILLA.es.f_registro && INFO_PLANILLA.en.f_registro && /Registrar el detalle/.test(INFO_PLANILLA.es.f_registro.titulo));
+  // V5.156 (owner): «las "i" debían estar para cada tipo de defecto, en frente de ellos, no doble» — una por defecto en el detalle.
+  check("defectos: una «i» en frente de CADA defecto del detalle (def_<clave>, en el catálogo, ES/EN), y ninguna doble junto a la R", editor.includes('{d[lang]} {info(`def_${d.key}` as ClaveDeInfo)}') && !editor.includes('{info("f_registro")}') && (await import("../src/lib/catacion/fisico.ts")).DEFECTOS_FISICOS.every((d) => INFO_PLANILLA.es[`def_${d.key}`]?.texto.length > 40 && INFO_PLANILLA.en[`def_${d.key}`]?.titulo));
   const F = await import("../src/lib/catacion/fisico.ts");
   const datasheet = lee("public/tools/coffee-datasheet/ctcx-coffee-datasheet-tool.html");
   const primarios = F.DEFECTOS_FISICOS.filter((d) => d.cat === 1);

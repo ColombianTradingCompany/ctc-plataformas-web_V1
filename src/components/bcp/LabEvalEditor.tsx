@@ -644,8 +644,6 @@ export function LabEvalEditor({
               <div key={cat} style={S.par}>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                   {cat === 1 ? t.defPrimario : t.defSecundario} {info("f_def")}
-                  {/* V5.154 (owner): la «i» de la R — qué es registrar el detalle. */}
-                  {info("f_registro")}
                   <button type="button" onClick={() => setDetalleAbierto(detalleAbierto === cat ? null : cat)} aria-expanded={detalleAbierto === cat} title={t.detalle} aria-label={`${t.detalle}: ${cat === 1 ? t.defPrimario : t.defSecundario}`} style={{ ...S.r, ...(detalleAbierto === cat ? { background: "var(--primary, #3C0A86)", color: "#fff" } : {}) }}>
                     R
                   </button>
@@ -703,7 +701,8 @@ export function LabEvalEditor({
                 <tbody>
                   {DEFECTOS_FISICOS.filter((d) => d.cat === detalleAbierto).map((d) => (
                     <tr key={d.key}>
-                      <td style={S.td}>{d[lang]}</td>
+                      {/* V5.156 (owner): «las "i" debían estar para cada tipo de defecto, en frente de ellos». */}
+                      <td style={S.td}>{d[lang]} {info(`def_${d.key}` as ClaveDeInfo)}</td>
                       <td style={{ ...S.td, textAlign: "right", color: "var(--muted)" }}>({d.granos}:1)</td>
                       <td style={{ ...S.td, textAlign: "right" }}>
                         <input

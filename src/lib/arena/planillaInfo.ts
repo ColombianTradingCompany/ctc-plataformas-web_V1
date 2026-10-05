@@ -55,6 +55,22 @@ export type ClaveDeInfo =
   | "f_aw"
   | "f_dens"
   | "f_registro"
+  | "def_insecto_grave"
+  | "def_negro"
+  | "def_agrio"
+  | "def_cereza"
+  | "def_hongos"
+  | "def_extrana"
+  | "def_negro_parcial"
+  | "def_agrio_parcial"
+  | "def_pergamino"
+  | "def_flotador"
+  | "def_inmaduro"
+  | "def_averanado"
+  | "def_concha"
+  | "def_partido"
+  | "def_cascarilla"
+  | "def_insecto_leve"
   | "f_factor_rep"
   | "f_factor"
   | "e_que"
@@ -316,6 +332,86 @@ export const INFO_PLANILLA: Record<IdiomaDePlanilla, Record<ClaveDeInfo, InfoDeP
     "f_registro": {
       "titulo": "Registrar el detalle · cuál defecto es cuál",
       "texto": "Los gramos de defecto primario y secundario bastan para el factor. El detalle dice qué había: cuántos granos de cada defecto, y cuántos defectos completos hacen según su equivalencia (1:1, 3:1, 5:1, 10:1).\nEs lo que pide el formato físico: con 350 g de muestra, los primarios (negro, agrio, cereza seca, hongos, materia extraña, broca) y los secundarios (parciales, pergamino, flotador, inmaduro, averanado, concha, partido, cascarilla, insecto leve). El detalle no cambia los gramos ni el factor: documenta la muestra y sostiene la clasificación del verde.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_insecto_grave": {
+      "titulo": "Daño por insecto grave (Broca)",
+      "texto": "Granos perforados por la broca del café (Hypothenemus hampei): uno o varios orificios, a veces con galerías. Es el defecto que más se cuenta en Colombia.\nEquivalencia 5:1: cinco granos con daño grave hacen un defecto completo. Un grano con tres o más perforaciones cuenta como daño grave; con menos, como leve (categoría 2).",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_negro": {
+      "titulo": "Grano negro",
+      "texto": "Grano total o casi totalmente negro, opaco, por fermentación excesiva, cereza caída al suelo o enfermedad. Da taza sucia, fenólica o fermentada.\nEquivalencia 1:1: cada grano es un defecto completo. Es el defecto más grave del formato.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_agrio": {
+      "titulo": "Grano agrio",
+      "texto": "Grano de color pardo a rojizo, a veces con olor a vinagre: fermentación descontrolada, exceso de tiempo en el tanque o cereza sobremadura. Da taza agria o avinagrada.\nEquivalencia 1:1.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_cereza": {
+      "titulo": "Cereza seca",
+      "texto": "La cereza entera secada con su pulpa, que no pasó por el beneficio o se coló en la trilla. Trae sabores fermentados y a tierra.\nEquivalencia 1:1.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_hongos": {
+      "titulo": "Daño por hongos",
+      "texto": "Grano con moho visible (manchas amarillas, verdes o blancas, polvo) por humedad alta en el secado o el almacenamiento. Riesgo de taza mohosa y de ocratoxina.\nEquivalencia 1:1.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_extrana": {
+      "titulo": "Materia extraña",
+      "texto": "Todo lo que no es café: piedras, palos, ramas, clavos, plástico. Además de la taza, es un riesgo para la trilladora y el tostador.\nEquivalencia 1:1: cada pieza es un defecto completo.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_negro_parcial": {
+      "titulo": "Grano negro parcial",
+      "texto": "Menos de la mitad del grano es negra. Mismas causas que el negro completo, en menor grado.\nEquivalencia 3:1: tres granos hacen un defecto completo.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_agrio_parcial": {
+      "titulo": "Grano agrio parcial",
+      "texto": "Menos de la mitad del grano es agria (parda o rojiza). Mismas causas que el agrio completo.\nEquivalencia 3:1.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_pergamino": {
+      "titulo": "Pergamino",
+      "texto": "Grano que conserva total o parcialmente su cáscara de pergamino: la trilla no lo peló. No daña la taza, pero sí la apariencia y el tueste (se quema).\nEquivalencia 5:1.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_flotador": {
+      "titulo": "Flotador",
+      "texto": "Grano liviano, blanquecino o descolorido, que flota en agua: secado deficiente, grano vano o mal almacenado. Taza plana, a veces a madera.\nEquivalencia 5:1.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_inmaduro": {
+      "titulo": "Inmaduro",
+      "texto": "Grano de cereza recogida verde: pequeño, verdoso o pálido, de superficie arrugada y bordes afilados, con la película plateada pegada. Da taza astringente, herbal, «a verde».\nEquivalencia 5:1.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_averanado": {
+      "titulo": "Averanado",
+      "texto": "Grano pequeño, arrugado y deforme por falta de agua en el llenado del fruto (sequía). Taza débil, a veces a paja.\nEquivalencia 5:1.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_concha": {
+      "titulo": "Concha",
+      "texto": "Grano malformado en dos piezas: una externa en forma de concha y una interna cónica, que se separan. De origen genético. Tuesta desparejo.\nEquivalencia 5:1.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_partido": {
+      "titulo": "Partido / mordido / cortado",
+      "texto": "Grano roto o cortado por la despulpadora o la trilladora mal calibradas; suele oxidarse y mostrar bordes oscuros. Tuesta desparejo y puede dar sabores agrios o fermentados.\nEquivalencia 5:1.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_cascarilla": {
+      "titulo": "Cascarilla",
+      "texto": "Fragmentos de cáscara seca de la cereza o de pergamino sueltos en la muestra. Dan sabores a tierra o fermentados y son riesgo de fuego en el tostador.\nEquivalencia 5:1.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_insecto_leve": {
+      "titulo": "Daño por insecto leve",
+      "texto": "Grano con una o dos perforaciones pequeñas de broca, sin galerías. Con tres o más, es daño grave (categoría 1).\nEquivalencia 10:1: diez granos hacen un defecto completo.",
       "std": "Formato físico CVA · SCA café verde"
     },
     "f_factor_rep": {
@@ -608,6 +704,86 @@ export const INFO_PLANILLA: Record<IdiomaDePlanilla, Record<ClaveDeInfo, InfoDeP
     "f_registro": {
       "titulo": "Record the detail · which defect is which",
       "texto": "The grams of primary and secondary defects are enough for the factor. The detail says what was there: how many beans of each defect, and how many full defects they make by their equivalence (1:1, 3:1, 5:1, 10:1).\nIt is what the physical form asks for: on a 350 g sample, the primaries (black, sour, dried cherry, fungus, foreign matter, borer) and the secondaries (partials, parchment, floater, immature, withered, shell, broken, hull, slight insect). The detail does not change the grams or the factor: it documents the sample and supports the green grading.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_insecto_grave": {
+      "titulo": "Severe insect damage (coffee berry borer)",
+      "texto": "Beans bored by the coffee berry borer (Hypothenemus hampei): one or several holes, sometimes with galleries. It is the most counted defect in Colombia.\nEquivalence 5:1: five severely damaged beans make one full defect. A bean with three or more holes counts as severe; with fewer, as slight (category 2).",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_negro": {
+      "titulo": "Full black",
+      "texto": "Bean wholly or almost wholly black and dull, from over-fermentation, cherries picked from the ground or disease. It gives a dirty, phenolic or fermented cup.\nEquivalence 1:1: every bean is one full defect. The most serious defect on the form.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_agrio": {
+      "titulo": "Full sour",
+      "texto": "Bean brown to reddish, sometimes smelling of vinegar: uncontrolled fermentation, too long in the tank or over-ripe cherry. It gives a sour or vinegary cup.\nEquivalence 1:1.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_cereza": {
+      "titulo": "Dried cherry / pod",
+      "texto": "The whole cherry dried with its pulp, which skipped processing or slipped through hulling. It brings fermented and earthy flavors.\nEquivalence 1:1.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_hongos": {
+      "titulo": "Fungus damaged",
+      "texto": "Bean with visible mould (yellow, green or white spots, powder) from high moisture during drying or storage. Risk of a mouldy cup and of ochratoxin.\nEquivalence 1:1.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_extrana": {
+      "titulo": "Foreign matter",
+      "texto": "Anything that is not coffee: stones, sticks, twigs, nails, plastic. Beyond the cup, it is a risk for the huller and the roaster.\nEquivalence 1:1: every piece is one full defect.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_negro_parcial": {
+      "titulo": "Partial black",
+      "texto": "Less than half of the bean is black. Same causes as the full black, to a lesser degree.\nEquivalence 3:1: three beans make one full defect.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_agrio_parcial": {
+      "titulo": "Partial sour",
+      "texto": "Less than half of the bean is sour (brown or reddish). Same causes as the full sour.\nEquivalence 3:1.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_pergamino": {
+      "titulo": "Parchment",
+      "texto": "Bean still wholly or partly wrapped in its parchment skin: hulling did not strip it. It does not harm the cup, but it does harm appearance and roast (it scorches).\nEquivalence 5:1.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_flotador": {
+      "titulo": "Floater",
+      "texto": "Light, whitish or faded bean that floats in water: poor drying, empty bean or bad storage. A flat cup, sometimes woody.\nEquivalence 5:1.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_inmaduro": {
+      "titulo": "Immature / unripe",
+      "texto": "Bean from a cherry picked green: small, greenish or pale, wrinkled surface and sharp edges, silverskin stuck on. It gives an astringent, herbal, “green” cup.\nEquivalence 5:1.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_averanado": {
+      "titulo": "Withered",
+      "texto": "Small, wrinkled, deformed bean from lack of water while the fruit was filling (drought). A weak cup, sometimes straw-like.\nEquivalence 5:1.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_concha": {
+      "titulo": "Shell",
+      "texto": "Malformed bean in two pieces: an outer shell-shaped part and an inner conical part that come apart. Genetic in origin. It roasts unevenly.\nEquivalence 5:1.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_partido": {
+      "titulo": "Broken / chipped / cut",
+      "texto": "Bean broken or cut by a badly calibrated pulper or huller; it tends to oxidise and show dark edges. It roasts unevenly and can give sour or fermented flavors.\nEquivalence 5:1.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_cascarilla": {
+      "titulo": "Hull / husk",
+      "texto": "Loose fragments of dried cherry skin or parchment in the sample. They give earthy or fermented flavors and are a fire risk in the roaster.\nEquivalence 5:1.",
+      "std": "Formato físico CVA · SCA café verde"
+    },
+    "def_insecto_leve": {
+      "titulo": "Slight insect damage",
+      "texto": "Bean with one or two small borer holes, without galleries. With three or more, it is severe damage (category 1).\nEquivalence 10:1: ten beans make one full defect.",
       "std": "Formato físico CVA · SCA café verde"
     },
     "f_factor_rep": {

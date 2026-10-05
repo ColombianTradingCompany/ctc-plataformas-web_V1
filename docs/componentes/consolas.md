@@ -177,6 +177,12 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.151 · el reporte original del Q-Grader, adjunto opcional a cada evaluación** (owner, 2026-10-05). En «Registrar a
+  mano» (`SondeoRegistroControls`) la planilla lleva `reporte_asset_id`/`reporte_file_name` en la lista de la inscripción y
+  pasa a `lot_evaluations.reference_asset_id` al galardonar; «Lotes en Evaluación» enseña el del alta del Centro con URL
+  firmada. Subida directa a Storage (`src/lib/evaluaciones/reporte.ts`). Abierto: el adjunto no se enseña todavía en
+  «Lotes Evaluados» ni en la vista completa del lote (`/ocp/kr?lote=`); y el «Archivo del Q-Grader» del veredicto
+  (`sondeo_result_storage_path`, por lote) sigue siendo otra cosa — el owner decide si se funden.
 - **V5.150 · renombrar el Producto desde el OCP; la Altitud cae a la de la finca** (owner, 2026-10-05). `RenombrarProducto`
   en «FT · Identidad y Origen» → `renombrarProducto` (`emite`; `lots.name` + `datasheet.product_name`, `lote_renombrado`,
   aviso al productor). Con esto el pendiente de la V5.146 («el OCP no tiene botón para renombrar») queda cerrado. La fila

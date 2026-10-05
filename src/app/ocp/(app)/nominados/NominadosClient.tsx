@@ -7,6 +7,8 @@ import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import {
   addSondeoEvaluation,
   applyCodeOnBehalf,
+  confirmarReporteQGraderOcp,
+  prepararReporteQGraderOcp,
   asumirEvaluacion,
   assignLotsToBatch,
   cerrarBache,
@@ -26,6 +28,8 @@ import {
 import { decidirSubvencion, emitirFactura, guardarCarrilDePago, recibirMuestraAction } from "../solicitudesActions";
 import { carrilConfigurado, type CarrilDePago } from "@/lib/arena/payment";
 import { LabEvalEditor } from "@/components/bcp/LabEvalEditor";
+import { AdjuntoReporteQGrader } from "@/components/bcp/AdjuntoReporteQGrader";
+import type { ReporteAdjunto } from "@/lib/evaluaciones/reporteReglas";
 import { decidirPorPunto, rotuloDelPunto, type PuntoSca } from "@/lib/arena/homologacion";
 import { EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, computeSca, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import { gradoPorPuntaje, redondeaPuntaje } from "@/lib/grados/definicion";
@@ -586,6 +590,8 @@ export function SondeoRegistroControls({
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
   const [ev, setEv] = useState<LabEvaluation>(EMPTY_LAB_EVALUATION);
+  // V5.151 (owner): el reporte original del Q-Grader, adjunto a ESTA planilla (opcional).
+  const [reporte, setReporte] = useState<ReporteAdjunto | null>(null);
   const [notes, setNotes] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -593,9 +599,10 @@ export function SondeoRegistroControls({
 
   function saveEvaluation() {
     run(async () => {
-      const res = await addSondeoEvaluation(lotId, ev);
+      const res = await addSondeoEvaluation(lotId, ev, reporte);
       if (res.ok) {
         setEv(EMPTY_LAB_EVALUATION);
+        setReporte(null);
         setAdding(false);
       }
       return res;
@@ -647,10 +654,12 @@ export function SondeoRegistroControls({
               <div style={{ display: "grid", gap: 4, margin: "10px 0" }}>
                 {evaluations.map((e, i) => {
                   const total = labEvaluationScore(e);
+                  const adjunto = (e as { reporte_file_name?: string | null }).reporte_file_name;
                   return (
                     <p key={i} className={styles.meta} style={{ margin: 0 }}>
                       Planilla {i + 1}: SCA <b>{total != null ? total.toFixed(2) : "—"}</b>
                       {total != null && ` · ${computeSca(e).cls}`}
+                      {adjunto && <> · 📎 {adjunto}</>}
                     </p>
                   );
                 })}
@@ -664,6 +673,13 @@ export function SondeoRegistroControls({
             ) : (
               <div style={{ border: "1px dashed var(--line)", borderRadius: 10, padding: "10px 12px", marginTop: 8 }}>
                 <LabEvalEditor value={ev} onChange={(patch) => setEv((v) => ({ ...v, ...patch }))} disabled={pending} />
+                <AdjuntoReporteQGrader
+                  value={reporte}
+                  onChange={setReporte}
+                  preparar={(meta) => prepararReporteQGraderOcp(lotId, meta)}
+                  confirmar={(path, meta) => confirmarReporteQGraderOcp(lotId, path, meta)}
+                  disabled={pending}
+                />
                 <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
                   <button className="btn btn-sm btn-solid" disabled={pending} onClick={saveEvaluation}>
                     Guardar planilla

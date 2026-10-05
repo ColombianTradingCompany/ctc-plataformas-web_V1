@@ -512,3 +512,10 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `scripts/qa-area-check.mjs`, `scripts/qa-visa-check.mjs`, `docs/componentes/{kaffetal-regal,consolas}.md`, `docs/ALINEACION.md`.
 - DATOS `lots.ficha_altitud_m` + `datasheet.masl` de dos lotes (rastro `altitud_completada`).
 (commit: fae0f0f)
+
+## [2026-10-05] V5.151 · Evaluaciones — el reporte original del Q-Grader, adjunto opcional (Centro de Calidad y OCP)
+- ADD `src/lib/evaluaciones/{reporteReglas,reporte}.ts`, `src/components/bcp/AdjuntoReporteQGrader.tsx`, `docs/migraciones/2026-10-05_evaluaciones_reporte_original_q_grader.sql`.
+- ANN `app/socios/[partner]/panel/evaluacionActions.ts` (`prepararReporteQGrader`, `confirmarReporteQGrader`), `evaluacion/{PlanillaCentro,page}.tsx`.
+- ANN `app/ocp/(app)/nominadosActions.ts` (`prepararReporteQGraderOcp`, `confirmarReporteQGraderOcp`, `addSondeoEvaluation`), `nominados/{NominadosClient,CircuitoVista}.tsx`.
+- ANN `scripts/qa-centro-calidad-check.mjs`, `docs/componentes/{consolas,socios}.md`.
+(commit: pendiente)

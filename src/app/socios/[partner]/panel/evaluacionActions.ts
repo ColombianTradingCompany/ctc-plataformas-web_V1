@@ -7,6 +7,8 @@ import { erroresDePlanilla, labEvaluationHasData, labEvaluationScaData, protocol
 import { rotuloDelPunto } from "@/lib/arena/homologacion";
 import { normalizaDetalle, normalizaRueda } from "@/lib/catacion/rueda";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
+import { columnasDeReporte, prepararSubidaDeReporte, registrarReporteSubido, type MetaDeReporte } from "@/lib/evaluaciones/reporte";
+import type { ReporteAdjunto } from "@/lib/evaluaciones/reporteReglas";
 
 // ── Centro de Calidad · Evaluación de Lotes (fase 4 del PLAN_CIRCUITO_DEL_LOTE, V5.81) ─────────
 // Folio 7, paso 11: el Q-Grader recibe baches, evalúa lote a lote —ANÓNIMOS (solo el código), física y
@@ -50,7 +52,7 @@ async function bacheEnMisManos(service: ReturnType<typeof createServiceRoleClien
 // La planilla a medio llenar se guarda en `evaluacion_borradores` (una por lote y credencial) y se retoma después, en
 // este u otro equipo. Un borrador NO es un alta: no tiene puntaje ni estado, CTCx no lo ve y no pide que la planilla esté
 // completa. Se borra al dar de alta el lote.
-export async function guardarBorrador(lotId: string, raw: LabEvaluation, notas: string, codigoInterno: string): Promise<Result> {
+export async function guardarBorrador(lotId: string, raw: LabEvaluation, notas: string, codigoInterno: string, reporte: ReporteAdjunto | null = null): Promise<Result> {
   const auth = await identidadConModulo();
   if (!auth.ok) return auth;
   const service = createServiceRoleClient();
@@ -64,6 +66,7 @@ export async function guardarBorrador(lotId: string, raw: LabEvaluation, notas: 
       planilla: toLabEvaluation(raw),
       notas: notas.trim().slice(0, 4000) || null,
       codigo_interno: codigoLimpio(codigoInterno),
+      ...columnasDeReporte(reporte), // V5.151: el reporte original viaja con el borrador
       updated_at: new Date().toISOString(),
     },
     { onConflict: "lot_id,account_id" }
@@ -74,7 +77,7 @@ export async function guardarBorrador(lotId: string, raw: LabEvaluation, notas: 
 }
 
 /** «Dar de alta» un lote: la planilla del Q-Grader queda registrada, pendiente de la confirmación de CTCx. */
-export async function registrarEvaluacion(lotId: string, raw: LabEvaluation, notas: string, codigoInterno = ""): Promise<Result> {
+export async function registrarEvaluacion(lotId: string, raw: LabEvaluation, notas: string, codigoInterno = "", reporte: ReporteAdjunto | null = null): Promise<Result> {
   const auth = await identidadConModulo();
   if (!auth.ok) return auth;
   const { identity } = auth;
@@ -138,6 +141,7 @@ export async function registrarEvaluacion(lotId: string, raw: LabEvaluation, not
     q_grader_reference: identity.contactName?.trim() || identity.orgName,
     notes: notas.trim() || null,
     codigo_interno: codigoLimpio(codigoInterno), // V5.144: el código de la muestra en el laboratorio
+    ...columnasDeReporte(reporte), // V5.151: el reporte original del Q-Grader (opcional)
     submitted_by: identity.userId,
   });
   if (error) return { ok: false, error: "No se pudo dar de alta el lote: " + error.message };
@@ -168,4 +172,25 @@ export async function anularRegistro(evaluationId: string): Promise<Result> {
   await service.from("audit_log").insert({ entity_type: "lot", entity_id: row.lot_id, action: "evaluacion_anulada_centro", performed_by: auth.identity.userId });
   revalidar();
   return { ok: true };
+}
+
+// ── V5.151 (owner, 2026-10-05) · el reporte original del Q-Grader, adjunto a la planilla (opcional) ───────────────────
+// Dos pasos: firmar la subida (el archivo va del navegador a Storage) y, subido, registrarlo. Ambos con la compuerta
+// del Centro y el bache en sus manos — nadie firma una subida para un lote ajeno.
+export async function prepararReporteQGrader(lotId: string, meta: MetaDeReporte): Promise<{ ok: true; path: string; token: string } | { ok: false; error: string }> {
+  const auth = await identidadConModulo();
+  if (!auth.ok) return auth;
+  const service = createServiceRoleClient();
+  const bache = await bacheEnMisManos(service, lotId, auth.identity.userId);
+  if (!bache.ok) return bache;
+  return prepararSubidaDeReporte(service, lotId, meta);
+}
+
+export async function confirmarReporteQGrader(lotId: string, path: string, meta: MetaDeReporte): Promise<{ ok: true; reporte: ReporteAdjunto } | { ok: false; error: string }> {
+  const auth = await identidadConModulo();
+  if (!auth.ok) return auth;
+  const service = createServiceRoleClient();
+  const bache = await bacheEnMisManos(service, lotId, auth.identity.userId);
+  if (!bache.ok) return bache;
+  return registrarReporteSubido(service, { lotId, path, meta, uploadedBy: auth.identity.userId });
 }

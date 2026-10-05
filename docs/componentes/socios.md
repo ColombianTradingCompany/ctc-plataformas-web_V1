@@ -98,6 +98,10 @@ fórmula del CVA y la rueda única). Lo tocan también `qa-recuperacion-check.mj
 
 ## Pendientes
 
+- **V5.151 · el reporte original del Q-Grader, adjunto opcional en la planilla del Centro** (owner, 2026-10-05; ejecutado
+  desde `consolas`). `AdjuntoReporteQGrader` bajo las notas; `prepararReporteQGrader`/`confirmarReporteQGrader` pasan por la
+  credencial y el bache en sus manos; viaja con el borrador (`evaluacion_borradores.reference_asset_id`) y con el alta.
+  El Centro ve su adjunto con URL firmada. `qa-centro-calidad` 208.
 - **V5.77 (`consolas`, fase 1 del `PLAN_CIRCUITO_DEL_LOTE`) — dos cosas con dueño aquí**: (a) la Arena ya no es una gala con
   jornada en vivo sino una sesión de segunda apreciación, así que el sello del **Estudio de Contenido** «video de Arena + assets del
   lote» (`partners.ts`) queda sin objeto en su primera mitad: pasa a «assets del lote» — y, en el mismo archivo, el `why` del

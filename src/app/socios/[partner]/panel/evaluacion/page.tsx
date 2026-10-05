@@ -23,9 +23,12 @@ export const dynamic = "force-dynamic";
 // lote (el que va en la bolsa) y los gramos de la muestra que llegaron con el bache. `qa-centro-calidad-check`
 // lo vigila. Abre solo con la credencial `centro-calidad` activa y su módulo `evaluacion` encendido (BCP · Socios).
 
+import { reporteDeFila } from "@/lib/evaluaciones/reporteReglas";
+import { urlsDeReportes } from "@/lib/evaluaciones/reporte";
+
 type BatchRow = { id: string; label: string; shipped_at: string | null; q_grader_name: string | null };
 type InsRow = { lot_id: string; sondeo_batch_id: string | null; phase: string };
-type EvalRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; cva_total: number | string | null; escala: string; rueda: unknown; rueda_detalle: unknown; created_at: string; reviewed_at: string | null; notes: string | null; submitted_by: string | null; codigo_interno: string | null };
+type EvalRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; cva_total: number | string | null; escala: string; rueda: unknown; rueda_detalle: unknown; created_at: string; reviewed_at: string | null; notes: string | null; submitted_by: string | null; codigo_interno: string | null; reference_asset_id: string | null; reference_file_name: string | null };
 // V5.92: nunca un homologado se lee como un SCA catado.
 const rotulo = (e: EvalRow) => {
   const p = puntoDeFila(e);
@@ -57,7 +60,7 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
         service.from("arena_inscriptions").select("lot_id, sondeo_batch_id, phase").in("sondeo_batch_id", batchIds),
         service
           .from("lot_evaluations")
-          .select("id, lot_id, batch_id, status, sca_total, punto, cva_total, escala, rueda, rueda_detalle, created_at, reviewed_at, notes, submitted_by, codigo_interno")
+          .select("id, lot_id, batch_id, status, sca_total, punto, cva_total, escala, rueda, rueda_detalle, created_at, reviewed_at, notes, submitted_by, codigo_interno, reference_asset_id, reference_file_name")
           .in("batch_id", batchIds)
           .eq("source", "q_grader_batch")
           .order("created_at", { ascending: false }),
@@ -67,15 +70,17 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
   const inscripciones = (insRaw as InsRow[] | null) ?? [];
   // V5.144: lo que este evaluador dejó a medias («Guardar y terminar más tarde»). Solo los SUYOS.
   const { data: borrRaw } = batchIds.length
-    ? await service.from("evaluacion_borradores").select("lot_id, planilla, notas, codigo_interno, updated_at").eq("account_id", identity.userId).in("batch_id", batchIds)
+    ? await service.from("evaluacion_borradores").select("lot_id, planilla, notas, codigo_interno, updated_at, reference_asset_id, reference_file_name").eq("account_id", identity.userId).in("batch_id", batchIds)
     : { data: [] };
   const borradores = new Map(
-    ((borrRaw as { lot_id: string; planilla: unknown; notas: string | null; codigo_interno: string | null; updated_at: string }[] | null) ?? []).map((b) => [
+    ((borrRaw as { lot_id: string; planilla: unknown; notas: string | null; codigo_interno: string | null; updated_at: string; reference_asset_id: string | null; reference_file_name: string | null }[] | null) ?? []).map((b) => [
       b.lot_id,
-      { planilla: b.planilla, notas: b.notas, codigoInterno: b.codigo_interno, guardadoEl: b.updated_at },
+      { planilla: b.planilla, notas: b.notas, codigoInterno: b.codigo_interno, guardadoEl: b.updated_at, reporte: reporteDeFila(b) },
     ])
   );
   const evaluaciones = (evalRaw as EvalRow[] | null) ?? [];
+  // V5.151: el reporte original adjunto a cada alta, con URL firmada para abrirlo.
+  const urlDeReporte = await urlsDeReportes(service, evaluaciones.map((e) => e.reference_asset_id));
   const kgPorLote = new Map<string, number>();
   for (const m of (movRaw as MovRow[] | null) ?? []) {
     const lot = (Array.isArray(m.muestras) ? m.muestras[0] : m.muestras)?.lot_id;
@@ -142,6 +147,16 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
                             · su código: <span className="mono">{codigoInterno}</span>
                           </span>
                         )}
+                        {(() => {
+                          const alta = pendiente ?? confirmada ?? devuelta;
+                          const rep = reporteDeFila(alta);
+                          const url = rep ? urlDeReporte.get(rep.assetId) : null;
+                          return rep ? (
+                            <span className={styles.orgLine}>
+                              · 📎 {url ? <a href={url} target="_blank" rel="noopener noreferrer">{rep.fileName}</a> : rep.fileName}
+                            </span>
+                          ) : null;
+                        })()}
                         <span style={{ flex: 1 }} />
                         {confirmada || l.phase !== "sondeo" ? (
                           <span className={styles.orgLine}>✓ Confirmado por CTC</span>

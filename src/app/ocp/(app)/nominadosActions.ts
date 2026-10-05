@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { columnasDeReporte, prepararSubidaDeReporte, registrarReporteSubido, type MetaDeReporte } from "@/lib/evaluaciones/reporte";
+import { reporteDeFila, type ReporteAdjunto } from "@/lib/evaluaciones/reporteReglas";
 import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { ARENA_FEE_COP, MAX_BATCH_LOTS, avanzarAFilaSiCompleta, dueFor, formatCop, type InscriptionStatus } from "@/lib/arena/inscriptions";
 import { claimCampaignCode, insertEntryCode } from "@/lib/arena/entryCodes";
@@ -534,9 +536,26 @@ export async function createSondeoLotResultUploadUrl(
   return { ok: true, path, token: data.token };
 }
 
+// ── V5.151 (owner, 2026-10-05) · el reporte original del Q-Grader en «Registrar a mano» (opcional) ──────────────────────
+export async function prepararReporteQGraderOcp(lotId: string, meta: MetaDeReporte): Promise<{ ok: true; path: string; token: string } | { ok: false; error: string }> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const service = createServiceRoleClient();
+  const { data: ins } = await service.from("arena_inscriptions").select("id, phase").eq("lot_id", lotId).maybeSingle();
+  if (!ins || ins.phase !== "sondeo") return { ok: false, error: "Este lote no está en sondeo." };
+  return prepararSubidaDeReporte(service, lotId, meta);
+}
+
+export async function confirmarReporteQGraderOcp(lotId: string, path: string, meta: MetaDeReporte): Promise<{ ok: true; reporte: ReporteAdjunto } | { ok: false; error: string }> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const service = createServiceRoleClient();
+  return registrarReporteSubido(service, { lotId, path, meta, uploadedBy: permiso.userId });
+}
+
 /** Añade UNA planilla B2/B3 al lote (pueden registrarse varias por lote —
  *  pedido del owner; el jsonb guarda la lista). Sin veredicto todavía. */
-export async function addSondeoEvaluation(lotId: string, evaluation: LabEvaluation): Promise<Result> {
+export async function addSondeoEvaluation(lotId: string, evaluation: LabEvaluation, reporte: ReporteAdjunto | null = null): Promise<Result> {
   const permiso = await permisoDeEscritura("ocp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const service = createServiceRoleClient();
@@ -549,7 +568,8 @@ export async function addSondeoEvaluation(lotId: string, evaluation: LabEvaluati
   if (!ins || ins.phase !== "sondeo" || !ins.sondeo_batch_id) return { ok: false, error: "Este lote no está en un Bache de Evaluación." };
   const { data: batch } = await service.from("sondeo_batches").select("status").eq("id", ins.sondeo_batch_id).maybeSingle();
   if (batch?.status !== "en_centro") return { ok: false, error: "El bache no está en el Centro de Calidad — envíelo primero." };
-  const list = [...toLabEvaluationList(ins.sondeo_evaluation), { ...evaluation, registered_at: new Date().toISOString() }];
+  // V5.151: el reporte original del Q-Grader viaja con SU planilla (y de ahí a `lot_evaluations` al galardonar).
+  const list = [...toLabEvaluationList(ins.sondeo_evaluation), { ...evaluation, registered_at: new Date().toISOString(), ...(reporte ? { reporte_asset_id: reporte.assetId, reporte_file_name: reporte.fileName } : {}) }];
   const { error } = await service.from("arena_inscriptions").update({ sondeo_evaluation: list }).eq("id", ins.id);
   if (error) return { ok: false, error: "No se pudo guardar la planilla." };
   revalidateAll();
@@ -710,6 +730,8 @@ export async function recordEvaluationVerdict(
         },
         q_grader_reference: batch.q_grader_name.trim(),
         notes: lastEval.analysis_notes || null,
+        // V5.151: el reporte original adjunto a esa planilla, si lo trajo.
+        ...columnasDeReporte(reporteDeFila({ reference_asset_id: (lastEval as { reporte_asset_id?: string | null }).reporte_asset_id ?? null, reference_file_name: (lastEval as { reporte_file_name?: string | null }).reporte_file_name ?? null })),
         submitted_by: adminId,
         reviewed_by: adminId,
         reviewed_at: new Date().toISOString(),

@@ -19,6 +19,23 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.151] — 2026-10-05 (commit pendiente)
+
+- **Añadido**: en cada evaluación de lote, **el reporte original del Q-Grader en su propio formato institucional**, como
+  adjunto opcional (owner, 2026-10-05): PDF, imagen u Office, hasta 20 MB. Está en la planilla del **Centro de Calidad**
+  (viaja con «Guardar y terminar más tarde» y con el alta) y en **«Registrar a mano»** del OCP (con su planilla, y de ahí
+  a la evaluación oficial al galardonar). El archivo va del navegador a Storage con URL firmada —tras la compuerta de cada
+  lado— y solo se registra si llegó (`src/lib/evaluaciones/reporte.ts`, pieza `AdjuntoReporteQGrader`). Se usa
+  `lot_evaluations.reference_asset_id`, que ya existía para la oficialización del productor.
+- **Cambiado**: el Centro ve el reporte adjunto a su alta; el OCP lo ve en «Lotes en Evaluación» (alta del Centro) y en
+  la lista de planillas a mano.
+- **Datos**: migración `evaluaciones_reporte_original_q_grader` (acta `docs/migraciones/2026-10-05_…sql`):
+  `lot_evaluations.reference_file_name`; `evaluacion_borradores.reference_asset_id` + `reference_file_name`.
+- **Seguridad**: `qa-centro-calidad` (197 → 208): reglas del archivo, ruta por lote, registro solo con el objeto en
+  Storage, compuertas de los dos lados y la pieza en los dos idiomas. Flujo real firmar→subir→registrar→URL firmada
+  comprobado a mano contra Storage (objeto y fila de prueba borrados).
+- **Docs**: charters `consolas` y `socios`.
+
 ## [V5.150] — 2026-10-05 (commit fae0f0f)
 
 - **Corregido**: **la altura de un cafetal se trae sola del mapa** (owner, 2026-10-05: «no siempre se está guardando la

@@ -6,7 +6,9 @@ import { LabEvalEditor } from "@/components/bcp/LabEvalEditor";
 import { EMPTY_LAB_EVALUATION, labEvaluationHasData, puntoDeLaPlanilla, toLabEvaluation, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import { rotuloDelPunto } from "@/lib/arena/homologacion";
 import type { IdiomaDePlanilla } from "@/lib/arena/planillaI18n";
-import { anularRegistro, guardarBorrador, registrarEvaluacion } from "../evaluacionActions";
+import { anularRegistro, confirmarReporteQGrader, guardarBorrador, prepararReporteQGrader, registrarEvaluacion } from "../evaluacionActions";
+import { AdjuntoReporteQGrader } from "@/components/bcp/AdjuntoReporteQGrader";
+import type { ReporteAdjunto } from "@/lib/evaluaciones/reporteReglas";
 import styles from "../../socios.module.css";
 
 // La planilla del Q-Grader, por lote: SCA o CVA, factor, mallas, rueda — y «Dar de alta». Patrón resultado-inline.
@@ -74,7 +76,7 @@ function useAction() {
 }
 
 /** V5.144: lo que quedó guardado con «Guardar y terminar más tarde» (`evaluacion_borradores`). */
-export type BorradorDeEvaluacion = { planilla: unknown; notas: string | null; codigoInterno: string | null; guardadoEl: string };
+export type BorradorDeEvaluacion = { planilla: unknown; notas: string | null; codigoInterno: string | null; guardadoEl: string; reporte?: ReporteAdjunto | null };
 
 export function DarDeAltaButton({ lotId, uid, borrador }: { lotId: string; uid: string; borrador?: BorradorDeEvaluacion | null }) {
   const { pending, error, run } = useAction();
@@ -85,6 +87,8 @@ export function DarDeAltaButton({ lotId, uid, borrador }: { lotId: string; uid: 
   // V5.144 (owner): el código con que el LABORATORIO lleva la muestra — suyo, independiente del de CTCx.
   const [codigoInterno, setCodigoInterno] = useState(borrador?.codigoInterno ?? "");
   const [codigoAbierto, setCodigoAbierto] = useState(!!borrador?.codigoInterno);
+  // V5.151 (owner): el reporte original del Q-Grader, opcional; viaja con el borrador y con el alta.
+  const [reporte, setReporte] = useState<ReporteAdjunto | null>(borrador?.reporte ?? null);
   const [guardado, setGuardado] = useState(false);
   const [lang, setLang] = useState<IdiomaDePlanilla>("es");
   const tx = TXT[lang];
@@ -137,6 +141,14 @@ export function DarDeAltaButton({ lotId, uid, borrador }: { lotId: string; uid: 
               <label>{tx.notas}</label>
               <textarea rows={2} value={notas} onChange={(e) => { setNotas(e.target.value); setGuardado(false); }} placeholder={tx.notasPh} style={{ width: "100%" }} />
             </div>
+            <AdjuntoReporteQGrader
+              value={reporte}
+              onChange={(r) => { setReporte(r); setGuardado(false); }}
+              preparar={(meta) => prepararReporteQGrader(lotId, meta)}
+              confirmar={(path, meta) => confirmarReporteQGrader(lotId, path, meta)}
+              disabled={pending}
+              lang={lang}
+            />
             <p style={{ fontSize: 13, margin: "8px 0 6px" }}>
               {!punto ? tx.falta : <>{rotuloDelPunto(punto, lang)}. {tx.deriva}</>}
             </p>
@@ -146,12 +158,13 @@ export function DarDeAltaButton({ lotId, uid, borrador }: { lotId: string; uid: 
                 disabled={pending || puntaje == null}
                 onClick={() =>
                   run(
-                    () => registrarEvaluacion(lotId, ev, notas, codigoInterno),
+                    () => registrarEvaluacion(lotId, ev, notas, codigoInterno, reporte),
                     () => {
                       setOpen(false);
                       setEv(EMPTY_LAB_EVALUATION);
                       setNotas("");
                       setCodigoInterno("");
+                      setReporte(null);
                     }
                   )
                 }
@@ -161,8 +174,8 @@ export function DarDeAltaButton({ lotId, uid, borrador }: { lotId: string; uid: 
               {/* V5.144 (owner): «Guardar y terminar más tarde» — no exige la planilla completa; la retoma después. */}
               <button
                 className="btn btn-sm"
-                disabled={pending || (!labEvaluationHasData(ev) && !notas.trim() && !codigoInterno.trim())}
-                onClick={() => run(() => guardarBorrador(lotId, ev, notas, codigoInterno), () => { setGuardado(true); setOpen(false); })}
+                disabled={pending || (!labEvaluationHasData(ev) && !notas.trim() && !codigoInterno.trim() && !reporte)}
+                onClick={() => run(() => guardarBorrador(lotId, ev, notas, codigoInterno, reporte), () => { setGuardado(true); setOpen(false); })}
               >
                 {pending ? tx.guardando : tx.despues}
               </button>

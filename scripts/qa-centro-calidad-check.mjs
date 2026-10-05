@@ -312,8 +312,8 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("borrador: NO es un alta — no escribe lot_evaluations ni exige la planilla completa", !borr.includes("lot_evaluations") && !borr.includes("puntoDeLaPlanilla") && !borr.includes("labEvaluationHasData"));
   check("borrador: el alta lo borra", reg.includes('.from("evaluacion_borradores").delete().eq("lot_id", lotId).eq("account_id", identity.userId)'));
   check("borrador: la tabla es solo del service role (RLS sin políticas) y se va con el lote", acta.includes("alter table public.evaluacion_borradores enable row level security;") && !/create policy/.test(acta) && acta.includes("references public.lots(id) on delete cascade"));
-  check("borrador: la página carga SOLO los de esta credencial y la planilla arranca con lo guardado", pagina.includes('.from("evaluacion_borradores").select("lot_id, planilla, notas, codigo_interno, updated_at").eq("account_id", identity.userId)') && planilla.includes("borrador ? toLabEvaluation(borrador.planilla) : EMPTY_LAB_EVALUATION") && pagina.includes('key={borrador?.guardadoEl ?? "nuevo"}'));
-  check("borrador: el botón existe en los dos idiomas y se enciende con cualquier dato", PLANILLA_TXT("Guardar y terminar más tarde") && PLANILLA_TXT("Save and finish later") && planilla.includes("guardarBorrador(lotId, ev, notas, codigoInterno)"));
+  check("borrador: la página carga SOLO los de esta credencial y la planilla arranca con lo guardado", pagina.includes('.from("evaluacion_borradores").select("lot_id, planilla, notas, codigo_interno, updated_at, reference_asset_id, reference_file_name").eq("account_id", identity.userId)') && planilla.includes("borrador ? toLabEvaluation(borrador.planilla) : EMPTY_LAB_EVALUATION") && pagina.includes('key={borrador?.guardadoEl ?? "nuevo"}'));
+  check("borrador: el botón existe en los dos idiomas y se enciende con cualquier dato", PLANILLA_TXT("Guardar y terminar más tarde") && PLANILLA_TXT("Save and finish later") && planilla.includes("guardarBorrador(lotId, ev, notas, codigoInterno, reporte)"));
   check("la página del Centro sigue sin leer nombres (el borrador tampoco los trae)", !/full_name|producer_id|fincas\(|ficha_variedad/.test(paginaCodigo));
 
   // El código interno de la muestra
@@ -440,6 +440,33 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("grado: el editor lo oculta a pedido — ni «grado firme» ni «sin grado»; el Punto que rige se sigue enseñando", editor.includes("ocultaGrado = false,") && editor.includes('{!ocultaGrado && decision?.tipo === "galardon" && (') && editor.includes('{!ocultaGrado && decision?.tipo === "sin_grado" &&') && editor.includes("{t.puntoQueRige}: <b"));
   check("grado: la planilla del Centro de Calidad lo pide oculto", centro.length === 1 && centro[0].includes(" ocultaGrado "));
   check("grado: CTCx («Registrar a mano») y la Arena lo siguen viendo", deCtcx.length === 2 && deCtcx.every((l) => !l.includes("ocultaGrado")));
+}
+
+// ── V5.151 (owner, 2026-10-05) · el reporte ORIGINAL del Q-Grader, adjunto a la evaluación (opcional) ──────────────────
+// «En cada evaluación de Lote, la opción de agregar un archivo adjunto… en su propio formato institucional (opcional).
+// También si se registra desde OCP.»
+{
+  const { motivoDeRechazo, reporteDeFila, REPORTE_MAX_BYTES } = await import("../src/lib/evaluaciones/reporteReglas.ts");
+  const { rutaDeReporte, columnasDeReporte } = await import("../src/lib/evaluaciones/reporte.ts");
+  const pdf = { fileName: "Reporte SCA 2026-0147.pdf", mime: "application/pdf", size: 350_000 };
+  check("reporte: acepta PDF, imagen y Office; rechaza vacío, pesado y otros tipos", motivoDeRechazo(pdf) === null && motivoDeRechazo({ fileName: "foto.heic", mime: "", size: 10 }) === null && motivoDeRechazo({ fileName: "hoja.xlsx", mime: "", size: 10 }) === null && motivoDeRechazo({ ...pdf, size: 0 }) !== null && motivoDeRechazo({ ...pdf, size: REPORTE_MAX_BYTES + 1 }) !== null && motivoDeRechazo({ fileName: "virus.exe", mime: "application/octet-stream", size: 10 }) !== null);
+  check("reporte: la ruta en Storage es POR LOTE (la evaluación es a ciegas) y con nombre seguro", /^evaluaciones\/L1\/q-grader\/\d+-Reporte_SCA_2026-0147\.pdf$/.test(rutaDeReporte("L1", "Reporte SCA 2026-0147.pdf")));
+  check("reporte: las columnas van juntas (asset + nombre) y sin adjunto quedan en null", columnasDeReporte({ assetId: "A", fileName: "  r.pdf " }).reference_file_name === "r.pdf" && columnasDeReporte(null).reference_asset_id === null && reporteDeFila({ reference_asset_id: "A", reference_file_name: null })?.fileName === "Reporte del Q-Grader" && reporteDeFila({ reference_asset_id: null }) === null);
+  const lib = lee("src/lib/evaluaciones/reporte.ts").replace(/\r\n/g, "\n");
+  check("reporte: registrar comprueba que el objeto EXISTA en Storage y que la ruta sea del lote", lib.includes('if (!args.path.startsWith(prefijo) || args.path.includes(".."))') && lib.includes(".list(prefijo.slice(0, -1), { search: nombre, limit: 5 })") && lib.includes("lista?.some((o) => o.name === nombre)"));
+  const accionesCentro = lee("src/app/socios/[partner]/panel/evaluacionActions.ts").replace(/\r\n/g, "\n");
+  const trasCompuerta = (nombre) => { const i = accionesCentro.indexOf(`export async function ${nombre}(`); const cuerpo = accionesCentro.slice(i, accionesCentro.indexOf("\n}\n", i)); return cuerpo.includes("identidadConModulo()") && cuerpo.includes("bacheEnMisManos(service, lotId, auth.identity.userId)"); };
+  check("centro: firmar y registrar el reporte pasan por la credencial Y el bache en sus manos", trasCompuerta("prepararReporteQGrader") && trasCompuerta("confirmarReporteQGrader"));
+  check("centro: el alta y el borrador guardan el adjunto (asset + nombre)", accionesCentro.includes("registrarEvaluacion(lotId: string, raw: LabEvaluation, notas: string, codigoInterno = \"\", reporte: ReporteAdjunto | null = null)") && (accionesCentro.match(/\.\.\.columnasDeReporte\(reporte\)/g) ?? []).length === 2);
+  check("centro: la planilla monta el adjunto compartido con sus dos acciones, en los dos idiomas, y el borrador lo trae de vuelta", planilla.includes("<AdjuntoReporteQGrader") && planilla.includes("preparar={(meta) => prepararReporteQGrader(lotId, meta)}") && planilla.includes("confirmar={(path, meta) => confirmarReporteQGrader(lotId, path, meta)}") && planilla.includes("lang={lang}") && planilla.includes("useState<ReporteAdjunto | null>(borrador?.reporte ?? null)") && planilla.includes("registrarEvaluacion(lotId, ev, notas, codigoInterno, reporte)"));
+  check("centro: la página enseña el reporte del alta con URL firmada", pagina.includes("urlsDeReportes(service, evaluaciones.map((e) => e.reference_asset_id))") && pagina.includes("reporte: reporteDeFila(b)") && pagina.includes('rel="noopener noreferrer">{rep.fileName}</a>'));
+  const pieza = lee("src/components/bcp/AdjuntoReporteQGrader.tsx").replace(/\r\n/g, "\n");
+  check("pieza: valida antes de subir, sube con URL firmada y solo guarda {assetId, fileName}; siempre opcional", pieza.includes("const motivo = motivoDeRechazo(meta);") && pieza.includes("putSignedUrlWithProgress(prep.path, prep.token, file, up.progress)") && pieza.includes("onChange(res.reporte)") && pieza.includes("(opcional)") && pieza.includes("(optional)"));
+  // OCP: lo mismo desde «Registrar a mano»
+  const ocpAcc = lee("src/app/ocp/(app)/nominadosActions.ts").replace(/\r\n/g, "\n");
+  const ocpUi = lee("src/app/ocp/(app)/nominados/NominadosClient.tsx").replace(/\r\n/g, "\n");
+  check("ocp: firmar y registrar son acciones `emite`; la planilla a mano lleva su adjunto y pasa a `lot_evaluations` al galardonar", ocpAcc.includes("export async function prepararReporteQGraderOcp(") && ocpAcc.includes("export async function confirmarReporteQGraderOcp(") && ocpAcc.includes("addSondeoEvaluation(lotId: string, evaluation: LabEvaluation, reporte: ReporteAdjunto | null = null)") && ocpAcc.includes("reporte_asset_id: reporte.assetId, reporte_file_name: reporte.fileName") && ocpAcc.includes("...columnasDeReporte(reporteDeFila({ reference_asset_id: (lastEval as"));
+  check("ocp: «Registrar a mano» monta la misma pieza y lista el adjunto de cada planilla; Lotes en Evaluación enseña el del alta del Centro", ocpUi.includes("<AdjuntoReporteQGrader") && ocpUi.includes("preparar={(meta) => prepararReporteQGraderOcp(lotId, meta)}") && ocpUi.includes("addSondeoEvaluation(lotId, ev, reporte)") && ocpUi.includes("{adjunto && <> · 📎 {adjunto}</>}") && lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").includes("{enlaceDeReporte(pendiente)}"));
 }
 
 if (fallos.length) {

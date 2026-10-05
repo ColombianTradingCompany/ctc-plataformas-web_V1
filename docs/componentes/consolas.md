@@ -177,6 +177,11 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.153 · B3 reporta factor, aw y densidad; «i» en todos los conceptos; tazas 1–5 en SCA y CVA** (owner, 2026-10-05).
+  `factorDeLaPlanilla` decide el `factor_rendimiento` guardado (derivado de los pesos; reportado si no hay pesos). Los textos
+  de las «i» vienen de la Coffee Datasheet Tool (`planillaInfo.ts`, generado: no se editan a mano). Abierto, **con decisión
+  del owner**: si el factor REPORTADO debiera mandar sobre el derivado cuando hay pesos; y los tres datos nuevos de B3 no
+  se proyectan todavía a la Ficha del lote ni al catálogo (solo viven en la evaluación, `physical_data`).
 - **V5.151 · el reporte original del Q-Grader, adjunto opcional a cada evaluación** (owner, 2026-10-05). En «Registrar a
   mano» (`SondeoRegistroControls`) la planilla lleva `reporte_asset_id`/`reporte_file_name` en la lista de la inscripción y
   pasa a `lot_evaluations.reference_asset_id` al galardonar; «Lotes en Evaluación» enseña el del alta del Centro con URL

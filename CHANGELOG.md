@@ -19,6 +19,24 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.153] — 2026-10-05 (commit pendiente)
+
+- **Añadido**: en la planilla de evaluación (Centro de Calidad, «Registrar a mano» del OCP y la Arena) **B3 reporta también
+  el factor de rendimiento, la actividad de agua (aw) y la densidad (g/L)** (owner, 2026-10-05) — los mismos campos de la
+  Ficha (`b3_factor_reportado`, `b3_actividad_agua`, `b3_densidad_verde`). El factor derivado de los pesos manda; el
+  reportado vale cuando no hay pesos (`factorDeLaPlanilla`), y es el que se guarda como `factor_rendimiento`.
+- **Añadido**: **un botón «i» en cada concepto de la planilla** — vista, escalas, los diez atributos SCA y las ocho secciones
+  CVA, tazas, puntajes, rueda, acidez, boca, perfil y todo B3 — con los textos de la Coffee Datasheet Tool, en ES · EN y con
+  su norma: `src/lib/arena/planillaInfo.ts` se GENERA del catálogo INFO de la herramienta (`scripts/build-planilla-info.mjs`),
+  una sola fuente. La herramienta gana cinco conceptos (humedad, aw, densidad, factor reportado, perfil) y su «i».
+- **Cambiado**: **las tazas usadas se eligen también en el CVA, de 1 a 5**, y en el SCA 2004 pasan de 1–10 a **1–5** (owner:
+  el formulario es de cinco tazas). `cva_num_tazas`; u y d se cuentan sobre las tazas usadas (todas defectuosas por igual ⇒
+  u = 0, sea cual sea N). Mismo selector en la Coffee Datasheet Tool (`fa_factor_reportado` también allí).
+- **Seguridad**: `qa-centro-calidad` (209 → 219: tazas 1–5 en los dos protocolos, los tres campos de B3 en el alta, cada
+  «i» con su clave en el catálogo) y `qa-coffee-datasheet` (1.305 → 1.340: paridad CVA con N tazas, factor que vale,
+  `planillaInfo.ts` al día con la herramienta).
+- **Docs**: charters `consolas` y `herramientas-cafe`, ALINEACION §3.
+
 ## [V5.152] — 2026-10-05 (commit 36b5ccd)
 
 - **Cambiado**: el adjunto del reporte original del Q-Grader **se ve como un botón** (owner, 2026-10-05: «no parece un botón

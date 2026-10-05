@@ -523,3 +523,10 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-10-05] V5.152 · Evaluaciones — el adjunto del reporte del Q-Grader es un botón
 - ANN `src/components/bcp/AdjuntoReporteQGrader.tsx`, `scripts/qa-centro-calidad-check.mjs`.
 (commit: 36b5ccd)
+
+## [2026-10-05] V5.153 · Planilla — B3 reporta factor, aw y densidad; «i» en todos los conceptos (generados de la herramienta); tazas 1–5 en SCA y CVA
+- ADD `scripts/build-planilla-info.mjs`, `src/lib/arena/planillaInfo.ts` (generado).
+- ANN `src/lib/arena/labEvaluation.ts` (`TAZAS_CVA`, `tazasCvaUsadas`, `factorDeLaPlanilla`, `b3_*`), `planillaI18n.ts`, `src/components/bcp/{LabEvalEditor,PlanillaPiezas}.tsx`.
+- ANN `app/socios/[partner]/panel/evaluacionActions.ts`, `app/ocp/(app)/nominadosActions.ts`, `app/bcp/(app)/arenaActions.ts` (`factor_rendimiento` = el que vale).
+- ANN `public/tools/coffee-datasheet/ctcx-coffee-datasheet-tool.html` (INFO ×5, `cva_num_tazas`, `fa_factor_reportado`), `scripts/qa-{centro-calidad,coffee-datasheet}-check.mjs`, `docs/componentes/{consolas,herramientas-cafe}.md`, `docs/ALINEACION.md`.
+(commit: pendiente)

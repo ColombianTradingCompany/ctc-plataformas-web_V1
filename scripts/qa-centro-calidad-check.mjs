@@ -415,20 +415,46 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("latido · si la sesión se cerró, avisa sin perder lo digitado; un corte de red no cuenta como cierre", viva.includes("Su sesión se cerró.") && viva.includes("} catch {") && lee("src/app/socios/[partner]/panel/actions.ts").includes("export async function latidoDeSocio(): Promise<{ viva: boolean }>"));
 }
 
-// ── V5.147 (owner, 2026-10-02) · el número de tazas usadas en «Defectos de taza, taza a taza» ─────────────────────────
+// ── V5.147 (owner, 2026-10-02) · el número de tazas usadas en «Defectos de taza, taza a taza» — V5.153: de 1 a 5 ───────
 {
   const { TAZAS_SCA, tazasUsadas } = await import("../src/lib/arena/labEvaluation.ts");
   const editor = lee("src/components/bcp/LabEvalEditor.tsx").replace(/\r\n/g, "\n");
-  check("tazas: de 1 a 10, cinco por protocolo; lo que no es un entero en rango cae a cinco", TAZAS_SCA.min === 1 && TAZAS_SCA.max === 10 && TAZAS_SCA.porDefecto === SCA2004.tazas && [["3", 3], [10, 10], ["", 5], ["0", 5], ["11", 5], ["2.5", 5], [null, 5], ["x", 5]].every(([v, n]) => tazasUsadas(v) === n));
+  check("tazas: de 1 a 5, cinco por protocolo; lo que no es un entero en rango (o más de cinco) cae a cinco", TAZAS_SCA.min === 1 && TAZAS_SCA.max === 5 && TAZAS_SCA.porDefecto === SCA2004.tazas && [["3", 3], [5, 5], ["", 5], ["0", 5], ["6", 5], ["10", 5], ["2.5", 5], [null, 5], ["x", 5]].every(([v, n]) => tazasUsadas(v) === n));
   check("tazas: una planilla anterior (sin el dato) sigue con cinco", toLabEvaluation({}).sca_num_tazas === "5" && toLabEvaluation({}).sca_tazas.length === 5 && EMPTY_LAB_EVALUATION.sca_num_tazas === "5");
   const tres = toLabEvaluation({ sca_num_tazas: "3", sca_tazas: [{ estado: "taint", defecto: "moho" }, { estado: "" }, { estado: "fault", defecto: "papa" }, { estado: "fault" }, { estado: "fault" }] });
   check("tazas: con 3 hay 3 tazas para marcar — las que sobran se quitan y los contadores salen de las que quedan", tres.sca_tazas.length === 3 && tres.sca_taint_cups === "1" && tres.sca_fault_cups === "1");
-  const ocho = toLabEvaluation({ sca_num_tazas: 8, sca_tazas: [{ estado: "taint" }] });
-  check("tazas: con 8 hay 8 — las que faltan nacen limpias", ocho.sca_tazas.length === 8 && ocho.sca_tazas.slice(1).every((x) => x.estado === "") && ocho.sca_taint_cups === "1");
+  const dos = toLabEvaluation({ sca_num_tazas: 2, sca_tazas: [{ estado: "taint" }] });
+  check("tazas: con 2 hay 2 — la que falta nace limpia; una planilla de la V5.147 con 8 vuelve a cinco", dos.sca_tazas.length === 2 && dos.sca_tazas[1].estado === "" && dos.sca_taint_cups === "1" && toLabEvaluation({ sca_num_tazas: "8", sca_tazas: Array(8).fill({ estado: "taint" }) }).sca_tazas.length === 5);
   const diez = Object.fromEntries(SCA_ATTRS_KEYS().map((k) => [`sca_${k}`, "8"]));
-  check("tazas: el tope de tazas con defecto es el número de tazas usadas", computeSca2004({ ...diez, sca_num_tazas: "3", sca_taint_cups: "3", sca_fault_cups: "" }).total === 80 - 6 && computeSca2004({ ...diez, sca_num_tazas: "3", sca_taint_cups: "4", sca_fault_cups: "" }).total === null && computeSca2004({ ...diez, sca_num_tazas: "8", sca_taint_cups: "", sca_fault_cups: "7" }).total === 80 - 28 && computeSca2004({ ...diez, sca_taint_cups: "", sca_fault_cups: "6" }).total === null);
-  check("tazas: elegir el número no cuenta como dato (una planilla vacía sigue vacía)", labEvaluationHasData(toLabEvaluation({ sca_num_tazas: "8" })) === false);
+  check("tazas: el tope de tazas con defecto es el número de tazas usadas", computeSca2004({ ...diez, sca_num_tazas: "3", sca_taint_cups: "3", sca_fault_cups: "" }).total === 80 - 6 && computeSca2004({ ...diez, sca_num_tazas: "3", sca_taint_cups: "4", sca_fault_cups: "" }).total === null && computeSca2004({ ...diez, sca_num_tazas: "4", sca_taint_cups: "", sca_fault_cups: "4" }).total === 80 - 16 && computeSca2004({ ...diez, sca_taint_cups: "", sca_fault_cups: "6" }).total === null);
+  check("tazas: elegir el número no cuenta como dato (una planilla vacía sigue vacía)", labEvaluationHasData(toLabEvaluation({ sca_num_tazas: "4" })) === false);
   check("tazas: el editor trae el selector junto a «Defectos de taza» y ajusta las tazas al cambiarlo", editor.includes("{t.tazasUsadas}") && editor.includes("onChange={(e) => setNumTazas(e.target.value)}") && editor.includes("normalizaScaTazas(value.sca_tazas, undefined, undefined, n)") && PL.es.tazasUsadas === "Tazas usadas" && PL.en.tazasUsadas === "Cups used");
+}
+
+// ── V5.153 (owner, 2026-10-05) · tazas del CVA (1–5); B3 reporta factor, aw y densidad; «i» en todos los conceptos ─────
+{
+  const { TAZAS_CVA, tazasCvaUsadas, computeCva, factorDeLaPlanilla } = await import("../src/lib/arena/labEvaluation.ts");
+  const { INFO_PLANILLA } = await import("../src/lib/arena/planillaInfo.ts");
+  const editor = lee("src/components/bcp/LabEvalEditor.tsx").replace(/\r\n/g, "\n");
+  check("tazas CVA: de 1 a 5, cinco por protocolo; lo demás cae a cinco", TAZAS_CVA.min === 1 && TAZAS_CVA.max === 5 && [["2", 2], [5, 5], ["", 5], ["0", 5], ["6", 5], ["x", 5]].every(([v, n]) => tazasCvaUsadas(v) === n) && EMPTY_LAB_EVALUATION.cva_num_tazas === "5");
+  const dosCva = toLabEvaluation({ cva_num_tazas: "2", cva_tazas: [{ defectuosa: true, defecto: "papa" }, {}, { defectuosa: true, defecto: "papa" }] });
+  check("tazas CVA: con 2 hay 2 para marcar; las que sobran se quitan y una planilla anterior sigue con cinco", dosCva.cva_tazas.length === 2 && dosCva.cva_num_tazas === "2" && toLabEvaluation({}).cva_tazas.length === 5);
+  const ocho = Object.fromEntries(["fragrance", "aroma", "flavor", "aftertaste", "acidity", "sweetness", "mouthfeel", "overall"].map((k) => [`cva_${k}`, "7"]));
+  const papa = { noUniforme: true, defectuosa: true, defecto: "papa" };
+  check("tazas CVA: u y d se cuentan sobre las tazas usadas — todas defectuosas por igual ⇒ u = 0, sea cual sea N", computeCva(toLabEvaluation({ ...ocho, cva_num_tazas: "2", cva_tazas: [papa, papa] })).u === 0 && computeCva(toLabEvaluation({ ...ocho, cva_num_tazas: "2", cva_tazas: [papa, papa] })).d === 2 && computeCva(toLabEvaluation({ ...ocho, cva_num_tazas: "3", cva_tazas: [papa, papa, {}] })).u === 2);
+  check("tazas CVA: elegir el número no cuenta como dato; el editor trae el selector junto a las tazas", labEvaluationHasData(toLabEvaluation({ cva_num_tazas: "3" })) === false && editor.includes("onChange={(e) => setNumTazasCva(e.target.value)}") && editor.includes("normalizaTazas(value.cva_tazas, undefined, undefined, n)"));
+  // B3: lo que el laboratorio reporta
+  const conPesos = toLabEvaluation({ fa_start: "250", fa_green_remainder: "200", b3_factor_reportado: "88.5" });
+  check("B3: factor, aw y densidad están en la planilla; el factor derivado de los pesos manda y el reportado vale sin pesos", "b3_factor_reportado" in EMPTY_LAB_EVALUATION && "b3_actividad_agua" in EMPTY_LAB_EVALUATION && "b3_densidad_verde" in EMPTY_LAB_EVALUATION && factorDeLaPlanilla(conPesos) === 87.5 && factorDeLaPlanilla(toLabEvaluation({ b3_factor_reportado: "88,5" })) === 88.5 && factorDeLaPlanilla(toLabEvaluation({ b3_factor_reportado: "-1" })) === null && factorDeLaPlanilla(toLabEvaluation({})) === null);
+  check("B3: el editor pide los tres (aw al milésimo, densidad entera, factor al centésimo) y enseña el factor que vale", editor.includes('numInput("b3_actividad_agua", { step: "0.001", max: 1 })') && editor.includes('numInput("b3_densidad_verde", { step: "1" })') && editor.includes('numInput("b3_factor_reportado", { step: "0.01" })') && editor.includes("const factorQueVale = factorDeLaPlanilla(value);") && editor.includes("{factorQueVale !== null ? factorQueVale.toFixed(2)"));
+  const acciones = lee("src/app/socios/[partner]/panel/evaluacionActions.ts");
+  check("B3: el alta del Centro guarda los tres en `physical_data` y `factor_rendimiento` es el que vale; CTCx y la Arena igual", acciones.includes("b3_factor_reportado: ev.b3_factor_reportado") && acciones.includes("b3_actividad_agua: ev.b3_actividad_agua") && acciones.includes("b3_densidad_verde: ev.b3_densidad_verde") && acciones.includes("factor_rendimiento: factorDeLaPlanilla(ev)") && lee("src/app/ocp/(app)/nominadosActions.ts").includes("factor_rendimiento: factorDeLaPlanilla(lastEval)") && lee("src/app/bcp/(app)/arenaActions.ts").includes("factor_rendimiento: factorDeLaPlanilla(evaluation)"));
+  // «i» en todos los conceptos: los textos son los de la herramienta (generados) y cada concepto de la hoja lleva el suyo
+  const claves = [...editor.matchAll(/info\("([a-z_]+)"\)|info\(`([a-z_]+)\$\{key\}` as ClaveDeInfo\)/g)].map((m) => m[1] ?? m[2]);
+  const fijas = claves.filter((k) => !k.endsWith("_"));
+  check("«i»: la planilla trae un botón por concepto — vista, escalas, atributos, tazas, puntajes, rueda, acidez, boca, perfil y todo B3", ["dif", "sca_esc", "sca_def", "sca_punt", "cva_dos", "cva_aff", "cva_tazas", "cva_punt", "rueda", "cva_acidez", "cva_textura", "perfil", "f_factor", "f_muestra", "f_hum", "f_aw", "f_dens", "f_def", "f_color", "f_factor_rep", "f_mallas"].every((k) => fijas.includes(k)) && claves.includes("sca_") && claves.includes("sec_"), fijas.join(","));
+  check("«i»: cada clave usada existe en el catálogo, en los dos idiomas, con título, texto y norma", fijas.every((k) => ["es", "en"].every((l) => INFO_PLANILLA[l][k] && INFO_PLANILLA[l][k].titulo && INFO_PLANILLA[l][k].texto.length > 40 && INFO_PLANILLA[l][k].std)) && ["fragrance", "flavor", "aftertaste", "acidity", "body", "balance", "uniformity", "clean_cup", "sweetness", "cuppers"].every((k) => INFO_PLANILLA.es[`sca_${k}`]) && ["fragrance", "aroma", "flavor", "aftertaste", "acidity", "sweetness", "mouthfeel", "overall"].every((k) => INFO_PLANILLA.en[`sec_${k}`]));
+  check("«i»: los textos son texto plano (sin HTML) y la pieza enseña título y norma", Object.values(INFO_PLANILLA.es).every((x) => !/<[a-z]/i.test(x.texto)) && lee("src/components/bcp/PlanillaPiezas.tsx").includes("{titulo && <b style={{ display: \"block\", marginBottom: 3 }}>{titulo}</b>}"));
 }
 
 // ── V5.148 (owner, 2026-10-02) · la planilla del Centro de Calidad no enseña el grado (depende también de B1) ──────────────

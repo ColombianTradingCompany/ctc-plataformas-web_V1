@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import type { ActionResult } from "@/components/panel/ActionForm";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
-import { computeFactor, labEvaluationHasData, protocoloDelPunto, puntoDeLaPlanilla, type LabEvaluation } from "@/lib/arena/labEvaluation";
+import { factorDeLaPlanilla, labEvaluationHasData, protocoloDelPunto, puntoDeLaPlanilla, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import { decidirPorPunto, puntoDeFila } from "@/lib/arena/homologacion";
 import { ATRIBUTOS_SCA } from "@/lib/fichas/tipos";
 
@@ -176,7 +176,7 @@ export async function registrarApreciacion(sessionId: string, lotId: string, eva
       cva_total: punto?.cvaTotal ?? null,
       escala: protocoloDelPunto(evaluation),
       sca_data: scaData,
-      factor_rendimiento: computeFactor(evaluation).yieldFactor,
+      factor_rendimiento: factorDeLaPlanilla(evaluation), // V5.153
       physical_data: fisico,
       notes: evaluation.analysis_notes?.trim() || null,
       submitted_by: adminId,

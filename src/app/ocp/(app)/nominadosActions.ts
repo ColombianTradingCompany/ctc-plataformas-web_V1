@@ -8,7 +8,7 @@ import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { ARENA_FEE_COP, MAX_BATCH_LOTS, avanzarAFilaSiCompleta, dueFor, formatCop, type InscriptionStatus } from "@/lib/arena/inscriptions";
 import { claimCampaignCode, insertEntryCode } from "@/lib/arena/entryCodes";
 import { generateMejorasDoc } from "@/lib/arena/mejoras";
-import { labEvaluationHasData, labEvaluationScaData, protocoloDelPunto, puntoDeLaPlanilla, toLabEvaluationList, computeFactor, type LabEvaluation } from "@/lib/arena/labEvaluation";
+import { factorDeLaPlanilla, labEvaluationHasData, labEvaluationScaData, protocoloDelPunto, puntoDeLaPlanilla, toLabEvaluationList, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import { decidirPorPunto, puntoDeFila, puntoNativo, rotuloDelPunto, type PuntoSca } from "@/lib/arena/homologacion";
 import { currentSeason, lotSeasonCount, MAX_SEASONS_PER_LOT } from "@/lib/arena/seasons";
 import { saldoDe } from "@/lib/muestras/particion";
@@ -699,14 +699,14 @@ export async function recordEvaluationVerdict(
     // Sin Centro: la planilla tecleada queda como evaluación OFICIAL del lote, con su
     // procedencia propia — el comprador confía en esa etiqueta.
     if (lastEval) {
-      const derived = computeFactor(lastEval);
+      // V5.153: el factor derivado de los pesos; si no hay pesos, el que reportó el laboratorio.
       const { error: evalError } = await service.from("lot_evaluations").insert({
         lot_id: lotId,
         source: "q_grader_batch",
         status: "accepted",
         sca_total: puntaje,
         sca_data: labEvaluationScaData(lastEval),
-        factor_rendimiento: derived.yieldFactor,
+        factor_rendimiento: factorDeLaPlanilla(lastEval),
         batch_id: ins.sondeo_batch_id,
         escala: protocoloDelPunto(lastEval),
         punto: puntoEfectivo,

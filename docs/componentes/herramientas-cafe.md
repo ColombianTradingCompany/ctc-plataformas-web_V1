@@ -105,7 +105,7 @@ once vectores de ataque) · `qa-tools-puente-conformance.mjs` (15/15; las de esq
 V5.149: una sonda que revienta ya no aprueba en silencio) · `qa-tools-seo-check.mjs` (273, recorre las carpetas) ·
 `qa-gulliver-check.mjs` (63, puro: el evento en un solo bloque, la trampa del `localStorage` ejecutada en Node, descargos y NIT) ·
 `qa-tools-seo-espejo.mjs` (98, toca la base: columna = archivo; `noindex` en archivadas y en `FUERA_DEL_INDICE`) ·
-`qa-coffee-datasheet-check.mjs` (1.305, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`: catálogos generados al día,
+`qa-coffee-datasheet-check.mjs` (1.340, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`: catálogos generados al día,
 **paridad de las fórmulas SCA 2004 y CVA con la planilla de la plataforma** sobre 1.200 planillas, los dos métodos sin mezclar, tres idiomas
 completos, sin CDN) ·
 `qa-cromatografia-check.mjs` (294, puro) · `qa-cromatografia-modelo.mjs` (manual, gasta: estabilidad del modelo; acepta
@@ -138,6 +138,11 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 
 ## Pendientes
 
+- **V5.153 · Coffee Datasheet Tool: cinco conceptos nuevos en INFO (humedad, aw, densidad, factor reportado, perfil), el
+  factor reportado (`fa_factor_reportado`), tazas del CVA 1–5 (`cva_num_tazas`) y SCA 1–5** (owner, 2026-10-05; ejecutado
+  desde `consolas`). El catálogo INFO es ahora la FUENTE de las «i» de la planilla de la plataforma
+  (`scripts/build-planilla-info.mjs` → `src/lib/arena/planillaInfo.ts`; `qa-coffee-datasheet` exige que esté al día). Regla:
+  un texto de «i» se cambia en la herramienta y se regenera, nunca en el `.ts`.
 - **V5.149 · Gulliver · 7 días a Tokio** (owner, 2026-10-04: «sí a todo» al brief `briefs/herramientas-cafe-gulliver.md`; ficha
   `herramientas-cafe/gulliver/README.md`). Hecho: herramienta NUEVA, Plus, japonés de bolsillo para SCAJ 2026; V1.1 sobre la V1.0 del
   owner con memoria de esquema propio (y la trampa del `localStorage` cerrada), el evento en un bloque, los descargos de la casa (pie

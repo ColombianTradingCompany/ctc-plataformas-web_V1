@@ -52,7 +52,7 @@ const corte = (desde, hasta) => {
 const M = new Function(
   `${corte("/*<CATALOGOS-GENERADOS>*/", "/*</NUCLEO-PURO>*/")}\n${corte("const RUEDA_A_CATA = {", "const UI = {").replace(/const UI = \{$/, "")}
    return { RUEDA, DEP_MUNI, VARIEDADES, HS_CODES, TX, INFO, IDIOMAS, CATA, CATA_TX, RUEDA_A_CATA, HOJA_A_CATA, DEFECTOS, MALLAS_CVA, MALLAS_CO, TOPE, CVA_SEC, CVA_K, SCA_ATR, SCA_TAZ, SCA_K,
-            calcCva, calcSca2004, calcDefectos, clasificaVerde, calcMallas, calcFactor, cataCuenta, contarTazas, claseSca };`,
+            calcCva, calcSca2004, calcDefectos, clasificaVerde, calcMallas, calcFactor, factorQueVale, cataCuenta, contarTazas, claseSca };`,
 )();
 
 const idsDe = (rueda, subs, hojas) => rueda.flatMap((f) => [f.id, ...f[subs].flatMap((s) => [s.id, ...s[hojas].map((h) => `${s.id}|${h.id}`)])]);
@@ -98,6 +98,8 @@ for (let n = 0; n < 600; n++) {
     return { noUniforme: azar() < 0.15, defectuosa: def, defecto: def && azar() < 0.85 ? elige(["moho", "fenol", "papa"]) : "" };
   });
   if (n % 97 === 0) ev.cva_tazas = ev.cva_tazas.map(() => ({ noUniforme: true, defectuosa: true, defecto: "papa" })); // las cinco iguales
+  // V5.153: el número de tazas usadas en el CVA (1–5; a veces sin dato o inválido) — las dos cuentan u y d sobre las usadas.
+  ev.cva_num_tazas = azar() < 0.3 ? "" : azar() < 0.1 ? elige(["0", "6", "x"]) : String(1 + Math.floor(azar() * 5));
   const a = M.calcCva(ev), b = computeCva(ev);
   if (a.total !== b.total || a.completa !== b.completa || a.u !== b.u || a.d !== b.d || a.suma !== b.suma) difCva++;
   if (a.total != null) conPuntajeCva++;
@@ -263,8 +265,22 @@ for (const v of [-3, 0, 0.2, 7.3, 7.75, 12.5, 15, 99, "8,5"]) check(`planilla ·
   const diez = Object.fromEntries(M.SCA_ATR.map((k) => [`sca_${k}`, "8"]));
   const casos = [["3", "3", ""], ["3", "4", ""], ["8", "", "7"], ["10", "10", ""], ["", "", "6"], ["", "5", ""], ["x", "2", "1"], ["1", "", "1"], ["1", "1", "1"]];
   check("planilla · tazas: el puntaje con N tazas es el de la planilla, y pasarse del tope lo anula igual", casos.every(([n, t, f]) => { const ev = { ...diez, sca_num_tazas: n, sca_taint_cups: t, sca_fault_cups: f }; return M.calcSca2004(ev).total === computeSca2004(ev).total; }), casos.map(([n, t, f]) => { const ev = { ...diez, sca_num_tazas: n, sca_taint_cups: t, sca_fault_cups: f }; return `${M.calcSca2004(ev).total}/${computeSca2004(ev).total}`; }).join(" "));
-  check("planilla · tazas: el lote guarda tantas tazas como se eligieron; sin dato o con uno inválido, cinco", E.normLote({ sca_num_tazas: "3" }, 0).sca_tazas.length === 3 && E.normLote({ sca_num_tazas: "9", sca_tazas: [{ estado: "taint" }] }, 0).sca_tazas.length === 9 && E.normLote({}, 0).sca_tazas.length === 5 && E.normLote({ sca_num_tazas: "40" }, 0).sca_num_tazas === "5");
+  check("planilla · tazas: el lote guarda tantas tazas como se eligieron (1–5); sin dato o con uno inválido —o más de cinco, V5.153—, cinco", E.normLote({ sca_num_tazas: "3" }, 0).sca_tazas.length === 3 && E.normLote({ sca_num_tazas: "9", sca_tazas: [{ estado: "taint" }] }, 0).sca_tazas.length === 5 && E.normLote({}, 0).sca_tazas.length === 5 && E.normLote({ sca_num_tazas: "40" }, 0).sca_num_tazas === "5");
+  // V5.153 (owner): también en el CVA, de 1 a 5 — el mismo selector, el mismo ajuste; y el factor reportado cuando no hay pesos.
+  check("planilla · tazas CVA: el lote guarda tantas tazas como se eligieron (1–5); sin dato, cinco", E.normLote({ cva_num_tazas: "2", cva_tazas: [{ defectuosa: true, defecto: "papa" }, {}, { defectuosa: true, defecto: "papa" }] }, 0).cva_tazas.length === 2 && E.normLote({}, 0).cva_tazas.length === 5 && E.normLote({ cva_num_tazas: "7" }, 0).cva_num_tazas === "5");
+  check("planilla · tazas CVA: con N tazas todas defectuosas por igual, u = 0 (como con cinco)", M.calcCva({ ...Object.fromEntries(M.CVA_SEC.map((k) => [`cva_${k}`, "7"])), cva_num_tazas: "2", cva_tazas: [{ defectuosa: true, defecto: "papa" }, { defectuosa: true, defecto: "papa" }] }).u === 0 && M.calcCva({ ...Object.fromEntries(M.CVA_SEC.map((k) => [`cva_${k}`, "7"])), cva_num_tazas: "3", cva_tazas: [{ defectuosa: true, defecto: "papa" }, { defectuosa: true, defecto: "papa" }, {}] }).u === 2);
+  check("planilla · tazas CVA: el selector está junto a las tazas y al cambiarlo se repinta; el SCA va de 1 a 5", js.includes('<select data-k=\\"cva_num_tazas\\"') && js.includes('if(el.dataset.k==="cva_num_tazas"){ ajustaTazasCva(lote()); pintarPanel(); cambio(); return; }') && js.includes('[1,2,3,4,5].map(function(n){ return "<option value=\\""+n+"\\""+(String(n)===l.sca_num_tazas') && !js.includes("[1,2,3,4,5,6,7,8,9,10]"));
+  check("planilla · B3: el factor reportado vale cuando no hay pesos; con pesos manda el derivado", M.factorQueVale({ fa_start: "", fa_green_remainder: "", fa_factor_reportado: "88.5" }) === 88.5 && M.factorQueVale({ fa_start: "250", fa_green_remainder: "200", fa_primary_defect: "", fa_secondary_defect: "", fa_factor_reportado: "88.5" }) === 87.5 && M.factorQueVale({ fa_factor_reportado: "" }) === null && M.factorQueVale({ fa_factor_reportado: "-3" }) === null);
+  check("planilla · B3: humedad, aw, densidad, factor reportado y las notas de taza llevan su «i»", ["f_hum", "f_aw", "f_dens", "f_factor_rep", "perfil"].every((k) => M.INFO[k] && js.includes(`info:"${k}"`) || (k === "perfil" && js.includes('ib("perfil")'))));
   check("planilla · tazas: el selector está junto a los defectos de taza y al cambiarlo se repinta", js.includes('<select data-k=\\"sca_num_tazas\\"') && js.includes('if(el.dataset.k==="sca_num_tazas"){ ajustaTazasSca(lote()); pintarPanel(); cambio(); return; }') && js.includes("sca_num_tazas:l.sca_num_tazas"));
+}
+
+// V5.153 (owner, 2026-10-05): los botones «i» de la planilla de la plataforma leen los textos de ESTA herramienta
+// (`scripts/build-planilla-info.mjs` → `src/lib/arena/planillaInfo.ts`). Si cambia el catálogo INFO, se regenera.
+{
+  const { generar } = await import("./build-planilla-info.mjs");
+  const generado = lee("src/lib/arena/planillaInfo.ts").replace(/\r\n/g, "\n");
+  check("planilla · «i»: `planillaInfo.ts` está al día con el catálogo INFO de la herramienta (node scripts/build-planilla-info.mjs)", generado === generar().replace(/\r\n/g, "\n"));
 }
 
 // El radar: el centro es 0 (antes el 6 del formulario quedaba en el centro y la figura se deformaba).

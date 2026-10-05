@@ -42,7 +42,8 @@ import {
   type EstadoDeTazaSca,
   type LabEvaluation,
   type ScaTaza,
-  type VistaDePlanilla, NOTA_DESCRIPTIVA_MAX, TAZAS_SCA, normalizaScaTazas, tazasUsadas } from "@/lib/arena/labEvaluation";
+  type VistaDePlanilla, NOTA_DESCRIPTIVA_MAX, TAZAS_SCA, TAZAS_CVA, factorDeLaPlanilla, normalizaScaTazas, normalizaTazas, tazasCvaUsadas, tazasUsadas } from "@/lib/arena/labEvaluation";
+import { INFO_PLANILLA, type ClaveDeInfo } from "@/lib/arena/planillaInfo";
 import { CVA_PROPOSITO, decidirPorPunto, rotuloDelPunto } from "@/lib/arena/homologacion";
 import { ETAPAS_DE_LA_RUEDA, ETAPA_LABEL, INTENSIDAD, NOTA_MAX, ZONA_LABEL, ajustaIntensidad, alternaEtapa, detalleDe, etapasLabel, familiaDe, fmtIntensidad, normalizaRueda, rutaDe, zonaDeIntensidad, type DetalleDeMarca } from "@/lib/catacion/rueda";
 import { scaClassFor } from "@/components/kaffetal-regal/ficha/fichaCalculations";
@@ -133,6 +134,7 @@ export function LabEvalEditor({
   const sca = computeSca2004(value, lang);
   const cva = computeCva(value, lang);
   const factor = computeFactor(value);
+  const factorQueVale = factorDeLaPlanilla(value); // V5.153: el derivado de los pesos, o el reportado
   // V5.144 (owner, 2026-10-02): «los defectos primarios y secundarios hacen parte del trillado verde restante… no se suman con el
   // total de mallas: ya estaban incluidos allí». El verde ENTERO pasa por las mallas y los defectos se apartan de ahí: la suma de
   // mallas se compara con el TRILLADO VERDE RESTANTE, no con el grano sano. El grano sano sigue siendo la base del factor.
@@ -180,6 +182,17 @@ export function LabEvalEditor({
     onChange({ rueda: [...set], rueda_detalle: detalle });
   };
   // V5.147 (owner): el catador elige cuántas tazas usó. Las que sobran se quitan; las que faltan nacen limpias.
+  // V5.153 (owner): «incluye "i" en estos y todos los conceptos de la herramienta» — cada concepto con su botón, con los textos
+  // de la Coffee Datasheet Tool (`planillaInfo.ts`, generado) en el idioma de la planilla.
+  const info = (k: ClaveDeInfo) => {
+    const x = INFO_PLANILLA[lang][k];
+    return <Info texto={x.texto} titulo={x.titulo} std={x.std} />;
+  };
+  // V5.153 (owner): también en el CVA se elige cuántas tazas se usaron (1–5).
+  const setNumTazasCva = (v: string) => {
+    const n = tazasCvaUsadas(v);
+    onChange({ cva_num_tazas: String(n), cva_tazas: normalizaTazas(value.cva_tazas, undefined, undefined, n) });
+  };
   const setNumTazas = (v: string) => {
     const n = tazasUsadas(v);
     const next = normalizaScaTazas(value.sca_tazas, undefined, undefined, n);
@@ -275,7 +288,7 @@ export function LabEvalEditor({
           </label>
         ))}
       </div>
-      <p style={S.hint}>{t.hintVista}</p>
+      <p style={S.hint}>{t.hintVista} {info("dif")}</p>
 
       {/* El radar vivo con el puntaje grande y su franja: la cabecera de Intrínsecos de la Datasheet Tool. */}
       <div style={{ ...S.bloque, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, alignItems: "center", marginBottom: 12 }}>
@@ -322,12 +335,12 @@ export function LabEvalEditor({
         <div style={verSca && verCva ? S.dosCol : { display: "grid", gap: 12 }}>
           {verSca && (
             <div style={S.bloque}>
-              <h6 style={S.h6}>{t.scaTitulo}</h6>
+              <h6 style={S.h6}>{t.scaTitulo} {info("sca_esc")}</h6>
               <p style={S.hint}>{t.scaHint(SCA2004.min.toFixed(2), SCA2004.max.toFixed(2), SCA2004.paso, SCA2004.porTaza, SCA2004.castigoTaint, SCA2004.castigoFault)}</p>
               <div style={S.pares}>
                 {SCA_ATTRS.map(([key]) => (
                   <label key={key} style={S.par}>
-                    <span>{SCA_ATTR_LABEL[lang][key]}</span>
+                    <span>{SCA_ATTR_LABEL[lang][key]} {info(`sca_${key}` as ClaveDeInfo)}</span>
                     {/* V5.135 (owner): Uniformidad, Taza limpia y Dulzor se teclean igual que los demás (pasos de 0,25); su piso es 0. */}
                     {numInput(`sca_${key}` as keyof LabEvaluation, { step: String(SCA2004.paso), min: SCA2004_POR_TAZAS.includes(key) ? 0 : SCA2004.min, max: SCA2004.max })}
                   </label>
@@ -336,8 +349,8 @@ export function LabEvalEditor({
               {/* V5.135 (owner): taint y fault, taza a taza y con el mismo selector de tipo que la taza defectuosa del CVA; cada uno
                   con su «i». Los dos contadores que lee la fórmula se derivan de aquí. */}
               <div style={{ ...S.lbl, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", margin: "10px 0 4px" }}>
-                <span>{t.tazasSca}</span>
-                {/* V5.147 (owner): «permite elegir el número de tazas usadas» — cinco por protocolo, de 1 a 10. */}
+                <span>{t.tazasSca} {info("sca_def")}</span>
+                {/* V5.147 (owner): «permite elegir el número de tazas usadas» — cinco por protocolo; V5.153: de 1 a 5. */}
                 <label style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 400 }}>
                   {t.tazasUsadas}
                   <select value={value.sca_num_tazas} onChange={(e) => setNumTazas(e.target.value)} disabled={disabled} aria-label={t.tazasUsadas} style={{ ...S.sel, width: 58, fontSize: 11.5 }}>
@@ -375,7 +388,7 @@ export function LabEvalEditor({
               </div>
               <div style={S.total}>
                 <span>
-                  {t.totalSca}: <b style={{ fontSize: 17 }}>{sca.total != null ? sca.total.toFixed(2) : sca.calificados ? t.incompleto : "—"}</b>
+                  {t.totalSca} {info("sca_punt")}: <b style={{ fontSize: 17 }}>{sca.total != null ? sca.total.toFixed(2) : sca.calificados ? t.incompleto : "—"}</b>
                   {sca.total != null && <>/100{sca.defectos > 0 && <> ({t.defectosMenos(sca.defectos)})</>}</>}
                 </span>
               </div>
@@ -387,17 +400,28 @@ export function LabEvalEditor({
 
           {verCva && (
             <div style={S.bloque}>
-              <h6 style={S.h6}>{t.cvaTitulo}</h6>
-              <p style={S.hint}>{t.cvaHint(CVA.min, CVA.max, CVA.coeficiente, CVA.base, CVA.castigoNoUniforme, CVA.castigoDefectuosa, CVA.paso, CVA_PROPOSITO)}</p>
+              <h6 style={S.h6}>{t.cvaTitulo} {info("cva_dos")}</h6>
+              <p style={S.hint}>{info("cva_aff")} {t.cvaHint(CVA.min, CVA.max, CVA.coeficiente, CVA.base, CVA.castigoNoUniforme, CVA.castigoDefectuosa, CVA.paso, CVA_PROPOSITO)}</p>
               <div style={S.pares}>
                 {CVA_SECCIONES.map(([key]) => (
                   <label key={key} style={S.par}>
-                    <span>{CVA_SECCION_LABEL[lang][key]}</span>
+                    <span>{CVA_SECCION_LABEL[lang][key]} {info(`sec_${key}` as ClaveDeInfo)}</span>
                     {numInput(`cva_${key}` as keyof LabEvaluation, { step: String(CVA.pasoSeccion), min: CVA.min, max: CVA.max, ancho: 70 })}
                   </label>
                 ))}
               </div>
-              <p style={{ ...S.hint, margin: "8px 0 4px" }}>{t.tazasHint(CVA.tazas, CVA.castigoNoUniforme + CVA.castigoDefectuosa)}</p>
+              <div style={{ ...S.hint, margin: "8px 0 4px", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                <span>{t.tazasHint(CVA.tazas, CVA.castigoNoUniforme + CVA.castigoDefectuosa)} {info("cva_tazas")}</span>
+                {/* V5.153 (owner): «en la versión CVA no puedo elegir el número de tazas usadas. Debe ser de 1 a 5». */}
+                <label style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "var(--ink)" }}>
+                  {t.tazasUsadas}
+                  <select value={value.cva_num_tazas} onChange={(e) => setNumTazasCva(e.target.value)} disabled={disabled} aria-label={`${t.tazasUsadas} CVA`} style={{ ...S.sel, width: 58, fontSize: 11.5 }}>
+                    {Array.from({ length: TAZAS_CVA.max - TAZAS_CVA.min + 1 }, (_, k) => TAZAS_CVA.min + k).map((n) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(96px, 1fr))", gap: 6 }}>
                 {value.cva_tazas.map((x, i) => (
                   <div key={i} style={{ border: "1px dashed var(--line)", borderRadius: 8, padding: "4px 6px", fontSize: 11.5 }}>
@@ -421,7 +445,7 @@ export function LabEvalEditor({
               </div>
               <div style={S.total}>
                 <span>
-                  {t.puntajeCva}: <b style={{ fontSize: 17 }}>{cva.total != null ? cva.total.toFixed(2) : cva.calificadas ? t.incompleto : "—"}</b>
+                  {t.puntajeCva} {info("cva_punt")}: <b style={{ fontSize: 17 }}>{cva.total != null ? cva.total.toFixed(2) : cva.calificadas ? t.incompleto : "—"}</b>
                   {cva.total != null && <>/100</>}
                 </span>
                 <span style={S.pill}>u = {cva.u} · d = {cva.d} → −{CVA.castigoNoUniforme * cva.u + CVA.castigoDefectuosa * cva.d}</span>
@@ -436,7 +460,7 @@ export function LabEvalEditor({
 
         {/* ── La rueda (V5.131): la Rueda del Café del taller, a tamaño de lectura, con sus marcas y las notas al lado ── */}
         <div style={{ ...S.bloque, marginTop: 12 }}>
-          <h6 style={S.h6}>{t.ruedaTitulo}</h6>
+          <h6 style={S.h6}>{t.ruedaTitulo} {info("rueda")}</h6>
           <p style={S.hint}>{t.ruedaHint}</p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 14, alignItems: "flex-start" }}>
             <div style={{ flex: "4 1 620px", minWidth: 0, maxWidth: 880 }}>
@@ -537,7 +561,7 @@ export function LabEvalEditor({
                   tal» — la intensidad (0–15) y sus opciones: una para la acidez, hasta dos para la boca. No entra en el puntaje. */}
               <div style={S.descriptivo}>
                 <div style={S.lbl}>
-                  {t.acidez} <small style={{ fontWeight: 400, color: "var(--muted)" }}>· {t.intensidad} · {t.elijaUna}</small>
+                  {t.acidez} {info("cva_acidez")} <small style={{ fontWeight: 400, color: "var(--muted)" }}>· {t.intensidad} · {t.elijaUna}</small>
                 </div>
                 {intensidadDe("acidez_intensidad")}
                 {TIPOS_DE_ACIDEZ.map((o) => (
@@ -549,7 +573,7 @@ export function LabEvalEditor({
               </div>
               <div style={S.descriptivo}>
                 <div style={S.lbl}>
-                  {t.boca} <small style={{ fontWeight: 400, color: "var(--muted)" }}>· {t.intensidad} · {t.hastaDos}</small>
+                  {t.boca} {info("cva_textura")} <small style={{ fontWeight: 400, color: "var(--muted)" }}>· {t.intensidad} · {t.hastaDos}</small>
                 </div>
                 {intensidadDe("boca_intensidad")}
                 {TEXTURAS_EN_BOCA.map((o) => {
@@ -569,7 +593,7 @@ export function LabEvalEditor({
                 {comentarioDe("boca_nota", t.boca)}
               </div>
               <div>
-                <label style={S.lbl}>{t.perfil}</label>
+                <label style={S.lbl}>{t.perfil} {info("perfil")}</label>
                 <textarea rows={6} value={value.cupping_profile} onChange={(e) => onChange({ cupping_profile: e.target.value })} disabled={disabled} style={{ ...S.input, fontFamily: "inherit" }} placeholder={t.perfilPh} />
               </div>
             </div>
@@ -589,27 +613,37 @@ export function LabEvalEditor({
         <div style={S.bloque}>
           <div style={S.pares}>
             <label style={S.par}>
-              <span>{t.pergamino}</span>
+              <span>{t.pergamino} {info("f_factor")}</span>
               {numInput("fa_start")}
             </label>
             <label style={S.par}>
-              <span>{t.trillado}</span>
+              <span>{t.trillado} {info("f_muestra")}</span>
               {numInput("fa_green_remainder")}
             </label>
             <label style={S.par}>
-              <span>{t.humedad}</span>
+              <span>{t.humedad} {info("f_hum")}</span>
               {numInput("fa_parch_hum")}
             </label>
             {/* V5.144 (owner): faltaba la humedad del café VERDE (el mismo campo de la Ficha, `b3_humedad_verde`). */}
             <label style={S.par}>
-              <span>{t.humedadVerde}</span>
+              <span>{t.humedadVerde} {info("f_hum")}</span>
               {numInput("b3_humedad_verde")}
+            </label>
+            {/* V5.153 (owner): «B3 debe incluir la opción de reportar aquí mismo el Factor de Rendimiento, la Actividad de Agua y la
+                Densidad» — los mismos campos de la Ficha (`water_activity`, `b3_densidad_verde`, `yield_factor_producer`). */}
+            <label style={S.par}>
+              <span>{t.aw} {info("f_aw")}</span>
+              {numInput("b3_actividad_agua", { step: "0.001", max: 1 })}
+            </label>
+            <label style={S.par}>
+              <span>{t.densidad} {info("f_dens")}</span>
+              {numInput("b3_densidad_verde", { step: "1" })}
             </label>
             {/* V5.135 (owner): los gramos se quedan («me gusta por simplicidad»); la (R) abre el detalle — cuál defecto es cuál. */}
             {([1, 2] as const).map((cat) => (
               <div key={cat} style={S.par}>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                  {cat === 1 ? t.defPrimario : t.defSecundario}
+                  {cat === 1 ? t.defPrimario : t.defSecundario} {info("f_def")}
                   <button type="button" onClick={() => setDetalleAbierto(detalleAbierto === cat ? null : cat)} aria-expanded={detalleAbierto === cat} title={t.detalle} aria-label={`${t.detalle}: ${cat === 1 ? t.defPrimario : t.defSecundario}`} style={{ ...S.r, ...(detalleAbierto === cat ? { background: "var(--primary, #3C0A86)", color: "#fff" } : {}) }}>
                     R
                   </button>
@@ -619,7 +653,7 @@ export function LabEvalEditor({
               </div>
             ))}
             <label style={S.par}>
-              <span>{t.color}</span>
+              <span>{t.color} {info("f_color")}</span>
               <select value={value.fa_color} onChange={(e) => onChange({ fa_color: e.target.value })} disabled={disabled} style={{ ...S.sel, maxWidth: 160 }}>
                 <option value="">—</option>
                 {COLORES_DEL_VERDE.map((o) => (
@@ -691,12 +725,19 @@ export function LabEvalEditor({
             </div>
           )}
           <div style={{ marginTop: 10, display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 13 }}>{t.factor}:</span>
-            <b style={{ fontSize: 28, lineHeight: 1 }}>{factor.yieldFactor !== null ? factor.yieldFactor.toFixed(2) : "—"}</b>
-            <span style={{ fontSize: 11.5, color: "var(--muted)" }}>{t.factorFormula}</span>
+            <span style={{ fontSize: 13 }}>{t.factor} {info("f_factor")}:</span>
+            <b style={{ fontSize: 28, lineHeight: 1 }}>{factorQueVale !== null ? factorQueVale.toFixed(2) : "—"}</b>
+            <span style={{ fontSize: 11.5, color: "var(--muted)" }}>{factor.yieldFactor !== null || factorQueVale === null ? t.factorFormula : t.factorReportadoRige}</span>
           </div>
+          {/* V5.153 (owner): el factor que el laboratorio ya calculó, tal cual lo reporta. Manda el derivado de los pesos. */}
+          <label style={{ ...S.par, marginTop: 6 }}>
+            <span>
+              {t.factorReportado} {info("f_factor_rep")} <small style={{ color: "var(--muted)" }}>· {t.factorVale}</small>
+            </span>
+            {numInput("b3_factor_reportado", { step: "0.01" })}
+          </label>
           <div style={{ marginTop: 10 }}>
-            <label style={S.lbl}>{t.notasAnalisis}</label>
+            <label style={S.lbl}>{t.notasAnalisis} {info("f_muestra")}</label>
             <textarea rows={3} value={value.analysis_notes} onChange={(e) => onChange({ analysis_notes: e.target.value })} disabled={disabled} style={{ ...S.input, fontFamily: "inherit" }} placeholder={t.notasAnalisisPh} />
           </div>
         </div>
@@ -706,7 +747,7 @@ export function LabEvalEditor({
           <table style={S.tbl}>
             <thead>
               <tr>
-                <th style={S.th}>{t.granulometria}</th>
+                <th style={S.th}>{t.granulometria} {info("f_mallas")}</th>
                 <th style={{ ...S.th, textAlign: "right", width: 90 }}>{t.peso}</th>
                 <th style={{ ...S.th, textAlign: "right", width: 56 }}>%</th>
                 <th style={{ ...S.th, width: "32%" }} aria-hidden />

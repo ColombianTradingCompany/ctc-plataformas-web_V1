@@ -499,6 +499,8 @@ const TX = {
   tazasAfect:["tazas afectadas","cups affected","betroffene Tassen"],
   /* V5.137 · los mismos campos que la planilla del Centro de Calidad */
   tazasUsadas:["Tazas usadas","Cups used","Verwendete Tassen"],
+  faRep:["Factor reportado por el laboratorio (opcional)","Factor reported by the lab (optional)","Vom Labor gemeldeter Faktor (optional)"],
+  faRepRes:["Factor de rendimiento reportado por el laboratorio: <b>{0}</b> (sin pesos de trilla; manda el derivado cuando los hay)","Yield factor reported by the lab: <b>{0}</b> (no hulling weights; the derived one governs when they exist)","Vom Labor gemeldeter Ausbeutefaktor: <b>{0}</b> (ohne Schälgewichte; der abgeleitete gilt, wenn sie vorliegen)"],
   tzTaint:["Leve · taint −2","Taint −2","Leicht · Taint −2"], tzFault:["Grave · fault −4","Fault −4","Schwer · Fault −4"],
   scaDefTaza:["Marca cada taza con defecto: leve (taint) o grave (fault), y di cuál es. Una taza sin marcar está limpia.","Mark each defective cup: taint or fault, and say which defect. An unmarked cup is clean.","Markieren Sie jede fehlerhafte Tasse: leicht (Taint) oder schwer (Fault), und nennen Sie den Fehler. Eine unmarkierte Tasse ist sauber."],
   scaDefRes:["leves: {0} · graves: {1} → {2}","taints: {0} · faults: {1} → {2}","leicht: {0} · schwer: {1} → {2}"],
@@ -575,7 +577,7 @@ const TX = {
   notasAPh:["¿Por qué esa impresión de calidad?","Why that impression of quality?","Warum dieser Qualitätseindruck?"],
   descRueda:["De la rueda","From the wheel","Aus dem Rad"],
   e1:["Extremadamente baja","Extremely low","Extrem niedrig"], e2:["Muy baja","Very low","Sehr niedrig"], e3:["Moderadamente baja","Moderately low","Mäßig niedrig"], e4:["Ligeramente baja","Slightly low","Leicht niedrig"], e5:["Ni alta ni baja","Neither high nor low","Weder hoch noch niedrig"], e6:["Ligeramente alta","Slightly high","Leicht hoch"], e7:["Moderadamente alta","Moderately high","Mäßig hoch"], e8:["Muy alta","Very high","Sehr hoch"], e9:["Extremadamente alta","Extremely high","Extrem hoch"],
-  tazasCva:["Las cinco tazas · uniformidad y defectos","The five cups · uniformity and defects","Die fünf Tassen · Gleichmäßigkeit und Fehler"],
+  tazasCva:["Las tazas · uniformidad y defectos","The cups · uniformity and defects","Die Tassen · Gleichmäßigkeit und Fehler"],
   tazaN:["Taza {0}","Cup {0}","Tasse {0}"],
   noUnif:["No uniforme","Non-uniform","Ungleichmäßig"],
   defectuosa:["Defectuosa","Defective","Fehlerhaft"],
@@ -906,6 +908,26 @@ const INFO = {
     es:["Tamaño por mallas","<p>La granulometría reparte la muestra por tamaño: el número de la malla es el diámetro del orificio en 1/64 de pulgada (malla 17 ≈ 6,75 mm). Se pesa lo que <b>retiene</b> cada malla.</p><p>Con <b>CVA</b> se llena el formato oficial, de la malla 10 a la 23. Con <b>SCA 2004</b> se usan las agrupaciones comerciales de Colombia: Supremo (17 y más), Extra (16), Europa (15), UGQ (14).</p><p>La suma debe acercarse al peso de la muestra; la diferencia es lo que no retuvo ninguna malla.</p>"],
     en:["Size by screens","<p>Screening splits the sample by size: the screen number is the hole diameter in 1/64 of an inch (screen 17 ≈ 6.75 mm). You weigh what each screen <b>retains</b>.</p><p>With <b>CVA</b> you fill in the official form, screens 10 to 23. With <b>SCA 2004</b> the Colombian commercial groupings are used: Supremo (17 and up), Extra (16), Europa (15), UGQ (14).</p><p>The sum should approach the sample weight; the difference is what no screen retained.</p>"],
     de:["Größe nach Sieben","<p>Die Siebung teilt die Probe nach Größe: Die Siebnummer ist der Lochdurchmesser in 1/64 Zoll (Sieb 17 ≈ 6,75 mm). Gewogen wird, was jedes Sieb <b>zurückhält</b>.</p><p>Bei <b>CVA</b> füllen Sie das offizielle Formular aus, Siebe 10 bis 23. Bei <b>SCA 2004</b> gelten die kolumbianischen Handelsgruppen: Supremo (17 und größer), Extra (16), Europa (15), UGQ (14).</p><p>Die Summe sollte nahe am Probengewicht liegen; die Differenz ist das, was kein Sieb zurückgehalten hat.</p>"] },
+  perfil:{ std:"SCA 103-2024 · 6.3 · práctica del catador",
+    es:["Perfil de taza · notas descriptivas","<p>El texto libre del catador: qué recuerda la taza, cómo evoluciona al enfriarse, qué la distingue. No entra en ningún puntaje.</p><p>Es el complemento de la rueda: la rueda marca <b>qué</b> se percibió (y en qué etapa, con qué intensidad); aquí se cuenta <b>cómo</b>. Un comprador lee primero el puntaje y después estas líneas.</p>"],
+    en:["Cup profile · descriptive notes","<p>The cupper's free text: what the cup recalls, how it evolves as it cools, what sets it apart. It enters no score.</p><p>It complements the wheel: the wheel marks <b>what</b> was perceived (and at which stage, with what intensity); here you tell <b>how</b>. A buyer reads the score first and then these lines.</p>"],
+    de:["Tassenprofil · beschreibende Notizen","<p>Der Freitext des Verkosters: woran die Tasse erinnert, wie sie sich beim Abkühlen entwickelt, was sie auszeichnet. Fließt in keine Punktzahl ein.</p><p>Er ergänzt das Rad: Das Rad markiert, <b>was</b> wahrgenommen wurde (in welcher Phase, mit welcher Intensität); hier wird erzählt, <b>wie</b>. Ein Käufer liest zuerst die Punktzahl und dann diese Zeilen.</p>"] },
+  f_hum:{ std:"SCA café verde · ISO 6673",
+    es:["Humedad del grano","<p>El agua que contiene el grano, en porcentaje de su peso. Para café verde de exportación el rango aceptado es <b>10–12 %</b>: por debajo el grano envejece y pierde taza; por encima, riesgo de moho y de pérdida de peso en tránsito.</p><p>La humedad del <b>pergamino</b> se mide antes de trillar (en Colombia se compra a 10–12 %); la del <b>verde</b>, después. Son dos lecturas distintas: anote cada una en su casilla.</p>"],
+    en:["Bean moisture","<p>The water held in the bean, as a percentage of its weight. For export green coffee the accepted range is <b>10–12%</b>: below it the bean ages and loses cup; above it, mould risk and weight loss in transit.</p><p><b>Parchment</b> moisture is measured before hulling (in Colombia it is bought at 10–12%); <b>green</b> moisture after. They are two different readings: record each in its own box.</p>"],
+    de:["Feuchte der Bohne","<p>Das in der Bohne enthaltene Wasser in Prozent ihres Gewichts. Für Export-Rohkaffee liegt der akzeptierte Bereich bei <b>10–12 %</b>: darunter altert die Bohne und verliert in der Tasse; darüber Schimmelrisiko und Gewichtsverlust beim Transport.</p><p>Die Feuchte des <b>Pergamino</b> wird vor dem Schälen gemessen (in Kolumbien wird bei 10–12 % gekauft); die des <b>Rohkaffees</b> danach. Zwei verschiedene Messwerte: jeden in sein Feld eintragen.</p>"] },
+  f_aw:{ std:"SCA café verde · práctica de laboratorio",
+    es:["Actividad de agua (aw)","<p>No es lo mismo que la humedad: la aw mide el agua <b>disponible</b> en el grano —la que puede usar un hongo—, en una escala de 0 a 1. Por eso anticipa el riesgo de moho mejor que el porcentaje de humedad.</p><p>Para café verde se busca <b>por debajo de 0,70</b>; por encima de 0,75 el riesgo de crecimiento de moho y de ocratoxina sube de verdad. Se mide con un equipo de aw, no con un medidor de humedad.</p>"],
+    en:["Water activity (aw)","<p>Not the same as moisture: aw measures the water <b>available</b> in the bean — the water a fungus can use — on a scale from 0 to 1. That is why it anticipates mould risk better than the moisture percentage.</p><p>For green coffee the target is <b>below 0.70</b>; above 0.75 the risk of mould growth and ochratoxin rises for real. It is measured with an aw meter, not a moisture meter.</p>"],
+    de:["Wasseraktivität (aw)","<p>Nicht dasselbe wie die Feuchte: aw misst das <b>verfügbare</b> Wasser in der Bohne – das, was ein Pilz nutzen kann – auf einer Skala von 0 bis 1. Deshalb sagt sie das Schimmelrisiko besser voraus als der Feuchteprozentsatz.</p><p>Für Rohkaffee strebt man <b>unter 0,70</b> an; über 0,75 steigt das Risiko von Schimmelwachstum und Ochratoxin tatsächlich. Gemessen wird mit einem aw-Gerät, nicht mit einem Feuchtemesser.</p>"] },
+  f_dens:{ std:"Práctica de laboratorio · café verde",
+    es:["Densidad del grano verde","<p>Masa por volumen del café verde, en <b>gramos por litro</b> (densidad aparente, medida en una probeta). Rango habitual: <b>650–800 g/L</b>.</p><p>Un grano más denso suele venir de mayor altitud y de maduración lenta: es más firme y aguanta mejor el tueste. Es un dato físico que acompaña a la taza, no la reemplaza.</p>"],
+    en:["Green bean density","<p>Mass per volume of the green coffee, in <b>grams per litre</b> (bulk density, measured in a graduated cylinder). Usual range: <b>650–800 g/L</b>.</p><p>A denser bean usually comes from higher altitude and slower ripening: it is firmer and stands up better to roasting. It is a physical datum that accompanies the cup; it does not replace it.</p>"],
+    de:["Dichte des Rohkaffees","<p>Masse pro Volumen des Rohkaffees in <b>Gramm pro Liter</b> (Schüttdichte, im Messzylinder gemessen). Üblicher Bereich: <b>650–800 g/L</b>.</p><p>Eine dichtere Bohne stammt meist aus größerer Höhe und langsamerer Reifung: Sie ist fester und verträgt die Röstung besser. Ein physischer Wert, der die Tasse begleitet, nicht ersetzt.</p>"] },
+  f_factor_rep:{ std:"Práctica colombiana (FNC) · CTCx",
+    es:["Factor de rendimiento reportado","<p>Si su laboratorio ya calculó el factor con su propio procedimiento, escríbalo aquí tal cual lo reporta. Es opcional.</p><p>Cuando hay pesos de trilla (muestra de pergamino, verde restante y defectos), <b>manda el factor derivado de esos pesos</b>; el reportado vale cuando no los hay. Los dos quedan en la planilla.</p>"],
+    en:["Reported yield factor","<p>If your lab has already calculated the factor with its own procedure, enter it here as reported. It is optional.</p><p>When hulling weights exist (parchment sample, remaining green and defects), <b>the factor derived from those weights governs</b>; the reported one counts when they are missing. Both stay on the sheet.</p>"],
+    de:["Gemeldeter Ausbeutefaktor","<p>Wenn Ihr Labor den Faktor bereits nach eigenem Verfahren berechnet hat, tragen Sie ihn hier so ein, wie er gemeldet wird. Optional.</p><p>Liegen Schälgewichte vor (Pergamino-Probe, verbleibender Rohkaffee und Defekte), <b>gilt der aus diesen Gewichten abgeleitete Faktor</b>; der gemeldete zählt, wenn sie fehlen. Beide bleiben auf dem Bogen.</p>"] },
   f_factor:{ std:"Práctica colombiana (FNC) · CTCx",
     es:["Factor de rendimiento","<p>No es del SCA ni del CVA: es la medida con la que se compra café pergamino en Colombia.</p><p><b>Factor = 70 × muestra de pergamino ÷ grano sano</b>, donde grano sano = verde tras la trilla − defectos. Con la muestra estándar de 250 g, un factor de 92 quiere decir que hacen falta 92 kg de pergamino para sacar 70 kg de café verde exportable. Cuanto más bajo, mejor rinde.</p>"],
     en:["Yield factor","<p>This is neither SCA nor CVA: it is the measure used to buy parchment coffee in Colombia.</p><p><b>Factor = 70 × parchment sample ÷ sound beans</b>, where sound beans = green after hulling − defects. With the standard 250 g sample, a factor of 92 means it takes 92 kg of parchment to obtain 70 kg of exportable green coffee. The lower, the better the yield.</p>"],
@@ -975,10 +997,13 @@ function num0(v){ const n = parseFloat(String(v==null?"":v).replace(",",".")); r
 function r2(n){ return Math.round(n*100)/100; }
 function alCuarto(x){ return r2(Math.round(x/0.25)*0.25); }
 
-function contarTazas(tazas){
-  const tz = (Array.isArray(tazas)?tazas:[]).slice(0, CVA_K.tazas);
+/** V5.153 · cuántas tazas usó el catador en el CVA: un entero de 1 a 5; cualquier otra cosa, las 5 del protocolo (como la planilla). */
+function tazasCvaUsadas(v){ const n = Number(String(v==null?"":v).replace(",",".")); return Number.isInteger(n) && n>=1 && n<=CVA_K.tazas ? n : CVA_K.tazas; }
+function contarTazas(tazas, n){
+  n = n || CVA_K.tazas;
+  const tz = (Array.isArray(tazas)?tazas:[]).slice(0, n);
   const d = tz.filter(function(x){ return x && x.defectuosa; }).length;
-  const u = d === CVA_K.tazas ? 0 : tz.filter(function(x){ return x && (x.noUniforme || x.defectuosa); }).length;
+  const u = d === n ? 0 : tz.filter(function(x){ return x && (x.noUniforme || x.defectuosa); }).length;
   const sinTipo = tz.some(function(x){ return x && x.defectuosa && !x.defecto; });
   return { u:u, d:d, sinTipo:sinTipo };
 }
@@ -993,7 +1018,7 @@ function calcCva(ev){
     if(n==null || n<CVA_K.min || n>CVA_K.max || Math.abs(n/CVA_K.paso - Math.round(n/CVA_K.paso))>1e-9){ errores.push("rango:"+k); return; } /* V5.135: cuartos de punto, como la planilla */
     cal++; suma += n;
   });
-  const tz = contarTazas(ev.cva_tazas);
+  const tz = contarTazas(ev.cva_tazas, tazasCvaUsadas(ev.cva_num_tazas)); /* V5.153: sobre las tazas usadas */
   if(tz.sinTipo) errores.push("sinTipo");
   if(cal>0 && faltan.length) errores.push("incompleta");
   const completa = cal === CVA_SEC.length && errores.length === 0;
@@ -1002,8 +1027,8 @@ function calcCva(ev){
 }
 
 /** SCA 2004: siete atributos 6,00–10,00 al 0,25, tres por taza (2 puntos cada una), menos taint×2 y fault×4. Diez completos o no hay puntaje. */
-/** V5.147 · cuántas tazas usó el catador: un entero de 1 a 10; cualquier otra cosa, las 5 del protocolo (como la planilla). */
-function tazasUsadas(v){ const n = Number(String(v==null?"":v).replace(",",".")); return Number.isInteger(n) && n>=1 && n<=10 ? n : SCA_K.tazas; }
+/** V5.147 · cuántas tazas usó el catador: un entero de 1 a 5 (V5.153; antes hasta 10); cualquier otra cosa, las 5 del protocolo (como la planilla). */
+function tazasUsadas(v){ const n = Number(String(v==null?"":v).replace(",",".")); return Number.isInteger(n) && n>=1 && n<=SCA_K.tazas ? n : SCA_K.tazas; }
 function calcSca2004(ev){
   const faltan = [], errores = []; let cal = 0, suma = 0;
   SCA_ATR.forEach(function(k){
@@ -1066,6 +1091,9 @@ function calcFactor(f){
   const sano = rem>0 ? Math.max(0, rem - num0(f.fa_primary_defect) - num0(f.fa_secondary_defect)) : 0;
   return { start:start, rem:rem, merma:merma, sano:sano, factor: sano>0 ? (70*start)/sano : null };
 }
+/** V5.153 · el factor que vale: el derivado de los pesos; si no hay pesos, el que el laboratorio reportó (`fa_factor_reportado`). */
+function factorQueVale(l){ const f = calcFactor(l); if(f.factor!=null) return f.factor; const r = numO(l.fa_factor_reportado); return r!=null && r>0 ? r2(r) : null; }
+function textoFactor(l, f){ if(f.factor!=null) return t("faRes", nf(f.factor), nf(f.sano,1), nf(f.merma,1)); const r = factorQueVale(l); return r!=null ? t("faRepRes", nf(r)) : t("faVacio"); }
 /** Cuántas casillas CATA cuentan: la madre con una hija marcada va implícita. */
 function cataCuenta(lista){
   const set = {}; (lista||[]).forEach(function(x){ set[x] = 1; });
@@ -1139,10 +1167,10 @@ function loteVacio(i){
     cva_fragrance:"", cva_aroma:"", cva_flavor:"", cva_aftertaste:"", cva_acidity:"", cva_sweetness:"", cva_mouthfeel:"", cva_overall:"",
     cva_cata_nariz:[], cva_cata_boca:[], cva_desc_nariz:[], cva_desc_boca:[], cva_gustos:[], cva_boca:[], cva_acidez:[],
     cva_n:{ fa:"", fl:"", ac:"", du:"", bo:"" }, cva_a:{ fa:"", fl:"", ac:"", du:"", bo:"", gl:"" },
-    cva_tazas:[0,1,2,3,4].map(function(){ return { noUniforme:false, defectuosa:false, defecto:"" }; }),
+    cva_tazas:[0,1,2,3,4].map(function(){ return { noUniforme:false, defectuosa:false, defecto:"" }; }), cva_num_tazas:"5",
     fis_muestra:"350", fis_humedad:"", fis_aw:"", fis_densidad:"", fis_color:"", fis_def:{}, fis_quakers:"", fis_m:{},
     mesh_supremo_plus:"", mesh_supremo:"", mesh_extra:"", mesh_europa:"", mesh_ugq:"", mesh_peaberry:"",
-    fa_start:"250", fa_green_remainder:"", fa_primary_defect:"", fa_secondary_defect:"", fa_parch_hum:"", fis_notas:"",
+    fa_start:"250", fa_green_remainder:"", fa_primary_defect:"", fa_secondary_defect:"", fa_parch_hum:"", fa_factor_reportado:"", fis_notas:"",
     ext:{ pais:"", region:"", municipio:"", finca:"", productor:"", especie:"", variedades:[{ n:"", p:"" }], cosecha:"", altitud:"", geo:"", cultivo_info:"",
       humedo:"", trilla:"", proc_otro:"", tipo:"", tipo_cual:"", descaf:"", descaf_cual:"", proc_desc:"",
       grado:"", oic:"", importador:"", exportador:"", precio:"", tamano:"", proveedor:"", nit:"", uid:"", hs:"", comercio_info:"",
@@ -1172,7 +1200,8 @@ function normLote(l, i){
   o.cva_cata_nariz = solo(o.cva_cata_nariz, esCaja); o.cva_cata_boca = solo(o.cva_cata_boca, esCaja);
   o.cva_gustos = solo(o.cva_gustos, function(x){ return GUSTOS.indexOf(x)>=0; }).slice(0, TOPE.gustos);
   o.cva_boca = solo(o.cva_boca, function(x){ return TEXTURAS.indexOf(x)>=0; }).slice(0, TOPE.textura);
-  o.cva_tazas = [0,1,2,3,4].map(function(j){ const x = (Array.isArray(o.cva_tazas) && o.cva_tazas[j]) || {}; return { noUniforme:!!x.noUniforme, defectuosa:!!x.defectuosa, defecto: DEF_CVA.indexOf(x.defecto)>=0 ? x.defecto : "" }; });
+  const nCv = tazasCvaUsadas(o.cva_num_tazas); o.cva_num_tazas = String(nCv); /* V5.153: tantas tazas CVA como se usaron (1–5) */
+  o.cva_tazas = Array.from({ length:nCv }, function(_, j){ const x = (Array.isArray(o.cva_tazas) && o.cva_tazas[j]) || {}; return { noUniforme:!!x.noUniforme, defectuosa:!!x.defectuosa, defecto: DEF_CVA.indexOf(x.defecto)>=0 ? x.defecto : "" }; });
   // V5.137 · Uniformidad, Taza limpia y Dulzor son un número (0–10 al 0,25), como en la planilla. Un archivo anterior traía
   // cinco casillas por atributo (`sca_cups`): se convierten a 2 puntos por taza marcada.
   const crudo = l && typeof l==="object" ? l : {}, viejas = crudo.sca_cups && typeof crudo.sca_cups==="object" ? crudo.sca_cups : null;
@@ -1218,6 +1247,11 @@ function evSca(l){
 }
 // V5.137 · los dos contadores que lee la fórmula salen de las cinco tazas.
 // V5.147 · al cambiar el número de tazas usadas, las que sobran se quitan y las que faltan nacen limpias.
+/** V5.153 · al cambiar el número de tazas del CVA, las que sobran se quitan y las que faltan nacen limpias. */
+function ajustaTazasCva(l){
+  const n = tazasCvaUsadas(l.cva_num_tazas); l.cva_num_tazas = String(n);
+  l.cva_tazas = Array.from({ length:n }, function(_, j){ return l.cva_tazas[j] || { noUniforme:false, defectuosa:false, defecto:"" }; });
+}
 function ajustaTazasSca(l){
   const n = tazasUsadas(l.sca_num_tazas); l.sca_num_tazas = String(n);
   l.sca_tazas = Array.from({ length:n }, function(_, j){ return l.sca_tazas[j] || { estado:"", defecto:"" }; });
@@ -1530,7 +1564,7 @@ function tarjetaRueda(){
     "<div>"+(UI.vista==="rueda" ? ruedaSVG() : listaRueda())+"</div>"+(UI.vista==="rueda" ? "<div class=\"dice-rueda\" id=\"diceRueda\">"+(IDX[UI.ultima] ? "<b>"+esc(rutaId(UI.ultima))+"</b><br>"+esc(descId(UI.ultima)) : t("pasaRueda"))+"</div>" : "")+"</div>"+
     "<div><input class=\"busca\" data-busca value=\""+esc(UI.busca)+"\" placeholder=\""+esc(t("buscar"))+"\" aria-label=\""+esc(t("buscar"))+"\"><div class=\"chips\" id=\"buscaRes\">"+buscaHTML()+"</div>"+
     "<div class=\"sub-etq\" style=\"margin-bottom:6px\">"+t("marcadas")+"</div>"+marcadasHTML()+
-    (cva ? "" : "<div class=\"campo\" style=\"margin-top:12px\"><label>"+t("notasTaza")+"</label><textarea data-k=\"sca_notas\" placeholder=\""+esc(t("notasTazaPh"))+"\" style=\"min-height:110px\">"+esc(l.sca_notas)+"</textarea></div>")+
+    (cva ? "" : "<div class=\"campo\" style=\"margin-top:12px\"><label>"+t("notasTaza")+" "+ib("perfil")+"</label><textarea data-k=\"sca_notas\" placeholder=\""+esc(t("notasTazaPh"))+"\" style=\"min-height:110px\">"+esc(l.sca_notas)+"</textarea></div>")+
     "</div></div></div></section>";
 }
 function saborSca(){
@@ -1550,7 +1584,7 @@ function saborSca(){
       (tz.estado ? "<select data-k=\"sca_tazas."+i+".defecto\" aria-label=\""+esc(t("tipoDef"))+"\"><option value=\"\">"+t("tipoDef")+"</option>"+DEF_CVA.map(function(d){ return "<option value=\""+d+"\""+(tz.defecto===d?" selected":"")+">"+t("d_"+d)+"</option>"; }).join("")+"</select>" : "")+"</div>";
   }).join("")+"</div>";
   const cabDef = "<div class=\"nota-m\">"+t("scaDefTaza")+"<br>"+t("taint")+" "+ib("sca_taint")+" &nbsp;·&nbsp; "+t("fault")+" "+ib("sca_fault")+
-    " &nbsp;·&nbsp; <label>"+t("tazasUsadas")+" <select data-k=\"sca_num_tazas\" aria-label=\""+esc(t("tazasUsadas"))+"\">"+[1,2,3,4,5,6,7,8,9,10].map(function(n){ return "<option value=\""+n+"\""+(String(n)===l.sca_num_tazas?" selected":"")+">"+n+"</option>"; }).join("")+"</select></label></div>";
+    " &nbsp;·&nbsp; <label>"+t("tazasUsadas")+" <select data-k=\"sca_num_tazas\" aria-label=\""+esc(t("tazasUsadas"))+"\">"+[1,2,3,4,5].map(function(n){ return "<option value=\""+n+"\""+(String(n)===l.sca_num_tazas?" selected":"")+">"+n+"</option>"; }).join("")+"</select></label></div>";
   return "<div class=\"puntaje\" data-o=\"puntaje\"></div>"+
     caja("1", t("fiMuestra"), "SCA 2004", "", tuesteCampo())+
     caja("2", t("scaEsc"), "SCA 2004", "sca_esc", SCA_ESC.map(filaEsc).join(""))+
@@ -1598,7 +1632,9 @@ function saborCva(){
       "<div class=\"col-d\"><div class=\"rot\">"+t("parteD")+" · SCA 103 "+(primera?ib("cva_int"):"")+"<small>"+t("parteDq")+"</small></div>"+d+"</div>"+
       "<div class=\"col-a\"><div class=\"rot\">"+t("parteA")+" · SCA 104 "+(primera?ib("cva_aff"):"")+"<small>"+t("parteAq")+"</small></div>"+a+"</div></section>";
   };
-  const tazas = "<div class=\"cva-tz\">"+l.cva_tazas.map(function(tz,i){
+  /* V5.153 (owner): también en el CVA se elige cuántas tazas se usaron (1–5). */
+  const tazas = "<div class=\"nota-m\"><label>"+t("tazasUsadas")+" <select data-k=\"cva_num_tazas\" aria-label=\""+esc(t("tazasUsadas"))+"\">"+[1,2,3,4,5].map(function(n){ return "<option value=\""+n+"\""+(String(n)===l.cva_num_tazas?" selected":"")+">"+n+"</option>"; }).join("")+"</select></label></div>"+
+    "<div class=\"cva-tz\">"+l.cva_tazas.map(function(tz,i){
     return "<div class=\"t\"><b>"+t("tazaN", i+1)+"</b><button class=\""+(tz.noUniforme||tz.defectuosa?"on":"")+"\" data-a=\"tzNu\" data-v=\""+i+"\" aria-pressed=\""+(tz.noUniforme||tz.defectuosa)+"\">"+t("noUnif")+"</button>"+
       "<button class=\"def"+(tz.defectuosa?" on":"")+"\" data-a=\"tzDef\" data-v=\""+i+"\" aria-pressed=\""+tz.defectuosa+"\">"+t("defectuosa")+"</button>"+
       (tz.defectuosa ? "<select data-k=\"cva_tazas."+i+".defecto\" aria-label=\""+esc(t("tipoDef"))+"\"><option value=\"\">"+t("tipoDef")+"</option>"+DEF_CVA.map(function(d){ return "<option value=\""+d+"\""+(tz.defecto===d?" selected":"")+">"+t("d_"+d)+"</option>"; }).join("")+"</select>" : "")+"</div>";
@@ -1638,8 +1674,8 @@ function fisico(){
   }
   const colores = [["","—"]].concat([1,2,3,4,5,6,7,8].map(function(n){ return ["c"+n, t("col"+n)]; }));
   return caja("1", t("fMuestra"), sca?"SCA":"CVA", "f_muestra",
-      "<div class=\"grid g4\">"+cL(t("fPeso"),"fis_muestra",{ tipo:"number", step:"0.1", min:0 })+cL(t("fHum"),"fis_humedad",{ tipo:"number", step:"0.1", min:0, ph:"10–12" })+
-      cL(t("fAw"),"fis_aw",{ tipo:"number", step:"0.001", min:0, ph:"< 0,70" })+cL(t("fDens"),"fis_densidad",{ tipo:"number", step:"1", min:0 })+
+      "<div class=\"grid g4\">"+cL(t("fPeso"),"fis_muestra",{ tipo:"number", step:"0.1", min:0 })+cL(t("fHum"),"fis_humedad",{ tipo:"number", step:"0.1", min:0, ph:"10–12", info:"f_hum" })+
+      cL(t("fAw"),"fis_aw",{ tipo:"number", step:"0.001", min:0, ph:"< 0,70", info:"f_aw" })+cL(t("fDens"),"fis_densidad",{ tipo:"number", step:"1", min:0, info:"f_dens" })+
       cL(t("fColor"),"fis_color",{ tipo:"sel", ops:colores, info:"f_color", cls:"s2" })+"</div>")+
     caja("2", t("fDef"), sca?"SCA":"CVA", "f_def",
       "<div class=\"grid g2\">"+tablaDef(1)+tablaDef(2)+"</div><div class=\"dato\">"+t("totDef")+": <b data-o=\"dtot\"></b></div>"+
@@ -1648,7 +1684,8 @@ function fisico(){
     caja("3", t("fTam"), sca?"Colombia":"CVA", "f_mallas", mallas+"<div data-o=\"mestado\"></div>")+
     acordeon("factor", t("factor"),
       "<div class=\"nota-m\">"+t("factorNota")+"</div><div class=\"grid g3\">"+cL(t("faStart"),"fa_start",{ tipo:"number", step:"0.1", min:0 })+cL(t("faRem"),"fa_green_remainder",{ tipo:"number", step:"0.1", min:0 })+
-      cL(t("faHum"),"fa_parch_hum",{ tipo:"number", step:"0.1", min:0 })+cL(t("faP"),"fa_primary_defect",{ tipo:"number", step:"0.1", min:0 })+cL(t("faS"),"fa_secondary_defect",{ tipo:"number", step:"0.1", min:0 })+"</div><div class=\"dato\" data-o=\"factor\"></div>",
+      cL(t("faHum"),"fa_parch_hum",{ tipo:"number", step:"0.1", min:0, info:"f_hum" })+cL(t("faP"),"fa_primary_defect",{ tipo:"number", step:"0.1", min:0 })+cL(t("faS"),"fa_secondary_defect",{ tipo:"number", step:"0.1", min:0 })+
+      cL(t("faRep"),"fa_factor_reportado",{ tipo:"number", step:"0.01", min:0, info:"f_factor_rep" })+"</div><div class=\"dato\" data-o=\"factor\"></div>",
       "<span class=\"std\">CTCx</span>"+ib("f_factor"))+
     caja("", t("fNotas"), "", "", "<div class=\"campo\"><textarea data-k=\"fis_notas\">"+esc(l.fis_notas)+"</textarea></div>");
 }
@@ -1682,7 +1719,7 @@ function fichaBasico(l){
   const f = calcFactor(l);
   return "<div class=\"f-sec\"><h3>"+t("b1Tit")+"<small>B1</small></h3><div class=\"dl\">"+
     di(t("xEspecie"), l.ext.especie)+di(t("xVariedad"), variedadesTx(l))+di(t("xTipo"), procesoTx(l))+di(t("xProcOtro"), l.ext.proc_otro)+
-    di(t("fHum"), l.fis_humedad)+di(t("fDens"), l.fis_densidad)+di(t("fAw"), l.fis_aw)+(f.factor!=null ? di(t("factor"), nf(f.factor)) : "")+"</div></div>";
+    di(t("fHum"), l.fis_humedad)+di(t("fDens"), l.fis_densidad)+di(t("fAw"), l.fis_aw)+(factorQueVale(l)!=null ? di(t("factor"), nf(factorQueVale(l))) : "")+"</div></div>";
 }
 
 /* ── Parte 3 · caracterización extrínseca ────────────────────────────────── */
@@ -1798,7 +1835,7 @@ function fichaFisico(l){
     (d.granos ? di(t("totCat",1), String(d.cat1))+di(t("totCat",2), String(d.cat2))+di(t("totDef"), String(d.total)) : "")+
     (sca ? di(t("quakers"), l.fis_quakers)+(c ? di(t("clsTit"), t("cls_"+c)) : "") : "")+lista(1)+lista(2)+
     mm.keys.map(function(k,i){ return mm.m.filas[i].g>0 ? di(mm.etqs[i], nf(mm.m.filas[i].g,1)+" g"+(mm.m.filas[i].pct!=null?" · "+nf(mm.m.filas[i].pct,1)+" %":"")) : ""; }).join("")+
-    (f.factor!=null ? di(t("factor"), nf(f.factor)) : "")+di(t("faHum"), f.factor!=null ? l.fa_parch_hum : "")+"</div>"+
+    (factorQueVale(l)!=null ? di(t("factor"), nf(factorQueVale(l))) : "")+di(t("faHum"), f.factor!=null ? l.fa_parch_hum : "")+"</div>"+
     (String(l.fis_notas||"").trim() ? "<p class=\"prosa\" style=\"margin-top:8px\">"+esc(l.fis_notas)+"</p>" : "")+"</div>";
 }
 function variedadesTx(l){ return l.ext.variedades.filter(function(v){ return v.n.trim(); }).map(function(v){ return (v.p ? v.p+" % " : "")+v.n; }).join(" · "); }
@@ -1892,9 +1929,9 @@ function derivados(){
       const sobre = function(n){ let p = 0; MALLAS_CVA.forEach(function(x,i){ if(x>=n && m.filas[i].pct!=null) p += m.filas[i].pct; }); return nf(p,1); };
       D.macum = hay ? t("mAcum", sobre(17), sobre(15), sobre(14)) : "";
     }
-    D.factor = f.factor!=null ? t("faRes", nf(f.factor), nf(f.sano,1), nf(f.merma,1)) : t("faVacio");
+    D.factor = textoFactor(l, f);
   }
-  if(UI.tab==="basico"){ const f = calcFactor(l); D.factor = f.factor!=null ? t("faRes", nf(f.factor), nf(f.sano,1), nf(f.merma,1)) : t("faVacio"); }
+  if(UI.tab==="basico"){ const f = calcFactor(l); D.factor = textoFactor(l, f); }
   if(UI.tab==="extr" || UI.tab==="basico"){
     let tot = 0, hayP = false;
     if(UI.tab==="extr"){
@@ -2056,6 +2093,7 @@ document.addEventListener("change", function(ev){
   const el = ev.target; if(!el || !el.dataset || el.dataset.k==null || el.tagName!=="SELECT") return;
   poner(lote(), el.dataset.k, el.value);
   if(el.dataset.k==="sca_num_tazas"){ ajustaTazasSca(lote()); pintarPanel(); cambio(); return; } /* V5.147: cambia cuántas tazas se pintan */
+  if(el.dataset.k==="cva_num_tazas"){ ajustaTazasCva(lote()); pintarPanel(); cambio(); return; } /* V5.153: lo mismo en el CVA */
   refrescar(); cambio();
 });
 document.addEventListener("keydown", function(ev){

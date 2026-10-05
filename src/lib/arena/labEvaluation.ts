@@ -66,7 +66,15 @@ export const CVA_DEFECTOS: readonly [id: string, label: string][] = [
 
 export type CvaTaza = { noUniforme: boolean; defectuosa: boolean; defecto: string };
 export const TAZA_LIMPIA: CvaTaza = { noUniforme: false, defectuosa: false, defecto: "" };
-const tazasLimpias = (): CvaTaza[] => Array.from({ length: CVA.tazas }, () => ({ ...TAZA_LIMPIA }));
+// V5.153 (owner, 2026-10-05): «en la versión CVA no puedo elegir el número de tazas usadas… debe ser de 1 a 5 (igualmente
+// en SCA)». Las tazas del CVA son hasta cinco (SCA-104); el catador dice cuántas usó y la planilla tiene esas para marcar.
+export const TAZAS_CVA = { min: 1, max: CVA.tazas, porDefecto: CVA.tazas } as const;
+/** Cuántas tazas usó el catador en el CVA: un entero de 1 a 5; cualquier otra cosa, las 5 del protocolo. */
+export function tazasCvaUsadas(v: unknown): number {
+  const n = Number(String(v ?? "").replace(",", "."));
+  return Number.isInteger(n) && n >= TAZAS_CVA.min && n <= TAZAS_CVA.max ? n : TAZAS_CVA.porDefecto;
+}
+const tazasLimpias = (n: number = CVA.tazas): CvaTaza[] => Array.from({ length: n }, () => ({ ...TAZA_LIMPIA }));
 
 export type CvaFields = {
   cva_fragrance: string;
@@ -77,12 +85,14 @@ export type CvaFields = {
   cva_sweetness: string;
   cva_mouthfeel: string;
   cva_overall: string;
-  /** Las cinco tazas: no uniforme · defectuosa (con su tipo). u y d se DERIVAN de aquí. */
+  /** Las tazas (hasta cinco): no uniforme · defectuosa (con su tipo). u y d se DERIVAN de aquí. */
   cva_tazas: CvaTaza[];
+  /** V5.153: cuántas tazas usó el catador (1–5; sin dato, 5). */
+  cva_num_tazas?: string;
 };
 
 /** Lo que el formulario SCA 2004 tiene además de los diez atributos: los defectos por taza (taint × 2 · fault × 4). */
-export type Sca2004Extra = { sca_taint_cups: string; sca_fault_cups: string; /** V5.147: cuántas tazas usó el catador (1–10; sin dato, 5). */ sca_num_tazas?: string };
+export type Sca2004Extra = { sca_taint_cups: string; sca_fault_cups: string; /** V5.147: cuántas tazas usó el catador (1–5 desde la V5.153; sin dato, 5). */ sca_num_tazas?: string };
 
 // V5.135 (owner, 2026-10-01): los defectos de taza del SCA 2004 se anotan TAZA A TAZA, con el mismo selector que la taza
 // defectuosa del CVA — limpia · taint · fault, y el tipo de defecto—. Los dos contadores (`sca_taint_cups` · `sca_fault_cups`)
@@ -90,10 +100,11 @@ export type Sca2004Extra = { sca_taint_cups: string; sca_fault_cups: string; /**
 export type EstadoDeTazaSca = "" | "taint" | "fault";
 export type ScaTaza = { estado: EstadoDeTazaSca; defecto: string };
 // V5.147 (owner, 2026-10-02): «en "Defectos de taza, taza a taza", permite elegir el número de tazas usadas». El protocolo
-// pide cinco, pero un laboratorio cata con las que la muestra le da: de 1 a 10. Sin dato (planillas anteriores), cinco.
-// El número fija cuántas tazas hay para marcar y el tope de tazas con defecto; el castigo sigue siendo por taza (×2 · ×4).
-export const TAZAS_SCA = { min: 1, max: 10, porDefecto: 5 } as const;
-/** Cuántas tazas usó el catador: un entero de 1 a 10; cualquier otra cosa, las 5 del protocolo. */
+// pide cinco, pero un laboratorio cata con las que la muestra le da. V5.153 (owner): de 1 a 5 — el formulario 2004 es de
+// cinco tazas (Uniformidad, Taza limpia y Dulzor valen 2 puntos por taza), así que más de cinco no tiene lectura. Sin dato
+// (planillas anteriores), cinco. El número fija cuántas tazas hay para marcar y el tope de tazas con defecto.
+export const TAZAS_SCA = { min: 1, max: 5, porDefecto: 5 } as const;
+/** Cuántas tazas usó el catador: un entero de 1 a 5; cualquier otra cosa, las 5 del protocolo. */
 export function tazasUsadas(v: unknown): number {
   const n = Number(String(v ?? "").replace(",", "."));
   return Number.isInteger(n) && n >= TAZAS_SCA.min && n <= TAZAS_SCA.max ? n : TAZAS_SCA.porDefecto;
@@ -141,6 +152,14 @@ export type LabEvaluation = ScaFields &
     sca_tazas: ScaTaza[];
     /** V5.147: cuántas tazas se usaron (`tazasUsadas`). Es una elección del catador, no un dato de la muestra. */
     sca_num_tazas: string;
+    /** V5.153: cuántas tazas se usaron en el CVA (`tazasCvaUsadas`). */
+    cva_num_tazas: string;
+    /** V5.153 (owner) · B3: lo que el laboratorio REPORTA del grano verde además de los pesos — el factor de rendimiento que
+     *  él mismo calculó, la actividad de agua (aW) y la densidad (g/L). Los mismos campos de la Ficha (`yield_factor_producer`,
+     *  `water_activity`, `b3_densidad_verde`). El factor derivado de los pesos manda; el reportado vale cuando no hay pesos. */
+    b3_factor_reportado: string;
+    b3_actividad_agua: string;
+    b3_densidad_verde: string;
     /** V5.135 · B3: el color del grano verde y el detalle de los defectos (granos por defecto; claves de `fisico.ts`). */
     fa_color: string;
     defectos_detalle: Record<string, string>;
@@ -171,6 +190,8 @@ export const EMPTY_LAB_EVALUATION: LabEvaluation = {
   rueda_detalle: {},
   sca_tazas: scaTazasLimpias(),
   sca_num_tazas: String(TAZAS_SCA.porDefecto),
+  cva_num_tazas: String(TAZAS_CVA.porDefecto),
+  b3_factor_reportado: "", b3_actividad_agua: "", b3_densidad_verde: "",
   fa_color: "", defectos_detalle: {},
   acidez_intensidad: "", acidez_tipo: "", boca_intensidad: "", boca_texturas: [], acidez_nota: "", boca_nota: "",
   fa_start: "", fa_green_remainder: "", fa_primary_defect: "", fa_secondary_defect: "",
@@ -187,18 +208,19 @@ const numOr = (v: string | number | null | undefined): number | null => {
 };
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
-/** Cinco tazas siempre. Acepta la lista nueva y los dos contadores de la V5.81 (`cva_nonuniform` · `cva_defective`), que se reparten taza a taza. */
-export function normalizaTazas(raw: unknown, uViejo?: unknown, dViejo?: unknown): CvaTaza[] {
-  const out = tazasLimpias();
+/** Tantas tazas como diga `n` (cinco si no se dice). Acepta la lista nueva —se recorta o se completa con tazas limpias— y los
+ *  dos contadores de la V5.81 (`cva_nonuniform` · `cva_defective`), que se reparten taza a taza. */
+export function normalizaTazas(raw: unknown, uViejo?: unknown, dViejo?: unknown, n: number = CVA.tazas): CvaTaza[] {
+  const out = tazasLimpias(n);
   if (Array.isArray(raw)) {
-    raw.slice(0, CVA.tazas).forEach((t, i) => {
+    raw.slice(0, n).forEach((t, i) => {
       const x = (t ?? {}) as Partial<CvaTaza>;
       out[i] = { noUniforme: Boolean(x.noUniforme), defectuosa: Boolean(x.defectuosa), defecto: String(x.defecto ?? "") };
     });
     return out;
   }
-  const u = Math.min(CVA.tazas, Math.max(0, Math.trunc(numOr(uViejo as string) ?? 0)));
-  const d = Math.min(CVA.tazas, Math.max(0, Math.trunc(numOr(dViejo as string) ?? 0)));
+  const u = Math.min(n, Math.max(0, Math.trunc(numOr(uViejo as string) ?? 0)));
+  const d = Math.min(n, Math.max(0, Math.trunc(numOr(dViejo as string) ?? 0)));
   for (let i = 0; i < d; i++) out[i] = { noUniforme: true, defectuosa: true, defecto: "otro" };
   for (let i = 0; i < u; i++) out[i] = { ...out[i], noUniforme: true };
   return out;
@@ -219,13 +241,19 @@ export function toLabEvaluation(raw: unknown): LabEvaluation {
   const scaTazas = normalizaScaTazas(r.sca_tazas, r.sca_taint_cups, r.sca_fault_cups, numTazas);
   const cuenta = contarScaTazas(scaTazas);
   const contadores = Array.isArray(r.sca_tazas) ? { sca_taint_cups: cuenta.taint ? String(cuenta.taint) : "", sca_fault_cups: cuenta.fault ? String(cuenta.fault) : "" } : {};
+  const numTazasCva = tazasCvaUsadas(r.cva_num_tazas);
+  const texto = (v: unknown): string => (typeof v === "string" || typeof v === "number" ? String(v) : "");
   return {
     ...EMPTY_LAB_EVALUATION,
     ...r,
     ...contadores,
     escala,
     vista,
-    cva_tazas: normalizaTazas(r.cva_tazas, cva_nonuniform, cva_defective),
+    cva_tazas: normalizaTazas(r.cva_tazas, cva_nonuniform, cva_defective, numTazasCva),
+    cva_num_tazas: String(numTazasCva),
+    b3_factor_reportado: texto(r.b3_factor_reportado),
+    b3_actividad_agua: texto(r.b3_actividad_agua),
+    b3_densidad_verde: texto(r.b3_densidad_verde),
     rueda,
     rueda_detalle: normalizaDetalle(r.rueda_detalle, rueda),
     sca_tazas: scaTazas,
@@ -257,8 +285,8 @@ export function labEvaluationHasData(ev: LabEvaluation): boolean {
   // valores; `false` y «» no cuentan (una taza limpia, un detalle vacío). El detalle de las marcas no es un dato por sí solo.
   const tieneDato = (v: unknown): boolean =>
     Array.isArray(v) ? v.some(tieneDato) : v && typeof v === "object" ? Object.values(v).some(tieneDato) : typeof v === "boolean" ? v : String(v ?? "").trim() !== "";
-  // `sca_num_tazas` es una elección (como la escala y la vista): por sí solo no es un dato.
-  return Object.entries(ev).some(([k, v]) => k !== "escala" && k !== "vista" && k !== "rueda_detalle" && k !== "sca_num_tazas" && tieneDato(v));
+  // `sca_num_tazas` y `cva_num_tazas` son elecciones (como la escala y la vista): por sí solos no son un dato.
+  return Object.entries(ev).some(([k, v]) => k !== "escala" && k !== "vista" && k !== "rueda_detalle" && k !== "sca_num_tazas" && k !== "cva_num_tazas" && tieneDato(v));
 }
 
 // ── CVA · la evaluación afectiva (SCA-104) ────────────────────────────────────
@@ -270,10 +298,11 @@ export function labEvaluationHasData(ev: LabEvaluation): boolean {
 // no se recorta. (Así lo corrigió el Q-Grader el 2026-09-25 sobre la V5.81, que fundía Fragancia/Aroma y doblaba la general.)
 
 // V5.130: los mensajes salen en el idioma de la planilla (`planillaI18n.ts`); por defecto, español, como siempre.
-export function contarTazas(tazas: readonly CvaTaza[], lang: IdiomaDePlanilla = "es"): { u: number; d: number; errores: string[] } {
-  const t = tazas.slice(0, CVA.tazas);
+export function contarTazas(tazas: readonly CvaTaza[], lang: IdiomaDePlanilla = "es", n: number = CVA.tazas): { u: number; d: number; errores: string[] } {
+  // V5.153: sobre las tazas USADAS (1–5): todas defectuosas por igual ⇒ u = 0, sea cual sea el número.
+  const t = tazas.slice(0, n);
   const d = t.filter((x) => x.defectuosa).length;
-  const u = d === CVA.tazas ? 0 : t.filter((x) => x.noUniforme || x.defectuosa).length;
+  const u = d === n ? 0 : t.filter((x) => x.noUniforme || x.defectuosa).length;
   const errores = t.some((x) => x.defectuosa && !x.defecto) ? [PL[lang].errTazaSinTipo] : [];
   return { u, d, errores };
 }
@@ -300,7 +329,7 @@ export function computeCva(ev: CvaFields, lang: IdiomaDePlanilla = "es"): Result
     calificadas++;
     suma += n;
   }
-  const tazas = contarTazas(Array.isArray(ev.cva_tazas) ? ev.cva_tazas : [], lang);
+  const tazas = contarTazas(Array.isArray(ev.cva_tazas) ? ev.cva_tazas : [], lang, tazasCvaUsadas(ev.cva_num_tazas));
   errores.push(...tazas.errores);
   if (calificadas > 0 && faltan.length) errores.push(PL[lang].errCvaIncompleto(faltan.length, CVA_SECCIONES.length, faltan.join(", ")));
   const completa = calificadas === CVA_SECCIONES.length && errores.length === 0;
@@ -404,6 +433,15 @@ export function protocoloDelPunto(ev: LabEvaluation): EscalaSensorial {
 /** El puntaje que RIGE (el piso del Punto), o null si la planilla no tiene Punto. */
 export function labEvaluationScore(ev: LabEvaluation): number | null {
   return puntoDeLaPlanilla(ev)?.bajo ?? null;
+}
+
+/** V5.153: el factor de rendimiento que VALE — el derivado de los pesos (`computeFactor`) manda; si no hay pesos, el que el
+ *  laboratorio reportó en B3 (`b3_factor_reportado`). null si no hay ninguno. */
+export function factorDeLaPlanilla(ev: LabEvaluation): number | null {
+  const derivado = computeFactor(ev).yieldFactor;
+  if (derivado != null) return derivado;
+  const reportado = numOr(ev.b3_factor_reportado);
+  return reportado != null && reportado > 0 ? r2(reportado) : null;
 }
 
 /** Los valores por atributo/sección que se guardan como `sca_data` (números): los dos bloques que cuenten y estén calificados. */

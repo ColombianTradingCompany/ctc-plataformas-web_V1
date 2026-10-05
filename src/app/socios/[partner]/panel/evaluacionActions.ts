@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { getPartnerIdentity } from "@/lib/partners/requirePartner";
-import { erroresDePlanilla, labEvaluationHasData, labEvaluationScaData, protocoloDelPunto, puntoDeLaPlanilla, computeFactor, toLabEvaluation, type LabEvaluation } from "@/lib/arena/labEvaluation";
+import { erroresDePlanilla, factorDeLaPlanilla, labEvaluationHasData, labEvaluationScaData, protocoloDelPunto, puntoDeLaPlanilla, toLabEvaluation, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import { rotuloDelPunto } from "@/lib/arena/homologacion";
 import { normalizaDetalle, normalizaRueda } from "@/lib/catacion/rueda";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
@@ -103,14 +103,13 @@ export async function registrarEvaluacion(lotId: string, raw: LabEvaluation, not
     .eq("status", "pending");
   if ((yaRegistrada ?? 0) > 0) return { ok: false, error: "Este lote ya está dado de alta — CTC lo confirma o se lo devuelve." };
 
-  const factor = computeFactor(ev);
   const { error } = await service.from("lot_evaluations").insert({
     lot_id: lotId,
     source: "q_grader_batch",
     status: "pending",
     sca_total: puntaje,
     sca_data: labEvaluationScaData(ev),
-    factor_rendimiento: factor.yieldFactor,
+    factor_rendimiento: factorDeLaPlanilla(ev), // V5.153: el derivado de los pesos; si no hay pesos, el reportado en B3
     physical_data: {
       tipo: "centro_calidad",
       escala: protocoloDelPunto(ev),
@@ -121,6 +120,9 @@ export async function registrarEvaluacion(lotId: string, raw: LabEvaluation, not
       fa_secondary_defect: ev.fa_secondary_defect,
       fa_parch_hum: ev.fa_parch_hum,
       b3_humedad_verde: ev.b3_humedad_verde, // V5.144: la humedad del verde
+      b3_factor_reportado: ev.b3_factor_reportado, // V5.153: lo que el laboratorio reporta del verde
+      b3_actividad_agua: ev.b3_actividad_agua,
+      b3_densidad_verde: ev.b3_densidad_verde,
       mesh_supremo_plus: ev.mesh_supremo_plus,
       mesh_supremo: ev.mesh_supremo,
       mesh_extra: ev.mesh_extra,

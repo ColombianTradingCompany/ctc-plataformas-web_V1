@@ -67,13 +67,15 @@ export function RadarDeTaza({ ejes, max, marcas, color = "#3C0A86" }: { ejes: Ej
 }
 
 // ── La «i»: una explicación corta que se abre al tocarla ─────────────────────────────────────────────────────────────
-export function Info({ texto }: { texto: string }) {
+// V5.153 (owner): «incluye "i" en todos los conceptos» — la misma pieza, ahora con el título del concepto y la norma que lo
+// respalda (los textos vienen de la herramienta, `planillaInfo.ts`). Con scroll si el texto es largo.
+export function Info({ texto, titulo, std }: { texto: string; titulo?: string; std?: string }) {
   const [abierto, setAbierto] = useState(false);
   return (
     <span style={{ position: "relative", display: "inline-flex" }}>
       <button
         type="button"
-        aria-label={texto}
+        aria-label={titulo ? `${titulo}: ${texto}` : texto}
         aria-expanded={abierto}
         onClick={() => setAbierto((v) => !v)}
         onBlur={() => setAbierto(false)}
@@ -82,8 +84,10 @@ export function Info({ texto }: { texto: string }) {
         i
       </button>
       {abierto && (
-        <span role="tooltip" style={{ position: "absolute", zIndex: 5, top: 22, left: 0, width: 270, background: "var(--ink)", color: "#fff", borderRadius: 8, padding: "8px 10px", fontSize: 12, fontWeight: 400, lineHeight: 1.4, boxShadow: "0 6px 18px rgba(0,0,0,.25)" }}>
+        <span role="tooltip" onMouseDown={(e) => e.preventDefault()} style={{ position: "absolute", zIndex: 5, top: 22, left: 0, width: 320, maxHeight: 300, overflowY: "auto", background: "var(--ink)", color: "#fff", borderRadius: 8, padding: "8px 10px", fontSize: 12, fontWeight: 400, lineHeight: 1.45, boxShadow: "0 6px 18px rgba(0,0,0,.25)", whiteSpace: "pre-line", textAlign: "left" }}>
+          {titulo && <b style={{ display: "block", marginBottom: 3 }}>{titulo}</b>}
           {texto}
+          {std && <small style={{ display: "block", marginTop: 5, opacity: 0.75 }}>{std}</small>}
         </span>
       )}
     </span>

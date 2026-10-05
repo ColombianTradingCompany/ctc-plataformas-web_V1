@@ -540,4 +540,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `app/ocp/(app)/nominados/{NominadosClient,CircuitoVista}.tsx` (`ConfirmarCentroControls` con `planilla`, `codigoInterno`, `reporte`).
 - ADD `app/socios/[partner]/panel/evaluacion/PestanasDeBaches.tsx`; ANN `evaluacion/page.tsx` (también los baches cerrados; `<details>`).
 - ANN `scripts/qa-centro-calidad-check.mjs`, `docs/componentes/{consolas,socios}.md`.
-(commit: pendiente)
+(commit: 41178b8)

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.155] — 2026-10-06 (commit pendiente)
+## [V5.155] — 2026-10-06 (commit 41178b8)
 
 - **Cambiado**: en el OCP, «Lotes en Evaluación», el alta del Centro ya no se confirma a ciegas (owner, 2026-10-06: «no hay
   forma de ver el trabajo hecho»): el botón es ahora **«Abrir el informe del Centro y decidir…»** — Q-Grader, Punto, código

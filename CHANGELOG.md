@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.172] — 2026-10-06 (commit pendiente)
+## [V5.172] — 2026-10-06 (commit 9458215)
 
 - **Cambiado**: **«Confirmar la oferta» (OCP · Pendiente de Oferta) deja ver que las cifras son dinero y kilos, y que se cambian**
   (owner, 2026-10-06: «no hace muy claro que los números son dinero y que se pueden cambiar, igual que la cantidad»). El precio

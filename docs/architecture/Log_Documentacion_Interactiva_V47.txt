@@ -614,4 +614,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-06] V5.172 · «Confirmar la oferta»: las cifras se ven como dinero y kilos editables
 - ANN `app/ocp/(app)/ofertas/OfertaDesplegable.tsx`, `src/components/panel/shared.module.css`, `scripts/qa-trato-check.mjs`, `docs/componentes/consolas.md`.
-(commit: pendiente)
+(commit: 9458215)

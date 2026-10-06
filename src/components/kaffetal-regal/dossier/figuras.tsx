@@ -206,62 +206,6 @@ export function Medidor({ valor, min, max, rango, decimales = 1, unidad = "", lo
   );
 }
 
-/** La regla de altitud: de 0 a 2.500 m, con la finca marcada. */
-export function ReglaDeAltitud({ metros, etiqueta, loc = "es-CO" }: { metros: number; etiqueta: string; loc?: string }) {
-  const H = 150;
-  const TOPE = 2500;
-  const y = (m: number) => H - (Math.min(TOPE, Math.max(0, m)) / TOPE) * H;
-  return (
-    <svg viewBox={`-4 -10 120 ${H + 20}`} width="100%" role="img" aria-label={etiqueta} style={{ display: "block" }}>
-      <rect x={34} y={y(metros)} width={14} height={H - y(metros)} fill={MORADO} />
-      <rect x={34} y={0} width={14} height={y(metros)} fill={MORADO_TINTE} />
-      {[0, 500, 1000, 1500, 2000, 2500].map((m) => (
-        <g key={m}>
-          <line x1={28} y1={y(m)} x2={34} y2={y(m)} stroke={TINTA_SUAVE} strokeWidth={0.7} />
-          <text x={24} y={y(m) + 3} fontSize={7.5} fill={TINTA_SUAVE} textAnchor="end">
-            {m.toLocaleString(loc)}
-          </text>
-        </g>
-      ))}
-      <line x1={48} y1={y(metros)} x2={58} y2={y(metros)} stroke={TINTA} strokeWidth={1} />
-      <text x={61} y={y(metros) + 4} fontSize={12} fontWeight={700} fill={TINTA}>
-        {metros.toLocaleString(loc)} m
-      </text>
-    </svg>
-  );
-}
-
-/** La composición varietal: una barra al 100 % repartida por variedad. */
-export function Composicion({ variedades }: { variedades: { nombre: string; pct: number | null }[] }) {
-  const conPct = variedades.filter((v) => v.pct != null && v.pct > 0);
-  const lista = conPct.length ? conPct : variedades.map((v) => ({ ...v, pct: 100 / Math.max(1, variedades.length) }));
-  if (!lista.length) return null;
-  const total = lista.reduce((s, v) => s + (v.pct ?? 0), 0) || 1;
-  const tonos = [MORADO, "#7A4FC2", "#B49BE0", "#D9CDF1"];
-  // Las posiciones se calculan antes de pintar (nada se reasigna durante el render).
-  const anchos = lista.map((v) => ((v.pct ?? 0) / total) * 400);
-  const inicios = anchos.map((_, i) => anchos.slice(0, i).reduce((a, b) => a + b, 0));
-  return (
-    <svg viewBox="0 0 400 34" width="100%" role="img" aria-label="Composición varietal" style={{ display: "block" }}>
-      {lista.map((v, i) => {
-        const w = anchos[i];
-        const x0 = inicios[i];
-        const claro = i >= 2;
-        return (
-          <g key={v.nombre + i}>
-            <rect x={x0} y={0} width={w} height={20} fill={tonos[i % tonos.length]} stroke="#fff" strokeWidth={1} />
-            {w > 60 && (
-              <text x={x0 + 6} y={14} fontSize={9} fill={claro ? TINTA : "#fff"} fontWeight={600}>
-                {v.nombre} {Math.round(v.pct ?? 0)}%
-              </text>
-            )}
-          </g>
-        );
-      })}
-    </svg>
-  );
-}
-
 /** Una barra de intensidad de 0 a 15 (la escala de la rueda). */
 export function Intensidad({ valor, color }: { valor: number; color: string }) {
   return (
@@ -379,6 +323,70 @@ export function MatrizDeRespaldo({ columnas, filas }: { columnas: string[]; fila
           </g>
         );
       })}
+    </svg>
+  );
+}
+
+// ── V5.167 (owner): ilustraciones conceptuales, minimalistas, en trazo de la marca ──────────────────────────────────────
+// «Utiliza imágenes minimalistas conceptuales para enriquecer las visuales […] como en "Altitud de la finca sobre el nivel
+// del mar" puede tener una silueta de montaña.» Dibujos de pocas formas, un solo color (el morado CTCx en tintes): acompañan
+// a los datos, no los reemplazan.
+
+/** La altitud de la finca sobre una silueta de montañas: tres cordilleras en tintes, la cota de la finca y su marca. */
+export function AltitudEnLaMontana({ metros, etiqueta, loc = "es-CO" }: { metros: number; etiqueta: string; loc?: string }) {
+  const W = 240;
+  const H = 150;
+  const TOPE = 2600;
+  const y = (m: number) => H - (Math.min(TOPE, Math.max(0, m)) / TOPE) * H;
+  const yf = y(metros);
+  return (
+    <svg viewBox={`-30 -12 ${W + 34} ${H + 22}`} width="100%" role="img" aria-label={etiqueta} style={{ display: "block" }}>
+      <polygon points={`0,${H} 0,${y(900)} 40,${y(1500)} 75,${y(1100)} 120,${y(2300)} 160,${y(1600)} 200,${y(2000)} ${W},${y(1300)} ${W},${H}`} fill={MORADO} fillOpacity={0.1} />
+      <polygon points={`0,${H} 0,${y(600)} 55,${y(1350)} 100,${y(900)} 150,${y(1750)} 205,${y(1050)} ${W},${y(1400)} ${W},${H}`} fill={MORADO} fillOpacity={0.2} />
+      <polygon points={`0,${H} 0,${y(300)} 45,${y(700)} 95,${y(400)} 140,${y(1000)} 190,${y(500)} ${W},${y(800)} ${W},${H}`} fill={MORADO} fillOpacity={0.38} />
+      {[0, 500, 1000, 1500, 2000, 2500].map((m) => (
+        <g key={m}>
+          <line x1={-4} y1={y(m)} x2={0} y2={y(m)} stroke={TINTA_SUAVE} strokeWidth={0.7} />
+          <text x={-7} y={y(m) + 3} fontSize={7.5} fill={TINTA_SUAVE} textAnchor="end">
+            {m.toLocaleString(loc)}
+          </text>
+        </g>
+      ))}
+      <line x1={0} y1={yf} x2={W} y2={yf} stroke={TINTA} strokeWidth={1} strokeDasharray="3 3" />
+      <circle cx={150} cy={yf} r={4.5} fill={TINTA} />
+      <text x={158} y={yf - 6} fontSize={13} fontWeight={700} fill={TINTA}>
+        {metros.toLocaleString(loc)} m
+      </text>
+    </svg>
+  );
+}
+
+/** Una taza de catación vista de lado, con su plato y el vapor: la cabecera del perfil de taza. */
+export function IlustracionTaza() {
+  return (
+    <svg viewBox="0 0 120 100" width="100%" aria-hidden style={{ display: "block" }}>
+      <path d="M44 22c-6 6 6 10 0 16M60 18c-6 6 6 10 0 16M76 22c-6 6 6 10 0 16" fill="none" stroke={MORADO} strokeOpacity={0.45} strokeWidth={2.2} strokeLinecap="round" />
+      <path d="M28 44h64v10c0 18-14 30-32 30S28 72 28 54z" fill={MORADO} fillOpacity={0.12} stroke={MORADO} strokeWidth={2.4} strokeLinejoin="round" />
+      <path d="M92 50h4a9 9 0 0 1 0 18h-6" fill="none" stroke={MORADO} strokeWidth={2.4} strokeLinecap="round" />
+      <ellipse cx={60} cy={44} rx={32} ry={4} fill={MORADO} fillOpacity={0.35} />
+      <path d="M14 90h92" stroke={MORADO} strokeWidth={2.4} strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Tres granos: pergamino, verde y grano sano (el camino del análisis físico). */
+export function IlustracionGranos() {
+  const grano = (cx: number, relleno: string, opacidad: number, rot: number) => (
+    <g transform={`rotate(${rot} ${cx} 50)`}>
+      <ellipse cx={cx} cy={50} rx={15} ry={22} fill={relleno} fillOpacity={opacidad} stroke={MORADO} strokeWidth={2.2} />
+      <path d={`M${cx} 30c-7 8 7 14 0 20s7 12 0 20`} fill="none" stroke={MORADO} strokeWidth={2.2} strokeLinecap="round" />
+    </g>
+  );
+  return (
+    <svg viewBox="0 0 136 100" width="100%" aria-hidden style={{ display: "block" }}>
+      {grano(22, "#ffffff", 1, -14)}
+      {grano(68, MORADO, 0.15, 0)}
+      {grano(114, MORADO, 0.4, 14)}
     </svg>
   );
 }

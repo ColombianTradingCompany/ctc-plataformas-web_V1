@@ -152,6 +152,11 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.167 · el dossier sin ajuste CTCx, en CTCx, con la taza segunda, el grado con imagen y variedades, ilustraciones y
+  conjeturas; «Ver el Dossier del lote» en Mis Lotes** (owner, 2026-10-06; ejecutado desde WRAP-COMMIT-PUSH). Decisión del owner:
+  **el productor no ve el ajuste CTCx** en el dossier (va dentro de los puntos, sin nombrarse). Las conjeturas viven en
+  `src/lib/kaffetal/conjeturas.ts` (reglas con su evidencia; se redactan como hipótesis). El orden de hojas está en
+  `ORDEN_DE_HOJAS` (`DossierCtcx.tsx`). Abierto: el barrido «CTC» → «CTCx» del resto de la plataforma (tarea aparte).
 - **V5.166 · el dossier del lote con formato CTCx, por hojas A4, con la Visa EUDR dentro** (owner, 2026-10-06; ejecutado desde
   WRAP-COMMIT-PUSH). Datos: `src/lib/kaffetal/dossierDatos.ts` (`cargarDossier`); documento: `components/kaffetal-regal/dossier/`
   (`DossierCtcx`, figuras SVG en `figuras.tsx`, textos ES/EN en `textos.ts`, hojas A4 en `dossier.module.css`). Una hoja nueva

@@ -20,9 +20,11 @@ import { evaluacionQueRige } from "@/lib/evaluations";
 import { rowToLotFicha, type FichaTecnicaData } from "@/lib/fichas/tipos";
 import { puntoDeFila, type PuntoSca } from "@/lib/arena/homologacion";
 import { triadaDeLaFicha, type TriadaDelLote } from "@/lib/pvc/triadaDelLote";
-import type { Puntaje } from "@/lib/pvc/escala";
 import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { caracterizacionDelDossier, planillaDeEvaluacion, type DossierCaracterizacion, type Lang } from "@/lib/kaffetal/dossierEvaluacion";
+import { conjeturasDelLote, lecturaDeLaRueda, type Conjetura, type LecturaDeLaRueda } from "@/lib/kaffetal/conjeturas";
+import { fichaDeVariedad, rangoDeAltitud, GRANO_LABEL } from "@/lib/catacion/variedades";
+import { IMAGEN_DE_ORIGEN_POR_DEFECTO } from "@/lib/imagenDeOrigen";
 
 export type { Lang };
 
@@ -91,8 +93,21 @@ export type DossierCtcxData = {
     grado: Grado | null;
     punto: PuntoSca | null;
     triada: TriadaDelLote;
-    puntaje: Puntaje | null;
+    /** V5.167 (owner): «que el productor no vea el ajuste CTCx en el dossier». Solo el multiplicador de la tríada y los
+     *  puntos finales; el ajuste (si lo hubo) va dentro de `puntos` y no se nombra en ninguna parte del documento. */
+    puntaje: { puntos: number; mult: number } | null;
   };
+  /** V5.167: la imagen de la hoja del grado: una foto del lote, o una del productor que no se haya usado, o la de CTCx. */
+  imagenGrado: { url: string; porDefecto: boolean };
+  /** V5.167: cada variedad del lote con su ficha del Mapa de Variedades (si la herramienta la tiene). */
+  variedadesInfo: {
+    nombre: string;
+    pct: number | null;
+    ficha: { nombre: string; grupo: string; tipo: string; color: string; lugar: string; historia: string; altitud: [number, number] | null; grano: string | null; notas: string[] } | null;
+  }[];
+  /** V5.167: la lectura de la rueda (como el reporte de la herramienta) y las conjeturas del lote. */
+  lectura: LecturaDeLaRueda;
+  conjeturas: Conjetura[];
   evaluacion: { sca: number | null; factor: number | null; fecha: string; fuente: "q_grader_batch" | "bcp_arena" | "producer_claim" } | null;
   caracterizacion: DossierCaracterizacion;
   ficha: FichaTecnicaData | null;
@@ -141,6 +156,9 @@ const numero = (v: unknown): number | null => {
 };
 
 const SITIO = "https://www.ctcexport.com";
+
+/** Los textos de las herramientas usan rayas largas; el documento no (guía de diseño): se vuelven comas. */
+const sinRaya = (v: string) => v.replace(/\s*—\s*/g, ", ").replace(/,\s*([.,])/g, "$1").trim();
 
 /** «castillo» → «Castillo»: el nombre tal como lo escribió el productor, con mayúscula inicial. */
 export const capitaliza = (v: string) => (v ? v.charAt(0).toLocaleUpperCase("es") + v.slice(1) : v);
@@ -282,8 +300,9 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
   ]);
 
   const perfil = perfilRaw as { company_name: string | null; avatar_asset_id: string | null; gallery_asset_ids: string[] | null } | null;
-  const galeriaIds = (perfil?.gallery_asset_ids ?? []).slice(0, 3);
-  const firmadas = await signedKaffetalMediaUrls(service, [perfil?.avatar_asset_id, ...galeriaIds, ...origen.map((x) => x.f.profile_photo_asset_id)]);
+  const galeriaIds = (perfil?.gallery_asset_ids ?? []).slice(0, 4);
+  const fotosDelLote = (((lot.datasheet as { b4_files_foto?: { assetId: string }[] } | null)?.b4_files_foto ?? []) as { assetId: string }[]).map((x) => x.assetId).filter(Boolean).slice(0, 2);
+  const firmadas = await signedKaffetalMediaUrls(service, [perfil?.avatar_asset_id, ...galeriaIds, ...fotosDelLote, ...origen.map((x) => x.f.profile_photo_asset_id)]);
   // Las fotos van ya orientadas, reducidas y en JPEG: el PDF del navegador incrusta un JPEG tal cual, pero una foto de
   // 5.700 px (o un WebP) la vuelve a codificar sin pérdida, y un dossier pesaba 29 MB.
   const urls = new Map(await Promise.all([...firmadas].map(async ([id, url]) => [id, await fotoParaImprimir(url)] as const)));
@@ -384,6 +403,7 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
     .filter((v) => String(v.name ?? "").trim())
     .map((v) => ({ nombre: capitaliza(String(v.name).trim()), pct: numero(v.pct) }));
 
+  const caracterizacion = caracterizacionDelDossier(ds as Record<string, unknown>, aceptada ? planillaDeEvaluacion(aceptada) : null, lang);
   const catalogoUrl = lot.public_code ? `${SITIO}/ctcx-public-catalogue/${encodeURIComponent(lot.public_code)}` : null;
   const qrSvg = catalogoUrl ? await QRCode.toString(catalogoUrl, { type: "svg", margin: 0, color: { dark: "#17121F", light: "#00000000" } }) : null;
 
@@ -417,7 +437,8 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
       empresa: perfil?.company_name || producer?.companyName || null,
       contacto: [producer?.phone, producer?.email].filter(Boolean).join(" · "),
       avatarUrl: perfil?.avatar_asset_id ? urls.get(perfil.avatar_asset_id) ?? null : null,
-      galeria: galeriaIds.map((id) => urls.get(id)).filter((u): u is string => !!u),
+      // La hoja de origen pinta hasta 3; la cuarta queda para la hoja del grado si no hay foto de lote.
+      galeria: galeriaIds.slice(0, 3).map((id) => urls.get(id)).filter((u): u is string => !!u),
     },
     fincas,
     mapaUrl,
@@ -433,10 +454,34 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
       grado: gradoGuardado ?? calculo?.grado ?? null,
       punto,
       triada,
-      puntaje: calculo?.puntaje ?? null,
+      puntaje: calculo ? { puntos: calculo.puntaje.puntos, mult: calculo.puntaje.mult } : null,
     },
+    imagenGrado: (() => {
+      // Una imagen que no se haya mostrado ya: foto del lote, la cuarta de la galería, la foto de otra finca; si no, la de CTCx.
+      const libre = [...fotosDelLote, galeriaIds[3], ...origen.slice(1).map((x) => x.f.profile_photo_asset_id)].map((id) => (id ? urls.get(id) : undefined)).find((u): u is string => !!u);
+      return libre ? { url: libre, porDefecto: false } : { url: IMAGEN_DE_ORIGEN_POR_DEFECTO, porDefecto: true };
+    })(),
+    variedadesInfo: variedades.map((v) => {
+      const f = fichaDeVariedad(v.nombre);
+      return {
+        nombre: v.nombre,
+        pct: v.pct,
+        ficha: f
+          ? { nombre: f.nombre, grupo: sinRaya(f.grupo[lang]), tipo: sinRaya(f.tipoTexto[lang]), color: f.color, lugar: f.lugar[lang], historia: sinRaya(f.historia[lang]), altitud: rangoDeAltitud(f), grano: f.grano != null ? GRANO_LABEL[lang][f.grano] : null, notas: f.notas.map((x) => x[lang]) }
+          : null,
+      };
+    }),
+    lectura: lecturaDeLaRueda(aceptada ? planillaDeEvaluacion(aceptada)?.rueda : null, lang),
+    conjeturas: conjeturasDelLote(
+      {
+        cifras: caracterizacion.cifras ?? null,
+        altitud: fincas[0]?.altitud ?? lot.ficha_altitud_m ?? numero(ds.masl),
+        variedades: variedades.length ? variedades.map((v) => v.nombre) : lot.ficha_variedad ? [lot.ficha_variedad] : [],
+      },
+      lang
+    ),
     evaluacion: aceptada ? { sca: aceptada.sca_total, factor: aceptada.factor_rendimiento, fecha: aceptada.created_at ?? "", fuente: aceptada.source ?? "q_grader_batch" } : null,
-    caracterizacion: caracterizacionDelDossier(ds as Record<string, unknown>, aceptada ? planillaDeEvaluacion(aceptada) : null, lang),
+    caracterizacion,
     ficha: fichaRow?.data ?? null,
     fichaSource: fichaRow?.source ?? null,
     certificates: certRows

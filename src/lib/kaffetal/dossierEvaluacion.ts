@@ -45,8 +45,8 @@ export type DossierCifras = {
   densidad: number | null;
   factor: number | null;
   defectuosaPct: number | null;
-  mallas: { malla: string; gramos: number; pct: number }[];
-  defectos: { defecto: string; granos: number; completos: number; categoria: 1 | 2 }[];
+  mallas: { key: string; malla: string; gramos: number; pct: number }[];
+  defectos: { key: string; defecto: string; granos: number; completos: number; categoria: 1 | 2 }[];
 };
 export type DossierCaracterizacion = { b1: DossierB1 | null; b2: DossierB2 | null; b3: DossierB3 | null; anotaciones: AnotacionDeMejora[]; cifras?: DossierCifras | null };
 
@@ -184,8 +184,8 @@ export function caracterizacionDelDossier(ds: Record<string, unknown> | null | u
     densidad: num(ev.b3_densidad_verde),
     factor: fq ?? null,
     defectuosaPct: factor.defectivePct,
-    mallas: factor.remainder > 0 ? mesh.rows.filter((r) => r.grams > 0 || r.key === "mesh_residue").map((r) => ({ malla: MALLA_LABEL[lang][r.key] ?? r.label, gramos: r.key === "mesh_residue" ? mesh.residueGrams : r.grams, pct: r.pct ?? 0 })) : [],
-    defectos: DEFECTOS_FISICOS.filter((d) => defectos.filas[d.key].granos > 0).map((d) => ({ defecto: d[lang], granos: defectos.filas[d.key].granos, completos: defectos.filas[d.key].completos, categoria: (d.cat === 2 ? 2 : 1) as 1 | 2 })),
+    mallas: factor.remainder > 0 ? mesh.rows.filter((r) => r.grams > 0 || r.key === "mesh_residue").map((r) => ({ key: r.key, malla: MALLA_LABEL[lang][r.key] ?? r.label, gramos: r.key === "mesh_residue" ? mesh.residueGrams : r.grams, pct: r.pct ?? 0 })) : [],
+    defectos: DEFECTOS_FISICOS.filter((d) => defectos.filas[d.key].granos > 0).map((d) => ({ key: d.key, defecto: d[lang], granos: defectos.filas[d.key].granos, completos: defectos.filas[d.key].completos, categoria: (d.cat === 2 ? 2 : 1) as 1 | 2 })),
   };
   return { b1, b2, b3, anotaciones: anotacionesDeMejora(ev.rueda, lang), cifras };
 }

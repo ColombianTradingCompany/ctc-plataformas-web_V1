@@ -138,6 +138,11 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 
 ## Pendientes
 
+- **V5.167 · el Mapa de Variedades alimenta a la plataforma** (owner, 2026-10-06; ejecutado desde WRAP-COMMIT-PUSH):
+  `scripts/build-variedades-datos.mjs` lee los bloques de datos de `public/tools/mapa-variedades/mapa-variedades.html`
+  (`GROUPS`, `add`, `ES`, `ES_NOTES`, `ES_PROF`, `pf`, `TYPED`) en un contexto aislado y genera `src/lib/catacion/variedadesDatos.ts`;
+  la prosa sin traducción va vacía en español. `build-rueda-datos.mjs` trae además los varietales de cada nota. Si la
+  herramienta cambia, regenerar; `qa-centro-calidad` corre los dos `--check`.
 - **V5.165 · la taxonomía de la rueda trae las causas** (owner, 2026-10-06; ejecutado desde WRAP-COMMIT-PUSH):
   `scripts/build-rueda-datos.mjs` copia `cause`/`cause_en` de la herramienta a `causa` en `ruedaDatos.ts`;
   `anotacionesDeMejora()` en `rueda.ts` las sirve a la plataforma (dossier, Kaffetal Regal, mejoras IA). Si la herramienta

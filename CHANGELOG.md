@@ -19,6 +19,29 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.167] — 2026-10-06 (commit pendiente)
+
+- **Cambiado**: **el productor ya no ve el ajuste CTCx en el dossier** (owner, 2026-10-06). El grado se presenta como Punto SCA ×
+  tríada = puntos CTCx (los puntos finales, sin nombrar el ajuste ni la base); se retiró «lo que pide cada grado con esta tríada».
+- **Cambiado**: **«CTC» pasa a «CTCx» en todo el dossier** y en las etiquetas de grado que ve el productor en Kaffetal Regal
+  («Grado CTCx»). El barrido del resto de la plataforma quedó como tarea aparte (no toca la razón social ni los códigos CTC-L/F/P).
+- **Cambiado**: el perfil de taza es la segunda sección; la mejora y el respaldo van en dos hojas; el contenido de cada hoja
+  deja aire abajo (la portada ya no pega el índice al pie).
+- **Añadido**: **la hoja del grado, reorganizada**: la tríada junto a una imagen (foto del lote, una de la galería que no se haya
+  usado, o la ilustración de CTCx por defecto) y **las variedades del lote según el Mapa de Variedades** (grupo genético, tipo,
+  origen, historia, altitud en que se da, grano y notas típicas en taza). Generador nuevo `scripts/build-variedades-datos.mjs`
+  → `src/lib/catacion/variedadesDatos.ts` (88 fichas, ES/EN) y emparejador `variedades.ts` (castillo, Gesha, Maragogipe…).
+- **Añadido**: **ilustraciones conceptuales minimalistas**: la altitud de la finca sobre una silueta de montañas, una taza en la
+  cabecera del perfil de taza y tres granos en la del análisis físico.
+- **Añadido**: **conjeturas en «Mejora»** (owner): la lectura del perfil redactada como el reporte de la Rueda del Café (familia
+  dominante, una frase por familia, síntesis varietal; la taxonomía de la rueda trae ahora sus varietales) y las hipótesis que
+  salen de lo medido y lo declarado (margen en taza, humedad, aw, defecto principal y su causa probable, mallas, factor, densidad,
+  altitud frente a la variedad), cada una con su evidencia (`src/lib/kaffetal/conjeturas.ts`).
+- **Añadido**: **«Mis Lotes» en Kaffetal Regal trae el botón «Ver el Dossier del lote»** dentro de cada lote galardonado (fila
+  completa y tarjeta del carrusel).
+- **Seguridad**: `qa-centro-calidad` (278 → 287), con `build-variedades-datos.mjs --check`.
+- **Docs**: charters `kaffetal-regal`, `herramientas-cafe`; ALINEACION §3.
+
 ## [V5.166] — 2026-10-06 (commit 44426c3)
 
 - **Cambiado**: **el dossier del lote se rehízo con formato CTCx, por hojas A4** (owner, 2026-10-06: «es muy simple; quiero un

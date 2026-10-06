@@ -104,6 +104,8 @@
   flex: 1;
   min-height: 0;
   padding-top: 7mm;
+  /* V5.167 (owner): «el contenido debe subir un poco para no quedar contra la parte inferior». */
+  padding-bottom: 7mm;
   display: flex;
   flex-direction: column;
   gap: 6mm;
@@ -221,7 +223,7 @@
   grid-template-columns: 1fr auto;
   gap: 8mm;
   align-items: end;
-  margin-top: auto;
+  margin-top: 4mm;
 }
 .indiceLista {
   display: grid;
@@ -253,14 +255,9 @@
 .mapa { position: relative; border: 1px solid var(--linea); background: #fff; align-self: start; }
 .mapa img { width: 100%; height: auto; display: block; }
 .mapaImg { width: 100%; height: auto; display: block; }
-.datosYAltitud { display: grid; grid-template-columns: 1fr 38mm; gap: 6mm; align-items: start; }
+.datosYAltitud { display: grid; grid-template-columns: 1fr 64mm; gap: 6mm; align-items: start; }
 .geo { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; align-items: start; }
 .geo > img { width: 100%; height: auto; display: block; border: 1px solid var(--linea); }
-.requisitos { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3mm; }
-.requisito { border-top: 3px solid var(--linea); padding: 2.5mm 0 0; display: grid; gap: 0.6mm; justify-items: start; }
-.requisito img { width: 13mm; height: 13mm; object-fit: contain; display: block; margin-bottom: 1mm; }
-.requisitoActual { outline: 2px solid var(--morado); outline-offset: -2px; padding: 2.5mm 2.5mm 2mm; }
-.requisitoSca { font-family: var(--font-spline-mono), monospace; font-size: 8.5pt; font-weight: 600; margin-top: 1mm; }
 .mapaPie { font-size: 7pt; color: var(--tinta-suave); padding: 1.5mm 2mm; border-top: 1px solid var(--linea); background: #fff; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 1.5mm; }
@@ -346,7 +343,7 @@
 .anotacionRuta { font-weight: 700; font-size: 9pt; }
 .anotacionCausa { font-size: 8.5pt; margin: 1mm 0 0; }
 .limpio { display: grid; grid-template-columns: 8mm 1fr; gap: 3mm; align-items: center; border-left: 3px solid var(--ok); padding: 3mm; background: #f5faf7; font-size: 9.5pt; }
-.vacio { border: 1px dashed var(--linea); padding: 5mm; color: var(--tinta-suave); font-size: 9.5pt; }
+.vacio { border: 1px dashed var(--linea); padding: 3.5mm 4mm; color: var(--tinta-suave); font-size: 9.5pt; }
 .cierre { margin-top: auto; display: grid; grid-template-columns: 1fr auto; gap: 8mm; align-items: end; padding-top: 5mm; border-top: 2px solid var(--tinta); }
 
 /* ── Pantallas estrechas: la hoja se vuelve columna ─────────────────── */
@@ -362,7 +359,6 @@
   .datosPortada { grid-template-columns: 1fr 1fr; }
   .datosPortada > div + div { border-left: 0; padding-left: 0; }
   .dosTercios, .mitades, .tercios, .triada, .anotaciones, .criterios, .notas, .indiceLista, .datosYAltitud, .geo { grid-template-columns: 1fr; }
-  .requisitos { grid-template-columns: repeat(3, 1fr); }
   .mapaImg { height: auto; }
   .datos, .datos3, .tiles { grid-template-columns: 1fr 1fr; }
   .cadena { grid-template-columns: 1fr 1fr; row-gap: 3mm; }
@@ -382,4 +378,36 @@
   .barra, .noPrint { display: none !important; }
   .hoja { margin: 0; box-shadow: none; break-after: page; page-break-after: always; }
   .hoja:last-child { break-after: auto; page-break-after: auto; }
+}
+
+/* ── V5.167: cabeceras ilustradas, la hoja del grado, la lectura y las conjeturas ── */
+.cabezaIlustrada { display: grid; grid-template-columns: 1fr 30mm; gap: 8mm; align-items: end; }
+.triadaYFoto { display: grid; grid-template-columns: 1.35fr 1fr; gap: 6mm; align-items: start; }
+.filaTriada { border-top: 1px solid var(--linea); padding: 2mm 0; }
+.filaTriadaNombre { font-weight: 700; font-size: 9pt; margin-bottom: 1.2mm; }
+.filaTriadaNiveles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5mm; }
+.nivel { display: grid; grid-template-columns: 6mm 1fr; gap: 1.5mm; align-items: center; font-size: 7.5pt; color: var(--tinta-suave); line-height: 1.2; }
+.nivel .escalonLetra { width: 6mm; height: 6mm; }
+.nivelActivo { color: var(--tinta); font-weight: 600; }
+.nivelActivo .escalonLetra { background: var(--morado); border-color: var(--morado); color: #fff; }
+.fotoGrado { margin: 0; border: 1px solid var(--linea); }
+.fotoGrado img { width: 100%; height: 50mm; object-fit: cover; display: block; }
+.variedades { display: grid; gap: 5mm; }
+.variedad { border-left: 3px solid var(--linea); padding: 1mm 0 1mm 3.5mm; }
+.variedadNombre { font-family: var(--font-dossier-display), sans-serif; font-weight: 800; font-size: 16pt; text-transform: uppercase; line-height: 1; margin-bottom: 1mm; }
+.variedadDatos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2mm 4mm; margin-top: 2mm; }
+.lectura { columns: 2; column-gap: 7mm; font-size: 9pt; }
+.lectura p { margin: 0 0 2mm; break-inside: avoid; }
+.conjeturas { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm 5mm; }
+.conjetura { display: grid; grid-template-columns: 7mm 1fr; gap: 2.5mm; padding: 2.2mm 2.5mm; border-left: 3px solid var(--linea); background: #faf9fc; break-inside: avoid; }
+.conjeturaAtencion { border-left-color: var(--pend); }
+.conjeturaBien { border-left-color: var(--ok); }
+.conjeturaIcono { width: 7mm; height: 7mm; display: grid; place-items: center; background: var(--morado-tinte); color: var(--morado); }
+.conjeturaTitulo { font-weight: 700; font-size: 8.8pt; }
+.conjeturaTexto { font-size: 8.2pt; margin: 0.8mm 0 1mm; line-height: 1.38; }
+@media screen and (max-width: 860px) {
+  .cabezaIlustrada, .triadaYFoto, .conjeturas, .variedades { grid-template-columns: 1fr !important; }
+  .cabezaIlustrada > svg { max-width: 30mm; }
+  .lectura { columns: 1; }
+  .filaTriadaNiveles { grid-template-columns: 1fr; }
 }

@@ -9,15 +9,15 @@
 // Solo afirma lo que la plataforma tiene; cada bloque dice su vacío.
 
 import { Big_Shoulders } from "next/font/google";
-import { Check, Clock, X } from "lucide-react";
+import { Bean, Bug, Check, Clock, Coffee, Droplets, Grid3x3, Mountain, Scale, Sprout, TriangleAlert, X } from "lucide-react";
 import type { DossierCtcxData, EstadoCriterio } from "@/lib/kaffetal/dossierDatos";
 import { CTC_LEGAL_LINE } from "@/lib/legal";
-import { BANDAS_PUNTOS, NIVELES, ORDEN_TRIADA, letras, scaMinimoPara } from "@/lib/pvc/escala";
-import { GRADO_POR_ID, esGradoValido } from "@/lib/grados/definicion";
+import { NIVELES, ORDEN_TRIADA, letras } from "@/lib/pvc/escala";
+import type { IconoConjetura } from "@/lib/kaffetal/conjeturas";
 import { RUEDA } from "@/lib/catacion/rueda";
 import { TEXTOS, type Textos } from "./textos";
 import { BotonImprimir } from "./BotonImprimir";
-import { Composicion, EscalaCtc, Intensidad, Mallas, MatrizDeRespaldo, Medidor, Radar, ReglaDeAltitud, Rendimiento, RuedaFamilias } from "./figuras";
+import { AltitudEnLaMontana, EscalaCtc, IlustracionGranos, IlustracionTaza, Intensidad, Mallas, MatrizDeRespaldo, Medidor, Radar, Rendimiento, RuedaFamilias } from "./figuras";
 import s from "./dossier.module.css";
 
 const display = Big_Shoulders({ subsets: ["latin"], weight: ["700", "800"], variable: "--font-dossier-display" });
@@ -35,6 +35,22 @@ function Dato({ k, v, mono = false }: { k: string; v: React.ReactNode; mono?: bo
     </div>
   );
 }
+
+/** El icono de cada conjetura (de la familia de iconos del proyecto). */
+const ICONO_CONJETURA: Record<IconoConjetura, typeof Coffee> = {
+  taza: Coffee,
+  gota: Droplets,
+  insecto: Bug,
+  grano: Bean,
+  mallas: Grid3x3,
+  montana: Mountain,
+  balanza: Scale,
+  variedad: Sprout,
+  alerta: TriangleAlert,
+};
+
+/** V5.167 (owner): el perfil de taza va segundo. El orden de las hojas, en un solo sitio. */
+const ORDEN_DE_HOJAS = ["portada", "origen", "taza", "visa", "grado", "fisico", "mejora", "respaldo"];
 
 function IconoCriterio({ estado }: { estado: EstadoCriterio }) {
   const I = estado === "ok" ? Check : estado === "stop" ? X : Clock;
@@ -291,7 +307,7 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
               {(finca.altitud ?? d.lot.altitudeM) != null && (
                 <div>
                   <div className={s.k}>{t.escalaAltitud}</div>
-                  <ReglaDeAltitud metros={(finca.altitud ?? d.lot.altitudeM)!} etiqueta={t.altitud} loc={loc} />
+                  <AltitudEnLaMontana metros={(finca.altitud ?? d.lot.altitudeM)!} etiqueta={t.altitud} loc={loc} />
                 </div>
               )}
             </div>
@@ -392,7 +408,7 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
               </span>
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element -- sello EUDR voluntario CTC */}
-            <img src="/docs/eudr/sello-eudr-voluntario-560.png" alt="Sello EUDR Voluntario CTC" style={{ opacity: visaOk ? 1 : 0.35, filter: visaOk ? undefined : "grayscale(1)" }} />
+            <img src="/docs/eudr/sello-eudr-voluntario-560.png" alt="Sello EUDR Voluntario CTCx" style={{ opacity: visaOk ? 1 : 0.35, filter: visaOk ? undefined : "grayscale(1)" }} />
           </div>
           <div className={s.cadena}>
             {eslabones.map((e, i) => (
@@ -517,7 +533,7 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
       ),
   });
 
-  // ── 4 · El grado ────────────────────────────────────────────────────────
+  // ── El grado (V5.167: sin el ajuste CTCx, sin «lo que pide cada grado»; con la imagen y las variedades del lote) ──
   hojas.push({
     id: "grado",
     render: (n, total) =>
@@ -548,11 +564,6 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
                 <div className={s.ecuacionNum}>{num(g.punto.valor)}</div>
                 <div className={s.nota}>{g.punto.origen === "nativo" ? t.puntoNativo : t.puntoHomologado(num(g.punto.bajo) ?? "", num(g.punto.alto) ?? "")}</div>
               </div>
-              <div className={s.ecuacionOp}>→</div>
-              <div>
-                <div className={s.k}>{t.base}</div>
-                <div className={s.ecuacionNum}>{Math.round(g.puntaje.base).toLocaleString(loc)}</div>
-              </div>
               <div className={s.ecuacionOp}>×</div>
               <div>
                 <div className={s.k}>
@@ -564,75 +575,87 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
               <div className={s.ecuacionTotal}>
                 <div className={s.k}>{t.total}</div>
                 <div className={s.ecuacionNum}>{Math.round(g.puntaje.puntos).toLocaleString(loc)}</div>
-                {g.puntaje.ajuste > 0 && (
-                  <div className={s.k} style={{ marginTop: "1mm" }}>
-                    {t.ajuste} +{g.puntaje.ajuste}
-                  </div>
-                )}
               </div>
             </div>
           ) : (
             <div className={s.vacio}>{t.sinEvaluacion}</div>
           )}
-          <div className={s.triada}>
-            {ORDEN_TRIADA.map((a) => {
-              const nivel = g.triada.triada[a];
-              const razon = g.triada[a];
-              return (
-                <div key={a} className={s.atributo}>
-                  <div className={s.h3}>{t.triada[a]}</div>
-                  {[...NIVELES].reverse().map((l) => (
-                    <div key={l} className={cx(s.escalon, l === nivel && s.activo)}>
-                      <span className={s.escalonLetra}>{l}</span>
-                      <span>{t.niveles[a][l]}</span>
-                    </div>
-                  ))}
-                  {/* El motivo lo escribe el cálculo de la tríada, solo en español. */}
-                  {razon.por && d.lang === "es" && <div className={s.porque}>{razon.por}</div>}
-                </div>
-              );
-            })}
-          </div>
-          {d.lot.variedades.length > 0 && (
+          <div className={s.triadaYFoto}>
             <div>
-              <div className={s.k} style={{ marginBottom: "1.5mm" }}>
-                {t.composicion}
+              <div className={s.h3}>{t.tituloTriada}</div>
+              {ORDEN_TRIADA.map((a) => {
+                const nivel = g.triada.triada[a];
+                const razon = g.triada[a];
+                return (
+                  <div key={a} className={s.filaTriada}>
+                    <div className={s.filaTriadaNombre}>{t.triada[a]}</div>
+                    <div className={s.filaTriadaNiveles}>
+                      {[...NIVELES].map((l) => (
+                        <div key={l} className={cx(s.nivel, l === nivel && s.nivelActivo)}>
+                          <span className={s.escalonLetra}>{l}</span>
+                          <span>{t.niveles[a][l]}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {/* El motivo lo escribe el cálculo de la tríada, solo en español. */}
+                    {razon.por && d.lang === "es" && <div className={s.porque}>{razon.por}</div>}
+                  </div>
+                );
+              })}
+            </div>
+            <figure className={s.fotoGrado}>
+              {/* eslint-disable-next-line @next/next/no-img-element -- foto del lote o la ilustración de CTCx */}
+              <img src={d.imagenGrado.url} alt={d.imagenGrado.porDefecto ? t.imagenDefecto : titulo} />
+              {d.imagenGrado.porDefecto && <figcaption className={s.mapaPie}>{t.imagenDefecto}</figcaption>}
+            </figure>
+          </div>
+          {d.variedadesInfo.length > 0 && (
+            <div>
+              <div className={s.h3}>{t.variedadesTitulo}</div>
+              <div className={s.variedades} style={{ gridTemplateColumns: d.variedadesInfo.length > 1 ? "1fr 1fr" : "1fr" }}>
+                {d.variedadesInfo.slice(0, 2).map((v) => (
+                  <div key={v.nombre} className={s.variedad} style={{ borderLeftColor: v.ficha?.color ?? "var(--linea)" }}>
+                    <div className={s.variedadNombre}>
+                      {v.nombre}
+                      {v.pct != null ? <span className={s.k}> · {Math.round(v.pct)} %</span> : null}
+                    </div>
+                    {v.ficha ? (
+                      <>
+                        <div className={s.k}>
+                          {v.ficha.grupo} · {v.ficha.tipo}
+                        </div>
+                        {v.ficha.historia && (
+                          <p className={s.cita} style={{ WebkitLineClamp: 3 }}>
+                            {v.ficha.historia}
+                          </p>
+                        )}
+                        <div className={s.variedadDatos}>
+                          <Dato k={t.origenVariedad} v={v.ficha.lugar} />
+                          <Dato k={t.altitudVariedad} v={v.ficha.altitud ? `${v.ficha.altitud[0].toLocaleString(loc)} a ${v.ficha.altitud[1].toLocaleString(loc)} m` : null} />
+                          <Dato k={t.granoVariedad} v={v.ficha.grano} />
+                        </div>
+                        {v.ficha.notas.length > 0 && (
+                          <div className={s.chips} style={{ marginTop: "2mm" }}>
+                            {v.ficha.notas.map((x) => (
+                              <span key={x} className={s.chip}>
+                                {x}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <p className={s.nota}>{t.sinFichaVariedad(v.nombre)}</p>
+                    )}
+                  </div>
+                ))}
               </div>
-              <Composicion variedades={d.lot.variedades} />
+              <p className={s.nota}>{t.variedadesFuente}</p>
             </div>
           )}
           <div>
             <div className={s.h3}>{t.escalaTitulo}</div>
             <EscalaCtc puntos={g.puntaje?.puntos ?? null} etiqueta={t.escalaTitulo} loc={loc} />
-          </div>
-          <div>
-            <div className={s.h3}>{t.requisitosTitulo}</div>
-            <p className={s.nota} style={{ marginTop: 0, marginBottom: "3mm" }}>
-              {t.requisitosLead(letras(g.triada.triada))}
-            </p>
-            <div className={s.requisitos}>
-              {BANDAS_PUNTOS.map((b) => {
-                const gr = esGradoValido(b.id) ? GRADO_POR_ID[b.id] : null;
-                const minimo = scaMinimoPara(b.nombre, g.triada.triada, 0.25);
-                const actual = g.grado?.id === b.id;
-                return (
-                  <div key={b.id} className={cx(s.requisito, actual && s.requisitoActual)} style={{ borderTopColor: b.hex }}>
-                    {gr && (
-                      // eslint-disable-next-line @next/next/no-img-element -- sello del grado
-                      <img src={gr.logo} alt={b.nombre} />
-                    )}
-                    <div className={s.v} style={{ color: b.hex }}>
-                      {b.nombre}
-                    </div>
-                    <div className={s.k}>
-                      {b.min.toLocaleString(loc)} a {b.max.toLocaleString(loc)}
-                    </div>
-                    <div className={s.requisitoSca}>{minimo != null ? `${t.scaDesde} ${num(minimo)}` : t.noAlcanzable}</div>
-                    {actual && <div className={s.k}>{t.gradoActual}</div>}
-                  </div>
-                );
-              })}
-            </div>
           </div>
         </>
       ),
@@ -651,9 +674,12 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
           n,
           total,
           <>
-            <div>
-              <h2 className={s.h2}>{t.tazaTitulo}</h2>
-              <p className={s.lead}>{t.tazaLead}</p>
+            <div className={s.cabezaIlustrada}>
+              <div>
+                <h2 className={s.h2}>{t.tazaTitulo}</h2>
+                <p className={s.lead}>{t.tazaLead}</p>
+              </div>
+              <IlustracionTaza />
             </div>
             <div className={s.mitades} style={{ alignItems: "center" }}>
               <div>{radar ? <Radar items={radar} /> : fichaAttrs ? <Radar items={fichaAttrs} /> : null}</div>
@@ -795,9 +821,12 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
           n,
           total,
           <>
-            <div>
-              <h2 className={s.h2}>{t.fisicoTitulo}</h2>
-              <p className={s.lead}>{t.fisicoLead}</p>
+            <div className={s.cabezaIlustrada}>
+              <div>
+                <h2 className={s.h2}>{t.fisicoTitulo}</h2>
+                <p className={s.lead}>{t.fisicoLead}</p>
+              </div>
+              <IlustracionGranos />
             </div>
             {cif.pesos && (
               <div>
@@ -963,6 +992,61 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
               <div className={s.vacio}>{t.sinEvaluacion}</div>
             )}
           </div>
+          {d.lectura.intro && (
+            <div>
+              <div className={s.h3}>{t.lecturaTitulo}</div>
+              <div className={s.lectura}>
+                <p>{d.lectura.intro}</p>
+                {d.lectura.parrafos.map((x) => (
+                  <p key={x}>{x}</p>
+                ))}
+                {d.lectura.sintesis && <p>{d.lectura.sintesis}</p>}
+              </div>
+              <p className={s.nota}>{t.lecturaFuente}</p>
+            </div>
+          )}
+          {d.conjeturas.length > 0 && (
+            <div>
+              <div className={s.h3}>{t.conjeturasTitulo}</div>
+              <p className={s.nota} style={{ marginTop: 0, marginBottom: "2.5mm" }}>
+                {t.conjeturasLead}
+              </p>
+              <div className={s.conjeturas}>
+                {d.conjeturas.slice(0, 10).map((x) => {
+                  const I = ICONO_CONJETURA[x.icono];
+                  return (
+                    <div key={x.titulo} className={cx(s.conjetura, x.tono === "atencion" ? s.conjeturaAtencion : s.conjeturaBien)}>
+                      <span className={s.conjeturaIcono}>
+                        <I size={14} strokeWidth={2} aria-hidden />
+                      </span>
+                      <div>
+                        <div className={s.conjeturaTitulo}>{x.titulo}</div>
+                        <p className={s.conjeturaTexto}>{x.texto}</p>
+                        <div className={s.notaSub}>
+                          {t.areas[x.area]} · {t.evidencia}: {x.evidencia}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </>
+      ),
+  });
+
+  hojas.push({
+    id: "respaldo",
+    render: (n, total) =>
+      marco(
+        "respaldo",
+        n,
+        total,
+        <>
+          <div>
+            <h2 className={s.h2}>{t.respaldoHojaTitulo}</h2>
+          </div>
           <div>
             <div className={s.h3}>{t.certs}</div>
             {d.certificates.length ? (
@@ -1018,6 +1102,7 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
       ),
   });
 
+  hojas.sort((a, b) => ORDEN_DE_HOJAS.indexOf(a.id) - ORDEN_DE_HOJAS.indexOf(b.id));
   const total = hojas.length;
   return (
     <div className={cx(s.lienzo, display.variable)} lang={d.lang}>

@@ -201,7 +201,7 @@ export function LotKanbanStepper({
         {chip(
           "GRADO",
           st(gradoDone, gradoActive),
-          grade ? `Grado ${grade} — se deriva del puntaje del Q-Grader` : "Grado CTC — se emite con la evaluación entregada",
+          grade ? `Grado ${grade} — se deriva del puntaje del Q-Grader` : "Grado CTCx — se emite con la evaluación entregada",
           "evaluaciones"
         )}
         <span className={styles.fork} aria-hidden>→</span>

@@ -35,8 +35,10 @@ export function leerDatosDeLaHerramienta() {
       id: s.id,
       es: s.name,
       en: s.name_en,
+      // V5.167: los varietales con que la herramienta asocia la subcategoría (su «síntesis varietal»).
+      ...(s.varietals ? { variedades: { es: s.varietals, en: s.varietals_en ?? s.varietals } } : {}),
       // V5.165: la «posible causa en el beneficio» de las notas de defecto — las anotaciones de mejora de la herramienta.
-      hojas: s.leaves.map((l) => ({ id: l.id, es: l.n, en: l.n_en, ...(l.cause ? { causa: { es: l.cause, en: l.cause_en ?? l.cause } } : {}) })),
+      hojas: s.leaves.map((l) => ({ id: l.id, es: l.n, en: l.n_en, ...(l.cause ? { causa: { es: l.cause, en: l.cause_en ?? l.cause } } : {}), ...(l.varietals ? { variedades: { es: l.varietals, en: l.varietals_en ?? l.varietals } } : {}) })),
     })),
   }));
 }
@@ -51,8 +53,10 @@ export function generar() {
     "// regenera; `qa-centro-calidad` falla si este archivo y la herramienta dejan de coincidir. La lee `rueda.ts`.",
     "",
     "/** V5.165: `causa` = la «posible causa en el beneficio» que la herramienta da para las notas de defecto (anotación de mejora). */",
-    "export type NotaDeLaRueda = { id: string; es: string; en: string; causa?: { es: string; en: string } };",
-    "export type SubcategoriaDeLaRueda = { id: string; es: string; en: string; hojas: NotaDeLaRueda[] };",
+    "/** V5.167: `variedades` = los varietales con que la herramienta asocia la nota o la subcategoría (su síntesis varietal). */",
+    "export type VariedadesDeLaRueda = { es: string[]; en: string[] };",
+    "export type NotaDeLaRueda = { id: string; es: string; en: string; causa?: { es: string; en: string }; variedades?: VariedadesDeLaRueda };",
+    "export type SubcategoriaDeLaRueda = { id: string; es: string; en: string; variedades?: VariedadesDeLaRueda; hojas: NotaDeLaRueda[] };",
     "export type FamiliaDeLaRueda = { id: string; es: string; en: string; color: string; icono: string; subs: SubcategoriaDeLaRueda[] };",
     "",
     "export const RUEDA_DATOS: readonly FamiliaDeLaRueda[] = [",
@@ -62,8 +66,11 @@ export function generar() {
     lineas.push(`    id: ${q(f.id)}, es: ${q(f.es)}, en: ${q(f.en)}, color: ${q(f.color)}, icono: ${q(f.icono)},`);
     lineas.push("    subs: [");
     for (const s of f.subs) {
-      lineas.push(`      { id: ${q(s.id)}, es: ${q(s.es)}, en: ${q(s.en)}, hojas: [`);
-      for (const h of s.hojas) lineas.push(`        { id: ${q(h.id)}, es: ${q(h.es)}, en: ${q(h.en)}${h.causa ? `, causa: { es: ${q(h.causa.es)}, en: ${q(h.causa.en)} }` : ""} },`);
+      lineas.push(`      { id: ${q(s.id)}, es: ${q(s.es)}, en: ${q(s.en)}${s.variedades ? `, variedades: { es: ${q(s.variedades.es)}, en: ${q(s.variedades.en)} }` : ""}, hojas: [`);
+      for (const h of s.hojas)
+        lineas.push(
+          `        { id: ${q(h.id)}, es: ${q(h.es)}, en: ${q(h.en)}${h.causa ? `, causa: { es: ${q(h.causa.es)}, en: ${q(h.causa.en)} }` : ""}${h.variedades ? `, variedades: { es: ${q(h.variedades.es)}, en: ${q(h.variedades.en)} }` : ""} },`
+        );
       lineas.push("      ] },");
     }
     lineas.push("    ],");

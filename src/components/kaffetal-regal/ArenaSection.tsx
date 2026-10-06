@@ -23,7 +23,7 @@ const T: Record<Lang, Dict> = {
     p: (
       <>
         Todo lote de la red se evalúa a ciegas con un{" "}
-        <strong style={{ color: "#F7F2E2" }}>Q-Grader certificado</strong> — así nace su Grado CTC. La Arena es lo
+        <strong style={{ color: "#F7F2E2" }}>Q-Grader certificado</strong> — así nace su Grado CTCx. La Arena es lo
         que viene después: nuestra gala en vivo, de guion mínimo y formato primario de contenido para el mercado de
         especialidad, donde los mejores cafés ya galardonados de la temporada — los grados{" "}
         <strong style={{ color: "#F7F2E2" }}>Blue, Gold y Tyrian</strong>, ya con contrato — se enfrentan taza a

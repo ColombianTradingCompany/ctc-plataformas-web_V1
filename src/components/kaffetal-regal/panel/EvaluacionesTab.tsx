@@ -24,7 +24,7 @@ import { anotacionesDeMejora, normalizaRueda } from "@/lib/catacion/rueda";
 //      muestra de 2 kg contra entrega (MUE).
 //   2. EVALUACIONES EN FILA — muestra recibida y pago confirmado: el lote
 //      espera su Bache de Evaluación y al Q-Grader del Centro de Calidad.
-//   3. LOTES GALARDONADOS — evaluación completada: el Grado CTC (derivado del
+//   3. LOTES GALARDONADOS — evaluación completada: el Grado CTCx (derivado del
 //      puntaje — «el puntaje manda»), los documentos y el feedback.
 // La Arena ya NO es parte de este camino: quedó como vitrina post-galardón
 // (se re-gatea en V5.19).
@@ -149,7 +149,7 @@ export function EvaluacionesTab({
         <div className={styles.secSub}>Evaluación completada, aquí los resultados</div>
         {galardonados.length === 0 ? (
           <div className={styles.alist} style={{ marginTop: 10 }}>
-            Sin galardones todavía. Cuando el Q-Grader evalúe su lote, el resultado, sus documentos y su Grado CTC
+            Sin galardones todavía. Cuando el Q-Grader evalúe su lote, el resultado, sus documentos y su Grado CTCx
             aparecerán aquí — y su camino comercial sigue en <b>Contratos y Compras</b>.
           </div>
         ) : (
@@ -396,7 +396,7 @@ function FilaCard({ lot }: { lot: Lot }) {
       {phase === "sondeo" && (
         <div style={{ fontSize: 13, color: "var(--muted)" }}>
           Su lote está en un <b>Bache de Evaluación</b> en manos del <b>Q-Grader</b> del Centro de Calidad, evaluado a ciegas
-          (solo su código). El resultado —puntaje, Grado CTC y feedback— le llegará aquí y a su feed.
+          (solo su código). El resultado —puntaje, Grado CTCx y feedback— le llegará aquí y a su feed.
         </div>
       )}
       {/* Fases de la Arena vieja (legado defensivo): ningún veredicto nuevo las
@@ -435,7 +435,7 @@ function FilaCard({ lot }: { lot: Lot }) {
   );
 }
 
-// La tarjeta del GALARDÓN: el Grado CTC (con su sello), el puntaje, los
+// La tarjeta del GALARDÓN: el Grado CTCx (con su sello), el puntaje, los
 // documentos y el feedback del Q-Grader. Absorbe el viejo módulo
 // «Certificación CTC».
 function GalardonCard({ lot, fincas }: { lot: Lot; fincas: Finca[] }) {
@@ -467,7 +467,7 @@ function GalardonCard({ lot, fincas }: { lot: Lot; fincas: Finca[] }) {
               className="mono"
               style={{ fontSize: 11.5, fontWeight: 700, border: `1.5px solid ${lot.grade ? GRADES[lot.grade] : "var(--line)"}`, color: lot.grade ? GRADES[lot.grade] : "var(--muted)", borderRadius: 999, padding: "2px 10px" }}
             >
-              {lot.grade ? `Grado CTC · ${lot.grade}` : "Evaluado (sin galardón)"}
+              {lot.grade ? `Grado CTCx · ${lot.grade}` : "Evaluado (sin galardón)"}
             </span>
             {puntaje != null && (
               <span className="mono" style={{ fontSize: 11.5, border: "1px solid var(--line)", borderRadius: 999, padding: "2px 10px" }}>

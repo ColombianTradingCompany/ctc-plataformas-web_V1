@@ -274,12 +274,13 @@ export function PerfilTab({
             <span className={styles.datachip}>Variedad: <b>{l.variety}</b></span>
             <span className={styles.datachip}>Puntaje: <b>{l.score}</b></span>
             <span className={styles.datachip}>Proceso: <b>{l.process}</b></span>
-            <span className={styles.datachip}>Grado CTC: <b style={l.grade ? { color: GRADES[l.grade] } : undefined}>{l.grade || "Pendiente"}</b></span>
+            <span className={styles.datachip}>Grado CTCx: <b style={l.grade ? { color: GRADES[l.grade] } : undefined}>{l.grade || "Pendiente"}</b></span>
           </div>
           <LotCompletionSparkline history={l.completionHistory} />
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "stretch" }}>
           <button className="btn btn-sm" onClick={() => onOpenFicha(l.id)}>{l.stage === 0 ? "Completar ficha" : "Ver ficha"}</button>
+          {botonDelDossier(l)}
           {botonQueSigue(l)}
           {avisoDelLote(l)}
           {/* Deletable any time before the paid pipeline takes the lot (sin
@@ -292,6 +293,15 @@ export function PerfilTab({
       </div>
     );
   };
+
+  // V5.167 (owner): «desde Mis Lotes en KR, una vez galardonado, tenga también adentro un botón para ver el Dossier».
+  // Abre el dossier (hojas A4, ES/EN) en otra pestaña; el inglés se elige dentro del propio dossier.
+  const botonDelDossier = (l: Lot) =>
+    l.grade ? (
+      <a className="btn btn-sm btn-solid" href={`/kaffetal-regal/dossier/${l.id}`} target="_blank" rel="noopener noreferrer">
+        Ver el Dossier del lote
+      </a>
+    ) : null;
 
   // Tarjeta compacta del carrusel de lotes (la fila completa vive en el drill).
   const lotCard = (l: Lot) => {
@@ -307,11 +317,12 @@ export function PerfilTab({
           <span className={styles.datachip}>Variedad: <b>{l.variety}</b></span>
           <span className={styles.datachip}>Proceso: <b>{l.process}</b></span>
           <span className={styles.datachip}>Puntaje: <b>{l.score}</b></span>
-          <span className={styles.datachip}>Grado CTC: <b style={l.grade ? { color: GRADES[l.grade] } : undefined}>{l.grade || "Pendiente"}</b></span>
+          <span className={styles.datachip}>Grado CTCx: <b style={l.grade ? { color: GRADES[l.grade] } : undefined}>{l.grade || "Pendiente"}</b></span>
         </div>
         {barraDelLote(l)}
         <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginTop: "auto" }}>
           <button className="btn btn-sm" onClick={() => onOpenFicha(l.id)}>{l.stage === 0 ? "Completar ficha" : "Ver ficha"}</button>
+          {botonDelDossier(l)}
           {botonQueSigue(l)}
           <span className={styles.state} style={{ ["--lc" as string]: col } as React.CSSProperties}>{STAGES[l.stage]}</span>
         </div>

@@ -594,4 +594,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-06] V5.167 · Kaffetal Regal — dossier: sin ajuste CTCx, CTCx en todo el texto, taza segunda, grado con imagen y variedades del Mapa de Variedades, ilustraciones, conjeturas; botón al dossier en Mis Lotes
 - NEW `scripts/build-variedades-datos.mjs`, `src/lib/catacion/{variedades.ts,variedadesDatos.ts}`, `src/lib/kaffetal/conjeturas.ts`; ANN `src/components/kaffetal-regal/dossier/{DossierCtcx.tsx,figuras.tsx,textos.ts,dossier.module.css}`, `src/lib/kaffetal/{dossierDatos.ts,dossierEvaluacion.ts}`, `scripts/build-rueda-datos.mjs` + `src/lib/catacion/ruedaDatos.ts` (varietales), `src/components/kaffetal-regal/{ArenaSection.tsx,LotKanbanStepper.tsx,panel/EvaluacionesTab.tsx,panel/PerfilTab.tsx}`, `scripts/qa-centro-calidad-check.mjs`, `docs/componentes/{kaffetal-regal,herramientas-cafe}.md`, `docs/ALINEACION.md`.
-(commit: pendiente)
+(commit: 60b77a7)

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.167] — 2026-10-06 (commit pendiente)
+## [V5.167] — 2026-10-06 (commit 60b77a7)
 
 - **Cambiado**: **el productor ya no ve el ajuste CTCx en el dossier** (owner, 2026-10-06). El grado se presenta como Punto SCA ×
   tríada = puntos CTCx (los puntos finales, sin nombrar el ajuste ni la base); se retiró «lo que pide cada grado con esta tríada».

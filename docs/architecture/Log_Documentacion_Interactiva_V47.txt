@@ -582,4 +582,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-06] V5.164 · Consolas — resumen del veredicto opcional junto a los botones; avance en las acciones largas de OCP, BCP, LCP y ECP
 - ANN `src/components/panel/ProgresoDeAccion.tsx` (`useAvance`, `AVANCE`, `EnviarConAvance`), `app/ocp/(app)/nominados/NominadosClient.tsx`, `app/ocp/(app)/nominadosActions.ts` (resumen por defecto), `app/ocp/(app)/kr/FichasClient.tsx`, `app/bcp/(app)/{socios/SociosClient,usuarios/UsuariosClient}.tsx`, `app/bcp/(app)/terratalento/page.tsx`, `app/lcp/(app)/buzon/BuzonMail.tsx`, `src/components/panel/direccionamiento/DefinicionDeContexto.tsx`, `scripts/qa-centro-calidad-check.mjs`, `docs/componentes/consolas.md`.
-(commit: pendiente)
+(commit: 86340d2)

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.164] — 2026-10-06 (commit pendiente)
+## [V5.164] — 2026-10-06 (commit 86340d2)
 
 - **Cambiado**: el **resumen del resultado es OPCIONAL y va al lado de los botones** del veredicto (owner, 2026-10-06: «que sea
   obligatorio lo hace muchas veces innecesario, y además está muy lejos del botón»), en el informe del Centro y en «Registrar a

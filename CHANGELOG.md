@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.163] — 2026-10-06 (commit pendiente)
+## [V5.163] — 2026-10-06 (commit f70ed29)
 
 - **Corregido**: en el informe del Centro (OCP) y en «Registrar a mano», **«Galardonar», «No supera» y «Enviar de vuelta» ya no
   quedan mudos** (owner, 2026-10-06: «al dar click a Galardonar no sucede nada; si hay algo bloqueando, debe aparecer un

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.173] — 2026-10-06 (commit pendiente)
+## [V5.173] — 2026-10-06 (commit b5f5e4f)
 
 - **Cambiado**: **«Declarar para Temporada Actual» reemplaza a «Declarar Ahora»** (owner, 2026-10-06: «este modelo es demasiado
   inflexible» — sin el PVC de la siguiente temporada y a 71 días de ella, solo quedaban 30 días renovables). La declaración cubre

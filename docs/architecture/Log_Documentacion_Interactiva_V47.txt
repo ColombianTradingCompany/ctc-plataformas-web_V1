@@ -610,4 +610,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-06] V5.171 · la redeclaración de «Ahora y Siguiente» (se pide diez días antes; sin respuesta queda en el 70 %)
 - ANN `src/lib/trato/{terminos,modalidades,contrato,producerActions,redeclaracion}.ts`, `src/app/api/cron/redeclaraciones/route.ts`, `vercel.json`, `src/components/kaffetal-regal/{data.ts,KaffetalExperience.tsx,panel/ContratosTab.tsx}`, `app/ocp/(app)/contratos/[id]/page.tsx`, `scripts/qa-trato-check.mjs`, `docs/migraciones/2026-10-06_redeclaracion_ahora_y_siguiente.sql`, `docs/componentes/{kaffetal-regal,consolas}.md`, `docs/ALINEACION.md`.
-(commit: pendiente)
+(commit: 4ee9532)

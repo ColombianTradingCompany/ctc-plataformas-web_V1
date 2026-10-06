@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.171] — 2026-10-06 (commit pendiente)
+## [V5.171] — 2026-10-06 (commit 4ee9532)
 
 - **Añadido**: **la redeclaración de «Declarar Ahora y Siguiente Temporada»** (owner, 2026-10-06: «la opción 1, que quede en el
   70 %»). Diez días antes de que empiece la siguiente Temporada Trimestral se le pide al productor (nota y correo) y en «Mis

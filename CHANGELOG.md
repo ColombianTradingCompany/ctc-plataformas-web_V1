@@ -19,6 +19,16 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.172] — 2026-10-06 (commit pendiente)
+
+- **Cambiado**: **«Confirmar la oferta» (OCP · Pendiente de Oferta) deja ver que las cifras son dinero y kilos, y que se cambian**
+  (owner, 2026-10-06: «no hace muy claro que los números son dinero y que se pueden cambiar, igual que la cantidad»). El precio
+  por kg y por carga van en cajas con borde, «$» delante y «COP / kg» o «COP / carga» detrás; la cantidad, con «kg de CPS»;
+  todas con separador de miles, un lápiz y resalte al enfocarlas. Debajo de cada una, de dónde sale la cifra (el PVC o el tope
+  PVC − 8 %) y, si se cambió, «volver a ese precio». Las condiciones de entrega y las notas, también con borde.
+- **Seguridad**: `qa-trato` (146 → 147).
+- **Docs**: charter `consolas`; la redeclaración de «Ahora y Siguiente» queda con diez días (owner, 2026-10-06).
+
 ## [V5.171] — 2026-10-06 (commit 4ee9532)
 
 - **Añadido**: **la redeclaración de «Declarar Ahora y Siguiente Temporada»** (owner, 2026-10-06: «la opción 1, que quede en el

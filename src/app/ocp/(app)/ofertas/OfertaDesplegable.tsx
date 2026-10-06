@@ -34,6 +34,48 @@ export type ResumenDelLote = {
 };
 
 const num = (s: string) => Number(String(s).replace(/\./g, "").replace(",", "."));
+/** V5.172: los montos y los kilos se escriben con separador de miles («23.920»); `num` los vuelve a leer. */
+const miles = (s: string) => {
+  const d = String(s).replace(/\D/g, "");
+  return d ? Number(d).toLocaleString("es-CO") : "";
+};
+
+// V5.172 (owner, 2026-10-06: «no hace muy claro que los números son dinero y que se pueden cambiar, igual que la cantidad»): cada
+// cifra editable va en una caja con borde, su moneda o unidad a los lados y el lápiz que dice que se escribe ahí.
+function Campo({
+  etiqueta,
+  prefijo,
+  sufijo,
+  valor,
+  onCambio,
+  ayuda,
+}: {
+  etiqueta: string;
+  prefijo?: string;
+  sufijo: string;
+  valor: string;
+  onCambio: (v: string) => void;
+  ayuda?: React.ReactNode;
+}) {
+  return (
+    <label style={{ fontSize: 12, display: "grid", gap: 4, fontWeight: 600, gridTemplateColumns: "minmax(0, 1fr)", minWidth: 0 }}>
+      {etiqueta}
+      <span className={styles.campoCifra}>
+        {prefijo && <span className={styles.campoCifraLado}>{prefijo}</span>}
+        <input inputMode="numeric" value={valor} onChange={(e) => onCambio(miles(e.target.value))} aria-label={etiqueta} />
+        <span className={styles.campoCifraLado}>{sufijo}</span>
+        <span aria-hidden className={styles.campoCifraLapiz}>
+          ✎
+        </span>
+      </span>
+      {ayuda && (
+        <span className={styles.meta} style={{ margin: 0, fontWeight: 400 }}>
+          {ayuda}
+        </span>
+      )}
+    </label>
+  );
+}
 
 export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId: string; lotName: string; resumen: ResumenDelLote; anclaje: AnclajeDeOferta | null }) {
   const router = useRouter();
@@ -41,8 +83,8 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
   const [error, setError] = useState<string | null>(null);
   const [clase, setClase] = useState<OfferKind>("temporada");
   const precioAncla = anclaje ? (clase === "directa" ? anclaje.copKgDirecta : anclaje.copKg) : null;
-  const [precioKg, setPrecioKg] = useState(precioAncla != null ? String(Math.round(precioAncla)) : "");
-  const [minKg, setMinKg] = useState(anclaje?.minKg != null ? String(anclaje.minKg) : "");
+  const [precioKg, setPrecioKg] = useState(precioAncla != null ? miles(String(Math.round(precioAncla))) : "");
+  const [minKg, setMinKg] = useState(anclaje?.minKg != null ? miles(String(anclaje.minKg)) : "");
   // V5.169: la compra de CTCx Selection propone cuántos kilos compra (todo el lote o una parte).
   const [kgSelection, setKgSelection] = useState("");
   const [lugar, setLugar] = useState(LUGAR_DE_ENTREGA_POR_DEFECTO);
@@ -63,7 +105,7 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
 
   function elegirClase(k: OfferKind) {
     setClase(k);
-    if (anclaje && (k === "temporada" || k === "directa")) setPrecioKg(String(Math.round(k === "directa" ? anclaje.copKgDirecta : anclaje.copKg)));
+    if (anclaje && (k === "temporada" || k === "directa")) setPrecioKg(miles(String(Math.round(k === "directa" ? anclaje.copKgDirecta : anclaje.copKg))));
   }
 
   function emitir() {
@@ -123,6 +165,9 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
         {/* ── Los parámetros de la oferta ── */}
         <div style={{ border: "1px dashed var(--line)", borderRadius: 8, padding: "10px 12px", display: "grid", gap: 8 }}>
           <b style={{ fontSize: 13 }}>Confirmar la oferta</b>
+          <span className={styles.meta} style={{ margin: "-4px 0 0" }}>
+            El precio llega del PVC y la cantidad del mínimo del grado: puede cambiar las cifras de las cajas antes de emitir.
+          </span>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             {(["temporada", "directa"] as const).map((k) => (
               <label key={k} style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12.5, cursor: "pointer" }}>
@@ -132,43 +177,62 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
             ))}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 8 }}>
-            <label style={{ fontSize: 12, display: "grid", gap: 3 }}>
-              Precio COP por kg de CPS
-              <input inputMode="numeric" value={precioKg} onChange={(e) => setPrecioKg(e.target.value)} />
-            </label>
-            <label style={{ fontSize: 12, display: "grid", gap: 3 }}>
-              Precio COP por carga ({CARGA_KG} kg)
-              <input
-                inputMode="numeric"
-                value={Number.isFinite(kgN) && kgN > 0 ? String(Math.round(kgN * CARGA_KG)) : ""}
-                onChange={(e) => {
-                  const c = num(e.target.value);
-                  setPrecioKg(Number.isFinite(c) && c > 0 ? String(Math.round(c / CARGA_KG)) : "");
-                }}
-              />
-            </label>
+            <Campo
+              etiqueta="Precio por kg de CPS"
+              prefijo="$"
+              sufijo="COP / kg"
+              valor={precioKg}
+              onCambio={setPrecioKg}
+              ayuda={
+                precioAncla != null && Number.isFinite(kgN) && Math.round(kgN) !== Math.round(precioAncla) ? (
+                  <>
+                    {esSelection ? "Tope" : "PVC"}: {formatCop(precioAncla)}/kg ·{" "}
+                    <button type="button" className={styles.enlaceBoton} onClick={() => setPrecioKg(miles(String(Math.round(precioAncla))))}>
+                      volver a ese precio
+                    </button>
+                  </>
+                ) : precioAncla != null ? (
+                  esSelection ? "El tope (PVC − 8 %); puede proponer menos." : "El PVC del grado."
+                ) : null
+              }
+            />
+            <Campo
+              etiqueta={`Precio por carga (${CARGA_KG} kg)`}
+              prefijo="$"
+              sufijo="COP / carga"
+              valor={Number.isFinite(kgN) && kgN > 0 ? miles(String(Math.round(kgN * CARGA_KG))) : ""}
+              onCambio={(v) => {
+                const c = num(v);
+                setPrecioKg(Number.isFinite(c) && c > 0 ? miles(String(Math.round(c / CARGA_KG))) : "");
+              }}
+              ayuda="Se mueve junto con el precio por kg."
+            />
             {esSelection ? (
-              <label style={{ fontSize: 12, display: "grid", gap: 3 }}>
-                Kilos de CPS que CTCx propone comprar
-                <input inputMode="numeric" value={kgSelection} onChange={(e) => setKgSelection(e.target.value)} />
-                <span className={styles.meta} style={{ margin: 0 }}>
-                  {Number.isFinite(kgSelN) && kgSelN > 0 ? `${(kgSelN / CARGA_KG).toLocaleString("es-CO", { maximumFractionDigits: 2 })} cargas · total ${formatCop(kgSelN * (Number.isFinite(kgN) ? kgN : 0))}` : "Todo el lote o una parte"}
-                </span>
-              </label>
+              <Campo
+                etiqueta="Kilos de CPS que CTCx propone comprar"
+                sufijo="kg de CPS"
+                valor={kgSelection}
+                onCambio={setKgSelection}
+                ayuda={Number.isFinite(kgSelN) && kgSelN > 0 ? `${(kgSelN / CARGA_KG).toLocaleString("es-CO", { maximumFractionDigits: 2 })} cargas · total ${formatCop(kgSelN * (Number.isFinite(kgN) ? kgN : 0))}` : "Escriba los kilos: todo el lote o una parte."}
+              />
             ) : (
-              <label style={{ fontSize: 12, display: "grid", gap: 3 }}>
-                Cantidad mínima disponible de CPS (kg)
-                <input inputMode="numeric" value={minKg} onChange={(e) => setMinKg(e.target.value)} />
-                <span className={styles.meta} style={{ margin: 0 }}>
-                  {Number.isFinite(minN) && minN > 0 ? `${(minN / CARGA_KG).toLocaleString("es-CO", { maximumFractionDigits: 2 })} cargas` : "—"}
-                  {anclaje?.minKg != null ? ` · el mínimo del grado es ${anclaje.minKg} kg` : ""}
-                </span>
-              </label>
+              <Campo
+                etiqueta="Cantidad mínima disponible de CPS"
+                sufijo="kg de CPS"
+                valor={minKg}
+                onCambio={setMinKg}
+                ayuda={
+                  <>
+                    {Number.isFinite(minN) && minN > 0 ? `${(minN / CARGA_KG).toLocaleString("es-CO", { maximumFractionDigits: 2 })} cargas` : "—"}
+                    {anclaje?.minKg != null ? ` · el mínimo del grado es ${anclaje.minKg} kg` : ""}
+                  </>
+                }
+              />
             )}
           </div>
-          <label style={{ fontSize: 12, display: "grid", gap: 3 }}>
+          <label style={{ fontSize: 12, display: "grid", gap: 4, fontWeight: 600 }}>
             Condiciones de entrega
-            <textarea rows={2} value={lugar} onChange={(e) => setLugar(e.target.value)} />
+            <textarea className={styles.campoTexto} rows={2} value={lugar} onChange={(e) => setLugar(e.target.value)} />
           </label>
           {pasaTope && (
             <p className={styles.warn} style={{ margin: 0 }}>
@@ -210,6 +274,7 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
             <p className={styles.warn} style={{ margin: 0 }}>Sin edición del PVC vigente: la oferta sale como excepción, con motivo.</p>
           )}
           <textarea
+            className={styles.campoTexto}
             rows={2}
             placeholder={claseEfectiva === "excepcion" ? "Motivo de la excepción (obligatorio; el productor lo ve)" : "Notas para el productor (opcional)"}
             value={notas}

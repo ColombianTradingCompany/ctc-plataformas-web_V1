@@ -279,7 +279,7 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   const blind = lee("src/components/kaffetal-regal/blindaje/Blindaje.tsx");
   check("blindaje · sin contrato: sin menú contextual ni copiar, sin atajos de imprimir/guardar; imprimir desde el navegador saca el aviso", blind.includes('"contextmenu", "copy", "cut", "dragstart", "selectstart"') && blind.includes('["p", "s", "c", "x", "a", "u"]') && blind.includes("body * { display: none !important; }"));
   const desp = lee("src/app/ocp/(app)/ofertas/OfertaDesplegable.tsx");
-  check("OCP · el lote se despliega con su resumen y se confirma: mínimo, entrega (Bucaramanga por defecto), precio por kg y carga; cambiar el precio lo vuelve excepción con motivo", desp.includes("<details") && desp.includes("useState(LUGAR_DE_ENTREGA_POR_DEFECTO)") && desp.includes("Cantidad mínima disponible de CPS (kg)") && desp.includes("Precio COP por carga") && desp.includes('const claseEfectiva: OfferKind = cambiaPrecio || precioAncla == null ? "excepcion" : clase;') && lee("src/app/ocp/(app)/ofertas/page.tsx").includes("<OfertaDesplegable"));
+  check("OCP · el lote se despliega con su resumen y se confirma: mínimo, entrega (Bucaramanga por defecto), precio por kg y carga; cambiar el precio lo vuelve excepción con motivo", desp.includes("<details") && desp.includes("useState(LUGAR_DE_ENTREGA_POR_DEFECTO)") && desp.includes('etiqueta="Cantidad mínima disponible de CPS"') && desp.includes("etiqueta={`Precio por carga (${CARGA_KG} kg)`}") && desp.includes('const claseEfectiva: OfferKind = cambiaPrecio || precioAncla == null ? "excepcion" : clase;') && lee("src/app/ocp/(app)/ofertas/page.tsx").includes("<OfertaDesplegable"));
 }
 
 // ── V5.169 (owner, 2026-10-06) · CTCx ofrece una de dos cosas (Cherry Picked con tres modalidades, o una compra de CTCx Selection
@@ -355,6 +355,13 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   check("redeclaración · corre a diario (vercel.json) con CRON_SECRET", lee("vercel.json").includes('"/api/cron/redeclaraciones"') && lee("src/app/api/cron/redeclaraciones/route.ts").includes("Bearer ${secret}"));
   const tab = lee("src/components/kaffetal-regal/panel/ContratosTab.tsx");
   check("redeclaración · Mis contratos trae el botón «Redeclarar», que no deja bajar del mínimo; el OCP ve el estado", tab.includes("<Redeclaracion contractId={c.id}") && tab.includes("redeclararSiguienteTemporada(contractId") && tab.includes("No puede ser menos de {e.minKg} kg.") && lee("src/app/ocp/(app)/contratos/[id]/page.tsx").includes("estadoDeRedeclaracion({"));
+}
+
+// ── V5.172 (owner, 2026-10-06) · en «Confirmar la oferta» se ve que las cifras son dinero y kilos, y que se cambian ──
+{
+  const desp = lee("src/app/ocp/(app)/ofertas/OfertaDesplegable.tsx");
+  const css = lee("src/components/panel/shared.module.css");
+  check("oferta · precio por kg y por carga en cajas con $ y COP, los kilos con su unidad, separador de miles y lápiz; volver al precio del PVC", desp.includes('prefijo="$"') && desp.includes('sufijo="COP / kg"') && desp.includes('sufijo="COP / carga"') && desp.includes('sufijo="kg de CPS"') && desp.includes("onCambio(miles(e.target.value))") && desp.includes("volver a ese precio") && css.includes(".campoCifra:focus-within") && css.includes(".campoCifraLapiz"));
 }
 
 if (fallos.length) {

@@ -177,6 +177,8 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.172 · «Confirmar la oferta» con cifras que se ven editables** (owner, 2026-10-06): cajas con $ · COP / kg · COP / carga ·
+  kg de CPS, separador de miles, lápiz y «volver a ese precio» (`Campo` en `OfertaDesplegable.tsx`, clases `campoCifra*` en `shared.module.css`).
 - **V5.171 · el contrato del OCP muestra la redeclaración de «Ahora y Siguiente»** (se abre el…, abierta y pedida, hecha por
   el productor o al mínimo por el barrido diario). Solo lectura: la decide el productor o el cron.
 - **V5.170 · al emitir, el OCP dice si «Siguiente Temporada» ya tiene precio** (PVC de la edición siguiente) o si conviene

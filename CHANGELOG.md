@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.161] — 2026-10-06 (commit pendiente)
+## [V5.161] — 2026-10-06 (commit 7060037)
 
 - **Corregido**: **un lote devuelto desde el OCP al Centro de Calidad ya no llega con la planilla vacía** (owner, 2026-10-06:
   «toda la información registrada se borra cuando llega de vuelta»). La información nunca se borró —la fila devuelta conserva

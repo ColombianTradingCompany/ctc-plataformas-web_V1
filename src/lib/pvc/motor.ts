@@ -30,9 +30,10 @@ export type Nivel = "FCA" | "CIP" | "DDP";
 // aquí una segunda vez. Hasta la V5.81 esta tabla decía «Red 84,0–85,9» mientras el grado Red era 82–83,99.
 // Son rótulos: solo alimentan el campo `rango` de la escalera. Las ediciones YA publicadas conservan sus
 // rótulos viejos (una edición publicada es inmutable); por eso `precio.ts` nunca lee `rango`.
+// V5.160 (owner): el grado es El Punto y la Tríada — el rótulo es la banda de PUNTOS; el SCA de un café común, de referencia.
 const fmtSca = (n: number) => n.toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 export const RANGOS: Record<Banda5, string> = Object.fromEntries(
-  GRADOS.map((g) => [g.nombre, g.scaMax >= 100 ? `≥ ${fmtSca(g.scaMin)}` : `${fmtSca(g.scaMin)}–${fmtSca(g.scaMax)}`])
+  GRADOS.map((g) => [g.nombre, `${g.puntosMin}–${g.puntosMax} pts${g.scaDesdeComun != null ? ` (café común desde SCA ${fmtSca(g.scaDesdeComun)})` : " (SCA ≥ 89 + surplus)"}`])
 ) as Record<Banda5, string>;
 
 export const SCORE_KEYS = [

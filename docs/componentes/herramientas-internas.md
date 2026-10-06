@@ -111,6 +111,9 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
 
 ## Pendientes
 
+- **V5.160 · la escala de puntos GOBIERNA** (owner, 2026-10-06; ejecutado desde `consolas`). `escala.ts` deja de ser «la
+  que viene»: `definicion.ts` lee sus bandas y `EscalaBoard` ya no avisa «no gobierna». Los rótulos de la escalera del PVC
+  (`motor.ts` · `RANGOS`) son ahora bandas de puntos con el SCA de un café común de referencia.
 - **V5.158 · `CurvaDeEscala` sale de `EscalaBoard` a `src/components/panel/pvc/CurvaDeEscala.tsx`** (ejecutado desde
   `consolas`): la pinta también el informe del Centro en el OCP con la tríada del lote (`src/lib/pvc/triadaDelLote.ts`).
   Sin cambio de comportamiento en `/ecp/pvc`.

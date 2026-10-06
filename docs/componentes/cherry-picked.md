@@ -79,6 +79,10 @@ con cuenta QA — **hoy no corre**: las cuentas de prueba se eliminaron en la V5
 
 ## Pendientes
 
+- **V5.160 · el JSON-LD de los grados y los lotes mock del Sneak Peek cambian con el contrato nuevo** (ejecutado desde
+  `consolas`). Los siete mock se reclasificaron con su tríada (dos Gold → Blue, dos Blue → Red; BK-6A08 sube a 82,50) y sus
+  PDF se regeneraron con códigos nuevos (BL-4C1A, BL-9E33, RD-8B15, RD-3D62). Abierto: `GradosSection` y el copy público que
+  describa un grado por SCA debe pasar a puntos (revisar el componente).
 - **CTCx Selection en la vitrina (V5.85, fase 8 del `PLAN_CIRCUITO_DEL_LOTE`; código de este componente tocado desde `consolas`
   con el «continúa» del owner, línea en `ALINEACION` §3)**: la tarjeta de la tienda y la cinta enseñan el **perfil único** en vez de
   la finca; la cinta y el portal (`PaquetePublico`) pintan la **imagen por lote** (`ctcx_imagen_path`) o, si no hay, la del perfil.

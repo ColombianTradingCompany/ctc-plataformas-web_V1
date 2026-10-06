@@ -69,11 +69,14 @@ export function nivelDeVariedad(nombre: string): Nivel | null {
 export function nivelDeProceso(base: string | null | undefined, especial: string | null | undefined): RazonDeNivel {
   const e = llano(especial ?? "");
   const b = llano(base ?? "");
-  if (e && /(ferment|experiment|co ferment|coferment|anaerob|carbonic|maceracion|lactic|termic|yeast|levadura|koji)/.test(e)) return { nivel: "A", por: `${especial}: experimental / fermentaciones` };
-  if (e && /(infusi|inocul|frut)/.test(e)) return { nivel: "B", por: `${especial}: infusiones` };
-  if (/(honey|natural|miel)/.test(b)) return { nivel: "B", por: `${base}${especial ? ` + ${especial}` : ""}` };
-  if (/lavado|washed/.test(b)) return { nivel: "C", por: `${base}${especial ? ` + ${especial}` : ""}` };
-  return { nivel: "C", por: base || especial ? `${base || ""}${especial ? ` + ${especial}` : ""}`.trim() : "sin proceso declarado (C)" };
+  const todo = `${b} ${e}`.trim();
+  const rotulo = `${base ?? ""}${especial ? ` + ${especial}` : ""}`.trim();
+  // Las palabras se buscan en el base Y en el especial: un productor escribe «Doble Fermentado» o «Lavado + fermentación» donde le cabe.
+  if (/(ferment|experiment|anaerob|carbonic|maceracion|lactic|termic|yeast|levadura|koji)/.test(todo)) return { nivel: "A", por: `${rotulo}: experimental / fermentaciones` };
+  if (/(infusi|inocul)/.test(todo)) return { nivel: "B", por: `${rotulo}: infusiones` };
+  if (/(honey|natural|miel)/.test(todo)) return { nivel: "B", por: rotulo };
+  if (/lavado|washed/.test(todo)) return { nivel: "C", por: rotulo };
+  return { nivel: "C", por: rotulo || "sin proceso declarado (C)" };
 }
 
 /** Cuántos reconocimientos declaró el productor en A3: una línea o un ítem separado por «;» o «|» por premio («·» NO separa:

@@ -126,7 +126,7 @@ de la serie FNC.
 |---|---|---|
 | 0 (hoy) | Tablero HTML en `reference_html_tools`; registrarlo en `tools`/`tool_versions` | — |
 | 1 | Tablas, `motor.ts` + paridad, `/bcp/pvc` con tablero, ediciones y publicar; vista pública | `tsc`, eslint, build; V5.28 + CHANGELOG |
-| 2 | `definicion.ts` con la escala de puntos (§9.1) y `qa-grados-check` al día; MOQ por unidades (§9.2); contratos, ofertas, listados y subastas leen la edición en US$ FOB y exhiben en la moneda del destino (§9.3) | QA de rutas y sneak peek; el owner valida la escala con la calculadora antes del cambio |
+| 2 | **HECHO en la V5.160 (2026-10-06): `definicion.ts` lee la escala de puntos (§9.1) y `gradoDelLote` gobierna; `qa-grados-check` al día.** Pendiente de esta fase: MOQ por unidades (§9.2); contratos, ofertas, listados y subastas leen la edición en US$ FOB y exhiben en la moneda del destino (§9.3) | QA de rutas y sneak peek; el owner valida la escala con la calculadora antes del cambio |
 | 3 | Endpoint de ciclo, capturas, cron semanal de Vercel, avisos, dossier por edición vía GitHub Action a storage | Prueba de un ciclo completo antes del corte del 30-sep-2026 |
 | 4 | Disparador diario, certeza, informe de afinación | Primera franja cerrada (F4-2026) |
 
@@ -143,6 +143,10 @@ de la serie FNC.
 ## 9. Lo que las decisiones fijan
 
 ### 9.1 La escala de puntos CTC (decisión #1)
+
+> **V5.160 (2026-10-06): GOBIERNA.** El owner declaró obsoleta la escala SCA de dos en dos («retirarla de todos lados y dejar
+> solo la regla del Punto y la Tríada»). `definicion.ts` lee estas bandas; la tríada de cada lote se deriva de su Ficha
+> (`src/lib/pvc/triadaDelLote.ts`). La Base física (§9.1.b) se exhibe y todavía no cierra la puerta.
 
 **Doctrina.** El puntaje SCA sigue siendo el ancla —sin él no hay grado— pero el grado se lee de una escala propia de
 puntos (1000–2500) en la que también cuentan tres atributos del lote, cada uno en tres niveles (C · B · A), a los que

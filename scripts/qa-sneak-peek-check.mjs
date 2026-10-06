@@ -22,7 +22,8 @@
 
 import { readFileSync, existsSync } from "node:fs";
 import { SNEAK_PEEK_MOCK, MOCK_ID_PREFIX } from "../src/lib/catalogo/sneakPeekMock.ts";
-import { gradoPorPuntaje, puntajeValido, GRADO_POR_ID } from "../src/lib/grados/definicion.ts";
+import { gradoDelLote, puntajeValido, GRADO_POR_ID } from "../src/lib/grados/definicion.ts";
+import { triadaDeLaFicha } from "../src/lib/pvc/triadaDelLote.ts";
 
 let ok = 0;
 const fallos = [];
@@ -128,11 +129,13 @@ check(
   "ninguno es Tyrian",
   SNEAK_PEEK_MOCK.every((l) => l.grade !== "tyrian")
 );
-// El grado tiene que ser el que el puntaje manda (regla 1 de grados/definicion).
+// El grado tiene que ser el que los puntos mandan (V5.160: El Punto y la Tríada — la tríada sale de la variedad y el
+// proceso del mock, sin reconocimientos).
 for (const l of SNEAK_PEEK_MOCK) {
-  const esperado = gradoPorPuntaje(Number(l.score));
+  const tri = triadaDeLaFicha({ varieties: [{ name: l.variety, pct: "100", base: l.process, special: "" }], awards: "" }).triada;
+  const esperado = gradoDelLote(Number(l.score), tri).grado;
   check(
-    `${l.id}: grado «${l.grade}» coherente con el puntaje ${l.score} (${esperado?.id ?? "sin grado"})`,
+    `${l.id}: grado «${l.grade}» coherente con el Punto ${l.score} × ${tri.variedad}${tri.proceso}${tri.reconocimiento} (${esperado?.id ?? "sin grado"})`,
     esperado?.id === l.grade
   );
 }

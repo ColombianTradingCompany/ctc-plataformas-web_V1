@@ -169,7 +169,7 @@ function paginaResumen(lote, grado) {
     <div class="codigo">${esc(lote.code)}</div>
     <div class="grado">
       <div class="sello"><img src="${url(`${RAIZ}/public${grado.logo}`)}" alt=""></div>
-      <div class="gtxt"><b>Grado ${esc(grado.nombre)}</b><span>${esc(grado.lema)} · SCA ${grado.scaMin}–${grado.scaMax}</span></div>
+      <div class="gtxt"><b>Grado ${esc(grado.nombre)}</b><span>${esc(grado.lema)} · ${grado.puntosMin}–${grado.puntosMax} puntos CTC</span></div>
       <div class="puntaje"><b>${esc(lote.score)}</b><span>Puntaje SCA${lote.scoreEstimated ? " · estimado" : ""}</span></div>
     </div>
     <h2 class="sec">Identificación del lote</h2>

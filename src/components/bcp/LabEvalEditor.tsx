@@ -45,6 +45,7 @@ import {
   type VistaDePlanilla, NOTA_DESCRIPTIVA_MAX, TAZAS_SCA, TAZAS_CVA, factorDeLaPlanilla, normalizaScaTazas, normalizaTazas, tazasCvaUsadas, tazasUsadas } from "@/lib/arena/labEvaluation";
 import { INFO_PLANILLA, type ClaveDeInfo } from "@/lib/arena/planillaInfo";
 import { CVA_PROPOSITO, decidirPorPunto, rotuloDelPunto } from "@/lib/arena/homologacion";
+import type { Triada } from "@/lib/pvc/escala";
 import { ETAPAS_DE_LA_RUEDA, ETAPA_LABEL, INTENSIDAD, NOTA_MAX, ZONA_LABEL, ajustaIntensidad, alternaEtapa, detalleDe, etapasLabel, familiaDe, fmtIntensidad, normalizaRueda, rutaDe, zonaDeIntensidad, type DetalleDeMarca } from "@/lib/catacion/rueda";
 import { scaClassFor } from "@/components/kaffetal-regal/ficha/fichaCalculations";
 import {
@@ -116,6 +117,7 @@ export function LabEvalEditor({
   lang: langProp,
   onLang,
   ocultaGrado = false,
+  triada = null,
 }: {
   value: LabEvaluation;
   onChange: (patch: Partial<LabEvaluation>) => void;
@@ -125,6 +127,8 @@ export function LabEvalEditor({
   onLang?: (lang: IdiomaDePlanilla) => void;
   /** V5.148 (owner, 2026-10-02): el Centro de Calidad no ve el grado — depende también de B1, que su planilla no refleja. El Punto sí se enseña. */
   ocultaGrado?: boolean;
+  /** V5.160: la tríada del lote (variedad · proceso · reconocimiento). Sin ella no se puede derivar un grado: solo se enseña el Punto. */
+  triada?: Triada | null;
 }) {
   const [langPropio, setLangPropio] = useState<IdiomaDePlanilla>("es");
   const lang = langProp ?? langPropio;
@@ -141,7 +145,7 @@ export function LabEvalEditor({
   const mesh = computeMesh(value, factor.remainder);
   const punto = puntoDeLaPlanilla(value);
   const errores = erroresDePlanilla(value, lang);
-  const decision = punto ? decidirPorPunto(punto) : null;
+  const decision = punto && triada ? decidirPorPunto(punto, triada) : null;
   const verSca = value.vista !== "cva";
   const verCva = value.vista !== "sca";
 

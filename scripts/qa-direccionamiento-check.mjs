@@ -41,8 +41,8 @@ console.log("\n1 · El texto de la memoria");
 const mem = textoMemoria();
 
 for (const g of GRADOS) {
-  check(`cita ${g.nombre} con su rango real (${g.scaMin}–${g.scaMax})`,
-    mem.includes(`${g.nombre} (SCA ${g.scaMin}–${g.scaMax})`));
+  check(`cita ${g.nombre} con su banda real (${g.puntosMin}–${g.puntosMax} puntos)`,
+    mem.includes(`${g.nombre} (${g.puntosMin}–${g.puntosMax} puntos CTC`));
 }
 check("dice que PREVALECE sobre el contexto de compañía", /prevalece/i.test(mem));
 check("dice explícitamente que no es un índice de precio", /no de un índice de precio/i.test(mem));
@@ -158,7 +158,7 @@ Responde ÚNICAMENTE con un array JSON, sin markdown:
     Array.isArray(items) && items.length > 0 && items.every((i) => typeof i?.titulo === "string" && typeof i?.texto === "string"));
 
   const texto = JSON.stringify(items ?? "");
-  const scaCitados = GRADOS.filter((g) => texto.includes(String(g.scaMin)) || texto.includes(String(g.scaMax)));
+  const scaCitados = GRADOS.filter((g) => texto.includes(String(g.puntosMin)) || texto.includes(String(g.puntosMax)) || (g.scaDesdeComun != null && texto.includes(String(g.scaDesdeComun))));
   const precioCitados = CIFRAS_DE_PRECIO.filter((c) => texto.includes(c.replace("–", "-")) || texto.includes(c));
 
   check("LA MEMORIA GANA: cita al menos un rango SCA real", scaCitados.length > 0,

@@ -79,11 +79,12 @@ export function EscalaBoard({
         tres letras de la Tríada (el surplus). Sirve para <strong>validarla</strong> antes de llevarla al código.
       </p>
 
-      <p className={styles.warn}>
-        <strong>Esto todavía no gobierna.</strong> La fuente única de grados sigue siendo <code>definicion.ts</code> — la
-        escala SCA de dos en dos, que es la que se aplica hoy en la Ficha, el catálogo y las ofertas. Puede verla en{" "}
+      <p className={styles.meta}>
+        <strong>Esto gobierna desde la V5.160 (2026-10-06).</strong> La fuente única de grados, <code>definicion.ts</code>, lee de
+        esta escala sus bandas y deriva el grado de cada lote con su Punto y su tríada; la escala SCA de dos en dos quedó
+        obsoleta y se retiró. La escalera con sus criterios está en{" "}
         <Link href="/ecp/direccionamiento/grados">Direccionamiento · Grados de Calidad</Link>. Esta pantalla calcula y
-        enseña; no escribe en ningún lote.
+        enseña; la tríada de cada lote se deriva de su Ficha al galardonar.
       </p>
 
       {/* ── La doctrina ── */}

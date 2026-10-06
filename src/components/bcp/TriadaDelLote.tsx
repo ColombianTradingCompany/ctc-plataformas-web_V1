@@ -7,11 +7,10 @@ import { CurvaDeEscala } from "@/components/panel/pvc/CurvaDeEscala";
 // ── V5.158 (owner, 2026-10-06) · «debe salir la escala A B C para cada parámetro de la tríada en la que cae» ──────────
 // La tríada del lote (variedad · proceso · reconocimiento) derivada de su Ficha, con las tres letras de cada atributo y la
 // elegida encendida —como en la calculadora del Modelo Económico—, los puntos que da la escala con el Punto de la taza, y
-// la curva con el lote encima. La escala sigue siendo referencia (`escala.ts`): el grado firme sale del Punto.
-export function TriadaDelLote({ ficha, sca, gradoHoy }: { ficha: FichaParaTriada | null | undefined; sca: number | null; /** V5.159: el grado que asigna hoy la plataforma (solo el Punto), para decir cuando la escala no coincide. */ gradoHoy?: string | null }) {
+// la curva con el lote encima. V5.160: la escala GOBIERNA — el grado se lee de los puntos.
+export function TriadaDelLote({ ficha, sca }: { ficha: FichaParaTriada | null | undefined; sca: number | null }) {
   const d: Derivada = triadaDeLaFicha(ficha);
   const r = sca != null ? puntosCtc(sca, d.triada) : null;
-  const difieren = !!(gradoHoy && r?.banda && r.banda.nombre !== gradoHoy);
   const pill = (n: Nivel, on: boolean) => ({
     display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 10px", borderRadius: 999, fontSize: 12, border: `1.5px solid ${on ? "var(--primary, #3C0A86)" : "var(--line)"}`,
     background: on ? "var(--primary, #3C0A86)" : "transparent", color: on ? "#fff" : "var(--muted)", fontWeight: on ? 700 : 500,
@@ -52,13 +51,8 @@ export function TriadaDelLote({ ficha, sca, gradoHoy }: { ficha: FichaParaTriada
         )}
       </div>
       {sca != null && r && <CurvaDeEscala t={d.triada} sca={sca} puntos={r.puntos} />}
-      {difieren && r?.banda && (
-        <p style={{ margin: 0, fontSize: 12.5, padding: "6px 10px", borderRadius: 8, background: "var(--paper)", border: "1px solid var(--line)" }} role="note">
-          <b>No coinciden:</b> hoy la plataforma galardonaría <b>{gradoHoy}</b> (solo el Punto); con la escala de la tríada este lote (<span className="mono">{letras(d.triada)}</span> a {sca?.toFixed(2)}) sería <b style={{ color: r.banda.hex }}>{r.banda.nombre}</b> ({r.puntos.toLocaleString("es-CO")} puntos). Mientras la escala no gobierne, vale lo de arriba.
-        </p>
-      )}
       <p style={{ margin: 0, fontSize: 11.5, color: "var(--muted)" }}>
-        La línea tenue es un café común (CCC); la marcada, la tríada del lote. La vertical punteada es el SCA 89, suelo de Tyrian. La escala de puntos es referencia: el grado firme sale del Punto.
+        La línea tenue es un café común (CCC); la marcada, la tríada del lote. La vertical punteada es el SCA 89, suelo de Tyrian. El grado se lee de los puntos (V5.160).
       </p>
     </div>
   );

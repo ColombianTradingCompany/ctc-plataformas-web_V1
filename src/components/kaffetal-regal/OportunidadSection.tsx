@@ -414,10 +414,16 @@ const T: Record<Lang, Dict> = {
   },
 };
 
-/** 81.99 se escribe con coma en español y alemán. El dato viene de
- *  `definicion.ts`; aquí solo se viste. */
+/** El dato viene de `definicion.ts`; aquí solo se viste (coma decimal en español y alemán). */
 function num(n: number, lang: Lang): string {
   return lang === "en" ? String(n) : String(n).replace(".", ",");
+}
+/** V5.160 (owner): el grado es El Punto y la Tríada — la escalera enseña la banda de puntos y, como referencia, el Punto SCA
+ *  desde el que un café COMÚN (variedad, proceso y reconocimiento corrientes) alcanza el grado. */
+function rangoDelGrado(g: { puntosMin: number; puntosMax: number; scaDesdeComun: number | null }, lang: Lang): string {
+  const pts = `${g.puntosMin.toLocaleString(lang === "en" ? "en-US" : "es-CO")}–${g.puntosMax.toLocaleString(lang === "en" ? "en-US" : "es-CO")}`;
+  const sca = g.scaDesdeComun != null ? (lang === "en" ? `SCA from ${num(g.scaDesdeComun, lang)} (common coffee)` : lang === "de" ? `SCA ab ${num(g.scaDesdeComun, lang)} (gewöhnlicher Kaffee)` : `SCA desde ${num(g.scaDesdeComun, lang)} (café común)`) : lang === "en" ? "SCA ≥ 89 + surplus" : lang === "de" ? "SCA ≥ 89 + Surplus" : "SCA ≥ 89 + surplus";
+  return `${pts} ${lang === "en" ? "pts" : "pts"} · ${sca}`;
 }
 
 export function OportunidadSection() {
@@ -431,7 +437,7 @@ export function OportunidadSection() {
     setEntry({
       key: row.key,
       eyebrow: grade
-        ? `${t.gradeKicker} ${num(grade.scaMin, lang)}–${num(grade.scaMax, lang)}`
+        ? `${t.gradeKicker} ${rangoDelGrado(grade, lang)}`
         : t.outOfScale,
       // El lema es copy de cliente y va en inglés en las tres lenguas: es el
       // nombre comercial del grado, no una frase que se traduzca.
@@ -502,7 +508,7 @@ export function OportunidadSection() {
                       escalera de precios en una escalera de CALIDAD. */}
                   {grade && (
                     <span className={styles.csca}>
-                      SCA {num(grade.scaMin, lang)}–{num(grade.scaMax, lang)}
+                      {rangoDelGrado(grade, lang)}
                     </span>
                   )}
                 </span>

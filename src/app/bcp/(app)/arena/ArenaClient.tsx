@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { LabEvalEditor } from "@/components/bcp/LabEvalEditor";
 import { EMPTY_LAB_EVALUATION, puntoDeLaPlanilla, type LabEvaluation } from "@/lib/arena/labEvaluation";
-import { gradoFirme } from "@/lib/arena/homologacion";
 import { deleteArenaSession, elegirEvaluacionQueRige, registrarApreciacion, removeLotFromSession } from "../arenaActions";
 import styles from "@/components/panel/shared.module.css";
 
@@ -94,7 +93,8 @@ export function ApreciacionForm({ sessionId, lotId, lotName }: { sessionId: stri
   const [ev, setEv] = useState<LabEvaluation>(EMPTY_LAB_EVALUATION);
   const punto = puntoDeLaPlanilla(ev);
   const puntaje = punto?.bajo ?? null;
-  const grado = punto ? gradoFirme(punto) : null;
+  // V5.160: el grado es El Punto y la Tríada; la tríada vive en la Ficha del lote, que este pop-up no carga. Se enseña el
+  // Punto; el grado lo calcula la acción al elegir la evaluación que rige.
 
   return (
     <span>
@@ -112,7 +112,7 @@ export function ApreciacionForm({ sessionId, lotId, lotName }: { sessionId: stri
               Se adjunta al lote como una evaluación más. El Grado no cambia salvo que después la elija como la que rige.
               {puntaje != null && (
                 <>
-                  {" "}Con esta planilla: <b>SCA {puntaje}</b> → {grado ? grado.nombre : "por debajo de Black"}.
+                  {" "}Con esta planilla: <b>Punto {puntaje}</b> (el grado sale del Punto y la tríada del lote al elegirla como la que rige).
                 </>
               )}
             </p>

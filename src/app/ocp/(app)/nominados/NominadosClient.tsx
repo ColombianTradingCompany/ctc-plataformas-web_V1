@@ -29,14 +29,14 @@ import { decidirSubvencion, emitirFactura, guardarCarrilDePago, recibirMuestraAc
 import { carrilConfigurado, type CarrilDePago } from "@/lib/arena/payment";
 import { LabEvalEditor } from "@/components/bcp/LabEvalEditor";
 import { AdjuntoReporteQGrader } from "@/components/bcp/AdjuntoReporteQGrader";
-import { FranjaDeGrados } from "@/components/bcp/FranjaDeGrados";
 import { FichaCompletaLectura } from "@/components/bcp/FichaCompletaLectura";
 import { TriadaDelLote } from "@/components/bcp/TriadaDelLote";
 import type { FichaFormData } from "@/components/kaffetal-regal/ficha/fichaData";
 import type { ReporteAdjunto } from "@/lib/evaluaciones/reporteReglas";
 import { decidirPorPunto, rotuloDelPunto, type PuntoSca } from "@/lib/arena/homologacion";
 import { EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, computeSca, type LabEvaluation } from "@/lib/arena/labEvaluation";
-import { gradoPorPuntaje, redondeaPuntaje } from "@/lib/grados/definicion";
+import { gradoDelLote, redondeaPuntaje } from "@/lib/grados/definicion";
+import { triadaDeLaFicha } from "@/lib/pvc/triadaDelLote";
 import { openFactura, type FacturaData } from "@/lib/arena/factura";
 import { MAX_BATCH_LOTS } from "@/lib/arena/inscriptions";
 import { MUESTRA_EVALUACION_KG } from "@/lib/trato/terminos";
@@ -528,7 +528,9 @@ export function ConfirmarCentroControls({
   const [verInforme, setVerInforme] = useState(false);
   const puntaje = alta.puntaje != null ? redondeaPuntaje(alta.puntaje) : null;
   // V5.92: el grado FIRME sale del Punto (piso; un homologado nunca da Tyrian); si el intervalo cruza los 80, recata.
-  const decision = alta.punto ? decidirPorPunto(alta.punto) : null;
+  // V5.160 (owner): el grado es El Punto y la Tríada; la tríada sale de la Ficha del lote (como en la acción).
+  const triada = triadaDeLaFicha(ficha).triada;
+  const decision = alta.punto ? decidirPorPunto(alta.punto, triada) : null;
   const grado = decision?.tipo === "galardon" ? decision.grado : null;
   const pendienteRecata = decision?.tipo === "pendiente_recata";
   return (
@@ -603,21 +605,14 @@ export function ConfirmarCentroControls({
               <label>Resumen del resultado (el productor lo verá)</label>
               <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Resultado de la evaluación…" />
             </div>
-            {/* V5.157 (owner): «la combinación y el punto donde cae en la franja correspondiente». V5.159 (owner: «no entiendo por qué
-                en un lado sale Blue y abajo sale Red»): son DOS reglas. Esta franja es la que la plataforma aplica HOY al galardonar
-                (`definicion.ts`: solo el Punto). La escala de la tríada, abajo, es la que viene (§9.1 del plan PVC): se exhibe para
-                validarla, no gobierna. Cuando no coinciden, se dice en una línea. */}
-            <div style={{ margin: "10px 0 6px" }}>
-              <p className={styles.meta} style={{ margin: "0 0 4px", fontWeight: 700, color: "var(--ink)" }}>1 · Grado que la plataforma asigna hoy — solo el Punto de la taza (`definicion.ts`)</p>
-              <FranjaDeGrados punto={alta.punto} />
-            </div>
-            {/* V5.158 (owner): «debe salir la escala A B C para cada parámetro de la tríada en la que cae». */}
+            {/* V5.158 (owner): «debe salir la escala A B C para cada parámetro de la tríada en la que cae». V5.160 (owner): la escala
+                SCA de dos en dos es OBSOLETA y se retiró; EL grado es El Punto y la Tríada — esto es la regla, no una referencia. */}
             <div style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "10px 12px", margin: "8px 0" }} aria-label="Tríada del lote">
-              <p className={styles.meta} style={{ margin: "0 0 2px", fontWeight: 700, color: "var(--ink)" }}>2 · Escala de puntos CTC «El Punto y la Tríada» — en validación, todavía no gobierna el grado</p>
+              <p className={styles.meta} style={{ margin: "0 0 2px", fontWeight: 700, color: "var(--ink)" }}>El grado · El Punto y la Tríada (variedad · proceso · reconocimiento, de su Ficha) con el Punto de la taza</p>
               <p className={styles.meta} style={{ margin: "0 0 8px" }}>
-                La misma taza vale distinto según la variedad, el proceso y los reconocimientos: un café común (CCC) necesita más puntaje para la misma banda que uno con surplus. Por eso puede no coincidir con la franja de arriba.
+                La misma taza vale distinto según la variedad, el proceso y los reconocimientos: un café común (CCC) necesita más puntaje para la misma banda que uno con surplus.
               </p>
-              <TriadaDelLote ficha={ficha} sca={alta.punto?.bajo ?? null} gradoHoy={grado?.nombre ?? null} />
+              <TriadaDelLote ficha={ficha} sca={alta.punto?.bajo ?? null} />
             </div>
             {/* El puntaje manda: el grado se DERIVA del alta del Centro; nadie lo digita. */}
             <p className={styles.meta} style={{ margin: "8px 0 6px" }}>
@@ -626,8 +621,8 @@ export function ConfirmarCentroControls({
                 : pendienteRecata
                   ? <>El Punto homologado cruza los 80 ({alta.punto?.bajo}–{alta.punto?.alto}): ni galardón ni «No supera» — acuerde una recata SCA 2004 nativa.</>
                   : grado
-                    ? <>Punto <b>{puntaje}</b> → Grado firme <b style={{ color: grado.hex }}>{grado.nombre}</b> (derivado — el puntaje manda{decision?.tipo === "galardon" && decision.techo ? <>; hasta {decision.techo.nombre} con recata SCA</> : null}).</>
-                    : <>Punto <b>{puntaje}</b>: por debajo de 80 no hay galardón — registre «No supera».</>}
+                    ? <>Punto <b>{puntaje}</b> × tríada <span className="mono">{`${triada.variedad}${triada.proceso}${triada.reconocimiento}`}</span> → Grado firme <b style={{ color: grado.hex }}>{grado.nombre}</b> (derivado — los puntos mandan{decision?.tipo === "galardon" && decision.techo ? <>; hasta {decision.techo.nombre} con recata SCA</> : null}).</>
+                    : <>Punto <b>{puntaje}</b> con tríada <span className="mono">{`${triada.variedad}${triada.proceso}${triada.reconocimiento}`}</span>: los puntos no llegan a Black (un café común entra desde 82) — registre «No supera».</>}
             </p>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               <button
@@ -675,6 +670,7 @@ export function SondeoRegistroControls({
   evaluations,
   resultFilename,
   qGraderName,
+  ficha,
 }: {
   lotId: string;
   lotName: string;
@@ -682,7 +678,10 @@ export function SondeoRegistroControls({
   resultFilename: string | null;
   /** El Q-Grader del bache — firma la planilla oficial al galardonar. */
   qGraderName: string;
+  /** V5.160: la Ficha del lote, de la que sale la tríada (el grado es El Punto y la Tríada). */
+  ficha?: Partial<FichaFormData> | null;
 }) {
+  const triada = triadaDeLaFicha(ficha).triada;
   const { pending, error, run } = useAction();
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -769,7 +768,7 @@ export function SondeoRegistroControls({
               </button>
             ) : (
               <div style={{ border: "1px dashed var(--line)", borderRadius: 10, padding: "10px 12px", marginTop: 8 }}>
-                <LabEvalEditor value={ev} onChange={(patch) => setEv((v) => ({ ...v, ...patch }))} disabled={pending} />
+                <LabEvalEditor value={ev} onChange={(patch) => setEv((v) => ({ ...v, ...patch }))} disabled={pending} triada={triada} />
                 <AdjuntoReporteQGrader
                   value={reporte}
                   onChange={setReporte}
@@ -799,14 +798,13 @@ export function SondeoRegistroControls({
               <label>Resumen del resultado (el productor lo verá)</label>
               <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Resultado de la evaluación…" />
             </div>
-            {/* El puntaje manda (V5.17): el grado se DERIVA de la última
-                planilla con gradoPorPuntaje — aquí se previsualiza para que el
-                registrador vea qué va a firmar; nadie digita un grado. */}
+            {/* Los puntos mandan (V5.17 → V5.160): el grado se DERIVA de la última planilla con `gradoDelLote` (El Punto y la
+                Tríada) — aquí se previsualiza para que el registrador vea qué va a firmar; nadie digita un grado. */}
             {(() => {
               const previewEval = adding && labEvaluationHasData(ev) ? ev : evaluations.length ? evaluations[evaluations.length - 1] : null;
               const rawScore = previewEval ? labEvaluationScore(previewEval) : null;
               const puntaje = rawScore != null ? redondeaPuntaje(rawScore) : null;
-              const grado = puntaje != null ? gradoPorPuntaje(puntaje) : null;
+              const grado = puntaje != null ? gradoDelLote(puntaje, triada).grado : null;
               const sinQGrader = !qGraderName.trim();
               return (
                 <>
@@ -814,8 +812,8 @@ export function SondeoRegistroControls({
                     {puntaje == null
                       ? "Sin planilla con puntaje SCA — registre una para poder galardonar."
                       : grado
-                        ? <>Puntaje <b>{puntaje}</b> → Grado <b style={{ color: grado.hex }}>{grado.nombre}</b> (derivado — el puntaje manda).</>
-                        : <>Puntaje <b>{puntaje}</b>: por debajo de 80 no hay galardón — registre «No supera».</>}
+                        ? <>Punto <b>{puntaje}</b> × tríada <span className="mono">{`${triada.variedad}${triada.proceso}${triada.reconocimiento}`}</span> → Grado <b style={{ color: grado.hex }}>{grado.nombre}</b> (derivado — los puntos mandan).</>
+                        : <>Punto <b>{puntaje}</b> con tríada <span className="mono">{`${triada.variedad}${triada.proceso}${triada.reconocimiento}`}</span>: los puntos no llegan a Black — registre «No supera».</>}
                     {grado && sinQGrader && <> ⚠ Defina el Q-Grader del bache (al enviarlo al Centro) antes de galardonar.</>}
                   </p>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>

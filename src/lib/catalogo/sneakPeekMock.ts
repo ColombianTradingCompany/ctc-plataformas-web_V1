@@ -31,7 +31,8 @@
 // `Grado CTC` de Notion contradice su propia columna `SCA` en 6 de las 7 fichas
 // (84.25 → «Tiryan», 87.0 → «Black», 86.25 → «Gold»…). Manda la regla 1 de
 // `lib/grados/definicion.ts`: el puntaje manda. Cada grado de abajo sale de
-// `gradoPorPuntaje(sca)` y el guardián lo vuelve a comprobar entrada por entrada.
+// `gradoDelLote(sca, tríada)` (V5.160: El Punto y la Tríada — variedad y proceso del mock, sin reconocimientos) y el
+// guardián lo vuelve a comprobar entrada por entrada. Los grados de la V4.44–V5.159 (solo SCA) se recalcularon el 2026-10-06.
 // La deriva de Notion está anotada en docs/V5_CONSOLAS_PLAN.md §9 para que el
 // owner la arregle en el origen (Notion debe MIRAR a este repo, no al revés).
 //
@@ -80,9 +81,9 @@ const TEMPORADA_ANTERIOR = {
 export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
   {
     id: `${MOCK_ID_PREFIX}01`,
-    code: "GD-4C1A",
+    code: "BL-4C1A",
     name: "Tabi · Honey",
-    grade: "gold", // 87.00 → Gold (86–87.99). Notion decía «Black».
+    grade: "blue", // V5.160: 87.00 × BBC (Tabi B · Honey B) = 1.704 → Blue. (Con la escala SCA sola era Gold; Notion decía «Black».)
     score: "87.00",
     scoreEstimated: false,
     finca: "La Pradera",
@@ -97,14 +98,14 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     image: "/images/catalogo/sneak-peek/mock-lote-01.webp",
     wheel: "/images/catalogo/sneak-peek/rueda-mock-lote-01-mini.svg",
     intrinseco: { fragancia: 8.25, sabor: 8.25, residual: 8.5, acidez: 7.5, cuerpo: 8.5, balance: 7.75, uniformidad: 10, limpia: 10, dulzor: 10, catador: 8.25 },
-    datasheetUrl: "/docs/fichas-mock/GD-4C1A.pdf",
+    datasheetUrl: "/docs/fichas-mock/BL-4C1A.pdf",
     mock: true,
   },
   {
     id: `${MOCK_ID_PREFIX}02`,
-    code: "GD-9E33",
+    code: "BL-9E33",
     name: "Bourbon · Honey",
-    grade: "gold", // 87.00 → Gold. Es la única ficha cuyo grado en Notion coincide.
+    grade: "blue", // V5.160: 87.00 × BBC (Bourbon B · Honey B) = 1.704 → Blue.
     score: "87.00",
     scoreEstimated: false,
     finca: "La Pradera",
@@ -133,7 +134,7 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     image: "/images/catalogo/sneak-peek/mock-lote-02.webp",
     wheel: "/images/catalogo/sneak-peek/rueda-mock-lote-02-mini.svg",
     intrinseco: { fragancia: 8.25, sabor: 8, residual: 8.25, acidez: 8.5, cuerpo: 7.5, balance: 8.25, uniformidad: 10, limpia: 10, dulzor: 10, catador: 8.25 },
-    datasheetUrl: "/docs/fichas-mock/GD-9E33.pdf",
+    datasheetUrl: "/docs/fichas-mock/BL-9E33.pdf",
     mock: true,
   },
   {
@@ -143,7 +144,7 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     // misma forma que produce `listingCode()` en la tienda.
     code: "CTCX-0326005",
     name: "Gesha Ragonvalia · Lavado",
-    grade: "gold", // 86.25 → Gold (86–87.99, escala corregida 2026-08-19). Era Blue con la escala vieja.
+    grade: "blue", // V5.160: 86.25 × ACC (Gesha A · Lavado C) = 1.680 → Blue.
     score: "86.25",
     scoreEstimated: false,
     // ✅ D0.10 RESUELTA (2026-08-19), y no por criterio sino por PRUEBA: la
@@ -179,7 +180,7 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     id: `${MOCK_ID_PREFIX}04`,
     code: "BL-2F70",
     name: "Tabi · Doble Fermentado",
-    grade: "blue", // 85.00 → Blue. Notion decía «Gold».
+    grade: "blue", // V5.160: 85.00 × BAC (Tabi B · Doble Fermentado A) = 1.658 → Blue.
     score: "85.00",
     scoreEstimated: false,
     finca: "Las Cruces",
@@ -202,9 +203,9 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
   },
   {
     id: `${MOCK_ID_PREFIX}05`,
-    code: "BL-8B15",
+    code: "RD-8B15",
     name: "Castillo · Doble Fermentado",
-    grade: "blue", // 84.50 → Blue (84–85.99, escala corregida 2026-08-19). Era Red con la escala vieja.
+    grade: "red", // V5.160: 84.50 × CAC (Castillo C · Doble Fermentado A) = 1.558 → Red.
     score: "84.50",
     scoreEstimated: false,
     finca: "La Pradera",
@@ -219,14 +220,14 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     image: "/images/catalogo/sneak-peek/mock-lote-05.webp",
     wheel: "/images/catalogo/sneak-peek/rueda-mock-lote-05-mini.svg",
     intrinseco: { fragancia: 7.25, sabor: 8.25, residual: 7.75, acidez: 7, cuerpo: 8.5, balance: 8, uniformidad: 10, limpia: 10, dulzor: 10, catador: 7.75 },
-    datasheetUrl: "/docs/fichas-mock/BL-8B15.pdf",
+    datasheetUrl: "/docs/fichas-mock/RD-8B15.pdf",
     mock: true,
   },
   {
     id: `${MOCK_ID_PREFIX}06`,
-    code: "BL-3D62",
+    code: "RD-3D62",
     name: "Castillo · Lavado",
-    grade: "blue", // 84.25 → Blue (escala corregida 2026-08-19). Era Red con la escala vieja.
+    grade: "red", // V5.160: 84.25 × CCC (Castillo C · Lavado C) = 1.418 → Red.
     score: "84.25",
     scoreEstimated: false,
     finca: "La Pradera",
@@ -241,7 +242,7 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     image: "/images/catalogo/sneak-peek/mock-lote-06.webp",
     wheel: "/images/catalogo/sneak-peek/rueda-mock-lote-06-mini.svg",
     intrinseco: { fragancia: 7.5, sabor: 7.75, residual: 8, acidez: 7, cuerpo: 8, balance: 8.25, uniformidad: 10, limpia: 10, dulzor: 10, catador: 7.75 },
-    datasheetUrl: "/docs/fichas-mock/BL-3D62.pdf",
+    datasheetUrl: "/docs/fichas-mock/RD-3D62.pdf",
     mock: true,
   },
   {
@@ -255,7 +256,8 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     // leí de su propio título. `scoreEstimated: true` porque este puntaje NO
     // viene de una catación: no puede parecer verificado.
     grade: "black",
-    score: "81.50",
+    // V5.160: con la escala de puntos un café común por debajo de 82 no entra; el estimado sube a 82,50 (× CCC = 1.100 → Black).
+    score: "82.50",
     scoreEstimated: true,
     finca: "Agropalencia",
     municipio: "Chima",
@@ -268,7 +270,7 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     season: TEMPORADA_ANTERIOR,
     image: "/images/catalogo/sneak-peek/mock-lote-07.webp",
     wheel: "/images/catalogo/sneak-peek/rueda-mock-lote-07-mini.svg",
-    intrinseco: { fragancia: 7.25, sabor: 7.25, residual: 7, acidez: 7, cuerpo: 8, balance: 7.75, uniformidad: 10, limpia: 10, dulzor: 10, catador: 7.25 },
+    intrinseco: { fragancia: 7.25, sabor: 7.5, residual: 7.25, acidez: 7, cuerpo: 8, balance: 7.75, uniformidad: 10, limpia: 10, dulzor: 10, catador: 7.75 },
     datasheetUrl: "/docs/fichas-mock/BK-6A08.pdf",
     mock: true,
   },

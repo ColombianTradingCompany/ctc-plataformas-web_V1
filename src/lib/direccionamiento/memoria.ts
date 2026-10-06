@@ -26,7 +26,7 @@ export const SISTEMA_REDACCION =
  *  `definicion.ts`, este texto cambia solo — que es todo el punto. */
 export function escalaCanonica(): string {
   return GRADOS.map(
-    (g) => `${g.nombre} (SCA ${g.scaMin}–${g.scaMax}) — «${g.lema}» · ${g.claseLote} · ${g.variedad}`
+    (g) => `${g.nombre} (${g.puntosMin}–${g.puntosMax} puntos CTC${g.scaDesdeComun != null ? `; un café común lo alcanza desde SCA ${g.scaDesdeComun}` : "; exige SCA ≥ 89 y surplus"}) — «${g.lema}» · ${g.claseLote} · ${g.variedad}`
   ).join("\n");
 }
 
@@ -38,9 +38,9 @@ export function textoMemoria(): string {
   return [
     "GRADOS DE CALIDAD CTC — ESTA es la definición de la casa y prevalece sobre",
     "cualquier otra cifra que aparezca en el contexto de compañía. Los grados se",
-    `leen del PUNTAJE SCA (escala continua de ${SCA_MINIMO} a ${SCA_MAXIMO}, dos decimales como máximo),`,
-    "no de un índice de precio. El puntaje manda y no se negocia; los criterios",
-    "cualitativos orientan el VALOR dentro del rango, no cambian el grado.",
+    `leen de los PUNTOS CTC: el Punto SCA de la taza (de ${SCA_MINIMO} a ${SCA_MAXIMO}, dos decimales como máximo) por el`,
+    "multiplicador de la TRÍADA (variedad · proceso · reconocimiento, cada una C, B o A), no de un índice de precio.",
+    "Los puntos mandan y no se negocian; un café común (CCC) necesita más puntaje que uno con surplus para la misma banda.",
     escalaCanonica(),
     "",
     "Nunca inventes ni redondees un umbral de grado en una pieza de contenido:",

@@ -551,6 +551,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
                             lotId={i.lot_id}
                             lotName={i.lot!.name}
                             evaluations={toLabEvaluationList(i.sondeo_evaluation)}
+                            ficha={i.lot!.datasheet ?? null}
                             resultFilename={i.sondeo_result_filename ?? null}
                             qGraderName={b.q_grader_name ?? ""}
                           />

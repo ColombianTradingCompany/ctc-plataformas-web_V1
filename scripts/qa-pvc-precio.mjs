@@ -55,13 +55,8 @@ const paridad = JSON.parse(lee("src/lib/pvc/paridad.json"));
     const r = RANGOS[g.nombre];
     check(`RANGOS tiene la banda ${g.nombre}`, typeof r === "string" && r.length > 0);
     if (!r) continue;
-    if (g.scaMax >= 100) {
-      const m = r.match(/^≥\s*([\d.,]+)$/);
-      check(`${g.nombre}: «≥ ${g.scaMin}» como en definicion.ts`, !!m && num(m[1]) === g.scaMin, r);
-    } else {
-      const m = r.match(/^([\d.,]+)–([\d.,]+)$/);
-      check(`${g.nombre}: ${g.scaMin}–${g.scaMax} como en definicion.ts`, !!m && num(m[1]) === g.scaMin && num(m[2]) === g.scaMax, r);
-    }
+    // V5.160: el rótulo es la banda de PUNTOS (con el SCA de un café común de referencia).
+    check(`${g.nombre}: ${g.puntosMin}–${g.puntosMax} pts como en definicion.ts`, r.startsWith(`${g.puntosMin}–${g.puntosMax} pts`), r);
   }
   const motor = lee("src/lib/pvc/motor.ts");
   check("RANGOS se deriva de GRADOS (no es una segunda tabla)", /export const RANGOS[^=]*=\s*Object\.fromEntries\(\s*GRADOS\.map/.test(motor));

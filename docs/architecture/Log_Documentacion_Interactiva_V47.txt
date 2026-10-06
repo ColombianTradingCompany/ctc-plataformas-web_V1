@@ -558,3 +558,10 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-10-06] V5.159 · OCP — las dos reglas del grado, rotuladas en el informe (la que gobierna y la escala en validación)
 - ANN `app/ocp/(app)/nominados/NominadosClient.tsx`, `src/components/bcp/TriadaDelLote.tsx` (`gradoHoy`), `scripts/qa-centro-calidad-check.mjs`.
 (commit: 01b2451)
+
+## [2026-10-06] V5.160 · CONTRATO · el grado es El Punto y la Tríada; la escala SCA de dos en dos se retira de todas partes
+- ANN `src/lib/grados/definicion.ts` (`puntosMin/puntosMax/scaDesdeComun`, `gradoPorPuntos`, `gradoDelLote`; fuera `gradoPorPuntaje`, `scaMin/scaMax`), `src/lib/pvc/escala.ts` (gobierna), `src/lib/arena/homologacion.ts` (tríada obligatoria), `src/lib/pvc/triadaDelLote.ts`.
+- ANN `app/ocp/(app)/nominadosActions.ts`, `app/bcp/(app)/arenaActions.ts`, `arena/ArenaClient.tsx`, `nominados/{NominadosClient,CircuitoVista}.tsx`, `src/components/bcp/{LabEvalEditor,TriadaDelLote}.tsx`, `src/components/panel/GradosBoard.tsx` (reescrito), `panel/pvc/EscalaBoard.tsx`, `kaffetal-regal/OportunidadSection.tsx`, `src/lib/pvc/motor.ts`, `src/lib/seo/jsonLd.ts`, `src/lib/direccionamiento/memoria.ts`, `src/lib/catalogo/sneakPeekMock.ts`.
+- DEL `src/components/bcp/FranjaDeGrados.tsx`. DATOS mock: `public/docs/fichas-mock/*.pdf` regenerados (códigos nuevos).
+- ANN `scripts/qa-{grados,centro-calidad,evaluaciones,sneak-peek,direccionamiento}-check.mjs`, `scripts/qa-pvc-{escala,precio}.mjs`, `scripts/build-fichas-mock.mjs`, `docs/ALINEACION.md`, `docs/PVC_BCP_PLAN.md`, `docs/componentes/{consolas,herramientas-internas,kaffetal-regal,cherry-picked}.md`.
+(commit: pendiente)

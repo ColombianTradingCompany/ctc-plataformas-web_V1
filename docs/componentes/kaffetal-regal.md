@@ -152,6 +152,10 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.160 · la escalera de grados de la Oportunidad enseña puntos** (ejecutado desde `consolas`, contrato nuevo de
+  grados). `OportunidadSection`: «1.600–1.799 pts · SCA desde 88 (café común)» en ES/EN/DE. El productor ya no ve un rango
+  SCA por grado. Abierto: el copy largo de cada grado (bullets) sigue diciendo «la puntuación decide el grado»; vale, pero
+  podría nombrar la tríada.
 - **V5.150 · la altura del cafetal se trae sola del mapa** (owner, 2026-10-05; ejecutado desde `consolas`). `CafetalEditor`
   consulta Open-Meteo al cambiar la geometría: la del punto o el promedio de los vértices del polígono
   (`alturaDeLaGeometria`); respeta la escrita a mano después de ubicar y la ya guardada. La Ficha toma `masl` de la finca

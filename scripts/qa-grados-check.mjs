@@ -12,80 +12,66 @@
 
 import {
   GRADOS, GRADO_POR_ID, SCA_MINIMO, SCA_MAXIMO, SCA_DECIMALES,
-  gradoPorPuntaje, escalaEsContinua, puntajeValido, redondeaPuntaje, esGradoValido, MIX,
+  gradoDelLote, gradoPorPuntos, escalaEsContinua, puntajeValido, redondeaPuntaje, esGradoValido, MIX,
 } from "../src/lib/grados/definicion.ts";
+import { BANDAS_PUNTOS } from "../src/lib/pvc/escala.ts";
 
 let pass = 0;
 const fails = [];
 const check = (name, cond, detail = "") => { if (cond) pass++; else fails.push(`${name}${detail ? ` — ${detail}` : ""}`); };
 
-// ── La escala ───────────────────────────────────────────────────────────────
+// ── La escala (V5.160, owner 2026-10-06: El Punto y la Tríada) ─────────────────────────────────────────────────────
 check("son cinco grados", GRADOS.length === 5, `son ${GRADOS.length}`);
 check("el orden es black→red→blue→gold→tyrian",
   GRADOS.map(g => g.id).join(",") === "black,red,blue,gold,tyrian", GRADOS.map(g => g.id).join(","));
-check("la escala es continua: sin huecos ni solapes", escalaEsContinua());
-check("empieza en 80", SCA_MINIMO === 80, `${SCA_MINIMO}`);
-check("termina en 100", SCA_MAXIMO === 100, `${SCA_MAXIMO}`);
-check("cada banda es válida (min ≤ max)", GRADOS.every(g => g.scaMin <= g.scaMax));
-check("las bandas suben monótonamente",
-  GRADOS.every((g, i) => i === 0 || g.scaMin > GRADOS[i - 1].scaMin));
+check("la escala es continua: las bandas de puntos embaldosan 1000–2500 sin huecos ni solapes", escalaEsContinua());
+check("el Punto SCA entra en la escala desde 80", SCA_MINIMO === 80, `${SCA_MINIMO}`);
+check("y termina en 100", SCA_MAXIMO === 100, `${SCA_MAXIMO}`);
+check("cada banda es válida (min ≤ max)", GRADOS.every(g => g.puntosMin <= g.puntosMax));
+check("las bandas suben monótonamente", GRADOS.every((g, i) => i === 0 || g.puntosMin > GRADOS[i - 1].puntosMin));
+check("ningún grado conserva la banda SCA vieja", GRADOS.every((g) => !("scaMin" in g) && !("scaMax" in g)));
 
-// ── Los rangos EXACTOS que fijó el owner (2026-08-05) ───────────────────────
-// Si alguien los toca, esto salta. Ninguna de las dos versiones que había en
-// Notion coincidía con estos, así que no se derivan: se citan.
-const OFICIAL = {
-  // ⚠️ La escala es DE DOS EN DOS (corrección del owner, 2026-08-19). Antes este
-  // archivo y `definicion.ts` decían 80–82.99 · 83–84.99 · 85–86.99 · 87–87.99,
-  // que nadie había fijado así. El límite pertenece siempre al grado de ARRIBA:
-  // 84.00 es Blue, no Red; 88.00 es Tyrian.
-  black:  [80, 81.99],
-  red:    [82, 83.99],
-  blue:   [84, 85.99],
-  gold:   [86, 87.99],
-  tyrian: [88, 100],
-};
+// ── Las bandas EXACTAS de la escala de puntos (plan PVC §9.1, decisión #1 del owner, 2026-09-15) ──────────────────
+const OFICIAL = { black: [1000, 1399], red: [1400, 1599], blue: [1600, 1799], gold: [1800, 2000], tyrian: [2001, 2500] };
 for (const [id, [min, max]] of Object.entries(OFICIAL)) {
   const g = GRADO_POR_ID[id];
-  check(`${id} va de ${min} a ${max}`, g && g.scaMin === min && g.scaMax === max,
-    g ? `está en ${g.scaMin}–${g.scaMax}` : "no existe");
+  check(`${id} va de ${min} a ${max} puntos`, g && g.puntosMin === min && g.puntosMax === max, g ? `está en ${g.puntosMin}–${g.puntosMax}` : "no existe");
 }
+check("las bandas son las de escala.ts (una sola definición)", GRADOS.every((g) => { const b = BANDAS_PUNTOS.find((x) => x.id === g.id); return b && b.min === g.puntosMin && b.max === g.puntosMax && b.hex === g.hex; }));
 
-// ── La búsqueda por puntaje ─────────────────────────────────────────────────
+// ── El SCA desde el que un café COMÚN alcanza cada grado (se calcula, no se escribe) ──────────────────────────────
+check("un café común entra en Black desde 82 y en Red desde 84", GRADO_POR_ID.black.scaDesdeComun === 82 && GRADO_POR_ID.red.scaDesdeComun === 84);
+check("un café común es Blue desde 88 (sobre la rejilla de 0,25), Gold desde 89 y nunca Tyrian", GRADO_POR_ID.blue.scaDesdeComun === 88 && GRADO_POR_ID.gold.scaDesdeComun === 89 && GRADO_POR_ID.tyrian.scaDesdeComun === null);
+
+// ── El grado de un lote: Punto × Tríada → puntos → banda ──────────────────────────────────────────────────────────
+const T = (s) => ({ variedad: s[0], proceso: s[1], reconocimiento: s[2] });
 const casos = [
-  [80, "black"], [81.99, "black"],
-  [82, "red"], [83.99, "red"],
-  [84, "blue"], [85.99, "blue"],
-  [86, "gold"], [87.99, "gold"],
-  // Los cuatro límites, uno por uno: el entero es del grado de ARRIBA. Es donde
-  // un error de un punto convierte un Red en Blue y cambia lo que se cobra.
-  [82.00, "red"], [84.00, "blue"], [86.00, "gold"], [88.00, "tyrian"],
-  [88, "tyrian"], [91, "tyrian"], [100, "tyrian"],
+  [86, "CCC", "red"], [86, "BCC", "blue"], [86, "AAB", "gold"], [85, "CCC", "red"], [85, "BAC", "blue"],
+  [82, "CCC", "black"], [81, "CCC", null], [81, "BCC", "black"], [84, "CCC", "red"], [88, "CCC", "blue"],
+  [89, "CCC", "gold"], [89, "BBB", "tyrian"], [88, "AAA", "gold"], [100, "CCC", "gold"], [100, "AAA", "tyrian"],
 ];
-for (const [sca, esperado] of casos) {
-  const g = gradoPorPuntaje(sca);
-  check(`${sca} → ${esperado}`, g?.id === esperado, g ? g.id : "null");
+for (const [sca, tri, esperado] of casos) {
+  const g = gradoDelLote(sca, T(tri)).grado;
+  check(`${sca} × ${tri} → ${esperado ?? "sin grado"}`, (g?.id ?? null) === esperado, g ? g.id : "null");
 }
+check("gradoDelLote devuelve los puntos y la puerta que actuó", gradoDelLote(81, T("CCC")).puntaje.puerta === "umbral-sin-surplus" && gradoDelLote(88, T("AAA")).puntaje.puerta === "tope-tyrian");
+check("gradoPorPuntos lee la banda de unos puntos", gradoPorPuntos(1000)?.id === "black" && gradoPorPuntos(1399)?.id === "black" && gradoPorPuntos(1400)?.id === "red" && gradoPorPuntos(2001)?.id === "tyrian" && gradoPorPuntos(999) === null);
 
 // ── Fuera de la escala ──────────────────────────────────────────────────────
-check("79.99 no tiene grado", gradoPorPuntaje(79.99) === null);
-check("0 no tiene grado", gradoPorPuntaje(0) === null);
-check("100.01 no tiene grado", gradoPorPuntaje(100.01) === null);
-check("NaN no revienta", gradoPorPuntaje(NaN) === null);
-check("undefined no revienta", gradoPorPuntaje(undefined) === null);
+check("79.99 no tiene grado, ni con AAA", gradoDelLote(79.99, T("AAA")).grado === null);
+check("0 no tiene grado", gradoDelLote(0, T("CCC")).grado === null);
+check("NaN no revienta", gradoDelLote(NaN, T("CCC")).grado === null);
+check("undefined no revienta", gradoDelLote(undefined, T("CCC")).grado === null);
 
 // ── La regla de los dos decimales (owner, 2026-08-05) ───────────────────────
-// Es la que sostiene la continuidad de la escala: las bandas cierran en .99, y
-// sin esta regla un 81.995 se queda entre Black y Red sin ser ninguno.
 check("la casa trabaja con 2 decimales", SCA_DECIMALES === 2, `${SCA_DECIMALES}`);
 check("86.5 es un puntaje válido", puntajeValido(86.5));
 check("86.55 es un puntaje válido", puntajeValido(86.55));
 check("86.555 NO es un puntaje válido", !puntajeValido(86.555));
 check("79 no es válido aunque tenga 0 decimales", !puntajeValido(79));
 check("81.995 se redondea a 82", redondeaPuntaje(81.995) === 82, `${redondeaPuntaje(81.995)}`);
-check("81.995 no cae en el hueco: da red", gradoPorPuntaje(81.995)?.id === "red",
-  gradoPorPuntaje(81.995)?.id ?? "null");
-check("81.991 redondea hacia abajo: sigue siendo black", gradoPorPuntaje(81.991)?.id === "black",
-  gradoPorPuntaje(81.991)?.id ?? "null");
+check("81.995 con CCC da Black (se redondea a 82 antes de buscar)", gradoDelLote(81.995, T("CCC")).grado?.id === "black");
+check("81.991 redondea hacia abajo: con CCC sigue sin grado", gradoDelLote(81.991, T("CCC")).grado === null);
 
 // ── «Mix» no es un grado ────────────────────────────────────────────────────
 // Vive en el Cotizador Logístico y significa "la carga no es de un solo grado".

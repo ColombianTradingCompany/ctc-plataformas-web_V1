@@ -177,6 +177,12 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.160 · CONTRATO: el grado es El Punto y la Tríada; la escala SCA se retiró de todas partes** (owner, 2026-10-06).
+  `gradoDelLote` en `definicion.ts` lee `escala.ts`; el veredicto del OCP y «la que rige» de la Arena derivan la tríada de la
+  Ficha del lote (`triadaDeLaFicha`). El tablero Grados de Calidad del ECP se reescribió (escalera en puntos + calculadora
+  con tríada). Abierto, **con decisión del owner**: (a) la Base física (§9.1.b) se exhibe y no cierra la puerta; (b) la
+  variedad se clasifica con el catálogo semilla hasta que el comité publique el marco de mercado; (c) un café común entre
+  80 y 81,99 ya no recibe grado (puerta de la escala) — el productor lo verá como «No supera».
 - **V5.158 · el informe del Centro trae la Ficha completa y la tríada A·B·C** (owner, 2026-10-06). `FichaCompletaLectura`
   (= `renderFichaHtml`, una sola forma de pintar la Ficha) y `TriadaDelLote` sobre `triadaDeLaFicha` + `puntosCtc` +
   `CurvaDeEscala`. Abierto, **con decisión del owner**: la tríada se DERIVA con reglas de texto (catálogo semilla con sinónimos,

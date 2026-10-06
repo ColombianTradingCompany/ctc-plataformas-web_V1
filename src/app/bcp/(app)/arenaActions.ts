@@ -7,6 +7,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { factorDeLaPlanilla, labEvaluationHasData, protocoloDelPunto, puntoDeLaPlanilla, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import { decidirPorPunto, puntoDeFila } from "@/lib/arena/homologacion";
+import { triadaDeLaFicha } from "@/lib/pvc/triadaDelLote";
 import { ATRIBUTOS_SCA } from "@/lib/fichas/tipos";
 
 // ── Kaffetal Regal Arena · sesiones de SEGUNDA APRECIACIÓN (V5.77, owner 2026-09-24) ──
@@ -208,7 +209,7 @@ export async function registrarApreciacion(sessionId: string, lotId: string, eva
 
 /**
  * Elige QUÉ evaluación rige el grado del lote (una sola por lote) y reescribe `lots.grade` con ella
- * («el puntaje manda»: `gradoPorPuntaje`). Es la única reescritura del grado fuera del veredicto.
+ * («los puntos mandan»: `gradoDelLote` = El Punto y la Tríada). Es la única reescritura del grado fuera del veredicto.
  */
 export async function elegirEvaluacionQueRige(lotId: string, evaluationId: string): Promise<ActionResult> {
   const permiso = await permisoDeEscritura("bcp", "emite");
@@ -218,14 +219,15 @@ export async function elegirEvaluacionQueRige(lotId: string, evaluationId: strin
 
   const [{ data: ev }, { data: lot }] = await Promise.all([
     service.from("lot_evaluations").select("id, lot_id, status, sca_total, punto, source").eq("id", evaluationId).maybeSingle(),
-    service.from("lots").select("id, name, stage, grade").eq("id", lotId).maybeSingle(),
+    service.from("lots").select("id, name, stage, grade, datasheet").eq("id", lotId).maybeSingle(),
   ]);
   if (!ev || ev.lot_id !== lotId) return { ok: false, error: "Esa evaluación no es de este lote." };
   if (ev.status !== "accepted" || ev.sca_total == null) return { ok: false, error: "Solo rige una evaluación aceptada con puntaje." };
   if (!lot || lot.stage !== "galardonado") return { ok: false, error: "Solo se elige la evaluación que rige de un lote galardonado." };
   // V5.92: el grado firme lo decide el Punto (piso; un homologado nunca da Tyrian; si cruza los 80, pendiente de recata).
   const punto = puntoDeFila(ev);
-  const decision = punto ? decidirPorPunto(punto) : null;
+  // V5.160: El Punto y la Tríada — la tríada se deriva de la Ficha del lote.
+  const decision = punto ? decidirPorPunto(punto, triadaDeLaFicha(lot.datasheet as Parameters<typeof triadaDeLaFicha>[0]).triada) : null;
   if (!decision || decision.tipo !== "galardon") return { ok: false, error: `Con Punto ${ev.sca_total} el lote quedaría por debajo de Black (o pendiente de recata SCA): esa evaluación no puede regir.` };
   const grado = decision.grado;
 

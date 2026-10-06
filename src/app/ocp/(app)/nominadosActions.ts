@@ -10,6 +10,8 @@ import { claimCampaignCode, insertEntryCode } from "@/lib/arena/entryCodes";
 import { generateMejorasDoc } from "@/lib/arena/mejoras";
 import { factorDeLaPlanilla, labEvaluationHasData, labEvaluationScaData, protocoloDelPunto, puntoDeLaPlanilla, toLabEvaluationList, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import { decidirPorPunto, puntoDeFila, puntoNativo, rotuloDelPunto, type PuntoSca } from "@/lib/arena/homologacion";
+import { triadaDeLaFicha } from "@/lib/pvc/triadaDelLote";
+import { letras } from "@/lib/pvc/escala";
 import { currentSeason, lotSeasonCount, MAX_SEASONS_PER_LOT } from "@/lib/arena/seasons";
 import { saldoDe } from "@/lib/muestras/particion";
 import { anularRecibo } from "@/lib/muestras/recibo";
@@ -618,10 +620,13 @@ export async function recordEvaluationVerdict(
 
   const { data: ins } = await service
     .from("arena_inscriptions")
-    .select("id, phase, status, amount_due_cop, producer_id, sondeo_batch_id, sondeo_evaluation, reevaluaciones, grado_previo, lots(name, stage)")
+    .select("id, phase, status, amount_due_cop, producer_id, sondeo_batch_id, sondeo_evaluation, reevaluaciones, grado_previo, lots(name, stage, datasheet)")
     .eq("lot_id", lotId)
     .maybeSingle();
   if (!ins || ins.phase !== "sondeo") return { ok: false, error: "Este lote no está en evaluación." };
+  // V5.160 (owner, 2026-10-06): el grado es El Punto y la Tríada — la tríada se deriva de la Ficha del lote.
+  const fichaDelLote = (Array.isArray(ins.lots) ? ins.lots[0] : ins.lots) as { datasheet?: unknown } | null;
+  const triada = triadaDeLaFicha((fichaDelLote?.datasheet ?? null) as Parameters<typeof triadaDeLaFicha>[0]).triada;
 
   // El veredicto solo existe con el bache EN el Centro de Calidad (V5.80): hasta la fase 4 lo registra CTCx
   // aquí; después lo escribirá el Q-Grader con su credencial y esto quedará como «confirmar».
@@ -681,12 +686,12 @@ export async function recordEvaluationVerdict(
     }
     const puntaje = redondeaPuntaje(effectiveScore);
     // El puntaje manda: el grado FIRME se lee del piso del Punto; un homologado nunca da Tyrian; si el intervalo cruza los 80, recata.
-    const decision = decidirPorPunto(puntoEfectivo);
+    const decision = decidirPorPunto(puntoEfectivo, triada);
     if (decision.tipo === "pendiente_recata") {
       return { ok: false, error: `El Punto homologado ${puntoEfectivo.bajo}–${puntoEfectivo.alto} cruza los 80: ni galardón ni «No supera» hasta una recata SCA 2004 nativa (acuerde una re-evaluación).` };
     }
     if (decision.tipo !== "galardon") {
-      return { ok: false, error: `Con puntaje ${puntaje} no hay galardón (mínimo 80). Registre el veredicto como «rechazado».` };
+      return { ok: false, error: `Con Punto ${puntaje} y tríada ${letras(triada)} los puntos no llegan a Black (un café común entra desde 82; por debajo de 80 no hay especialidad). Registre el veredicto como «rechazado».` };
     }
     const grado = decision.grado;
     if (!centroRow && !batch.q_grader_name?.trim()) {
@@ -784,7 +789,7 @@ export async function recordEvaluationVerdict(
     // V5.85 (fase 8): el CRM de `black_negotiations` se retiró — la compra en firme de un Black es una oferta directa.
   } else {
     // V5.92 (R5): un Punto homologado cuyo intervalo cruza los 80 no se rechaza: pendiente de recata SCA nativa.
-    if (puntoEfectivo && decidirPorPunto(puntoEfectivo).tipo === "pendiente_recata") {
+    if (puntoEfectivo && decidirPorPunto(puntoEfectivo, triada).tipo === "pendiente_recata") {
       return { ok: false, error: `El Punto homologado ${puntoEfectivo.bajo}–${puntoEfectivo.alto} cruza los 80: no se registra «No supera» sin una recata SCA 2004 nativa.` };
     }
     // V5.82 · folio 12 / respuesta 2: el rechazo bajo Black es GRATIS para el productor —se lleva el reporte de

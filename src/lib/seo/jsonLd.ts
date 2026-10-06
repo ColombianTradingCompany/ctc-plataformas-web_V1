@@ -155,7 +155,7 @@ export function gradosLd(): Json {
       name: g.nombre,
       termCode: g.id,
       inDefinedTermSet: { "@id": `${WWW_ORIGIN}/#grados-ctc` },
-      description: `${g.lema}. Puntaje SCA de ${g.scaMin} a ${g.scaMax}. Clase de lote: ${g.claseLote.toLowerCase()}. ${g.variedad}.`,
+      description: `${g.lema}. ${g.puntosMin}–${g.puntosMax} puntos CTC (el Punto SCA de la taza por la tríada variedad · proceso · reconocimiento)${g.scaDesdeComun != null ? `; un café común lo alcanza desde SCA ${g.scaDesdeComun}` : "; exige SCA 89 o más y surplus"}. Clase de lote: ${g.claseLote.toLowerCase()}. ${g.variedad}.`,
       image: `${WWW_ORIGIN}/images/shared/grados/${g.id}.webp`,
     })),
   };

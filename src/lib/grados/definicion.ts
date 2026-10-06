@@ -3,43 +3,25 @@
 // Cherry Picked, Kaffetal Regal, los cotizadores, Notion— tiene que salir de
 // aquí. Si hay que cambiar un umbral, se cambia en este archivo y punto.
 //
-// POR QUÉ EXISTE (2026-08-05): los grados estaban definidos en TRES sitios con
-// TRES respuestas distintas.
-//   · Notion «Conceptos Fundamentales»: Black 80+ · Red 84+ · Blue 85+ · Gold 87+ · Tyrian 89+
-//   · Notion «Pitch Go To Market»:      Black 80+ · Red 84+ · Blue 86+ · Gold 88+ · Tyrian 91+
-//   · La plataforma:                    sin umbrales; el comité de la Jornada asignaba el grado
-// Las dos páginas de Notion se contradecían entre sí, y las dos eran material
-// que se le enseña a un cliente. El owner fijó los rangos definitivos y son los
-// de abajo: **ninguna de las dos versiones anteriores era correcta**.
+// ⚠️ V5.160 (owner, 2026-10-06): «La definición de la franja [SCA de dos en dos] es OBSOLETA. Debemos retirarla de TODOS
+// LADOS y dejar solo la regla del Punto y la Tríada.» Desde esta versión EL GRADO SE LEE DE LOS PUNTOS CTC
+// (`src/lib/pvc/escala.ts`, decisión #1 del plan PVC, §9.1): la taza es el suelo y el surplus es la altura. Cada grado es
+// una BANDA DE PUNTOS (Black 1000–1399 · Red 1400–1599 · Blue 1600–1799 · Gold 1800–2000 · Tyrian 2001–2500), y los
+// puntos salen del Punto SCA de la taza × el multiplicador de la Tríada (variedad · proceso · reconocimiento, cada una C/B/A).
+// Las bandas SCA que vivían aquí (80–81,99 · 82–83,99 · 84–85,99 · 86–87,99 · 88–100; V4.44 del 2026-08-19) ya no existen
+// en el código: un café COMÚN (CCC) entra en Black desde SCA 82, es Red desde 84, Blue desde 88, Gold desde 89 y nunca es
+// Tyrian; con surplus las bandas se adelantan (BCC a 86 ya es Blue). `escalaEsContinua` ahora afirma que las bandas de
+// puntos embaldosan 1000–2500. Historia de los umbrales anteriores: Log V37 (V4.44) y CHANGELOG hasta la V5.159.
 //
-// ⚠️ CORRECCIÓN DEL OWNER (2026-08-19): LOS RANGOS DE ESTE ARCHIVO TAMBIÉN
-// ESTABAN MAL. Decían Black 80–82.99 · Red 83–84.99 · Blue 85–86.99 · Gold
-// 87–87.99 · Tyrian 88–100, y la escala de verdad es **de dos en dos**:
-//
-//     Black 80–82 · Red 82–84 · Blue 84–86 · Gold 86–88 · Tyrian 88+
-//
-// Escrita con la convención de este archivo —rango cerrado por ambos extremos y
-// dos decimales como máximo— eso es 80–81.99 · 82–83.99 · 84–85.99 · 86–87.99 ·
-// 88–100. El límite pertenece SIEMPRE al grado de arriba: un 84.00 es Blue, no
-// Red, igual que un 88.00 es Tyrian. Es la única lectura que hace que las cinco
-// bandas embaldosen sin solaparse.
-//
-// No fue un cambio de criterio: el archivo llevaba desde el 2026-08-05
-// afirmando una escala que nadie había fijado así. Cambiarla mueve grados de
-// lotes reales — ver el Log V37, V4.44.
+// LAS TRES REGLAS (owner, 2026-08-05) siguen, leídas sobre los puntos:
+// 1. EL PUNTAJE MANDA — ahora «los puntos mandan»: el grado se lee de los puntos y no se negocia ni lo elige un comité.
+// 2. LOS CRITERIOS CUALITATIVOS entran por la Tríada (variedad, proceso, reconocimiento) y por eso SÍ cambian el grado;
+//    el resto (clase de lote, disponibilidad por malla) sigue siendo guía de VALOR dentro de la banda.
+// 3. DOS DECIMALES COMO MÁXIMO en el Punto SCA. Ver `puntajeValido`.
 //
 // Notion debe MIRAR a esto, no al revés (ver docs/INTEGRACIONES_PLAN.md, §1).
-//
-// ── LAS TRES REGLAS (owner, 2026-08-05) ─────────────────────────────────────
-// 1. EL PUNTAJE MANDA. El grado se lee del puntaje SCA y no se negocia. No es
-//    una banda dentro de la cual alguien elige después: es el grado.
-// 2. LOS CRITERIOS CUALITATIVOS SON GUÍA, NO PUERTA. Clase de lote, rareza de
-//    variedad y disponibilidad por malla no cambian el grado — orientan el
-//    VALOR dentro del rango. Un Blue de variedad exótica se cotiza en la parte
-//    alta de Blue; sigue siendo Blue.
-// 3. DOS DECIMALES COMO MÁXIMO. No existe un puntaje de 81.995. Esta regla es
-//    la que hace que la escala no tenga huecos: las bandas cierran en .99, así
-//    que un tercer decimal caería entre dos grados. Ver `puntajeValido`.
+
+import { BANDAS_PUNTOS, PUNTOS_MAX, PUNTOS_MIN, SCA_MINIMO_ESCALA, puntosCtc, scaMinimoPara, type Puntaje, type Triada } from "@/lib/pvc/escala";
 
 export type GradoId = "black" | "red" | "blue" | "gold" | "tyrian";
 
@@ -48,9 +30,11 @@ export type Grado = {
   nombre: string;
   /** El lema. Es copy de cliente: se cita tal cual. */
   lema: string;
-  /** Rango SCA cerrado por ambos extremos. */
-  scaMin: number;
-  scaMax: number;
+  /** V5.160: la BANDA DE PUNTOS del grado (`escala.ts`), cerrada por ambos extremos. */
+  puntosMin: number;
+  puntosMax: number;
+  /** El Punto SCA desde el que un café COMÚN (tríada CCC) alcanza este grado; null si no lo alcanza nunca (Tyrian). */
+  scaDesdeComun: number | null;
   /** Token de color del sistema de diseño (globals.css). */
   colorVar: string;
   hex: string;
@@ -69,6 +53,11 @@ export type Grado = {
   criterios: string[];
 };
 
+const CCC: Triada = { variedad: "C", proceso: "C", reconocimiento: "C" };
+/** El SCA desde el que un café común alcanza cada banda (se calcula de la escala, no se escribe a mano). */
+// Sobre la rejilla del Punto (0,25): 87,99 redondearía a 1600 y diría «Blue desde 87,99», que no es un Punto que exista.
+const SCA_DESDE_COMUN = Object.fromEntries(BANDAS_PUNTOS.map((b) => [b.id, scaMinimoPara(b.nombre, CCC, 0.25)])) as Record<GradoId, number | null>;
+
 /** De menor a mayor. El ORDEN importa: coincide con el enum `lot_grade` de
  *  Postgres (black → red → blue → gold → tyrian) y con la escalera visual. */
 export const GRADOS: Grado[] = [
@@ -76,8 +65,9 @@ export const GRADOS: Grado[] = [
     id: "black",
     nombre: "Black",
     lema: "The essence of origin",
-    scaMin: 80,
-    scaMax: 81.99,
+    puntosMin: 1000,
+    puntosMax: 1399,
+    scaDesdeComun: SCA_DESDE_COMUN.black,
     colorVar: "--t-black",
     hex: "#1A1C1E",
     logo: "/images/shared/grados/black.webp",
@@ -89,8 +79,9 @@ export const GRADOS: Grado[] = [
     id: "red",
     nombre: "Red",
     lema: "The soul of the harvest",
-    scaMin: 82,
-    scaMax: 83.99,
+    puntosMin: 1400,
+    puntosMax: 1599,
+    scaDesdeComun: SCA_DESDE_COMUN.red,
     colorVar: "--t-red",
     hex: "#B01F24",
     logo: "/images/shared/grados/red.webp",
@@ -102,8 +93,9 @@ export const GRADOS: Grado[] = [
     id: "blue",
     nombre: "Blue",
     lema: "The edge of perfection",
-    scaMin: 84,
-    scaMax: 85.99,
+    puntosMin: 1600,
+    puntosMax: 1799,
+    scaDesdeComun: SCA_DESDE_COMUN.blue,
     colorVar: "--t-blue",
     hex: "#1F4FB0",
     logo: "/images/shared/grados/blue.webp",
@@ -120,8 +112,9 @@ export const GRADOS: Grado[] = [
     id: "gold",
     nombre: "Gold",
     lema: "The standard of excellence",
-    scaMin: 86,
-    scaMax: 87.99,
+    puntosMin: 1800,
+    puntosMax: 2000,
+    scaDesdeComun: SCA_DESDE_COMUN.gold,
     colorVar: "--t-gold",
     hex: "#A87A14",
     logo: "/images/shared/grados/gold.webp",
@@ -139,8 +132,9 @@ export const GRADOS: Grado[] = [
     id: "tyrian",
     nombre: "Tyrian",
     lema: "The highest rarity tier",
-    scaMin: 88,
-    scaMax: 100,
+    puntosMin: 2001,
+    puntosMax: 2500,
+    scaDesdeComun: SCA_DESDE_COMUN.tyrian,
     colorVar: "--t-tyrian",
     hex: "#66023C",
     logo: "/images/shared/grados/tyrian.webp",
@@ -160,10 +154,12 @@ export const GRADO_POR_ID: Record<GradoId, Grado> = Object.fromEntries(
   GRADOS.map((g) => [g.id, g])
 ) as Record<GradoId, Grado>;
 
-/** El puntaje mínimo con el que un café entra en la escala. Por debajo no hay
+/** El Punto SCA mínimo con el que un café entra en la escala (puerta 0 de `escala.ts`). Por debajo no hay
  *  grado: no es que sea "peor que Black", es que no es café de especialidad. */
-export const SCA_MINIMO = GRADOS[0].scaMin;
-export const SCA_MAXIMO = GRADOS[GRADOS.length - 1].scaMax;
+export const SCA_MINIMO = SCA_MINIMO_ESCALA;
+export const SCA_MAXIMO = 100;
+/** Los extremos de la escala de puntos (las bandas embaldosan de 1000 a 2500). */
+export { PUNTOS_MIN, PUNTOS_MAX };
 
 /** Los decimales que admite un puntaje de la casa. Regla 3 del owner. */
 export const SCA_DECIMALES = 2;
@@ -174,29 +170,27 @@ export function redondeaPuntaje(sca: number): number {
   return Math.round(sca * 100) / 100;
 }
 
-/** ¿Es un puntaje que la casa puede escribir? Dentro de escala y con dos
- *  decimales como mucho. Sirve para VALIDAR una entrada antes de guardarla;
- *  `gradoPorPuntaje` es más indulgente a propósito (redondea). */
+/** ¿Es un Punto que la casa puede escribir? Dentro de escala y con dos
+ *  decimales como mucho. Sirve para VALIDAR una entrada antes de guardarla. */
 export function puntajeValido(sca: number): boolean {
   if (!Number.isFinite(sca)) return false;
   if (sca < SCA_MINIMO || sca > SCA_MAXIMO) return false;
   return redondeaPuntaje(sca) === sca;
 }
 
-/** EL grado de un puntaje, o null si está fuera de la escala.
- *
- *  El puntaje MANDA (regla 1 del owner, 2026-08-05): esto no propone un grado
- *  para que alguien lo confirme después — lo determina. Los criterios
- *  cualitativos de cada grado son guía de VALOR dentro del rango, no requisitos
- *  de entrada: un café de 88 en un macrolote de variedad común es Tyrian, y se
- *  cotizará en la parte baja de Tyrian.
- *
- *  Redondea a dos decimales antes de buscar, para que un tercer decimal —que no
- *  debería existir— no caiga en el hueco entre dos bandas. */
-export function gradoPorPuntaje(sca: number): Grado | null {
-  if (!Number.isFinite(sca)) return null;
-  const p = redondeaPuntaje(sca);
-  return GRADOS.find((g) => p >= g.scaMin && p <= g.scaMax) ?? null;
+/** EL grado de unos puntos CTC, o null si quedan por debajo de Black (o fuera de la escala). */
+export function gradoPorPuntos(puntos: number): Grado | null {
+  if (!Number.isFinite(puntos)) return null;
+  const p = Math.round(puntos);
+  return GRADOS.find((g) => p >= g.puntosMin && p <= g.puntosMax) ?? null;
+}
+
+/** EL grado de un lote: su Punto SCA (redondeado a dos decimales) × su Tríada → puntos → banda. Devuelve también los
+ *  puntos y la puerta que actuó, para que la pantalla lo explique. Los puntos MANDAN (regla 1): esto no propone un grado
+ *  para que alguien lo confirme después — lo determina. */
+export function gradoDelLote(sca: number, triada: Triada): { grado: Grado | null; puntaje: Puntaje } {
+  const puntaje = puntosCtc(Number.isFinite(sca) ? redondeaPuntaje(sca) : NaN, triada);
+  return { grado: puntaje.banda ? GRADO_POR_ID[puntaje.banda.id as GradoId] ?? null : null, puntaje };
 }
 
 // ── «Mix» ───────────────────────────────────────────────────────────────────
@@ -213,28 +207,21 @@ export function esGradoValido(v: string): v is GradoId {
   return v in GRADO_POR_ID;
 }
 
-/** ¿La escala cubre 80–100 sin huecos ni solapes? Cierto SOLO bajo la regla de
- *  los dos decimales: el "hueco" entre 81.99 y 82 mide justo un centésimo, que
- *  es la resolución de la escala. Lo comprueba el guardián
+/** ¿Las bandas de puntos embaldosan 1000–2500 sin huecos ni solapes? Lo comprueba el guardián
  *  `scripts/qa-grados-check.mjs`; se expone para poder afirmarlo en la UI. */
 export function escalaEsContinua(): boolean {
+  if (GRADOS[0].puntosMin !== PUNTOS_MIN || GRADOS[GRADOS.length - 1].puntosMax !== PUNTOS_MAX) return false;
   for (let i = 1; i < GRADOS.length; i++) {
-    const anterior = GRADOS[i - 1];
-    const actual = GRADOS[i];
-    if (actual.scaMin <= anterior.scaMax) return false; // solape
-    if (Math.round((actual.scaMin - anterior.scaMax) * 100) !== 1) return false; // hueco
+    if (GRADOS[i].puntosMin !== GRADOS[i - 1].puntosMax + 1) return false;
   }
   return true;
 }
 
 // ── LO QUE QUEDA POR ALINEAR ────────────────────────────────────────────────
-// Las dudas de este archivo están cerradas (las tres reglas de arriba). Lo que
-// sigue abierto es lo que TODAVÍA NO CITA esta definición:
-//
-// · LA JORNADA DE ARENA. Hoy el comité vota el grado directamente. Con la regla
-//   1, lo que el comité aporta es el PUNTAJE; el grado se deriva. Cambiar eso
-//   toca el flujo de la Jornada, así que no se ha tocado aquí: cuando se haga,
-//   `gradoPorPuntaje` es la única función que debe decidirlo.
-// · LAS DOS PÁGINAS DE NOTION («Conceptos Fundamentales» y «Pitch Go To
-//   Market»). Siguen publicando umbrales viejos y contradictorios. Se
-//   actualizan DESDE aquí (docs/INTEGRACIONES_PLAN.md, §1).
+// · LA TRÍADA DE UN LOTE se deriva de su Ficha (`src/lib/pvc/triadaDelLote.ts`): la variedad contra el catálogo semilla
+//   de `escala.ts` hasta que el comité publique el marco de mercado (plan PVC §11.2); el proceso por sus palabras; los
+//   reconocimientos contados. Cuando exista el marco, la variedad se lee de ahí.
+// · LA BASE FÍSICA (§9.1.b: factor, humedad, densidad) da el DERECHO al grado y no da puntos. Se exhibe
+//   (`revisarBaseFisica`); todavía no cierra la puerta — decisión del owner pendiente.
+// · LAS DOS PÁGINAS DE NOTION («Conceptos Fundamentales» y «Pitch Go To Market») siguen publicando umbrales SCA viejos.
+//   Se actualizan DESDE aquí (docs/INTEGRACIONES_PLAN.md, §1).

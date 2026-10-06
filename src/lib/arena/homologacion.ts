@@ -8,7 +8,8 @@
 //     SCA ≈ 79 + (CVA − 79) / k, con k entre 1 y 2 — ancha a propósito: empuja las decisiones al límite a una recata nativa.
 // Puro: no importa nada del servidor. Lo leen `labEvaluation.ts`, las acciones que escriben `lot_evaluations` y el guardián.
 
-import { GRADO_POR_ID, SCA_MINIMO, gradoPorPuntaje, type Grado } from "@/lib/grados/definicion";
+import { GRADO_POR_ID, SCA_MINIMO, gradoDelLote, type Grado } from "@/lib/grados/definicion";
+import type { Triada } from "@/lib/pvc/escala";
 import { PL, type IdiomaDePlanilla } from "./planillaI18n";
 
 export type ProtocoloDeTaza = "sca2004" | "cva";
@@ -92,24 +93,26 @@ export function puntoDeFila(row: { sca_total: number | string | null; punto?: un
   return Number.isFinite(n) ? puntoNativo(n) : null;
 }
 
-/** R6: Tyrian exige un Punto NATIVO. */
+/** R6: Tyrian exige un Punto NATIVO (la escala, además, exige SCA ≥ 89 y surplus en la tríada). */
 export function admiteTyrian(p: PuntoSca): boolean {
-  return p.origen === "nativo" && p.valor >= GRADO_POR_ID.tyrian.scaMin;
+  return p.origen === "nativo";
 }
 
-/** El grado FIRME: se lee del piso; un homologado que caiga en Tyrian queda en Gold (R4 + R6). Null si el piso no llega a Black. */
-export function gradoFirme(p: PuntoSca): Grado | null {
-  const g = gradoPorPuntaje(p.bajo);
+/** El grado FIRME (V5.160: El Punto y la Tríada): se lee del PISO del Punto con la tríada del lote; un homologado que caiga
+ *  en Tyrian queda en Gold (R4 + R6). Null si los puntos no llegan a Black. */
+export function gradoFirme(p: PuntoSca, triada: Triada): Grado | null {
+  const g = gradoDelLote(p.bajo, triada).grado;
   if (!g) return null;
   if (g.id === "tyrian" && !admiteTyrian(p)) return GRADO_POR_ID.gold;
   return g;
 }
 
-/** El TECHO: el grado que daría el borde alto del intervalo (informativo: «hasta X con recata SCA»). Null si es nativo o no sube. */
-export function techoDelPunto(p: PuntoSca): Grado | null {
+/** El TECHO: el grado que daría el borde alto del intervalo con la misma tríada (informativo: «hasta X con recata SCA»).
+ *  Null si es nativo o no sube. */
+export function techoDelPunto(p: PuntoSca, triada: Triada): Grado | null {
   if (p.origen === "nativo") return null;
-  const alto = gradoPorPuntaje(p.alto);
-  const firme = gradoFirme(p);
+  const alto = gradoDelLote(p.alto, triada).grado;
+  const firme = gradoFirme(p, triada);
   if (!alto || (firme && alto.id === firme.id)) return null;
   return alto;
 }
@@ -120,10 +123,11 @@ export type DecisionDePunto =
   /** R5: el intervalo homologado cruza los 80 — ni galardón ni rechazo: recata SCA nativa. */
   | { tipo: "pendiente_recata" };
 
-/** Lo que el Punto decide por sí solo (el puntaje manda): galardón con grado firme, sin grado, o pendiente de recata. */
-export function decidirPorPunto(p: PuntoSca): DecisionDePunto {
-  const firme = gradoFirme(p);
-  if (firme) return { tipo: "galardon", grado: firme, techo: techoDelPunto(p) };
+/** Lo que el Punto y la Tríada deciden (los puntos mandan): galardón con grado firme, sin grado, o pendiente de recata.
+ *  V5.160: la tríada es obligatoria — sin ella no hay grado (`triadaDeLaFicha` la deriva de la Ficha del lote). */
+export function decidirPorPunto(p: PuntoSca, triada: Triada): DecisionDePunto {
+  const firme = gradoFirme(p, triada);
+  if (firme) return { tipo: "galardon", grado: firme, techo: techoDelPunto(p, triada) };
   if (p.origen === "homologado" && p.alto >= SCA_MINIMO) return { tipo: "pendiente_recata" };
   return { tipo: "sin_grado" };
 }

@@ -156,7 +156,7 @@ check("ninguna variedad está en dos niveles", (() => {
 
 // ── 11 · la pantalla dice que esto NO gobierna ────────────────────────────
 const board = lee("src/components/panel/pvc/EscalaBoard.tsx");
-check("EscalaBoard avisa que todavía no gobierna", /no gobierna/i.test(board));
+check("EscalaBoard dice que gobierna desde la V5.160 (ya no avisa lo contrario)", /gobierna desde la V5\.160/i.test(board) && !/todavía no gobierna/i.test(board));
 check("EscalaBoard remite a definicion.ts", board.includes("definicion.ts"));
 check("EscalaBoard enlaza la escala vigente", board.includes("/ecp/direccionamiento/grados"));
 check("la pestaña Grados está en el tab strip", lee("src/components/panel/pvc/PvcTabs.tsx").includes("/ecp/pvc/grados"));

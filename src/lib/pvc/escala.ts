@@ -2,12 +2,11 @@
 // El modelo del §9.1 de docs/PVC_BCP_PLAN.md, decidido por el owner el
 // 2026-09-15 y afinado el 16.
 //
-// ⚠️ ESTO NO GOBIERNA TODAVÍA. La fuente única de grados sigue siendo
-// `src/lib/grados/definicion.ts` (contrato de ALINEACION §1: Black 80–81.99 …
-// Tyrian 88+, el puntaje manda). Este módulo es la escala QUE VIENE: existe
-// para que el owner la valide con la calculadora antes de que la fase 2 la
-// lleve a `definicion.ts`. Mientras tanto se exhibe y se calcula; no se
-// escribe en ningún lote ni en ninguna oferta.
+// ✅ V5.160 (owner, 2026-10-06): ESTO GOBIERNA. La fuente única de grados, `src/lib/grados/definicion.ts`, lee desde esta
+// versión sus bandas de puntos y el grado de un lote con `gradoDelLote(sca, triada)` = `puntosCtc`. La escala SCA de dos
+// en dos quedó OBSOLETA y se retiró de todas partes (contrato de ALINEACION §1). Las dos capas se mantienen a propósito:
+// aquí la aritmética de la escala (puro, sin imports de la casa); allá los grados con su cara (nombre, lema, color,
+// sello, criterios) y el enum `lot_grade`.
 //
 // PURO y sin `server-only`, como `motor.ts` y `lectura.ts`: lo importan la
 // pantalla del BCP y el guardián `qa-pvc-escala.mjs`.

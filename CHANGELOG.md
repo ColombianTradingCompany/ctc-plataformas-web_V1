@@ -19,6 +19,32 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.160] — 2026-10-06 (commit pendiente)
+
+- **Cambiado**: **CONTRATO (ALINEACION §1) — el grado es El Punto y la Tríada** (owner, 2026-10-06: «la definición de la franja
+  [SCA de dos en dos] es OBSOLETA; retirarla de TODOS LADOS y dejar solo la regla del Punto y la Tríada»). La escala de puntos
+  CTC del Modelo Económico (`src/lib/pvc/escala.ts`, decisión #1 del plan PVC) GOBIERNA: `definicion.ts` lee de ella sus
+  bandas (Black 1000–1399 · Red 1400–1599 · Blue 1600–1799 · Gold 1800–2000 · Tyrian 2001–2500) y deriva el grado con
+  `gradoDelLote(sca, tríada)` = Punto SCA de la taza × multiplicador de la tríada (variedad · proceso · reconocimiento, C/B/A).
+  Un café común (CCC) entra en Black desde 82, es Red desde 84, Blue desde 88, Gold desde 89 y nunca Tyrian; con surplus las
+  bandas se adelantan. `gradoPorPuntaje` y los campos `scaMin`/`scaMax` desaparecen; `gradoFirme`, `techoDelPunto` y
+  `decidirPorPunto` exigen la tríada. La tríada de un lote se deriva de su Ficha (`triadaDeLaFicha`; el proceso se lee del
+  base y del especial juntos). Ningún lote tenía grado asignado: no hay datos que mover.
+- **Cambiado**: lo escriben con la regla nueva el veredicto del OCP (`recordEvaluationVerdict`, tríada de la Ficha del
+  lote), «la que rige» de la Arena y las previsualizaciones (informe del Centro, «Registrar a mano», `LabEvalEditor` con
+  `triada`). Lo enseñan con ella: el tablero **Grados de Calidad** del ECP (escalera en puntos + calculadora con la tríada),
+  el Modelo Económico (ya no avisa «no gobierna»), la escalera de Kaffetal Regal («1.600–1.799 pts · SCA desde 88 (café
+  común)»), los rótulos de la escalera del PVC, el JSON-LD de los grados y la memoria de la IA de Direccionamiento.
+- **Retirado**: `FranjaDeGrados` (la franja SCA del informe) y las notas «no gobierna / no coinciden» de la V5.159.
+- **Datos**: (mock) los siete lotes del Sneak Peek se reclasificaron con su tríada (variedad + proceso): BL-4C1A y BL-9E33
+  (antes GD-…), CTCX-0326005 y BL-2F70 Blue, RD-8B15 y RD-3D62 (antes BL-…), BK-6A08 Black con el estimado subido de
+  81,50 a 82,50 (un café común por debajo de 82 no entra). PDF regenerados (`build-fichas-mock`), ahora con la banda de puntos.
+- **Seguridad**: `qa-grados` reescrito (53: bandas de puntos, SCA desde el que entra un café común, 15 casos Punto × tríada),
+  `qa-centro-calidad` (239: R4/R5/R6 con la tríada), `qa-evaluaciones`, `qa-sneak-peek` (grado = Punto × tríada del mock),
+  `qa-pvc-escala` (el tablero dice que gobierna), `qa-pvc-precio` (rótulos en puntos), `qa-direccionamiento` (memoria).
+- **Docs**: ALINEACION §1 (contrato de grados reescrito) y §3; plan PVC (fase 2: la escala gobierna); charters `consolas`,
+  `herramientas-internas`, `kaffetal-regal`, `cherry-picked`.
+
 ## [V5.159] — 2026-10-06 (commit 01b2451)
 
 - **Cambiado**: en el informe del Centro, **las dos reglas quedan rotuladas** (owner, 2026-10-06: «no entiendo por qué en un

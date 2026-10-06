@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.160] — 2026-10-06 (commit pendiente)
+## [V5.160] — 2026-10-06 (commit 3054f7d)
 
 - **Cambiado**: **CONTRATO (ALINEACION §1) — el grado es El Punto y la Tríada** (owner, 2026-10-06: «la definición de la franja
   [SCA de dos en dos] es OBSOLETA; retirarla de TODOS LADOS y dejar solo la regla del Punto y la Tríada»). La escala de puntos

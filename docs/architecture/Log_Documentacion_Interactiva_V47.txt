@@ -564,4 +564,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `app/ocp/(app)/nominadosActions.ts`, `app/bcp/(app)/arenaActions.ts`, `arena/ArenaClient.tsx`, `nominados/{NominadosClient,CircuitoVista}.tsx`, `src/components/bcp/{LabEvalEditor,TriadaDelLote}.tsx`, `src/components/panel/GradosBoard.tsx` (reescrito), `panel/pvc/EscalaBoard.tsx`, `kaffetal-regal/OportunidadSection.tsx`, `src/lib/pvc/motor.ts`, `src/lib/seo/jsonLd.ts`, `src/lib/direccionamiento/memoria.ts`, `src/lib/catalogo/sneakPeekMock.ts`.
 - DEL `src/components/bcp/FranjaDeGrados.tsx`. DATOS mock: `public/docs/fichas-mock/*.pdf` regenerados (códigos nuevos).
 - ANN `scripts/qa-{grados,centro-calidad,evaluaciones,sneak-peek,direccionamiento}-check.mjs`, `scripts/qa-pvc-{escala,precio}.mjs`, `scripts/build-fichas-mock.mjs`, `docs/ALINEACION.md`, `docs/PVC_BCP_PLAN.md`, `docs/componentes/{consolas,herramientas-internas,kaffetal-regal,cherry-picked}.md`.
-(commit: pendiente)
+(commit: 3054f7d)

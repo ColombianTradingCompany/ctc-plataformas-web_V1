@@ -15,7 +15,7 @@ import { SCA_ATTRS } from "@/components/kaffetal-regal/ficha/fichaData";
 import { CVA_SECCIONES, computeCva, computeFactor, computeMesh, computeSca2004, factorDeLaPlanilla, labEvaluationHasData, toLabEvaluation, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import { CVA_SECCION_LABEL, ESTADO_DE_MALLAS, MALLA_LABEL, SCA_ATTR_LABEL } from "@/lib/arena/planillaI18n";
 import { COLORES_DEL_VERDE, DEFECTOS_FISICOS, TEXTURAS_EN_BOCA, TIPOS_DE_ACIDEZ, calcDefectos, opcionLabel } from "@/lib/catacion/fisico";
-import { anotacionesDeMejora, detalleDe, etapasLabel, fmtIntensidad, normalizaDetalle, normalizaRueda, rutaDe, type AnotacionDeMejora } from "@/lib/catacion/rueda";
+import { anotacionesDeMejora, descriptorLabel, detalleDe, etapasLabel, familiaDe, fmtIntensidad, normalizaDetalle, normalizaRueda, rutaDe, type AnotacionDeMejora } from "@/lib/catacion/rueda";
 
 export type Lang = "es" | "en";
 export type Par = { k: string; v: string };
@@ -29,7 +29,31 @@ export type DossierB2 = {
   perfil: string | null;
 };
 export type DossierB3 = { pares: Par[]; defectos: { defecto: string; granos: string; completos: string }[]; mallas: { malla: string; gramos: string; pct: string }[]; estadoMallas: string | null; notas: string | null };
-export type DossierCaracterizacion = { b1: DossierB1 | null; b2: DossierB2 | null; b3: DossierB3 | null; anotaciones: AnotacionDeMejora[] };
+/** V5.166: las CIFRAS de la planilla que rige, en número, para las gráficas del dossier (radar, rendimiento, mallas, medidores). */
+export type DossierCifras = {
+  sca: { k: string; label: string; v: number }[];
+  scaTotal: number | null;
+  cva: { k: string; label: string; v: number }[];
+  cvaTotal: number | null;
+  /** Las notas de la rueda con el color de su familia y su intensidad (0–15). */
+  rueda: { id: string; nota: string; familiaId: string; familia: string; color: string; intensidad: number; etapas: string; defecto: boolean }[];
+  /** Los pesos del análisis físico, en gramos (null si no se pesó). */
+  pesos: { pergamino: number; verde: number; merma: number; primario: number; secundario: number; sano: number } | null;
+  humedadPergamino: number | null;
+  humedadVerde: number | null;
+  aw: number | null;
+  densidad: number | null;
+  factor: number | null;
+  defectuosaPct: number | null;
+  mallas: { malla: string; gramos: number; pct: number }[];
+  defectos: { defecto: string; granos: number; completos: number; categoria: 1 | 2 }[];
+};
+export type DossierCaracterizacion = { b1: DossierB1 | null; b2: DossierB2 | null; b3: DossierB3 | null; anotaciones: AnotacionDeMejora[]; cifras?: DossierCifras | null };
+
+const num = (v: unknown): number | null => {
+  const x = Number(String(v ?? "").replace(",", "."));
+  return String(v ?? "").trim() !== "" && Number.isFinite(x) ? x : null;
+};
 
 const n = (v: unknown, d = 2): string | null => {
   const x = Number(String(v ?? "").replace(",", "."));
@@ -135,5 +159,33 @@ export function caracterizacionDelDossier(ds: Record<string, unknown> | null | u
     estadoMallas: factor.remainder > 0 ? ESTADO_DE_MALLAS[lang][mesh.state] ?? null : null,
     notas: ev.analysis_notes?.trim() || null,
   };
-  return { b1, b2, b3, anotaciones: anotacionesDeMejora(ev.rueda, lang) };
+  // ── V5.166: las cifras para las gráficas ──
+  const anot = new Set(anotacionesDeMejora(ev.rueda, lang).map((a) => a.id));
+  const cifras: DossierCifras = {
+    sca: SCA_ATTRS.flatMap(([k]) => {
+      const v = num(ev[`sca_${k}` as keyof LabEvaluation]);
+      return v == null ? [] : [{ k, label: SCA_ATTR_LABEL[lang][k], v }];
+    }),
+    scaTotal: sca.total ?? null,
+    cva: CVA_SECCIONES.flatMap(([k]) => {
+      const v = num(ev[`cva_${k}` as keyof LabEvaluation]);
+      return v == null ? [] : [{ k, label: CVA_SECCION_LABEL[lang][k], v }];
+    }),
+    cvaTotal: cva.total ?? null,
+    rueda: ids.map((id) => {
+      const d = detalleDe(detalle, id);
+      const f = familiaDe(id);
+      return { id, nota: descriptorLabel(id, lang), familiaId: f?.id ?? "", familia: f ? (lang === "en" ? f.en : f.es) : "", color: f?.color ?? "#8A8F98", intensidad: d.intensidad, etapas: etapasLabel(d.etapas, lang), defecto: anot.has(id) };
+    }),
+    pesos: factor.start > 0 && factor.remainder > 0 ? { pergamino: factor.start, verde: factor.remainder, merma: factor.yieldLoss, primario: num(ev.fa_primary_defect) ?? 0, secundario: num(ev.fa_secondary_defect) ?? 0, sano: factor.healthy } : null,
+    humedadPergamino: num(ev.fa_parch_hum),
+    humedadVerde: num(ev.b3_humedad_verde),
+    aw: num(ev.b3_actividad_agua),
+    densidad: num(ev.b3_densidad_verde),
+    factor: fq ?? null,
+    defectuosaPct: factor.defectivePct,
+    mallas: factor.remainder > 0 ? mesh.rows.filter((r) => r.grams > 0 || r.key === "mesh_residue").map((r) => ({ malla: MALLA_LABEL[lang][r.key] ?? r.label, gramos: r.key === "mesh_residue" ? mesh.residueGrams : r.grams, pct: r.pct ?? 0 })) : [],
+    defectos: DEFECTOS_FISICOS.filter((d) => defectos.filas[d.key].granos > 0).map((d) => ({ defecto: d[lang], granos: defectos.filas[d.key].granos, completos: defectos.filas[d.key].completos, categoria: (d.cat === 2 ? 2 : 1) as 1 | 2 })),
+  };
+  return { b1, b2, b3, anotaciones: anotacionesDeMejora(ev.rueda, lang), cifras };
 }

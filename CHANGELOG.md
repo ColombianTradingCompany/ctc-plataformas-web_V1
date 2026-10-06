@@ -19,6 +19,29 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.166] — 2026-10-06 (commit pendiente)
+
+- **Cambiado**: **el dossier del lote se rehízo con formato CTCx, por hojas A4** (owner, 2026-10-06: «es muy simple; quiero un
+  formato interesante, que use los recursos que hemos coleccionado del Lote, la Finca y el Productor, con las gráficas, el mapa
+  y figuras conceptuales […] organízalo en páginas […] de la marca CTCx»). Siete hojas que se leen en pantalla y se imprimen
+  tal cual (ES y EN): portada con la foto de la finca, el grado y el índice; origen con el mapa de los cafetales (polígono
+  encuadrado, sin rótulos ajenos), la ubicación regional, la regla de altitud, la finca y el productor con su avatar, su historia
+  y su galería; el grado (El Punto → base × tríada = puntos CTC, la escalera A/B/C de cada atributo, la composición varietal,
+  la escala CTC y el Punto SCA que pide cada grado con la tríada del lote); el perfil de taza (radar, rueda de familias con las
+  notas marcadas por intensidad); el análisis físico (rendimiento de la muestra, factor, humedad, aw, densidad, granulometría,
+  defectos, declarado contra medido); mejora y respaldo (anotaciones de la Rueda del Sabor, certificaciones y la matriz de quién
+  respalda cada dato). Hecho con las skills de diseño instaladas el 2026-10-06 (guía anti-plantilla, pautas de interfaz web
+  de Vercel y playwright-cli para verificar el PDF hoja por hoja).
+- **Añadido**: **la Visa EUDR dentro del dossier** (owner): estado, la cadena finca → lote → DDS → comprador UE, los siete
+  criterios del Pasaporte de la finca, riesgo del país, DDS, sellos con cobertura total y la geolocalización con las
+  coordenadas de cada vértice (Art. 9).
+- **Cambiado**: el grado del dossier muestra el ajuste CTCx cuando lo hubo (era un pendiente de la V5.165).
+- **Corregido**: el PDF del dossier pesaba 35 MB (una foto de 5.700 px y el sello EUDR de 4.266 px se incrustaban sin
+  compresión): las fotos van orientadas, reducidas a 1.600 px y en JPEG, los mapas en JPG y el sello en 560 px. Ahora ~3 MB.
+- **Datos**: `sharp` pasa a dependencia explícita (ya venía con Next).
+- **Seguridad**: `qa-centro-calidad` (269 → 278); `qa-registro` apunta al documento nuevo.
+- **Docs**: charter `kaffetal-regal`; ALINEACION §3.
+
 ## [V5.165] — 2026-10-06 (commit 2938408)
 
 - **Añadido**: **el dossier del lote galardonado incluye TODO: B1, B2 y B3** (owner, 2026-10-06), en ES y EN. B1 es lo que

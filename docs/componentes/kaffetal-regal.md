@@ -152,11 +152,18 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.166 · el dossier del lote con formato CTCx, por hojas A4, con la Visa EUDR dentro** (owner, 2026-10-06; ejecutado desde
+  WRAP-COMMIT-PUSH). Datos: `src/lib/kaffetal/dossierDatos.ts` (`cargarDossier`); documento: `components/kaffetal-regal/dossier/`
+  (`DossierCtcx`, figuras SVG en `figuras.tsx`, textos ES/EN en `textos.ts`, hojas A4 en `dossier.module.css`). Una hoja nueva
+  se suma al arreglo `hojas` y al índice de la portada sola. Las fotos se reducen en el servidor con `sharp` (`fotoParaImprimir`)
+  porque el PDF del navegador re-codifica sin pérdida lo que no es un JPEG pequeño. Abierto: el dossier no adjunta el reporte
+  original del Q-Grader; la ficha pública solo trae QR cuando el lote tiene `public_code`; el motivo de cada nivel de la tríada
+  solo existe en español (en inglés se omite).
 - **V5.165 · el dossier del lote galardonado lleva B1, B2 y B3 y las anotaciones de mejora de la Rueda del Sabor**
   (owner, 2026-10-06; ejecutado desde WRAP-COMMIT-PUSH). El constructor es `src/lib/kaffetal/dossierEvaluacion.ts`
   (`caracterizacionDelDossier(ficha, planillaDeEvaluacion(fila que rige), lang)`); B2/B3 salen SOLO de la evaluación que rige
   (aceptada). La tarjeta del productor (`EvaluacionesTab`, `AnotacionesDeMejora`) lee `lot.officialRueda`. Abierto: el
-  dossier no muestra aún el ajuste CTCx ni el adjunto original del Q-Grader.
+  dossier no muestra aún el adjunto original del Q-Grader (el ajuste CTCx ya sale en la V5.166).
 - **V5.160 · la escalera de grados de la Oportunidad enseña puntos** (ejecutado desde `consolas`, contrato nuevo de
   grados). `OportunidadSection`: «1.600–1.799 pts · SCA desde 88 (café común)» en ES/EN/DE. El productor ya no ve un rango
   SCA por grado. Abierto: el copy largo de cada grado (bullets) sigue diciendo «la puntuación decide el grado»; vale, pero

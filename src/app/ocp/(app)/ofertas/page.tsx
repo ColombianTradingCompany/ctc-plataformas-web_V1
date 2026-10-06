@@ -11,7 +11,7 @@ import { triadaDeLaFicha } from "@/lib/pvc/triadaDelLote";
 import { letras } from "@/lib/pvc/escala";
 import { CARGA_KG, COMPRA_INICIAL_CTCX_CARGAS, minimoKg, MODIFICADOR_DIRECTA_PCT } from "@/lib/trato/terminos";
 import { CatalogoTabs } from "../catalogo/CatalogoTabs";
-import { EmitOfferForm, ReabrirDecisionButton, RetireOfferButton, type AnclajeDeOferta } from "./OfertasClient";
+import { EmitOfferForm, ReabrirDecisionButton, RespuestaContraoferta, RetireOfferButton, RondasDeNegociacion, type AnclajeDeOferta, type RondaDeNegociacion } from "./OfertasClient";
 import { OfertaDesplegable, type ResumenDelLote } from "./OfertaDesplegable";
 import styles from "@/components/panel/shared.module.css";
 
@@ -24,9 +24,10 @@ import styles from "@/components/panel/shared.module.css";
 // EL CONTRATO NACE cuando el productor ACEPTA desde «Contratos y Compras» (respondToOffer); firmar y la escalera
 // de liberación siguen en Contratos.
 
-const KIND_LABEL: Record<string, string> = { temporada: "Temporada (PVC)", directa: "Directa · CTCx Selection", excepcion: "Excepción", black: "Black", subasta: "Subasta Tyrian" };
+const KIND_LABEL: Record<string, string> = { temporada: "Participación en Cherry Picked (PVC)", directa: "Compra CTCx Selection", excepcion: "Cherry Picked · excepción", black: "Black", subasta: "Subasta Tyrian" };
 const STATUS_LABEL: Record<string, string> = {
   emitida: "Emitida — esperando al productor",
+  contraofertada: "Contraofertada — le toca a CTCx",
   aceptada: "Aceptada ✓ (contrato creado)",
   rechazada: "Rechazada por el productor",
   retirada: "Retirada por CTC",
@@ -68,6 +69,7 @@ type OfferRow = {
   max_kg: number | string | null;
   expira_at: string | null;
   compra_inicial_kg: number | string | null;
+  precio_tope_kg: number | string | null;
   lots: { name: string } | { name: string }[] | null;
 };
 type DecisionRow = { lot_id: string; decision_comercial: string | null; decision_comercial_at: string | null; decision_comercial_motivo: string | null };
@@ -83,7 +85,7 @@ export default async function OcpOfertasPage() {
     service
       .from("lot_offers")
       .select(
-        "id, lot_id, producer_id, kind, status, grade_snapshot, score_snapshot, price_per_kg, quantity_kg, season_label, lote_de_temporada_pasada, emitted_at, responded_at, response_note, reference_price_source, modificador_pct, min_kg, max_kg, expira_at, compra_inicial_kg, lots(name)"
+        "id, lot_id, producer_id, kind, status, grade_snapshot, score_snapshot, price_per_kg, quantity_kg, season_label, lote_de_temporada_pasada, emitted_at, responded_at, response_note, reference_price_source, modificador_pct, min_kg, max_kg, expira_at, compra_inicial_kg, precio_tope_kg, lots(name)"
       )
       .order("emitted_at", { ascending: false }),
     service.from("purchase_contracts").select("lot_id").in("status", ["pending_signature", "active", "reconditioning"]),
@@ -93,7 +95,8 @@ export default async function OcpOfertasPage() {
   const lots = (lotsRaw as LotRow[] | null) ?? [];
   const offers = (offersRaw as OfferRow[] | null) ?? [];
   const withLiveContract = new Set(((liveContractsRaw as { lot_id: string }[] | null) ?? []).map((c) => c.lot_id));
-  const withOpenOffer = new Set(offers.filter((o) => o.status === "emitida").map((o) => o.lot_id));
+  const abiertaEstado = (s: string) => s === "emitida" || s === "contraofertada";
+  const withOpenOffer = new Set(offers.filter((o) => abiertaEstado(o.status)).map((o) => o.lot_id));
   const sinOferta = new Map(((decisionesRaw as DecisionRow[] | null) ?? []).map((d) => [d.lot_id, d]));
   const escalera = ((edicion?.outputs?.escalera ?? []) as unknown as EscalonPublicado[]);
 
@@ -101,8 +104,18 @@ export default async function OcpOfertasPage() {
   const colaTemporada = lots.filter((l) => ["red", "blue", "gold"].includes(l.grade ?? "") && elegible(l));
   const colaSubasta = lots.filter((l) => l.grade === "tyrian" && elegible(l));
   const decididos = lots.filter((l) => sinOferta.has(l.id));
-  const abiertas = offers.filter((o) => o.status === "emitida");
-  const respondidas = offers.filter((o) => o.status !== "emitida").slice(0, 30);
+  // V5.169: primero las contraofertas (le toca a CTCx), después las que esperan al productor.
+  const abiertas = offers.filter((o) => abiertaEstado(o.status)).sort((a, b) => (a.status === "contraofertada" ? 0 : 1) - (b.status === "contraofertada" ? 0 : 1));
+  const respondidas = offers.filter((o) => !abiertaEstado(o.status)).slice(0, 30);
+  const idsSelection = offers.filter((o) => o.kind === "directa").map((o) => o.id);
+  const { data: rondasRaw } = idsSelection.length
+    ? await service.from("lot_offer_rondas").select("offer_id, autor, accion, price_per_kg, quantity_kg, nota, created_at").in("offer_id", idsSelection).order("created_at", { ascending: true })
+    : { data: [] };
+  type RondaRow = { offer_id: string; autor: "ctcx" | "productor"; accion: string; price_per_kg: number | string | null; quantity_kg: number | string | null; nota: string | null; created_at: string };
+  const rondasDe = (id: string): RondaDeNegociacion[] =>
+    ((rondasRaw as RondaRow[] | null) ?? [])
+      .filter((r) => r.offer_id === id)
+      .map((r) => ({ autor: r.autor, accion: r.accion, precioKg: r.price_per_kg != null ? Number(r.price_per_kg) : null, kg: r.quantity_kg != null ? Number(r.quantity_kg) : null, nota: r.nota, fecha: r.created_at }));
 
   // V5.168: el resumen de cada lote elegible (lo que CTCx ve al desplegarlo antes de ofertar).
   const { data: evalsRaw } = colaTemporada.length
@@ -195,7 +208,18 @@ export default async function OcpOfertasPage() {
           {o.responded_at && ` · ${new Date(o.responded_at).toLocaleDateString("es-CO")}`}
           {o.response_note && ` · «${o.response_note}»`}
         </p>
-        {o.status === "emitida" && <RetireOfferButton offerId={o.id} />}
+        {o.kind === "directa" && <RondasDeNegociacion rondas={rondasDe(o.id)} />}
+        {o.status === "contraofertada" && (
+          <RespuestaContraoferta
+            offerId={o.id}
+            tope={o.precio_tope_kg != null ? Number(o.precio_tope_kg) : null}
+            ultima={(() => {
+              const u = [...rondasDe(o.id)].reverse().find((r) => r.autor === "productor");
+              return u ? { precioKg: u.precioKg, kg: u.kg } : null;
+            })()}
+          />
+        )}
+        {abiertaEstado(o.status) && <RetireOfferButton offerId={o.id} />}
       </div>
     );
   };

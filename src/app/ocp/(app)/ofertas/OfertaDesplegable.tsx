@@ -42,17 +42,23 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
   const precioAncla = anclaje ? (clase === "directa" ? anclaje.copKgDirecta : anclaje.copKg) : null;
   const [precioKg, setPrecioKg] = useState(precioAncla != null ? String(Math.round(precioAncla)) : "");
   const [minKg, setMinKg] = useState(anclaje?.minKg != null ? String(anclaje.minKg) : "");
-  const [maxKg, setMaxKg] = useState("");
+  // V5.169: la compra de CTCx Selection propone cuántos kilos compra (todo el lote o una parte).
+  const [kgSelection, setKgSelection] = useState("");
   const [lugar, setLugar] = useState(LUGAR_DE_ENTREGA_POR_DEFECTO);
   const [notas, setNotas] = useState("");
 
   const kgN = num(precioKg);
-  // Cambiar el precio del PVC convierte la oferta en excepción (con motivo): se dice, no se oculta.
-  const cambiaPrecio = precioAncla != null && Number.isFinite(kgN) && Math.round(kgN) !== Math.round(precioAncla);
+  const esSelection = clase === "directa";
+  // Participar en Cherry Picked va al PVC: cambiarlo la convierte en excepción (con motivo). Una compra de CTCx Selection va HASTA
+  // el PVC − 8 %: se puede proponer menos, nunca más (V5.169).
+  const cambiaPrecio = !esSelection && precioAncla != null && Number.isFinite(kgN) && Math.round(kgN) !== Math.round(precioAncla);
+  const pasaTope = esSelection && precioAncla != null && Number.isFinite(kgN) && kgN > precioAncla;
   const claseEfectiva: OfferKind = cambiaPrecio || precioAncla == null ? "excepcion" : clase;
   const faltaMotivo = claseEfectiva === "excepcion" && !notas.trim();
   const minN = num(minKg);
-  const listo = Number.isFinite(kgN) && kgN > 0 && Number.isFinite(minN) && minN > 0 && !faltaMotivo && lugar.trim() !== "";
+  const kgSelN = num(kgSelection);
+  const listo =
+    Number.isFinite(kgN) && kgN > 0 && !faltaMotivo && lugar.trim() !== "" && !pasaTope && (esSelection ? Number.isFinite(kgSelN) && kgSelN > 0 : Number.isFinite(minN) && minN > 0);
 
   function elegirClase(k: OfferKind) {
     setClase(k);
@@ -63,10 +69,10 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
     setError(null);
     start(async () => {
       const fd = new FormData();
-      if (claseEfectiva === "excepcion") fd.set("price_per_kg", String(kgN));
-      fd.set("min_kg", String(minN));
+      if (claseEfectiva === "excepcion" || claseEfectiva === "directa") fd.set("price_per_kg", String(kgN));
+      if (claseEfectiva === "directa") fd.set("quantity_kg", String(kgSelN));
+      else fd.set("min_kg", String(minN));
       fd.set("lugar_entrega", lugar.trim());
-      if (claseEfectiva === "directa" && maxKg.trim()) fd.set("max_kg", String(num(maxKg)));
       if (notas.trim()) fd.set("notes", notas.trim());
       const res = await emitOffer(lotId, claseEfectiva, fd);
       if (res.ok) router.refresh();
@@ -120,7 +126,7 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
             {(["temporada", "directa"] as const).map((k) => (
               <label key={k} style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12.5, cursor: "pointer" }}>
                 <input type="radio" name={`clase-${lotId}`} checked={clase === k} onChange={() => elegirClase(k)} disabled={!anclaje} />
-                {k === "temporada" ? "Lote de Temporada (PVC)" : "Directa · CTCx Selection (PVC − 8 %, 30 días)"}
+                {k === "temporada" ? "Participe en Cherry Picked (PVC)" : "Compra CTCx Selection (hasta PVC − 8 %)"}
               </label>
             ))}
           </div>
@@ -140,18 +146,22 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
                 }}
               />
             </label>
-            <label style={{ fontSize: 12, display: "grid", gap: 3 }}>
-              Cantidad mínima disponible de CPS (kg)
-              <input inputMode="numeric" value={minKg} onChange={(e) => setMinKg(e.target.value)} />
-              <span className={styles.meta} style={{ margin: 0 }}>
-                {Number.isFinite(minN) && minN > 0 ? `${(minN / CARGA_KG).toLocaleString("es-CO", { maximumFractionDigits: 2 })} cargas` : "—"}
-                {anclaje?.minKg != null ? ` · el mínimo del grado es ${anclaje.minKg} kg` : ""}
-              </span>
-            </label>
-            {claseEfectiva === "directa" && (
+            {esSelection ? (
               <label style={{ fontSize: 12, display: "grid", gap: 3 }}>
-                Máximo kg (opcional)
-                <input inputMode="numeric" value={maxKg} onChange={(e) => setMaxKg(e.target.value)} />
+                Kilos de CPS que CTCx propone comprar
+                <input inputMode="numeric" value={kgSelection} onChange={(e) => setKgSelection(e.target.value)} />
+                <span className={styles.meta} style={{ margin: 0 }}>
+                  {Number.isFinite(kgSelN) && kgSelN > 0 ? `${(kgSelN / CARGA_KG).toLocaleString("es-CO", { maximumFractionDigits: 2 })} cargas · total ${formatCop(kgSelN * (Number.isFinite(kgN) ? kgN : 0))}` : "Todo el lote o una parte"}
+                </span>
+              </label>
+            ) : (
+              <label style={{ fontSize: 12, display: "grid", gap: 3 }}>
+                Cantidad mínima disponible de CPS (kg)
+                <input inputMode="numeric" value={minKg} onChange={(e) => setMinKg(e.target.value)} />
+                <span className={styles.meta} style={{ margin: 0 }}>
+                  {Number.isFinite(minN) && minN > 0 ? `${(minN / CARGA_KG).toLocaleString("es-CO", { maximumFractionDigits: 2 })} cargas` : "—"}
+                  {anclaje?.minKg != null ? ` · el mínimo del grado es ${anclaje.minKg} kg` : ""}
+                </span>
               </label>
             )}
           </div>
@@ -159,7 +169,18 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
             Condiciones de entrega
             <textarea rows={2} value={lugar} onChange={(e) => setLugar(e.target.value)} />
           </label>
-          {precioAncla != null ? (
+          {pasaTope && (
+            <p className={styles.warn} style={{ margin: 0 }}>
+              Una compra de CTCx Selection va hasta el PVC − 8 %: {formatCop(precioAncla!)}/kg como máximo.
+            </p>
+          )}
+          {esSelection && !pasaTope && precioAncla != null && (
+            <p className={styles.meta} style={{ margin: 0 }}>
+              Tope PVC {anclaje!.code} − 8 %: {formatCop(precioAncla)}/kg. El productor ve que este precio NO es el PVC, puede aceptar, contraofertar o desistir; la
+              negociación vuelve aquí (Abiertas).
+            </p>
+          )}
+          {esSelection ? null : precioAncla != null ? (
             cambiaPrecio ? (
               <p className={styles.warn} style={{ margin: 0 }}>
                 El precio se aparta del PVC ({formatCop(precioAncla)}/kg): la oferta sale como <b>excepción</b> y necesita su motivo abajo.
@@ -187,7 +208,7 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
           </div>
           {!listo && !pending && (
             <p className={styles.meta} style={{ margin: 0, textAlign: "right" }}>
-              {faltaMotivo ? "Falta el motivo de la excepción." : "Falta el precio, la cantidad mínima o las condiciones de entrega."}
+              {pasaTope ? "El precio supera el tope de PVC − 8 %." : faltaMotivo ? "Falta el motivo de la excepción." : esSelection ? "Falta el precio, los kilos o las condiciones de entrega." : "Falta el precio, la cantidad mínima o las condiciones de entrega."}
             </p>
           )}
           {error && (

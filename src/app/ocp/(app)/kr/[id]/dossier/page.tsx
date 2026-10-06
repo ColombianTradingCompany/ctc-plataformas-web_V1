@@ -6,6 +6,8 @@ import { mapPreviewUrl } from "@/lib/eudr";
 import { daneCodeFor } from "@/lib/daneCodes";
 import { EudrDossierDoc, type DossierFinca } from "@/components/kaffetal-regal/EudrDossierDoc";
 import { dossierParcelasAndCerts } from "@/lib/dossierExtras";
+import type { Metadata } from "next";
+import { tituloDeFinca } from "@/lib/kaffetal/tituloDeDocumento";
 
 type CommRow = { id: string; note: string; created_at: string; author_role: string };
 
@@ -14,6 +16,11 @@ const DOSSIER_COLUMNS = `id, name, producer_id, status, vereda, municipio, depar
   eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_legal_docs_asset_id, eudr_legal_docs_filename,
   eudr_sustainability_tags, eudr_sustainability_notes, eudr_evidence_files, eudr_sustainability_files, eudr_local_infra,
   eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_product_risk_factors, eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme, eudr_mitigation_actions, eudr_mitigation_responsible, eudr_mitigation_effective`;
+
+// V5.169: el título (= el nombre del PDF) lleva el nombre general y el código.
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  return tituloDeFinca("Pasaporte EUDR", (await params).id, { verificarDueno: false });
+}
 
 export default async function FincaDossierPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

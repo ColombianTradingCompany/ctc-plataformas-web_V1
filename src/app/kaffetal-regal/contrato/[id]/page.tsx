@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { createHash } from "node:crypto";
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
-import { clausulasDelContrato, textoDelContrato, type DatosDelContrato } from "@/lib/trato/contrato";
+import { CONTRATO_VERSION, clausulasDelContrato, textoDelContrato, type DatosDelContrato } from "@/lib/trato/contrato";
+import type { CondicionesDeModalidad, Modalidad } from "@/lib/trato/modalidades";
 import { LUGAR_DE_ENTREGA_POR_DEFECTO } from "@/lib/trato/terminos";
 import { AVISO_SIN_CONTRATO, contratoFirmado, textoDeMarca } from "@/lib/kaffetal/blindaje";
 import { ctcLotReference } from "@/components/kaffetal-regal/data";
@@ -10,9 +11,13 @@ import { MarcaDeAgua } from "@/components/kaffetal-regal/blindaje/MarcaDeAgua";
 import { Blindaje } from "@/components/kaffetal-regal/blindaje/Blindaje";
 import { PrintButton } from "@/components/kaffetal-regal/PrintButton";
 import { CTC_LEGAL_LINE } from "@/lib/legal";
+import { tituloDeContrato } from "@/lib/kaffetal/tituloDeDocumento";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Contrato · CTCx", robots: { index: false, follow: false } };
+// V5.169: el título (= el nombre del PDF) lleva el nombre del lote y su código.
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  return tituloDeContrato((await params).id);
+}
 
 // ── /kaffetal-regal/contrato/[id] (V5.168, owner 2026-10-06) ───────────────────────────────────────────────────────────
 // El contrato que el productor firmó con el dedo al aceptar la oferta: las cláusulas (regeneradas de los datos guardados con
@@ -45,7 +50,7 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
   const { data: raw } = await service
     .from("purchase_contracts")
     .select(
-      "id, lot_id, status, grade_snapshot, price_per_kg_locked, quantity_frozen_kg, declaracion, compra_inicial_kg, terms_version, lugar_entrega, signed_at, producer_signed_at, producer_signer_name, producer_signature_path, contract_text_version, contract_text_sha256, offer_id, lots(name, producer_id), lot_offers!purchase_contracts_offer_id_fkey(season_label)"
+      "id, lot_id, status, grade_snapshot, price_per_kg_locked, quantity_frozen_kg, declaracion, compra_inicial_kg, terms_version, lugar_entrega, signed_at, producer_signed_at, producer_signer_name, producer_signature_path, contract_text_version, contract_text_sha256, offer_id, freeze_months, vigencia_desde, vigencia_hasta, retiro_libre_pct, redeclarar_min_kg, redeclarar_at, compra_inicial_min_kg, compra_inicial_max_kg, lots(name, producer_id), lot_offers!purchase_contracts_offer_id_fkey(season_label, kind)"
     )
     .eq("id", id)
     .maybeSingle();
@@ -56,7 +61,15 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
     grade_snapshot: string | null;
     price_per_kg_locked: number | string | null;
     quantity_frozen_kg: number | string | null;
-    declaracion: "trimestre" | "30_dias" | null;
+    declaracion: Modalidad | null;
+    freeze_months: number | null;
+    vigencia_desde: string | null;
+    vigencia_hasta: string | null;
+    retiro_libre_pct: number | string | null;
+    redeclarar_min_kg: number | string | null;
+    redeclarar_at: string | null;
+    compra_inicial_min_kg: number | string | null;
+    compra_inicial_max_kg: number | string | null;
     compra_inicial_kg: number | string | null;
     terms_version: string | null;
     lugar_entrega: string | null;
@@ -67,7 +80,7 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
     contract_text_version: string | null;
     contract_text_sha256: string | null;
     lots: { name: string; producer_id: string } | { name: string; producer_id: string }[] | null;
-    lot_offers: { season_label: string | null } | { season_label: string | null }[] | null;
+    lot_offers: { season_label: string | null; kind: string } | { season_label: string | null; kind: string }[] | null;
   };
   const c = raw as Row | null;
   const lote = c ? ((Array.isArray(c.lots) ? c.lots[0] : c.lots) ?? null) : null;
@@ -75,7 +88,23 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
   if (!c.producer_signed_at) return gate("Este contrato es anterior a la firma digital: lo encuentra en «Contratos y Compras».");
 
   const oferta = (Array.isArray(c.lot_offers) ? c.lot_offers[0] : c.lot_offers) ?? null;
+  // Las condiciones de la modalidad, tal como quedaron guardadas al firmar.
+  const n = (v: number | string | null) => (v != null ? Number(v) : null);
+  const condiciones: CondicionesDeModalidad | null =
+    oferta?.kind !== "directa" && c.declaracion
+      ? {
+          modalidad: c.declaracion,
+          desde: c.vigencia_desde ?? "",
+          hasta: c.vigencia_hasta ?? "",
+          meses: c.freeze_months ?? 1,
+          retiroLibrePct: n(c.retiro_libre_pct),
+          compraInicial: c.compra_inicial_min_kg != null ? { minKg: Number(c.compra_inicial_min_kg), maxKg: Number(c.compra_inicial_max_kg ?? c.compra_inicial_min_kg) } : { kg: Number(c.compra_inicial_kg ?? 0) },
+          redeclarar: c.redeclarar_min_kg != null && c.redeclarar_at ? { minKg: Number(c.redeclarar_min_kg), at: c.redeclarar_at } : null,
+        }
+      : null;
   const datos: DatosDelContrato = {
+    tipo: oferta?.kind === "directa" ? "selection" : "cherry_picked",
+    condiciones,
     productorNombre: c.producer_signer_name ?? "—",
     productorDocumento: null,
     loteNombre: lote.name,
@@ -83,13 +112,13 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
     grado: c.grade_snapshot ?? "—",
     copKg: Number(c.price_per_kg_locked ?? 0),
     declaradoKg: Number(c.quantity_frozen_kg ?? 0),
-    declaracion: c.declaracion ?? "trimestre",
-    compraInicialKg: c.compra_inicial_kg != null ? Number(c.compra_inicial_kg) : null,
     lugarEntrega: c.lugar_entrega ?? LUGAR_DE_ENTREGA_POR_DEFECTO,
     termsVersion: c.terms_version,
     temporada: oferta?.season_label ?? null,
   };
   const huella = createHash("sha256").update(textoDelContrato(datos), "utf8").digest("hex");
+  // Un contrato firmado con un texto de otra versión conserva su huella; aquí se dice, no se compara a ciegas.
+  const mismaVersion = (c.contract_text_version ?? CONTRATO_VERSION) === CONTRATO_VERSION;
   const integro = huella === c.contract_text_sha256;
   const { data: firmaUrl } = c.producer_signature_path ? await service.storage.from("kaffetal-media").createSignedUrl(c.producer_signature_path, 600) : { data: null };
   const puedeImprimir = contratoFirmado(c.status);
@@ -135,7 +164,7 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
       </div>
       <p style={{ marginTop: 24, fontSize: 11, color: "#5B5568", borderTop: "1px solid #E2DEE9", paddingTop: 8 }}>
         Texto versión {c.contract_text_version ?? "—"} · huella SHA-256 {c.contract_text_sha256 ? `${c.contract_text_sha256.slice(0, 16)}…` : "—"} ·{" "}
-        {integro ? "el texto coincide con el que se firmó" : "el texto mostrado no coincide con la huella firmada: escríbale a CTCx"} · {CTC_LEGAL_LINE}
+        {integro ? "el texto coincide con el que se firmó" : mismaVersion ? "el texto mostrado no coincide con la huella firmada: escríbale a CTCx" : "firmado con una versión anterior del texto; la huella guardada corresponde a esa versión"} · {CTC_LEGAL_LINE}
       </p>
     </div>
   );

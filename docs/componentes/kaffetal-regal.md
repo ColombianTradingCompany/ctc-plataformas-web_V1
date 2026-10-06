@@ -152,6 +152,13 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.169 · Cherry Picked con tres modalidades y escenarios de venta; CTCx Selection negociable; nombres de archivo; Visa →
+  Pasaportes** (owner, 2026-10-06; ejecutado desde WRAP-COMMIT-PUSH). Las reglas de las modalidades viven en
+  `src/lib/trato/modalidades.ts` (la Temporada Trimestral = la ventana de la edición del PVC). Abierto: (1) el precio de
+  «Siguiente Temporada» sigue siendo el PVC vigente al emitir, no el de la edición siguiente; (2) la redeclaración obligada de
+  «Ahora y Siguiente» queda anotada en el contrato pero todavía no abre sola una declaración nueva al empezar la temporada;
+  (3) la renovación de «Declarar Ahora» enmienda la cantidad sobre el mismo mes del trato; (4) los flujos no se condujeron con
+  una cuenta real de productor.
 - **V5.168 · la calculadora del trato, el contrato con firma con el dedo y el blindaje de los documentos** (owner, 2026-10-06;
   ejecutado desde WRAP-COMMIT-PUSH). Aceptar una oferta ES firmar (`respondToOffer` exige la firma; sin firma no nace contrato).
   El texto del contrato vive en `src/lib/trato/contrato.ts` con versión propia: cambiarlo es subir `CONTRATO_VERSION` (los viejos

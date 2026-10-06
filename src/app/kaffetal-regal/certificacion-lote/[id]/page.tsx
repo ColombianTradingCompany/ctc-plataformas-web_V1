@@ -7,6 +7,8 @@ import { ORIGIN_CERTS, INTL_CERTS } from "@/components/kaffetal-regal/ficha/fich
 import { ctcLotReference } from "@/components/kaffetal-regal/data";
 import { impresionDelProductor } from "@/lib/kaffetal/blindajeServidor";
 import { textoDeMarca } from "@/lib/kaffetal/blindaje";
+import type { Metadata } from "next";
+import { tituloDeLote } from "@/lib/kaffetal/tituloDeDocumento";
 
 type CommRow = { id: string; note: string; created_at: string; author_role: string };
 
@@ -70,6 +72,11 @@ function gate(message: string) {
 // read with the service-role client once ownership + readiness are verified.
 // Readiness = lotEudrStatus "eudr_ready" (source finca Apta + risk level
 // determined by CTC as insignificante).
+// V5.169: el título (= el nombre del PDF) lleva el nombre general y el código.
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  return tituloDeLote("Visa EUDR", (await params).id);
+}
+
 export default async function LotEudrCertPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await createSessionClient();

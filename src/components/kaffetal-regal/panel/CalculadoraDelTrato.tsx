@@ -1,113 +1,142 @@
 "use client";
 
 import { useState } from "react";
-import { simularTrato, type Declaracion, type SimulacionDelTrato } from "@/lib/trato/simulador";
+import { simularVentas, PATRON_LABEL, type PatronDeVenta } from "@/lib/trato/simulador";
 import { CARGA_KG, PENALIDAD_RETIRO_PCT, TRAMO_LIBRE_ACUMULADO_PCT } from "@/lib/trato/terminos";
+import { condicionesDe, modalidadesDisponibles, textoCompraInicial, MODALIDAD_LABEL, MODALIDADES, type CondicionesDeModalidad, type Modalidad } from "@/lib/trato/modalidades";
 import { formatCop } from "@/lib/arena/inscriptions";
 
-// ── V5.168 (owner, 2026-10-06) · la calculadora del trato, para el productor ─────────────────────────────────────────────
-// «El Productor recibe esta oferta y con ella se activa una herramienta sencilla que permite entender las opciones y
-// condiciones posibles (fijar disponibilidad del periodo siguiente o este […]). Esta calculadora muestra de manera intuitiva
-// cómo funciona el sistema y qué podría esperar en cada caso.»
-// Sobre el MISMO simulador del trato (`src/lib/trato/simulador.ts`, la lógica de la V5.83): cuánto compromete (en cargas),
-// las dos maneras de comprometerlo lado a lado —este periodo (30 días) o el trimestre que empieza—, cómo llegan los pedidos
-// y los pagos mes a mes y qué pasaría si necesitara retirar café. Al final, «Tomar la decisión» lleva al contrato.
+// ── La calculadora de la participación en Cherry Picked (V5.168 · modalidades y escenarios desde la V5.169) ─────────────
+// Owner, 2026-10-06: el productor elige CÓMO participa —«Declarar Ahora» (los próximos 30 días, si faltan ≥ 30 días para la
+// siguiente Temporada Trimestral), «Declarar Siguiente Temporada Trimestral» (lo usual) o «Declarar Ahora y Siguiente
+// Temporada» (si faltan ≤ 50 días)—, cuánto declara, y juega con el ESCENARIO de ventas: «CTCx no se compromete a comprar las
+// fracciones mes a mes; puede no haber compra en un mes, o venderse todo el primer día». Los KPIs (% vendido, ingreso, prima
+// sobre la referencia FNC, café que le queda) anclan la decisión. Las reglas viven en `modalidades.ts` y `simulador.ts`.
 
-export type DecisionDelTrato = { kg: number; declaracion: Declaracion };
+export type DecisionDelTrato = { kg: number; modalidad: Modalidad; condiciones: CondicionesDeModalidad };
 
 const cargasDe = (kg: number) => kg / CARGA_KG;
 const fmtCargas = (kg: number) => `${cargasDe(kg).toLocaleString("es-CO", { maximumFractionDigits: 1 })} ${cargasDe(kg) === 1 ? "carga" : "cargas"}`;
+const fmtFecha = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
 
 export function CalculadoraDelTrato({
   copKg,
   grado,
   minKg,
   maxKg,
-  compraInicialKg,
   lugarEntrega,
-  declaracionInicial,
+  fncCargaRef,
+  temporadaHasta,
+  hoy,
+  diasHastaSiguiente,
   onDecidir,
 }: {
   copKg: number;
   grado: string | null;
   minKg: number | null;
   maxKg: number | null;
-  compraInicialKg: number | null;
   lugarEntrega: string;
-  declaracionInicial: Declaracion;
+  fncCargaRef: number | null;
+  temporadaHasta: string | null;
+  hoy: string;
+  diasHastaSiguiente: number | null;
   onDecidir: (d: DecisionDelTrato) => void;
 }) {
+  const disp = modalidadesDisponibles(diasHastaSiguiente);
   const minimo = minKg ?? CARGA_KG;
   const tope = maxKg ?? Math.max(minimo * 4, 40 * CARGA_KG);
+  const [modalidad, setModalidad] = useState<Modalidad>(disp.ahora_y_siguiente.disponible ? "ahora_y_siguiente" : "trimestre");
   const [kg, setKg] = useState(minimo);
-  const [declaracion, setDeclaracion] = useState<Declaracion>(declaracionInicial);
+  const [ventaPct, setVentaPct] = useState(60);
+  const [patron, setPatron] = useState<PatronDeVenta>("parejo");
+  const [retiroPct, setRetiroPct] = useState(25);
   const [mesRetiro, setMesRetiro] = useState(2);
-  const [pctRetiro, setPctRetiro] = useState(25);
 
-  const sims: Record<Declaracion, SimulacionDelTrato> = {
-    "30_dias": simularTrato({ declaradoKg: kg, copKg, declaracion: "30_dias", grado }),
-    trimestre: simularTrato({ declaradoKg: kg, copKg, declaracion: "trimestre", grado }),
-  };
-  const sim = sims[declaracion];
-  const pasos = [{ etiqueta: "Hoy", kg: compraInicialKg ? sim.compraInicial.kg : 0, cop: compraInicialKg ? sim.compraInicial.cop : 0, nota: "CTCx le compra una carga" }, ...sim.porMes.map((m) => ({ etiqueta: `Mes ${m.mes}`, kg: m.pedidoKg, cop: m.pagoCop, nota: "CTCx pide y paga al mes siguiente" }))].filter((p) => p.kg > 0);
+  const cond = condicionesDe(modalidad, { hoy, temporadaHasta, declaradoKg: kg, grado });
+  // «Declarar Ahora»: CTCx compra entre 10 y 25 kg a su discreción; el escenario usa lo mínimo (10 kg), lo que seguro ocurre.
+  const compraInicialKg = "kg" in cond.compraInicial ? cond.compraInicial.kg : cond.compraInicial.minKg;
+  const v = simularVentas({ declaradoKg: kg, copKg, meses: cond.meses, compraInicialKg, ventaPct, patron, fncCargaRef });
+  const pasos = [{ etiqueta: "Firma", kg: v.compraInicial.kg, cop: v.compraInicial.cop }, ...v.porMes.map((m) => ({ etiqueta: `Mes ${m.mes}`, kg: m.kg, cop: m.cop }))];
   const maxPaso = Math.max(...pasos.map((p) => p.kg), 1);
 
-  // ¿Y si necesito retirar? El tramo libre acumulado al cerrar el mes anterior; lo de encima paga la penalidad.
-  const mesesDisponibles = declaracion === "30_dias" ? [1] : [1, 2, 3];
-  const mesR = mesesDisponibles.includes(mesRetiro) ? mesRetiro : mesesDisponibles[mesesDisponibles.length - 1];
-  const librePct = declaracion === "30_dias" ? 0 : TRAMO_LIBRE_ACUMULADO_PCT[mesR as 1 | 2 | 3] ?? 0;
-  const retiroKg = (kg * pctRetiro) / 100;
-  const libreKg = Math.min(retiroKg, (kg * librePct) / 100);
+  // ¿Y si retiro café? Por modalidad: «Ahora» sin tramo libre; «Siguiente» 25 % / 50 % al cerrar los meses 1 y 2; «Ahora y
+  // Siguiente» el 30 % en cualquier momento.
+  const libreModalidad =
+    modalidad === "30_dias" ? 0 : modalidad === "ahora_y_siguiente" ? cond.retiroLibrePct ?? 0 : TRAMO_LIBRE_ACUMULADO_PCT[Math.min(3, Math.max(1, mesRetiro)) as 1 | 2 | 3] ?? 0;
+  const retiroKg = (kg * retiroPct) / 100;
+  const libreKg = Math.min(retiroKg, (kg * libreModalidad) / 100);
   const penalizadoKg = Math.max(0, retiroKg - libreKg);
   const penalidad = (cargasDe(penalizadoKg) * copKg * CARGA_KG * PENALIDAD_RETIRO_PCT) / 100;
-  const cumple = kg >= minimo && (maxKg == null || kg <= maxKg);
+  const cumple = kg >= minimo && (maxKg == null || kg <= maxKg) && disp[modalidad].disponible;
 
-  const opcion = (d: Declaracion) => {
-    const s = sims[d];
-    const activa = d === declaracion;
-    return (
-      <button
-        type="button"
-        onClick={() => setDeclaracion(d)}
-        aria-pressed={activa}
-        style={{
-          textAlign: "left",
-          border: `2px solid ${activa ? "var(--accent)" : "var(--line)"}`,
-          background: activa ? "var(--paper)" : "var(--card)",
-          borderRadius: 10,
-          padding: "10px 12px",
-          cursor: "pointer",
-          display: "grid",
-          gap: 4,
-          minHeight: 44,
-        }}
-      >
-        <span style={{ fontSize: 12, color: "var(--muted)" }}>{d === "30_dias" ? "Opción A" : "Opción B"}</span>
-        <b style={{ fontSize: 14 }}>{d === "30_dias" ? "Este periodo · 30 días" : "El próximo trimestre · 3 meses"}</b>
-        <span style={{ fontSize: 12.5 }}>
-          {d === "30_dias"
-            ? "Compromete café para el mes en curso: CTCx lo pide en un solo pedido. Sin tramo libre de retiro."
-            : `CTCx reparte los pedidos en 3 meses. Puede retirar sin costo hasta el ${TRAMO_LIBRE_ACUMULADO_PCT[2]} % al cerrar el mes 1 y el ${TRAMO_LIBRE_ACUMULADO_PCT[3]} % al cerrar el mes 2.`}
-        </span>
-        <span style={{ fontSize: 18, fontWeight: 800, marginTop: 2 }}>{formatCop(s.totalCop)}</span>
-        <span style={{ fontSize: 11.5, color: "var(--muted)" }}>en total por {fmtCargas(kg)}</span>
-      </button>
-    );
-  };
+  const kpi = (titulo: string, valor: string, nota?: string, color?: string) => (
+    <div style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "8px 10px", background: "var(--paper)", display: "grid", gap: 2 }}>
+      <span style={{ fontSize: 11.5, color: "var(--muted)" }}>{titulo}</span>
+      <b style={{ fontSize: 17, color }}>{valor}</b>
+      {nota && <span style={{ fontSize: 11, color: "var(--muted)" }}>{nota}</span>}
+    </div>
+  );
 
   return (
-    <div style={{ marginTop: 10, border: "1px solid var(--line)", borderRadius: 10, padding: "12px 14px", background: "var(--card)", display: "grid", gap: 12 }}>
+    <div style={{ marginTop: 10, border: "1px solid var(--line)", borderRadius: 10, padding: "12px 14px", background: "var(--card)", display: "grid", gap: 14 }}>
       <div>
-        <b style={{ fontSize: 14 }}>Calcule su trato antes de decidir</b>
+        <b style={{ fontSize: 14 }}>Calcule su participación en Cherry Picked</b>
         <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 2 }}>
-          El precio queda fijo en <b>{formatCop(copKg)}/kg</b> ({formatCop(copKg * CARGA_KG)} por carga). Mueva la cantidad y compare las dos opciones.
+          Precio fijo de <b>{formatCop(copKg)}/kg</b> ({formatCop(copKg * CARGA_KG)} por carga), el PVC de esta temporada.
+          {diasHastaSiguiente != null && temporadaHasta && <> La siguiente Temporada Trimestral empieza en {diasHastaSiguiente} días.</>}
         </div>
       </div>
 
-      {/* 1 · La cantidad */}
+      {/* 1 · La modalidad */}
+      <div>
+        <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 6 }}>1. ¿Cómo quiere participar?</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 8 }}>
+          {MODALIDADES.map((m) => {
+            const d = disp[m];
+            const c = condicionesDe(m, { hoy, temporadaHasta, declaradoKg: kg, grado });
+            const activa = m === modalidad;
+            return (
+              <button
+                key={m}
+                type="button"
+                disabled={!d.disponible}
+                onClick={() => setModalidad(m)}
+                aria-pressed={activa}
+                style={{
+                  textAlign: "left",
+                  border: `2px solid ${activa ? "var(--accent)" : "var(--line)"}`,
+                  background: activa ? "var(--paper)" : "var(--card)",
+                  borderRadius: 10,
+                  padding: "10px 12px",
+                  cursor: d.disponible ? "pointer" : "not-allowed",
+                  opacity: d.disponible ? 1 : 0.55,
+                  display: "grid",
+                  gap: 4,
+                  minHeight: 44,
+                }}
+              >
+                <b style={{ fontSize: 13.5 }}>{MODALIDAD_LABEL[m]}</b>
+                <span style={{ fontSize: 12 }}>
+                  {m === "30_dias"
+                    ? "Los próximos 30 días. Renovable mientras falten al menos 30 días para la siguiente temporada."
+                    : m === "trimestre"
+                      ? "La siguiente Temporada Trimestral completa. Lo usual."
+                      : "Desde hoy y toda la siguiente temporada. Retiro libre del 30 %; al empezar la siguiente, redeclara al menos el 70 %."}
+                </span>
+                <span style={{ fontSize: 11.5, color: "var(--muted)" }}>
+                  {fmtFecha(c.desde)} a {fmtFecha(c.hasta)} · con la firma CTCx compra {textoCompraInicial(c.compraInicial)}
+                </span>
+                {!d.disponible && <span style={{ fontSize: 11.5, color: "var(--accent)", fontWeight: 700 }}>{d.motivo}</span>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 2 · La cantidad */}
       <div>
         <label htmlFor="kg-trato" style={{ fontSize: 12.5, fontWeight: 700 }}>
-          1. ¿Cuánto café pergamino seco quiere comprometer?
+          2. ¿Cuánto café pergamino seco declara disponible?
         </label>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginTop: 6 }}>
           <input
@@ -125,8 +154,8 @@ export function CalculadoraDelTrato({
               inputMode="decimal"
               value={String(kg)}
               onChange={(e) => {
-                const v = Number(e.target.value.replace(",", "."));
-                if (Number.isFinite(v)) setKg(v);
+                const n = Number(e.target.value.replace(",", "."));
+                if (Number.isFinite(n)) setKg(n);
               }}
               style={{ width: 80, padding: "6px 8px", border: "1.5px solid var(--line)", borderRadius: 7, fontSize: 13, background: "var(--paper)" }}
               aria-label="Kilos de CPS"
@@ -135,65 +164,82 @@ export function CalculadoraDelTrato({
           </span>
         </div>
         <div style={{ fontSize: 11.5, color: kg < minimo ? "var(--accent)" : "var(--muted)", marginTop: 3, fontWeight: kg < minimo ? 700 : 400 }}>
-          Mínimo para su grado: {minimo.toLocaleString("es-CO")} kg ({fmtCargas(minimo)}){maxKg != null ? ` · máximo de esta oferta: ${maxKg.toLocaleString("es-CO")} kg` : ""}.
+          Mínimo para su grado: {minimo.toLocaleString("es-CO")} kg ({fmtCargas(minimo)}).
+          {cond.redeclarar && <> Al empezar la siguiente temporada redeclara al menos {cond.redeclarar.minKg.toLocaleString("es-CO")} kg.</>}
         </div>
       </div>
 
-      {/* 2 · Las dos opciones */}
+      {/* 3 · El escenario de ventas */}
       <div>
-        <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 6 }}>2. ¿Para cuándo lo compromete?</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 8 }}>
-          {opcion("30_dias")}
-          {opcion("trimestre")}
+        <div style={{ fontSize: 12.5, fontWeight: 700 }}>3. Juegue con el escenario: ¿cuánto vende CTCx y cuándo?</div>
+        <div style={{ fontSize: 11.5, color: "var(--muted)", margin: "2px 0 6px" }}>
+          CTCx no se compromete a comprar fracciones fijas mes a mes: puede no comprar en un mes, o venderse todo el primer día. Lo que no se vende sigue
+          siendo suyo.
         </div>
-      </div>
-
-      {/* 3 · Cómo se ve, paso a paso */}
-      <div>
-        <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 6 }}>3. Así llegarían los pedidos y los pagos</div>
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${pasos.length}, 1fr)`, gap: 8, alignItems: "end" }}>
+        <label htmlFor="venta-pct" style={{ fontSize: 12.5 }}>
+          CTCx termina comprando el <b>{ventaPct} %</b> de lo declarado
+        </label>
+        <input id="venta-pct" type="range" min={0} max={100} step={5} value={ventaPct} onChange={(e) => setVentaPct(Number(e.target.value))} style={{ width: "100%", accentColor: "var(--accent)", minHeight: 32 }} />
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "4px 0 8px" }}>
+          {(Object.keys(PATRON_LABEL) as PatronDeVenta[]).map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setPatron(p)}
+              aria-pressed={p === patron}
+              className="btn btn-sm"
+              style={p === patron ? { background: "var(--accent)", borderColor: "var(--accent)", color: "#fff" } : undefined}
+            >
+              {PATRON_LABEL[p]}
+            </button>
+          ))}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${pasos.length}, 1fr)`, gap: 6, alignItems: "end" }}>
           {pasos.map((p) => (
-            <div key={p.etiqueta} style={{ display: "grid", gap: 4, justifyItems: "center", textAlign: "center" }}>
-              <span style={{ fontSize: 11.5, fontWeight: 700 }}>{formatCop(p.cop)}</span>
-              <div style={{ width: "70%", height: Math.max(8, (p.kg / maxPaso) * 90), background: p.etiqueta === "Hoy" ? "var(--green)" : "var(--accent)", borderRadius: "6px 6px 0 0" }} aria-hidden />
-              <b style={{ fontSize: 12.5 }}>{p.etiqueta}</b>
-              <span style={{ fontSize: 11.5 }}>
-                {p.kg.toLocaleString("es-CO", { maximumFractionDigits: 1 })} kg
-              </span>
-              <span style={{ fontSize: 10.5, color: "var(--muted)" }}>{p.nota}</span>
+            <div key={p.etiqueta} style={{ display: "grid", gap: 3, justifyItems: "center", textAlign: "center" }}>
+              <span style={{ fontSize: 11, fontWeight: 700 }}>{p.cop ? formatCop(p.cop) : "—"}</span>
+              <div style={{ width: "72%", height: Math.max(4, (p.kg / maxPaso) * 80), background: p.etiqueta === "Firma" ? "var(--green)" : "var(--accent)", borderRadius: "6px 6px 0 0", opacity: p.kg ? 1 : 0.25 }} aria-hidden />
+              <b style={{ fontSize: 12 }}>{p.etiqueta}</b>
+              <span style={{ fontSize: 11 }}>{p.kg.toLocaleString("es-CO", { maximumFractionDigits: 1 })} kg</span>
             </div>
           ))}
         </div>
-        <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 6 }}>
-          Entrega: {lugarEntrega} CTCx paga cada pedido en la primera semana del mes siguiente. El reparto mensual es parejo para el ejemplo; el pedido real lo
-          hace CTCx mes a mes.
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8, marginTop: 10 }}>
+          {kpi("Vendido a CTCx", `${v.vendidoPct.toLocaleString("es-CO")} %`, `${v.vendidoKg.toLocaleString("es-CO", { maximumFractionDigits: 1 })} kg`)}
+          {kpi("Usted recibe", formatCop(v.ingresoCop), "pagos en la primera semana del mes siguiente")}
+          {v.primaFncPct != null &&
+            kpi("Precio frente a la FNC", `${v.primaFncPct >= 0 ? "+" : ""}${v.primaFncPct.toLocaleString("es-CO")} %`, `FNC del día de la oferta: ${formatCop(fncCargaRef ?? 0)}/carga`, v.primaFncPct >= 0 ? "var(--green)" : "var(--red)")}
+          {v.diferenciaFncCop != null && kpi("Más que vendiendo a la FNC", formatCop(v.diferenciaFncCop), "por lo vendido a CTCx", v.diferenciaFncCop >= 0 ? "var(--green)" : "var(--red)")}
+          {kpi("Le queda sin vender", `${v.sinVenderKg.toLocaleString("es-CO", { maximumFractionDigits: 1 })} kg`, "sigue siendo suyo")}
         </div>
       </div>
 
-      {/* 4 · ¿Y si necesito retirar? */}
+      {/* 4 · ¿Y si necesito retirar café? */}
       <div style={{ borderTop: "1px dashed var(--line)", paddingTop: 10 }}>
-        <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 6 }}>4. ¿Y si necesito retirar café?</div>
+        <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 6 }}>4. ¿Y si necesito retirar café de lo declarado?</div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", fontSize: 12.5 }}>
           <label>
             Retiro el{" "}
-            <select value={pctRetiro} onChange={(e) => setPctRetiro(Number(e.target.value))} style={{ padding: "4px 6px" }}>
-              {[10, 25, 50, 75, 100].map((v) => (
-                <option key={v} value={v}>
-                  {v} %
+            <select value={retiroPct} onChange={(e) => setRetiroPct(Number(e.target.value))} style={{ padding: "4px 6px" }}>
+              {[10, 25, 30, 50, 75, 100].map((n) => (
+                <option key={n} value={n}>
+                  {n} %
                 </option>
               ))}
             </select>
           </label>
-          <label>
-            en el{" "}
-            <select value={mesR} onChange={(e) => setMesRetiro(Number(e.target.value))} style={{ padding: "4px 6px" }}>
-              {mesesDisponibles.map((m) => (
-                <option key={m} value={m}>
-                  mes {m}
-                </option>
-              ))}
-            </select>
-          </label>
+          {modalidad === "trimestre" && (
+            <label>
+              en el{" "}
+              <select value={mesRetiro} onChange={(e) => setMesRetiro(Number(e.target.value))} style={{ padding: "4px 6px" }}>
+                {[1, 2, 3].map((m) => (
+                  <option key={m} value={m}>
+                    mes {m}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
         <div style={{ marginTop: 8, display: "grid", gap: 4 }}>
           <div style={{ display: "flex", height: 12, borderRadius: 6, overflow: "hidden", background: "var(--line)" }} aria-hidden>
@@ -212,11 +258,12 @@ export function CalculadoraDelTrato({
             )}
           </span>
         </div>
+        <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 6 }}>Entrega: {lugarEntrega}</div>
       </div>
 
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <button className="btn btn-sm btn-solid-accent" type="button" disabled={!cumple} onClick={() => onDecidir({ kg, declaracion })}>
-          Tomar la decisión · {fmtCargas(kg)} · {declaracion === "30_dias" ? "30 días" : "trimestre"}
+        <button className="btn btn-sm btn-solid-accent" type="button" disabled={!cumple} onClick={() => onDecidir({ kg, modalidad, condiciones: cond })}>
+          Tomar la decisión · {MODALIDAD_LABEL[modalidad]} · {fmtCargas(kg)}
         </button>
       </div>
     </div>

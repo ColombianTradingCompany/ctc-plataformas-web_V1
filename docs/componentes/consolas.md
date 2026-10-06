@@ -177,6 +177,10 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.169 · «Pendiente de Oferta»: Cherry Picked o CTCx Selection; la negociación de Selection vuelve a «Abiertas»** (owner,
+  2026-10-06): la Selection propone precio (hasta PVC − 8 %, que el servidor hace cumplir) y kilos; una contraoferta del
+  productor sube a «Abiertas» con su historial y CTCx acepta (si cabe en el tope), contraoferta o desiste
+  (`responderContraoferta`). El Pasaporte de la finca del OCP también se guarda con su nombre y código.
 - **V5.168 · «Pendiente de Oferta» se despliega y confirma la oferta** (owner, 2026-10-06): resumen del lote, cantidad mínima,
   condiciones de entrega (`LUGAR_DE_ENTREGA_POR_DEFECTO`) y precio por kg/carga; cambiar el precio del PVC la vuelve excepción.
   El contrato del OCP enseña la firma del productor (trazo, nombre, fecha, huella del texto). CTCx sigue firmando con

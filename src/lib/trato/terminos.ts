@@ -44,7 +44,7 @@ export const MODIFICADOR_DIRECTA_PCT = -8;
 export const VENTANA_DIRECTA_DIAS = 30;
 
 /** Paso 15: la declaración del productor al aceptar — trimestre por empezar, o 30 días del periodo en curso (fase 6). */
-export const DECLARACIONES = ["trimestre", "30_dias"] as const;
+export const DECLARACIONES = ["trimestre", "30_dias", "ahora_y_siguiente"] as const;
 
 /** El % de modificación de una oferta anclada al PVC: directa (−8 %) y/o past crop (−10 %), aditivos. */
 export function modificadorDeOferta(o: { directa?: boolean; pastCrop?: boolean }): number {
@@ -87,3 +87,30 @@ export function minimoKg(grado: string | null | undefined): number | null {
 
 /** V5.168 (owner, 2026-10-06): las condiciones de entrega por defecto de una oferta — CTCx las confirma (o cambia) al emitir. */
 export const LUGAR_DE_ENTREGA_POR_DEFECTO = "Entregado en Bucaramanga (Santander), en las instalaciones de CTCx.";
+
+// ── V5.169 (owner, 2026-10-06) · las tres modalidades de participar en Cherry Picked ──────────────────────────────────────
+// «Declarar Ahora» ('30_dias'): los próximos 30 días, solo si faltan al menos 30 días para la siguiente Temporada Trimestral;
+// PVC actual; CTCx compra entre 10 y 25 kg de CPS a su discreción al firmar; renovable dentro de la ventana (sin obligación de
+// compra adicional), y cada renovación enmienda la cantidad.
+// «Declarar Siguiente Temporada Trimestral» ('trimestre'): lo usual (los términos de arriba: una carga, tramos 25/50 %).
+// «Declarar Ahora y Siguiente Temporada» ('ahora_y_siguiente'): si faltan como máximo 50 días; PVC de esta temporada; retiro
+// libre hasta el 30 % sin escalones mensuales; al empezar la siguiente temporada se redeclara al menos el 70 % (y nunca menos
+// del mínimo del grado); CTCx compra la carga de 125 kg.
+// En TODAS: CTCx no se compromete a comprar fracciones mes a mes (puede no comprar en un mes, o todo el primer día).
+
+/** «Declarar Ahora» se ofrece si faltan al menos estos días para la siguiente Temporada Trimestral. */
+export const VENTANA_DECLARAR_AHORA_DIAS = 30;
+/** «Declarar Ahora» cubre los próximos 30 días. */
+export const DIAS_DECLARAR_AHORA = 30;
+/** «Ahora y Siguiente» se ofrece si faltan como máximo estos días para la siguiente Temporada Trimestral. */
+export const VENTANA_AHORA_Y_SIGUIENTE_DIAS = 50;
+/** «Declarar Ahora»: CTCx compra entre 10 y 25 kg de CPS, a su discreción, con la firma. */
+export const COMPRA_INICIAL_AHORA_KG = { min: 10, max: 25 } as const;
+/** «Ahora y Siguiente»: retiro libre hasta el 30 %, sin escalones mensuales. */
+export const RETIRO_LIBRE_AHORA_Y_SIGUIENTE_PCT = 30;
+/** «Ahora y Siguiente»: al empezar la siguiente temporada se redeclara al menos este % de lo declarado. */
+export const REDECLARAR_MIN_PCT = 70;
+/** La Temporada Trimestral dura tres meses (≈ 91 días). */
+export const DIAS_TEMPORADA_TRIMESTRAL = 91;
+/** El trato más largo («Ahora y Siguiente» con 50 días de esta temporada + la siguiente) cabe en 6 meses de 30 días. */
+export const MESES_MAX_DEL_TRATO = 6;

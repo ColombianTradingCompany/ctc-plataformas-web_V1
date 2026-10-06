@@ -5,7 +5,12 @@
 // esto se guarda; el OCP y el productor lo leen con las mismas funciones (`qa-trato-check`). Lo único que
 // cambia de estado de verdad —la ruptura y la cuenta congelada— lo escribe el owner a mano.
 
-import { CARGA_KG, MORA, PAST_CROP_MESES, PENALIDAD_RETIRO_PCT, PERIODO_MESES, RENOVACION_DIAS, TRAMO_LIBRE_ACUMULADO_PCT } from "./terminos";
+import { CARGA_KG, MESES_MAX_DEL_TRATO, MORA, PAST_CROP_MESES, PENALIDAD_RETIRO_PCT, PERIODO_MESES, RENOVACION_DIAS, TRAMO_LIBRE_ACUMULADO_PCT } from "./terminos";
+
+/** V5.169: los meses de un trato (1 «Declarar Ahora», 3 el trimestre, hasta 5 «Ahora y Siguiente»); sin dato, 3. */
+export function mesesDelTrato(freezeMonths: number | null | undefined): number {
+  return freezeMonths && freezeMonths > 0 ? Math.min(MESES_MAX_DEL_TRATO, freezeMonths) : PERIODO_MESES;
+}
 
 export type FilaDelMes = {
   mes: number;
@@ -73,7 +78,9 @@ export function mesEnCurso(signedAt: string | null, hoy: Date, meses = PERIODO_M
 }
 
 /** El tramo libre ACUMULADO al cerrar el mes anterior al que corre (paso 16: 25 % al cerrar el mes 1, 50 % al cerrar el 2). */
-export function tramoLibrePct(mes: number, meses = PERIODO_MESES): number {
+export function tramoLibrePct(mes: number, meses = PERIODO_MESES, retiroLibrePct: number | null = null): number {
+  // V5.169: «Ahora y Siguiente» tiene su % libre desde el primer día, sin escalones mensuales.
+  if (retiroLibrePct != null) return retiroLibrePct;
   if (meses <= 1) return 0;
   return TRAMO_LIBRE_ACUMULADO_PCT[Math.min(3, Math.max(1, mes)) as 1 | 2 | 3] ?? 0;
 }
@@ -84,8 +91,8 @@ export type Retiro = { libreDisponibleKg: number; libreKg: number; penalizadoKg:
  * Un retiro: lo que cabe en el tramo libre acumulado (descontando lo ya retirado libre) sale sin costo; el resto paga el
  * 4 % del precio de cada carga (§12.9: cargas penalizadas × COP/carga × 4 %).
  */
-export function retiro(o: { declaradoKg: number; mes: number; meses?: number; retiradoLibreAcumKg: number; retiraKg: number; copKg: number }): Retiro {
-  const pct = tramoLibrePct(o.mes, o.meses ?? PERIODO_MESES);
+export function retiro(o: { declaradoKg: number; mes: number; meses?: number; retiradoLibreAcumKg: number; retiraKg: number; copKg: number; retiroLibrePct?: number | null }): Retiro {
+  const pct = tramoLibrePct(o.mes, o.meses ?? PERIODO_MESES, o.retiroLibrePct ?? null);
   const libreAcumKg = (o.declaradoKg * pct) / 100;
   const libreDisponibleKg = Math.max(0, r1(libreAcumKg - o.retiradoLibreAcumKg));
   const retira = Math.max(0, Number(o.retiraKg) || 0);
@@ -130,7 +137,7 @@ export function resumenDelTrato(
   filas: readonly FilaDelMes[],
   hoy: Date
 ): ResumenDelTrato {
-  const meses = c.freezeMonths && c.freezeMonths > 0 ? Math.min(3, c.freezeMonths) : PERIODO_MESES;
+  const meses = mesesDelTrato(c.freezeMonths);
   const comprometidoKg = Number(c.quantityFrozenKg ?? 0);
   const suma = (k: (f: FilaDelMes) => number | null) => r1(filas.reduce((a, f) => a + (Number(k(f)) || 0), 0));
   const retiradoKg = suma((f) => f.retiradoKg);

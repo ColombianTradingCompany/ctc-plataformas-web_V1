@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { decidirNoOfertar, emitOffer, reabrirDecision, retireOffer, type OfferKind } from "../ofertasActions";
+import { decidirNoOfertar, emitOffer, reabrirDecision, responderContraoferta, retireOffer, type OfferKind } from "../ofertasActions";
 import { formatCop } from "@/lib/arena/inscriptions";
 import styles from "@/components/panel/shared.module.css";
 
@@ -203,5 +203,73 @@ export function ReabrirDecisionButton({ lotId }: { lotId: string }) {
       </button>
       <ErrorLine error={error} />
     </span>
+  );
+}
+
+/** V5.169 · una ronda de la negociación de CTCx Selection (`lot_offer_rondas`). */
+export type RondaDeNegociacion = { autor: "ctcx" | "productor"; accion: string; precioKg: number | null; kg: number | null; nota: string | null; fecha: string };
+
+const ACCION_LABEL: Record<string, string> = { propone: "propone", contraoferta: "contraoferta", acepta: "acepta", desiste: "desiste" };
+
+export function RondasDeNegociacion({ rondas }: { rondas: RondaDeNegociacion[] }) {
+  if (!rondas.length) return null;
+  return (
+    <ol style={{ margin: "6px 0", paddingLeft: 18, fontSize: 12 }}>
+      {rondas.map((r, i) => (
+        <li key={i} style={{ marginBottom: 2 }}>
+          <b>{r.autor === "ctcx" ? "CTCx" : "Productor"}</b> {ACCION_LABEL[r.accion] ?? r.accion}
+          {r.precioKg != null && <> · {formatCop(r.precioKg)}/kg</>}
+          {r.kg != null && <> · {r.kg} kg</>}
+          {r.nota && <> · «{r.nota}»</>} <span style={{ color: "var(--muted)" }}>({new Date(r.fecha).toLocaleDateString("es-CO")})</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** V5.169 · CTCx responde la contraoferta del productor: aceptar (si cabe en el tope), contraofertar o desistir. */
+export function RespuestaContraoferta({ offerId, tope, ultima }: { offerId: string; tope: number | null; ultima: { precioKg: number | null; kg: number | null } | null }) {
+  const { pending, error, run } = useAction();
+  const [precio, setPrecio] = useState(tope != null ? String(Math.round(tope)) : "");
+  const [kg, setKg] = useState(ultima?.kg != null ? String(ultima.kg) : "");
+  const [nota, setNota] = useState("");
+  const enviar = (accion: "aceptar" | "contraofertar" | "desistir") =>
+    run(() => {
+      const fd = new FormData();
+      if (accion === "contraofertar") {
+        fd.set("price_per_kg", precio.replace(/\./g, "").replace(",", "."));
+        if (kg.trim()) fd.set("quantity_kg", kg.replace(",", "."));
+      }
+      if (nota.trim()) fd.set("nota", nota.trim());
+      return responderContraoferta(offerId, accion, fd);
+    });
+  const cabe = ultima?.precioKg != null && (tope == null || ultima.precioKg <= tope);
+  return (
+    <div style={{ border: "1px dashed var(--line)", borderRadius: 8, padding: "8px 10px", display: "grid", gap: 6, marginTop: 4 }}>
+      <b style={{ fontSize: 12.5 }}>El productor contraofertó: le toca a CTCx</b>
+      {ultima?.precioKg != null && (
+        <span className={styles.meta} style={{ margin: 0 }}>
+          Pide {formatCop(ultima.precioKg)}/kg{ultima.kg != null ? ` por ${ultima.kg} kg` : ""}
+          {tope != null && <> · tope {formatCop(tope)}/kg{cabe ? "" : " (lo supera: no se puede aceptar tal cual)"}</>}
+        </span>
+      )}
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <input placeholder="Precio COP/kg" inputMode="numeric" value={precio} onChange={(e) => setPrecio(e.target.value)} style={{ maxWidth: 130 }} />
+        <input placeholder="Kilos" inputMode="numeric" value={kg} onChange={(e) => setKg(e.target.value)} style={{ maxWidth: 100 }} />
+      </div>
+      <input placeholder="Nota para el productor (opcional)" value={nota} onChange={(e) => setNota(e.target.value)} />
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
+        <button className="btn btn-sm" disabled={pending} onClick={() => window.confirm("¿Desistir de esta compra?") && enviar("desistir")}>
+          Desistir
+        </button>
+        <button className="btn btn-sm" disabled={pending || !precio.trim()} onClick={() => enviar("contraofertar")}>
+          Contraofertar
+        </button>
+        <button className="btn btn-sm btn-solid" disabled={pending || !cabe} onClick={() => enviar("aceptar")}>
+          {pending ? "Enviando…" : "Aceptar su contraoferta"}
+        </button>
+      </div>
+      <ErrorLine error={error} />
+    </div>
   );
 }

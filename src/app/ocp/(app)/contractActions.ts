@@ -5,7 +5,7 @@ import type { ActionResult } from "@/components/panel/ActionForm";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { emitOffer } from "./ofertasActions";
-import { renovacionDebida } from "@/lib/trato/mesAMes";
+import { mesesDelTrato, renovacionDebida } from "@/lib/trato/mesAMes";
 import { RENOVACION_DIAS } from "@/lib/trato/terminos";
 import { esCompraEnFirme } from "@/lib/compras/reglas";
 import { formatCop } from "@/lib/arena/inscriptions";
@@ -103,7 +103,7 @@ async function contratoYMeses(service: ReturnType<typeof createServiceRoleClient
 }
 
 const mesValido = (contract: { freeze_months: number | null } | null, mes: number) => {
-  const meses = contract?.freeze_months && contract.freeze_months > 0 ? Math.min(3, contract.freeze_months) : 3;
+  const meses = mesesDelTrato(contract?.freeze_months);
   return Number.isInteger(mes) && mes >= 1 && mes <= meses;
 };
 
@@ -111,7 +111,7 @@ const mesValido = (contract: { freeze_months: number | null } | null, mes: numbe
 async function cerrarSiCumplido(service: ReturnType<typeof createServiceRoleClient>, contractId: string, adminId: string) {
   const { contract, meses } = await contratoYMeses(service, contractId);
   if (!contract || contract.status !== "active") return;
-  const n = contract.freeze_months && contract.freeze_months > 0 ? Math.min(3, contract.freeze_months) : 3;
+  const n = mesesDelTrato(contract.freeze_months);
   const cerrado = meses.length >= n && meses.every((m) => m.enviado_at && m.pagado_at);
   if (!cerrado) return;
   await service.from("purchase_contracts").update({ status: "completed" }).eq("id", contractId);

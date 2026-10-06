@@ -371,7 +371,7 @@ export type ProducerOffer = {
   lotName: string;
   // V5.82: `directa` (CTCx Selection, PVC − 8 %) y `excepcion` (precio a mano con motivo) llegan del OCP; se muestran junto a temporada.
   kind: "temporada" | "directa" | "excepcion" | "black" | "subasta";
-  status: "emitida" | "aceptada" | "rechazada" | "retirada" | "expirada";
+  status: "emitida" | "contraofertada" | "aceptada" | "rechazada" | "retirada" | "expirada";
   grade: NonNullable<Lot["grade"]> | null;
   score: number | null;
   variety: string | null;
@@ -397,9 +397,17 @@ export type ProducerOffer = {
   modificadorPct: number;
   expiraAt: string | null;
   lockedKg: number | null;
-  declaracion: "trimestre" | "30_dias" | null;
+  declaracion: "trimestre" | "30_dias" | "ahora_y_siguiente" | null;
   /** V5.168: las condiciones de entrega que CTCx confirmó al emitir. */
   lugarEntrega: string | null;
+  /** V5.169: el tope de una compra de CTCx Selection (PVC − 8 %), la referencia FNC por carga del día de la oferta, el fin de la
+   *  Temporada Trimestral, los días que faltan para la siguiente (calculados al cargar) y las rondas de la negociación. */
+  precioTopeKg: number | null;
+  fncCargaRef: number | null;
+  temporadaHasta: string | null;
+  diasHastaSiguiente: number | null;
+  hoy: string;
+  rondas: { autor: "ctcx" | "productor"; accion: string; precioKg: number | null; kg: number | null; nota: string | null; fecha: string }[];
 };
 
 export type ProducerContract = {
@@ -414,9 +422,16 @@ export type ProducerContract = {
   quantityFrozenKg: number | null;
   // V5.83: el contrato nace LLENO de la oferta aceptada con la declaración del productor.
   termsVersion: string | null;
-  declaracion: "trimestre" | "30_dias" | null;
+  declaracion: "trimestre" | "30_dias" | "ahora_y_siguiente" | null;
   compraInicialKg: number | null;
   referencePriceSource: string | null;
+  /** V5.169: la vigencia del trato, el retiro libre, la redeclaración y la compra discrecional de la modalidad. */
+  vigenciaDesde: string | null;
+  vigenciaHasta: string | null;
+  retiroLibrePct: number | null;
+  redeclararMinKg: number | null;
+  redeclararAt: string | null;
+  compraInicialRango: { min: number; max: number } | null;
   // V5.84 (fase 7): el trato mes a mes — lo que CTC pide, lo enviado, lo pagado y los retiros; la mora se DERIVA
   // al cargar (`moraDelMes` / `resumenDelTrato`, la misma función que lee el OCP), nunca se guarda.
   signedAt: string | null;

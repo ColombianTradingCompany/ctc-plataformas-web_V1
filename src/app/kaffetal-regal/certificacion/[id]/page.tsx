@@ -8,6 +8,8 @@ import { dossierParcelasAndCerts } from "@/lib/dossierExtras";
 import { impresionDelProductor } from "@/lib/kaffetal/blindajeServidor";
 import { textoDeMarca } from "@/lib/kaffetal/blindaje";
 import { fincaCode } from "@/components/kaffetal-regal/data";
+import type { Metadata } from "next";
+import { tituloDeFinca } from "@/lib/kaffetal/tituloDeDocumento";
 
 type CommRow = { id: string; note: string; created_at: string; author_role: string };
 
@@ -33,6 +35,11 @@ function gate(message: string) {
 // only once CTC has approved and shared it (eudr_cert_shared). We authenticate
 // via the session client, then read the dossier data with the service-role
 // client -- safe because we've already verified ownership + release here.
+// V5.169: el título (= el nombre del PDF) lleva el nombre general y el código.
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  return tituloDeFinca("Pasaporte EUDR", (await params).id);
+}
+
 export default async function ProducerCertPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await createSessionClient();

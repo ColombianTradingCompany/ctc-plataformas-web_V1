@@ -19,6 +19,33 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.169] — 2026-10-06 (commit pendiente)
+
+- **Cambiado**: **CTCx ofrece una de dos cosas** (owner, 2026-10-06): **participar en Cherry Picked** (al PVC de la temporada) o
+  una **compra de CTCx Selection** (propuesta de venta a **hasta PVC − 8 %**, que no es el PVC). En el OCP el desplegable elige
+  entre las dos; en Kaffetal Regal van en secciones separadas.
+- **Añadido**: **las tres modalidades de Cherry Picked** (`src/lib/trato/modalidades.ts`): «Declarar Ahora» (los próximos 30
+  días si faltan ≥ 30 para la siguiente Temporada Trimestral; CTCx compra entre 10 y 25 kg a su discreción; renovable en la
+  ventana, cada renovación enmienda la cantidad y no obliga a más compras), «Declarar Siguiente Temporada Trimestral» (lo usual)
+  y «Declarar Ahora y Siguiente Temporada» (si faltan ≤ 50 días; 30 % de retiro libre sin escalones; redeclarar ≥ 70 % al
+  empezar la siguiente; CTCx compra 125 kg). La disponibilidad sale de la fecha real de la temporada (edición del PVC).
+- **Añadido**: **escenarios de venta en la calculadora**: CTCx no se compromete a comprar fracciones mes a mes; el productor
+  elige cuánto vende CTCx (0–100 %) y cuándo (todo apenas empieza, parejo, al final, un mes sin ventas) y ve los KPIs: % vendido,
+  lo que recibe, la prima sobre la referencia FNC del día de la oferta, cuánto más que vendiendo a la FNC y lo que le queda.
+- **Añadido**: **la negociación de CTCx Selection**: el productor acepta y firma, contraoferta (precio y kilos) o desiste; la
+  contraoferta vuelve al OCP («le toca a CTCx»), que acepta (si cabe en el tope), contraoferta o desiste, las veces que haga falta.
+  Cada paso queda en `lot_offer_rondas`.
+- **Cambiado**: el contrato tiene una versión por tipo (Cherry Picked con su modalidad y la cláusula «sin compromiso de compra
+  mensual»; Selection como compra en firme) — texto versión 2026-10-06.2.
+- **Añadido**: **el nombre con que se guarda cada documento** lleva el nombre general y el código: «Dossier del lote · Nombre ·
+  CTC-L-…», «Visa EUDR · …», «Pasaporte EUDR · Finca · CTC-F-…», «Contrato · …» y la Ficha Técnica al imprimir y al descargar.
+- **Añadido**: **la Visa EUDR del lote enlaza el Pasaporte EUDR de cada finca de origen** (también desde el dossier).
+- **Datos**: migración `2026-10-06_modalidades_y_contraofertas.sql` (aditiva): `ahora_y_siguiente`, el estado `contraofertada`
+  (cuenta como oferta abierta), el tope, la FNC y el fin de temporada en la oferta, la vigencia, el retiro libre, la
+  redeclaración y las enmiendas en el contrato, y la tabla `lot_offer_rondas` (RLS: el productor lee las suyas).
+- **Seguridad**: `qa-trato` (116 → 131); `qa-ofertas` con las secciones nuevas.
+- **Docs**: charters `kaffetal-regal`, `consolas`; ALINEACION §3.
+
 ## [V5.168] — 2026-10-06 (commit a252474)
 
 - **Añadido**: **OCP · «Pendiente de Oferta»: cada lote se despliega** (owner, 2026-10-06) con su resumen (sello, Punto SCA,

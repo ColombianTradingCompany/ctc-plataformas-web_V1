@@ -2,7 +2,10 @@
 
 import { createSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { formatCop } from "@/lib/arena/inscriptions";
-import { mesEnCurso, retiro, type FilaDelMes, type Retiro } from "./mesAMes";
+import { mesEnCurso, mesesDelTrato, retiro, type FilaDelMes, type Retiro } from "./mesAMes";
+import { DIAS_DECLARAR_AHORA, VENTANA_DECLARAR_AHORA_DIAS, minimoKg } from "./terminos";
+import { diasHastaLaSiguiente } from "./modalidades";
+import { edicionVigente, hoyEnColombia } from "@/lib/pvc/servicio";
 
 // ── El retiro del productor (fase 7 del PLAN_CIRCUITO_DEL_LOTE, V5.84) ───────────────────────
 // Folio 8, paso 16: «puede retirar el 100 %: lo que exceda el tramo libre paga 4 % sobre el precio de cada carga».
@@ -35,7 +38,7 @@ export async function retirarDelTrato(contractId: string, kg: number, nota?: str
 
   const { data: contract } = await service
     .from("purchase_contracts")
-    .select("id, lot_id, status, quantity_frozen_kg, price_per_kg_locked, freeze_months, signed_at, lots(name, producer_id)")
+    .select("id, lot_id, status, quantity_frozen_kg, price_per_kg_locked, freeze_months, retiro_libre_pct, signed_at, lots(name, producer_id)")
     .eq("id", contractId)
     .maybeSingle();
   const lot = (Array.isArray(contract?.lots) ? contract?.lots[0] : contract?.lots) as { name: string; producer_id: string } | null;
@@ -62,7 +65,7 @@ export async function retirarDelTrato(contractId: string, kg: number, nota?: str
   const vigenteKg = declaradoKg - retiradoHastaAhora;
   if (retira > vigenteKg + 1e-9) return { ok: false, message: `Solo quedan ${Math.round(vigenteKg * 10) / 10} kg comprometidos en este trato.` };
 
-  const meses = contract.freeze_months && contract.freeze_months > 0 ? Math.min(3, contract.freeze_months) : 3;
+  const meses = mesesDelTrato(contract.freeze_months);
   const mes = mesEnCurso(contract.signed_at, new Date(), meses);
   const r = retiro({
     declaradoKg,
@@ -71,6 +74,7 @@ export async function retirarDelTrato(contractId: string, kg: number, nota?: str
     retiradoLibreAcumKg: filas.reduce((a, f) => a + f.retiradoLibreKg, 0),
     retiraKg: retira,
     copKg: Number(contract.price_per_kg_locked),
+    retiroLibrePct: contract.retiro_libre_pct != null ? Number(contract.retiro_libre_pct) : null,
   });
 
   const now = new Date().toISOString();
@@ -124,7 +128,7 @@ export async function previsualizarRetiro(contractId: string, kg: number): Promi
   const service = createServiceRoleClient();
   const { data: contract } = await service
     .from("purchase_contracts")
-    .select("id, status, quantity_frozen_kg, price_per_kg_locked, freeze_months, signed_at, lots(producer_id)")
+    .select("id, status, quantity_frozen_kg, price_per_kg_locked, freeze_months, retiro_libre_pct, signed_at, lots(producer_id)")
     .eq("id", contractId)
     .maybeSingle();
   const lot = (Array.isArray(contract?.lots) ? contract?.lots[0] : contract?.lots) as { producer_id: string } | null;
@@ -132,7 +136,7 @@ export async function previsualizarRetiro(contractId: string, kg: number): Promi
   const { data: filasRaw } = await service.from("contract_months").select("mes, retirado_kg, retirado_libre_kg").eq("contract_id", contractId);
   const filas = ((filasRaw as { mes: number; retirado_kg: number; retirado_libre_kg: number }[] | null) ?? []) as unknown as Pick<FilaDelMes, "mes" | "retiradoKg" | "retiradoLibreKg">[];
   const declaradoKg = Number(contract.quantity_frozen_kg ?? 0);
-  const meses = contract.freeze_months && contract.freeze_months > 0 ? Math.min(3, contract.freeze_months) : 3;
+  const meses = mesesDelTrato(contract.freeze_months);
   const mes = mesEnCurso(contract.signed_at, new Date(), meses);
   const retiradoLibreAcumKg = ((filasRaw as { retirado_libre_kg: number | string }[] | null) ?? []).reduce((a, f) => a + Number(f.retirado_libre_kg ?? 0), 0);
   const retiradoKg = ((filasRaw as { retirado_kg: number | string }[] | null) ?? []).reduce((a, f) => a + Number(f.retirado_kg ?? 0), 0);
@@ -143,4 +147,38 @@ export async function previsualizarRetiro(contractId: string, kg: number): Promi
     vigenteKg: Math.round((declaradoKg - retiradoKg) * 10) / 10,
     retiro: retiro({ declaradoKg, mes, meses, retiradoLibreAcumKg, retiraKg: Number(kg) || 0, copKg: Number(contract.price_per_kg_locked ?? 0) }),
   };
+}
+
+// ── V5.169 (owner, 2026-10-06) · renovar «Declarar Ahora» ────────────────────────────────────────────────────────────────
+// «Se puede renovar durante el mismo periodo actual si está dentro de la ventana; sin embargo en este punto CTCx no está obligado
+// a comprar más. Se enmienda la cantidad declarada cada vez.» Renovar = otros 30 días desde hoy con la cantidad nueva (≥ el mínimo
+// del grado), mientras falten al menos 30 días para la siguiente Temporada Trimestral. Queda en `enmiendas` y en el rastro.
+export async function renovarDeclaracionAhora(contractId: string, kg: number): Promise<{ ok: true } | { ok: false; message: string }> {
+  const auth = await requireProducer();
+  if ("error" in auth) return { ok: false, message: auth.error };
+  const service = createServiceRoleClient();
+  const { data: c } = await service
+    .from("purchase_contracts")
+    .select("id, lot_id, status, declaracion, grade_snapshot, quantity_frozen_kg, vigencia_hasta, enmiendas, lots(name, producer_id)")
+    .eq("id", contractId)
+    .maybeSingle();
+  const lot = (Array.isArray(c?.lots) ? c?.lots[0] : c?.lots) as { name: string; producer_id: string } | null;
+  if (!c || lot?.producer_id !== auth.userId) return { ok: false, message: "Contrato no encontrado." };
+  if (c.declaracion !== "30_dias") return { ok: false, message: "Solo se renueva una declaración «Declarar Ahora»." };
+  if (c.status !== "active") return { ok: false, message: "Se renueva un trato vigente (firmado por CTCx)." };
+  const hoy = hoyEnColombia();
+  const vigente = await edicionVigente();
+  const dias = vigente?.validTo ? diasHastaLaSiguiente(hoy, vigente.validTo) : null;
+  if (dias == null || dias < VENTANA_DECLARAR_AHORA_DIAS) return { ok: false, message: `La renovación se cierra cuando faltan menos de ${VENTANA_DECLARAR_AHORA_DIAS} días para la siguiente temporada${dias != null ? ` (faltan ${dias})` : ""}.` };
+  const nuevo = Number(kg);
+  const minimo = minimoKg(c.grade_snapshot) ?? 0;
+  if (!Number.isFinite(nuevo) || nuevo <= 0) return { ok: false, message: "Escriba cuántos kilos declara." };
+  if (nuevo < minimo) return { ok: false, message: `El mínimo para su grado es ${minimo} kg.` };
+  const hasta = new Date(new Date(`${hoy}T12:00:00Z`).getTime() + DIAS_DECLARAR_AHORA * 86_400_000).toISOString().slice(0, 10);
+  const enmiendas = [...(((c.enmiendas as unknown[]) ?? []) as object[]), { at: new Date().toISOString(), de_kg: Number(c.quantity_frozen_kg ?? 0), a_kg: nuevo, hasta }];
+  const { error } = await service.from("purchase_contracts").update({ quantity_frozen_kg: nuevo, vigencia_hasta: hasta, enmiendas }).eq("id", contractId);
+  if (error) return { ok: false, message: "No se pudo renovar: " + error.message };
+  await service.from("audit_log").insert({ entity_type: "purchase_contract", entity_id: contractId, action: "renovacion_declarar_ahora", performed_by: auth.userId, notes: `Renueva «Declarar Ahora» hasta ${hasta}: ${Number(c.quantity_frozen_kg ?? 0)} → ${nuevo} kg (sin compra adicional obligada).` });
+  await service.from("producer_comm_log").insert({ producer_id: auth.userId, context_label: `Lote ${lot.name}`, lot_id: c.lot_id, note: `Usted renovó su declaración «Declarar Ahora»: ${nuevo} kg de CPS disponibles hasta el ${hasta}. CTCx no queda obligado a una compra adicional con esta renovación.`, created_by: auth.userId });
+  return { ok: true };
 }

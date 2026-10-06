@@ -9,6 +9,7 @@ import { MarcaDeAgua } from "../blindaje/MarcaDeAgua";
 import { Blindaje } from "../blindaje/Blindaje";
 import { AVISO_SIN_CONTRATO, textoDeMarca } from "@/lib/kaffetal/blindaje";
 import { ctcLotReference } from "../data";
+import { nombreDeArchivo } from "@/lib/kaffetal/nombreDeArchivo";
 
 type Factor = { start: number; remainder: number; yieldLoss: number; healthy: number; yieldFactor: number | null };
 type MeshT = { rows: { key: string; label: string; grams: number; pct: number | null }[]; sum: number; totalPct: number; bad: boolean };
@@ -44,14 +45,24 @@ export function FichaPreview({
     [data, factor, mesh, sca, varTotal, scorings]
   );
 
+  // V5.169: al imprimir, el título (= el nombre del PDF) lleva el nombre general y el código del lote.
+  function imprimir() {
+    const antes = document.title;
+    document.title = nombreDeArchivo(["Ficha Técnica", data.product_name || null, referencia ? ctcLotReference(referencia) : null]);
+    window.print();
+    document.title = antes;
+  }
+
   function downloadHtml() {
     const doc = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>CTC · ${data.product_name || "Ficha Técnica"}</title><style>${FICHA_PREVIEW_CSS} body{background:#fff;padding:20px}</style></head><body><div style="position:relative">${inner}${marcaHtml(marca)}</div></body></html>`;
-    const name = (data.product_name || "Ficha_Tecnica_CTC").replace(/[^\w\-\sáéíóúÁÉÍÓÚ]/g, "").trim().replace(/\s+/g, "_").slice(0, 55);
+    const name = (data.product_name || "Ficha_Tecnica").replace(/[^\w\-\sáéíóúÁÉÍÓÚ]/g, "").trim().replace(/\s+/g, "_").slice(0, 55);
+    const codigo = referencia ? ctcLotReference(referencia) : null;
     const blob = new Blob([doc], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `CTC_${name}.html`;
+    // V5.169 (owner): el nombre general y el código del lote.
+    a.download = `Ficha_Tecnica_${name}${codigo ? `_${codigo}` : ""}.html`;
     document.body.appendChild(a);
     a.click();
     setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 100);
@@ -69,7 +80,7 @@ export function FichaPreview({
           {puedeImprimir ? (
             <>
               <button className="btn btn-solid-accent btn-sm" onClick={downloadHtml}>Descargar HTML</button>
-              <button className="btn btn-sm" onClick={() => window.print()}>Imprimir / PDF</button>
+              <button className="btn btn-sm" onClick={imprimir}>Imprimir / PDF</button>
             </>
           ) : (
             <span style={{ fontSize: 12.5, color: "var(--muted)", border: "1px dashed var(--line)", borderRadius: 8, padding: "6px 10px" }}>{AVISO_SIN_CONTRATO.es}</span>

@@ -18,9 +18,10 @@ import { ActionForm } from "@/components/panel/ActionForm";
 import { formatCop } from "@/lib/arena/inscriptions";
 import { ESTADO_DE_CONTRATO } from "@/lib/ocp/etapas";
 import { MORA, PENALIDAD_RETIRO_PCT, RENOVACION_DIAS } from "@/lib/trato/terminos";
-import { MORA_LABEL, moraDelMes, resumenDelTrato, type FilaDelMes } from "@/lib/trato/mesAMes";
+import { MORA_LABEL, mesesDelTrato, moraDelMes, resumenDelTrato, type FilaDelMes } from "@/lib/trato/mesAMes";
 import { MAX_RECORDATORIOS_MORA } from "@/lib/trato/mora";
 import styles from "@/components/panel/shared.module.css";
+import { MODALIDAD_LABEL, type Modalidad } from "@/lib/trato/modalidades";
 
 // ── El contrato, mes a mes (V5.84 · fase 7 del PLAN_CIRCUITO_DEL_LOTE) ──────────────────────
 // Folio 8, pasos 16–18. Nació lleno de la aceptación con declaración (fase 6); CTCx lo FIRMA y desde ahí lo lleva
@@ -95,7 +96,7 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
   const refsDePago = new Map(((mesesRaw as MesRow[] | null) ?? []).map((m) => [m.mes, m.pago_ref]));
   const recordatoriosDe = new Map(((mesesRaw as MesRow[] | null) ?? []).map((m) => [m.mes, m.recordatorios_mora ?? 0]));
   const hoy = new Date();
-  const nMeses = contract.freeze_months && contract.freeze_months > 0 ? Math.min(3, contract.freeze_months) : 3;
+  const nMeses = mesesDelTrato(contract.freeze_months);
   const resumen = resumenDelTrato({ quantityFrozenKg: contract.quantity_frozen_kg != null ? Number(contract.quantity_frozen_kg) : null, freezeMonths: nMeses, signedAt: contract.signed_at }, meses, hoy);
   const vigente = contract.status === "active";
   const cuentaCongelada = perfil?.estado_cuenta === "congelada";
@@ -146,7 +147,7 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
             Nació de la oferta aceptada por el productor: precio <b>{contract.price_per_kg_locked != null ? `${formatCop(Number(contract.price_per_kg_locked))}/kg` : "—"}</b>
             {contract.reference_price_source && <> (referencia {contract.reference_price_source}{contract.modificador_pct ? ` ${Number(contract.modificador_pct) > 0 ? "+" : ""}${Number(contract.modificador_pct)} %` : ""})</>} · cantidad declarada{" "}
             <b>{contract.quantity_frozen_kg != null ? `${Number(contract.quantity_frozen_kg)} kg` : "—"}</b>
-            {contract.declaracion && <> · {contract.declaracion === "trimestre" ? "por el trimestre" : "por 30 días"}</>}
+            {contract.declaracion && <> · «{MODALIDAD_LABEL[contract.declaracion as Modalidad] ?? contract.declaracion}»</>}
             {contract.compra_inicial_kg != null && <> · CTC compra de inmediato {Number(contract.compra_inicial_kg)} kg</>}
             {contract.terms_version && <> · términos {contract.terms_version}</>}. Firmar activa el trato.
           </p>
@@ -156,7 +157,7 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
           <p className={styles.meta}>
             Referencia: {contract.reference_price_source ?? "—"} ({contract.reference_price_snapshot ?? "—"} $/kg) · Precio pactado:{" "}
             <b>{contract.price_per_kg_locked != null ? `${formatCop(Number(contract.price_per_kg_locked))}/kg` : "—"}</b> · Declarado: <b>{contract.quantity_frozen_kg} kg</b>
-            {contract.declaracion && <> ({contract.declaracion === "trimestre" ? "trimestre" : "30 días"})</>}
+            {contract.declaracion && <> («{MODALIDAD_LABEL[contract.declaracion as Modalidad] ?? contract.declaracion}»)</>}
             {contract.compra_inicial_kg != null && <> · compra inicial {Number(contract.compra_inicial_kg)} kg</>}
             {contract.terms_version && <> · términos {contract.terms_version}</>} · Firmado: {fecha(contract.signed_at)}
           </p>

@@ -7,7 +7,7 @@ import { officialAverages, type EvaluationRow } from "@/lib/evaluations";
 import { currentSeason, seasonKey, seasonLabel, type Season } from "@/lib/arena/seasons";
 import { formatCop } from "@/lib/arena/inscriptions";
 import { esGradoValido, type GradoId } from "@/lib/grados/definicion";
-import { pvcParaGrado, type PvcDeGrado } from "@/lib/pvc/servicio";
+import { lecturaDeMercado, pvcParaGrado, type PvcDeGrado } from "@/lib/pvc/servicio";
 import { esPastCrop } from "@/lib/trato/mesAMes";
 import { CARGA_KG, COMPRA_INICIAL_CTCX_CARGAS, LUGAR_DE_ENTREGA_POR_DEFECTO, minimoKg, modificadorDeOferta, TERMINOS_VERSION, VENTANA_DIRECTA_DIAS } from "@/lib/trato/terminos";
 
@@ -133,11 +133,24 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
   const modificadorPct = ANCLADAS.includes(kind) ? modificadorDeOferta({ directa: kind === "directa", pastCrop }) : 0;
   const pvc: PvcDeGrado | null = lot.grade === "tyrian" ? null : await pvcParaGrado(lot.grade, undefined, { modificadorPct });
   let price: number;
+  // V5.169 (owner): una compra de CTCx SELECTION propone un precio HASTA el PVC − 8 % (el tope) y una cantidad; se negocia.
+  const esSelection = kind === "directa";
+  let precioTope: number | null = null;
   if (ANCLADAS.includes(kind)) {
     if (!pvc) {
       return { ok: false, error: "No hay una edición del PVC vigente hoy para ese grado — publíquela en ECP · Modelo Económico antes de ofertar (o emita una excepción con motivo)." };
     }
     price = pvc.precio.copKgFinal;
+    if (esSelection) {
+      precioTope = pvc.precio.copKgFinal;
+      const propuesto = numOpcional(formData.get("price_per_kg"));
+      if (propuesto !== null) {
+        if (Number.isNaN(propuesto) || propuesto <= 0) return { ok: false, error: "El precio propuesto debe ser mayor que 0." };
+        if (propuesto > precioTope) return { ok: false, error: `Una compra de CTCx Selection va hasta el PVC − 8 %: ${formatCop(precioTope)}/kg como máximo.` };
+        price = propuesto;
+      }
+      if (quantity === null) return { ok: false, error: "Una compra de CTCx Selection propone cuántos kilos compra: escriba la cantidad." };
+    }
   } else {
     const typed = Number(String(formData.get("price_per_kg") ?? "").replace(",", "."));
     if (!Number.isFinite(typed) || typed <= 0) return { ok: false, error: "Escriba el precio ofrecido por kg (COP)." };
@@ -148,7 +161,7 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
   // Una sola oferta abierta por lote (el índice parcial lo garantiza; esto da
   // el error legible). Y un lote con contrato vivo no se re-oferta.
   const [{ data: abierta }, { data: contratoVivo }] = await Promise.all([
-    service.from("lot_offers").select("id").eq("lot_id", lotId).eq("status", "emitida").maybeSingle(),
+    service.from("lot_offers").select("id").eq("lot_id", lotId).in("status", ["emitida", "contraofertada"]).maybeSingle(),
     service.from("purchase_contracts").select("id").eq("lot_id", lotId).in("status", ["pending_signature", "active", "reconditioning"]).maybeSingle(),
   ]);
   if (abierta) return { ok: false, error: "Este lote ya tiene una oferta abierta — retírela antes de emitir otra." };
@@ -163,7 +176,9 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
 
   const now = new Date();
   const esDirecta = kind === "directa";
-  const { error } = await service.from("lot_offers").insert({
+  // V5.169: la referencia FNC del día y el fin de la Temporada Trimestral viajan congelados (la calculadora del productor los usa).
+  const mercado = await lecturaDeMercado(10);
+  const { data: insertada, error } = await service.from("lot_offers").insert({
     lot_id: lotId,
     producer_id: lot.producer_id,
     season_id: vigente?.id ?? null,
@@ -194,8 +209,14 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
     expira_at: esDirecta ? new Date(now.getTime() + VENTANA_DIRECTA_DIAS * 86_400_000).toISOString() : null,
     compra_inicial_kg: kind === "temporada" ? COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG : null,
     renewal_of_contract_id: renewalOf,
-  });
+    precio_tope_kg: precioTope,
+    fnc_carga_ref: mercado.fncHoy,
+    temporada_hasta: pvc?.edicion.validTo ?? null,
+  }).select("id").single();
   if (error) return { ok: false, error: "No se pudo emitir la oferta: " + error.message };
+  if (esSelection && insertada) {
+    await service.from("lot_offer_rondas").insert({ offer_id: insertada.id, autor: "ctcx", accion: "propone", price_per_kg: price, quantity_kg: quantity, nota: notes, created_by: adminId });
+  }
 
   // Emitir reabre una decisión de «sin oferta», si la había.
   if (ins?.decision_comercial) {
@@ -211,12 +232,12 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
     performed_by: adminId,
     notes: `${kind} · ${lot.grade} · ${formatCop(price)}/kg${quantity ? ` · ${quantity} kg` : ""}${anclaje}${minConfirmado ? ` · mínimo confirmado ${minConfirmado} kg` : ""} · entrega: ${lugarEntrega}${kind === "excepcion" ? ` · motivo: ${notes}` : ""}`,
   });
-  const donde = kind === "subasta" ? "Subastas Tyrian" : kind === "black" ? "Ofertas Black" : "Ofertas de Temporada";
+  const donde = kind === "subasta" ? "Subastas Tyrian" : kind === "black" ? "Ofertas Black" : esSelection ? "Compra CTCx Selection" : "Participación en Cherry Picked";
   const detalle =
     kind === "temporada"
-      ? ` Es un Lote de Temporada${renewalOf ? " (renovación de su trato)" : ""}: ${formatCop(price)}/kg de CPS anclados al PVC vigente${pastCrop ? " (past crop, −10 %)" : ""}; CTC compra de inmediato una carga (${COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG} kg) al precio acordado y usted declara cuánto compromete para el trimestre (mínimo ${minConfirmado ?? minimoKg(lot.grade) ?? "—"} kg).`
+      ? ` Es una invitación a participar en Cherry Picked${renewalOf ? " (renovación de su trato)" : ""}: ${formatCop(price)}/kg de CPS anclados al PVC vigente${pastCrop ? " (past crop, −10 %)" : ""}; CTC compra de inmediato una carga (${COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG} kg) al precio acordado y usted declara cuánto compromete para el trimestre (mínimo ${minConfirmado ?? minimoKg(lot.grade) ?? "—"} kg).`
       : kind === "directa"
-        ? ` Es una oferta directa de CTCx Selection: ${formatCop(price)}/kg de CPS (PVC − 8 %), vigente ${VENTANA_DIRECTA_DIAS} días${maxKg ? `, hasta ${maxKg} kg` : ""}.`
+        ? ` Es una propuesta de compra de CTCx Selection: ${quantity} kg de CPS a ${formatCop(price)}/kg. Ese precio NO es el PVC actual: es hasta el PVC − 8 %. Puede aceptarla, contraofertar o desistir.`
         : ` ${formatCop(price)}/kg de CPS.`;
   await service.from("producer_comm_log").insert({
     producer_id: lot.producer_id,
@@ -238,7 +259,7 @@ export async function retireOffer(offerId: string): Promise<Result> {
   const service = createServiceRoleClient();
   const { data: offer } = await service.from("lot_offers").select("id, status, lot_id").eq("id", offerId).maybeSingle();
   if (!offer) return { ok: false, error: "Oferta no encontrada." };
-  if (offer.status !== "emitida") return { ok: false, error: "Solo una oferta abierta puede retirarse." };
+  if (offer.status !== "emitida" && offer.status !== "contraofertada") return { ok: false, error: "Solo una oferta abierta puede retirarse." };
   await service.from("lot_offers").update({ status: "retirada", responded_at: new Date().toISOString() }).eq("id", offerId);
   await service.from("audit_log").insert({
     entity_type: "lot_offer",
@@ -268,7 +289,7 @@ export async function decidirNoOfertar(lotId: string, formData: FormData): Promi
   const [{ data: lot }, { data: ins }, { data: abierta }] = await Promise.all([
     service.from("lots").select("id, name, stage, producer_id").eq("id", lotId).maybeSingle(),
     service.from("arena_inscriptions").select("id, decision_comercial").eq("lot_id", lotId).maybeSingle(),
-    service.from("lot_offers").select("id").eq("lot_id", lotId).eq("status", "emitida").maybeSingle(),
+    service.from("lot_offers").select("id").eq("lot_id", lotId).in("status", ["emitida", "contraofertada"]).maybeSingle(),
   ]);
   if (!lot || lot.stage !== "galardonado") return { ok: false, error: "Solo se decide sobre un lote galardonado." };
   if (!ins) return { ok: false, error: "Este lote no tiene solicitud de evaluación." };
@@ -301,6 +322,58 @@ export async function reabrirDecision(lotId: string): Promise<Result> {
   if (!ins || ins.decision_comercial !== "sin_oferta") return { ok: false, error: "Este lote no tiene una decisión de «sin oferta»." };
   await service.from("arena_inscriptions").update({ decision_comercial: null, decision_comercial_at: null, decision_comercial_motivo: null }).eq("id", ins.id);
   await service.from("audit_log").insert({ entity_type: "lot", entity_id: lotId, action: "sin_oferta_reabierta", performed_by: permiso.userId });
+  revalidateAll();
+  return { ok: true };
+}
+
+/**
+ * V5.169 (owner, 2026-10-06) · CTCx RESPONDE la contraoferta del productor en una compra de CTCx Selection: la acepta (si cabe en el
+ * tope PVC − 8 %: la propuesta queda con el precio y los kilos del productor y él firma), contraoferta (precio ≤ tope y kilos) o
+ * desiste. «Esto puede suceder las veces que se quiera hasta que alguno de los dos acepte o desista del todo.»
+ */
+export async function responderContraoferta(offerId: string, accion: "aceptar" | "contraofertar" | "desistir", formData: FormData): Promise<Result> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const { data: offer } = await service.from("lot_offers").select("id, lot_id, producer_id, status, kind, precio_tope_kg, price_per_kg, quantity_kg, lots(name)").eq("id", offerId).maybeSingle();
+  if (!offer || offer.kind !== "directa") return { ok: false, error: "Oferta de CTCx Selection no encontrada." };
+  if (offer.status !== "contraofertada") return { ok: false, error: "Esta propuesta no está esperando la respuesta de CTCx." };
+  const { data: ultima } = await service.from("lot_offer_rondas").select("price_per_kg, quantity_kg").eq("offer_id", offerId).eq("autor", "productor").order("created_at", { ascending: false }).limit(1).maybeSingle();
+  const tope = offer.precio_tope_kg != null ? Number(offer.precio_tope_kg) : null;
+  const nota = String(formData.get("nota") ?? "").trim().slice(0, 600) || null;
+  const lot = (Array.isArray(offer.lots) ? offer.lots[0] : offer.lots) as { name: string } | null;
+  let precio = Number(offer.price_per_kg);
+  let kg = offer.quantity_kg != null ? Number(offer.quantity_kg) : null;
+  let aviso = "";
+
+  if (accion === "desistir") {
+    await service.from("lot_offers").update({ status: "retirada", responded_at: new Date().toISOString() }).eq("id", offerId);
+    await service.from("lot_offer_rondas").insert({ offer_id: offerId, autor: "ctcx", accion: "desiste", nota, created_by: adminId });
+    aviso = "CTCx desistió de la compra de CTCx Selection. Su galardón y su Ficha siguen vigentes.";
+  } else {
+    if (accion === "aceptar") {
+      if (!ultima?.price_per_kg) return { ok: false, error: "No hay una contraoferta del productor que aceptar." };
+      precio = Number(ultima.price_per_kg);
+      kg = ultima.quantity_kg != null ? Number(ultima.quantity_kg) : kg;
+      if (tope != null && precio > tope) return { ok: false, error: `La contraoferta (${formatCop(precio)}/kg) supera el tope de PVC − 8 % (${formatCop(tope)}/kg): contraoferte o desista.` };
+      aviso = `CTCx ACEPTÓ su contraoferta: ${kg} kg a ${formatCop(precio)}/kg. Solo falta que usted firme el contrato.`;
+    } else {
+      const p = numOpcional(formData.get("price_per_kg"));
+      const q = numOpcional(formData.get("quantity_kg"));
+      if (p === null || Number.isNaN(p) || p <= 0) return { ok: false, error: "Escriba el precio por kg de la contraoferta." };
+      if (tope != null && p > tope) return { ok: false, error: `Hasta PVC − 8 %: ${formatCop(tope)}/kg como máximo.` };
+      if (q !== null && (Number.isNaN(q) || q <= 0)) return { ok: false, error: "La cantidad debe ser mayor que 0." };
+      precio = p;
+      kg = q ?? kg;
+      aviso = `CTCx respondió con una contraoferta: ${kg} kg a ${formatCop(precio)}/kg. Puede aceptarla, contraofertar de nuevo o desistir.`;
+    }
+    const { error } = await service.from("lot_offers").update({ status: "emitida", price_per_kg: precio, quantity_kg: kg }).eq("id", offerId);
+    if (error) return { ok: false, error: "No se pudo responder: " + error.message };
+    await service.from("lot_offer_rondas").insert({ offer_id: offerId, autor: "ctcx", accion: accion === "aceptar" ? "acepta" : "contraoferta", price_per_kg: precio, quantity_kg: kg, nota, created_by: adminId });
+  }
+  await service.from("audit_log").insert({ entity_type: "lot_offer", entity_id: offer.lot_id, action: `selection_${accion}`, performed_by: adminId, notes: `${accion} · ${formatCop(precio)}/kg${kg ? ` · ${kg} kg` : ""}${nota ? ` · ${nota.slice(0, 200)}` : ""}` });
+  await service.from("producer_comm_log").insert({ producer_id: offer.producer_id, context_label: lot ? `Lote ${lot.name}` : null, lot_id: offer.lot_id, note: `${aviso}${nota ? ` Nota de CTCx: ${nota}` : ""}`, created_by: adminId });
   revalidateAll();
   return { ok: true };
 }

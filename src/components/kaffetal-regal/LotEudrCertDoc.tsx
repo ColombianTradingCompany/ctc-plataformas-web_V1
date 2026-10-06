@@ -140,9 +140,21 @@ export function LotEudrCertDoc({
             {row("Altitud", lot.ficha_altitud_m ? `${lot.ficha_altitud_m} msnm` : "—")}
             {row(
               "Finca(s) de origen",
-              fincas.length
-                ? fincas.map((f) => `${f.name} (${fincaCode(f.id)}) · ${f.municipio ?? "—"}, ${f.pais || f.departamento || "—"}`).join(" · ")
-                : "sin resolver"
+              fincas.length ? (
+                <>
+                  {fincas.map((f) => `${f.name} (${fincaCode(f.id)}) · ${f.municipio ?? "—"}, ${f.pais || f.departamento || "—"}`).join(" · ")}
+                  {/* V5.169 (owner): desde la Visa del lote, el Pasaporte EUDR de cada finca de origen. */}
+                  <span className="no-print" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 4, fontWeight: 400 }}>
+                    {fincas.map((f) => (
+                      <a key={f.id} href={`/kaffetal-regal/certificacion/${f.id}`} style={{ color: "#3C0A86" }}>
+                        Ver el Pasaporte EUDR de {f.name} ({fincaCode(f.id)}) →
+                      </a>
+                    ))}
+                  </span>
+                </>
+              ) : (
+                "sin resolver"
+              )
             )}
           </tbody>
         </table>

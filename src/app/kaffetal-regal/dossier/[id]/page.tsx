@@ -2,9 +2,13 @@ import type { Metadata } from "next";
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
 import { cargarDossier, type Lang } from "@/lib/kaffetal/dossierDatos";
 import { DossierCtcx } from "@/components/kaffetal-regal/dossier/DossierCtcx";
+import { tituloDeLote } from "@/lib/kaffetal/tituloDeDocumento";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Dossier del lote · CTCx", robots: { index: false, follow: false } };
+// V5.169: el título (= el nombre del PDF) lleva el nombre del lote y su código.
+export async function generateMetadata({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ lang?: string }> }): Promise<Metadata> {
+  return tituloDeLote((await searchParams).lang === "en" ? "Lot dossier" : "Dossier del lote", (await params).id);
+}
 
 // ── /kaffetal-regal/dossier/[id]?lang=es|en ─────────────────────────────────────────────────────────────────────────────
 // V5.79: el dossier del lote para el productor, UN documento en dos idiomas. V5.166 (owner, 2026-10-06): formato CTCx por

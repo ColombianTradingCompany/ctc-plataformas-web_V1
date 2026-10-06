@@ -1,6 +1,7 @@
 "use client";
 
 import { contratoFirmado } from "@/lib/kaffetal/blindaje";
+import { diasHastaLaSiguiente } from "@/lib/trato/modalidades";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ToastProvider, useToast } from "@/components/Toast";
 import { puedoSer } from "@/lib/identidad/matriz";
@@ -452,7 +453,7 @@ function Experience() {
           supabase
             .from("lot_offers")
             .select(
-              "id, lot_id, kind, status, grade_snapshot, score_snapshot, variety_snapshot, process_snapshot, price_per_kg, quantity_kg, notes, season_label, lote_de_temporada_pasada, emitted_at, responded_at, response_note, contract_id, terms_version, min_kg, max_kg, compra_inicial_kg, reference_price_source, modificador_pct, expira_at, locked_kg, declaracion, lugar_entrega"
+              "id, lot_id, kind, status, grade_snapshot, score_snapshot, variety_snapshot, process_snapshot, price_per_kg, quantity_kg, notes, season_label, lote_de_temporada_pasada, emitted_at, responded_at, response_note, contract_id, terms_version, min_kg, max_kg, compra_inicial_kg, reference_price_source, modificador_pct, expira_at, locked_kg, declaracion, lugar_entrega, precio_tope_kg, fnc_carga_ref, temporada_hasta"
             )
             .order("emitted_at", { ascending: false }),
           // RLS (lot_fichas_select_own) scopes this to the producer's own lots
@@ -585,9 +586,16 @@ function Experience() {
         quantity_frozen_kg: number | null;
         season_id: string | null;
         terms_version: string | null;
-        declaracion: "trimestre" | "30_dias" | null;
+        declaracion: "trimestre" | "30_dias" | "ahora_y_siguiente" | null;
         compra_inicial_kg: number | string | null;
         reference_price_source: string | null;
+        vigencia_desde?: string | null;
+        vigencia_hasta?: string | null;
+        retiro_libre_pct?: number | string | null;
+        redeclarar_min_kg?: number | string | null;
+        redeclarar_at?: string | null;
+        compra_inicial_min_kg?: number | string | null;
+        compra_inicial_max_kg?: number | string | null;
         signed_at: string | null;
         producer_signed_at?: string | null;
         lugar_entrega?: string | null;
@@ -653,6 +661,12 @@ function Experience() {
           compraInicialKg: c.compra_inicial_kg != null ? Number(c.compra_inicial_kg) : null,
           referencePriceSource: c.reference_price_source ?? null,
           signedAt: c.signed_at ?? null,
+          vigenciaDesde: c.vigencia_desde ?? null,
+          vigenciaHasta: c.vigencia_hasta ?? null,
+          retiroLibrePct: c.retiro_libre_pct != null ? Number(c.retiro_libre_pct) : null,
+          redeclararMinKg: c.redeclarar_min_kg != null ? Number(c.redeclarar_min_kg) : null,
+          redeclararAt: c.redeclarar_at ?? null,
+          compraInicialRango: c.compra_inicial_min_kg != null ? { min: Number(c.compra_inicial_min_kg), max: Number(c.compra_inicial_max_kg ?? c.compra_inicial_min_kg) } : null,
           producerSignedAt: c.producer_signed_at ?? null,
           lugarEntrega: c.lugar_entrega ?? null,
           freezeMonths: c.freeze_months ?? null,
@@ -707,9 +721,20 @@ function Experience() {
         modificador_pct: number | string | null;
         expira_at: string | null;
         locked_kg: number | string | null;
-        declaracion: "trimestre" | "30_dias" | null;
+        declaracion: "trimestre" | "30_dias" | "ahora_y_siguiente" | null;
         lugar_entrega: string | null;
+        precio_tope_kg: number | string | null;
+        fnc_carga_ref: number | string | null;
+        temporada_hasta: string | null;
       };
+      // V5.169: las rondas de las negociaciones de CTCx Selection (RLS: solo las de sus ofertas) y la fecha de hoy en Colombia.
+      const ofertaRows = (offerRows as OfferRow[] | null) ?? [];
+      const idsSel = ofertaRows.filter((o) => o.kind === "directa").map((o) => o.id);
+      const { data: rondasRaw } = idsSel.length
+        ? await supabase.from("lot_offer_rondas").select("offer_id, autor, accion, price_per_kg, quantity_kg, nota, created_at").in("offer_id", idsSel).order("created_at", { ascending: true })
+        : { data: [] };
+      type RondaRow = { offer_id: string; autor: "ctcx" | "productor"; accion: string; price_per_kg: number | string | null; quantity_kg: number | string | null; nota: string | null; created_at: string };
+      const hoyCo = new Date(Date.now() - 5 * 3_600_000).toISOString().slice(0, 10);
       const lotNameById = new Map(lotRowList.map((l) => [l.id, l.name]));
       setOffers(
         ((offerRows as OfferRow[] | null) ?? []).map((o) => ({
@@ -741,6 +766,19 @@ function Experience() {
           lockedKg: o.locked_kg != null ? Number(o.locked_kg) : null,
           declaracion: o.declaracion ?? null,
           lugarEntrega: o.lugar_entrega ?? null,
+          precioTopeKg: o.precio_tope_kg != null ? Number(o.precio_tope_kg) : null,
+          fncCargaRef: o.fnc_carga_ref != null ? Number(o.fnc_carga_ref) : null,
+          temporadaHasta: o.temporada_hasta ?? null,
+          diasHastaSiguiente: o.temporada_hasta ? diasHastaLaSiguiente(hoyCo, o.temporada_hasta) : null,
+          hoy: hoyCo,
+          rondas: (((rondasRaw as RondaRow[] | null) ?? []).filter((r) => r.offer_id === o.id)).map((r) => ({
+            autor: r.autor,
+            accion: r.accion,
+            precioKg: r.price_per_kg != null ? Number(r.price_per_kg) : null,
+            kg: r.quantity_kg != null ? Number(r.quantity_kg) : null,
+            nota: r.nota,
+            fecha: r.created_at,
+          })),
         }))
       );
 

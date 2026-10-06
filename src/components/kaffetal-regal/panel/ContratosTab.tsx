@@ -10,8 +10,11 @@ import { simularTrato } from "@/lib/trato/simulador";
 import { LUGAR_DE_ENTREGA_POR_DEFECTO } from "@/lib/trato/terminos";
 import { CalculadoraDelTrato, type DecisionDelTrato } from "./CalculadoraDelTrato";
 import { FirmaDelContrato, type FirmaDelProductor } from "./FirmaDelContrato";
+import { PropuestaSelection } from "./PropuestaSelection";
+import { MODALIDAD_LABEL } from "@/lib/trato/modalidades";
+import { renovarDeclaracionAhora } from "@/lib/trato/producerActions";
 import { MORA, PENALIDAD_RETIRO_PCT, TRAMO_LIBRE_ACUMULADO_PCT } from "@/lib/trato/terminos";
-import { MORA_LABEL, type Retiro } from "@/lib/trato/mesAMes";
+import { MORA_LABEL, mesesDelTrato, type Retiro } from "@/lib/trato/mesAMes";
 import { useToast } from "@/components/Toast";
 import { CtcRef } from "./CtcRef";
 import styles from "../AppDashboard.module.css";
@@ -48,9 +51,9 @@ export function ContratosTab({
   onGoEvaluaciones: () => void;
 }) {
   // V5.82: la directa (CTCx Selection) y la excepción son ofertas de temporada a otro precio; viven en la misma sección.
-  const esDeLaClase = (o: ProducerOffer, kind: ProducerOffer["kind"]) =>
-    kind === "temporada" ? o.kind === "temporada" || o.kind === "directa" || o.kind === "excepcion" : o.kind === kind;
-  const abiertas = (kind: ProducerOffer["kind"]) => offers.filter((o) => esDeLaClase(o, kind) && o.status === "emitida");
+  // V5.169: «Participación en Cherry Picked» (temporada · excepción) y «Compra CTCx Selection» (directa) van por separado.
+  const esDeLaClase = (o: ProducerOffer, kind: ProducerOffer["kind"]) => (kind === "temporada" ? o.kind === "temporada" || o.kind === "excepcion" : o.kind === kind);
+  const abiertas = (kind: ProducerOffer["kind"]) => offers.filter((o) => esDeLaClase(o, kind) && (o.status === "emitida" || o.status === "contraofertada"));
   const historial = (kind: ProducerOffer["kind"]) =>
     offers.filter((o) => esDeLaClase(o, kind) && (o.status === "rechazada" || o.status === "retirada" || o.status === "expirada"));
   // La oferta aceptada que dio origen a cada contrato: trae el encuadre de
@@ -59,7 +62,7 @@ export function ContratosTab({
   const cuentaCongelada = gi.estadoCuenta === "congelada";
 
   // Tyrian «rumbo a subasta»: galardonado Tyrian sin oferta abierta ni contrato.
-  const conOfertaAbierta = new Set(offers.filter((o) => o.status === "emitida").map((o) => o.lotId));
+  const conOfertaAbierta = new Set(offers.filter((o) => o.status === "emitida" || o.status === "contraofertada").map((o) => o.lotId));
   const conContrato = new Set(contracts.map((c) => c.lotId));
   const rumboASubasta = lots.filter(
     (l) => l.stage === 8 && l.grade === "Tyrian" && !conOfertaAbierta.has(l.id) && !conContrato.has(l.id)
@@ -77,22 +80,32 @@ export function ContratosTab({
 
       <section>
         <div className={styles.secHead}>
-          <span className={styles.secTitle}>Ofertas de Temporada</span>
+          <span className={styles.secTitle}>Participación en Cherry Picked</span>
         </div>
-        <div className={styles.secSub}>Lotes galardonados de esta temporada disponibles para postular en Cherry Picked</div>
+        <div className={styles.secSub}>CTCx le invita a vender su café en Cherry Picked, al PVC de esta temporada</div>
         <div className={styles.alist} style={{ marginTop: 8 }}>
-          Solo entran aquí los lotes con un galardón que los posiciona <b>Red o superior</b>, de <b>esta temporada o la
-          pasada</b>. CTC le presenta su oferta en firme, <b>anclada al PVC vigente</b> — referencia la combinación de Grado,
-          Puntaje, Variedad y Proceso — y <b>usted decide con claridad</b>: la calculadora le muestra qué compra CTC de
-          inmediato, qué pediría cada mes y qué puede retirar sin costo; usted declara cuánto compromete y acepta las
-          condiciones. Aceptar crea el contrato con ese precio y esa cantidad; rechazar la cierra sin compromiso.
+          Usted elige <b>cómo participa</b> (Declarar Ahora, la Siguiente Temporada Trimestral, o Ahora y la Siguiente), <b>cuánto declara</b> y juega
+          con el escenario de ventas: <b>CTCx no se compromete a comprar fracciones fijas mes a mes</b>. Con la firma, CTCx compra una parte de
+          inmediato. Aceptar es firmar el contrato con el dedo.
         </div>
         <OfferList
           offers={abiertas("temporada")}
           historial={historial("temporada")}
-          vacio="Sin ofertas abiertas. Cuando un lote suyo salga galardonado Red o superior, la oferta de CTC aparecerá aquí."
+          vacio="Sin invitaciones abiertas. Cuando un lote suyo salga galardonado Red o superior, la invitación de CTCx aparecerá aquí."
           onRefreshData={onRefreshData}
         />
+      </section>
+
+      <section>
+        <div className={styles.secHead}>
+          <span className={styles.secTitle}>Compras de CTCx Selection</span>
+        </div>
+        <div className={styles.secSub}>Propuestas de CTCx para comprar su lote, o una parte, ahora</div>
+        <div className={styles.alist} style={{ marginTop: 8 }}>
+          Una propuesta de compra en firme a <b>hasta el PVC − 8 %</b> (no es el PVC). Puede aceptarla y firmar, contraofertar las veces que quiera, o
+          desistir.
+        </div>
+        <OfferList offers={abiertas("directa")} historial={historial("directa")} vacio="Sin propuestas de compra abiertas." onRefreshData={onRefreshData} />
       </section>
 
       <section>
@@ -177,9 +190,9 @@ const td: React.CSSProperties = { textAlign: "right", padding: "3px 4px", whiteS
 function ContratoCard({ contract: c, oferta, cuentaCongelada, onRefreshData }: { contract: ProducerContract; oferta: ProducerOffer | undefined; cuentaCongelada: boolean; onRefreshData: () => void }) {
   const sim =
     c.quantityFrozenKg != null && c.pricePerKgLocked != null
-      ? simularTrato({ declaradoKg: c.quantityFrozenKg, copKg: c.pricePerKgLocked, declaracion: c.declaracion ?? "trimestre", grado: c.grade?.toLowerCase() })
+      ? simularTrato({ declaradoKg: c.quantityFrozenKg, copKg: c.pricePerKgLocked, declaracion: c.declaracion ?? "trimestre", grado: c.grade?.toLowerCase(), meses: mesesDelTrato(c.freezeMonths), compraInicialKg: c.compraInicialRango ? c.compraInicialRango.min : c.compraInicialKg ?? undefined })
       : null;
-  const nMeses = c.freezeMonths && c.freezeMonths > 0 ? Math.min(3, c.freezeMonths) : 3;
+  const nMeses = mesesDelTrato(c.freezeMonths);
   const retiradoKg = Math.round(c.months.reduce((a, m) => a + m.retiradoKg, 0) * 10) / 10;
   const penalidadCop = c.months.reduce((a, m) => a + m.penalidadCop, 0);
   const vigenteKg = c.quantityFrozenKg != null ? Math.round((c.quantityFrozenKg - retiradoKg) * 10) / 10 : null;
@@ -195,18 +208,30 @@ function ContratoCard({ contract: c, oferta, cuentaCongelada, onRefreshData }: {
       <div className={styles.sub}>
         Estado: <b>{CONTRACT_STATUS_LABEL[c.status]}</b>
         {oferta?.seasonLabel && <> · Temporada de venta: <b>{oferta.seasonLabel}</b></>}
-        {c.quantityFrozenKg != null && <> · Declarado: <b>{c.quantityFrozenKg} kg de CPS</b>{c.declaracion && <> ({c.declaracion === "trimestre" ? "trimestre" : "30 días"})</>}</>}
+        {c.quantityFrozenKg != null && <> · Declarado: <b>{c.quantityFrozenKg} kg de CPS</b>{c.declaracion && <> («{MODALIDAD_LABEL[c.declaracion]}»)</>}</>}
+        {c.vigenciaDesde && c.vigenciaHasta && <> · Vigencia: <b>{fecha(c.vigenciaDesde)} a {fecha(c.vigenciaHasta)}</b></>}
         {c.pricePerKgLocked != null && <> · Precio: <b>{formatCop(c.pricePerKgLocked)}/kg</b>{c.referencePriceSource && <> ({c.referencePriceSource})</>}</>}
         {c.signedAt && <> · Firmado el {fecha(c.signedAt)}</>}
       </div>
       {sim && (
         <div className={styles.alist} style={{ marginTop: 4 }}>
-          CTC compra de inmediato <b>{sim.compraInicial.kg} kg</b> ({formatCop(sim.compraInicial.cop)}) · el trato vale{" "}
-          <b>{formatCop(sim.totalCop)}</b> · retiro libre al cerrar cada mes:{" "}
-          {sim.porMes.map((m) => `mes ${m.mes} ${m.retiroLibrePct} %`).join(" · ")} · penalidad por encima del tramo:{" "}
-          {PENALIDAD_RETIRO_PCT} % por carga{c.termsVersion && <> · términos {c.termsVersion}</>}
+          Con la firma CTC compra{" "}
+          <b>{c.compraInicialRango ? `entre ${c.compraInicialRango.min} y ${c.compraInicialRango.max} kg, a su discreción` : `${sim.compraInicial.kg} kg (${formatCop(sim.compraInicial.cop)})`}</b> · lo
+          declarado vale <b>{formatCop(sim.totalCop)}</b> si CTC lo vende todo (no se compromete a comprar fracciones fijas mes a mes) ·{" "}
+          {c.retiroLibrePct != null
+            ? `retiro libre hasta el ${c.retiroLibrePct} % en cualquier momento`
+            : c.declaracion === "30_dias"
+              ? "sin tramo libre de retiro"
+              : `retiro libre al cerrar cada mes: ${sim.porMes.map((m) => `mes ${m.mes} ${m.retiroLibrePct} %`).join(" · ")}`}{" "}
+          · penalidad por encima: {PENALIDAD_RETIRO_PCT} % por carga{c.termsVersion && <> · términos {c.termsVersion}</>}
         </div>
       )}
+      {c.redeclararMinKg != null && c.redeclararAt && (
+        <div className={styles.sub} style={{ fontWeight: 700 }}>
+          Al empezar la siguiente Temporada Trimestral ({fecha(c.redeclararAt)}) usted redeclara al menos {c.redeclararMinKg} kg.
+        </div>
+      )}
+      {c.declaracion === "30_dias" && c.status === "active" && <RenovarAhora contractId={c.id} actualKg={c.quantityFrozenKg ?? 0} onRefreshData={onRefreshData} />}
       {oferta?.loteDeTemporadaPasada && (
         <div className={styles.sub} style={{ color: "var(--accent)", fontWeight: 700 }}>
           Lote de la temporada pasada — posicionado en la ventana de esta temporada, y valorado como tal.
@@ -229,7 +254,7 @@ function ContratoCard({ contract: c, oferta, cuentaCongelada, onRefreshData }: {
       )}
       {c.status === "renovado" && (
         <div className={styles.sub} style={{ color: "var(--green)", fontWeight: 700 }}>
-          Trato cumplido y renovación ofrecida: la oferta nueva, con el PVC vigente, está arriba en «Ofertas de Temporada».
+          Trato cumplido y renovación ofrecida: la oferta nueva, con el PVC vigente, está arriba en «Participación en Cherry Picked».
         </div>
       )}
       {c.status === "completed" && <div className={styles.sub} style={{ color: "var(--green)", fontWeight: 700 }}>Trato cumplido: los {nMeses} meses enviados y pagados. A los 90 días de la firma CTC le ofrece renovar.</div>}
@@ -318,7 +343,8 @@ function RetiroForm({ contract, vigenteKg, nMeses, onRefreshData }: { contract: 
   const [vista, setVista] = useState<{ retiro: Retiro; mes: number } | null>(null);
   const n = Number(String(kg).replace(",", "."));
   const valido = Number.isFinite(n) && n > 0 && n <= vigenteKg + 1e-9;
-  const tramoLibre = TRAMO_LIBRE_ACUMULADO_PCT[Math.min(3, Math.max(1, contract.mesEnCurso)) as 1 | 2 | 3] ?? 0;
+  // V5.169: «Ahora y Siguiente» tiene su % libre en cualquier momento; el trimestre, los tramos al cerrar cada mes.
+  const tramoLibre = contract.retiroLibrePct ?? (contract.declaracion === "30_dias" ? 0 : TRAMO_LIBRE_ACUMULADO_PCT[Math.min(3, Math.max(1, contract.mesEnCurso)) as 1 | 2 | 3] ?? 0);
 
   async function calcular() {
     if (!valido) return;
@@ -480,12 +506,13 @@ function OfferCard({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshDa
   const conDeclaracion = Boolean(offer.termsVersion);
   // V5.168 (owner): la oferta se CALCULA (la calculadora del trato), se DECIDE y se FIRMA con el dedo; aceptar es firmar.
   const [fase, setFase] = useState<"calcular" | "firmar">("calcular");
-  const [decision, setDecision] = useState<DecisionDelTrato | null>(conDeclaracion ? null : { kg: offer.quantityKg ?? 0, declaracion: "trimestre" });
+  const [decision, setDecision] = useState<DecisionDelTrato | null>(null);
+  const esSelection = offer.kind === "directa";
   const lugarEntrega = offer.lugarEntrega ?? LUGAR_DE_ENTREGA_POR_DEFECTO;
 
   async function responder(respuesta: "aceptar" | "rechazar", firma?: FirmaDelProductor) {
     setBusy(true);
-    const declaracionParaEnviar = conDeclaracion && decision ? { lockedKg: decision.kg, declaracion: decision.declaracion, aceptaTerminos: true } : undefined;
+    const declaracionParaEnviar = conDeclaracion && decision ? { lockedKg: decision.kg, declaracion: decision.modalidad, aceptaTerminos: true } : undefined;
     const res = await respondToOffer(offer.id, respuesta, respuesta === "rechazar" ? nota : undefined, respuesta === "aceptar" ? declaracionParaEnviar : undefined, respuesta === "aceptar" ? firma : undefined);
     setBusy(false);
     if (res.ok) {
@@ -546,33 +573,36 @@ function OfferCard({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshDa
 
           {lugarEntrega && <div style={{ fontSize: 12.5, marginTop: 4 }}>Entrega: {lugarEntrega}</div>}
 
-          {/* ── V5.168: la calculadora del trato (decida viendo los escenarios) y, después, el contrato con su firma ── */}
-          {conDeclaracion && !rechazando && fase === "calcular" && (
+          {/* ── V5.169: una compra de CTCx Selection se negocia; la participación en Cherry Picked se calcula, se decide y se firma ── */}
+          {esSelection && <PropuestaSelection offer={offer} onRefreshData={onRefreshData} />}
+          {!esSelection && conDeclaracion && !rechazando && fase === "calcular" && (
             <CalculadoraDelTrato
               copKg={offer.pricePerKg}
               grado={offer.grade?.toLowerCase() ?? null}
               minKg={offer.minKg}
               maxKg={offer.maxKg}
-              compraInicialKg={offer.compraInicialKg}
               lugarEntrega={lugarEntrega}
-              declaracionInicial={offer.kind === "directa" ? "30_dias" : "trimestre"}
+              fncCargaRef={offer.fncCargaRef}
+              temporadaHasta={offer.temporadaHasta}
+              hoy={offer.hoy}
+              diasHastaSiguiente={offer.diasHastaSiguiente}
               onDecidir={(d) => {
                 setDecision(d);
                 setFase("firmar");
               }}
             />
           )}
-          {!rechazando && fase === "firmar" && decision && (
+          {!esSelection && !rechazando && fase === "firmar" && (
             <FirmaDelContrato
               datos={{
+                tipo: decision ? "cherry_picked" : "selection",
+                condiciones: decision?.condiciones ?? null,
                 productorDocumento: null,
                 loteNombre: offer.lotName,
                 loteReferencia: ctcLotReference(offer.lotId),
                 grado: offer.grade ?? "—",
                 copKg: offer.pricePerKg,
-                declaradoKg: decision.kg,
-                declaracion: decision.declaracion,
-                compraInicialKg: offer.compraInicialKg,
+                declaradoKg: decision?.kg ?? offer.quantityKg ?? 0,
                 lugarEntrega,
                 termsVersion: offer.termsVersion,
                 temporada: offer.seasonLabel,
@@ -593,7 +623,7 @@ function OfferCard({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshDa
             />
           )}
           <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end", marginTop: 10 }}>
-            {!rechazando ? (
+            {esSelection ? null : !rechazando ? (
               fase === "calcular" && (
                 <>
                   {!conDeclaracion && (
@@ -619,6 +649,47 @@ function OfferCard({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshDa
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// V5.169 (owner): «Declarar Ahora» se renueva dentro de la misma Temporada Trimestral mientras falten ≥ 30 días para la siguiente;
+// cada renovación enmienda la cantidad y no obliga a CTCx a una compra adicional (el servidor valida la ventana).
+function RenovarAhora({ contractId, actualKg, onRefreshData }: { contractId: string; actualKg: number; onRefreshData: () => void }) {
+  const { showToast } = useToast();
+  const [abierto, setAbierto] = useState(false);
+  const [kg, setKg] = useState(String(actualKg));
+  const [busy, setBusy] = useState(false);
+  if (!abierto)
+    return (
+      <button className="btn btn-sm" style={{ justifySelf: "start", marginTop: 6 }} onClick={() => setAbierto(true)}>
+        Renovar «Declarar Ahora» (próximos 30 días)…
+      </button>
+    );
+  return (
+    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 6, fontSize: 12.5 }}>
+      Declaro
+      <input inputMode="decimal" value={kg} onChange={(e) => setKg(e.target.value)} style={{ width: 90, padding: "5px 7px", border: "1.5px solid var(--line)", borderRadius: 7 }} aria-label="Kilos a declarar" />
+      kg para los próximos 30 días (CTCx no queda obligado a una compra adicional).
+      <button
+        className="btn btn-sm btn-solid-accent"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          const r = await renovarDeclaracionAhora(contractId, Number(kg.replace(",", ".")));
+          setBusy(false);
+          if (r.ok) {
+            showToast("Declaración renovada ✓");
+            setAbierto(false);
+            onRefreshData();
+          } else showToast(r.message);
+        }}
+      >
+        {busy ? "Renovando…" : "Renovar"}
+      </button>
+      <button className="btn btn-sm" onClick={() => setAbierto(false)}>
+        Cancelar
+      </button>
     </div>
   );
 }

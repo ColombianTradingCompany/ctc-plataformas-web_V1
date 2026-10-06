@@ -527,13 +527,18 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
               </div>
             </div>
           )}
-          {visaOk && (
-            <p className={s.noPrint} style={{ margin: 0 }}>
+          <p className={s.noPrint} style={{ margin: 0, display: "flex", gap: 14, flexWrap: "wrap" }}>
+            {visaOk && (
               <a href={`/kaffetal-regal/certificacion-lote/${d.lot.id}`} style={{ color: "var(--morado)", fontWeight: 600 }}>
                 {t.verVisa}
               </a>
-            </p>
-          )}
+            )}
+            {d.fincas.map((f) => (
+              <a key={f.id} href={`/kaffetal-regal/certificacion/${f.id}`} style={{ color: "var(--morado)", fontWeight: 600 }}>
+                {t.verPasaporte(f.name, f.code)}
+              </a>
+            ))}
+          </p>
         </>
       ),
   });

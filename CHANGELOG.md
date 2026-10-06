@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.168] — 2026-10-06 (commit pendiente)
+## [V5.168] — 2026-10-06 (commit a252474)
 
 - **Añadido**: **OCP · «Pendiente de Oferta»: cada lote se despliega** (owner, 2026-10-06) con su resumen (sello, Punto SCA,
   tríada, factor, variedad, proceso, altitud, origen, cosecha) y se **confirman los parámetros de la oferta**: cantidad mínima

@@ -586,4 +586,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-06] V5.165 · Kaffetal Regal — el dossier del lote galardonado con B1, B2 y B3; las anotaciones de mejora de la Rueda del Sabor en el dossier, en la tarjeta del productor y en el reporte de mejoras IA
 - NEW `src/lib/kaffetal/dossierEvaluacion.ts`; ANN `src/components/kaffetal-regal/LotDossierDoc.tsx`, `app/kaffetal-regal/dossier/[id]/page.tsx`, `src/components/kaffetal-regal/{KaffetalExperience.tsx,data.ts,panel/EvaluacionesTab.tsx}`, `src/lib/catacion/{rueda.ts,ruedaDatos.ts}`, `scripts/build-rueda-datos.mjs`, `src/lib/arena/mejoras.ts`, `scripts/qa-centro-calidad-check.mjs`, `docs/componentes/{kaffetal-regal,herramientas-cafe,consolas}.md`, `docs/ALINEACION.md`.
-(commit: pendiente)
+(commit: 2938408)

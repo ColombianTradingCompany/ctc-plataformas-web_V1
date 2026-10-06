@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.165] — 2026-10-06 (commit pendiente)
+## [V5.165] — 2026-10-06 (commit 2938408)
 
 - **Añadido**: **el dossier del lote galardonado incluye TODO: B1, B2 y B3** (owner, 2026-10-06), en ES y EN. B1 es lo que
   declaró el productor (variedades con su %, especie, humedad, densidad, aw y factor, con «No lo sabe» dato por dato); B2 y B3

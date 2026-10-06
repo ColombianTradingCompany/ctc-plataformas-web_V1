@@ -590,4 +590,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-06] V5.166 · Kaffetal Regal — el dossier del lote con formato CTCx por hojas A4: Visa EUDR, mapa, finca y productor, grado, taza y físico con gráficas
 - NEW `src/lib/kaffetal/dossierDatos.ts`, `src/components/kaffetal-regal/dossier/{DossierCtcx.tsx,figuras.tsx,textos.ts,dossier.module.css,BotonImprimir.tsx}`, `public/docs/eudr/sello-eudr-voluntario-560.png`; ANN `app/kaffetal-regal/dossier/[id]/page.tsx`, `src/lib/kaffetal/dossierEvaluacion.ts` (cifras), `package.json` (sharp), `scripts/{qa-centro-calidad-check,qa-registro-check}.mjs`, `docs/componentes/kaffetal-regal.md`, `docs/ALINEACION.md`; DEL `src/components/kaffetal-regal/LotDossierDoc.tsx`.
-(commit: pendiente)
+(commit: 44426c3)

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.166] — 2026-10-06 (commit pendiente)
+## [V5.166] — 2026-10-06 (commit 44426c3)
 
 - **Cambiado**: **el dossier del lote se rehízo con formato CTCx, por hojas A4** (owner, 2026-10-06: «es muy simple; quiero un
   formato interesante, que use los recursos que hemos coleccionado del Lote, la Finca y el Productor, con las gráficas, el mapa

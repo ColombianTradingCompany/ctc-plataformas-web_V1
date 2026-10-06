@@ -314,7 +314,7 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("borrador: NO es un alta — no escribe lot_evaluations ni exige la planilla completa", !borr.includes("lot_evaluations") && !borr.includes("puntoDeLaPlanilla") && !borr.includes("labEvaluationHasData"));
   check("borrador: el alta lo borra", reg.includes('.from("evaluacion_borradores").delete().eq("lot_id", lotId).eq("account_id", identity.userId)'));
   check("borrador: la tabla es solo del service role (RLS sin políticas) y se va con el lote", acta.includes("alter table public.evaluacion_borradores enable row level security;") && !/create policy/.test(acta) && acta.includes("references public.lots(id) on delete cascade"));
-  check("borrador: la página carga SOLO los de esta credencial y la planilla arranca con lo guardado", pagina.includes('.from("evaluacion_borradores").select("lot_id, planilla, notas, codigo_interno, updated_at, reference_asset_id, reference_file_name").eq("account_id", identity.userId)') && planilla.includes("borrador ? toLabEvaluation(borrador.planilla) : EMPTY_LAB_EVALUATION") && pagina.includes('key={borrador?.guardadoEl ?? "nuevo"}'));
+  check("borrador: la página carga SOLO los de esta credencial y la planilla arranca con lo guardado", pagina.includes('.from("evaluacion_borradores").select("lot_id, planilla, notas, codigo_interno, updated_at, reference_asset_id, reference_file_name").eq("account_id", identity.userId)') && planilla.includes("borrador ? toLabEvaluation(borrador.planilla) : EMPTY_LAB_EVALUATION") && pagina.includes('key={semilla?.guardadoEl ?? "nuevo"}'));
   check("borrador: el botón existe en los dos idiomas y se enciende con cualquier dato", PLANILLA_TXT("Guardar y terminar más tarde") && PLANILLA_TXT("Save and finish later") && planilla.includes("guardarBorrador(lotId, ev, notas, codigoInterno, reporte)"));
   check("la página del Centro sigue sin leer nombres (el borrador tampoco los trae)", !/full_name|producer_id|fincas\(|ficha_variedad/.test(paginaCodigo));
 
@@ -559,6 +559,23 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("informe · el grado del alta se decide con la tríada de la Ficha y el botón lo dice", ocpUi.includes("const triada = triadaDeLaFicha(ficha).triada;") && ocpUi.includes("decidirPorPunto(alta.punto, triada)") && ocpUi.includes("× tríada <span className=\"mono\">"));
   check("«Registrar a mano» previsualiza con la tríada y pasa la tríada al editor", ocpUi.includes("gradoDelLote(puntaje, triada).grado") && ocpUi.includes("triada={triada} />") && lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").includes("ficha={i.lot!.datasheet ?? null}"));
   check("el Centro sigue sin ver el grado (ocultaGrado) y sin tríada el editor no lo deriva", lee("src/components/bcp/LabEvalEditor.tsx").includes("const decision = punto && triada ? decidirPorPunto(punto, triada) : null;"));
+}
+
+// ── V5.161 (owner, 2026-10-06) · un alta DEVUELTA se reabre con todo lo registrado (nunca con la hoja vacía) ─────────────
+{
+  const { separaNotasDevueltas, notasAlDevolver, MARCA_DEVOLUCION } = await import("../src/lib/evaluaciones/devolucion.ts");
+  const real = "Este es un ensayo, no representa un Lote real. · Devuelta por CTC: Revisa por favor las notas de analisis";
+  const sep = separaNotasDevueltas(real);
+  check("devolución · las notas se separan: lo del Q-Grader vuelve a su casilla y el motivo de CTC va aparte (caso real CTC-L-0B9C1C04)", sep.notasQGrader === "Este es un ensayo, no representa un Lote real." && sep.motivo === "Revisa por favor las notas de analisis");
+  const dos = notasAlDevolver(notasAlDevolver("Notas del QG", "primera"), "segunda");
+  check("devolución · devolver dos veces no apila motivos dentro de las notas del Q-Grader; sin motivo, todo es del Q-Grader", separaNotasDevueltas(dos).notasQGrader === "Notas del QG" && separaNotasDevueltas(dos).motivo === "segunda" && separaNotasDevueltas("solo notas").motivo === null && notasAlDevolver(null, "x") === MARCA_DEVOLUCION + "x");
+  const accion = lee("src/app/ocp/(app)/nominadosActions.ts").replace(/\r\n/g, "\n");
+  const cuerpo = accion.slice(accion.indexOf("export async function devolverEvaluacionAlCentro("), accion.indexOf("\n}\n", accion.indexOf("export async function devolverEvaluacionAlCentro(")));
+  check("devolución · la acción solo cambia estado, revisor y notas — no toca la planilla, el código interno ni el reporte", cuerpo.includes("notes: notasAlDevolver(row.notes, razon)") && !/physical_data|codigo_interno|reference_asset_id|sca_data|delete\(/.test(cuerpo.replace(/\/\/.*$/gm, "")));
+  check("centro · un alta devuelta siembra la planilla (planilla, notas sin el motivo, código interno, reporte); si hay borrador posterior, manda el borrador", pagina.includes("const semilla = borrador ?? (devuelta ? semillaDeDevuelta(devuelta) : null);") && pagina.includes("planilla: e.physical_data?.planilla ?? {},") && pagina.includes("notas: separaNotasDevueltas(e.notes).notasQGrader || null,") && pagina.includes("codigoInterno: e.codigo_interno,") && pagina.includes("reporte: reporteDeFila(e),") && pagina.includes("reference_file_name, physical_data\")"));
+  const planillaReal = { rueda: ["floral-floral|jazmin", "frutal-otras|granada"], vista: "sca", sca_fragrance: "9", sca_flavor: "7", sca_aftertaste: "8", sca_acidity: "9", sca_body: "8", sca_balance: "9", sca_uniformity: "10", sca_clean_cup: "10", sca_sweetness: "9", sca_cuppers: "8", sca_num_tazas: "3", sca_tazas: [{ estado: "taint", defecto: "papa" }, { estado: "" }, { estado: "" }], fa_start: "250", fa_green_remainder: "207.7", fa_primary_defect: "2.3", fa_secondary_defect: "3", b3_actividad_agua: "0.6", b3_densidad_verde: "780", defectos_detalle: { insecto_grave: "7", negro: "1" } };
+  const reabierta = toLabEvaluation(planillaReal);
+  check("centro · la planilla devuelta reabre con sus datos: atributos, tazas, rueda, B3 y detalle de defectos", labEvaluationHasData(reabierta) && reabierta.sca_fragrance === "9" && reabierta.sca_tazas.length === 3 && reabierta.sca_taint_cups === "1" && reabierta.rueda.length === 2 && reabierta.b3_densidad_verde === "780" && reabierta.defectos_detalle.insecto_grave === "7" && computeSca2004(reabierta).total != null);
 }
 
 if (fallos.length) {

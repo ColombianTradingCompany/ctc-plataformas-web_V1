@@ -11,6 +11,7 @@ import { generateMejorasDoc } from "@/lib/arena/mejoras";
 import { factorDeLaPlanilla, labEvaluationHasData, labEvaluationScaData, protocoloDelPunto, puntoDeLaPlanilla, toLabEvaluationList, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import { decidirPorPunto, puntoDeFila, puntoNativo, rotuloDelPunto, type PuntoSca } from "@/lib/arena/homologacion";
 import { triadaDeLaFicha } from "@/lib/pvc/triadaDelLote";
+import { notasAlDevolver } from "@/lib/evaluaciones/devolucion";
 import { letras } from "@/lib/pvc/escala";
 import { currentSeason, lotSeasonCount, MAX_SEASONS_PER_LOT } from "@/lib/arena/seasons";
 import { saldoDe } from "@/lib/muestras/particion";
@@ -477,7 +478,8 @@ export async function devolverEvaluacionAlCentro(evaluationId: string, motivo: s
   if (!row || row.source !== "q_grader_batch" || row.status !== "pending") return { ok: false, error: "Esa alta ya no está pendiente." };
   const { error } = await service
     .from("lot_evaluations")
-    .update({ status: "rejected", reviewed_by: adminId, reviewed_at: new Date().toISOString(), notes: [row.notes, `Devuelta por CTC: ${razon}`].filter(Boolean).join(" · ") })
+    // V5.161: la planilla, el código interno y el reporte NO se tocan — la fila conserva todo y el Centro la reabre con ello.
+    .update({ status: "rejected", reviewed_by: adminId, reviewed_at: new Date().toISOString(), notes: notasAlDevolver(row.notes, razon) })
     .eq("id", evaluationId);
   if (error) return { ok: false, error: "No se pudo devolver: " + error.message };
   await service.from("audit_log").insert({ entity_type: "lot", entity_id: row.lot_id, action: "evaluacion_devuelta_al_centro", performed_by: adminId, notes: razon.slice(0, 300) });

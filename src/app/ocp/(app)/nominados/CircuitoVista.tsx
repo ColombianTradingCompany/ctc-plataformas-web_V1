@@ -81,6 +81,7 @@ type BatchRow = {
 };
 type MuestraRow = { id: string; lot_id: string; tipo: TipoDeMuestra; kg: number; ubicacion: string | null };
 import { reporteDeFila } from "@/lib/evaluaciones/reporteReglas";
+import { separaNotasDevueltas } from "@/lib/evaluaciones/devolucion";
 import { urlsDeReportes } from "@/lib/evaluaciones/reporte";
 
 type AltaRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; escala: string; rueda: unknown; rueda_detalle: unknown; q_grader_reference: string | null; notes: string | null; created_at: string; codigo_interno: string | null; reference_asset_id: string | null; reference_file_name: string | null; physical_data: { planilla?: unknown } | null };
@@ -541,7 +542,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
                       <>
                         {devuelta && (
                           <p className={styles.meta} style={{ margin: "4px 0 0" }}>
-                            <span className={`${styles.badge} ${styles.badgeBad}`}>Alta devuelta al Centro</span> {devuelta.notes ?? ""}
+                            <span className={`${styles.badge} ${styles.badgeBad}`}>Alta devuelta al Centro</span> {separaNotasDevueltas(devuelta.notes).motivo ?? ""}
                           </p>
                         )}
                         <p className={styles.meta} style={{ margin: "4px 0 0" }}>Esperando el alta del Q-Grader en el Centro de Calidad.</p>

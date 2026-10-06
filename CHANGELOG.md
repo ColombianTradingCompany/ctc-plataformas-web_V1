@@ -19,6 +19,20 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.161] — 2026-10-06 (commit pendiente)
+
+- **Corregido**: **un lote devuelto desde el OCP al Centro de Calidad ya no llega con la planilla vacía** (owner, 2026-10-06:
+  «toda la información registrada se borra cuando llega de vuelta»). La información nunca se borró —la fila devuelta conserva
+  la planilla en `physical_data.planilla`, las notas, el código interno y el reporte adjunto—, pero la pantalla del Centro
+  solo sabía arrancar desde un borrador y abría la hoja vacía. Ahora un alta devuelta reabre con todo lo registrado
+  (`semillaDeDevuelta`); si el Q-Grader guardó un borrador después, manda el borrador.
+- **Corregido**: el motivo de CTC ya no se mezcla con las notas del Q-Grader (`src/lib/evaluaciones/devolucion.ts`): las notas
+  vuelven a su casilla y el motivo se enseña aparte en el Centro y en el OCP; devolver dos veces no apila motivos.
+- **Datos**: CTC-L-0B9C1C04 no requirió restauración — su alta devuelta estaba íntegra (diez atributos SCA, rueda, tazas,
+  B3, mallas y detalle de defectos, código `CTC-L-0B9C1C04_MOCK`, reporte adjunto) y se reabre con esta versión.
+- **Seguridad**: `qa-centro-calidad` (239 → 244: la acción de devolver no toca la planilla; la semilla de la devuelta; el caso
+  real del lote).
+
 ## [V5.160] — 2026-10-06 (commit 3054f7d)
 
 - **Cambiado**: **CONTRATO (ALINEACION §1) — el grado es El Punto y la Tríada** (owner, 2026-10-06: «la definición de la franja

@@ -565,3 +565,7 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - DEL `src/components/bcp/FranjaDeGrados.tsx`. DATOS mock: `public/docs/fichas-mock/*.pdf` regenerados (códigos nuevos).
 - ANN `scripts/qa-{grados,centro-calidad,evaluaciones,sneak-peek,direccionamiento}-check.mjs`, `scripts/qa-pvc-{escala,precio}.mjs`, `scripts/build-fichas-mock.mjs`, `docs/ALINEACION.md`, `docs/PVC_BCP_PLAN.md`, `docs/componentes/{consolas,herramientas-internas,kaffetal-regal,cherry-picked}.md`.
 (commit: 3054f7d)
+
+## [2026-10-06] V5.161 · Centro de Calidad — un alta devuelta se reabre con todo lo registrado; motivo de CTC separado de las notas
+- ADD `src/lib/evaluaciones/devolucion.ts`; ANN `app/socios/[partner]/panel/evaluacion/page.tsx` (`semillaDeDevuelta`), `app/ocp/(app)/nominadosActions.ts` (`notasAlDevolver`), `nominados/CircuitoVista.tsx`, `scripts/qa-centro-calidad-check.mjs`, `docs/componentes/socios.md`.
+(commit: pendiente)

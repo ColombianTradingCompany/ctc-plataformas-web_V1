@@ -25,17 +25,27 @@ export const dynamic = "force-dynamic";
 // lo vigila. Abre solo con la credencial `centro-calidad` activa y su módulo `evaluacion` encendido (BCP · Socios).
 
 import { reporteDeFila } from "@/lib/evaluaciones/reporteReglas";
+import { separaNotasDevueltas } from "@/lib/evaluaciones/devolucion";
 import { urlsDeReportes } from "@/lib/evaluaciones/reporte";
 
 type BatchRow = { id: string; label: string; shipped_at: string | null; q_grader_name: string | null; status: string; cerrado_at: string | null };
 type InsRow = { lot_id: string; sondeo_batch_id: string | null; phase: string };
-type EvalRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; cva_total: number | string | null; escala: string; rueda: unknown; rueda_detalle: unknown; created_at: string; reviewed_at: string | null; notes: string | null; submitted_by: string | null; codigo_interno: string | null; reference_asset_id: string | null; reference_file_name: string | null };
+type EvalRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; cva_total: number | string | null; escala: string; rueda: unknown; rueda_detalle: unknown; created_at: string; reviewed_at: string | null; notes: string | null; submitted_by: string | null; codigo_interno: string | null; reference_asset_id: string | null; reference_file_name: string | null; physical_data: { planilla?: unknown } | null };
 // V5.92: nunca un homologado se lee como un SCA catado.
 const rotulo = (e: EvalRow) => {
   const p = puntoDeFila(e);
   return p ? rotuloDelPunto(p) : "—";
 };
 type MovRow = { batch_id: string | null; kg: number | string; muestras: { lot_id: string } | { lot_id: string }[] | null };
+
+/** V5.161: lo que un alta devuelta trae para reabrir la planilla (las notas del Q-Grader sin el motivo de CTC). */
+const semillaDeDevuelta = (e: EvalRow) => ({
+  planilla: e.physical_data?.planilla ?? {},
+  notas: separaNotasDevueltas(e.notes).notasQGrader || null,
+  codigoInterno: e.codigo_interno,
+  guardadoEl: `devuelta-${e.reviewed_at ?? e.created_at}`,
+  reporte: reporteDeFila(e),
+});
 
 const fecha = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString("es-CO") : "—");
 
@@ -62,7 +72,7 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
         service.from("arena_inscriptions").select("lot_id, sondeo_batch_id, phase").in("sondeo_batch_id", batchIds),
         service
           .from("lot_evaluations")
-          .select("id, lot_id, batch_id, status, sca_total, punto, cva_total, escala, rueda, rueda_detalle, created_at, reviewed_at, notes, submitted_by, codigo_interno, reference_asset_id, reference_file_name")
+          .select("id, lot_id, batch_id, status, sca_total, punto, cva_total, escala, rueda, rueda_detalle, created_at, reviewed_at, notes, submitted_by, codigo_interno, reference_asset_id, reference_file_name, physical_data")
           .in("batch_id", batchIds)
           .eq("source", "q_grader_batch")
           .order("created_at", { ascending: false }),
@@ -185,12 +195,17 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
                           <>
                             {devuelta && (
                               <span className={styles.err} style={{ margin: 0 }}>
-                                Devuelta por CTC{devuelta.notes ? `: ${devuelta.notes}` : ""} — evalúe de nuevo.
+                                Devuelta por CTC{separaNotasDevueltas(devuelta.notes).motivo ? `: ${separaNotasDevueltas(devuelta.notes).motivo}` : ""} — revise su planilla (la encontrará con todo lo que registró) y vuelva a darla de alta.
                               </span>
                             )}
                             {borrador && <span className={styles.orgLine}>Borrador guardado el {fecha(borrador.guardadoEl)}</span>}
-                            {/* La `key` cambia con el borrador: al guardar y volver a abrir, la planilla arranca con lo guardado. */}
-                            <DarDeAltaButton key={borrador?.guardadoEl ?? "nuevo"} lotId={l.lot_id} uid={uid} borrador={borrador} />
+                            {/* V5.161 (owner): un alta DEVUELTA se reabre con todo lo que el Q-Grader registró — planilla, notas, código
+                                interno y reporte —; nunca con la hoja vacía. Si después guardó un borrador, manda el borrador (es más nuevo).
+                                La `key` cambia con lo que siembra la planilla, para que arranque con eso. */}
+                            {(() => {
+                              const semilla = borrador ?? (devuelta ? semillaDeDevuelta(devuelta) : null);
+                              return <DarDeAltaButton key={semilla?.guardadoEl ?? "nuevo"} lotId={l.lot_id} uid={uid} borrador={semilla} />;
+                            })()}
                           </>
                         )}
                         {pendiente && Array.isArray(pendiente.rueda) && pendiente.rueda.length > 0 && (

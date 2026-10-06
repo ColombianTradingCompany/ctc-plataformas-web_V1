@@ -98,6 +98,9 @@ fórmula del CVA y la rueda única). Lo tocan también `qa-recuperacion-check.mj
 
 ## Pendientes
 
+- **V5.161 · un alta devuelta se reabre con todo lo registrado** (owner, 2026-10-06). La página siembra la planilla desde la
+  fila `rejected` (`physical_data.planilla`, notas sin el motivo, código interno, reporte) cuando no hay borrador posterior.
+  El motivo de CTC se separa con `separaNotasDevueltas`. Ningún dato se había perdido.
 - **V5.155 · Evaluación de Lotes con dos pestañas y baches desplegables** (owner, 2026-10-06; ejecutado desde `consolas`).
   `PestanasDeBaches` (cliente, solo elige qué lista se ve) sobre dos listas armadas en el servidor; «completado» = todos los
   lotes fuera de sondeo (confirmados) o bache `cerrado`. La página carga ahora `en_centro` y `cerrado`. Sigue sin nombres.

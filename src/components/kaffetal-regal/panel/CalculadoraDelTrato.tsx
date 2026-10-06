@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { simularVentas, PATRON_LABEL, type PatronDeVenta } from "@/lib/trato/simulador";
 import { CARGA_KG, PENALIDAD_RETIRO_PCT, TRAMO_LIBRE_ACUMULADO_PCT } from "@/lib/trato/terminos";
-import { condicionesDe, modalidadesDisponibles, textoCompraInicial, MODALIDAD_LABEL, MODALIDADES, type CondicionesDeModalidad, type Modalidad } from "@/lib/trato/modalidades";
+import { condicionesDe, fechaLarga, modalidadesDisponibles, textoCompraInicial, MODALIDAD_LABEL, MODALIDADES, type CondicionesDeModalidad, type Modalidad } from "@/lib/trato/modalidades";
 import { formatCop } from "@/lib/arena/inscriptions";
 
 // ── La calculadora de la participación en Cherry Picked (V5.168 · modalidades y escenarios desde la V5.169) ─────────────
@@ -13,7 +13,8 @@ import { formatCop } from "@/lib/arena/inscriptions";
 // fracciones mes a mes; puede no haber compra en un mes, o venderse todo el primer día». Los KPIs (% vendido, ingreso, prima
 // sobre la referencia FNC, café que le queda) anclan la decisión. Las reglas viven en `modalidades.ts` y `simulador.ts`.
 
-export type DecisionDelTrato = { kg: number; modalidad: Modalidad; condiciones: CondicionesDeModalidad };
+/** V5.170: `copKg` = el precio de la modalidad elegida (el PVC vigente, o el de la edición siguiente para «Siguiente Temporada»). */
+export type DecisionDelTrato = { kg: number; modalidad: Modalidad; condiciones: CondicionesDeModalidad; copKg: number };
 
 const cargasDe = (kg: number) => kg / CARGA_KG;
 const fmtCargas = (kg: number) => `${cargasDe(kg).toLocaleString("es-CO", { maximumFractionDigits: 1 })} ${cargasDe(kg) === 1 ? "carga" : "cargas"}`;
@@ -29,6 +30,9 @@ export function CalculadoraDelTrato({
   temporadaHasta,
   hoy,
   diasHastaSiguiente,
+  precioSiguienteKg,
+  pvcSiguienteCode,
+  fechaLimiteSiguiente,
   onDecidir,
 }: {
   copKg: number;
@@ -40,12 +44,17 @@ export function CalculadoraDelTrato({
   temporadaHasta: string | null;
   hoy: string;
   diasHastaSiguiente: number | null;
+  precioSiguienteKg: number | null;
+  pvcSiguienteCode: string | null;
+  fechaLimiteSiguiente: string | null;
   onDecidir: (d: DecisionDelTrato) => void;
 }) {
-  const disp = modalidadesDisponibles(diasHastaSiguiente);
+  const disp = modalidadesDisponibles(diasHastaSiguiente, { precioKg: precioSiguienteKg, fechaLimite: fechaLimiteSiguiente });
+  // V5.170: «Siguiente Temporada» va al PVC de la edición siguiente; «Ahora» y «Ahora y Siguiente», al de esta temporada.
+  const precioDe = (m: Modalidad) => (m === "trimestre" ? precioSiguienteKg ?? copKg : copKg);
   const minimo = minKg ?? CARGA_KG;
   const tope = maxKg ?? Math.max(minimo * 4, 40 * CARGA_KG);
-  const [modalidad, setModalidad] = useState<Modalidad>(disp.ahora_y_siguiente.disponible ? "ahora_y_siguiente" : "trimestre");
+  const [modalidad, setModalidad] = useState<Modalidad>(disp.ahora_y_siguiente.disponible ? "ahora_y_siguiente" : disp.trimestre.disponible ? "trimestre" : "30_dias");
   const [kg, setKg] = useState(minimo);
   const [ventaPct, setVentaPct] = useState(60);
   const [patron, setPatron] = useState<PatronDeVenta>("parejo");
@@ -55,7 +64,8 @@ export function CalculadoraDelTrato({
   const cond = condicionesDe(modalidad, { hoy, temporadaHasta, declaradoKg: kg, grado });
   // «Declarar Ahora»: CTCx compra entre 10 y 25 kg a su discreción; el escenario usa lo mínimo (10 kg), lo que seguro ocurre.
   const compraInicialKg = "kg" in cond.compraInicial ? cond.compraInicial.kg : cond.compraInicial.minKg;
-  const v = simularVentas({ declaradoKg: kg, copKg, meses: cond.meses, compraInicialKg, ventaPct, patron, fncCargaRef });
+  const copModalidad = precioDe(modalidad);
+  const v = simularVentas({ declaradoKg: kg, copKg: copModalidad, meses: cond.meses, compraInicialKg, ventaPct, patron, fncCargaRef });
   const pasos = [{ etiqueta: "Firma", kg: v.compraInicial.kg, cop: v.compraInicial.cop }, ...v.porMes.map((m) => ({ etiqueta: `Mes ${m.mes}`, kg: m.kg, cop: m.cop }))];
   const maxPaso = Math.max(...pasos.map((p) => p.kg), 1);
 
@@ -66,7 +76,7 @@ export function CalculadoraDelTrato({
   const retiroKg = (kg * retiroPct) / 100;
   const libreKg = Math.min(retiroKg, (kg * libreModalidad) / 100);
   const penalizadoKg = Math.max(0, retiroKg - libreKg);
-  const penalidad = (cargasDe(penalizadoKg) * copKg * CARGA_KG * PENALIDAD_RETIRO_PCT) / 100;
+  const penalidad = (cargasDe(penalizadoKg) * copModalidad * CARGA_KG * PENALIDAD_RETIRO_PCT) / 100;
   const cumple = kg >= minimo && (maxKg == null || kg <= maxKg) && disp[modalidad].disponible;
 
   const kpi = (titulo: string, valor: string, nota?: string, color?: string) => (
@@ -82,7 +92,14 @@ export function CalculadoraDelTrato({
       <div>
         <b style={{ fontSize: 14 }}>Calcule su participación en Cherry Picked</b>
         <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 2 }}>
-          Precio fijo de <b>{formatCop(copKg)}/kg</b> ({formatCop(copKg * CARGA_KG)} por carga), el PVC de esta temporada.
+          PVC de esta temporada: <b>{formatCop(copKg)}/kg</b> ({formatCop(copKg * CARGA_KG)} por carga).{" "}
+          {precioSiguienteKg != null ? (
+            <>
+              PVC de la siguiente{pvcSiguienteCode ? ` (${pvcSiguienteCode})` : ""}: <b>{formatCop(precioSiguienteKg)}/kg</b>.
+            </>
+          ) : (
+            <>El PVC de la siguiente temporada aún no se publica{fechaLimiteSiguiente ? ` (se fija a más tardar el ${fechaLarga(fechaLimiteSiguiente)})` : ""}.</>
+          )}
           {diasHastaSiguiente != null && temporadaHasta && <> La siguiente Temporada Trimestral empieza en {diasHastaSiguiente} días.</>}
         </div>
       </div>
@@ -125,6 +142,7 @@ export function CalculadoraDelTrato({
                 </span>
                 <span style={{ fontSize: 11.5, color: "var(--muted)" }}>
                   {fmtFecha(c.desde)} a {fmtFecha(c.hasta)} · con la firma CTCx compra {textoCompraInicial(c.compraInicial)}
+                  {d.disponible && <> · {formatCop(precioDe(m))}/kg ({m === "trimestre" ? "PVC siguiente" : "PVC actual"})</>}
                 </span>
                 {!d.disponible && <span style={{ fontSize: 11.5, color: "var(--accent)", fontWeight: 700 }}>{d.motivo}</span>}
               </button>
@@ -262,7 +280,7 @@ export function CalculadoraDelTrato({
       </div>
 
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <button className="btn btn-sm btn-solid-accent" type="button" disabled={!cumple} onClick={() => onDecidir({ kg, modalidad, condiciones: cond })}>
+        <button className="btn btn-sm btn-solid-accent" type="button" disabled={!cumple} onClick={() => onDecidir({ kg, modalidad, condiciones: cond, copKg: copModalidad })}>
           Tomar la decisión · {MODALIDAD_LABEL[modalidad]} · {fmtCargas(kg)}
         </button>
       </div>

@@ -177,6 +177,8 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.170 · al emitir, el OCP dice si «Siguiente Temporada» ya tiene precio** (PVC de la edición siguiente) o si conviene
+  re-emitir cuando se publique (primeras dos semanas del segundo mes de la temporada vigente).
 - **V5.169 · «Pendiente de Oferta»: Cherry Picked o CTCx Selection; la negociación de Selection vuelve a «Abiertas»** (owner,
   2026-10-06): la Selection propone precio (hasta PVC − 8 %, que el servidor hace cumplir) y kilos; una contraoferta del
   productor sube a «Abiertas» con su historial y CTCx acepta (si cabe en el tope), contraoferta o desiste

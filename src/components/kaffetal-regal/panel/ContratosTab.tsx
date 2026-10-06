@@ -586,6 +586,9 @@ function OfferCard({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshDa
               temporadaHasta={offer.temporadaHasta}
               hoy={offer.hoy}
               diasHastaSiguiente={offer.diasHastaSiguiente}
+              precioSiguienteKg={offer.precioSiguienteKg}
+              pvcSiguienteCode={offer.pvcSiguienteCode}
+              fechaLimiteSiguiente={offer.fechaLimiteSiguiente}
               onDecidir={(d) => {
                 setDecision(d);
                 setFase("firmar");
@@ -601,7 +604,7 @@ function OfferCard({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshDa
                 loteNombre: offer.lotName,
                 loteReferencia: ctcLotReference(offer.lotId),
                 grado: offer.grade ?? "—",
-                copKg: offer.pricePerKg,
+                copKg: decision?.copKg ?? offer.pricePerKg,
                 declaradoKg: decision?.kg ?? offer.quantityKg ?? 0,
                 lugarEntrega,
                 termsVersion: offer.termsVersion,

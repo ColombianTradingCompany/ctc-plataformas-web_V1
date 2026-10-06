@@ -124,7 +124,7 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   check("aceptar una oferta con términos exige la declaración", kr.includes("if (offer.terms_version) {") && kr.includes("if (!declaracion) return"));
   check("la cantidad respeta el mínimo del grado y el máximo de la directa", kr.includes("kg < minKg") && kr.includes("kg > maxKg"));
   check("y hay que marcar las condiciones", kr.includes("if (!declaracion.aceptaTerminos) return"));
-  check("el contrato NACE LLENO: precio de la oferta, cantidad declarada, referencia, términos", ["price_per_kg_locked: Number(offer.price_per_kg)", "quantity_frozen_kg: lockedKg", "reference_price_source: offer.reference_price_source", "terms_version: offer.terms_version", "declaracion: declarado", "compra_inicial_kg:"].every((x) => kr.includes(x)));
+  check("el contrato NACE LLENO: precio de la oferta (V5.170: el de la modalidad), cantidad declarada, referencia, términos", ["price_per_kg_locked: copKgTrato", "quantity_frozen_kg: lockedKg", "reference_price_source: offer.reference_price_source", "terms_version: offer.terms_version", "declaracion: declarado", "compra_inicial_kg:"].every((x) => kr.includes(x)));
   check("y la oferta guarda lo declarado y cuándo aceptó los términos", kr.includes("locked_kg: lockedKg, declaracion: declarado, terms_accepted_at: now"));
   check("una directa vencida no se acepta (queda expirada)", kr.includes('status: "expirada"') && kr.includes("offer.expira_at"));
   const firma = lee("src/app/ocp/(app)/contractActions.ts");
@@ -134,7 +134,7 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   const tab = lee("src/components/kaffetal-regal/panel/ContratosTab.tsx");
   const calc = lee("src/components/kaffetal-regal/panel/CalculadoraDelTrato.tsx");
   const firmaUi = lee("src/components/kaffetal-regal/panel/FirmaDelContrato.tsx");
-  check("el productor decide con la calculadora (V5.169: modalidades y escenarios de venta) y después FIRMA el contrato", tab.includes("<CalculadoraDelTrato") && tab.includes("<FirmaDelContrato") && calc.includes("simularVentas({ declaradoKg: kg, copKg, meses: cond.meses, compraInicialKg, ventaPct, patron, fncCargaRef })") && calc.includes("modalidadesDisponibles(diasHastaSiguiente)") && tab.includes("declaracion: decision.modalidad, aceptaTerminos: true") && tab.includes('respuesta === "aceptar" ? firma : undefined'));
+  check("el productor decide con la calculadora (V5.169: modalidades y escenarios de venta) y después FIRMA el contrato", tab.includes("<CalculadoraDelTrato") && tab.includes("<FirmaDelContrato") && calc.includes("simularVentas({ declaradoKg: kg, copKg: copModalidad, meses: cond.meses, compraInicialKg, ventaPct, patron, fncCargaRef })") && calc.includes("modalidadesDisponibles(diasHastaSiguiente, { precioKg: precioSiguienteKg, fechaLimite: fechaLimiteSiguiente })") && tab.includes("declaracion: decision.modalidad, aceptaTerminos: true") && tab.includes('respuesta === "aceptar" ? firma : undefined'));
   check("y no puede decidir por debajo del mínimo ni con una modalidad cerrada, ni firmar sin nombre, trazo y la casilla", calc.includes("const cumple = kg >= minimo && (maxKg == null || kg <= maxKg) && disp[modalidad].disponible;") && calc.includes("disabled={!cumple}") && firmaUi.includes("const listo = firmaSuficiente && nombre.trim().length >= 5 && leido && !ocupado;") && firmaUi.includes('touchAction: "none"'));
   check("«Mi trato» enseña lo declarado, la compra inicial y los tramos", tab.includes("CTC compra de inmediato") && tab.includes("retiro libre al cerrar cada mes"));
 }
@@ -259,7 +259,7 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   const cl = clausulasDelContrato(datos);
   const todo = cl.map((c) => c.texto).join(" ");
   check("contrato Cherry Picked · trece cláusulas con la modalidad, la vigencia, la compra con la firma y «sin compromiso de compra mensual»", cl.length === 13 && todo.includes("$26.000 COP por kg") && todo.includes("$3.250.000 COP por carga") && todo.includes("750 kg de CPS (6 cargas") && todo.includes("Bucaramanga") && todo.includes("«Declarar Siguiente Temporada Trimestral»") && todo.includes("del 16 de diciembre de 2026") && cl[4].titulo.includes("Sin compromiso de compra mensual") && todo.includes("Grado CTCx Red"));
-  check("contrato · el texto es el mismo con «red» o «Red» (la pantalla y el servidor firman la misma huella)", textoDelContrato(datos) === textoDelContrato({ ...datos, grado: "Red" }) && CONTRATO_VERSION === "2026-10-06.2");
+  check("contrato · el texto es el mismo con «red» o «Red» (la pantalla y el servidor firman la misma huella)", textoDelContrato(datos) === textoDelContrato({ ...datos, grado: "Red" }) && CONTRATO_VERSION === "2026-10-06.3");
   const sel = clausulasDelContrato({ ...datos, tipo: "selection", condiciones: null, declaradoKg: 500, copKg: 22000 });
   check("contrato CTCx Selection · compra en firme de los kilos acordados, «hasta el PVC vigente menos el 8 %», sin modalidad", sel.length === 8 && sel.map((c) => c.texto).join(" ").includes("hasta el PVC vigente menos el 8 %") && sel.map((c) => c.texto).join(" ").includes("$11.000.000 COP"));
   const resp = lee("src/lib/ofertas/producerActions.ts");
@@ -303,7 +303,7 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   const prod = lee("src/lib/ofertas/producerActions.ts");
   check("Selection · CTCx propone precio HASTA el tope (PVC − 8 %) y kilos; la oferta guarda el tope, la FNC y el fin de temporada", ofertas.includes("if (propuesto > precioTope) return") && ofertas.includes('if (quantity === null) return { ok: false, error: "Una compra de CTCx Selection propone cuántos kilos compra') && ofertas.includes("precio_tope_kg: precioTope,") && ofertas.includes("fnc_carga_ref: mercado.fncHoy,") && ofertas.includes("temporada_hasta: pvc?.edicion.validTo ?? null,"));
   check("Selection · la negociación: el productor contraoferta (queda «contraofertada»), CTCx acepta (si cabe en el tope), contraoferta o desiste; las rondas quedan guardadas", prod.includes("export async function contraofertarSeleccion(") && prod.includes('update({ status: "contraofertada" })') && ofertas.includes("export async function responderContraoferta(") && ofertas.includes("if (tope != null && precio > tope) return") && ofertas.includes('accion: accion === "aceptar" ? "acepta" : "contraoferta"'));
-  check("Selection · se acepta tal cual se negoció (sin declaración) y se firma; Cherry Picked valida la modalidad con la fecha REAL de la temporada", prod.includes('const esSelection = offer.kind === "directa";') && prod.includes("const disp = modalidadesDisponibles(dias)[declaracion.declaracion];") && prod.includes("const vigente = await edicionVigente();"));
+  check("Selection · se acepta tal cual se negoció (sin declaración) y se firma; Cherry Picked valida la modalidad con la fecha REAL de la temporada", prod.includes('const esSelection = offer.kind === "directa";') && prod.includes("const disp = modalidadesDisponibles(dias, { precioKg: precioSiguiente, fechaLimite: o.temporada_desde ? fechaLimitePvcSiguiente(o.temporada_desde) : null })[declaracion.declaracion];") && prod.includes("const vigente = await edicionVigente();"));
   check("«Declarar Ahora» se renueva en la ventana y enmienda la cantidad, sin compra adicional obligada", lee("src/lib/trato/producerActions.ts").includes("export async function renovarDeclaracionAhora(") && lee("src/lib/trato/producerActions.ts").includes("if (dias == null || dias < VENTANA_DECLARAR_AHORA_DIAS)"));
   const mig = lee("docs/migraciones/2026-10-06_modalidades_y_contraofertas.sql");
   check("migración · contraofertada cuenta como oferta abierta (una por lote) y las rondas solo las lee el dueño", mig.includes("where (status = any (array['emitida'::text, 'contraofertada'::text]))") && mig.includes("create policy lot_offer_rondas_select_own"));
@@ -312,6 +312,26 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   const paginas = ["src/app/kaffetal-regal/dossier/[id]/page.tsx", "src/app/kaffetal-regal/certificacion-lote/[id]/page.tsx", "src/app/kaffetal-regal/certificacion/[id]/page.tsx", "src/app/kaffetal-regal/contrato/[id]/page.tsx", "src/app/ocp/(app)/kr/[id]/dossier/page.tsx"];
   check("nombres · dossier, Visa, Pasaporte (KR y OCP) y contrato generan su título en el servidor; la Ficha también al imprimir y descargar", paginas.every((p) => lee(p).includes("export async function generateMetadata(")) && lee("src/components/kaffetal-regal/ficha/FichaPreview.tsx").includes("a.download = `Ficha_Tecnica_${name}${codigo ? `_${codigo}` : \"\"}.html`;"));
   check("la Visa del lote enlaza el Pasaporte EUDR de cada finca de origen (y el dossier también)", lee("src/components/kaffetal-regal/LotEudrCertDoc.tsx").includes("href={`/kaffetal-regal/certificacion/${f.id}`}") && lee("src/components/kaffetal-regal/dossier/DossierCtcx.tsx").includes("t.verPasaporte(f.name, f.code)"));
+}
+
+// ── V5.170 (owner, 2026-10-06) · «Siguiente Temporada» va al PVC de la EDICIÓN SIGUIENTE (fijado en las primeras dos semanas del
+//    segundo mes de la temporada anterior) ─────────────────────────────────────────────────────────────────────────────────
+{
+  const { fechaLimitePvcSiguiente, modalidadesDisponibles } = await import("../src/lib/trato/modalidades.ts");
+  const { clausulasDelContrato } = await import("../src/lib/trato/contrato.ts");
+  const { condicionesDe } = await import("../src/lib/trato/modalidades.ts");
+  check("PVC siguiente · la fecha límite es el inicio del segundo mes de la temporada + 13 días (15-sep → 28-oct)", fechaLimitePvcSiguiente("2026-09-15") === "2026-10-28");
+  const sinPvc = modalidadesDisponibles(71, { precioKg: null, fechaLimite: "2026-10-28" });
+  const conPvc = modalidadesDisponibles(71, { precioKg: 27300, fechaLimite: "2026-10-28" });
+  check("PVC siguiente · sin la edición siguiente publicada, «Siguiente Temporada» no se abre (y dice cuándo se fija); con ella, sí", !sinPvc.trimestre.disponible && sinPvc.trimestre.motivo.includes("28 de octubre de 2026") && conPvc.trimestre.disponible && sinPvc["30_dias"].disponible);
+  const ofertas = lee("src/app/ocp/(app)/ofertasActions.ts");
+  const prod = lee("src/lib/ofertas/producerActions.ts");
+  check("PVC siguiente · la oferta guarda el precio de la edición siguiente (con el mismo % del trato) y el inicio de la temporada", ofertas.includes("await pvcParaGrado(lot.grade, proxima.validFrom, { modificadorPct })") && ofertas.includes("price_next_kg: pvcSiguiente ? pvcSiguiente.precio.copKgFinal : null,") && ofertas.includes("temporada_desde: pvc?.edicion.validFrom ?? null,"));
+  check("PVC siguiente · al aceptar «Siguiente Temporada» el contrato fija ese precio y esa edición", prod.includes('const copKgTrato = declarado === "trimestre" && precioNext != null ? Number(precioNext) : Number(offer.price_per_kg);') && prod.includes("price_per_kg_locked: copKgTrato,") && prod.includes("pvc_edition_id: edicionTrato,"));
+  const tri = clausulasDelContrato({ tipo: "cherry_picked", condiciones: condicionesDe("trimestre", { hoy: "2026-10-06", temporadaHasta: "2026-12-15", declaradoKg: 750, grado: "red" }), productorNombre: "Ana Pérez", productorDocumento: null, loteNombre: "Lote X", loteReferencia: "CTC-L-AAAA0000", grado: "red", copKg: 27300, declaradoKg: 750, lugarEntrega: "Bucaramanga.", termsVersion: null, temporada: null });
+  check("PVC siguiente · el contrato dice que el precio es el PVC publicado para la siguiente Temporada Trimestral", tri.some((c) => c.texto.includes("publicado para la siguiente Temporada Trimestral") && c.texto.includes("$27.300 COP")));
+  const calc = lee("src/components/kaffetal-regal/panel/CalculadoraDelTrato.tsx");
+  check("PVC siguiente · la calculadora usa el precio de cada modalidad y lo lleva a la firma; el OCP avisa si aún no se publica", calc.includes('const precioDe = (m: Modalidad) => (m === "trimestre" ? precioSiguienteKg ?? copKg : copKg);') && calc.includes("copKg: copModalidad })") && lee("src/components/kaffetal-regal/panel/ContratosTab.tsx").includes("copKg: decision?.copKg ?? offer.pricePerKg,") && lee("src/app/ocp/(app)/ofertas/OfertaDesplegable.tsx").includes("El PVC de la siguiente temporada aún no se publica"));
 }
 
 if (fallos.length) {

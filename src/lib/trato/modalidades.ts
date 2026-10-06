@@ -29,6 +29,12 @@ export const MODALIDAD_LABEL: Record<Modalidad, string> = {
 
 const DIA_MS = 86_400_000;
 const soloFecha = (d: Date) => d.toISOString().slice(0, 10);
+const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+/** «2026-10-28» → «28 de octubre de 2026». */
+export const fechaLarga = (iso: string) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  return `${d} de ${MESES[m - 1]} de ${y}`;
+};
 const sumaDias = (iso: string, n: number) => soloFecha(new Date(new Date(`${iso}T12:00:00Z`).getTime() + n * DIA_MS));
 
 /** El primer día de la siguiente Temporada Trimestral (el día después del fin de la vigente). */
@@ -45,15 +51,35 @@ export function diasHastaLaSiguiente(hoy: string, temporadaHasta: string): numbe
 
 export type Disponibilidad = { disponible: boolean; motivo: string | null };
 
-/** Qué modalidades se pueden declarar con `dias` hasta la siguiente Temporada Trimestral. */
-export function modalidadesDisponibles(dias: number | null): Record<Modalidad, Disponibilidad> {
+/**
+ * V5.170 (owner, 2026-10-06): el PVC de la siguiente Temporada Trimestral «se fija en las primeras dos semanas del segundo mes
+ * del trimestre anterior» (PVC_BCP_PLAN §14.1, 6). Dada la fecha en que empezó la temporada vigente, el último día de esa
+ * ventana: el inicio del segundo mes + 13 días.
+ */
+export function fechaLimitePvcSiguiente(temporadaDesde: string): string {
+  const d = new Date(`${temporadaDesde}T12:00:00Z`);
+  d.setUTCMonth(d.getUTCMonth() + 1);
+  return sumaDias(soloFecha(d), 13);
+}
+
+/**
+ * Qué modalidades se pueden declarar con `dias` hasta la siguiente Temporada Trimestral. V5.170: «Siguiente Temporada» va al PVC
+ * de la EDICIÓN SIGUIENTE; si la oferta no lo trae (aún no se publicaba al emitir), esa modalidad no se abre en esta oferta.
+ */
+export function modalidadesDisponibles(dias: number | null, siguiente?: { precioKg: number | null; fechaLimite: string | null }): Record<Modalidad, Disponibilidad> {
   const sinFecha = dias == null;
+  const sinPrecioSiguiente = siguiente !== undefined && siguiente.precioKg == null;
   return {
     "30_dias":
       sinFecha || dias >= VENTANA_DECLARAR_AHORA_DIAS
         ? { disponible: true, motivo: null }
         : { disponible: false, motivo: `Faltan ${dias} días para la siguiente temporada: «Declarar Ahora» necesita al menos ${VENTANA_DECLARAR_AHORA_DIAS}.` },
-    trimestre: { disponible: true, motivo: null },
+    trimestre: sinPrecioSiguiente
+      ? {
+          disponible: false,
+          motivo: `Va al PVC de la siguiente temporada, que se fija en las primeras dos semanas del segundo mes de esta${siguiente?.fechaLimite ? ` (a más tardar el ${fechaLarga(siguiente.fechaLimite)})` : ""}; CTCx le envía la oferta con ese precio cuando se publique.`,
+        }
+      : { disponible: true, motivo: null },
     ahora_y_siguiente:
       !sinFecha && dias <= VENTANA_AHORA_Y_SIGUIENTE_DIAS
         ? { disponible: true, motivo: null }

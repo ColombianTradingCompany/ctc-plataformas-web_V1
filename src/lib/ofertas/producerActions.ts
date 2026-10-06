@@ -6,7 +6,7 @@ import { createSessionClient, createServiceRoleClient } from "@/lib/supabase/ser
 import { DECLARACIONES, LUGAR_DE_ENTREGA_POR_DEFECTO } from "@/lib/trato/terminos";
 import { formatCop } from "@/lib/arena/inscriptions";
 import { CONTRATO_VERSION, textoDelContrato } from "@/lib/trato/contrato";
-import { condicionesDe, diasHastaLaSiguiente, modalidadesDisponibles, MODALIDAD_LABEL, type CondicionesDeModalidad } from "@/lib/trato/modalidades";
+import { condicionesDe, diasHastaLaSiguiente, fechaLimitePvcSiguiente, modalidadesDisponibles, MODALIDAD_LABEL, type CondicionesDeModalidad } from "@/lib/trato/modalidades";
 import { edicionVigente, hoyEnColombia } from "@/lib/pvc/servicio";
 import { ctcLotReference } from "@/components/kaffetal-regal/data";
 
@@ -64,7 +64,7 @@ export async function respondToOffer(
   const { data: offer } = await service
     .from("lot_offers")
     .select(
-      "id, lot_id, producer_id, status, kind, grade_snapshot, season_id, price_per_kg, quantity_kg, terms_version, min_kg, max_kg, compra_inicial_kg, reference_price_source, reference_price_snapshot, pvc_edition_id, modificador_pct, expira_at, lugar_entrega, season_label, temporada_hasta, precio_tope_kg, lots(name)"
+      "id, lot_id, producer_id, status, kind, grade_snapshot, season_id, price_per_kg, quantity_kg, terms_version, min_kg, max_kg, compra_inicial_kg, reference_price_source, reference_price_snapshot, pvc_edition_id, modificador_pct, expira_at, lugar_entrega, season_label, temporada_hasta, temporada_desde, precio_tope_kg, price_next_kg, pvc_next_edition_id, lots(name)"
     )
     .eq("id", offerId)
     .maybeSingle();
@@ -133,7 +133,9 @@ export async function respondToOffer(
     const vigente = await edicionVigente();
     const temporadaHasta = vigente?.validTo ?? ((offer as { temporada_hasta?: string | null }).temporada_hasta ?? null);
     const dias = temporadaHasta ? diasHastaLaSiguiente(hoy, temporadaHasta) : null;
-    const disp = modalidadesDisponibles(dias)[declaracion.declaracion];
+    const o = offer as { price_next_kg?: number | string | null; temporada_desde?: string | null };
+    const precioSiguiente = o.price_next_kg != null ? Number(o.price_next_kg) : null;
+    const disp = modalidadesDisponibles(dias, { precioKg: precioSiguiente, fechaLimite: o.temporada_desde ? fechaLimitePvcSiguiente(o.temporada_desde) : null })[declaracion.declaracion];
     if (!disp.disponible) return { ok: false, message: disp.motivo ?? `«${MODALIDAD_LABEL[declaracion.declaracion]}» no está disponible hoy.` };
     lockedKg = kg;
     declarado = declaracion.declaracion;
@@ -150,6 +152,10 @@ export async function respondToOffer(
   const firmaBytes = Buffer.from(firma.imagenPng.slice(FIRMA_PREFIJO.length), "base64");
   if (firmaBytes.length < 200 || firmaBytes.length > FIRMA_MAX_BYTES) return { ok: false, message: "La firma no llegó bien. Fírmela de nuevo." };
   const lugarEntrega = (offer as { lugar_entrega?: string | null }).lugar_entrega?.trim() || LUGAR_DE_ENTREGA_POR_DEFECTO;
+  // V5.170: el precio del trato según la modalidad — «Siguiente Temporada» al PVC de la edición siguiente (congelado en la oferta).
+  const precioNext = (offer as { price_next_kg?: number | string | null }).price_next_kg;
+  const copKgTrato = declarado === "trimestre" && precioNext != null ? Number(precioNext) : Number(offer.price_per_kg);
+  const edicionTrato = declarado === "trimestre" ? ((offer as { pvc_next_edition_id?: string | null }).pvc_next_edition_id ?? null) : offer.pvc_edition_id ?? null;
   const texto = textoDelContrato({
     tipo: esSelection ? "selection" : "cherry_picked",
     condiciones,
@@ -158,7 +164,7 @@ export async function respondToOffer(
     loteNombre: lot?.name ?? "—",
     loteReferencia: ctcLotReference(offer.lot_id),
     grado: offer.grade_snapshot,
-    copKg: Number(offer.price_per_kg),
+    copKg: copKgTrato,
     declaradoKg: lockedKg ?? 0,
     lugarEntrega,
     termsVersion: offer.terms_version ?? null,
@@ -184,7 +190,7 @@ export async function respondToOffer(
       grade_snapshot: offer.grade_snapshot,
       season_id: offer.season_id,
       offer_id: offer.id,
-      price_per_kg_locked: Number(offer.price_per_kg),
+      price_per_kg_locked: copKgTrato,
       quantity_frozen_kg: lockedKg,
       reference_price_source: offer.reference_price_source ?? null,
       reference_price_snapshot: offer.reference_price_snapshot != null ? Number(offer.reference_price_snapshot) : null,
@@ -200,7 +206,7 @@ export async function respondToOffer(
       retiro_libre_pct: condiciones?.retiroLibrePct ?? null,
       redeclarar_min_kg: condiciones?.redeclarar?.minKg ?? null,
       redeclarar_at: condiciones?.redeclarar?.at ?? null,
-      pvc_edition_id: offer.pvc_edition_id ?? null,
+      pvc_edition_id: edicionTrato,
       modificador_pct: offer.modificador_pct != null ? Number(offer.modificador_pct) : null,
       lugar_entrega: lugarEntrega,
       producer_signed_at: now,
@@ -231,7 +237,7 @@ export async function respondToOffer(
     action: "created",
     new_status: "pending_signature",
     performed_by: auth.userId,
-    notes: `Nace de la oferta ${offer.kind} aceptada y FIRMADA por el productor (${nombreFirma}, texto ${CONTRATO_VERSION}, sha256 ${huella.slice(0, 12)}…) · ${formatCop(Number(offer.price_per_kg))}/kg${lockedKg ? ` · ${lockedKg} kg` : ""}${declaradoTxt}.`,
+    notes: `Nace de la oferta ${offer.kind} aceptada y FIRMADA por el productor (${nombreFirma}, texto ${CONTRATO_VERSION}, sha256 ${huella.slice(0, 12)}…) · ${formatCop(copKgTrato)}/kg${lockedKg ? ` · ${lockedKg} kg` : ""}${declaradoTxt}.`,
   });
   await service.from("audit_log").insert({
     entity_type: "lot_offer",
@@ -247,7 +253,7 @@ export async function respondToOffer(
     context_label: lot ? `Lote ${lot.name}` : null,
     lot_id: offer.lot_id,
     note: declarado
-      ? `Usted aceptó la oferta de CTC y declaró ${lockedKg} kg de CPS («${MODALIDAD_LABEL[declarado]}») a ${formatCop(Number(offer.price_per_kg))}/kg. El contrato quedó creado con ese precio y esa cantidad, pendiente solo de la firma de CTC${offer.compra_inicial_kg ? `; CTC compra de inmediato ${Number(offer.compra_inicial_kg)} kg` : ""}. Lo verá en «Contratos y Compras» → Contratos de Temporada.`
+      ? `Usted aceptó la oferta de CTC y declaró ${lockedKg} kg de CPS («${MODALIDAD_LABEL[declarado]}») a ${formatCop(copKgTrato)}/kg. El contrato quedó creado con ese precio y esa cantidad, pendiente solo de la firma de CTC${offer.compra_inicial_kg ? `; CTC compra de inmediato ${Number(offer.compra_inicial_kg)} kg` : ""}. Lo verá en «Contratos y Compras» → Contratos de Temporada.`
       : "Usted aceptó la oferta de CTC. El contrato quedó creado con el precio de la oferta, pendiente de la firma de CTC — lo verá avanzar en «Contratos y Compras» → Contratos de Temporada.",
     created_by: auth.userId,
   });

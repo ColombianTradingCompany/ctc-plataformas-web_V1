@@ -1,7 +1,7 @@
 "use client";
 
 import { contratoFirmado } from "@/lib/kaffetal/blindaje";
-import { diasHastaLaSiguiente } from "@/lib/trato/modalidades";
+import { diasHastaLaSiguiente, fechaLimitePvcSiguiente } from "@/lib/trato/modalidades";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ToastProvider, useToast } from "@/components/Toast";
 import { puedoSer } from "@/lib/identidad/matriz";
@@ -453,7 +453,7 @@ function Experience() {
           supabase
             .from("lot_offers")
             .select(
-              "id, lot_id, kind, status, grade_snapshot, score_snapshot, variety_snapshot, process_snapshot, price_per_kg, quantity_kg, notes, season_label, lote_de_temporada_pasada, emitted_at, responded_at, response_note, contract_id, terms_version, min_kg, max_kg, compra_inicial_kg, reference_price_source, modificador_pct, expira_at, locked_kg, declaracion, lugar_entrega, precio_tope_kg, fnc_carga_ref, temporada_hasta"
+              "id, lot_id, kind, status, grade_snapshot, score_snapshot, variety_snapshot, process_snapshot, price_per_kg, quantity_kg, notes, season_label, lote_de_temporada_pasada, emitted_at, responded_at, response_note, contract_id, terms_version, min_kg, max_kg, compra_inicial_kg, reference_price_source, modificador_pct, expira_at, locked_kg, declaracion, lugar_entrega, precio_tope_kg, fnc_carga_ref, temporada_hasta, temporada_desde, price_next_kg, pvc_next_code"
             )
             .order("emitted_at", { ascending: false }),
           // RLS (lot_fichas_select_own) scopes this to the producer's own lots
@@ -726,6 +726,9 @@ function Experience() {
         precio_tope_kg: number | string | null;
         fnc_carga_ref: number | string | null;
         temporada_hasta: string | null;
+        temporada_desde: string | null;
+        price_next_kg: number | string | null;
+        pvc_next_code: string | null;
       };
       // V5.169: las rondas de las negociaciones de CTCx Selection (RLS: solo las de sus ofertas) y la fecha de hoy en Colombia.
       const ofertaRows = (offerRows as OfferRow[] | null) ?? [];
@@ -771,6 +774,9 @@ function Experience() {
           temporadaHasta: o.temporada_hasta ?? null,
           diasHastaSiguiente: o.temporada_hasta ? diasHastaLaSiguiente(hoyCo, o.temporada_hasta) : null,
           hoy: hoyCo,
+          precioSiguienteKg: o.price_next_kg != null ? Number(o.price_next_kg) : null,
+          pvcSiguienteCode: o.pvc_next_code ?? null,
+          fechaLimiteSiguiente: o.temporada_desde ? fechaLimitePvcSiguiente(o.temporada_desde) : null,
           rondas: (((rondasRaw as RondaRow[] | null) ?? []).filter((r) => r.offer_id === o.id)).map((r) => ({
             autor: r.autor,
             accion: r.accion,

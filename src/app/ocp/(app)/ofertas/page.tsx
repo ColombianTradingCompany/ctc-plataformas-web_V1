@@ -3,7 +3,8 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { formatCop } from "@/lib/arena/inscriptions";
-import { edicionVigente } from "@/lib/pvc/servicio";
+import { edicionProxima, edicionVigente } from "@/lib/pvc/servicio";
+import { fechaLimitePvcSiguiente } from "@/lib/trato/modalidades";
 import { precioDeLaEscalera, type EscalonPublicado } from "@/lib/pvc/precio";
 import { esGradoValido, GRADO_POR_ID } from "@/lib/grados/definicion";
 import { evaluacionQueRige, type EvaluationRow } from "@/lib/evaluations";
@@ -92,6 +93,9 @@ export default async function OcpOfertasPage() {
     service.from("arena_inscriptions").select("lot_id, decision_comercial, decision_comercial_at, decision_comercial_motivo").eq("decision_comercial", "sin_oferta"),
     edicionVigente(),
   ]);
+  // V5.170: la edición SIGUIENTE (si ya se publicó) para el precio de «Siguiente Temporada».
+  const proxima = await edicionProxima();
+  const escaleraSiguiente = ((proxima?.outputs?.escalera ?? []) as unknown as EscalonPublicado[]);
   const lots = (lotsRaw as LotRow[] | null) ?? [];
   const offers = (offersRaw as OfferRow[] | null) ?? [];
   const withLiveContract = new Set(((liveContractsRaw as { lot_id: string }[] | null) ?? []).map((c) => c.lot_id));
@@ -135,7 +139,19 @@ export default async function OcpOfertasPage() {
     const base = precioDeLaEscalera(escalera, grade, 0);
     const directa = precioDeLaEscalera(escalera, grade, MODIFICADOR_DIRECTA_PCT);
     if (!base || !directa) return null;
-    return { code: edicion.code, banda: base.banda, mult: base.mult, copKg: base.copKg, copCarga: base.copCarga, copKgDirecta: directa.copKgFinal, minKg: minimoKg(grade), compraInicialKg: COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG };
+    const sig = proxima ? precioDeLaEscalera(escaleraSiguiente, grade, 0) : null;
+    return {
+      code: edicion.code,
+      banda: base.banda,
+      mult: base.mult,
+      copKg: base.copKg,
+      copCarga: base.copCarga,
+      copKgDirecta: directa.copKgFinal,
+      minKg: minimoKg(grade),
+      compraInicialKg: COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG,
+      siguiente: proxima && sig ? { code: proxima.code, copKg: sig.copKgFinal } : null,
+      fechaLimiteSiguiente: edicion.validFrom ? fechaLimitePvcSiguiente(edicion.validFrom) : null,
+    };
   };
 
   const resumenDe = (l: LotRow): ResumenDelLote => {

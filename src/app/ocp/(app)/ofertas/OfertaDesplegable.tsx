@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { emitOffer, type OfferKind } from "../ofertasActions";
 import { formatCop } from "@/lib/arena/inscriptions";
 import { CARGA_KG, LUGAR_DE_ENTREGA_POR_DEFECTO } from "@/lib/trato/terminos";
+import { fechaLarga } from "@/lib/trato/modalidades";
 import type { AnclajeDeOferta } from "./OfertasClient";
 import { NoOfertarForm } from "./OfertasClient";
 import styles from "@/components/panel/shared.module.css";
@@ -189,6 +190,20 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
               <p className={styles.meta} style={{ margin: 0 }}>
                 PVC {anclaje!.code} · banda {anclaje!.banda} ×{anclaje!.mult} → {formatCop(precioAncla)}/kg
                 {clase === "temporada" && <> · CTC compra {anclaje!.compraInicialKg} kg de inmediato</>}. Si el lote es de la temporada pasada, se aplica −10 % al emitir.
+                {/* V5.170: «Siguiente Temporada» va al PVC de la edición siguiente. */}
+                {clase === "temporada" &&
+                  (anclaje!.siguiente ? (
+                    <>
+                      {" "}«Siguiente Temporada» va al PVC {anclaje!.siguiente.code}: <b>{formatCop(anclaje!.siguiente.copKg)}/kg</b>.
+                    </>
+                  ) : (
+                    <>
+                      {" "}
+                      <b>El PVC de la siguiente temporada aún no se publica</b>
+                      {anclaje!.fechaLimiteSiguiente ? ` (a más tardar el ${fechaLarga(anclaje!.fechaLimiteSiguiente)})` : ""}: si emite hoy, el productor podrá
+                      «Declarar Ahora» (o «Ahora y Siguiente», si ya se abre), pero no «Siguiente Temporada»; re-emita cuando se publique.
+                    </>
+                  ))}
               </p>
             )
           ) : (

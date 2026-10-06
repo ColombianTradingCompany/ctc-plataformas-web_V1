@@ -407,6 +407,11 @@ export type ProducerOffer = {
   temporadaHasta: string | null;
   diasHastaSiguiente: number | null;
   hoy: string;
+  /** V5.170: el PVC de la EDICIÓN SIGUIENTE para «Siguiente Temporada» (null si al emitir aún no se publicaba) y la fecha límite
+   *  en que se fija (primeras dos semanas del segundo mes de la temporada vigente). */
+  precioSiguienteKg: number | null;
+  pvcSiguienteCode: string | null;
+  fechaLimiteSiguiente: string | null;
   rondas: { autor: "ctcx" | "productor"; accion: string; precioKg: number | null; kg: number | null; nota: string | null; fecha: string }[];
 };
 

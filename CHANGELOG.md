@@ -19,6 +19,19 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.170] — 2026-10-06 (commit pendiente)
+
+- **Cambiado**: **«Declarar Siguiente Temporada Trimestral» va al PVC de la EDICIÓN SIGUIENTE** (owner, 2026-10-06: «esta ancla
+  debe ser fijada en las primeras dos semanas del segundo mes del trimestre anterior»). La oferta de Cherry Picked guarda ese
+  precio al emitir (con el mismo % del trato); si la edición siguiente aún no se publica, esa modalidad no se abre en la oferta y
+  dice la fecha límite en que se fija (para PVC-F4-2026: el 28 de octubre de 2026). «Declarar Ahora» y «Ahora y Siguiente»
+  siguen al PVC de la temporada vigente. La calculadora, el contrato (texto 2026-10-06.3) y el precio fijado usan el de la
+  modalidad; el OCP avisa al emitir si conviene esperar a la publicación.
+- **Datos**: migración `2026-10-06_oferta_pvc_siguiente.sql` (aditiva): `lot_offers.price_next_kg`, `pvc_next_edition_id`,
+  `pvc_next_code`, `temporada_desde`.
+- **Seguridad**: `qa-trato` (131 → 137).
+- **Docs**: charters `kaffetal-regal`, `consolas`.
+
 ## [V5.169] — 2026-10-06 (commit 59b3b8c)
 
 - **Cambiado**: **CTCx ofrece una de dos cosas** (owner, 2026-10-06): **participar en Cherry Picked** (al PVC de la temporada) o

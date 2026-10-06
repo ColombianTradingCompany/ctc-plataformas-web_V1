@@ -152,6 +152,10 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.170 · «Siguiente Temporada» al PVC de la edición siguiente** (owner, 2026-10-06; ejecutado desde WRAP-COMMIT-PUSH): el
+  precio viaja congelado en la oferta (`price_next_kg`); sin edición siguiente publicada, la modalidad no se abre y dice la fecha
+  límite (`fechaLimitePvcSiguiente`). Sustituye el abierto (1) de la V5.169. Abierto: la redeclaración de «Ahora y Siguiente»
+  espera la decisión del owner sobre qué pasa si el productor no redeclara.
 - **V5.169 · Cherry Picked con tres modalidades y escenarios de venta; CTCx Selection negociable; nombres de archivo; Visa →
   Pasaportes** (owner, 2026-10-06; ejecutado desde WRAP-COMMIT-PUSH). Las reglas de las modalidades viven en
   `src/lib/trato/modalidades.ts` (la Temporada Trimestral = la ventana de la edición del PVC). Abierto: (1) el precio de

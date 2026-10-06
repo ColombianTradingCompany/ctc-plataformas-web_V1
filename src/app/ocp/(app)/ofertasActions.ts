@@ -7,7 +7,7 @@ import { officialAverages, type EvaluationRow } from "@/lib/evaluations";
 import { currentSeason, seasonKey, seasonLabel, type Season } from "@/lib/arena/seasons";
 import { formatCop } from "@/lib/arena/inscriptions";
 import { esGradoValido, type GradoId } from "@/lib/grados/definicion";
-import { lecturaDeMercado, pvcParaGrado, type PvcDeGrado } from "@/lib/pvc/servicio";
+import { edicionProxima, lecturaDeMercado, pvcParaGrado, type PvcDeGrado } from "@/lib/pvc/servicio";
 import { esPastCrop } from "@/lib/trato/mesAMes";
 import { CARGA_KG, COMPRA_INICIAL_CTCX_CARGAS, LUGAR_DE_ENTREGA_POR_DEFECTO, minimoKg, modificadorDeOferta, TERMINOS_VERSION, VENTANA_DIRECTA_DIAS } from "@/lib/trato/terminos";
 
@@ -178,6 +178,11 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
   const esDirecta = kind === "directa";
   // V5.169: la referencia FNC del día y el fin de la Temporada Trimestral viajan congelados (la calculadora del productor los usa).
   const mercado = await lecturaDeMercado(10);
+  // V5.170 (owner): «Siguiente Temporada» va al PVC de la EDICIÓN SIGUIENTE (se fija en las primeras dos semanas del segundo mes
+  // de esta temporada). Si ya está publicada, la participación en Cherry Picked guarda también ese precio, con el mismo % del
+  // trato; si no, esa modalidad no se abre en esta oferta (se re-emite cuando se publique).
+  const proxima = kind === "temporada" || kind === "excepcion" ? await edicionProxima() : null;
+  const pvcSiguiente = proxima?.validFrom && lot.grade !== "tyrian" ? await pvcParaGrado(lot.grade, proxima.validFrom, { modificadorPct }) : null;
   const { data: insertada, error } = await service.from("lot_offers").insert({
     lot_id: lotId,
     producer_id: lot.producer_id,
@@ -212,6 +217,10 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
     precio_tope_kg: precioTope,
     fnc_carga_ref: mercado.fncHoy,
     temporada_hasta: pvc?.edicion.validTo ?? null,
+    temporada_desde: pvc?.edicion.validFrom ?? null,
+    price_next_kg: pvcSiguiente ? pvcSiguiente.precio.copKgFinal : null,
+    pvc_next_edition_id: pvcSiguiente?.edicion.id ?? null,
+    pvc_next_code: pvcSiguiente?.edicion.code ?? null,
   }).select("id").single();
   if (error) return { ok: false, error: "No se pudo emitir la oferta: " + error.message };
   if (esSelection && insertada) {

@@ -48,6 +48,9 @@ export type AnclajeDeOferta = {
   copKgDirecta: number;
   minKg: number | null;
   compraInicialKg: number;
+  /** V5.170: el PVC de la edición siguiente («Siguiente Temporada»), o cuándo se fija si aún no se publica. */
+  siguiente: { code: string; copKg: number } | null;
+  fechaLimiteSiguiente: string | null;
 };
 
 export function EmitOfferForm({

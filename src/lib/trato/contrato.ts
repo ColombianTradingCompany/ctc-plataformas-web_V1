@@ -13,7 +13,7 @@ import { CTC_RAZON, CTC_SEDE, NIT } from "@/lib/legal";
 import { CARGA_KG, MORA, PENALIDAD_RETIRO_PCT, RENOVACION_DIAS, TRAMO_LIBRE_ACUMULADO_PCT } from "./terminos";
 import { MODALIDAD_LABEL, textoCompraInicial, type CondicionesDeModalidad } from "./modalidades";
 
-export const CONTRATO_VERSION = "2026-10-06.2";
+export const CONTRATO_VERSION = "2026-10-06.3";
 
 export type DatosDelContrato = {
   /** V5.169: participación en Cherry Picked (con modalidad) o compra de CTCx Selection. */
@@ -110,7 +110,14 @@ export function clausulasDelContrato(d: DatosDelContrato): ClausulaDelContrato[]
       { titulo: "", texto: cantidad },
       { titulo: "", texto: `${compra}` },
       sinCompromiso,
-      { titulo: "", texto: `El precio queda fijo en ${cop(d.copKg)} por kg de CPS (${cop(d.copKg * CARGA_KG)} por carga), el Precio de Valor de Compra (PVC) de la temporada vigente al emitir la oferta. No cambia durante la vigencia.` },
+      {
+        titulo: "",
+        // V5.170 (owner): «Siguiente Temporada» va al PVC de la edición siguiente (fijado en las primeras dos semanas del segundo mes
+        // de la temporada anterior); «Ahora» y «Ahora y Siguiente», al PVC de la temporada vigente.
+        texto: `El precio queda fijo en ${cop(d.copKg)} por kg de CPS (${cop(d.copKg * CARGA_KG)} por carga), ${
+          c.modalidad === "trimestre" ? "el Precio de Valor de Compra (PVC) publicado para la siguiente Temporada Trimestral" : "el Precio de Valor de Compra (PVC) de la temporada vigente"
+        }. No cambia durante la vigencia.`,
+      },
       entrega,
       pago,
       { titulo: "", texto: retiro },

@@ -152,6 +152,13 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.168 · la calculadora del trato, el contrato con firma con el dedo y el blindaje de los documentos** (owner, 2026-10-06;
+  ejecutado desde WRAP-COMMIT-PUSH). Aceptar una oferta ES firmar (`respondToOffer` exige la firma; sin firma no nace contrato).
+  El texto del contrato vive en `src/lib/trato/contrato.ts` con versión propia: cambiarlo es subir `CONTRATO_VERSION` (los viejos
+  conservan su huella). El blindaje está en `src/lib/kaffetal/blindaje.ts`: todo documento nuevo del productor lleva
+  `<MarcaDeAgua>` y `<Blindaje>`. Abierto: (1) el texto del contrato es una redacción operativa de los términos; la revisión
+  jurídica la decide el owner; (2) el contrato no lleva todavía el documento de identidad del productor; (3) una captura de
+  pantalla no se puede impedir (para eso la marca); (4) el flujo de firma no se condujo con una cuenta real de productor.
 - **V5.167 · el dossier sin ajuste CTCx, en CTCx, con la taza segunda, el grado con imagen y variedades, ilustraciones y
   conjeturas; «Ver el Dossier del lote» en Mis Lotes** (owner, 2026-10-06; ejecutado desde WRAP-COMMIT-PUSH). Decisión del owner:
   **el productor no ve el ajuste CTCx** en el dossier (va dentro de los puntos, sin nombrarse). Las conjeturas viven en

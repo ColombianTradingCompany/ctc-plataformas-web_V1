@@ -4,6 +4,9 @@ import { lotEudrStatus, type FincaEudrFields } from "@/lib/eudr";
 import { LotEudrCertDoc, type CertLot, type CertFinca } from "@/components/kaffetal-regal/LotEudrCertDoc";
 import { deriveClaims, deriveArchetype, ARCHETYPE_LABEL, type ContributionInput } from "@/lib/lotComposition";
 import { ORIGIN_CERTS, INTL_CERTS } from "@/components/kaffetal-regal/ficha/fichaData";
+import { ctcLotReference } from "@/components/kaffetal-regal/data";
+import { impresionDelProductor } from "@/lib/kaffetal/blindajeServidor";
+import { textoDeMarca } from "@/lib/kaffetal/blindaje";
 
 type CommRow = { id: string; note: string; created_at: string; author_role: string };
 
@@ -141,6 +144,7 @@ export default async function LotEudrCertPage({ params }: { params: Promise<{ id
     .filter((c) => c.claim)
     .map((c) => ({ label: SCHEME_LABEL[c.scheme] ?? c.scheme, verified: c.fullyVerified }));
   const archetype = deriveArchetype(contribInputs);
+  const impresion = await impresionDelProductor(service, lot.producer_id);
 
   return (
     <LotEudrCertDoc
@@ -153,6 +157,7 @@ export default async function LotEudrCertPage({ params }: { params: Promise<{ id
       archetypeLabel={archetype ? ARCHETYPE_LABEL[archetype] : null}
       harvestWindow={lot.harvest_from && lot.harvest_to ? `${lot.harvest_from} → ${lot.harvest_to}` : null}
       dds={lot.dds_reference ? { reference: lot.dds_reference, verificationCode: lot.dds_verification_code, filedAt: lot.dds_filed_at } : null}
+      blindaje={{ puedeImprimir: impresion.lotes.has(lot.id), marca: textoDeMarca({ referencia: ctcLotReference(lot.id), productor: producer?.fullName ?? null, fecha: new Date() }) }}
     />
   );
 }

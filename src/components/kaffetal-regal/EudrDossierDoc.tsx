@@ -1,6 +1,9 @@
 import { fincaCode, LOCAL_INFRA } from "./data";
 import { countryRiskFor, deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, PRODUCT_RISK_QUESTIONS } from "@/lib/eudr";
 import { PrintButton } from "./PrintButton";
+import { MarcaDeAgua } from "./blindaje/MarcaDeAgua";
+import { Blindaje } from "./blindaje/Blindaje";
+import { AVISO_SIN_CONTRATO } from "@/lib/kaffetal/blindaje";
 
 const CUSTODY_LABEL: Record<string, string> = {
   finca: "Finca", beneficio: "Beneficio", secado: "Secado", trilla: "Trilla", almacenamiento: "Almacenamiento", exportacion: "Exportación",
@@ -117,6 +120,7 @@ export function EudrDossierDoc({
   comms,
   parcelas = [],
   certificates = [],
+  blindaje = null,
 }: {
   finca: DossierFinca;
   producerName: string;
@@ -128,6 +132,9 @@ export function EudrDossierDoc({
   comms: { id: string; note: string; created_at: string; author_role: string }[];
   parcelas?: DossierParcela[];
   certificates?: DossierCert[];
+  /** V5.168 · el blindaje del lado del productor (marca personalizada; imprime solo con contrato firmado de un lote de la
+   *  finca). El OCP no lo pasa: allí el documento se imprime como siempre, con la marca CTCx de antes. */
+  blindaje?: { puedeImprimir: boolean; marca: string } | null;
 }) {
   const evidenceFiles = finca.eudr_evidence_files ?? {};
   const sustainFiles = finca.eudr_sustainability_files ?? {};
@@ -176,6 +183,12 @@ export function EudrDossierDoc({
           `,
         }}
       />
+      {blindaje ? (
+        <>
+          <MarcaDeAgua texto={blindaje.marca} />
+          <Blindaje puedeImprimir={blindaje.puedeImprimir} aviso={AVISO_SIN_CONTRATO.es} />
+        </>
+      ) : (
       <div id="dossier-watermark" aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 0, opacity: 0.06 }}>
         <div style={{ transform: "rotate(-30deg)", fontSize: 46, fontWeight: 800, lineHeight: "160px", whiteSpace: "nowrap", color: "#3C0A86" }}>
           {Array.from({ length: 40 }).map((_, i) => (
@@ -183,10 +196,11 @@ export function EudrDossierDoc({
           ))}
         </div>
       </div>
+      )}
 
       <div style={{ position: "relative", zIndex: 1 }}>
         <div className="no-print" style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-          <PrintButton />
+          {!blindaje || blindaje.puedeImprimir ? <PrintButton /> : <span style={{ fontSize: 12, color: "#555", border: "1px dashed #ccc", padding: "6px 10px" }}>{AVISO_SIN_CONTRATO.es}</span>}
         </div>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>

@@ -17,6 +17,9 @@ import type { IconoConjetura } from "@/lib/kaffetal/conjeturas";
 import { RUEDA } from "@/lib/catacion/rueda";
 import { TEXTOS, type Textos } from "./textos";
 import { BotonImprimir } from "./BotonImprimir";
+import { MarcaDeAgua } from "../blindaje/MarcaDeAgua";
+import { Blindaje } from "../blindaje/Blindaje";
+import { AVISO_SIN_CONTRATO } from "@/lib/kaffetal/blindaje";
 import { AltitudEnLaMontana, EscalaCtc, IlustracionGranos, IlustracionTaza, Intensidad, Mallas, MatrizDeRespaldo, Medidor, Radar, Rendimiento, RuedaFamilias } from "./figuras";
 import s from "./dossier.module.css";
 
@@ -100,6 +103,8 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
         </div>
       )}
       <div className={s.cuerpo}>{cuerpo}</div>
+      {/* V5.168 · el blindaje: la marca de agua en cada hoja, en pantalla y en el PDF. */}
+      <MarcaDeAgua texto={d.blindaje.marca} />
       <div className={s.pie}>
         <span>{CTC_LEGAL_LINE}</span>
         <span className={s.mono}>
@@ -1108,8 +1113,9 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
     <div className={cx(s.lienzo, display.variable)} lang={d.lang}>
       <div className={s.barra}>
         <a href={`/kaffetal-regal/dossier/${d.lot.id}?lang=${d.lang === "en" ? "es" : "en"}`}>{t.otroIdioma}</a>
-        <BotonImprimir label={t.imprimir} />
+        {d.blindaje.puedeImprimir ? <BotonImprimir label={t.imprimir} /> : <span className={s.candado}>{AVISO_SIN_CONTRATO[d.lang]}</span>}
       </div>
+      <Blindaje puedeImprimir={d.blindaje.puedeImprimir} aviso={AVISO_SIN_CONTRATO[d.lang]} />
       {hojas.map((h, i) => h.render(i + 1, total))}
     </div>
   );

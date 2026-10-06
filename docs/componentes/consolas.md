@@ -177,6 +177,10 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.168 · «Pendiente de Oferta» se despliega y confirma la oferta** (owner, 2026-10-06): resumen del lote, cantidad mínima,
+  condiciones de entrega (`LUGAR_DE_ENTREGA_POR_DEFECTO`) y precio por kg/carga; cambiar el precio del PVC la vuelve excepción.
+  El contrato del OCP enseña la firma del productor (trazo, nombre, fecha, huella del texto). CTCx sigue firmando con
+  «Firmar contrato»; esa firma es la que habilita la impresión de los documentos del productor.
 - **V5.165 · el reporte de mejoras con IA (OCP) parte de las anotaciones de la Rueda del Sabor** (owner, 2026-10-06):
   `src/lib/arena/mejoras.ts` lee la rueda de la evaluación del Q-Grader que rige (o la última) y pasa sus notas de defecto
   con su causa al prompt.

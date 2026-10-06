@@ -5,10 +5,14 @@ import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { formatCop } from "@/lib/arena/inscriptions";
 import { edicionVigente } from "@/lib/pvc/servicio";
 import { precioDeLaEscalera, type EscalonPublicado } from "@/lib/pvc/precio";
-import { esGradoValido } from "@/lib/grados/definicion";
+import { esGradoValido, GRADO_POR_ID } from "@/lib/grados/definicion";
+import { evaluacionQueRige, type EvaluationRow } from "@/lib/evaluations";
+import { triadaDeLaFicha } from "@/lib/pvc/triadaDelLote";
+import { letras } from "@/lib/pvc/escala";
 import { CARGA_KG, COMPRA_INICIAL_CTCX_CARGAS, minimoKg, MODIFICADOR_DIRECTA_PCT } from "@/lib/trato/terminos";
 import { CatalogoTabs } from "../catalogo/CatalogoTabs";
-import { EmitOfferForm, NoOfertarForm, ReabrirDecisionButton, RetireOfferButton, type AnclajeDeOferta } from "./OfertasClient";
+import { EmitOfferForm, ReabrirDecisionButton, RetireOfferButton, type AnclajeDeOferta } from "./OfertasClient";
+import { OfertaDesplegable, type ResumenDelLote } from "./OfertaDesplegable";
 import styles from "@/components/panel/shared.module.css";
 
 // ── Ofertas (V5.18 · ancladas al PVC desde la V5.82) ─────────────────────────
@@ -29,7 +33,20 @@ const STATUS_LABEL: Record<string, string> = {
   expirada: "Expirada",
 };
 
-type LotRow = { id: string; name: string; grade: string | null; producer_id: string; fincas: { name: string } | { name: string }[] | null };
+type FincaMin = { name: string; municipio: string | null; departamento: string | null; altitude_m: number | null };
+type LotRow = {
+  id: string;
+  name: string;
+  grade: string | null;
+  producer_id: string;
+  ficha_variedad: string | null;
+  ficha_proceso: string | null;
+  ficha_altitud_m: number | null;
+  harvest_from: string | null;
+  harvest_to: string | null;
+  datasheet: Record<string, unknown> | null;
+  fincas: FincaMin | FincaMin[] | null;
+};
 type OfferRow = {
   id: string;
   lot_id: string;
@@ -60,7 +77,7 @@ export default async function OcpOfertasPage() {
   const [{ data: lotsRaw }, { data: offersRaw }, { data: liveContractsRaw }, { data: decisionesRaw }, edicion] = await Promise.all([
     service
       .from("lots")
-      .select("id, name, grade, producer_id, fincas(name)")
+      .select("id, name, grade, producer_id, ficha_variedad, ficha_proceso, ficha_altitud_m, harvest_from, harvest_to, datasheet, fincas(name, municipio, departamento, altitude_m)")
       .eq("stage", "galardonado")
       .order("created_at", { ascending: false }),
     service
@@ -87,6 +104,12 @@ export default async function OcpOfertasPage() {
   const abiertas = offers.filter((o) => o.status === "emitida");
   const respondidas = offers.filter((o) => o.status !== "emitida").slice(0, 30);
 
+  // V5.168: el resumen de cada lote elegible (lo que CTCx ve al desplegarlo antes de ofertar).
+  const { data: evalsRaw } = colaTemporada.length
+    ? await service.from("lot_evaluations").select("lot_id, status, sca_total, factor_rendimiento, rige_grado, source, created_at").in("lot_id", colaTemporada.map((l) => l.id))
+    : { data: [] };
+  const evalsDe = (id: string) => (((evalsRaw as (EvaluationRow & { lot_id: string })[] | null) ?? []).filter((e) => e.lot_id === id));
+
   const producers = await fetchProducerContacts(service, [
     ...lots.map((l) => l.producer_id),
     ...offers.map((o) => o.producer_id),
@@ -102,9 +125,33 @@ export default async function OcpOfertasPage() {
     return { code: edicion.code, banda: base.banda, mult: base.mult, copKg: base.copKg, copCarga: base.copCarga, copKgDirecta: directa.copKgFinal, minKg: minimoKg(grade), compraInicialKg: COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG };
   };
 
+  const resumenDe = (l: LotRow): ResumenDelLote => {
+    const finca = (Array.isArray(l.fincas) ? l.fincas[0] : l.fincas) as FincaMin | null;
+    const rige = evaluacionQueRige(evalsDe(l.id));
+    const ds = (l.datasheet ?? {}) as Parameters<typeof triadaDeLaFicha>[0] & { base_processing?: string; special_processing?: string };
+    const fecha = (v: string | null) => (v ? new Date(v).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" }) : null);
+    return {
+      productor: name(l.producer_id),
+      finca: finca?.name ?? null,
+      lugar: finca ? [finca.municipio, finca.departamento].filter(Boolean).join(", ") || null : null,
+      grado: l.grade ?? "—",
+      gradoLogo: l.grade && esGradoValido(l.grade) ? GRADO_POR_ID[l.grade].logo : null,
+      punto: rige?.sca_total != null ? Number(rige.sca_total) : null,
+      triada: letras(triadaDeLaFicha(ds).triada),
+      factor: rige?.factor_rendimiento != null ? Number(rige.factor_rendimiento) : null,
+      variedad: l.ficha_variedad,
+      proceso: [ds.base_processing || l.ficha_proceso, ds.special_processing].filter(Boolean).join(" + ") || null,
+      altitud: l.ficha_altitud_m ?? finca?.altitude_m ?? null,
+      cosecha: l.harvest_from && l.harvest_to ? `${fecha(l.harvest_from)} a ${fecha(l.harvest_to)}` : null,
+      referencia: ctcLotReferenceShort(l.id),
+    };
+  };
+
   const lotCard = (l: LotRow, kind: "temporada" | "subasta") => {
-    const finca = (Array.isArray(l.fincas) ? l.fincas[0] : l.fincas) as { name: string } | null;
+    const finca = (Array.isArray(l.fincas) ? l.fincas[0] : l.fincas) as FincaMin | null;
     const anclaje = kind === "temporada" ? anclajeDe(l.grade) : null;
+    // V5.168: el lote de temporada se despliega (resumen + confirmar parámetros) antes de emitir.
+    if (kind === "temporada") return <OfertaDesplegable key={l.id} lotId={l.id} lotName={l.name} resumen={resumenDe(l)} anclaje={anclaje} />;
     return (
       <div key={l.id} className={styles.miniCard}>
         <Link href={`/ocp/kr?lote=${l.id}`} style={{ fontWeight: 700, color: "var(--ink)", textDecoration: "none" }}>
@@ -113,12 +160,10 @@ export default async function OcpOfertasPage() {
         <p className={styles.meta} style={{ margin: "2px 0 6px" }}>
           {name(l.producer_id)} · {finca?.name ?? "—"} · <span className="mono">{ctcLotReferenceShort(l.id)}</span> ·{" "}
           <b style={{ color: `var(--t-${l.grade})` }}>{l.grade}</b>
-          {anclaje && <> · PVC {anclaje.code}: <b>{formatCop(anclaje.copKg)}/kg</b> ({formatCop(anclaje.copCarga)}/carga)</>}
-          {kind === "temporada" && !anclaje && <> · <span className={styles.warn}>sin PVC vigente</span></>}
         </p>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "flex-start" }}>
-          <EmitOfferForm lotId={l.id} kind={kind} lotName={l.name} anclaje={anclaje} />
-          {kind === "temporada" && <NoOfertarForm lotId={l.id} />}
+          {/* La subasta Tyrian registra el mejor postor (sin PVC). */}
+          <EmitOfferForm lotId={l.id} kind={kind} lotName={l.name} anclaje={null} />
         </div>
       </div>
     );

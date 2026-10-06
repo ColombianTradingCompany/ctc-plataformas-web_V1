@@ -1,5 +1,6 @@
 "use client";
 
+import { contratoFirmado } from "@/lib/kaffetal/blindaje";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ToastProvider, useToast } from "@/components/Toast";
 import { puedoSer } from "@/lib/identidad/matriz";
@@ -451,7 +452,7 @@ function Experience() {
           supabase
             .from("lot_offers")
             .select(
-              "id, lot_id, kind, status, grade_snapshot, score_snapshot, variety_snapshot, process_snapshot, price_per_kg, quantity_kg, notes, season_label, lote_de_temporada_pasada, emitted_at, responded_at, response_note, contract_id, terms_version, min_kg, max_kg, compra_inicial_kg, reference_price_source, modificador_pct, expira_at, locked_kg, declaracion"
+              "id, lot_id, kind, status, grade_snapshot, score_snapshot, variety_snapshot, process_snapshot, price_per_kg, quantity_kg, notes, season_label, lote_de_temporada_pasada, emitted_at, responded_at, response_note, contract_id, terms_version, min_kg, max_kg, compra_inicial_kg, reference_price_source, modificador_pct, expira_at, locked_kg, declaracion, lugar_entrega"
             )
             .order("emitted_at", { ascending: false }),
           // RLS (lot_fichas_select_own) scopes this to the producer's own lots
@@ -588,6 +589,8 @@ function Experience() {
         compra_inicial_kg: number | string | null;
         reference_price_source: string | null;
         signed_at: string | null;
+        producer_signed_at?: string | null;
+        lugar_entrega?: string | null;
         freeze_months: number | null;
         contract_months: {
           mes: number;
@@ -650,6 +653,8 @@ function Experience() {
           compraInicialKg: c.compra_inicial_kg != null ? Number(c.compra_inicial_kg) : null,
           referencePriceSource: c.reference_price_source ?? null,
           signedAt: c.signed_at ?? null,
+          producerSignedAt: c.producer_signed_at ?? null,
+          lugarEntrega: c.lugar_entrega ?? null,
           freezeMonths: c.freeze_months ?? null,
           months: meses.map((m) => {
             const mora = moraDelMes(m, hoy);
@@ -703,6 +708,7 @@ function Experience() {
         expira_at: string | null;
         locked_kg: number | string | null;
         declaracion: "trimestre" | "30_dias" | null;
+        lugar_entrega: string | null;
       };
       const lotNameById = new Map(lotRowList.map((l) => [l.id, l.name]));
       setOffers(
@@ -734,6 +740,7 @@ function Experience() {
           expiraAt: o.expira_at ?? null,
           lockedKg: o.locked_kg != null ? Number(o.locked_kg) : null,
           declaracion: o.declaracion ?? null,
+          lugarEntrega: o.lugar_entrega ?? null,
         }))
       );
 
@@ -2112,6 +2119,7 @@ function Experience() {
         <FichaView
           key={curLot.id}
           lot={curLot}
+          impresionHabilitada={contracts.some((c) => c.lotId === curLot.id && contratoFirmado(c.status))}
           fichas={ordenaFichas(lotFichas.filter((f) => f.lotId === curLot.id))}
           fincas={fincas}
           fincaCerts={fincaCerts}

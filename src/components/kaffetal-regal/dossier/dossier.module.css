@@ -411,3 +411,6 @@
   .lectura { columns: 1; }
   .filaTriadaNiveles { grid-template-columns: 1fr; }
 }
+
+/* V5.168 · sin contrato firmado, el lugar del botón de imprimir dice por qué no está. */
+.candado { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; font-size: 9.5pt; color: var(--tinta-suave); border: 1px dashed var(--linea); background: #fff; }

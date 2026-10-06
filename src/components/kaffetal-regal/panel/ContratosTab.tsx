@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { CONTRACT_STATUS_LABEL, GRADES, type GeneralInfo, type Lot, type ProducerContract, type ProducerOffer } from "../data";
+import { CONTRACT_STATUS_LABEL, GRADES, ctcLotReference, type GeneralInfo, type Lot, type ProducerContract, type ProducerOffer } from "../data";
 import { respondToOffer } from "@/lib/ofertas/producerActions";
 import { previsualizarRetiro, retirarDelTrato } from "@/lib/trato/producerActions";
 import { formatCop } from "@/lib/arena/inscriptions";
-import { simularTrato, type Declaracion } from "@/lib/trato/simulador";
+import { simularTrato } from "@/lib/trato/simulador";
+import { LUGAR_DE_ENTREGA_POR_DEFECTO } from "@/lib/trato/terminos";
+import { CalculadoraDelTrato, type DecisionDelTrato } from "./CalculadoraDelTrato";
+import { FirmaDelContrato, type FirmaDelProductor } from "./FirmaDelContrato";
 import { MORA, PENALIDAD_RETIRO_PCT, TRAMO_LIBRE_ACUMULADO_PCT } from "@/lib/trato/terminos";
 import { MORA_LABEL, type Retiro } from "@/lib/trato/mesAMes";
 import { useToast } from "@/components/Toast";
@@ -210,7 +213,13 @@ function ContratoCard({ contract: c, oferta, cuentaCongelada, onRefreshData }: {
         </div>
       )}
       {c.status === "pending_signature" && (
-        <div className={styles.sub}>CTC está preparando la firma — el precio y la cantidad ya quedaron fijados al aceptar.</div>
+        <div className={styles.sub}>{c.producerSignedAt ? "Usted ya firmó: falta la firma de CTCx para que el trato quede vigente." : "CTC está preparando la firma — el precio y la cantidad ya quedaron fijados al aceptar."}</div>
+      )}
+      {/* V5.168: el contrato que el productor firmó con el dedo (se imprime cuando CTCx también firma). */}
+      {c.producerSignedAt && (
+        <a className="btn btn-sm" href={`/kaffetal-regal/contrato/${c.id}`} target="_blank" rel="noopener noreferrer" style={{ justifySelf: "start", marginTop: 6 }}>
+          Ver mi contrato firmado
+        </a>
       )}
       {c.status === "ruptura" && (
         <div className={styles.sub} style={{ color: "var(--accent)", fontWeight: 700 }}>
@@ -469,32 +478,18 @@ function OfferCard({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshDa
   const color = offer.grade ? GRADES[offer.grade] : "var(--line)";
   // V5.83 · la declaración (folio 8, paso 15): solo para las ofertas con términos.
   const conDeclaracion = Boolean(offer.termsVersion);
-  const [kg, setKg] = useState(offer.minKg != null ? String(offer.minKg) : "");
-  const [declaracion, setDeclaracion] = useState<Declaracion>(offer.kind === "directa" ? "30_dias" : "trimestre");
-  const [acepta, setAcepta] = useState(false);
-  const declaradoKg = Number(String(kg).replace(",", "."));
-  const sim = conDeclaracion && Number.isFinite(declaradoKg) && declaradoKg > 0 ? simularTrato({ declaradoKg, copKg: offer.pricePerKg, declaracion, grado: offer.grade?.toLowerCase() }) : null;
-  const cabeEnMaximo = offer.maxKg == null || declaradoKg <= offer.maxKg;
-  // El vencimiento de una directa lo decide el SERVIDOR al aceptar (`respondToOffer` la deja «expirada»): aquí solo se enseña
-  // la fecha — leer la hora en render viola `react-hooks/purity`.
-  const puedeAceptar = !conDeclaracion || (Boolean(sim?.cumpleMinimo) && cabeEnMaximo && acepta);
-  const declaracionParaEnviar = conDeclaracion ? { lockedKg: declaradoKg, declaracion, aceptaTerminos: acepta } : undefined;
+  // V5.168 (owner): la oferta se CALCULA (la calculadora del trato), se DECIDE y se FIRMA con el dedo; aceptar es firmar.
+  const [fase, setFase] = useState<"calcular" | "firmar">("calcular");
+  const [decision, setDecision] = useState<DecisionDelTrato | null>(conDeclaracion ? null : { kg: offer.quantityKg ?? 0, declaracion: "trimestre" });
+  const lugarEntrega = offer.lugarEntrega ?? LUGAR_DE_ENTREGA_POR_DEFECTO;
 
-  async function responder(respuesta: "aceptar" | "rechazar") {
-    if (respuesta === "aceptar") {
-      const ok = window.confirm(
-        `¿Aceptar la oferta de CTC por ${offer.lotName}?\n\n` +
-          `${formatCop(offer.pricePerKg)}/kg de CPS · Grado ${offer.grade ?? "—"}` +
-          (conDeclaracion ? `\nUsted declara ${declaradoKg} kg por ${declaracion === "trimestre" ? "el trimestre" : "30 días"} y acepta las condiciones (términos ${offer.termsVersion}).` : "") +
-          "\nAl aceptar se crea su contrato con CTC con ese precio y esa cantidad (pendiente de la firma de CTC)."
-      );
-      if (!ok) return;
-    }
+  async function responder(respuesta: "aceptar" | "rechazar", firma?: FirmaDelProductor) {
     setBusy(true);
-    const res = await respondToOffer(offer.id, respuesta, respuesta === "rechazar" ? nota : undefined, respuesta === "aceptar" ? declaracionParaEnviar : undefined);
+    const declaracionParaEnviar = conDeclaracion && decision ? { lockedKg: decision.kg, declaracion: decision.declaracion, aceptaTerminos: true } : undefined;
+    const res = await respondToOffer(offer.id, respuesta, respuesta === "rechazar" ? nota : undefined, respuesta === "aceptar" ? declaracionParaEnviar : undefined, respuesta === "aceptar" ? firma : undefined);
     setBusy(false);
     if (res.ok) {
-      showToast(respuesta === "aceptar" ? "Oferta aceptada ✓ · su contrato quedó creado" : "Oferta rechazada — sin compromiso");
+      showToast(respuesta === "aceptar" ? "Contrato firmado ✓ · CTCx lo firma y queda vigente" : "Oferta rechazada, sin compromiso");
       setRechazando(false);
       setNota("");
       onRefreshData();
@@ -549,81 +544,43 @@ function OfferCard({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshDa
           )}
           {offer.notes && <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 4 }}>{offer.notes}</div>}
 
-          {/* ── La calculadora (paso 15): decida la cantidad viendo el escenario ── */}
-          {conDeclaracion && !rechazando && (
-            <div style={{ marginTop: 10, border: "1px dashed var(--line)", borderRadius: 8, padding: "10px 12px", background: "var(--card)" }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 6 }}>Su declaración</div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                <label style={{ fontSize: 12.5 }}>
-                  Comprometo{" "}
-                  <input
-                    inputMode="decimal"
-                    value={kg}
-                    onChange={(e) => setKg(e.target.value)}
-                    style={{ width: 90, padding: "5px 7px", border: "1.5px solid var(--line)", borderRadius: 7, fontSize: 12.5, background: "var(--paper)" }}
-                  />{" "}
-                  kg de CPS
-                </label>
-                {(["trimestre", "30_dias"] as const).map((d) => (
-                  <label key={d} style={{ fontSize: 12.5, display: "flex", gap: 4, alignItems: "center" }}>
-                    <input type="radio" name={`decl-${offer.id}`} checked={declaracion === d} onChange={() => setDeclaracion(d)} />
-                    {d === "trimestre" ? "por el trimestre que empieza" : "por 30 días (periodo en curso)"}
-                  </label>
-                ))}
-              </div>
-              {sim && !sim.cumpleMinimo && offer.minKg != null && (
-                <div className={styles.sub} style={{ color: "var(--accent)", fontWeight: 700, marginTop: 4 }}>
-                  El mínimo para {offer.grade} es {offer.minKg} kg.
-                </div>
-              )}
-              {sim && !cabeEnMaximo && <div className={styles.sub} style={{ color: "var(--accent)", fontWeight: 700, marginTop: 4 }}>Esta oferta admite hasta {offer.maxKg} kg.</div>}
-              {sim && (
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, marginTop: 8 }}>
-                  <thead>
-                    <tr style={{ color: "var(--muted)" }}>
-                      <th style={{ textAlign: "left", padding: "3px 4px" }}>Mes</th>
-                      <th style={{ textAlign: "right", padding: "3px 4px" }}>CTC pide</th>
-                      <th style={{ textAlign: "right", padding: "3px 4px" }}>CTC paga</th>
-                      <th style={{ textAlign: "right", padding: "3px 4px" }}>Retiro libre</th>
-                      <th style={{ textAlign: "right", padding: "3px 4px" }}>Retirar todo costaría</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr style={{ borderTop: "1px solid var(--line)" }}>
-                      <td style={{ padding: "3px 4px" }}>Hoy</td>
-                      <td style={{ textAlign: "right", padding: "3px 4px" }}>{sim.compraInicial.kg} kg</td>
-                      <td style={{ textAlign: "right", padding: "3px 4px" }}>{formatCop(sim.compraInicial.cop)}</td>
-                      <td style={{ textAlign: "right", padding: "3px 4px" }}>—</td>
-                      <td style={{ textAlign: "right", padding: "3px 4px" }}>—</td>
-                    </tr>
-                    {sim.porMes.map((m) => (
-                      <tr key={m.mes} style={{ borderTop: "1px solid var(--line)" }}>
-                        <td style={{ padding: "3px 4px" }}>Mes {m.mes}</td>
-                        <td style={{ textAlign: "right", padding: "3px 4px" }}>{m.pedidoKg} kg</td>
-                        <td style={{ textAlign: "right", padding: "3px 4px" }}>{formatCop(m.pagoCop)}</td>
-                        <td style={{ textAlign: "right", padding: "3px 4px" }}>{m.retiroLibrePct} % ({m.retiroLibreKg} kg)</td>
-                        <td style={{ textAlign: "right", padding: "3px 4px" }}>{formatCop(m.penalidadSiRetiraTodoCop)}</td>
-                      </tr>
-                    ))}
-                    <tr style={{ borderTop: "2px solid var(--line)", fontWeight: 700 }}>
-                      <td style={{ padding: "3px 4px" }}>Total</td>
-                      <td style={{ textAlign: "right", padding: "3px 4px" }}>{sim.declaradoKg} kg</td>
-                      <td style={{ textAlign: "right", padding: "3px 4px" }}>{formatCop(sim.totalCop)}</td>
-                      <td colSpan={2} />
-                    </tr>
-                  </tbody>
-                </table>
-              )}
-              <div className={styles.sub} style={{ marginTop: 6 }}>
-                CTC paga cada pedido en la primera semana del mes siguiente. Retiro libre: {TRAMO_LIBRE_ACUMULADO_PCT[2]} % al cerrar el mes 1 y{" "}
-                {TRAMO_LIBRE_ACUMULADO_PCT[3]} % acumulado al cerrar el mes 2; lo que retire por encima paga el {PENALIDAD_RETIRO_PCT} % del precio de cada carga.
-                Mora: {MORA.semanasSinCargo} semanas sin cargo, {MORA.semanasConRecargo} más con {MORA.recargoPct} %; después, ruptura contractual.
-              </div>
-              <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12.5, marginTop: 8, cursor: "pointer" }}>
-                <input type="checkbox" checked={acepta} onChange={(e) => setAcepta(e.target.checked)} />
-                <span>Acepto las condiciones de retiro, mora y ruptura del trato (términos {offer.termsVersion}) y declaro la cantidad de arriba.</span>
-              </label>
-            </div>
+          {lugarEntrega && <div style={{ fontSize: 12.5, marginTop: 4 }}>Entrega: {lugarEntrega}</div>}
+
+          {/* ── V5.168: la calculadora del trato (decida viendo los escenarios) y, después, el contrato con su firma ── */}
+          {conDeclaracion && !rechazando && fase === "calcular" && (
+            <CalculadoraDelTrato
+              copKg={offer.pricePerKg}
+              grado={offer.grade?.toLowerCase() ?? null}
+              minKg={offer.minKg}
+              maxKg={offer.maxKg}
+              compraInicialKg={offer.compraInicialKg}
+              lugarEntrega={lugarEntrega}
+              declaracionInicial={offer.kind === "directa" ? "30_dias" : "trimestre"}
+              onDecidir={(d) => {
+                setDecision(d);
+                setFase("firmar");
+              }}
+            />
+          )}
+          {!rechazando && fase === "firmar" && decision && (
+            <FirmaDelContrato
+              datos={{
+                productorDocumento: null,
+                loteNombre: offer.lotName,
+                loteReferencia: ctcLotReference(offer.lotId),
+                grado: offer.grade ?? "—",
+                copKg: offer.pricePerKg,
+                declaradoKg: decision.kg,
+                declaracion: decision.declaracion,
+                compraInicialKg: offer.compraInicialKg,
+                lugarEntrega,
+                termsVersion: offer.termsVersion,
+                temporada: offer.seasonLabel,
+              }}
+              ocupado={busy}
+              onFirmar={(f) => responder("aceptar", f)}
+              onVolver={() => setFase("calcular")}
+            />
           )}
 
           {rechazando && (
@@ -637,14 +594,18 @@ function OfferCard({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshDa
           )}
           <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end", marginTop: 10 }}>
             {!rechazando ? (
-              <>
-                <button className="btn btn-sm btn-solid-accent" disabled={busy || !puedeAceptar} onClick={() => responder("aceptar")}>
-                  {busy ? "Enviando…" : conDeclaracion ? "Aceptar con mi declaración" : "Aceptar oferta"}
-                </button>
-                <button className="btn btn-sm" disabled={busy} onClick={() => setRechazando(true)}>
-                  Rechazar…
-                </button>
-              </>
+              fase === "calcular" && (
+                <>
+                  {!conDeclaracion && (
+                    <button className="btn btn-sm btn-solid-accent" disabled={busy} onClick={() => setFase("firmar")}>
+                      Aceptar y firmar el contrato
+                    </button>
+                  )}
+                  <button className="btn btn-sm" disabled={busy} onClick={() => setRechazando(true)}>
+                    Rechazar…
+                  </button>
+                </>
+              )
             ) : (
               <>
                 <button className="btn btn-sm btn-solid" disabled={busy} onClick={() => responder("rechazar")}>

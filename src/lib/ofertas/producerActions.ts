@@ -1,8 +1,12 @@
 "use server";
 
+import { createHash } from "node:crypto";
+import { headers } from "next/headers";
 import { createSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
-import { DECLARACIONES } from "@/lib/trato/terminos";
+import { DECLARACIONES, LUGAR_DE_ENTREGA_POR_DEFECTO } from "@/lib/trato/terminos";
 import { formatCop } from "@/lib/arena/inscriptions";
+import { CONTRATO_VERSION, textoDelContrato } from "@/lib/trato/contrato";
+import { ctcLotReference } from "@/components/kaffetal-regal/data";
 
 // ── La respuesta del productor a una oferta (V5.18 · con declaración desde la V5.83) ────────
 // lot_offers es de solo lectura para el productor (RLS select-own); TODA
@@ -17,6 +21,12 @@ import { formatCop } from "@/lib/arena/inscriptions";
 // productor — y no crea nada. Una oferta con ventana (directa) vencida no se puede aceptar.
 
 export type RespuestaOferta = { ok: true } | { ok: false; message: string };
+
+/** V5.168 (owner): la firma del productor con el dedo — su nombre y el trazo en PNG (data URL). */
+export type FirmaDeAceptacion = { nombre: string; imagenPng: string };
+
+const FIRMA_PREFIJO = "data:image/png;base64,";
+const FIRMA_MAX_BYTES = 600_000;
 
 export type DeclaracionDelProductor = {
   /** Lo que compromete, kg de CPS. */
@@ -42,7 +52,8 @@ export async function respondToOffer(
   offerId: string,
   respuesta: "aceptar" | "rechazar",
   note?: string,
-  declaracion?: DeclaracionDelProductor
+  declaracion?: DeclaracionDelProductor,
+  firma?: FirmaDeAceptacion
 ): Promise<RespuestaOferta> {
   const auth = await requireProducer();
   if ("error" in auth) return { ok: false, message: auth.error };
@@ -51,7 +62,7 @@ export async function respondToOffer(
   const { data: offer } = await service
     .from("lot_offers")
     .select(
-      "id, lot_id, producer_id, status, kind, grade_snapshot, season_id, price_per_kg, quantity_kg, terms_version, min_kg, max_kg, compra_inicial_kg, reference_price_source, reference_price_snapshot, pvc_edition_id, modificador_pct, expira_at, lots(name)"
+      "id, lot_id, producer_id, status, kind, grade_snapshot, season_id, price_per_kg, quantity_kg, terms_version, min_kg, max_kg, compra_inicial_kg, reference_price_source, reference_price_snapshot, pvc_edition_id, modificador_pct, expira_at, lugar_entrega, season_label, lots(name)"
     )
     .eq("id", offerId)
     .maybeSingle();
@@ -108,7 +119,42 @@ export async function respondToOffer(
     declarado = declaracion.declaracion;
   }
 
-  // Aceptar ⇒ el contrato nace aquí, LLENO, pendiente de la firma de CTC.
+  // V5.168 · LA FIRMA DEL PRODUCTOR: aceptar es firmar. Se valida y se guarda ANTES de crear el contrato (si la imagen no se
+  // puede guardar, no nace un contrato sin firma). El texto firmado es el que arma `textoDelContrato` con estos mismos datos —
+  // la pantalla le enseñó exactamente ese— y se guarda su huella SHA-256.
+  if (!firma) return { ok: false, message: "Para aceptar hay que firmar el contrato (su nombre y su firma con el dedo)." };
+  const nombreFirma = String(firma.nombre ?? "").replace(/\s+/g, " ").trim();
+  if (nombreFirma.length < 5) return { ok: false, message: "Escriba su nombre completo para firmar." };
+  if (typeof firma.imagenPng !== "string" || !firma.imagenPng.startsWith(FIRMA_PREFIJO)) return { ok: false, message: "La firma no llegó bien. Fírmela de nuevo." };
+  const firmaBytes = Buffer.from(firma.imagenPng.slice(FIRMA_PREFIJO.length), "base64");
+  if (firmaBytes.length < 200 || firmaBytes.length > FIRMA_MAX_BYTES) return { ok: false, message: "La firma no llegó bien. Fírmela de nuevo." };
+  const lugarEntrega = (offer as { lugar_entrega?: string | null }).lugar_entrega?.trim() || LUGAR_DE_ENTREGA_POR_DEFECTO;
+  const texto = textoDelContrato({
+    productorNombre: nombreFirma,
+    productorDocumento: null,
+    loteNombre: lot?.name ?? "—",
+    loteReferencia: ctcLotReference(offer.lot_id),
+    grado: offer.grade_snapshot,
+    copKg: Number(offer.price_per_kg),
+    declaradoKg: lockedKg ?? 0,
+    declaracion: declarado ?? "trimestre",
+    compraInicialKg: offer.compra_inicial_kg != null ? Number(offer.compra_inicial_kg) : null,
+    lugarEntrega,
+    termsVersion: offer.terms_version ?? null,
+    temporada: (offer as { season_label?: string | null }).season_label ?? null,
+  });
+  const huella = createHash("sha256").update(texto, "utf8").digest("hex");
+  const rutaFirma = `contratos/oferta-${offer.id}/firma-productor-${Date.now()}.png`;
+  const { error: errorFirma } = await service.storage.from("kaffetal-media").upload(rutaFirma, firmaBytes, { contentType: "image/png", upsert: false });
+  if (errorFirma) return { ok: false, message: "No se pudo guardar su firma. Intente de nuevo." };
+  const h = await headers();
+  const metaFirma = {
+    user_agent: h.get("user-agent")?.slice(0, 300) ?? null,
+    ip: (h.get("x-forwarded-for") ?? "").split(",")[0].trim() || null,
+    firmado_en: now,
+  };
+
+  // Aceptar ⇒ el contrato nace aquí, LLENO y FIRMADO por el productor, pendiente de la firma de CTC.
   const { data: contract, error } = await service
     .from("purchase_contracts")
     .insert({
@@ -127,6 +173,13 @@ export async function respondToOffer(
       compra_inicial_kg: offer.compra_inicial_kg != null ? Number(offer.compra_inicial_kg) : null,
       pvc_edition_id: offer.pvc_edition_id ?? null,
       modificador_pct: offer.modificador_pct != null ? Number(offer.modificador_pct) : null,
+      lugar_entrega: lugarEntrega,
+      producer_signed_at: now,
+      producer_signer_name: nombreFirma,
+      producer_signature_path: rutaFirma,
+      producer_signature_meta: metaFirma,
+      contract_text_version: CONTRATO_VERSION,
+      contract_text_sha256: huella,
     })
     .select("id")
     .single();
@@ -149,7 +202,7 @@ export async function respondToOffer(
     action: "created",
     new_status: "pending_signature",
     performed_by: auth.userId,
-    notes: `Nace de la oferta ${offer.kind} aceptada por el productor · ${formatCop(Number(offer.price_per_kg))}/kg${lockedKg ? ` · ${lockedKg} kg` : ""}${declaradoTxt}.`,
+    notes: `Nace de la oferta ${offer.kind} aceptada y FIRMADA por el productor (${nombreFirma}, texto ${CONTRATO_VERSION}, sha256 ${huella.slice(0, 12)}…) · ${formatCop(Number(offer.price_per_kg))}/kg${lockedKg ? ` · ${lockedKg} kg` : ""}${declaradoTxt}.`,
   });
   await service.from("audit_log").insert({
     entity_type: "lot_offer",

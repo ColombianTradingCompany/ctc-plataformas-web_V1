@@ -90,7 +90,7 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   check("y le avisa al productor sin devolución", decision.includes('from("producer_comm_log")') && !decision.includes("reembolso"));
   const emit = ofertas.slice(ofertas.indexOf("export async function emitOffer("), ofertas.indexOf("export async function retireOffer("));
   check("emitir una oferta reabre la decisión", emit.includes("decision_comercial: null"));
-  check("la oferta de temporada lleva la compra inicial de CTCx y el mínimo del grado", emit.includes("compra_inicial_kg: kind === \"temporada\" ? COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG : null") && emit.includes("min_kg: CON_DECLARACION.includes(kind) ? minimoKg(lot.grade) : null"));
+  check("la oferta de temporada lleva la compra inicial de CTCx y el mínimo (el del grado, o el que CTCx confirma al emitir, V5.168)", emit.includes("compra_inicial_kg: kind === \"temporada\" ? COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG : null") && emit.includes("min_kg: CON_DECLARACION.includes(kind) ? (minConfirmado ?? minimoKg(lot.grade)) : null") && emit.includes("lugar_entrega: lugarEntrega,") && emit.includes("|| LUGAR_DE_ENTREGA_POR_DEFECTO"));
   check("la directa lleva la ventana y su vencimiento", emit.includes("ventana_dias: esDirecta ? VENTANA_DIRECTA_DIAS : null") && emit.includes("expira_at: esDirecta"));
   check("y los términos con los que nace (también la excepción: es un Lote de Temporada)", emit.includes("terms_version: CON_DECLARACION.includes(kind) ? TERMINOS_VERSION : null") && ofertas.includes('const CON_DECLARACION: readonly OfferKind[] = ["temporada", "directa", "excepcion"]'));
 }
@@ -132,8 +132,10 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   check("signContract ya no teclea precio ni cantidad: solo firma", !/formData\.get\("price_per_kg_locked"\)/.test(sign) && !/formData\.get\("quantity_frozen_kg"\)/.test(sign) && sign.includes('update({ signed_at: new Date().toISOString(), status: "active" })'));
   check("y se niega si el contrato nació vacío", sign.includes("contract.price_per_kg_locked == null || contract.quantity_frozen_kg == null"));
   const tab = lee("src/components/kaffetal-regal/panel/ContratosTab.tsx");
-  check("el productor decide con la calculadora (simularTrato) y marca las condiciones", tab.includes("simularTrato({ declaradoKg, copKg: offer.pricePerKg, declaracion") && tab.includes("aceptaTerminos: acepta"));
-  check("y no puede aceptar por debajo del mínimo ni sin marcar", tab.includes("Boolean(sim?.cumpleMinimo) && cabeEnMaximo && acepta"));
+  const calc = lee("src/components/kaffetal-regal/panel/CalculadoraDelTrato.tsx");
+  const firmaUi = lee("src/components/kaffetal-regal/panel/FirmaDelContrato.tsx");
+  check("el productor decide con la calculadora (V5.168: las dos opciones lado a lado sobre simularTrato) y después FIRMA el contrato", tab.includes("<CalculadoraDelTrato") && tab.includes("<FirmaDelContrato") && calc.includes('simularTrato({ declaradoKg: kg, copKg, declaracion: "30_dias", grado })') && calc.includes('simularTrato({ declaradoKg: kg, copKg, declaracion: "trimestre", grado })') && tab.includes("aceptaTerminos: true") && tab.includes('respuesta === "aceptar" ? firma : undefined'));
+  check("y no puede decidir por debajo del mínimo ni firmar sin nombre, trazo y la casilla", calc.includes("const cumple = kg >= minimo && (maxKg == null || kg <= maxKg);") && calc.includes("disabled={!cumple}") && firmaUi.includes("const listo = firmaSuficiente && nombre.trim().length >= 5 && leido && !ocupado;") && firmaUi.includes('touchAction: "none"'));
   check("«Mi trato» enseña lo declarado, la compra inicial y los tramos", tab.includes("CTC compra de inmediato") && tab.includes("retiro libre al cerrar cada mes"));
 }
 
@@ -243,6 +245,37 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   // V5.103: el tercer barrido es el de la inactividad (owner, 2026-09-30); `qa-inactividad` lo vigila por dentro.
   check("el cron semanal corre los tres barridos y solo esos tres", cron.includes("correrRecordatorios(") && cron.includes("correrRecordatoriosDeMora(") && cron.includes("correrBarridoDeInactividad(") && (cron.match(/await correr/g) ?? []).length === 3);
   check("el OCP enseña cuántos recordatorios van", lee("src/app/ocp/(app)/contratos/[id]/page.tsx").includes("MAX_RECORDATORIOS_MORA"));
+}
+
+// ── V5.168 (owner, 2026-10-06) · la oferta se despliega y se confirma en el OCP; el productor calcula, decide y FIRMA con el dedo;
+//    los documentos llevan marca de agua y se imprimen solo con contrato firmado ─────────────────────────────────────────
+{
+  const { clausulasDelContrato, textoDelContrato, CONTRATO_VERSION } = await import("../src/lib/trato/contrato.ts");
+  const { contratoFirmado, textoDeMarca, ESTADOS_DE_CONTRATO_FIRMADO } = await import("../src/lib/kaffetal/blindaje.ts");
+  const { LUGAR_DE_ENTREGA_POR_DEFECTO } = await import("../src/lib/trato/terminos.ts");
+  const datos = { productorNombre: "Ana Pérez", productorDocumento: null, loteNombre: "Lote X", loteReferencia: "CTC-L-AAAA0000", grado: "red", copKg: 26000, declaradoKg: 750, declaracion: "trimestre", compraInicialKg: 125, lugarEntrega: LUGAR_DE_ENTREGA_POR_DEFECTO, termsVersion: "2026-09-24", temporada: "Q4 2026" };
+  const cl = clausulasDelContrato(datos);
+  const todo = cl.map((c) => c.texto).join(" ");
+  check("contrato · once cláusulas armadas con los datos de la oferta y la declaración (precio, cargas, entrega, retiro, mora, documentos)", cl.length === 11 && todo.includes("$26.000 COP por kg") && todo.includes("$3.250.000 COP por carga") && todo.includes("750 kg de CPS (6 cargas") && todo.includes("Bucaramanga") && todo.includes("25 %") && todo.includes("Grado CTCx Red") && cl[9].titulo.includes("Documentos y confidencialidad"));
+  check("contrato · el texto es el mismo con «red» o «Red» (la pantalla y el servidor firman la misma huella)", textoDelContrato(datos) === textoDelContrato({ ...datos, grado: "Red" }) && CONTRATO_VERSION === "2026-10-06");
+  const resp = lee("src/lib/ofertas/producerActions.ts");
+  check("aceptar ES firmar: sin firma no hay contrato; la imagen se guarda en Storage privado ANTES de crear el contrato", resp.includes('if (!firma) return { ok: false, message: "Para aceptar hay que firmar el contrato') && resp.indexOf('storage.from("kaffetal-media").upload(rutaFirma') < resp.indexOf('.from("purchase_contracts")\n    .insert(') && resp.includes("FIRMA_MAX_BYTES"));
+  check("la firma guarda nombre, fecha, dispositivo y la huella SHA-256 del texto firmado", ["producer_signed_at: now,", "producer_signer_name: nombreFirma,", "producer_signature_path: rutaFirma,", "producer_signature_meta: metaFirma,", "contract_text_version: CONTRATO_VERSION,", "contract_text_sha256: huella,"].every((k) => resp.includes(k)) && resp.includes('createHash("sha256").update(texto, "utf8")'));
+  const contratoPag = lee("src/app/kaffetal-regal/contrato/[id]/page.tsx");
+  check("el contrato del productor: solo el dueño, cláusulas regeneradas, huella comprobada, las dos firmas; se imprime firmado por las dos partes", contratoPag.includes("lote.producer_id !== user.id") && contratoPag.includes("const integro = huella === c.contract_text_sha256;") && contratoPag.includes("const puedeImprimir = contratoFirmado(c.status);") && contratoPag.includes("<MarcaDeAgua"));
+  check("blindaje · «firmado» = CTCx ya firmó (active, reconditioning, completed, renovado); pendiente de firma NO imprime", contratoFirmado("active") && contratoFirmado("completed") && !contratoFirmado("pending_signature") && !contratoFirmado("cancelled") && ESTADOS_DE_CONTRATO_FIRMADO.length === 4);
+  check("blindaje · la marca dice CTCx, la referencia, el productor y el uso exclusivo", textoDeMarca({ referencia: "CTC-L-AAAA0000", productor: "Ana Pérez", fecha: "2026-10-06T10:00:00Z" }) === "CTCx · CTC-L-AAAA0000 · Ana Pérez · Uso exclusivo con CTCx · 2026-10-06");
+  const docs = {
+    dossier: lee("src/components/kaffetal-regal/dossier/DossierCtcx.tsx"),
+    visa: lee("src/components/kaffetal-regal/LotEudrCertDoc.tsx"),
+    pasaporte: lee("src/components/kaffetal-regal/EudrDossierDoc.tsx"),
+    ficha: lee("src/components/kaffetal-regal/ficha/FichaPreview.tsx"),
+  };
+  check("blindaje · dossier, Visa del lote, Pasaporte de la finca y Ficha: marca de agua y el botón de imprimir solo con contrato firmado", Object.values(docs).every((d) => d.includes("<MarcaDeAgua") && d.includes("<Blindaje")) && docs.dossier.includes("d.blindaje.puedeImprimir ? <BotonImprimir") && docs.visa.includes("blindaje.puedeImprimir ? <PrintButton />") && docs.ficha.includes("{puedeImprimir ? (") && lee("src/lib/kaffetal/blindajeServidor.ts").includes('.in("status", [...ESTADOS_DE_CONTRATO_FIRMADO])'));
+  const blind = lee("src/components/kaffetal-regal/blindaje/Blindaje.tsx");
+  check("blindaje · sin contrato: sin menú contextual ni copiar, sin atajos de imprimir/guardar; imprimir desde el navegador saca el aviso", blind.includes('"contextmenu", "copy", "cut", "dragstart", "selectstart"') && blind.includes('["p", "s", "c", "x", "a", "u"]') && blind.includes("body * { display: none !important; }"));
+  const desp = lee("src/app/ocp/(app)/ofertas/OfertaDesplegable.tsx");
+  check("OCP · el lote se despliega con su resumen y se confirma: mínimo, entrega (Bucaramanga por defecto), precio por kg y carga; cambiar el precio lo vuelve excepción con motivo", desp.includes("<details") && desp.includes("useState(LUGAR_DE_ENTREGA_POR_DEFECTO)") && desp.includes("Cantidad mínima disponible de CPS (kg)") && desp.includes("Precio COP por carga") && desp.includes('const claseEfectiva: OfferKind = cambiaPrecio || precioAncla == null ? "excepcion" : clase;') && lee("src/app/ocp/(app)/ofertas/page.tsx").includes("<OfertaDesplegable"));
 }
 
 if (fallos.length) {

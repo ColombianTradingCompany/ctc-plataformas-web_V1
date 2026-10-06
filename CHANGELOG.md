@@ -19,6 +19,30 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.168] — 2026-10-06 (commit pendiente)
+
+- **Añadido**: **OCP · «Pendiente de Oferta»: cada lote se despliega** (owner, 2026-10-06) con su resumen (sello, Punto SCA,
+  tríada, factor, variedad, proceso, altitud, origen, cosecha) y se **confirman los parámetros de la oferta**: cantidad mínima
+  disponible de CPS, condiciones de entrega (por defecto: Bucaramanga, en las instalaciones de CTCx) y el precio por kg y por
+  carga. El precio llega del PVC; si se cambia, la oferta sale como excepción con motivo.
+- **Añadido**: **la calculadora del trato para el productor**: cuánto compromete (en cargas), las dos opciones lado a lado
+  (este periodo · 30 días, o el próximo trimestre), cómo llegarían los pedidos y los pagos y qué pasaría si retira café
+  (tramo libre y penalidad), sobre el mismo simulador del trato. Al final, «Tomar la decisión».
+- **Añadido**: **el contrato con firma con el dedo**: el productor lee las once cláusulas armadas con su decisión
+  (`src/lib/trato/contrato.ts`, versión 2026-10-06), escribe su nombre y firma en el recuadro. Aceptar ES firmar: la imagen va a
+  Storage privado y el contrato guarda fecha, nombre, dispositivo y la huella SHA-256 del texto firmado. El contrato se ve en
+  `/kaffetal-regal/contrato/[id]` (huella comprobada, las dos firmas) y la firma del productor sale en el contrato del OCP.
+- **Seguridad**: **el blindaje de los documentos del productor** (owner: el «moat»): el dossier, la Visa EUDR del lote, el
+  Pasaporte de la finca, la Ficha y el contrato llevan **marca de agua** (CTCx · referencia · productor · uso exclusivo con
+  CTCx · fecha), y **solo se imprimen o descargan con un contrato firmado** (del lote; para la finca, de un lote que salga de
+  ella). Sin contrato no hay botón, se bloquean copiar, el menú contextual y los atajos de imprimir y guardar, e imprimir desde
+  el navegador saca un aviso en vez del documento (`src/lib/kaffetal/blindaje.ts`).
+- **Datos**: migración `2026-10-06_oferta_entrega_y_firma_del_productor.sql` (aditiva): `lot_offers.lugar_entrega` y, en
+  `purchase_contracts`, la entrega y la firma del productor (`producer_signed_at`, `producer_signer_name`,
+  `producer_signature_path`, `producer_signature_meta`, `contract_text_version`, `contract_text_sha256`).
+- **Seguridad**: `qa-trato` (106 → 116).
+- **Docs**: charters `kaffetal-regal`, `consolas`; ALINEACION §3.
+
 ## [V5.167] — 2026-10-06 (commit 60b77a7)
 
 - **Cambiado**: **el productor ya no ve el ajuste CTCx en el dossier** (owner, 2026-10-06). El grado se presenta como Punto SCA ×

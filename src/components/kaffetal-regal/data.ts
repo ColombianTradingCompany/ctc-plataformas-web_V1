@@ -398,6 +398,8 @@ export type ProducerOffer = {
   expiraAt: string | null;
   lockedKg: number | null;
   declaracion: "trimestre" | "30_dias" | null;
+  /** V5.168: las condiciones de entrega que CTCx confirmó al emitir. */
+  lugarEntrega: string | null;
 };
 
 export type ProducerContract = {
@@ -418,6 +420,9 @@ export type ProducerContract = {
   // V5.84 (fase 7): el trato mes a mes — lo que CTC pide, lo enviado, lo pagado y los retiros; la mora se DERIVA
   // al cargar (`moraDelMes` / `resumenDelTrato`, la misma función que lee el OCP), nunca se guarda.
   signedAt: string | null;
+  /** V5.168: la firma del productor (con el dedo, al aceptar) y las condiciones de entrega del contrato. */
+  producerSignedAt: string | null;
+  lugarEntrega: string | null;
   freezeMonths: number | null;
   months: ContractMonth[];
   mesEnCurso: number;

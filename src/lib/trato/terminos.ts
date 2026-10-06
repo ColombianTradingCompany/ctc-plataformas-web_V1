@@ -84,3 +84,6 @@ export function minimoKg(grado: string | null | undefined): number | null {
   if (!m) return null;
   return m.kg ?? (m.cargas ?? 0) * CARGA_KG;
 }
+
+/** V5.168 (owner, 2026-10-06): las condiciones de entrega por defecto de una oferta — CTCx las confirma (o cambia) al emitir. */
+export const LUGAR_DE_ENTREGA_POR_DEFECTO = "Entregado en Bucaramanga (Santander), en las instalaciones de CTCx.";

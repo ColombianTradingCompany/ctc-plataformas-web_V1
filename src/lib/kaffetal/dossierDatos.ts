@@ -25,6 +25,7 @@ import { caracterizacionDelDossier, planillaDeEvaluacion, type DossierCaracteriz
 import { conjeturasDelLote, lecturaDeLaRueda, type Conjetura, type LecturaDeLaRueda } from "@/lib/kaffetal/conjeturas";
 import { fichaDeVariedad, rangoDeAltitud, GRANO_LABEL } from "@/lib/catacion/variedades";
 import { IMAGEN_DE_ORIGEN_POR_DEFECTO } from "@/lib/imagenDeOrigen";
+import { ESTADOS_DE_CONTRATO_FIRMADO, textoDeMarca } from "@/lib/kaffetal/blindaje";
 
 export type { Lang };
 
@@ -117,6 +118,8 @@ export type DossierCtcxData = {
   catalogoUrl: string | null;
   qrSvg: string | null;
   generatedOn: string;
+  /** V5.168 · el blindaje: la marca de agua (siempre) y si se puede imprimir (solo con contrato firmado de este lote). */
+  blindaje: { puedeImprimir: boolean; marca: string };
 };
 
 type FincaRow = {
@@ -285,7 +288,7 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
   const camposDe = (f: FincaRow): FincaEudrFields => fincaEudrFieldsDe(f as unknown as Parameters<typeof fincaEudrFieldsDe>[0]);
   const fincaIds = origen.map((x) => x.f.id);
 
-  const [producers, { data: perfilRaw }, { data: certRaw }, { data: fichaRaw }, { data: evalRaw }, { data: parcelasRaw }] = await Promise.all([
+  const [producers, { data: perfilRaw }, { data: certRaw }, { data: fichaRaw }, { data: evalRaw }, { data: parcelasRaw }, { data: firmadosRaw }] = await Promise.all([
     fetchProducerContacts(service, [lot.producer_id]),
     service.from("producer_profiles").select("company_name, avatar_asset_id, gallery_asset_ids").eq("profile_id", lot.producer_id).maybeSingle(),
     fincaIds.length
@@ -297,6 +300,7 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
       .select("status, source, sca_total, punto, factor_rendimiento, created_at, rige_grado, physical_data, sca_data, rueda, rueda_detalle, ajuste_ctcx_puntos")
       .eq("lot_id", lotId),
     fincaIds.length ? service.from("finca_parcelas").select("finca_id, name, area_ha, lat, lng, polygon_geojson, position").in("finca_id", fincaIds).order("position") : Promise.resolve({ data: [] }),
+    service.from("purchase_contracts").select("id").eq("lot_id", lotId).in("status", [...ESTADOS_DE_CONTRATO_FIRMADO]).limit(1),
   ]);
 
   const perfil = perfilRaw as { company_name: string | null; avatar_asset_id: string | null; gallery_asset_ids: string[] | null } | null;
@@ -490,5 +494,9 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
     catalogoUrl,
     qrSvg,
     generatedOn: new Date().toISOString(),
+    blindaje: {
+      puedeImprimir: (((firmadosRaw as { id: string }[] | null) ?? []).length) > 0,
+      marca: textoDeMarca({ referencia: ctcLotReference(lot.id), productor: producer?.fullName ?? null, fecha: new Date(), lang }),
+    },
   };
 }

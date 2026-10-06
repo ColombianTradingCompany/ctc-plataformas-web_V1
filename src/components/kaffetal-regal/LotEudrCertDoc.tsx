@@ -1,6 +1,9 @@
 import { ctcLotReference, ctcLotReferenceShort, fincaCode } from "./data";
 import { PRODUCT_RISK_QUESTIONS } from "@/lib/eudr";
 import { PrintButton } from "./PrintButton";
+import { MarcaDeAgua } from "./blindaje/MarcaDeAgua";
+import { Blindaje } from "./blindaje/Blindaje";
+import { AVISO_SIN_CONTRATO } from "@/lib/kaffetal/blindaje";
 
 const CUSTODY_LABEL: Record<string, string> = {
   finca: "Finca",
@@ -55,6 +58,7 @@ export function LotEudrCertDoc({
   archetypeLabel = null,
   harvestWindow = null,
   dds = null,
+  blindaje,
 }: {
   lot: CertLot;
   fincas: CertFinca[];
@@ -69,6 +73,8 @@ export function LotEudrCertDoc({
   /** F3: el artefacto de la DDS presentada — referencia + código de
    *  verificación del Information System de la UE (no es un certificado). */
   dds?: { reference: string; verificationCode: string | null; filedAt: string | null } | null;
+  /** V5.168 · el blindaje: la marca de agua personalizada y la impresión solo con contrato firmado del lote. */
+  blindaje: { puedeImprimir: boolean; marca: string };
 }) {
   const row = (label: string, value: React.ReactNode) => (
     <tr>
@@ -94,17 +100,13 @@ export function LotEudrCertDoc({
           `,
         }}
       />
-      <div id="dossier-watermark" aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 0, opacity: 0.06 }}>
-        <div style={{ transform: "rotate(-30deg)", fontSize: 46, fontWeight: 800, lineHeight: "160px", whiteSpace: "nowrap", color: "#3C0A86" }}>
-          {Array.from({ length: 40 }).map((_, i) => (
-            <div key={i}>{"CTCx  ".repeat(12)}</div>
-          ))}
-        </div>
-      </div>
+      {/* V5.168 · la marca de agua personalizada (referencia, productor, uso exclusivo con CTCx, fecha) y el blindaje. */}
+      <MarcaDeAgua texto={blindaje.marca} />
+      <Blindaje puedeImprimir={blindaje.puedeImprimir} aviso={AVISO_SIN_CONTRATO.es} />
 
       <div style={{ position: "relative", zIndex: 1 }}>
         <div className="no-print" style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-          <PrintButton />
+          {blindaje.puedeImprimir ? <PrintButton /> : <span style={{ fontSize: 12, color: "#555", border: "1px dashed #ccc", padding: "6px 10px" }}>{AVISO_SIN_CONTRATO.es}</span>}
         </div>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>

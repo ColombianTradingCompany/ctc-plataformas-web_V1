@@ -5,6 +5,9 @@ import { mapPreviewUrl } from "@/lib/eudr";
 import { daneCodeFor } from "@/lib/daneCodes";
 import { EudrDossierDoc, type DossierFinca } from "@/components/kaffetal-regal/EudrDossierDoc";
 import { dossierParcelasAndCerts } from "@/lib/dossierExtras";
+import { impresionDelProductor } from "@/lib/kaffetal/blindajeServidor";
+import { textoDeMarca } from "@/lib/kaffetal/blindaje";
+import { fincaCode } from "@/components/kaffetal-regal/data";
 
 type CommRow = { id: string; note: string; created_at: string; author_role: string };
 
@@ -63,6 +66,8 @@ export default async function ProducerCertPage({ params }: { params: Promise<{ i
   const producer = producers.get(finca.producer_id);
   const dane = daneCodeFor(finca.departamento, finca.municipio);
   const { parcelas, certificates } = await dossierParcelasAndCerts(service, id);
+  // V5.168 · el blindaje: imprime solo con un contrato firmado de un lote que salga de esta finca.
+  const impresion = await impresionDelProductor(service, finca.producer_id);
 
   return (
     <EudrDossierDoc
@@ -76,6 +81,7 @@ export default async function ProducerCertPage({ params }: { params: Promise<{ i
       legalDocUrl={finca.eudr_legal_docs_asset_id ? urlMap.get(finca.eudr_legal_docs_asset_id) : undefined}
       urlByAsset={Object.fromEntries(urlMap)}
       comms={(commsData as CommRow[] | null) ?? []}
+      blindaje={{ puedeImprimir: impresion.fincas.has(finca.id), marca: textoDeMarca({ referencia: fincaCode(finca.id), productor: producer?.fullName ?? null, fecha: new Date() }) }}
     />
   );
 }

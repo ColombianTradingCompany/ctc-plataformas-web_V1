@@ -62,11 +62,14 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
   const { data: contract } = await service
     .from("purchase_contracts")
     .select(
-      "id, status, grade_snapshot, signed_at, reference_price_source, reference_price_snapshot, price_per_kg_locked, quantity_frozen_kg, terms_version, declaracion, compra_inicial_kg, modificador_pct, freeze_months, ruptura_at, ruptura_motivo, renovado_at, lots(name, producer_id, fincas(name))"
+      "id, status, grade_snapshot, signed_at, reference_price_source, reference_price_snapshot, price_per_kg_locked, quantity_frozen_kg, terms_version, declaracion, compra_inicial_kg, modificador_pct, freeze_months, ruptura_at, ruptura_motivo, renovado_at, lugar_entrega, producer_signed_at, producer_signer_name, producer_signature_path, producer_signature_meta, contract_text_version, contract_text_sha256, lots(name, producer_id, fincas(name))"
     )
     .eq("id", id)
     .single();
   if (!contract) notFound();
+  // V5.168: la firma del productor vive en Storage privado; se lee con una URL firmada de corta vida.
+  const rutaFirma = (contract as { producer_signature_path?: string | null }).producer_signature_path ?? null;
+  const firmaProductorUrl = rutaFirma ? ((await service.storage.from("kaffetal-media").createSignedUrl(rutaFirma, 600)).data?.signedUrl ?? null) : null;
 
   const lot = contract.lots as unknown as { name: string; producer_id: string; fincas: { name: string } | null } | null;
 
@@ -109,6 +112,25 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
         {lot?.fincas?.name} {contract.grade_snapshot && `· grado ${GRADE_LABEL[contract.grade_snapshot] ?? contract.grade_snapshot}`}
         {cuentaCongelada && <> · <span className={styles.badgeBad}>cuenta del productor congelada</span></>}
       </p>
+
+      {/* V5.168 · la firma del PRODUCTOR (con el dedo, al aceptar la oferta): su trazo, nombre, fecha y la huella del texto. */}
+      {contract.producer_signed_at ? (
+        <div className={styles.card} style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap", marginBottom: 14 }}>
+          {firmaProductorUrl && (
+            // eslint-disable-next-line @next/next/no-img-element -- la firma, URL firmada de Storage privado
+            <img src={firmaProductorUrl} alt={`Firma de ${contract.producer_signer_name ?? "el productor"}`} style={{ height: 64, width: "auto", background: "#fff", border: "1px solid var(--line)", borderRadius: 6 }} />
+          )}
+          <p className={styles.meta} style={{ margin: 0 }}>
+            Firmado por el productor: <b>{contract.producer_signer_name}</b> · {fecha(contract.producer_signed_at)}
+            {contract.lugar_entrega && <> · entrega: {contract.lugar_entrega}</>}
+            <br />
+            Texto {contract.contract_text_version ?? "—"} · SHA-256 <span className="mono">{String(contract.contract_text_sha256 ?? "").slice(0, 16)}…</span>
+            {(contract.producer_signature_meta as { ip?: string | null } | null)?.ip && <> · IP {(contract.producer_signature_meta as { ip?: string | null }).ip}</>}
+          </p>
+        </div>
+      ) : (
+        <p className={styles.meta}>Contrato anterior a la firma digital del productor (V5.168).</p>
+      )}
 
       {contract.status === "pending_signature" ? (
         <ActionForm

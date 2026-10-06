@@ -146,8 +146,11 @@ export function FichaView({
   referencias = [],
   onAddReferencia,
   onSolicitarRevisionDeReferencia,
+  impresionHabilitada = false,
 }: {
   lot: Lot;
+  /** V5.168 · el blindaje: la Ficha se descarga o imprime solo con un contrato firmado del lote (`src/lib/kaffetal/blindaje.ts`). */
+  impresionHabilitada?: boolean;
   /** V5.23: el set de Fichas Técnicas del lote (las compila CTCx en
    *  /ocp/kr?lote= (la vista del lote); RLS select-own) — se listan en los panes B2 y B3, la
    *  oficial primero. Solo lectura. */
@@ -694,7 +697,7 @@ export function FichaView({
               )}
               {active === "ficha" && (
                 <>
-                  <FichaPreview data={data} factor={factor} mesh={mesh} sca={sca} varTotal={vTotal} scorings={lot.scaScorings} />
+                  <FichaPreview data={data} factor={factor} mesh={mesh} sca={sca} varTotal={vTotal} scorings={lot.scaScorings} puedeImprimir={impresionHabilitada} referencia={lot.id} />
                   {/* V5.143 (owner): «debajo de Ficha (vista final) debe haber un botón nuevo». */}
                   {effectiveIntakeStep >= 4 && (
                     <div style={{ marginTop: 14 }}>

@@ -9,7 +9,7 @@ import { formatCop } from "@/lib/arena/inscriptions";
 import { esGradoValido, type GradoId } from "@/lib/grados/definicion";
 import { pvcParaGrado, type PvcDeGrado } from "@/lib/pvc/servicio";
 import { esPastCrop } from "@/lib/trato/mesAMes";
-import { CARGA_KG, COMPRA_INICIAL_CTCX_CARGAS, minimoKg, modificadorDeOferta, TERMINOS_VERSION, VENTANA_DIRECTA_DIAS } from "@/lib/trato/terminos";
+import { CARGA_KG, COMPRA_INICIAL_CTCX_CARGAS, LUGAR_DE_ENTREGA_POR_DEFECTO, minimoKg, modificadorDeOferta, TERMINOS_VERSION, VENTANA_DIRECTA_DIAS } from "@/lib/trato/terminos";
 
 // ── Ofertas: CTCx decide y oferta, el productor acepta (V5.18 · anclada al PVC desde la V5.82) ────
 // El circuito comercial del galardón, folio 8 del owner (pasos 13–14 y 19; fase 5 del PLAN_CIRCUITO_DEL_LOTE).
@@ -80,6 +80,10 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
   const maxKg = numOpcional(formData.get("max_kg"));
   if (maxKg !== null && (Number.isNaN(maxKg) || maxKg <= 0)) return { ok: false, error: "El máximo, si se indica, debe ser mayor que 0 kg." };
   const notes = String(formData.get("notes") || "").trim() || null;
+  // V5.168 (owner): CTCx CONFIRMA al emitir la cantidad mínima disponible de CPS y las condiciones de entrega.
+  const minConfirmado = numOpcional(formData.get("min_kg"));
+  if (minConfirmado !== null && (Number.isNaN(minConfirmado) || minConfirmado <= 0)) return { ok: false, error: "La cantidad mínima, si se indica, debe ser mayor que 0 kg." };
+  const lugarEntrega = String(formData.get("lugar_entrega") ?? "").trim() || LUGAR_DE_ENTREGA_POR_DEFECTO;
 
   const { data: lot } = await service
     .from("lots")
@@ -183,7 +187,8 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
     reference_price_snapshot: pvc?.precio.copKg ?? null,
     // V5.83: toda oferta de Lote de Temporada (también la excepción) lleva términos y mínimo: el productor DECLARA al aceptar.
     terms_version: CON_DECLARACION.includes(kind) ? TERMINOS_VERSION : null,
-    min_kg: CON_DECLARACION.includes(kind) ? minimoKg(lot.grade) : null,
+    min_kg: CON_DECLARACION.includes(kind) ? (minConfirmado ?? minimoKg(lot.grade)) : null,
+    lugar_entrega: lugarEntrega,
     max_kg: esDirecta ? maxKg : null,
     ventana_dias: esDirecta ? VENTANA_DIRECTA_DIAS : null,
     expira_at: esDirecta ? new Date(now.getTime() + VENTANA_DIRECTA_DIAS * 86_400_000).toISOString() : null,
@@ -204,12 +209,12 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
     action: "offer_emitted",
     new_status: "emitida",
     performed_by: adminId,
-    notes: `${kind} · ${lot.grade} · ${formatCop(price)}/kg${quantity ? ` · ${quantity} kg` : ""}${anclaje}${kind === "excepcion" ? ` · motivo: ${notes}` : ""}`,
+    notes: `${kind} · ${lot.grade} · ${formatCop(price)}/kg${quantity ? ` · ${quantity} kg` : ""}${anclaje}${minConfirmado ? ` · mínimo confirmado ${minConfirmado} kg` : ""} · entrega: ${lugarEntrega}${kind === "excepcion" ? ` · motivo: ${notes}` : ""}`,
   });
   const donde = kind === "subasta" ? "Subastas Tyrian" : kind === "black" ? "Ofertas Black" : "Ofertas de Temporada";
   const detalle =
     kind === "temporada"
-      ? ` Es un Lote de Temporada${renewalOf ? " (renovación de su trato)" : ""}: ${formatCop(price)}/kg de CPS anclados al PVC vigente${pastCrop ? " (past crop, −10 %)" : ""}; CTC compra de inmediato una carga (${COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG} kg) al precio acordado y usted declara cuánto compromete para el trimestre (mínimo ${minimoKg(lot.grade) ?? "—"} kg).`
+      ? ` Es un Lote de Temporada${renewalOf ? " (renovación de su trato)" : ""}: ${formatCop(price)}/kg de CPS anclados al PVC vigente${pastCrop ? " (past crop, −10 %)" : ""}; CTC compra de inmediato una carga (${COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG} kg) al precio acordado y usted declara cuánto compromete para el trimestre (mínimo ${minConfirmado ?? minimoKg(lot.grade) ?? "—"} kg).`
       : kind === "directa"
         ? ` Es una oferta directa de CTCx Selection: ${formatCop(price)}/kg de CPS (PVC − 8 %), vigente ${VENTANA_DIRECTA_DIAS} días${maxKg ? `, hasta ${maxKg} kg` : ""}.`
         : ` ${formatCop(price)}/kg de CPS.`;
@@ -217,7 +222,7 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
     producer_id: lot.producer_id,
     context_label: `Lote ${lot.name}`,
     lot_id: lotId,
-    note: `CTC le envió una oferta por su lote galardonado (${lot.grade}).${detalle} Revísela en «Contratos y Compras» → ${donde} — usted decide si la acepta o la rechaza.`,
+    note: `CTC le envió una oferta por su lote galardonado (${lot.grade}).${detalle} Entrega: ${lugarEntrega} Revísela en «Contratos y Compras» → ${donde} — usted decide si la acepta o la rechaza.`,
     created_by: adminId,
   });
 

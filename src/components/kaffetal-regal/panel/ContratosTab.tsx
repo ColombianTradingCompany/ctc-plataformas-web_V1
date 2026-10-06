@@ -12,9 +12,9 @@ import { CalculadoraDelTrato, type DecisionDelTrato } from "./CalculadoraDelTrat
 import { FirmaDelContrato, type FirmaDelProductor } from "./FirmaDelContrato";
 import { PropuestaSelection } from "./PropuestaSelection";
 import { MODALIDAD_LABEL, fechaLarga, type EstadoDeRedeclaracion } from "@/lib/trato/modalidades";
-import { redeclararSiguienteTemporada, renovarDeclaracionAhora } from "@/lib/trato/producerActions";
-import { MORA, PENALIDAD_RETIRO_PCT, TRAMO_LIBRE_ACUMULADO_PCT } from "@/lib/trato/terminos";
-import { MORA_LABEL, mesesDelTrato, type Retiro } from "@/lib/trato/mesAMes";
+import { redeclararSiguienteTemporada } from "@/lib/trato/producerActions";
+import { MORA, PENALIDAD_RETIRO_PCT } from "@/lib/trato/terminos";
+import { MORA_LABEL, mesesDelTrato, tramoLibrePct, type Retiro } from "@/lib/trato/mesAMes";
 import { useToast } from "@/components/Toast";
 import { CtcRef } from "./CtcRef";
 import styles from "../AppDashboard.module.css";
@@ -84,7 +84,7 @@ export function ContratosTab({
         </div>
         <div className={styles.secSub}>CTCx le invita a vender su café en Cherry Picked, al PVC de esta temporada</div>
         <div className={styles.alist} style={{ marginTop: 8 }}>
-          Usted elige <b>cómo participa</b> (Declarar Ahora, la Siguiente Temporada Trimestral, o Ahora y la Siguiente), <b>cuánto declara</b> y juega
+          Usted elige <b>cómo participa</b> (para la Temporada Actual, la Siguiente Temporada Trimestral, o Ahora y la Siguiente), <b>cuánto declara</b> y juega
           con el escenario de ventas: <b>CTCx no se compromete a comprar fracciones fijas mes a mes</b>. Con la firma, CTCx compra una parte de
           inmediato. Aceptar es firmar el contrato con el dedo.
         </div>
@@ -220,14 +220,13 @@ function ContratoCard({ contract: c, oferta, cuentaCongelada, onRefreshData }: {
           declarado vale <b>{formatCop(sim.totalCop)}</b> si CTC lo vende todo (no se compromete a comprar fracciones fijas mes a mes) ·{" "}
           {c.retiroLibrePct != null
             ? `retiro libre hasta el ${c.retiroLibrePct} % en cualquier momento`
-            : c.declaracion === "30_dias"
-              ? "sin tramo libre de retiro"
+            : nMeses <= 1
+              ? "sin tramo libre de retiro (un solo mes)"
               : `retiro libre al cerrar cada mes: ${sim.porMes.map((m) => `mes ${m.mes} ${m.retiroLibrePct} %`).join(" · ")}`}{" "}
           · penalidad por encima: {PENALIDAD_RETIRO_PCT} % por carga{c.termsVersion && <> · términos {c.termsVersion}</>}
         </div>
       )}
       {c.redeclaracion && c.redeclaracion.fase !== "no_aplica" && <Redeclaracion contractId={c.id} estado={c.redeclaracion} enCurso={enCurso} onRefreshData={onRefreshData} />}
-      {c.declaracion === "30_dias" && c.status === "active" && <RenovarAhora contractId={c.id} actualKg={c.quantityFrozenKg ?? 0} onRefreshData={onRefreshData} />}
       {oferta?.loteDeTemporadaPasada && (
         <div className={styles.sub} style={{ color: "var(--accent)", fontWeight: 700 }}>
           Lote de la temporada pasada — posicionado en la ventana de esta temporada, y valorado como tal.
@@ -339,8 +338,9 @@ function RetiroForm({ contract, vigenteKg, nMeses, onRefreshData }: { contract: 
   const [vista, setVista] = useState<{ retiro: Retiro; mes: number } | null>(null);
   const n = Number(String(kg).replace(",", "."));
   const valido = Number.isFinite(n) && n > 0 && n <= vigenteKg + 1e-9;
-  // V5.169: «Ahora y Siguiente» tiene su % libre en cualquier momento; el trimestre, los tramos al cerrar cada mes.
-  const tramoLibre = contract.retiroLibrePct ?? (contract.declaracion === "30_dias" ? 0 : TRAMO_LIBRE_ACUMULADO_PCT[Math.min(3, Math.max(1, contract.mesEnCurso)) as 1 | 2 | 3] ?? 0);
+  // V5.169: «Ahora y Siguiente» tiene su % libre en cualquier momento; las demás, los tramos al cerrar cada mes, repartidos en los
+  // meses del trato desde la V5.173 (`tramoLibrePct`).
+  const tramoLibre = tramoLibrePct(contract.mesEnCurso, mesesDelTrato(contract.freezeMonths), contract.retiroLibrePct);
 
   async function calcular() {
     if (!valido) return;
@@ -720,47 +720,6 @@ function Redeclaracion({ contractId, estado: e, enCurso, onRefreshData }: { cont
             {Number(kg.replace(",", ".")) < (e.minKg ?? 0) && <span style={{ color: "var(--accent)" }}>No puede ser menos de {e.minKg} kg.</span>}
           </div>
         ))}
-    </div>
-  );
-}
-
-// V5.169 (owner): «Declarar Ahora» se renueva dentro de la misma Temporada Trimestral mientras falten ≥ 30 días para la siguiente;
-// cada renovación enmienda la cantidad y no obliga a CTCx a una compra adicional (el servidor valida la ventana).
-function RenovarAhora({ contractId, actualKg, onRefreshData }: { contractId: string; actualKg: number; onRefreshData: () => void }) {
-  const { showToast } = useToast();
-  const [abierto, setAbierto] = useState(false);
-  const [kg, setKg] = useState(String(actualKg));
-  const [busy, setBusy] = useState(false);
-  if (!abierto)
-    return (
-      <button className="btn btn-sm" style={{ justifySelf: "start", marginTop: 6 }} onClick={() => setAbierto(true)}>
-        Renovar «Declarar Ahora» (próximos 30 días)…
-      </button>
-    );
-  return (
-    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 6, fontSize: 12.5 }}>
-      Declaro
-      <input inputMode="decimal" value={kg} onChange={(e) => setKg(e.target.value)} style={{ width: 90, padding: "5px 7px", border: "1.5px solid var(--line)", borderRadius: 7 }} aria-label="Kilos a declarar" />
-      kg para los próximos 30 días (CTCx no queda obligado a una compra adicional).
-      <button
-        className="btn btn-sm btn-solid-accent"
-        disabled={busy}
-        onClick={async () => {
-          setBusy(true);
-          const r = await renovarDeclaracionAhora(contractId, Number(kg.replace(",", ".")));
-          setBusy(false);
-          if (r.ok) {
-            showToast("Declaración renovada ✓");
-            setAbierto(false);
-            onRefreshData();
-          } else showToast(r.message);
-        }}
-      >
-        {busy ? "Renovando…" : "Renovar"}
-      </button>
-      <button className="btn btn-sm" onClick={() => setAbierto(false)}>
-        Cancelar
-      </button>
     </div>
   );
 }

@@ -19,6 +19,24 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.173] — 2026-10-06 (commit pendiente)
+
+- **Cambiado**: **«Declarar para Temporada Actual» reemplaza a «Declarar Ahora»** (owner, 2026-10-06: «este modelo es demasiado
+  inflexible» — sin el PVC de la siguiente temporada y a 71 días de ella, solo quedaban 30 días renovables). La declaración cubre
+  lo que queda de la Temporada Trimestral en curso (si faltan al menos 30 días), al PVC vigente, con la misma lógica de meses del
+  trimestre: los meses son los que le quedan, redondeados (30–44 días: 1; 45–74: 2; 75 o más: 3), y el último llega al fin de la
+  temporada. CTCx compra entre 10 y 25 kg a su discreción con la firma (no la carga de 125 kg). La renovación de 30 días desaparece.
+- **Cambiado**: **la escalera de retiro libre se reparte en los meses del trato**: cada mes cerrado libera su parte del 75 %
+  (`TRAMO_LIBRE_DEL_TRATO_PCT`). En el trimestre sigue igual (0 · 25 · 50 %); en dos meses, 37,5 % al cerrar el primero; en un mes,
+  nada. La calculadora deja elegir el mes de retiro entre los del trato y muestra la escalera; «Mi trato», el retiro y el
+  contrato (texto 2026-10-06.5) la leen de `tramoLibrePct`.
+- **Cambiado**: la renovación también se debe al terminar la vigencia del trato (un trato de 70 días no espera los 90 días); el
+  contrato de «Temporada Actual» dice que, al terminar la temporada, CTCx puede ofrecer la siguiente con el PVC publicado para ella.
+- **Datos**: migración `2026-10-06_declarar_temporada_actual.sql`: `declaracion` admite `temporada_actual` en lugar de `30_dias`
+  (ninguna oferta ni contrato lo había guardado).
+- **Seguridad**: `qa-trato` (147 → 154).
+- **Docs**: `PLAN_CIRCUITO_DEL_LOTE.md` (paso 15, con la decisión del owner); charters `kaffetal-regal`, `consolas`; ALINEACION §3.
+
 ## [V5.172] — 2026-10-06 (commit 9458215)
 
 - **Cambiado**: **«Confirmar la oferta» (OCP · Pendiente de Oferta) deja ver que las cifras son dinero y kilos, y que se cambian**

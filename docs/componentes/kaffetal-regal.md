@@ -152,6 +152,11 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.173 · «Declarar para Temporada Actual» reemplaza a «Declarar Ahora»** (owner, 2026-10-06; ejecutado desde WRAP-COMMIT-PUSH):
+  lo que queda de la temporada en curso (≥ 30 días), al PVC vigente, 10 a 25 kg con la firma, meses redondeados
+  (`mesesDeLaTemporadaActual`); la escalera de retiro se reparte en los meses (`tramoLibrePct` · `TRAMO_LIBRE_DEL_TRATO_PCT` 75):
+  2 meses → 37,5 % al cerrar el primero. Sin renovación de 30 días. Decisión de diseño para que el owner la confirme: el reparto
+  proporcional (37,5 %) en vez de 25 % por mes.
 - **V5.171 · la redeclaración de «Ahora y Siguiente»** (owner, 2026-10-06: «la opción 1, que quede en el 70 %»; ejecutado desde
   WRAP-COMMIT-PUSH): se pide `DIAS_ANTES_REDECLARAR` (10) días antes, el botón «Redeclarar» de «Mis contratos» no acepta menos
   del mínimo y se cierra al terminar el primer día de la temporada; sin respuesta, `/api/cron/redeclaraciones` la deja en el

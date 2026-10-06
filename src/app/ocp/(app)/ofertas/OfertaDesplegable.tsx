@@ -265,7 +265,7 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
                       {" "}
                       <b>El PVC de la siguiente temporada aún no se publica</b>
                       {anclaje!.fechaLimiteSiguiente ? ` (a más tardar el ${fechaLarga(anclaje!.fechaLimiteSiguiente)})` : ""}: si emite hoy, el productor podrá
-                      «Declarar Ahora» (o «Ahora y Siguiente», si ya se abre), pero no «Siguiente Temporada»; re-emita cuando se publique.
+                      «Declarar para Temporada Actual» (o «Ahora y Siguiente», si ya se abre), pero no «Siguiente Temporada»; re-emita cuando se publique.
                     </>
                   ))}
               </p>

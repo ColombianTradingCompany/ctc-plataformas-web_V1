@@ -122,7 +122,7 @@ export async function respondToOffer(
   if (esSelection) {
     if (lockedKg == null || lockedKg <= 0) return { ok: false, message: "Esta propuesta no tiene la cantidad acordada: pídale a CTCx que la precise." };
   } else if (offer.terms_version) {
-    if (!declaracion) return { ok: false, message: "Esta oferta se acepta con su declaración: cuánto compromete, por trimestre o por 30 días, y las condiciones." };
+    if (!declaracion) return { ok: false, message: "Esta oferta se acepta con su declaración: cuánto compromete, en qué modalidad, y las condiciones." };
     const kg = Number(declaracion.lockedKg);
     if (!Number.isFinite(kg) || kg <= 0) return { ok: false, message: "Escriba cuántos kilos de CPS compromete." };
     if (minKg != null && kg < minKg) return { ok: false, message: `El mínimo para este grado es ${minKg} kg de CPS.` };
@@ -197,7 +197,7 @@ export async function respondToOffer(
       freeze_months: condiciones?.meses ?? 1,
       terms_version: offer.terms_version ?? null,
       declaracion: declarado,
-      // V5.169: la compra con la firma de la modalidad (125 kg, o 10 a 25 kg a discreción de CTCx en «Declarar Ahora»).
+      // V5.169: la compra con la firma de la modalidad (125 kg, o 10 a 25 kg a discreción de CTCx en «Temporada Actual»).
       compra_inicial_kg: condiciones && "kg" in condiciones.compraInicial ? condiciones.compraInicial.kg : null,
       compra_inicial_min_kg: condiciones && "minKg" in condiciones.compraInicial ? condiciones.compraInicial.minKg : null,
       compra_inicial_max_kg: condiciones && "maxKg" in condiciones.compraInicial ? condiciones.compraInicial.maxKg : null,

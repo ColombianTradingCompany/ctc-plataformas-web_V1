@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { simularVentas, PATRON_LABEL, type PatronDeVenta } from "@/lib/trato/simulador";
-import { CARGA_KG, PENALIDAD_RETIRO_PCT, TRAMO_LIBRE_ACUMULADO_PCT } from "@/lib/trato/terminos";
+import { CARGA_KG, PENALIDAD_RETIRO_PCT } from "@/lib/trato/terminos";
+import { tramoLibrePct } from "@/lib/trato/mesAMes";
 import { condicionesDe, fechaLarga, modalidadesDisponibles, textoCompraInicial, MODALIDAD_LABEL, MODALIDADES, type CondicionesDeModalidad, type Modalidad } from "@/lib/trato/modalidades";
 import { formatCop } from "@/lib/arena/inscriptions";
 
 // ── La calculadora de la participación en Cherry Picked (V5.168 · modalidades y escenarios desde la V5.169) ─────────────
-// Owner, 2026-10-06: el productor elige CÓMO participa —«Declarar Ahora» (los próximos 30 días, si faltan ≥ 30 días para la
-// siguiente Temporada Trimestral), «Declarar Siguiente Temporada Trimestral» (lo usual) o «Declarar Ahora y Siguiente
+// Owner, 2026-10-06: el productor elige CÓMO participa —«Declarar para Temporada Actual» (lo que queda de la temporada en curso,
+// si faltan ≥ 30 días; V5.173), «Declarar Siguiente Temporada Trimestral» (lo usual) o «Declarar Ahora y Siguiente
 // Temporada» (si faltan ≤ 50 días)—, cuánto declara, y juega con el ESCENARIO de ventas: «CTCx no se compromete a comprar las
 // fracciones mes a mes; puede no haber compra en un mes, o venderse todo el primer día». Los KPIs (% vendido, ingreso, prima
 // sobre la referencia FNC, café que le queda) anclan la decisión. Las reglas viven en `modalidades.ts` y `simulador.ts`.
@@ -50,11 +51,11 @@ export function CalculadoraDelTrato({
   onDecidir: (d: DecisionDelTrato) => void;
 }) {
   const disp = modalidadesDisponibles(diasHastaSiguiente, { precioKg: precioSiguienteKg, fechaLimite: fechaLimiteSiguiente });
-  // V5.170: «Siguiente Temporada» va al PVC de la edición siguiente; «Ahora» y «Ahora y Siguiente», al de esta temporada.
+  // V5.170: «Siguiente Temporada» va al PVC de la edición siguiente; «Temporada Actual» y «Ahora y Siguiente», al de esta temporada.
   const precioDe = (m: Modalidad) => (m === "trimestre" ? precioSiguienteKg ?? copKg : copKg);
   const minimo = minKg ?? CARGA_KG;
   const tope = maxKg ?? Math.max(minimo * 4, 40 * CARGA_KG);
-  const [modalidad, setModalidad] = useState<Modalidad>(disp.ahora_y_siguiente.disponible ? "ahora_y_siguiente" : disp.trimestre.disponible ? "trimestre" : "30_dias");
+  const [modalidad, setModalidad] = useState<Modalidad>(disp.ahora_y_siguiente.disponible ? "ahora_y_siguiente" : disp.trimestre.disponible ? "trimestre" : "temporada_actual");
   const [kg, setKg] = useState(minimo);
   const [ventaPct, setVentaPct] = useState(60);
   const [patron, setPatron] = useState<PatronDeVenta>("parejo");
@@ -62,17 +63,23 @@ export function CalculadoraDelTrato({
   const [mesRetiro, setMesRetiro] = useState(2);
 
   const cond = condicionesDe(modalidad, { hoy, temporadaHasta, declaradoKg: kg, grado });
-  // «Declarar Ahora»: CTCx compra entre 10 y 25 kg a su discreción; el escenario usa lo mínimo (10 kg), lo que seguro ocurre.
+  // «Temporada Actual»: CTCx compra entre 10 y 25 kg a su discreción; el escenario usa lo mínimo (10 kg), lo que seguro ocurre.
   const compraInicialKg = "kg" in cond.compraInicial ? cond.compraInicial.kg : cond.compraInicial.minKg;
   const copModalidad = precioDe(modalidad);
   const v = simularVentas({ declaradoKg: kg, copKg: copModalidad, meses: cond.meses, compraInicialKg, ventaPct, patron, fncCargaRef });
   const pasos = [{ etiqueta: "Firma", kg: v.compraInicial.kg, cop: v.compraInicial.cop }, ...v.porMes.map((m) => ({ etiqueta: `Mes ${m.mes}`, kg: m.kg, cop: m.cop }))];
   const maxPaso = Math.max(...pasos.map((p) => p.kg), 1);
 
-  // ¿Y si retiro café? Por modalidad: «Ahora» sin tramo libre; «Siguiente» 25 % / 50 % al cerrar los meses 1 y 2; «Ahora y
-  // Siguiente» el 30 % en cualquier momento.
-  const libreModalidad =
-    modalidad === "30_dias" ? 0 : modalidad === "ahora_y_siguiente" ? cond.retiroLibrePct ?? 0 : TRAMO_LIBRE_ACUMULADO_PCT[Math.min(3, Math.max(1, mesRetiro)) as 1 | 2 | 3] ?? 0;
+  // ¿Y si retiro café? V5.173: la escalera repartida en los meses del trato (`tramoLibrePct`): «Siguiente» 0 · 25 · 50 %; «Temporada
+  // Actual» con dos meses 0 · 37,5 % (con uno, nada); «Ahora y Siguiente» el 30 % en cualquier momento.
+  const mesR = Math.min(cond.meses, Math.max(1, mesRetiro));
+  const libreModalidad = tramoLibrePct(mesR, cond.meses, cond.retiroLibrePct);
+  const escalera =
+    cond.retiroLibrePct != null
+      ? `${cond.retiroLibrePct} % libre en cualquier momento, sin escalones.`
+      : cond.meses <= 1
+        ? "Un solo mes: no hay tramo libre."
+        : `Libre sin costo, acumulado: ${Array.from({ length: cond.meses }, (_, i) => `mes ${i + 1}: ${tramoLibrePct(i + 1, cond.meses).toLocaleString("es-CO")} %`).join(" · ")}.`;
   const retiroKg = (kg * retiroPct) / 100;
   const libreKg = Math.min(retiroKg, (kg * libreModalidad) / 100);
   const penalizadoKg = Math.max(0, retiroKg - libreKg);
@@ -134,8 +141,8 @@ export function CalculadoraDelTrato({
               >
                 <b style={{ fontSize: 13.5 }}>{MODALIDAD_LABEL[m]}</b>
                 <span style={{ fontSize: 12 }}>
-                  {m === "30_dias"
-                    ? "Los próximos 30 días. Renovable mientras falten al menos 30 días para la siguiente temporada."
+                  {m === "temporada_actual"
+                    ? `Lo que queda de esta temporada, al PVC actual: ${c.meses} ${c.meses === 1 ? "mes" : "meses"} de pedidos.`
                     : m === "trimestre"
                       ? "La siguiente Temporada Trimestral completa. Lo usual."
                       : "Desde hoy y toda la siguiente temporada. Retiro libre del 30 %; al empezar la siguiente, redeclara al menos el 70 %."}
@@ -246,11 +253,11 @@ export function CalculadoraDelTrato({
               ))}
             </select>
           </label>
-          {modalidad === "trimestre" && (
+          {cond.retiroLibrePct == null && cond.meses > 1 && (
             <label>
               en el{" "}
-              <select value={mesRetiro} onChange={(e) => setMesRetiro(Number(e.target.value))} style={{ padding: "4px 6px" }}>
-                {[1, 2, 3].map((m) => (
+              <select value={mesR} onChange={(e) => setMesRetiro(Number(e.target.value))} style={{ padding: "4px 6px" }}>
+                {Array.from({ length: cond.meses }, (_, i) => i + 1).map((m) => (
                   <option key={m} value={m}>
                     mes {m}
                   </option>
@@ -259,6 +266,7 @@ export function CalculadoraDelTrato({
             </label>
           )}
         </div>
+        <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 4 }}>{escalera}</div>
         <div style={{ marginTop: 8, display: "grid", gap: 4 }}>
           <div style={{ display: "flex", height: 12, borderRadius: 6, overflow: "hidden", background: "var(--line)" }} aria-hidden>
             <div style={{ width: `${(libreKg / Math.max(kg, 1)) * 100}%`, background: "var(--green)" }} />

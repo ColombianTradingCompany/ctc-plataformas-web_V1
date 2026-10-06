@@ -177,6 +177,8 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.173 · «Ofrecer renovación» se habilita también al terminar la vigencia del trato** (no solo a los 90 días), para los
+  tratos de «Temporada Actual»; el aviso de la oferta sin PVC siguiente nombra la nueva modalidad.
 - **V5.172 · «Confirmar la oferta» con cifras que se ven editables** (owner, 2026-10-06): cajas con $ · COP / kg · COP / carga ·
   kg de CPS, separador de miles, lápiz y «volver a ese precio» (`Campo` en `OfertaDesplegable.tsx`, clases `campoCifra*` en `shared.module.css`).
 - **V5.171 · el contrato del OCP muestra la redeclaración de «Ahora y Siguiente»** (se abre el…, abierta y pedida, hecha por

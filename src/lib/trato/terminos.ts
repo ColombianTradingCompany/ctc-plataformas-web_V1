@@ -26,6 +26,12 @@ export const PERIODO_MESES = 3;
  *  (acumulado 50 %). Es la misma escalera de `src/lib/pvc/compromiso.ts` (§12.9 del PVC plan), dicha por mes del periodo. */
 export const TRAMO_LIBRE_ACUMULADO_PCT: Record<1 | 2 | 3, number> = { 1: 0, 2: 25, 3: 50 };
 
+/** V5.173 (owner, 2026-10-06: «solo son 2 meses, la lógica de retirar debe ajustarse»): la escalera del trimestre dicha para
+ *  cualquier duración. Cada mes cerrado libera la parte proporcional de este 75 % (en 3 meses, 25 % por mes: 0 · 25 · 50; en 2
+ *  meses, 37,5 % al cerrar el primero; en 1 mes, nada). `tramoLibrePct` (mesAMes.ts) la aplica; `qa-trato` exige que reproduzca
+ *  la tabla de arriba en 3 meses. */
+export const TRAMO_LIBRE_DEL_TRATO_PCT = 75;
+
 /** Paso 16: lo retirado por encima del tramo libre paga el 4 % del precio de cada carga. */
 export const PENALIDAD_RETIRO_PCT = 4;
 
@@ -43,8 +49,9 @@ export const MODIFICADOR_PAST_CROP_PCT = -10;
 export const MODIFICADOR_DIRECTA_PCT = -8;
 export const VENTANA_DIRECTA_DIAS = 30;
 
-/** Paso 15: la declaración del productor al aceptar — trimestre por empezar, o 30 días del periodo en curso (fase 6). */
-export const DECLARACIONES = ["trimestre", "30_dias", "ahora_y_siguiente"] as const;
+/** Paso 15: la declaración del productor al aceptar (fase 6). V5.173: «Declarar para Temporada Actual» reemplaza a «Declarar Ahora»
+ *  (los 30 días), que nunca llegó a firmarse. */
+export const DECLARACIONES = ["trimestre", "temporada_actual", "ahora_y_siguiente"] as const;
 
 /** El % de modificación de una oferta anclada al PVC: directa (−8 %) y/o past crop (−10 %), aditivos. */
 export function modificadorDeOferta(o: { directa?: boolean; pastCrop?: boolean }): number {
@@ -89,23 +96,23 @@ export function minimoKg(grado: string | null | undefined): number | null {
 export const LUGAR_DE_ENTREGA_POR_DEFECTO = "Entregado en Bucaramanga (Santander), en las instalaciones de CTCx.";
 
 // ── V5.169 (owner, 2026-10-06) · las tres modalidades de participar en Cherry Picked ──────────────────────────────────────
-// «Declarar Ahora» ('30_dias'): los próximos 30 días, solo si faltan al menos 30 días para la siguiente Temporada Trimestral;
-// PVC actual; CTCx compra entre 10 y 25 kg de CPS a su discreción al firmar; renovable dentro de la ventana (sin obligación de
-// compra adicional), y cada renovación enmienda la cantidad.
+// «Declarar para Temporada Actual» ('temporada_actual', V5.173 — reemplaza a «Declarar Ahora», los 30 días renovables): lo que
+// queda de la Temporada Trimestral en curso, si faltan al menos 30 días; PVC actual; CTCx compra entre 10 y 25 kg de CPS a su
+// discreción al firmar; los meses del trato son los que quedan (redondeados, el último llega al fin de la temporada) y la escalera
+// de retiro se reparte en ellos (`TRAMO_LIBRE_DEL_TRATO_PCT`). Owner, 2026-10-06: «este modelo es demasiado inflexible» cuando
+// aún no se fija el PVC de la siguiente temporada y faltan más de 50 días.
 // «Declarar Siguiente Temporada Trimestral» ('trimestre'): lo usual (los términos de arriba: una carga, tramos 25/50 %).
 // «Declarar Ahora y Siguiente Temporada» ('ahora_y_siguiente'): si faltan como máximo 50 días; PVC de esta temporada; retiro
 // libre hasta el 30 % sin escalones mensuales; al empezar la siguiente temporada se redeclara al menos el 70 % (y nunca menos
 // del mínimo del grado); CTCx compra la carga de 125 kg.
 // En TODAS: CTCx no se compromete a comprar fracciones mes a mes (puede no comprar en un mes, o todo el primer día).
 
-/** «Declarar Ahora» se ofrece si faltan al menos estos días para la siguiente Temporada Trimestral. */
-export const VENTANA_DECLARAR_AHORA_DIAS = 30;
-/** «Declarar Ahora» cubre los próximos 30 días. */
-export const DIAS_DECLARAR_AHORA = 30;
+/** «Declarar para Temporada Actual» se ofrece si faltan al menos estos días para la siguiente Temporada Trimestral. */
+export const VENTANA_TEMPORADA_ACTUAL_DIAS = 30;
 /** «Ahora y Siguiente» se ofrece si faltan como máximo estos días para la siguiente Temporada Trimestral. */
 export const VENTANA_AHORA_Y_SIGUIENTE_DIAS = 50;
-/** «Declarar Ahora»: CTCx compra entre 10 y 25 kg de CPS, a su discreción, con la firma. */
-export const COMPRA_INICIAL_AHORA_KG = { min: 10, max: 25 } as const;
+/** «Declarar para Temporada Actual»: CTCx compra entre 10 y 25 kg de CPS, a su discreción, con la firma. */
+export const COMPRA_INICIAL_TEMPORADA_ACTUAL_KG = { min: 10, max: 25 } as const;
 /** «Ahora y Siguiente»: retiro libre hasta el 30 %, sin escalones mensuales. */
 export const RETIRO_LIBRE_AHORA_Y_SIGUIENTE_PCT = 30;
 /** «Ahora y Siguiente»: al empezar la siguiente temporada se redeclara al menos este % de lo declarado. */

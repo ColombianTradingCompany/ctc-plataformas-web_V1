@@ -6,24 +6,23 @@
 
 import {
   CARGA_KG,
-  COMPRA_INICIAL_AHORA_KG,
   COMPRA_INICIAL_CTCX_CARGAS,
+  COMPRA_INICIAL_TEMPORADA_ACTUAL_KG,
   DIAS_ANTES_REDECLARAR,
-  DIAS_DECLARAR_AHORA,
   DIAS_TEMPORADA_TRIMESTRAL,
   PERIODO_MESES,
   REDECLARAR_MIN_PCT,
   RETIRO_LIBRE_AHORA_Y_SIGUIENTE_PCT,
   VENTANA_AHORA_Y_SIGUIENTE_DIAS,
-  VENTANA_DECLARAR_AHORA_DIAS,
+  VENTANA_TEMPORADA_ACTUAL_DIAS,
   minimoKg,
 } from "./terminos";
 
-export type Modalidad = "30_dias" | "trimestre" | "ahora_y_siguiente";
-export const MODALIDADES: readonly Modalidad[] = ["30_dias", "trimestre", "ahora_y_siguiente"];
+export type Modalidad = "temporada_actual" | "trimestre" | "ahora_y_siguiente";
+export const MODALIDADES: readonly Modalidad[] = ["temporada_actual", "trimestre", "ahora_y_siguiente"];
 
 export const MODALIDAD_LABEL: Record<Modalidad, string> = {
-  "30_dias": "Declarar Ahora",
+  temporada_actual: "Declarar para Temporada Actual",
   trimestre: "Declarar Siguiente Temporada Trimestral",
   ahora_y_siguiente: "Declarar Ahora y Siguiente Temporada",
 };
@@ -71,10 +70,13 @@ export function modalidadesDisponibles(dias: number | null, siguiente?: { precio
   const sinFecha = dias == null;
   const sinPrecioSiguiente = siguiente !== undefined && siguiente.precioKg == null;
   return {
-    "30_dias":
-      sinFecha || dias >= VENTANA_DECLARAR_AHORA_DIAS
+    temporada_actual:
+      sinFecha || dias >= VENTANA_TEMPORADA_ACTUAL_DIAS
         ? { disponible: true, motivo: null }
-        : { disponible: false, motivo: `Faltan ${dias} días para la siguiente temporada: «Declarar Ahora» necesita al menos ${VENTANA_DECLARAR_AHORA_DIAS}.` },
+        : {
+            disponible: false,
+            motivo: `A esta temporada le quedan ${dias} días: «Declarar para Temporada Actual» necesita al menos ${VENTANA_TEMPORADA_ACTUAL_DIAS}. «Ahora y Siguiente» sí está abierta.`,
+          },
     trimestre: sinPrecioSiguiente
       ? {
           disponible: false,
@@ -108,13 +110,27 @@ export type CondicionesDeModalidad = {
   redeclarar: { minKg: number; at: string } | null;
 };
 
+/** V5.173: los meses de 30 días que le quedan a la temporada en curso, redondeados (mínimo 1); el último llega hasta su fin. */
+export function mesesDeLaTemporadaActual(dias: number): number {
+  return Math.max(1, Math.round(dias / 30));
+}
+
 /** Las condiciones del trato para una modalidad, una cantidad y un grado, hoy. */
 export function condicionesDe(modalidad: Modalidad, o: { hoy: string; temporadaHasta: string | null; declaradoKg: number; grado: string | null }): CondicionesDeModalidad {
   const inicioSig = o.temporadaHasta ? inicioDeLaSiguiente(o.temporadaHasta) : sumaDias(o.hoy, 30);
   const dias = o.temporadaHasta ? diasHastaLaSiguiente(o.hoy, o.temporadaHasta) : 30;
   const carga = { kg: COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG };
-  if (modalidad === "30_dias") {
-    return { modalidad, desde: o.hoy, hasta: sumaDias(o.hoy, DIAS_DECLARAR_AHORA), meses: 1, retiroLibrePct: null, compraInicial: { minKg: COMPRA_INICIAL_AHORA_KG.min, maxKg: COMPRA_INICIAL_AHORA_KG.max }, redeclarar: null };
+  if (modalidad === "temporada_actual") {
+    // V5.173: de hoy al último día de la temporada en curso, al PVC vigente; CTCx compra 10 a 25 kg a su discreción.
+    return {
+      modalidad,
+      desde: o.hoy,
+      hasta: sumaDias(inicioSig, -1),
+      meses: mesesDeLaTemporadaActual(dias),
+      retiroLibrePct: null,
+      compraInicial: { minKg: COMPRA_INICIAL_TEMPORADA_ACTUAL_KG.min, maxKg: COMPRA_INICIAL_TEMPORADA_ACTUAL_KG.max },
+      redeclarar: null,
+    };
   }
   if (modalidad === "trimestre") {
     return { modalidad, desde: inicioSig, hasta: sumaDias(inicioSig, DIAS_TEMPORADA_TRIMESTRAL - 1), meses: PERIODO_MESES, retiroLibrePct: null, compraInicial: carga, redeclarar: null };

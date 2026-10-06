@@ -95,7 +95,7 @@ type MesRow = { id: string; mes: number; pedido_at: string | null; enviado_kg: n
 
 async function contratoYMeses(service: ReturnType<typeof createServiceRoleClient>, contractId: string) {
   const [{ data: contract }, { data: meses }] = await Promise.all([
-    service.from("purchase_contracts").select("id, lot_id, status, quantity_frozen_kg, price_per_kg_locked, freeze_months, signed_at, grade_snapshot, offer_id, pvc_edition_id, modificador_pct, reference_price_source, lots(name, producer_id)").eq("id", contractId).maybeSingle(),
+    service.from("purchase_contracts").select("id, lot_id, status, quantity_frozen_kg, price_per_kg_locked, freeze_months, signed_at, vigencia_hasta, grade_snapshot, offer_id, pvc_edition_id, modificador_pct, reference_price_source, lots(name, producer_id)").eq("id", contractId).maybeSingle(),
     service.from("contract_months").select("id, mes, pedido_at, enviado_kg, enviado_at, pagado_at").eq("contract_id", contractId),
   ]);
   const lot = (Array.isArray(contract?.lots) ? contract?.lots[0] : contract?.lots) as { name: string; producer_id: string } | null;
@@ -254,7 +254,7 @@ export async function ofrecerRenovacion(contractId: string): Promise<ActionResul
   const { contract } = await contratoYMeses(service, contractId);
   if (!contract) return { ok: false, error: "Contrato no encontrado." };
   if (contract.status !== "completed") return { ok: false, error: "La renovación se ofrece sobre un trato cumplido (todos los meses enviados y pagados)." };
-  if (!renovacionDebida(contract.signed_at, new Date())) return { ok: false, error: `La renovación se ofrece a los ${RENOVACION_DIAS} días de la firma.` };
+  if (!renovacionDebida(contract.signed_at, new Date(), contract.vigencia_hasta)) return { ok: false, error: `La renovación se ofrece a los ${RENOVACION_DIAS} días de la firma, o al terminar la vigencia del trato.` };
   const fd = new FormData();
   fd.set("renewal_of_contract_id", contractId);
   fd.set("notes", "Renovación del trato: PVC vigente y cantidad nueva a declarar.");

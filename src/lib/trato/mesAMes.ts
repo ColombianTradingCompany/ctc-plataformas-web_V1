@@ -5,9 +5,9 @@
 // esto se guarda; el OCP y el productor lo leen con las mismas funciones (`qa-trato-check`). Lo único que
 // cambia de estado de verdad —la ruptura y la cuenta congelada— lo escribe el owner a mano.
 
-import { CARGA_KG, MESES_MAX_DEL_TRATO, MORA, PAST_CROP_MESES, PENALIDAD_RETIRO_PCT, PERIODO_MESES, RENOVACION_DIAS, TRAMO_LIBRE_ACUMULADO_PCT } from "./terminos";
+import { CARGA_KG, MESES_MAX_DEL_TRATO, MORA, PAST_CROP_MESES, PENALIDAD_RETIRO_PCT, PERIODO_MESES, RENOVACION_DIAS, TRAMO_LIBRE_DEL_TRATO_PCT } from "./terminos";
 
-/** V5.169: los meses de un trato (1 «Declarar Ahora», 3 el trimestre, hasta 5 «Ahora y Siguiente»); sin dato, 3. */
+/** V5.169: los meses de un trato (los que le quedan a la temporada en «Temporada Actual», 3 el trimestre, hasta 5 «Ahora y Siguiente»); sin dato, 3. */
 export function mesesDelTrato(freezeMonths: number | null | undefined): number {
   return freezeMonths && freezeMonths > 0 ? Math.min(MESES_MAX_DEL_TRATO, freezeMonths) : PERIODO_MESES;
 }
@@ -82,7 +82,10 @@ export function tramoLibrePct(mes: number, meses = PERIODO_MESES, retiroLibrePct
   // V5.169: «Ahora y Siguiente» tiene su % libre desde el primer día, sin escalones mensuales.
   if (retiroLibrePct != null) return retiroLibrePct;
   if (meses <= 1) return 0;
-  return TRAMO_LIBRE_ACUMULADO_PCT[Math.min(3, Math.max(1, mes)) as 1 | 2 | 3] ?? 0;
+  // V5.173: la escalera se reparte en los meses del trato — cada mes cerrado libera su parte del 75 % (3 meses: 0 · 25 · 50;
+  // 2 meses: 0 · 37,5). En 3 meses reproduce TRAMO_LIBRE_ACUMULADO_PCT (qa-trato lo exige).
+  const cerrados = Math.min(meses, Math.max(1, mes)) - 1;
+  return r1((TRAMO_LIBRE_DEL_TRATO_PCT * cerrados) / meses);
 }
 
 export type Retiro = { libreDisponibleKg: number; libreKg: number; penalizadoKg: number; penalidadCop: number; cargasPenalizadas: number };
@@ -111,9 +114,11 @@ export function esPastCrop(harvestTo: string | null | undefined, hoy: Date): boo
   return hoy.getTime() > limite.getTime();
 }
 
-/** Paso 18: a los ~90 días de la firma toca ofrecer la renovación. */
-export function renovacionDebida(signedAt: string | null | undefined, hoy: Date): boolean {
+/** Paso 18: a los ~90 días de la firma toca ofrecer la renovación. V5.173: o antes, si la vigencia del trato ya terminó
+ *  («Temporada Actual» dura lo que le queda a la temporada, a veces menos de 90 días). */
+export function renovacionDebida(signedAt: string | null | undefined, hoy: Date, vigenciaHasta?: string | null): boolean {
   if (!signedAt) return false;
+  if (vigenciaHasta && hoy.getTime() >= new Date(`${vigenciaHasta}T12:00:00Z`).getTime() + DIA_MS) return true;
   return hoy.getTime() - new Date(signedAt).getTime() >= RENOVACION_DIAS * DIA_MS;
 }
 
@@ -133,7 +138,7 @@ export type ResumenDelTrato = {
 };
 
 export function resumenDelTrato(
-  c: { quantityFrozenKg: number | null; freezeMonths: number | null; signedAt: string | null },
+  c: { quantityFrozenKg: number | null; freezeMonths: number | null; signedAt: string | null; vigenciaHasta?: string | null },
   filas: readonly FilaDelMes[],
   hoy: Date
 ): ResumenDelTrato {
@@ -152,7 +157,7 @@ export function resumenDelTrato(
     penalidadCop: Math.round(filas.reduce((a, f) => a + (Number(f.penalidadCop) || 0), 0)),
     mesEnCurso: mesEnCurso(c.signedAt, hoy, meses),
     mora: moraDelTrato(filas, hoy),
-    renovacionDebida: renovacionDebida(c.signedAt, hoy),
+    renovacionDebida: renovacionDebida(c.signedAt, hoy, c.vigenciaHasta),
     cerrado,
   };
 }

@@ -586,7 +586,7 @@ function Experience() {
         quantity_frozen_kg: number | null;
         season_id: string | null;
         terms_version: string | null;
-        declaracion: "trimestre" | "30_dias" | "ahora_y_siguiente" | null;
+        declaracion: "trimestre" | "temporada_actual" | "ahora_y_siguiente" | null;
         compra_inicial_kg: number | string | null;
         reference_price_source: string | null;
         vigencia_desde?: string | null;
@@ -650,7 +650,7 @@ function Experience() {
               retiradoPenalizadoKg: Number(m.retirado_penalizado_kg ?? 0),
               penalidadCop: Number(m.penalidad_cop ?? 0),
             }));
-          const resumen = resumenDelTrato({ quantityFrozenKg: c.quantity_frozen_kg, freezeMonths: c.freeze_months, signedAt: c.signed_at }, meses, hoy);
+          const resumen = resumenDelTrato({ quantityFrozenKg: c.quantity_frozen_kg, freezeMonths: c.freeze_months, signedAt: c.signed_at, vigenciaHasta: c.vigencia_hasta ?? null }, meses, hoy);
           return {
           id: c.id,
           lotId: c.lot_id,
@@ -736,7 +736,7 @@ function Experience() {
         modificador_pct: number | string | null;
         expira_at: string | null;
         locked_kg: number | string | null;
-        declaracion: "trimestre" | "30_dias" | "ahora_y_siguiente" | null;
+        declaracion: "trimestre" | "temporada_actual" | "ahora_y_siguiente" | null;
         lugar_entrega: string | null;
         precio_tope_kg: number | string | null;
         fnc_carga_ref: number | string | null;

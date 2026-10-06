@@ -1,7 +1,7 @@
 // ── La calculadora del trato (fase 6 del PLAN_CIRCUITO_DEL_LOTE, V5.83) ──────────────────────
 // PURA: sin red, sin servidor. Folio 8, paso 15: «acepta con claridad: una calculadora que simula escenarios y
 // sobre la que decide la cantidad». Dada la cantidad que el productor piensa comprometer, el precio anclado de la
-// oferta (COP/kg de CPS) y su declaración (trimestre o 30 días), dice: cuánto compra CTCx de inmediato (una carga),
+// oferta (COP/kg de CPS) y su declaración (la modalidad), dice: cuánto compra CTCx de inmediato (una carga),
 // cuánto pediría y pagaría cada mes, cuánto puede retirar sin costo al cerrar cada mes (25 % · 25 %) y cuánto
 // costaría retirar TODO en cada mes (4 % del precio de cada carga por encima del tramo libre). Las cifras salen de
 // `terminos.ts`; la penalidad reproduce el ejemplo del §12.9 del PVC plan (`qa-trato-check` lo exige).
@@ -9,7 +9,8 @@
 // Es un ESCENARIO, no un pedido: el pedido real de CTCx mes a mes lo hace el trato (fase 7). El reparto mensual se
 // enseña parejo porque es lo único honesto sin conocer la cosecha; el productor decide con eso la cantidad.
 
-import { CARGA_KG, COMPRA_INICIAL_CTCX_CARGAS, PENALIDAD_RETIRO_PCT, PERIODO_MESES, RETIRO_LIBRE_AHORA_Y_SIGUIENTE_PCT, TRAMO_LIBRE_ACUMULADO_PCT, minimoKg, type DECLARACIONES } from "./terminos";
+import { CARGA_KG, COMPRA_INICIAL_CTCX_CARGAS, PENALIDAD_RETIRO_PCT, PERIODO_MESES, RETIRO_LIBRE_AHORA_Y_SIGUIENTE_PCT, minimoKg, type DECLARACIONES } from "./terminos";
+import { tramoLibrePct } from "./mesAMes";
 
 export type Declaracion = (typeof DECLARACIONES)[number];
 
@@ -23,7 +24,7 @@ export type EscenarioDelTrato = {
   grado?: string | null;
   /** V5.169: los meses del trato cuando no son los de la declaración (p. ej. «Ahora y Siguiente»: los de esta temporada + 3). */
   meses?: number;
-  /** V5.169: la compra de CTCx con la firma, si no es la carga de siempre («Declarar Ahora»: 10 a 25 kg; se simula con un valor). */
+  /** V5.169: la compra de CTCx con la firma, si no es la carga de siempre («Temporada Actual»: 10 a 25 kg; se simula con un valor). */
   compraInicialKg?: number;
 };
 
@@ -62,7 +63,7 @@ const cop = (n: number) => Math.round(n);
 export function simularTrato(e: EscenarioDelTrato): SimulacionDelTrato {
   const declaradoKg = Math.max(0, Number(e.declaradoKg) || 0);
   const copKg = Math.max(0, Number(e.copKg) || 0);
-  const meses = e.meses ?? (e.declaracion === "30_dias" ? 1 : PERIODO_MESES);
+  const meses = e.meses ?? PERIODO_MESES;
   const copCarga = copKg * CARGA_KG;
   const cargas = declaradoKg / CARGA_KG;
   const compraInicialKg = Math.min(declaradoKg, e.compraInicialKg ?? COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG);
@@ -72,9 +73,9 @@ export function simularTrato(e: EscenarioDelTrato): SimulacionDelTrato {
   for (let mes = 1; mes <= meses; mes++) {
     const pedidoKg = mes === meses ? r1(restanteKg - repartido) : r1(restanteKg / meses);
     repartido = r1(repartido + pedidoKg);
-    // Por 30 días (el periodo en curso) no hay tramo libre: es el mes 1 del periodo.
-    // V5.169: «Ahora y Siguiente» tiene el 30 % libre desde el primer día, sin escalones.
-    const retiroLibrePct = e.declaracion === "30_dias" ? 0 : e.declaracion === "ahora_y_siguiente" ? RETIRO_LIBRE_AHORA_Y_SIGUIENTE_PCT : (TRAMO_LIBRE_ACUMULADO_PCT[Math.min(3, mes) as 1 | 2 | 3] ?? 0);
+    // V5.169: «Ahora y Siguiente» tiene el 30 % libre desde el primer día, sin escalones. V5.173: las demás, la escalera repartida
+    // en los meses del trato (`tramoLibrePct`): 0 · 25 · 50 en el trimestre, 0 · 37,5 en dos meses, nada en un mes.
+    const retiroLibrePct = tramoLibrePct(mes, meses, e.declaracion === "ahora_y_siguiente" ? RETIRO_LIBRE_AHORA_Y_SIGUIENTE_PCT : null);
     const cargasPenalizadas = cargas * (1 - retiroLibrePct / 100);
     porMes.push({
       mes,

@@ -3,17 +3,18 @@
 // firmar con el dedo.» El contrato se ARMA de la oferta aceptada y de la decisión del productor con las cifras de
 // `terminos.ts` y `modalidades.ts` (las mismas que leen la calculadora y el trato mes a mes): nada de lo que dice se teclea.
 // Dos clases:
-//   · PARTICIPACIÓN EN CHERRY PICKED — con su modalidad («Declarar Ahora», «Siguiente Temporada Trimestral», «Ahora y
+//   · PARTICIPACIÓN EN CHERRY PICKED — con su modalidad («Temporada Actual» desde la V5.173, «Siguiente Temporada Trimestral», «Ahora y
 //     Siguiente»), y la cláusula de que CTCx NO se compromete a comprar fracciones mes a mes.
 //   · COMPRA CTCx SELECTION — una venta en firme de una cantidad a un precio acordado (hasta PVC − 8 %).
 // El texto tiene VERSIÓN propia y el servidor guarda la huella SHA-256 del texto exacto que el productor firmó.
 // PURO. Es una redacción operativa de los términos del trato; la revisión jurídica la decide el owner.
 
 import { CTC_RAZON, CTC_SEDE, NIT } from "@/lib/legal";
-import { CARGA_KG, DIAS_ANTES_REDECLARAR, MORA, PENALIDAD_RETIRO_PCT, RENOVACION_DIAS, TRAMO_LIBRE_ACUMULADO_PCT } from "./terminos";
+import { CARGA_KG, DIAS_ANTES_REDECLARAR, MORA, PENALIDAD_RETIRO_PCT, RENOVACION_DIAS } from "./terminos";
+import { tramoLibrePct } from "./mesAMes";
 import { MODALIDAD_LABEL, textoCompraInicial, type CondicionesDeModalidad } from "./modalidades";
 
-export const CONTRATO_VERSION = "2026-10-06.4";
+export const CONTRATO_VERSION = "2026-10-06.5";
 
 export type DatosDelContrato = {
   /** V5.169: participación en Cherry Picked (con modalidad) o compra de CTCx Selection. */
@@ -41,6 +42,23 @@ const fecha = (iso: string) => {
   const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
   return `${d} de ${meses[m - 1]} de ${y}`;
 };
+
+const pct = (n: number) => n.toLocaleString("es-CO", { maximumFractionDigits: 1 });
+
+/** V5.173: la escalera de retiro libre dicha para los meses del trato («Al cerrar el mes 1 … hasta el 25 % … y, al cerrar el mes 2,
+ *  hasta el 50 % acumulado.»). En 3 meses es el texto de siempre. */
+export function textoDeLaEscalera(meses: number): string {
+  const cierres = Array.from({ length: Math.max(0, meses - 1) }, (_, i) => i + 1);
+  return (
+    cierres
+      .map((m, i) =>
+        i === 0
+          ? `Al cerrar el mes 1 el Productor puede retirar sin penalidad hasta el ${pct(tramoLibrePct(2, meses))} % de lo declarado`
+          : `${i === cierres.length - 1 ? " y" : ""}, al cerrar el mes ${m}, hasta el ${pct(tramoLibrePct(m + 1, meses))} % acumulado`
+      )
+      .join("") + "."
+  );
+}
 
 /** Las cláusulas del contrato, en el orden en que se firman. */
 export function clausulasDelContrato(d: DatosDelContrato): ClausulaDelContrato[] {
@@ -86,8 +104,8 @@ export function clausulasDelContrato(d: DatosDelContrato): ClausulaDelContrato[]
   const modalidad = MODALIDAD_LABEL[c.modalidad];
   const vigencia = `del ${fecha(c.desde)} al ${fecha(c.hasta)}`;
   const cantidad =
-    c.modalidad === "30_dias"
-      ? `En la modalidad «${modalidad}», el Productor declara disponibles ${kg(d.declaradoKg)} de CPS (${cargas} cargas de ${CARGA_KG} kg) para los próximos 30 días, ${vigencia}. Puede renovar la declaración dentro de la misma Temporada Trimestral mientras falten al menos 30 días para la siguiente; cada renovación enmienda la cantidad declarada, y CTCx no queda obligado a una compra adicional.`
+    c.modalidad === "temporada_actual"
+      ? `En la modalidad «${modalidad}», el Productor declara disponibles ${kg(d.declaradoKg)} de CPS (${cargas} cargas de ${CARGA_KG} kg) para lo que queda de la Temporada Trimestral en curso, ${vigencia}: ${c.meses} ${c.meses === 1 ? "mes" : "meses"} de 30 días, y el último llega hasta el fin de la temporada.`
       : c.modalidad === "trimestre"
         ? `En la modalidad «${modalidad}», el Productor declara disponibles ${kg(d.declaradoKg)} de CPS (${cargas} cargas de ${CARGA_KG} kg) para la siguiente Temporada Trimestral, ${vigencia}.`
         : `En la modalidad «${modalidad}», el Productor declara disponibles ${kg(d.declaradoKg)} de CPS (${cargas} cargas de ${CARGA_KG} kg) desde hoy y durante la siguiente Temporada Trimestral, ${vigencia}. Al empezar la siguiente temporada (${fecha(c.redeclarar!.at)}) el Productor redeclara cuánto deja disponible para ella, al menos ${kg(c.redeclarar!.minKg)} (el 70 % de lo declarado, y nunca menos del mínimo de su grado). La redeclaración se abre en Kaffetal Regal ${DIAS_ANTES_REDECLARAR} días antes y se cierra al terminar ese primer día; si el Productor no redeclara, la cantidad disponible para la siguiente temporada queda en ese mínimo. Lo ya comprado por CTCx y lo ya retirado no cambian.`;
@@ -98,11 +116,11 @@ export function clausulasDelContrato(d: DatosDelContrato): ClausulaDelContrato[]
       "CTCx no se compromete a comprar fracciones fijas del café declarado mes a mes. Puede no haber compras en un mes cualquiera, o venderse todo lo declarado el primer día: el café declarado queda disponible para la venta en Cherry Picked y CTCx lo compra a medida que se vende, al precio acordado.",
   };
   const retiro =
-    c.modalidad === "30_dias"
-      ? `Por ser una declaración de 30 días no hay tramo libre de retiro: lo que el Productor retire paga el ${PENALIDAD_RETIRO_PCT} % del precio de cada carga retirada.`
-      : c.modalidad === "trimestre"
-        ? `Al cerrar el mes 1 el Productor puede retirar sin penalidad hasta el ${TRAMO_LIBRE_ACUMULADO_PCT[2]} % de lo declarado y, al cerrar el mes 2, hasta el ${TRAMO_LIBRE_ACUMULADO_PCT[3]} % acumulado. Lo que retire por encima paga el ${PENALIDAD_RETIRO_PCT} % del precio de cada carga.`
-        : `El Productor puede retirar sin penalidad hasta el ${c.retiroLibrePct} % de lo declarado en cualquier momento, sin escalones mensuales. Lo que retire por encima paga el ${PENALIDAD_RETIRO_PCT} % del precio de cada carga.`;
+    c.retiroLibrePct != null
+      ? `El Productor puede retirar sin penalidad hasta el ${c.retiroLibrePct} % de lo declarado en cualquier momento, sin escalones mensuales. Lo que retire por encima paga el ${PENALIDAD_RETIRO_PCT} % del precio de cada carga.`
+      : c.meses <= 1
+        ? `Por ser un trato de un solo mes no hay tramo libre de retiro: lo que el Productor retire paga el ${PENALIDAD_RETIRO_PCT} % del precio de cada carga retirada.`
+        : `${textoDeLaEscalera(c.meses)} Lo que retire por encima paga el ${PENALIDAD_RETIRO_PCT} % del precio de cada carga.`;
   return numerar(
     [
       partes,
@@ -122,7 +140,13 @@ export function clausulasDelContrato(d: DatosDelContrato): ClausulaDelContrato[]
       pago,
       { titulo: "", texto: retiro },
       { titulo: "", texto: `Si una compra no se entrega, corren ${MORA.semanasSinCargo} semanas sin cargo y ${MORA.semanasConRecargo} más con un recargo del ${MORA.recargoPct} %. Pasado ese plazo, CTCx puede declarar la ruptura contractual, que congela la cuenta del Productor hasta que se resuelva.` },
-      { titulo: "", texto: `A los ${RENOVACION_DIAS} días CTCx puede ofrecer renovar con el PVC vigente en ese momento. Renovar es una oferta nueva que el Productor acepta o rechaza.` },
+      {
+        titulo: "",
+        texto:
+          c.modalidad === "temporada_actual"
+            ? `Al terminar la temporada (${fecha(c.hasta)}), CTCx puede ofrecer participar en la siguiente Temporada Trimestral con el PVC publicado para ella. Es una oferta nueva que el Productor acepta o rechaza.`
+            : `A los ${RENOVACION_DIAS} días CTCx puede ofrecer renovar con el PVC vigente en ese momento. Renovar es una oferta nueva que el Productor acepta o rechaza.`,
+      },
       documentos,
       firma,
     ],

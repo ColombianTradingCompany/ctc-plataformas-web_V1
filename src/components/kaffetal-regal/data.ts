@@ -398,7 +398,7 @@ export type ProducerOffer = {
   modificadorPct: number;
   expiraAt: string | null;
   lockedKg: number | null;
-  declaracion: "trimestre" | "30_dias" | "ahora_y_siguiente" | null;
+  declaracion: "trimestre" | "temporada_actual" | "ahora_y_siguiente" | null;
   /** V5.168: las condiciones de entrega que CTCx confirmó al emitir. */
   lugarEntrega: string | null;
   /** V5.169: el tope de una compra de CTCx Selection (PVC − 8 %), la referencia FNC por carga del día de la oferta, el fin de la
@@ -428,7 +428,7 @@ export type ProducerContract = {
   quantityFrozenKg: number | null;
   // V5.83: el contrato nace LLENO de la oferta aceptada con la declaración del productor.
   termsVersion: string | null;
-  declaracion: "trimestre" | "30_dias" | "ahora_y_siguiente" | null;
+  declaracion: "trimestre" | "temporada_actual" | "ahora_y_siguiente" | null;
   compraInicialKg: number | null;
   referencePriceSource: string | null;
   /** V5.169: la vigencia del trato, el retiro libre, la redeclaración y la compra discrecional de la modalidad. */

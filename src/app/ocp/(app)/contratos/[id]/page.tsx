@@ -64,7 +64,7 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
   const { data: contract } = await service
     .from("purchase_contracts")
     .select(
-      "id, status, grade_snapshot, signed_at, reference_price_source, reference_price_snapshot, price_per_kg_locked, quantity_frozen_kg, terms_version, declaracion, compra_inicial_kg, modificador_pct, freeze_months, ruptura_at, ruptura_motivo, renovado_at, lugar_entrega, producer_signed_at, producer_signer_name, producer_signature_path, producer_signature_meta, contract_text_version, contract_text_sha256, redeclarar_min_kg, redeclarar_at, redeclarado_at, redeclarado_kg, redeclaracion_origen, redeclarar_aviso_at, lots(name, producer_id, fincas(name))"
+      "id, status, grade_snapshot, signed_at, reference_price_source, reference_price_snapshot, price_per_kg_locked, quantity_frozen_kg, terms_version, declaracion, compra_inicial_kg, modificador_pct, freeze_months, ruptura_at, ruptura_motivo, renovado_at, lugar_entrega, producer_signed_at, producer_signer_name, producer_signature_path, producer_signature_meta, contract_text_version, contract_text_sha256, vigencia_hasta, redeclarar_min_kg, redeclarar_at, redeclarado_at, redeclarado_kg, redeclaracion_origen, redeclarar_aviso_at, lots(name, producer_id, fincas(name))"
     )
     .eq("id", id)
     .single();
@@ -98,7 +98,7 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
   const recordatoriosDe = new Map(((mesesRaw as MesRow[] | null) ?? []).map((m) => [m.mes, m.recordatorios_mora ?? 0]));
   const hoy = new Date();
   const nMeses = mesesDelTrato(contract.freeze_months);
-  const resumen = resumenDelTrato({ quantityFrozenKg: contract.quantity_frozen_kg != null ? Number(contract.quantity_frozen_kg) : null, freezeMonths: nMeses, signedAt: contract.signed_at }, meses, hoy);
+  const resumen = resumenDelTrato({ quantityFrozenKg: contract.quantity_frozen_kg != null ? Number(contract.quantity_frozen_kg) : null, freezeMonths: nMeses, signedAt: contract.signed_at, vigenciaHasta: contract.vigencia_hasta ?? null }, meses, hoy);
   const vigente = contract.status === "active";
   const cuentaCongelada = perfil?.estado_cuenta === "congelada";
 
@@ -282,7 +282,7 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
             <div className={styles.card} style={{ flexDirection: "column", alignItems: "stretch" }}>
               <h3 style={{ margin: 0 }}>Renovación</h3>
               <p className={styles.meta}>
-                A los {RENOVACION_DIAS} días de la firma CTC ofrece renovar con el PVC vigente y una cantidad nueva (past crop −10 % si la recolección
+                A los {RENOVACION_DIAS} días de la firma (o al terminar la vigencia, si es antes) CTC ofrece renovar con el PVC vigente y una cantidad nueva (past crop −10 % si la recolección
                 pasó de 9 meses). Se ofrece sobre un trato <b>cumplido</b>.
               </p>
               {contract.status === "completed" && resumen.renovacionDebida ? (

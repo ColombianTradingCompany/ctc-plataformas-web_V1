@@ -14,6 +14,7 @@ import { openShipmentInstructions } from "../ficha/shipmentInstructionsPrint";
 import { useToast } from "@/components/Toast";
 import { CtcRef } from "./CtcRef";
 import styles from "../AppDashboard.module.css";
+import { anotacionesDeMejora, normalizaRueda } from "@/lib/catacion/rueda";
 
 // ── Evaluar mi Café (V5.17: las tres secciones · V5.80: la solicitud del folio 7) ──────────
 // El camino del lote después de la Visa, en el orden en que lo vive el
@@ -420,6 +421,8 @@ function FilaCard({ lot }: { lot: Lot }) {
               </b>
             </div>
           )}
+          {/* V5.165 (owner): las anotaciones de mejora de la Rueda del Sabor, en lo que el productor recibe tras la evaluación. */}
+          <AnotacionesDeMejora rueda={lot.officialRueda} />
           {ins?.mejorasDoc && (
             <details style={{ border: "1px solid var(--line)", borderRadius: 8, padding: "8px 12px", background: "var(--card)" }}>
               <summary style={{ cursor: "pointer", fontWeight: 600, fontSize: 13 }}>Recomendaciones de Mejora</summary>
@@ -481,6 +484,8 @@ function GalardonCard({ lot, fincas }: { lot: Lot; fincas: Finca[] }) {
           {ins?.sondeoResultNotes && (
             <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 6 }}>Feedback del Q-Grader: {ins.sondeoResultNotes}</div>
           )}
+          {/* V5.165 (owner): las anotaciones de mejora de la Rueda del Sabor, en lo que el productor recibe tras la evaluación. */}
+          <AnotacionesDeMejora rueda={lot.officialRueda} />
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
             {/* V5.79: el dossier del lote (trazabilidad + EUDR + caracterización), en español e inglés. */}
             <a className="btn btn-sm btn-solid" href={`/kaffetal-regal/dossier/${lot.id}`} target="_blank" rel="noopener noreferrer">
@@ -519,6 +524,33 @@ function GalardonCard({ lot, fincas }: { lot: Lot; fincas: Finca[] }) {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** V5.165: las notas de defecto marcadas en la evaluación que rige y su posible causa en el beneficio (Rueda del Sabor). */
+function AnotacionesDeMejora({ rueda }: { rueda: unknown }) {
+  const anotaciones = anotacionesDeMejora(rueda, "es");
+  if (!anotaciones.length) {
+    // La rueda marcó notas, ninguna de defecto: se dice — el productor sabe que su beneficio salió limpio.
+    if (!normalizaRueda(rueda).length) return null;
+    return (
+      <div style={{ marginTop: 8, border: "1px solid #9CCB9C", background: "#F1FAF1", borderRadius: 8, padding: "8px 10px", fontSize: 12.5 }}>
+        <b>✓ Anotaciones de mejora · Rueda del Sabor</b> — el Q-Grader no marcó notas a revisar en el beneficio.
+      </div>
+    );
+  }
+  return (
+    <div style={{ marginTop: 8, border: "1px solid #E5C76B", background: "#FFF9E6", borderRadius: 8, padding: "8px 10px", fontSize: 12.5 }}>
+      <b>⚠ Anotaciones de mejora · Rueda del Sabor</b>
+      <div style={{ color: "var(--muted)", margin: "2px 0 4px" }}>Notas de defecto que el Q-Grader marcó en su café y su posible causa en el beneficio — lo que conviene revisar.</div>
+      <ul style={{ margin: 0, paddingLeft: 18 }}>
+        {anotaciones.map((a) => (
+          <li key={a.id} style={{ marginBottom: 3 }}>
+            <b>{a.ruta}</b> — {a.causa}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

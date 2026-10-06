@@ -261,6 +261,8 @@ export type Lot = {
   officialScaAverage: number | null;
   /** V5.92: el Punto que rige con su procedencia (nativo SCA 2004 u homologado desde CVA); opcional para no romper a quien arma un Lot a mano. */
   officialPunto?: PuntoSca | null;
+  /** V5.165: la rueda de la evaluación que rige — de ella salen las anotaciones de mejora de la Rueda del Sabor. */
+  officialRueda?: unknown;
   officialFactorAverage: number | null;
   officialEvalCount: number;
   hasPendingOfficializationClaim: boolean;

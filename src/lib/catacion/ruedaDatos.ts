@@ -3,7 +3,8 @@
 // familia → subcategoría → nota, con el color y el icono de cada familia. Para cambiarla se cambia la herramienta y se
 // regenera; `qa-centro-calidad` falla si este archivo y la herramienta dejan de coincidir. La lee `rueda.ts`.
 
-export type NotaDeLaRueda = { id: string; es: string; en: string };
+/** V5.165: `causa` = la «posible causa en el beneficio» que la herramienta da para las notas de defecto (anotación de mejora). */
+export type NotaDeLaRueda = { id: string; es: string; en: string; causa?: { es: string; en: string } };
 export type SubcategoriaDeLaRueda = { id: string; es: string; en: string; hojas: NotaDeLaRueda[] };
 export type FamiliaDeLaRueda = { id: string; es: string; en: string; color: string; icono: string; subs: SubcategoriaDeLaRueda[] };
 
@@ -56,17 +57,17 @@ export const RUEDA_DATOS: readonly FamiliaDeLaRueda[] = [
     id: "acido", es: "Ácido / Fermentado", en: "Sour / Fermented", color: "#b5c33b", icono: "🍷",
     subs: [
       { id: "acido-acidos", es: "Ácido", en: "Sour", hojas: [
-        { id: "acido-acetico", es: "Ácido acético", en: "Acetic Acid" },
-        { id: "acido-butirico", es: "Ácido butírico", en: "Butyric Acid" },
-        { id: "acido-isovalerico", es: "Ácido isovalérico", en: "Isovaleric Acid" },
+        { id: "acido-acetico", es: "Ácido acético", en: "Acetic Acid", causa: { es: "Sobrefermentación: el mucílago permaneció fermentando más tiempo del recomendado antes del lavado. Revisar tiempos y temperatura del tanque de fermentación.", en: "Over-fermentation: the mucilage kept fermenting longer than recommended before washing. Review fermentation tank time and temperature." } },
+        { id: "acido-butirico", es: "Ácido butírico", en: "Butyric Acid", causa: { es: "Fermentación anaeróbica prolongada, típica de tanques mal aireados o con temperaturas altas durante el beneficio húmedo.", en: "Prolonged anaerobic fermentation, typical of poorly aerated tanks or high temperatures during wet processing." } },
+        { id: "acido-isovalerico", es: "Ácido isovalérico", en: "Isovaleric Acid", causa: { es: "Fermentación excesiva, o cerezas sobremaduras mezcladas con la cosecha principal antes del despulpado.", en: "Excessive fermentation, or overripe cherries mixed into the main harvest before pulping." } },
         { id: "acido-citrico", es: "Ácido cítrico", en: "Citric Acid" },
         { id: "acido-malico", es: "Ácido málico", en: "Malic Acid" },
       ] },
       { id: "acido-fermentado", es: "Fermentado", en: "Fermented", hojas: [
         { id: "vinoso", es: "Vinoso", en: "Winey" },
         { id: "whiskey", es: "Whiskey", en: "Whiskey" },
-        { id: "fermentado", es: "Fermentado", en: "Fermented" },
-        { id: "sobremaduro", es: "Sobremaduro", en: "Overripe" },
+        { id: "fermentado", es: "Fermentado", en: "Fermented", causa: { es: "Tiempo de fermentación mayor al necesario para el clima y la variedad; conviene ajustar el protocolo de beneficio con catas de control cada pocas horas.", en: "Fermentation time longer than needed for the climate and variety; adjust the processing protocol with control cuppings every few hours." } },
+        { id: "sobremaduro", es: "Sobremaduro", en: "Overripe", causa: { es: "Cosecha con cerezas pasadas de punto (sobremaduras) mezcladas con la recolección selectiva; reforzar la selección en el recolectado.", en: "Harvest with overripe cherries mixed into the selective picking; reinforce selection during picking." } },
       ] },
     ],
   },
@@ -75,7 +76,7 @@ export const RUEDA_DATOS: readonly FamiliaDeLaRueda[] = [
     subs: [
       { id: "verde-crudo", es: "Crudo", en: "Raw", hojas: [
         { id: "aceite-de-oliva", es: "Aceite de oliva", en: "Olive Oil" },
-        { id: "crudo", es: "Crudo", en: "Raw" },
+        { id: "crudo", es: "Crudo", en: "Raw", causa: { es: "Cosecha con cerezas verdes/inmaduras mezcladas con la recolección madura, o un tueste demasiado corto que no desarrolló los azúcares.", en: "Harvest with green/unripe cherries mixed into the ripe picking, or a roast too short to develop the sugars." } },
       ] },
       { id: "verde-vegetal", es: "Vegetal", en: "Vegetative", hojas: [
         { id: "verde", es: "Verde", en: "Green" },
@@ -87,7 +88,7 @@ export const RUEDA_DATOS: readonly FamiliaDeLaRueda[] = [
         { id: "herbaceo", es: "Herbáceo", en: "Herb-like" },
       ] },
       { id: "verde-frijol", es: "A frijol", en: "Beany", hojas: [
-        { id: "a-frijol", es: "A frijol", en: "Beany" },
+        { id: "a-frijol", es: "A frijol", en: "Beany", causa: { es: "Tueste demasiado claro o de muy corta duración, que no alcanzó a romper el almidón del grano.", en: "A roast too light or too short to break down the bean's starch." } },
       ] },
     ],
   },
@@ -95,24 +96,24 @@ export const RUEDA_DATOS: readonly FamiliaDeLaRueda[] = [
     id: "otros", es: "Otros", en: "Other", color: "#4e8fa8", icono: "🧪",
     subs: [
       { id: "otros-papel", es: "Papel / Mohoso", en: "Papery / Musty", hojas: [
-        { id: "rancio", es: "Rancio", en: "Stale" },
-        { id: "carton", es: "Cartón", en: "Cardboard" },
-        { id: "papel", es: "Papel", en: "Papery" },
-        { id: "amaderado", es: "Amaderado", en: "Woody" },
-        { id: "mohoso-humedo", es: "Mohoso / Húmedo", en: "Moldy / Damp" },
-        { id: "polvoso-mohoso", es: "Polvoso / Mohoso", en: "Dusty / Musty" },
-        { id: "terroso-mohoso", es: "Terroso / Mohoso", en: "Earthy / Musty" },
-        { id: "animal", es: "Animal", en: "Animalic" },
-        { id: "caldo-de-carne", es: "Caldo de carne", en: "Meaty Broth" },
-        { id: "fenolico", es: "Fenólico", en: "Phenolic" },
+        { id: "rancio", es: "Rancio", en: "Stale", causa: { es: "Grano almacenado por demasiado tiempo o en condiciones de humedad/calor inadecuadas; los aceites naturales del grano se oxidaron.", en: "Coffee stored too long or under inadequate humidity/heat conditions; the bean's natural oils oxidized." } },
+        { id: "carton", es: "Cartón", en: "Cardboard", causa: { es: "Almacenamiento prolongado sin control de humedad, o empaque en mal estado que dejó pasar humedad ambiental.", en: "Prolonged storage without humidity control, or damaged packaging that let in ambient moisture." } },
+        { id: "papel", es: "Papel", en: "Papery", causa: { es: "Pérdida de frescura por almacenamiento prolongado; revisar rotación de inventario y condiciones de bodega.", en: "Loss of freshness from prolonged storage; check inventory rotation and warehouse conditions." } },
+        { id: "amaderado", es: "Amaderado", en: "Woody", causa: { es: "Secado lento o almacenamiento en contacto con empaques de fique o madera en mal estado.", en: "Slow drying or storage in contact with worn sisal bags or wood." } },
+        { id: "mohoso-humedo", es: "Mohoso / Húmedo", en: "Moldy / Damp", causa: { es: "Secado insuficiente (humedad final por encima del 12%) o almacenamiento en bodega húmeda; riesgo de crecimiento de hongos.", en: "Insufficient drying (final moisture above 12%) or storage in a damp warehouse; risk of mold growth." } },
+        { id: "polvoso-mohoso", es: "Polvoso / Mohoso", en: "Dusty / Musty", causa: { es: "Humedad residual alta con secado irregular, o contacto con superficies sucias durante el secado.", en: "High residual moisture with uneven drying, or contact with dirty surfaces during drying." } },
+        { id: "terroso-mohoso", es: "Terroso / Mohoso", en: "Earthy / Musty", causa: { es: "Secado directo sobre el suelo sin zarandas ni carpas; contacto del grano con tierra húmeda.", en: "Drying directly on the ground without raised beds or tarps; the coffee came into contact with damp soil." } },
+        { id: "animal", es: "Animal", en: "Animalic", causa: { es: "Contaminación cruzada durante transporte o almacenamiento cerca de animales o superficies sin higiene.", en: "Cross-contamination during transport or storage near animals or unhygienic surfaces." } },
+        { id: "caldo-de-carne", es: "Caldo de carne", en: "Meaty Broth", causa: { es: "Fermentación descontrolada o prolongada más allá del punto óptimo, generando compuestos proteicos degradados.", en: "Uncontrolled or over-extended fermentation beyond the optimal point, generating degraded protein compounds." } },
+        { id: "fenolico", es: "Fenólico", en: "Phenolic", causa: { es: "Fermentación contaminada (agua estancada, tanques sin lavar) o contacto con plástico/PVC durante el beneficio. Revisar de inmediato el protocolo de fermentación y lavado.", en: "Contaminated fermentation (stagnant water, unwashed tanks) or contact with plastic/PVC during processing. Review the fermentation and washing protocol immediately." } },
       ] },
       { id: "otros-quimico", es: "Químico", en: "Chemical", hojas: [
-        { id: "amargo", es: "Amargo", en: "Bitter" },
-        { id: "salado", es: "Salado", en: "Salty" },
-        { id: "medicinal", es: "Medicinal", en: "Medicinal" },
-        { id: "petroleo", es: "Petróleo", en: "Petroleum" },
-        { id: "skunky", es: "Skunky", en: "Skunky" },
-        { id: "caucho", es: "Caucho", en: "Rubber" },
+        { id: "amargo", es: "Amargo", en: "Bitter", causa: { es: "Sobreextracción por tueste muy oscuro, o exceso de cerezas verdes en la cosecha.", en: "Over-extraction from a very dark roast, or excess green cherries in the harvest." } },
+        { id: "salado", es: "Salado", en: "Salty", causa: { es: "Posible contaminación del agua usada en el lavado, o un defecto de sabor cruzado durante el beneficio.", en: "Possible contamination of the water used for washing, or a cross-flavor defect during processing." } },
+        { id: "medicinal", es: "Medicinal", en: "Medicinal", causa: { es: "Fermentación anaeróbica descontrolada o contaminación microbiana durante el beneficio húmedo.", en: "Uncontrolled anaerobic fermentation or microbial contamination during wet processing." } },
+        { id: "petroleo", es: "Petróleo", en: "Petroleum", causa: { es: "Contacto con combustibles o superficies contaminadas durante el secado o el transporte; revisar patios y vehículos usados.", en: "Contact with fuel or contaminated surfaces during drying or transport; check drying patios and vehicles used." } },
+        { id: "skunky", es: "Skunky", en: "Skunky", causa: { es: "Fermentación muy prolongada o secado demasiado lento con alta humedad ambiental.", en: "Very prolonged fermentation or drying too slowly under high ambient humidity." } },
+        { id: "caucho", es: "Caucho", en: "Rubber", causa: { es: "Contacto del grano con materiales de caucho o empaques inadecuados durante el secado o almacenamiento.", en: "Contact of the beans with rubber materials or unsuitable packaging during drying or storage." } },
       ] },
     ],
   },
@@ -139,8 +140,8 @@ export const RUEDA_DATOS: readonly FamiliaDeLaRueda[] = [
         { id: "tabaco", es: "Tabaco", en: "Tobacco" },
       ] },
       { id: "tostado-quemado", es: "Quemado", en: "Burnt", hojas: [
-        { id: "acre", es: "Acre", en: "Acrid" },
-        { id: "cenizo", es: "Cenizo", en: "Ashy" },
+        { id: "acre", es: "Acre", en: "Acrid", causa: { es: "Tueste llevado más allá del punto óptimo de desarrollo; ajustar la curva de tueste.", en: "Roast pushed past the optimal development point; adjust the roast curve." } },
+        { id: "cenizo", es: "Cenizo", en: "Ashy", causa: { es: "Tueste excesivamente oscuro o final de tueste demasiado rápido (quemado superficial).", en: "Excessively dark roast or too rapid a finish (surface scorching)." } },
         { id: "ahumado", es: "Ahumado", en: "Smoky" },
         { id: "curtido", es: "Curtido", en: "Brown, Roast" },
         { id: "tostado-intenso", es: "Tostado intenso", en: "Dark Roast" },

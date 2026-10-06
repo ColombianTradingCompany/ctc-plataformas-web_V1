@@ -13,7 +13,7 @@
 // Q-Grader (los vectores se LEEN de la tabla del §10.2) y el Punto homologado obedece R1–R8 (banda k 1–2, piso, Tyrian nativo).
 
 import { readFileSync } from "node:fs";
-import { RUEDA, DESCRIPTORES, normalizaRueda, descriptorLabel, rutaDe, familiaDe, ETAPAS_DE_LA_RUEDA, ETAPA_LABEL, INTENSIDAD, MARCA_POR_DEFECTO, ZONA_LABEL, zonaDeIntensidad, normalizaDetalle, marcaLabel, ajustaIntensidad, NOTA_MAX, alternaEtapa, etapasLabel, limpiaNota, normalizaEtapas } from "../src/lib/catacion/rueda.ts";
+import { RUEDA, DESCRIPTORES, normalizaRueda, descriptorLabel, rutaDe, familiaDe, ETAPAS_DE_LA_RUEDA, ETAPA_LABEL, INTENSIDAD, MARCA_POR_DEFECTO, ZONA_LABEL, zonaDeIntensidad, normalizaDetalle, marcaLabel, ajustaIntensidad, NOTA_MAX, alternaEtapa, etapasLabel, limpiaNota, normalizaEtapas, anotacionesDeMejora } from "../src/lib/catacion/rueda.ts";
 import { generar as generarRuedaDatos, leerDatosDeLaHerramienta } from "./build-rueda-datos.mjs";
 import { CVA, CVA_SECCIONES, SCA2004, computeCva, computeSca2004, contarScaTazas, normalizaScaTazas, EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, protocoloDelPunto, puntoDeLaPlanilla, toLabEvaluation } from "../src/lib/arena/labEvaluation.ts";
 import { BANDA_SIN_CALIBRAR, CVA_PROPOSITO, LOTES_PARA_CALIBRAR, admiteTyrian, decidirPorPunto, gradoFirme, homologarCva, puntoDeFila, puntoHomologado, puntoNativo, rotuloDelPunto, techoDelPunto } from "../src/lib/arena/homologacion.ts";
@@ -608,6 +608,33 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   const conAvance = (ruta, claves) => { const f = lee(ruta); return f.includes("useAvance") && claves.every((k) => f.includes(`AVANCE.${k}`)) && f.includes("<ProgresoDeAccion enCurso={enCurso} />") || (ruta.endsWith("NominadosClient.tsx") && claves.every((k) => f.includes(`AVANCE.${k}`))); };
   check("avance · OCP: galardonar, No supera, devolver, factura, enviar al Centro, re-evaluar y mejoras IA", conAvance("src/app/ocp/(app)/nominados/NominadosClient.tsx", ["galardonar", "noSupera", "devolver", "factura", "alCentro", "reevaluar", "mejoras"]) && (ocpUi.match(/<ErrorLine error=\{error\} enCurso=\{enCurso\} \/>/g) ?? []).length >= 5);
   check("avance · OCP Fichas (escaneo IA, compilar), BCP Socios y Usuarios (correos), LCP Buzón (responder), ECP Definición de Contexto (redactar IA), Terratalento (reenviar)", conAvance("src/app/ocp/(app)/kr/FichasClient.tsx", ["escanear", "compilar"]) && conAvance("src/app/bcp/(app)/socios/SociosClient.tsx", ["invitarSocio", "reenviarSocio"]) && conAvance("src/app/bcp/(app)/usuarios/UsuariosClient.tsx", ["invitarUsuario", "reenviarUsuario", "restablecer"]) && conAvance("src/app/lcp/(app)/buzon/BuzonMail.tsx", ["responderBuzon"]) && lee("src/components/panel/direccionamiento/DefinicionDeContexto.tsx").includes("AVANCE.redactarIa") && lee("src/app/bcp/(app)/terratalento/page.tsx").includes("<EnviarConAvance progreso={AVANCE.reenviarLlamado}>"));
+}
+
+// ── V5.165 (owner, 2026-10-06) · «una vez galardonado, el dossier debe incluir TODO: B1, B2 y B3» + las anotaciones de mejora
+//    que la Rueda del Sabor ya genera (sus «Aspectos a revisar en el beneficio»), también en lo que el productor recibe ─────
+{
+  const { caracterizacionDelDossier, planillaDeEvaluacion } = await import("../src/lib/kaffetal/dossierEvaluacion.ts");
+  const datos = lee("src/lib/catacion/ruedaDatos.ts");
+  const herramienta = lee("public/tools/catacion/rueda-del-cafe-v23.html");
+  check("rueda · las causas de la herramienta llegan a la taxonomía (una por nota con causa)", (datos.match(/causa: \{ es: /g) ?? []).length === (herramienta.match(/\bcause:/g) ?? []).length && (datos.match(/causa: \{ es: /g) ?? []).length >= 20);
+  const an = anotacionesDeMejora(["floral-floral|jazmin", "acido-acidos|acido-acetico"], "es");
+  check("anotaciones · solo las notas de defecto, con su ruta y su causa (Ácido acético → sobrefermentación)", an.length === 1 && an[0].ruta.endsWith("Ácido acético") && an[0].causa.startsWith("Sobrefermentación") && anotacionesDeMejora(["acido-acidos|acido-acetico"], "en")[0].causa.startsWith("Over-fermentation") && anotacionesDeMejora(null).length === 0);
+  const planilla = { rueda: ["floral-floral|jazmin", "acido-acidos|acido-acetico"], vista: "sca", escala: "sca", fa_start: "250", fa_green_remainder: "207.7", fa_primary_defect: "2.3", fa_secondary_defect: "3", sca_fragrance: "9", sca_flavor: "7", sca_aftertaste: "8", sca_acidity: "9", sca_body: "8", sca_balance: "9", sca_uniformity: "10", sca_clean_cup: "10", sca_sweetness: "9", sca_cuppers: "8", sca_num_tazas: "3", sca_taint_cups: "1", mesh_supremo: "76", defectos_detalle: { insecto_grave: "7" }, b3_actividad_agua: "0.6", b3_densidad_verde: "780", analysis_notes: "notas" };
+  const c = caracterizacionDelDossier({ varieties: [{ name: "castillo", pct: "100" }], species: "Arabica", base_processing: "Lavado", b1_unknown: ["density"] }, planillaDeEvaluacion({ physical_data: { planilla }, sca_data: {}, rueda: planilla.rueda }), "es");
+  check("dossier · B1 con variedades, proceso del lote y «No lo sabe» dato por dato", c.b1?.variedades[0]?.nombre === "castillo" && c.b1.pares.some((x) => x.k === "Proceso" && x.v === "Lavado") && c.b1.pares.some((x) => x.k === "Densidad" && x.v.startsWith("No lo sabe")));
+  check("dossier · B2 con los diez atributos SCA, total, tazas y la rueda", c.b2?.sca?.filas.length === 10 && c.b2.sca.total === "85.00" && c.b2.sca.tazas.startsWith("3") && c.b2.rueda.length === 2);
+  check("dossier · B3 con pesos, aw, densidad, % almendra defectuosa, factor, defectos y mallas", ["Actividad de agua (aw)", "Densidad", "Almendra defectuosa", "Factor de rendimiento"].every((k) => c.b3?.pares.some((x) => x.k === k)) && c.b3.defectos.some((d) => d.defecto.includes("(Broca)")) && c.b3.mallas.length > 0 && c.b3.notas === "notas");
+  check("dossier · trae las anotaciones de mejora de la rueda", c.anotaciones.length === 1 && c.anotaciones[0].causa.startsWith("Sobrefermentación"));
+  check("dossier · sin evaluación que rige no inventa B2/B3", (() => { const v = caracterizacionDelDossier({ varieties: [{ name: "x", pct: "100" }] }, null, "es"); return v.b2 === null && v.b3 === null && v.anotaciones.length === 0; })());
+  const pagina = lee("src/app/kaffetal-regal/dossier/[id]/page.tsx");
+  const doc = lee("src/components/kaffetal-regal/LotDossierDoc.tsx");
+  check("dossier · la página lee la planilla de la evaluación que rige y la pasa al documento", pagina.includes("physical_data, sca_data, rueda, rueda_detalle") && pagina.includes("caracterizacion={caracterizacionDelDossier(") && pagina.includes('rige.status === "accepted" ? planillaDeEvaluacion(rige) : null'));
+  check("dossier · el documento pinta B1, B2, B3 y las anotaciones (ES y EN), o el perfil limpio", ["caracterizacion?.b1 &&", "caracterizacion?.b2 &&", "caracterizacion?.b3 &&", "caracterizacion.anotaciones.map(", "t.anotLimpio"].every((k) => doc.includes(k)) && doc.includes('anot: "Anotaciones de mejora · Rueda del Sabor"') && doc.includes('anot: "Improvement notes · Flavour Wheel"'));
+  const kr = lee("src/components/kaffetal-regal/panel/EvaluacionesTab.tsx");
+  const exp = lee("src/components/kaffetal-regal/KaffetalExperience.tsx");
+  check("Kaffetal Regal · el productor ve las anotaciones con su resultado (galardonado y «No supera»)", (kr.match(/<AnotacionesDeMejora rueda=\{lot\.officialRueda\} \/>/g) ?? []).length === 2 && exp.includes("q_grader_reference, created_at, rueda") && exp.includes("officialRueda: evalSummary.rueda ?? null"));
+  const mej = lee("src/lib/arena/mejoras.ts");
+  check("mejoras IA · el reporte parte de las anotaciones de la rueda", mej.includes("const anotaciones = anotacionesDeMejora(") && mej.includes("i.anotaciones?.length ?") && mej.includes("              anotaciones,"));
 }
 
 if (fallos.length) {

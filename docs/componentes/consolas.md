@@ -177,6 +177,9 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.165 · el reporte de mejoras con IA (OCP) parte de las anotaciones de la Rueda del Sabor** (owner, 2026-10-06):
+  `src/lib/arena/mejoras.ts` lee la rueda de la evaluación del Q-Grader que rige (o la última) y pasa sus notas de defecto
+  con su causa al prompt.
 - **V5.164 · el avance en las acciones largas de las cuatro consolas; resumen del veredicto opcional** (owner, 2026-10-06).
   Patrón: `const { enCurso, conAvance } = useAvance()` + `<ProgresoDeAccion enCurso={enCurso} />`; los tiempos típicos en
   `AVANCE` (`ProgresoDeAccion.tsx`). Para un `<form action>` de servidor, `EnviarConAvance`. Una acción larga nueva se suma

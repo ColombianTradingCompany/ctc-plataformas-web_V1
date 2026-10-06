@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { anotacionesDeMejora } from "@/lib/catacion/rueda";
 
 // ── "Recomendaciones de Mejora" (IA) ────────────────────────────────────────
 // Cuando el sondeo preliminar sale subóptimo, el rechazo viaja acompañado de
@@ -13,6 +14,8 @@ import { registrarConsumo, usoDesdeAnthropic, USOS } from "@/lib/ai/consumo";
 const MODEL = "claude-sonnet-5";
 
 type MejorasInput = {
+  /** V5.165: las anotaciones de mejora de la rueda (notas de defecto marcadas y su causa). */
+  anotaciones?: { ruta: string; causa: string }[];
   lotName: string;
   variedad: string | null;
   proceso: string | null;
@@ -31,6 +34,8 @@ function buildPrompt(i: MejorasInput): string {
     i.notasCata ? `Notas de cata declaradas por el productor: ${i.notasCata}` : null,
     i.sondeoScore != null ? `Puntaje del sondeo preliminar: ${i.sondeoScore}` : null,
     `Resultado del sondeo preliminar (laboratorio de calidades / catación de la cooperativa): ${i.sondeoNotes}`,
+    // V5.165 (owner): las anotaciones de mejora de la Rueda del Sabor — notas de defecto marcadas y su posible causa.
+    i.anotaciones?.length ? `Notas de defecto que el Q-Grader marcó en la rueda del sabor, con su posible causa en el beneficio (úsalas en «Qué encontró el análisis» y en las recomendaciones):\n${i.anotaciones.map((a) => `- ${a.ruta}: ${a.causa}`).join("\n")}` : null,
   ]
     .filter(Boolean)
     .join("\n");
@@ -69,6 +74,10 @@ export async function generateMejorasDoc(service: SupabaseClient, lotId: string)
       ficha_notas_cata: string | null;
     } | null;
     if (!lot) return false;
+    // V5.165: la rueda de la evaluación que rige (o la última del Q-Grader) → sus anotaciones de mejora.
+    const { data: evs } = await service.from("lot_evaluations").select("rueda, rige_grado, created_at").eq("lot_id", lotId).eq("source", "q_grader_batch").order("created_at", { ascending: false }).limit(5);
+    const filas = (evs as { rueda: unknown; rige_grado: boolean | null }[] | null) ?? [];
+    const anotaciones = anotacionesDeMejora((filas.find((e) => e.rige_grado) ?? filas[0])?.rueda, "es").map((a) => ({ ruta: a.ruta, causa: a.causa }));
 
     const res = await fetch(ANTHROPIC_URL, {
       method: "POST",
@@ -97,6 +106,7 @@ export async function generateMejorasDoc(service: SupabaseClient, lotId: string)
               notasCata: lot.ficha_notas_cata,
               sondeoNotes: ins.sondeo_result_notes,
               sondeoScore: ins.sondeo_score != null ? Number(ins.sondeo_score) : null,
+              anotaciones,
             }),
           },
         ],

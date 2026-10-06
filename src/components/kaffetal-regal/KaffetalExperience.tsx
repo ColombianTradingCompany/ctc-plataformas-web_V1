@@ -277,7 +277,7 @@ function dbLotToLot(
   fincaNameById: Map<string, string>,
   completionHistory: CompletionPoint[] = [],
   videoUrl: string | null = null,
-  evalSummary: { scaAverage: number | null; factorAverage: number | null; acceptedCount: number; hasPendingClaim: boolean; scorings: ScaScoring[]; punto?: PuntoSca | null } = EMPTY_EVAL_SUMMARY,
+  evalSummary: { scaAverage: number | null; factorAverage: number | null; acceptedCount: number; hasPendingClaim: boolean; scorings: ScaScoring[]; punto?: PuntoSca | null; rueda?: unknown } = EMPTY_EVAL_SUMMARY,
   inscription: Lot["inscription"] = null
 ): Lot {
   const stage = STAGE_DB.indexOf(row.stage as (typeof STAGE_DB)[number]);
@@ -331,6 +331,7 @@ function dbLotToLot(
     eudrMitigationResponsible: row.eudr_mitigation_responsible || "",
     officialScaAverage: evalSummary.scaAverage,
     officialPunto: evalSummary.punto ?? null,
+    officialRueda: evalSummary.rueda ?? null,
     officialFactorAverage: evalSummary.factorAverage,
     officialEvalCount: evalSummary.acceptedCount,
     hasPendingOfficializationClaim: evalSummary.hasPendingClaim,
@@ -429,7 +430,7 @@ function Experience() {
           // (verificado por CTC vs declarado por el productor).
           supabase
             .from("lot_evaluations")
-            .select("id, lot_id, source, status, sca_total, punto, sca_data, factor_rendimiento, q_grader_reference, created_at")
+            .select("id, lot_id, source, status, sca_total, punto, sca_data, factor_rendimiento, q_grader_reference, created_at, rueda")
             .order("created_at", { ascending: true }),
           // RLS (producer_comm_log_select_own) scopes this to the producer's own notes.
           supabase.from("producer_comm_log").select("id, context_label, finca_id, lot_id, note, created_at, author_role, parent_id, lead_id").order("created_at", { ascending: false }),
@@ -544,6 +545,8 @@ function Experience() {
           // V5.92: el Punto que rige, con su procedencia (nativo SCA 2004 u homologado desde CVA).
           const rige = evaluacionQueRige(rows);
           const punto = rige ? puntoDeFila(rige as { sca_total: number | string | null; punto?: unknown }) : null;
+          // V5.165: las anotaciones de mejora salen de la rueda de la evaluación que rige.
+          const ruedaQueRige = rige ? ((rige as { rueda?: unknown }).rueda ?? null) : null;
           const hasPendingClaim = rows.some((e) => e.source === "producer_claim" && e.status === "pending");
           return dbLotToLot(
             r,
@@ -556,6 +559,7 @@ function Experience() {
               acceptedCount: avg.acceptedCount,
               hasPendingClaim,
               punto,
+              rueda: ruedaQueRige,
               // Cada puntaje con su procedencia, para la Ficha (vista final).
               scorings: rows.map((e) => ({
                 id: e.id,

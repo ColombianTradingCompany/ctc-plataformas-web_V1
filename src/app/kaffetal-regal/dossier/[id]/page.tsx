@@ -9,6 +9,7 @@ import { GRADO_POR_ID, esGradoValido } from "@/lib/grados/definicion";
 import { evaluacionQueRige } from "@/lib/evaluations";
 import { rowToLotFicha, type LotFicha } from "@/lib/fichas/tipos";
 import { LotDossierDoc, type DossierCertLine, type DossierFincaLine, type Lang } from "@/components/kaffetal-regal/LotDossierDoc";
+import { caracterizacionDelDossier, planillaDeEvaluacion } from "@/lib/kaffetal/dossierEvaluacion";
 
 export const dynamic = "force-dynamic";
 
@@ -121,7 +122,7 @@ export default async function LotDossierPage({ params, searchParams }: { params:
       .eq("lot_id", id)
       .eq("is_official", true)
       .maybeSingle(),
-    service.from("lot_evaluations").select("status, source, sca_total, factor_rendimiento, created_at, rige_grado").eq("lot_id", id),
+    service.from("lot_evaluations").select("status, source, sca_total, factor_rendimiento, created_at, rige_grado, physical_data, sca_data, rueda, rueda_detalle").eq("lot_id", id),
   ]);
 
   const producer = producers.get(lot.producer_id);
@@ -133,7 +134,7 @@ export default async function LotDossierPage({ params, searchParams }: { params:
     validTo: c.valid_to ?? "",
   }));
   const ficha: LotFicha | null = fichaRaw ? rowToLotFicha(fichaRaw as Parameters<typeof rowToLotFicha>[0]) : null;
-  type EvalRow = { status: "pending" | "accepted" | "rejected"; source: "q_grader_batch" | "bcp_arena" | "producer_claim"; sca_total: number | null; factor_rendimiento: number | null; created_at: string; rige_grado: boolean };
+  type EvalRow = { status: "pending" | "accepted" | "rejected"; source: "q_grader_batch" | "bcp_arena" | "producer_claim"; sca_total: number | null; factor_rendimiento: number | null; created_at: string; rige_grado: boolean; physical_data: unknown; sca_data: unknown; rueda: unknown; rueda_detalle: unknown };
   const rige = evaluacionQueRige(((evalRaw as EvalRow[] | null) ?? []));
 
   const contribInputs: ContributionInput[] = origen.map((x) => ({
@@ -185,6 +186,8 @@ export default async function LotDossierPage({ params, searchParams }: { params:
       ficha={ficha?.data ?? null}
       fichaSource={ficha?.source ?? null}
       evaluacion={rige && rige.status === "accepted" ? { sca: rige.sca_total, factor: rige.factor_rendimiento, fecha: rige.created_at ?? "", fuente: rige.source ?? "q_grader_batch" } : null}
+      // V5.165 (owner): B1 (lo declarado), B2 y B3 (la planilla que rige) y las anotaciones de mejora de la rueda.
+      caracterizacion={caracterizacionDelDossier(ds as Record<string, unknown>, rige && rige.status === "accepted" ? planillaDeEvaluacion(rige) : null, lang)}
       certificates={certificates}
       generatedOn={new Date().toISOString()}
     />

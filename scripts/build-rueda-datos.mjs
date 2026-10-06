@@ -35,7 +35,8 @@ export function leerDatosDeLaHerramienta() {
       id: s.id,
       es: s.name,
       en: s.name_en,
-      hojas: s.leaves.map((l) => ({ id: l.id, es: l.n, en: l.n_en })),
+      // V5.165: la «posible causa en el beneficio» de las notas de defecto — las anotaciones de mejora de la herramienta.
+      hojas: s.leaves.map((l) => ({ id: l.id, es: l.n, en: l.n_en, ...(l.cause ? { causa: { es: l.cause, en: l.cause_en ?? l.cause } } : {}) })),
     })),
   }));
 }
@@ -49,7 +50,8 @@ export function generar() {
     "// familia → subcategoría → nota, con el color y el icono de cada familia. Para cambiarla se cambia la herramienta y se",
     "// regenera; `qa-centro-calidad` falla si este archivo y la herramienta dejan de coincidir. La lee `rueda.ts`.",
     "",
-    "export type NotaDeLaRueda = { id: string; es: string; en: string };",
+    "/** V5.165: `causa` = la «posible causa en el beneficio» que la herramienta da para las notas de defecto (anotación de mejora). */",
+    "export type NotaDeLaRueda = { id: string; es: string; en: string; causa?: { es: string; en: string } };",
     "export type SubcategoriaDeLaRueda = { id: string; es: string; en: string; hojas: NotaDeLaRueda[] };",
     "export type FamiliaDeLaRueda = { id: string; es: string; en: string; color: string; icono: string; subs: SubcategoriaDeLaRueda[] };",
     "",
@@ -61,7 +63,7 @@ export function generar() {
     lineas.push("    subs: [");
     for (const s of f.subs) {
       lineas.push(`      { id: ${q(s.id)}, es: ${q(s.es)}, en: ${q(s.en)}, hojas: [`);
-      for (const h of s.hojas) lineas.push(`        { id: ${q(h.id)}, es: ${q(h.es)}, en: ${q(h.en)} },`);
+      for (const h of s.hojas) lineas.push(`        { id: ${q(h.id)}, es: ${q(h.es)}, en: ${q(h.en)}${h.causa ? `, causa: { es: ${q(h.causa.es)}, en: ${q(h.causa.en)} }` : ""} },`);
       lineas.push("      ] },");
     }
     lineas.push("    ],");

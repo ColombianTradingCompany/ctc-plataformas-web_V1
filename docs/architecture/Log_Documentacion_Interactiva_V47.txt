@@ -583,3 +583,7 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-10-06] V5.164 · Consolas — resumen del veredicto opcional junto a los botones; avance en las acciones largas de OCP, BCP, LCP y ECP
 - ANN `src/components/panel/ProgresoDeAccion.tsx` (`useAvance`, `AVANCE`, `EnviarConAvance`), `app/ocp/(app)/nominados/NominadosClient.tsx`, `app/ocp/(app)/nominadosActions.ts` (resumen por defecto), `app/ocp/(app)/kr/FichasClient.tsx`, `app/bcp/(app)/{socios/SociosClient,usuarios/UsuariosClient}.tsx`, `app/bcp/(app)/terratalento/page.tsx`, `app/lcp/(app)/buzon/BuzonMail.tsx`, `src/components/panel/direccionamiento/DefinicionDeContexto.tsx`, `scripts/qa-centro-calidad-check.mjs`, `docs/componentes/consolas.md`.
 (commit: 86340d2)
+
+## [2026-10-06] V5.165 · Kaffetal Regal — el dossier del lote galardonado con B1, B2 y B3; las anotaciones de mejora de la Rueda del Sabor en el dossier, en la tarjeta del productor y en el reporte de mejoras IA
+- NEW `src/lib/kaffetal/dossierEvaluacion.ts`; ANN `src/components/kaffetal-regal/LotDossierDoc.tsx`, `app/kaffetal-regal/dossier/[id]/page.tsx`, `src/components/kaffetal-regal/{KaffetalExperience.tsx,data.ts,panel/EvaluacionesTab.tsx}`, `src/lib/catacion/{rueda.ts,ruedaDatos.ts}`, `scripts/build-rueda-datos.mjs`, `src/lib/arena/mejoras.ts`, `scripts/qa-centro-calidad-check.mjs`, `docs/componentes/{kaffetal-regal,herramientas-cafe,consolas}.md`, `docs/ALINEACION.md`.
+(commit: pendiente)

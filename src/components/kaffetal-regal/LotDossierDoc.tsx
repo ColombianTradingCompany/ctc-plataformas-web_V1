@@ -1,6 +1,7 @@
 import { CTC_LEGAL_LINE, CTC_RAZON } from "@/lib/legal";
 import { ATRIBUTOS_SCA, type AtributoSca, type FichaTecnicaData } from "@/lib/fichas/tipos";
 import { PrintButton } from "./PrintButton";
+import type { DossierCaracterizacion, Par } from "@/lib/kaffetal/dossierEvaluacion";
 
 // ── El DOSSIER DEL LOTE, en español e inglés (V5.79, fase 2 del PLAN_CIRCUITO_DEL_LOTE) ──
 // «El productor recibe los documentos de su café con la misma info que envió, sobre todo con el valor
@@ -53,6 +54,16 @@ const T = {
     s2: "2 · Debida diligencia EUDR",
     s3: "3 · Caracterización del café",
     s4: "4 · Certificaciones corroboradas",
+    b1: "B1 · Variedades y caracterización básica (declarado por el productor)",
+    b2: "B2 · Perfil de taza (evaluación que rige el grado)",
+    b3: "B3 · Caracterización física (evaluación que rige el grado)",
+    anot: "Anotaciones de mejora · Rueda del Sabor",
+    anotHint: "Notas de defecto marcadas en la evaluación y su posible causa en el beneficio — lo que conviene revisar.",
+    anotLimpio: "La rueda del sabor no marcó notas a revisar en el beneficio: perfil sin defectos de proceso.",
+    variedad: "Variedad", pct: "%", proceso: "Proceso", sca2004: "SCA 2004", cvaT: "CVA (SCA-104)", total: "Total", tazas: "Tazas",
+    rueda: "Rueda del sabor", etapas: "Etapas · intensidad", comentario: "Comentario", perfil: "Perfil de taza",
+    defectos: "Detalle de defectos", defecto: "Defecto", granos: "Granos", completos: "Defectos completos", mallas: "Granulometría", malla: "Malla", gramos: "Gramos",
+    notasAnalisis: "Notas del análisis físico", causa: "Posible causa en el beneficio",
     producer: "Productor",
     contact: "Contacto",
     lot: "Lote",
@@ -114,6 +125,16 @@ const T = {
     s2: "2 · EUDR due diligence",
     s3: "3 · Coffee characterization",
     s4: "4 · Corroborated certifications",
+    b1: "B1 · Varieties and basic characterization (declared by the producer)",
+    b2: "B2 · Cup profile (evaluation that governs the grade)",
+    b3: "B3 · Physical characterization (evaluation that governs the grade)",
+    anot: "Improvement notes · Flavour Wheel",
+    anotHint: "Defect notes marked in the evaluation and their likely cause in processing — what is worth reviewing.",
+    anotLimpio: "The flavour wheel marked no notes to review in processing: a profile free of process defects.",
+    variedad: "Variety", pct: "%", proceso: "Process", sca2004: "SCA 2004", cvaT: "CVA (SCA-104)", total: "Total", tazas: "Cups",
+    rueda: "Flavour wheel", etapas: "Stages · intensity", comentario: "Comment", perfil: "Cup profile",
+    defectos: "Defect detail", defecto: "Defect", granos: "Beans", completos: "Full defects", mallas: "Screen size", malla: "Screen", gramos: "Grams",
+    notasAnalisis: "Physical analysis notes", causa: "Likely cause in processing",
     producer: "Producer",
     contact: "Contact",
     lot: "Lot",
@@ -201,6 +222,7 @@ export function LotDossierDoc({
   ficha,
   fichaSource,
   evaluacion,
+  caracterizacion = null,
   certificates,
   generatedOn,
 }: {
@@ -217,6 +239,8 @@ export function LotDossierDoc({
   fichaSource: "escaneo" | "productor" | "ctc" | null;
   /** La evaluación que rige el grado (o `null`). */
   evaluacion: DossierEvaluacion | null;
+  /** V5.165 (owner): «el dossier debe incluir TODO: B1, B2 y B3» — y las anotaciones de mejora de la Rueda del Sabor. */
+  caracterizacion?: DossierCaracterizacion | null;
   certificates: DossierCertLine[];
   generatedOn: string;
 }) {
@@ -360,6 +384,119 @@ export function LotDossierDoc({
         </div>
       )}
 
+      {/* V5.165 (owner): B1 (lo declarado), B2 y B3 (la evaluación que rige) y las anotaciones de mejora de la rueda. */}
+      {caracterizacion?.b1 && (
+        <div style={{ marginTop: 14 }}>
+          <div style={S.k}>{t.b1}</div>
+          {caracterizacion.b1.variedades.length > 0 && (
+            <table style={S.table}>
+              <thead>
+                <tr><th style={S.th}>{t.variedad}</th><th style={S.th}>{t.pct}</th>{caracterizacion.b1.variedades.some((v) => v.proceso) && <th style={S.th}>{t.proceso}</th>}</tr>
+              </thead>
+              <tbody>
+                {caracterizacion.b1.variedades.map((v, i) => (
+                  <tr key={i}><td style={S.td}>{v.nombre}</td><td style={S.td}>{v.pct || "—"}</td>{caracterizacion.b1!.variedades.some((x) => x.proceso) && <td style={S.td}>{v.proceso || "—"}</td>}</tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          <Pares pares={caracterizacion.b1.pares} />
+        </div>
+      )}
+      {caracterizacion?.b2 && (
+        <div style={{ marginTop: 14 }}>
+          <div style={S.k}>{t.b2}</div>
+          {caracterizacion.b2.sca && (
+            <>
+              <div style={{ fontSize: 12.5, fontWeight: 700, marginTop: 4 }}>{t.sca2004}{caracterizacion.b2.sca.total && <> · {t.total} {caracterizacion.b2.sca.total}</>}</div>
+              <Pares pares={[...caracterizacion.b2.sca.filas, ...(caracterizacion.b2.sca.tazas ? [{ k: t.tazas, v: caracterizacion.b2.sca.tazas }] : [])]} />
+            </>
+          )}
+          {caracterizacion.b2.cva && (
+            <>
+              <div style={{ fontSize: 12.5, fontWeight: 700, marginTop: 6 }}>{t.cvaT}{caracterizacion.b2.cva.total && <> · {t.total} {caracterizacion.b2.cva.total}</>}</div>
+              <Pares pares={caracterizacion.b2.cva.filas} />
+            </>
+          )}
+          {caracterizacion.b2.rueda.length > 0 && (
+            <table style={{ ...S.table, marginTop: 6 }}>
+              <thead>
+                <tr><th style={S.th}>{t.rueda}</th><th style={S.th}>{t.etapas}</th><th style={S.th}>{t.comentario}</th></tr>
+              </thead>
+              <tbody>
+                {caracterizacion.b2.rueda.map((r, i) => (
+                  <tr key={i}><td style={S.td}>{r.ruta}</td><td style={S.td}>{r.detalle}</td><td style={S.td}>{r.comentario || "—"}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          <Pares pares={caracterizacion.b2.descriptivo} />
+          {caracterizacion.b2.perfil && (
+            <div style={{ marginTop: 6 }}>
+              <div style={S.k}>{t.perfil}</div>
+              <div>{caracterizacion.b2.perfil}</div>
+            </div>
+          )}
+        </div>
+      )}
+      {caracterizacion?.b3 && (
+        <div style={{ marginTop: 14 }}>
+          <div style={S.k}>{t.b3}</div>
+          <Pares pares={caracterizacion.b3.pares} />
+          {caracterizacion.b3.defectos.length > 0 && (
+            <table style={{ ...S.table, marginTop: 6 }}>
+              <thead>
+                <tr><th style={S.th}>{t.defecto}</th><th style={S.th}>{t.granos}</th><th style={S.th}>{t.completos}</th></tr>
+              </thead>
+              <tbody>
+                {caracterizacion.b3.defectos.map((d, i) => (
+                  <tr key={i}><td style={S.td}>{d.defecto}</td><td style={S.td}>{d.granos}</td><td style={S.td}>{d.completos}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          {caracterizacion.b3.mallas.length > 0 && (
+            <table style={{ ...S.table, marginTop: 6 }}>
+              <thead>
+                <tr><th style={S.th}>{t.malla}</th><th style={S.th}>{t.gramos}</th><th style={S.th}>%</th></tr>
+              </thead>
+              <tbody>
+                {caracterizacion.b3.mallas.map((m, i) => (
+                  <tr key={i}><td style={S.td}>{m.malla}</td><td style={S.td}>{m.gramos}</td><td style={S.td}>{m.pct}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          {caracterizacion.b3.estadoMallas && <div style={S.meta}>{caracterizacion.b3.estadoMallas}</div>}
+          {caracterizacion.b3.notas && (
+            <div style={{ marginTop: 6 }}>
+              <div style={S.k}>{t.notasAnalisis}</div>
+              <div>{caracterizacion.b3.notas}</div>
+            </div>
+          )}
+        </div>
+      )}
+      {caracterizacion && caracterizacion.anotaciones.length > 0 && (
+        <div style={{ marginTop: 14, border: "1px solid #E5C76B", background: "#FFF9E6", borderRadius: 6, padding: "8px 10px" }}>
+          <div style={S.k}>⚠ {t.anot}</div>
+          <div style={S.meta}>{t.anotHint}</div>
+          <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+            {caracterizacion.anotaciones.map((a) => (
+              <li key={a.id} style={{ marginBottom: 4 }}>
+                <b>{a.ruta}</b> — {t.causa}: {a.causa}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {caracterizacion && caracterizacion.anotaciones.length === 0 && (caracterizacion.b2?.rueda.length ?? 0) > 0 && (
+        <div style={{ marginTop: 14, border: "1px solid #9CCB9C", background: "#F1FAF1", borderRadius: 6, padding: "8px 10px" }}>
+          <div style={S.k}>✓ {t.anot}</div>
+          <div>{t.anotLimpio}</div>
+        </div>
+      )}
+
       <h2 style={S.h2}>{t.s4}</h2>
       {!certificates.length ? (
         <p style={S.meta}>{t.noCerts}</p>
@@ -390,6 +527,20 @@ export function LotDossierDoc({
           {t.generated} {fecha(generatedOn)} · {CTC_LEGAL_LINE}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** V5.165: pares rótulo–valor en rejilla (los de B1, B2 y B3). */
+function Pares({ pares }: { pares: Par[] }) {
+  if (!pares.length) return null;
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "2px 14px", fontSize: 12.5, marginTop: 4 }}>
+      {pares.map((p, i) => (
+        <span key={i}>
+          {p.k}: <b>{p.v}</b>
+        </span>
+      ))}
     </div>
   );
 }

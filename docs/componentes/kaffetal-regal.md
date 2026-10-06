@@ -152,6 +152,11 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.165 · el dossier del lote galardonado lleva B1, B2 y B3 y las anotaciones de mejora de la Rueda del Sabor**
+  (owner, 2026-10-06; ejecutado desde WRAP-COMMIT-PUSH). El constructor es `src/lib/kaffetal/dossierEvaluacion.ts`
+  (`caracterizacionDelDossier(ficha, planillaDeEvaluacion(fila que rige), lang)`); B2/B3 salen SOLO de la evaluación que rige
+  (aceptada). La tarjeta del productor (`EvaluacionesTab`, `AnotacionesDeMejora`) lee `lot.officialRueda`. Abierto: el
+  dossier no muestra aún el ajuste CTCx ni el adjunto original del Q-Grader.
 - **V5.160 · la escalera de grados de la Oportunidad enseña puntos** (ejecutado desde `consolas`, contrato nuevo de
   grados). `OportunidadSection`: «1.600–1.799 pts · SCA desde 88 (café común)» en ES/EN/DE. El productor ya no ve un rango
   SCA por grado. Abierto: el copy largo de cada grado (bullets) sigue diciendo «la puntuación decide el grado»; vale, pero

@@ -138,6 +138,10 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 
 ## Pendientes
 
+- **V5.165 · la taxonomía de la rueda trae las causas** (owner, 2026-10-06; ejecutado desde WRAP-COMMIT-PUSH):
+  `scripts/build-rueda-datos.mjs` copia `cause`/`cause_en` de la herramienta a `causa` en `ruedaDatos.ts`;
+  `anotacionesDeMejora()` en `rueda.ts` las sirve a la plataforma (dossier, Kaffetal Regal, mejoras IA). Si la herramienta
+  cambia una causa, regenerar (`node scripts/build-rueda-datos.mjs`); `qa-centro-calidad` lo compara.
 - **V5.153 · Coffee Datasheet Tool: cinco conceptos nuevos en INFO (humedad, aw, densidad, factor reportado, perfil), el
   factor reportado (`fa_factor_reportado`), tazas del CVA 1–5 (`cva_num_tazas`) y SCA 1–5** (owner, 2026-10-05; ejecutado
   desde `consolas`). El catálogo INFO es ahora la FUENTE de las «i» de la planilla de la plataforma

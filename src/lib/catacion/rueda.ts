@@ -188,3 +188,21 @@ export function marcaLabel(id: string, detalle: DetalleDeLaRueda | null | undefi
   const d = detalleDe(detalle, id);
   return `${rutaDe(id, lang)} · ${etapasLabel(d.etapas, lang)} · ${fmtIntensidad(d.intensidad)}/${INTENSIDAD.max}${d.nota ? ` — «${d.nota}»` : ""}`;
 }
+
+// ── V5.165 (owner, 2026-10-06) · las anotaciones de mejora de la Rueda del Sabor ────────────────────────────────────
+// «Incorporemos las anotaciones de mejora que la herramienta Rueda del Sabor ya genera, incluyéndolas en lo que se obtiene
+// después de hacer la evaluación.» La herramienta da, para las notas de DEFECTO (acético, butírico, mohoso, papa…), una
+// «posible causa en el beneficio» con lo que hay que revisar. Llega aquí por `ruedaDatos.ts` (generado de la herramienta).
+// Una marca de nivel 3 con causa produce su anotación; las de nivel 1 y 2 no (la herramienta solo anota notas concretas).
+export type AnotacionDeMejora = { id: string; nota: string; ruta: string; causa: string };
+
+const CAUSA_POR_ID = new Map<string, { es: string; en: string }>(
+  RUEDA.flatMap((f) => f.subs.flatMap((s) => s.hojas.filter((h) => h.causa).map((h) => [idDeNota(s.id, h.id), h.causa!] as const)))
+);
+
+/** Las anotaciones de mejora de las notas marcadas (en el orden de la rueda). Vacío si ninguna nota marcada es de defecto. */
+export function anotacionesDeMejora(rueda: unknown, lang: "es" | "en" = "es"): AnotacionDeMejora[] {
+  return normalizaRueda(rueda)
+    .filter((id) => CAUSA_POR_ID.has(id))
+    .map((id) => ({ id, nota: descriptorLabel(id, lang), ruta: rutaDe(id, lang), causa: CAUSA_POR_ID.get(id)![lang] }));
+}

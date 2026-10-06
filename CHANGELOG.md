@@ -19,6 +19,23 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.165] — 2026-10-06 (commit pendiente)
+
+- **Añadido**: **el dossier del lote galardonado incluye TODO: B1, B2 y B3** (owner, 2026-10-06), en ES y EN. B1 es lo que
+  declaró el productor (variedades con su %, especie, humedad, densidad, aw y factor, con «No lo sabe» dato por dato); B2 y B3
+  salen de la planilla de la evaluación que rige el grado: los diez atributos SCA con total y tazas (o el CVA), la rueda del
+  sabor con etapas e intensidad, acidez y sensación en boca, el perfil; pesos, humedades, aw, densidad, % de almendra
+  defectuosa, factor de rendimiento, el detalle de defectos (la Broca primero), la granulometría y las notas del análisis
+  (`src/lib/kaffetal/dossierEvaluacion.ts`, `LotDossierDoc`).
+- **Añadido**: **las anotaciones de mejora de la Rueda del Sabor** (owner) — lo que la herramienta llama «Aspectos a revisar
+  en el beneficio»: cada nota de defecto marcada con su posible causa. Van en el dossier, en la tarjeta del productor en
+  Kaffetal Regal (galardonado y «No supera», bajo el feedback del Q-Grader) y en el reporte de mejoras con IA, que ahora
+  parte de ellas. Si la rueda no marcó defectos, se dice («perfil sin defectos de proceso»).
+- **Cambiado**: la taxonomía de la rueda (`ruedaDatos.ts`, generada por `scripts/build-rueda-datos.mjs`) trae ya las 25
+  causas de la herramienta en ES y EN; `anotacionesDeMejora(rueda, lang)` en `src/lib/catacion/rueda.ts`.
+- **Seguridad**: `qa-centro-calidad` (258 → 269).
+- **Docs**: charters `kaffetal-regal`, `herramientas-cafe`, `consolas`; ALINEACION §3.
+
 ## [V5.164] — 2026-10-06 (commit 86340d2)
 
 - **Cambiado**: el **resumen del resultado es OPCIONAL y va al lado de los botones** del veredicto (owner, 2026-10-06: «que sea

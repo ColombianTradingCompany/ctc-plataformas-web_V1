@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.162] — 2026-10-06 (commit pendiente)
+## [V5.162] — 2026-10-06 (commit 2d671ea)
 
 - **Añadido**: **el ajuste CTCx** en el informe del Centro (OCP): CTCx puede sumar **hasta 100 puntos** al puntaje final, que
   mueven el grado hacia arriba (owner, 2026-10-06), **con un argumento obligatorio** (al menos 30 caracteres) que justifique el

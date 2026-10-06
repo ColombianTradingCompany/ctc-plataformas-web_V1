@@ -574,4 +574,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `src/lib/pvc/escala.ts` (`AJUSTE_CTCX_MAX`, `ajusteCtcxValido`, `puntosCtc(…, ajuste)`), `src/lib/grados/definicion.ts`, `src/lib/arena/homologacion.ts`.
 - ANN `app/ocp/(app)/nominadosActions.ts` (`ajusteCtcx`), `app/bcp/(app)/arenaActions.ts`, `nominados/{NominadosClient,CircuitoVista}.tsx` (`LogDeDevoluciones`), `src/components/bcp/TriadaDelLote.tsx`, `app/socios/[partner]/panel/evaluacion/{PlanillaCentro,page}.tsx`.
 - ADD `docs/migraciones/2026-10-06_evaluaciones_ajuste_ctcx.sql`. ANN `scripts/qa-{grados,centro-calidad}-check.mjs`, `docs/ALINEACION.md`, `docs/componentes/{consolas,socios}.md`.
-(commit: pendiente)
+(commit: 2d671ea)

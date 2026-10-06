@@ -57,6 +57,13 @@ for (const [sca, tri, esperado] of casos) {
 check("gradoDelLote devuelve los puntos y la puerta que actuó", gradoDelLote(81, T("CCC")).puntaje.puerta === "umbral-sin-surplus" && gradoDelLote(88, T("AAA")).puntaje.puerta === "tope-tyrian");
 check("gradoPorPuntos lee la banda de unos puntos", gradoPorPuntos(1000)?.id === "black" && gradoPorPuntos(1399)?.id === "black" && gradoPorPuntos(1400)?.id === "red" && gradoPorPuntos(2001)?.id === "tyrian" && gradoPorPuntos(999) === null);
 
+// ── El ajuste CTCx (V5.162, owner 2026-10-06): hasta +100 puntos, sin saltar las dos puertas duras ─────────────────
+check("ajuste · CCC a 85 (1470, Red) + 100 = 1570, sigue Red; + 0 no cambia nada", gradoDelLote(85, T("CCC"), 100).puntaje.puntos === 1570 && gradoDelLote(85, T("CCC"), 100).grado?.id === "red" && gradoDelLote(85, T("CCC"), 0).puntaje.puntos === 1470);
+check("ajuste · un lote a poco del siguiente grado sube: CCC a 87 (1570, Red) + 30 = 1600 → Blue", gradoDelLote(87, T("CCC")).grado?.id === "red" && gradoDelLote(87, T("CCC"), 30).grado?.id === "blue" && gradoDelLote(87, T("CCC"), 30).puntaje.ajuste === 30);
+check("ajuste · se recorta a 100 y lo inválido es 0", gradoDelLote(85, T("CCC"), 250).puntaje.ajuste === 100 && gradoDelLote(85, T("CCC"), -5).puntaje.ajuste === 0 && gradoDelLote(85, T("CCC"), "x").puntaje.ajuste === 0);
+check("ajuste · sin especialidad (SCA < 80) no hay ajuste que valga", gradoDelLote(79.75, T("AAA"), 100).grado === null && gradoDelLote(79.75, T("AAA"), 100).puntaje.ajuste === 0);
+check("ajuste · Tyrian sigue exigiendo SCA ≥ 89 y surplus: CCC a 100 + 100 se queda en 2000 (Gold)", gradoDelLote(100, T("CCC"), 100).puntaje.puntos === 2000 && gradoDelLote(100, T("CCC"), 100).grado?.id === "gold" && gradoDelLote(92, T("BCC")).grado?.id === "gold" && gradoDelLote(92, T("BCC"), 100).grado?.id === "tyrian");
+
 // ── Fuera de la escala ──────────────────────────────────────────────────────
 check("79.99 no tiene grado, ni con AAA", gradoDelLote(79.99, T("AAA")).grado === null);
 check("0 no tiene grado", gradoDelLote(0, T("CCC")).grado === null);

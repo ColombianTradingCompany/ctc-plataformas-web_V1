@@ -98,6 +98,8 @@ fórmula del CVA y la rueda única). Lo tocan también `qa-recuperacion-check.mj
 
 ## Pendientes
 
+- **V5.162 · el log de devoluciones al final de la planilla del Centro** (ejecutado desde `consolas`). Cada devolución del lote
+  con fecha y motivo (`separaNotasDevueltas`), la más reciente primero, en ES/EN.
 - **V5.161 · un alta devuelta se reabre con todo lo registrado** (owner, 2026-10-06). La página siembra la planilla desde la
   fila `rejected` (`physical_data.planilla`, notas sin el motivo, código interno, reporte) cuando no hay borrador posterior.
   El motivo de CTC se separa con `separaNotasDevueltas`. Ningún dato se había perdido.

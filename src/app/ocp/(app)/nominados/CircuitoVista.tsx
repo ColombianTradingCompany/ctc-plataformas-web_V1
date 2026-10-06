@@ -84,7 +84,7 @@ import { reporteDeFila } from "@/lib/evaluaciones/reporteReglas";
 import { separaNotasDevueltas } from "@/lib/evaluaciones/devolucion";
 import { urlsDeReportes } from "@/lib/evaluaciones/reporte";
 
-type AltaRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; escala: string; rueda: unknown; rueda_detalle: unknown; q_grader_reference: string | null; notes: string | null; created_at: string; codigo_interno: string | null; reference_asset_id: string | null; reference_file_name: string | null; physical_data: { planilla?: unknown } | null };
+type AltaRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; escala: string; rueda: unknown; rueda_detalle: unknown; q_grader_reference: string | null; notes: string | null; created_at: string; reviewed_at: string | null; codigo_interno: string | null; reference_asset_id: string | null; reference_file_name: string | null; physical_data: { planilla?: unknown } | null };
 // V5.92: el alta se enseña con su Punto y su procedencia (nunca un homologado como un SCA catado).
 const rotuloDeAlta = (a: AltaRow) => {
   const p = puntoDeFila(a);
@@ -104,6 +104,9 @@ function EnlaceAlLote({ id, nombre, suave = false }: { id: string; nombre: strin
     </Link>
   );
 }
+
+/** V5.162: fecha y hora, para el log de devoluciones. */
+const fechaHora = (iso: string) => new Date(iso).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" });
 
 export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
   const service = createServiceRoleClient();
@@ -154,7 +157,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
     // V5.81: las altas del Centro de Calidad (pendientes o devueltas) de los lotes en bache.
     service
       .from("lot_evaluations")
-      .select("id, lot_id, batch_id, status, sca_total, punto, escala, rueda, rueda_detalle, q_grader_reference, notes, created_at, codigo_interno, reference_asset_id, reference_file_name, physical_data")
+      .select("id, lot_id, batch_id, status, sca_total, punto, escala, rueda, rueda_detalle, q_grader_reference, notes, created_at, reviewed_at, codigo_interno, reference_asset_id, reference_file_name, physical_data")
       .eq("source", "q_grader_batch")
       .in("status", ["pending", "rejected"])
       .in("lot_id", enBache.map((i) => i.lot_id))
@@ -536,6 +539,10 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
                           }}
                           b1={b1DelLote(i.lot!)}
                           ficha={i.lot!.datasheet ?? null}
+                          devoluciones={(altasPorLote.get(i.lot_id) ?? [])
+                            .filter((a) => a.status === "rejected")
+                            .sort((a, b) => (b.reviewed_at ?? b.created_at).localeCompare(a.reviewed_at ?? a.created_at))
+                            .map((a) => ({ fecha: fechaHora(a.reviewed_at ?? a.created_at), motivo: separaNotasDevueltas(a.notes).motivo ?? "(sin motivo)" }))}
                         />
                       </>
                     ) : (

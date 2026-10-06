@@ -547,7 +547,7 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("tríada · los puntos salen de la escala (ACC a 86 ≈ 1540 × 1,0854; CCC a 86 = 1540)", puntosCtc(86, gesha.triada).puntos === Math.round(1540 * (1 + ((2500 / 1990 - 1) / 6) * 2)) && puntosCtc(86, { variedad: "C", proceso: "C", reconocimiento: "C" }).puntos === 1540);
   const ocpUi = lee("src/app/ocp/(app)/nominados/NominadosClient.tsx").replace(/\r\n/g, "\n");
   check("informe · la Ficha Técnica COMPLETA de solo lectura (mismo renderizador que la Vista de Ficha), abierta por defecto", ocpUi.includes("<FichaCompletaLectura datasheet={ficha} />") && ocpUi.includes("const [verFicha, setVerFicha] = useState(true);") && lee("src/components/bcp/FichaCompletaLectura.tsx").includes("renderFichaHtml(data, factor, mesh, sca, varietyTotal(data)") && lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").includes("ficha={i.lot!.datasheet ?? null}"));
-  check("informe · la tríada A·B·C por parámetro, con la elegida encendida, los puntos y la MISMA curva del Modelo Económico", ocpUi.includes("<TriadaDelLote ficha={ficha} sca={alta.punto?.bajo ?? null} />") && lee("src/components/bcp/TriadaDelLote.tsx").includes("{NIVELES.map((n) => (") && lee("src/components/bcp/TriadaDelLote.tsx").includes('<CurvaDeEscala t={d.triada} sca={sca} puntos={r.puntos} />') && lee("src/components/panel/pvc/EscalaBoard.tsx").includes('import { CurvaDeEscala } from "./CurvaDeEscala";'));
+  check("informe · la tríada A·B·C por parámetro, con la elegida encendida, los puntos y la MISMA curva del Modelo Económico", ocpUi.includes("<TriadaDelLote ficha={ficha} sca={alta.punto?.bajo ?? null} ajuste={ajuste} />") && lee("src/components/bcp/TriadaDelLote.tsx").includes("{NIVELES.map((n) => (") && lee("src/components/bcp/TriadaDelLote.tsx").includes('<CurvaDeEscala t={d.triada} sca={sca} puntos={r.puntos} />') && lee("src/components/panel/pvc/EscalaBoard.tsx").includes('import { CurvaDeEscala } from "./CurvaDeEscala";'));
 }
 
 // ── V5.160 (owner, 2026-10-06: «la franja SCA es OBSOLETA: retirarla de TODOS LADOS y dejar solo el Punto y la Tríada») ──
@@ -556,7 +556,7 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   const tri = lee("src/components/bcp/TriadaDelLote.tsx").replace(/\r\n/g, "\n");
   const { existsSync } = await import("node:fs");
   check("informe · la franja SCA se retiró (no existe el componente ni se importa) y la tríada es LA regla del grado", !existsSync(new URL("../src/components/bcp/FranjaDeGrados.tsx", import.meta.url)) && !ocpUi.includes("FranjaDeGrados") && ocpUi.includes("El grado · El Punto y la Tríada") && !ocpUi.includes("todavía no gobierna") && !tri.includes("gradoHoy"));
-  check("informe · el grado del alta se decide con la tríada de la Ficha y el botón lo dice", ocpUi.includes("const triada = triadaDeLaFicha(ficha).triada;") && ocpUi.includes("decidirPorPunto(alta.punto, triada)") && ocpUi.includes("× tríada <span className=\"mono\">"));
+  check("informe · el grado del alta se decide con la tríada de la Ficha y el botón lo dice", ocpUi.includes("const triada = triadaDeLaFicha(ficha).triada;") && ocpUi.includes("decidirPorPunto(alta.punto, triada, ajuste)") && ocpUi.includes("× tríada <span className=\"mono\">"));
   check("«Registrar a mano» previsualiza con la tríada y pasa la tríada al editor", ocpUi.includes("gradoDelLote(puntaje, triada).grado") && ocpUi.includes("triada={triada} />") && lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").includes("ficha={i.lot!.datasheet ?? null}"));
   check("el Centro sigue sin ver el grado (ocultaGrado) y sin tríada el editor no lo deriva", lee("src/components/bcp/LabEvalEditor.tsx").includes("const decision = punto && triada ? decidirPorPunto(punto, triada) : null;"));
 }
@@ -576,6 +576,20 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   const planillaReal = { rueda: ["floral-floral|jazmin", "frutal-otras|granada"], vista: "sca", sca_fragrance: "9", sca_flavor: "7", sca_aftertaste: "8", sca_acidity: "9", sca_body: "8", sca_balance: "9", sca_uniformity: "10", sca_clean_cup: "10", sca_sweetness: "9", sca_cuppers: "8", sca_num_tazas: "3", sca_tazas: [{ estado: "taint", defecto: "papa" }, { estado: "" }, { estado: "" }], fa_start: "250", fa_green_remainder: "207.7", fa_primary_defect: "2.3", fa_secondary_defect: "3", b3_actividad_agua: "0.6", b3_densidad_verde: "780", defectos_detalle: { insecto_grave: "7", negro: "1" } };
   const reabierta = toLabEvaluation(planillaReal);
   check("centro · la planilla devuelta reabre con sus datos: atributos, tazas, rueda, B3 y detalle de defectos", labEvaluationHasData(reabierta) && reabierta.sca_fragrance === "9" && reabierta.sca_tazas.length === 3 && reabierta.sca_taint_cups === "1" && reabierta.rueda.length === 2 && reabierta.b3_densidad_verde === "780" && reabierta.defectos_detalle.insecto_grave === "7" && computeSca2004(reabierta).total != null);
+}
+
+// ── V5.162 (owner, 2026-10-06) · el log de devoluciones al final; el ajuste CTCx de hasta +100 puntos con argumento ───────
+{
+  const accion = lee("src/app/ocp/(app)/nominadosActions.ts").replace(/\r\n/g, "\n");
+  const ocpUi = lee("src/app/ocp/(app)/nominados/NominadosClient.tsx").replace(/\r\n/g, "\n");
+  const vista = lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").replace(/\r\n/g, "\n");
+  const { AJUSTE_CTCX_MAX, AJUSTE_CTCX_JUSTIFICACION_MIN } = await import("../src/lib/pvc/escala.ts");
+  check("ajuste · tope 100 puntos y argumento de al menos 30 caracteres (la base lo exige también)", AJUSTE_CTCX_MAX === 100 && AJUSTE_CTCX_JUSTIFICACION_MIN === 30 && lee("docs/migraciones/2026-10-06_evaluaciones_ajuste_ctcx.sql").includes("length(btrim(ajuste_ctcx_justificacion)) >= 30"));
+  check("ajuste · el veredicto lo valida en el servidor, decide CON él y lo guarda en la evaluación que rige, con rastro", accion.includes("if (ajuste > 0 && justificacion.length < AJUSTE_CTCX_JUSTIFICACION_MIN) {") && accion.includes("const decision = decidirPorPunto(puntoEfectivo, triada, ajuste);") && accion.includes('.update(columnasAjuste).eq("id", centroRow.id)') && accion.includes('action: "ajuste_ctcx"') && accion.includes("...columnasAjuste,"));
+  check("ajuste · «la que rige» de la Arena recalcula el grado con el ajuste guardado", lee("src/app/bcp/(app)/arenaActions.ts").includes("Number(ev.ajuste_ctcx_puntos ?? 0)"));
+  check("ajuste · el informe: puntos 0–100, argumento obligatorio, cuánto falta al siguiente grado, y Galardonar bloqueado sin argumento", ocpUi.includes('aria-label="Puntos del ajuste CTCx"') && ocpUi.includes('aria-label="Argumento del ajuste CTCx"') && ocpUi.includes("le faltan <b>{faltan}</b> puntos") && ocpUi.includes("disabled={pending || !notes.trim() || !grado || faltaArgumento}") && ocpUi.includes("ajusteCtcx: { puntos: ajuste, justificacion }") && ocpUi.includes("<TriadaDelLote ficha={ficha} sca={alta.punto?.bajo ?? null} ajuste={ajuste} />"));
+  check("log · al final del informe del OCP, cada devolución con su fecha y su motivo (más reciente primero)", ocpUi.includes("<LogDeDevoluciones devoluciones={devoluciones} />") && ocpUi.includes("Log · comentarios enviados de vuelta al Centro") && vista.includes('.filter((a) => a.status === "rejected")') && vista.includes("motivo: separaNotasDevueltas(a.notes).motivo") && vista.includes("reviewed_at, codigo_interno"));
+  check("log · y al final de la planilla del Centro", lee("src/app/socios/[partner]/panel/evaluacion/PlanillaCentro.tsx").includes('aria-label="Log de devoluciones de CTC"') && pagina.includes("borrador={semilla} devoluciones={devoluciones} />"));
 }
 
 if (fallos.length) {

@@ -8,9 +8,9 @@ import { CurvaDeEscala } from "@/components/panel/pvc/CurvaDeEscala";
 // La tríada del lote (variedad · proceso · reconocimiento) derivada de su Ficha, con las tres letras de cada atributo y la
 // elegida encendida —como en la calculadora del Modelo Económico—, los puntos que da la escala con el Punto de la taza, y
 // la curva con el lote encima. V5.160: la escala GOBIERNA — el grado se lee de los puntos.
-export function TriadaDelLote({ ficha, sca }: { ficha: FichaParaTriada | null | undefined; sca: number | null }) {
+export function TriadaDelLote({ ficha, sca, ajuste = 0 }: { ficha: FichaParaTriada | null | undefined; sca: number | null; /** V5.162: puntos del ajuste CTCx. */ ajuste?: number }) {
   const d: Derivada = triadaDeLaFicha(ficha);
-  const r = sca != null ? puntosCtc(sca, d.triada) : null;
+  const r = sca != null ? puntosCtc(sca, d.triada, ajuste) : null;
   const pill = (n: Nivel, on: boolean) => ({
     display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 10px", borderRadius: 999, fontSize: 12, border: `1.5px solid ${on ? "var(--primary, #3C0A86)" : "var(--line)"}`,
     background: on ? "var(--primary, #3C0A86)" : "transparent", color: on ? "#fff" : "var(--muted)", fontWeight: on ? 700 : 500,
@@ -42,7 +42,7 @@ export function TriadaDelLote({ ficha, sca }: { ficha: FichaParaTriada | null | 
             <span style={{ fontSize: 22, fontWeight: 800, lineHeight: 1 }}>{r.puntos.toLocaleString("es-CO")}</span>
             {r.banda && <span style={{ fontSize: 12.5, fontWeight: 700, color: r.banda.hex }}>● {r.banda.nombre}</span>}
             <span className="mono" style={{ fontSize: 11.5, color: "var(--muted)" }}>
-              base {Math.round(r.base).toLocaleString("es-CO")} × {r.mult.toFixed(4).replace(".", ",")} (V {d.triada.variedad === "A" ? 2 : d.triada.variedad === "B" ? 1 : 0} · P {d.triada.proceso === "A" ? 2 : d.triada.proceso === "B" ? 1 : 0} · R {d.triada.reconocimiento === "A" ? 2 : d.triada.reconocimiento === "B" ? 1 : 0})
+              base {Math.round(r.base).toLocaleString("es-CO")} × {r.mult.toFixed(4).replace(".", ",")} (V {d.triada.variedad === "A" ? 2 : d.triada.variedad === "B" ? 1 : 0} · P {d.triada.proceso === "A" ? 2 : d.triada.proceso === "B" ? 1 : 0} · R {d.triada.reconocimiento === "A" ? 2 : d.triada.reconocimiento === "B" ? 1 : 0}){r.ajuste > 0 && <> + {r.ajuste} ajuste CTCx</>}
             </span>
             {r.puerta && <span style={{ fontSize: 11.5, color: "var(--muted)" }}>· puerta: {r.puerta}</span>}
           </>

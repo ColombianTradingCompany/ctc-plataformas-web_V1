@@ -100,8 +100,8 @@ export function admiteTyrian(p: PuntoSca): boolean {
 
 /** El grado FIRME (V5.160: El Punto y la Tríada): se lee del PISO del Punto con la tríada del lote; un homologado que caiga
  *  en Tyrian queda en Gold (R4 + R6). Null si los puntos no llegan a Black. */
-export function gradoFirme(p: PuntoSca, triada: Triada): Grado | null {
-  const g = gradoDelLote(p.bajo, triada).grado;
+export function gradoFirme(p: PuntoSca, triada: Triada, ajusteCtcx: number = 0): Grado | null {
+  const g = gradoDelLote(p.bajo, triada, ajusteCtcx).grado;
   if (!g) return null;
   if (g.id === "tyrian" && !admiteTyrian(p)) return GRADO_POR_ID.gold;
   return g;
@@ -109,10 +109,10 @@ export function gradoFirme(p: PuntoSca, triada: Triada): Grado | null {
 
 /** El TECHO: el grado que daría el borde alto del intervalo con la misma tríada (informativo: «hasta X con recata SCA»).
  *  Null si es nativo o no sube. */
-export function techoDelPunto(p: PuntoSca, triada: Triada): Grado | null {
+export function techoDelPunto(p: PuntoSca, triada: Triada, ajusteCtcx: number = 0): Grado | null {
   if (p.origen === "nativo") return null;
-  const alto = gradoDelLote(p.alto, triada).grado;
-  const firme = gradoFirme(p, triada);
+  const alto = gradoDelLote(p.alto, triada, ajusteCtcx).grado;
+  const firme = gradoFirme(p, triada, ajusteCtcx);
   if (!alto || (firme && alto.id === firme.id)) return null;
   return alto;
 }
@@ -125,9 +125,9 @@ export type DecisionDePunto =
 
 /** Lo que el Punto y la Tríada deciden (los puntos mandan): galardón con grado firme, sin grado, o pendiente de recata.
  *  V5.160: la tríada es obligatoria — sin ella no hay grado (`triadaDeLaFicha` la deriva de la Ficha del lote). */
-export function decidirPorPunto(p: PuntoSca, triada: Triada): DecisionDePunto {
-  const firme = gradoFirme(p, triada);
-  if (firme) return { tipo: "galardon", grado: firme, techo: techoDelPunto(p, triada) };
+export function decidirPorPunto(p: PuntoSca, triada: Triada, ajusteCtcx: number = 0): DecisionDePunto {
+  const firme = gradoFirme(p, triada, ajusteCtcx);
+  if (firme) return { tipo: "galardon", grado: firme, techo: techoDelPunto(p, triada, ajusteCtcx) };
   if (p.origen === "homologado" && p.alto >= SCA_MINIMO) return { tipo: "pendiente_recata" };
   return { tipo: "sin_grado" };
 }

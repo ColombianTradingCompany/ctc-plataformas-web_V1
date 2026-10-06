@@ -218,7 +218,7 @@ export async function elegirEvaluacionQueRige(lotId: string, evaluationId: strin
   const service = createServiceRoleClient();
 
   const [{ data: ev }, { data: lot }] = await Promise.all([
-    service.from("lot_evaluations").select("id, lot_id, status, sca_total, punto, source").eq("id", evaluationId).maybeSingle(),
+    service.from("lot_evaluations").select("id, lot_id, status, sca_total, punto, source, ajuste_ctcx_puntos").eq("id", evaluationId).maybeSingle(),
     service.from("lots").select("id, name, stage, grade, datasheet").eq("id", lotId).maybeSingle(),
   ]);
   if (!ev || ev.lot_id !== lotId) return { ok: false, error: "Esa evaluación no es de este lote." };
@@ -227,7 +227,8 @@ export async function elegirEvaluacionQueRige(lotId: string, evaluationId: strin
   // V5.92: el grado firme lo decide el Punto (piso; un homologado nunca da Tyrian; si cruza los 80, pendiente de recata).
   const punto = puntoDeFila(ev);
   // V5.160: El Punto y la Tríada — la tríada se deriva de la Ficha del lote.
-  const decision = punto ? decidirPorPunto(punto, triadaDeLaFicha(lot.datasheet as Parameters<typeof triadaDeLaFicha>[0]).triada) : null;
+  // V5.162: el ajuste CTCx de esa evaluación (si lo tiene) entra en el grado.
+  const decision = punto ? decidirPorPunto(punto, triadaDeLaFicha(lot.datasheet as Parameters<typeof triadaDeLaFicha>[0]).triada, Number(ev.ajuste_ctcx_puntos ?? 0)) : null;
   if (!decision || decision.tipo !== "galardon") return { ok: false, error: `Con Punto ${ev.sca_total} el lote quedaría por debajo de Black (o pendiente de recata SCA): esa evaluación no puede regir.` };
   const grado = decision.grado;
 

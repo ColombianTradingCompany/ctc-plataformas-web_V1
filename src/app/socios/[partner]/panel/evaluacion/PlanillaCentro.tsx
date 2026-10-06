@@ -78,7 +78,7 @@ function useAction() {
 /** V5.144: lo que quedó guardado con «Guardar y terminar más tarde» (`evaluacion_borradores`). */
 export type BorradorDeEvaluacion = { planilla: unknown; notas: string | null; codigoInterno: string | null; guardadoEl: string; reporte?: ReporteAdjunto | null };
 
-export function DarDeAltaButton({ lotId, uid, borrador }: { lotId: string; uid: string; borrador?: BorradorDeEvaluacion | null }) {
+export function DarDeAltaButton({ lotId, uid, borrador, devoluciones = [] }: { lotId: string; uid: string; borrador?: BorradorDeEvaluacion | null; /** V5.162: los comentarios con que CTC devolvió este lote (log al final). */ devoluciones?: { fecha: string; motivo: string }[] }) {
   const { pending, error, run } = useAction();
   const [open, setOpen] = useState(false);
   // La planilla arranca con el borrador, si lo hay: el evaluador retoma donde quedó.
@@ -185,6 +185,17 @@ export function DarDeAltaButton({ lotId, uid, borrador }: { lotId: string; uid: 
             </div>
             {guardado && !error && <p className={styles.orgLine}>✓ {tx.guardado}</p>}
             {error && <p className={styles.err}>{error}</p>}
+            {/* V5.162 (owner): el log de lo que CTC devolvió, al final. */}
+            {devoluciones.length > 0 && (
+              <div style={{ borderTop: "1px solid var(--line)", marginTop: 14, paddingTop: 10 }} aria-label="Log de devoluciones de CTC">
+                <p className={styles.orgLine} style={{ margin: "0 0 6px", fontWeight: 700 }}>{lang === "en" ? "Log · comments CTC sent back" : "Log · comentarios que CTC envió de vuelta"} ({devoluciones.length})</p>
+                <ol style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 4, fontSize: 13 }}>
+                  {devoluciones.map((d, i) => (
+                    <li key={i}><b>{d.fecha}</b> · {d.motivo}</li>
+                  ))}
+                </ol>
+              </div>
+            )}
           </div>
         </div>
       )}

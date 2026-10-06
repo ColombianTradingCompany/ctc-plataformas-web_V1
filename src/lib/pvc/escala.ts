@@ -121,7 +121,23 @@ export type Puntaje = {
   banda: BandaPuntos | null;
   /** Qué puerta actuó, si actuó alguna. Es lo que la pantalla explica. */
   puerta: null | "sin-especialidad" | "umbral-sin-surplus" | "umbral-con-surplus" | "tope-tyrian" | "techo";
+  /** V5.162: los puntos del ajuste CTCx que de verdad se aplicaron (0 si no hubo, o si una puerta lo impidió). */
+  ajuste: number;
 };
+
+// ── El ajuste CTCx (V5.162, owner 2026-10-06) ───────────────────────────────
+// «CTCx puede agregar hasta 100 puntos al puntaje final que moverían el grado hacia arriba; de agregarse, se obliga a insertar
+// un argumento que justifique el incremento — sobre todo para pasar al siguiente grado un lote que está a poco de llegar y tiene
+// algún factor extraordinario que va más allá de lo ya registrado.» Se SUMA a Punto × Tríada; no salta las dos puertas duras:
+// sin especialidad (SCA < 80) no hay ajuste, y Tyrian sigue exigiendo SCA ≥ 89 y surplus (si no, el tope es 2000).
+export const AJUSTE_CTCX_MAX = 100;
+/** El argumento mínimo (caracteres) — lo exige también la base (`lot_evaluations_ajuste_ctcx_justificado`). */
+export const AJUSTE_CTCX_JUSTIFICACION_MIN = 30;
+/** Un ajuste válido: entero de 0 a 100; cualquier otra cosa, 0. */
+export function ajusteCtcxValido(v: unknown): number {
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) && n > 0 ? Math.min(AJUSTE_CTCX_MAX, n) : 0;
+}
 
 /**
  * Los puntos de un lote. Las tres puertas del owner, cumplidas por
@@ -134,14 +150,14 @@ export type Puntaje = {
  *  · Tyrian exige SCA ≥ 89 **y** surplus: un AAA de 88 se topa en 2000 (Gold) y
  *    un CCC no llega nunca.
  */
-export function puntosCtc(sca: number, t: Triada): Puntaje {
+export function puntosCtc(sca: number, t: Triada, ajusteCtcx: number = 0): Puntaje {
   const base = baseSca(sca);
   const mult = multiplicador(t);
   const conSurplus = pesoTotal(t) > 0;
 
   if (!Number.isFinite(sca) || sca < SCA_MINIMO_ESCALA) {
     const p = Math.round(base);
-    return { puntos: p, base, mult, banda: bandaDePuntos(p), puerta: "sin-especialidad" };
+    return { puntos: p, base, mult, banda: bandaDePuntos(p), puerta: "sin-especialidad", ajuste: 0 };
   }
 
   let puntos: number;
@@ -152,6 +168,9 @@ export function puntosCtc(sca: number, t: Triada): Puntaje {
   } else {
     puntos = Math.round(base * mult);
   }
+  // V5.162: el ajuste CTCx se suma DESPUÉS de las puertas de entrada y ANTES de los topes (Tyrian y techo siguen mandando).
+  const ajuste = ajusteCtcxValido(ajusteCtcx);
+  puntos += ajuste;
 
   const tyrianOk = sca >= SCA_TYRIAN && conSurplus;
   if (!tyrianOk && puntos > 2000) {
@@ -162,7 +181,7 @@ export function puntosCtc(sca: number, t: Triada): Puntaje {
     puntos = PUNTOS_MAX;
     puerta = "techo";
   }
-  return { puntos, base, mult, banda: bandaDePuntos(puntos), puerta };
+  return { puntos, base, mult, banda: bandaDePuntos(puntos), puerta, ajuste };
 }
 
 export function bandaDePuntos(puntos: number): BandaPuntos | null {

@@ -12,7 +12,7 @@ import { factorDeLaPlanilla, labEvaluationHasData, labEvaluationScaData, protoco
 import { decidirPorPunto, puntoDeFila, puntoNativo, rotuloDelPunto, type PuntoSca } from "@/lib/arena/homologacion";
 import { triadaDeLaFicha } from "@/lib/pvc/triadaDelLote";
 import { notasAlDevolver } from "@/lib/evaluaciones/devolucion";
-import { letras } from "@/lib/pvc/escala";
+import { AJUSTE_CTCX_JUSTIFICACION_MIN, ajusteCtcxValido, letras } from "@/lib/pvc/escala";
 import { currentSeason, lotSeasonCount, MAX_SEASONS_PER_LOT } from "@/lib/arena/seasons";
 import { saldoDe } from "@/lib/muestras/particion";
 import { anularRecibo } from "@/lib/muestras/recibo";
@@ -610,6 +610,8 @@ export async function recordEvaluationVerdict(
     resultFile?: { path: string; filename: string };
     /** V5.81: el alta PENDIENTE del Centro de Calidad que se confirma (registrar ≠ confirmar). Con ella no se teclea planilla. */
     centroEvaluationId?: string;
+    /** V5.162 (owner): hasta 100 puntos CTC que CTCx suma al puntaje final, con un argumento obligatorio (≥ 30 caracteres). */
+    ajusteCtcx?: { puntos: number; justificacion: string };
   }
 ): Promise<Result> {
   const permiso = await permisoDeEscritura("ocp", "emite");
@@ -687,8 +689,14 @@ export async function recordEvaluationVerdict(
       return { ok: false, error: "Registre una planilla con Punto (SCA 2004 completo, o CVA completo) o digite el puntaje SCA antes de galardonar." };
     }
     const puntaje = redondeaPuntaje(effectiveScore);
+    // V5.162 (owner): el ajuste CTCx — hasta 100 puntos con un argumento obligatorio que justifique el incremento.
+    const ajuste = ajusteCtcxValido(extras?.ajusteCtcx?.puntos);
+    const justificacion = (extras?.ajusteCtcx?.justificacion ?? "").trim();
+    if (ajuste > 0 && justificacion.length < AJUSTE_CTCX_JUSTIFICACION_MIN) {
+      return { ok: false, error: `Para sumar ${ajuste} puntos escriba el argumento que lo justifica (al menos ${AJUSTE_CTCX_JUSTIFICACION_MIN} caracteres): qué factor extraordinario va más allá de lo registrado.` };
+    }
     // El puntaje manda: el grado FIRME se lee del piso del Punto; un homologado nunca da Tyrian; si el intervalo cruza los 80, recata.
-    const decision = decidirPorPunto(puntoEfectivo, triada);
+    const decision = decidirPorPunto(puntoEfectivo, triada, ajuste);
     if (decision.tipo === "pendiente_recata") {
       return { ok: false, error: `El Punto homologado ${puntoEfectivo.bajo}–${puntoEfectivo.alto} cruza los 80: ni galardón ni «No supera» hasta una recata SCA 2004 nativa (acuerde una re-evaluación).` };
     }
@@ -702,6 +710,21 @@ export async function recordEvaluationVerdict(
 
     // El alta del Centro se confirma: pasa a accepted y rige el grado.
     if (centroRow) await confirmarFilaDelCentro(service, centroRow.id, lotId, adminId);
+    // V5.162: el ajuste queda en la evaluación que rige (el grado se recalcula siempre con él) y en el rastro.
+    const columnasAjuste = ajuste > 0 ? { ajuste_ctcx_puntos: ajuste, ajuste_ctcx_justificacion: justificacion.slice(0, 2000), ajuste_ctcx_por: adminId, ajuste_ctcx_at: new Date().toISOString() } : {};
+    if (centroRow && ajuste > 0) {
+      const { error: ajusteError } = await service.from("lot_evaluations").update(columnasAjuste).eq("id", centroRow.id);
+      if (ajusteError) return { ok: false, error: "No se pudo guardar el ajuste CTCx: " + ajusteError.message };
+    }
+    if (ajuste > 0) {
+      await service.from("audit_log").insert({
+        entity_type: "lot",
+        entity_id: lotId,
+        action: "ajuste_ctcx",
+        performed_by: adminId,
+        notes: `+${ajuste} puntos CTC (Punto ${puntaje} × tríada ${letras(triada)} → ${grado.nombre}). Argumento: ${justificacion.slice(0, 600)}`,
+      });
+    }
 
     // Sin Centro: la planilla tecleada queda como evaluación OFICIAL del lote, con su
     // procedencia propia — el comprador confía en esa etiqueta.
@@ -742,6 +765,7 @@ export async function recordEvaluationVerdict(
         submitted_by: adminId,
         reviewed_by: adminId,
         reviewed_at: new Date().toISOString(),
+        ...columnasAjuste,
       });
       if (evalError) return { ok: false, error: "No se pudo guardar la evaluación oficial del lote." };
     }

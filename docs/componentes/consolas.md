@@ -177,6 +177,10 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.162 · ajuste CTCx (hasta +100 puntos, argumento obligatorio) y log de devoluciones en el informe** (owner, 2026-10-06).
+  `recordEvaluationVerdict(…, { ajusteCtcx })` valida en el servidor, decide con el ajuste y lo guarda en la evaluación que rige
+  (`ajuste_ctcx_*`) con `audit_log` `ajuste_ctcx`. Abierto, **con decisión del owner**: el productor no ve hoy el ajuste ni su
+  argumento (solo el grado resultante); el ajuste no está en «Registrar a mano» (solo en el informe del Centro).
 - **V5.160 · CONTRATO: el grado es El Punto y la Tríada; la escala SCA se retiró de todas partes** (owner, 2026-10-06).
   `gradoDelLote` en `definicion.ts` lee `escala.ts`; el veredicto del OCP y «la que rige» de la Arena derivan la tríada de la
   Ficha del lote (`triadaDeLaFicha`). El tablero Grados de Calidad del ECP se reescribió (escalera en puntos + calculadora

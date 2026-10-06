@@ -188,8 +188,9 @@ export function gradoPorPuntos(puntos: number): Grado | null {
 /** EL grado de un lote: su Punto SCA (redondeado a dos decimales) × su Tríada → puntos → banda. Devuelve también los
  *  puntos y la puerta que actuó, para que la pantalla lo explique. Los puntos MANDAN (regla 1): esto no propone un grado
  *  para que alguien lo confirme después — lo determina. */
-export function gradoDelLote(sca: number, triada: Triada): { grado: Grado | null; puntaje: Puntaje } {
-  const puntaje = puntosCtc(Number.isFinite(sca) ? redondeaPuntaje(sca) : NaN, triada);
+export function gradoDelLote(sca: number, triada: Triada, ajusteCtcx: number = 0): { grado: Grado | null; puntaje: Puntaje } {
+  // V5.162: `ajusteCtcx` — hasta 100 puntos que CTCx suma con justificación (ver `escala.ts`).
+  const puntaje = puntosCtc(Number.isFinite(sca) ? redondeaPuntaje(sca) : NaN, triada, ajusteCtcx);
   return { grado: puntaje.banda ? GRADO_POR_ID[puntaje.banda.id as GradoId] ?? null : null, puntaje };
 }
 

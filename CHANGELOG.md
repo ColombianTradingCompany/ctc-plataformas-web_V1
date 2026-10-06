@@ -19,6 +19,23 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.162] — 2026-10-06 (commit pendiente)
+
+- **Añadido**: **el ajuste CTCx** en el informe del Centro (OCP): CTCx puede sumar **hasta 100 puntos** al puntaje final, que
+  mueven el grado hacia arriba (owner, 2026-10-06), **con un argumento obligatorio** (al menos 30 caracteres) que justifique el
+  incremento — pensado para un lote a poco del siguiente grado con un factor extraordinario que va más allá de lo registrado.
+  El informe dice cuántos puntos le faltan al siguiente grado; «Galardonar» queda bloqueado sin argumento; la tríada y la
+  curva enseñan el ajuste. Se suma a Punto × Tríada (`puntosCtc(sca, tríada, ajuste)`) sin saltar las dos puertas duras: sin
+  especialidad (SCA < 80) no hay ajuste y Tyrian sigue exigiendo SCA ≥ 89 y surplus (si no, tope 2.000).
+- **Datos**: migración `evaluaciones_ajuste_ctcx` (acta `docs/migraciones/2026-10-06_…sql`): `lot_evaluations.ajuste_ctcx_puntos`
+  (0–100), `ajuste_ctcx_justificacion` (la base exige ≥ 30 caracteres si hay puntos), `ajuste_ctcx_por`, `ajuste_ctcx_at`. El
+  ajuste vive en la evaluación que rige: «la que rige» de la Arena recalcula el grado con él. Cada ajuste deja `ajuste_ctcx`
+  en `audit_log`.
+- **Añadido**: **el log de devoluciones** (owner: «que queden los comentarios enviados de vuelta en un Log al final»): al final
+  del informe del OCP y de la planilla del Centro, cada devolución del lote con su fecha y su motivo, la más reciente primero.
+- **Seguridad**: `qa-grados` (+6: el ajuste y sus puertas), `qa-centro-calidad` (244 → 250).
+- **Docs**: ALINEACION §1 (contrato de grados: el ajuste) y §3; charters `consolas` y `socios`.
+
 ## [V5.161] — 2026-10-06 (commit 7060037)
 
 - **Corregido**: **un lote devuelto desde el OCP al Centro de Calidad ya no llega con la planilla vacía** (owner, 2026-10-06:

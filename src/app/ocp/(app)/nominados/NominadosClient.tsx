@@ -35,7 +35,8 @@ import type { FichaFormData } from "@/components/kaffetal-regal/ficha/fichaData"
 import type { ReporteAdjunto } from "@/lib/evaluaciones/reporteReglas";
 import { decidirPorPunto, rotuloDelPunto, type PuntoSca } from "@/lib/arena/homologacion";
 import { EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, computeSca, type LabEvaluation } from "@/lib/arena/labEvaluation";
-import { gradoDelLote, redondeaPuntaje } from "@/lib/grados/definicion";
+import { GRADOS, gradoDelLote, redondeaPuntaje } from "@/lib/grados/definicion";
+import { AJUSTE_CTCX_JUSTIFICACION_MIN, AJUSTE_CTCX_MAX, ajusteCtcxValido } from "@/lib/pvc/escala";
 import { triadaDeLaFicha } from "@/lib/pvc/triadaDelLote";
 import { openFactura, type FacturaData } from "@/lib/arena/factura";
 import { MAX_BATCH_LOTS } from "@/lib/arena/inscriptions";
@@ -508,6 +509,7 @@ export function ConfirmarCentroControls({
   alta,
   b1,
   ficha,
+  devoluciones = [],
 }: {
   lotId: string;
   lotName: string;
@@ -515,7 +517,12 @@ export function ConfirmarCentroControls({
   b1?: B1DelLote;
   /** V5.158: la Ficha Técnica entera del lote (datasheet), para la vista completa de solo lectura y la tríada. */
   ficha?: Partial<FichaFormData> | null;
+  /** V5.162 (owner): «que queden los comentarios enviados de vuelta en un Log al final» — cada devolución de este lote al Centro. */
+  devoluciones?: { fecha: string; motivo: string }[];
 }) {
+  // V5.162 (owner): el ajuste CTCx — hasta 100 puntos al puntaje final, con argumento obligatorio.
+  const [ajusteTxt, setAjusteTxt] = useState("");
+  const [justificacion, setJustificacion] = useState("");
   // V5.158 (owner): «quiero que se vean todos los datos» — la Ficha completa, abierta por defecto; se puede plegar.
   const [verFicha, setVerFicha] = useState(true);
   const { pending, error, run } = useAction();
@@ -530,7 +537,12 @@ export function ConfirmarCentroControls({
   // V5.92: el grado FIRME sale del Punto (piso; un homologado nunca da Tyrian); si el intervalo cruza los 80, recata.
   // V5.160 (owner): el grado es El Punto y la Tríada; la tríada sale de la Ficha del lote (como en la acción).
   const triada = triadaDeLaFicha(ficha).triada;
-  const decision = alta.punto ? decidirPorPunto(alta.punto, triada) : null;
+  const ajuste = ajusteCtcxValido(ajusteTxt);
+  const faltaArgumento = ajuste > 0 && justificacion.trim().length < AJUSTE_CTCX_JUSTIFICACION_MIN;
+  const decision = alta.punto ? decidirPorPunto(alta.punto, triada, ajuste) : null;
+  const sinAjuste = alta.punto ? gradoDelLote(alta.punto.bajo, triada).puntaje : null;
+  const siguiente = sinAjuste?.banda ? GRADOS[GRADOS.findIndex((g) => g.id === sinAjuste.banda!.id) + 1] ?? null : GRADOS[0];
+  const faltan = sinAjuste && siguiente ? siguiente.puntosMin - sinAjuste.puntos : null;
   const grado = decision?.tipo === "galardon" ? decision.grado : null;
   const pendienteRecata = decision?.tipo === "pendiente_recata";
   return (
@@ -612,7 +624,29 @@ export function ConfirmarCentroControls({
               <p className={styles.meta} style={{ margin: "0 0 8px" }}>
                 La misma taza vale distinto según la variedad, el proceso y los reconocimientos: un café común (CCC) necesita más puntaje para la misma banda que uno con surplus.
               </p>
-              <TriadaDelLote ficha={ficha} sca={alta.punto?.bajo ?? null} />
+              <TriadaDelLote ficha={ficha} sca={alta.punto?.bajo ?? null} ajuste={ajuste} />
+            </div>
+            {/* V5.162 (owner): «CTCx puede agregar hasta 100 puntos al puntaje final que moverían el grado hacia arriba; de agregarse,
+                se obliga a insertar un argumento que justifique el incremento» — sobre todo para un lote a poco del siguiente grado
+                con un factor extraordinario que va más allá de lo registrado. */}
+            <div style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "10px 12px", margin: "8px 0" }} aria-label="Ajuste CTCx">
+              <p className={styles.meta} style={{ margin: "0 0 6px", fontWeight: 700, color: "var(--ink)" }}>Ajuste CTCx (opcional) · hasta +{AJUSTE_CTCX_MAX} puntos</p>
+              <p className={styles.meta} style={{ margin: "0 0 8px" }}>
+                {sinAjuste && siguiente && faltan != null && faltan > 0
+                  ? <>Sin ajuste: <b>{sinAjuste.puntos.toLocaleString("es-CO")}</b> puntos{sinAjuste.banda ? <> ({sinAjuste.banda.nombre})</> : ""}. Al siguiente grado (<b style={{ color: siguiente.hex }}>{siguiente.nombre}</b>, desde {siguiente.puntosMin.toLocaleString("es-CO")}) le faltan <b>{faltan}</b> puntos{faltan > AJUSTE_CTCX_MAX ? <> — más de lo que el ajuste permite</> : ""}.</>
+                  : sinAjuste ? <>Sin ajuste: <b>{sinAjuste.puntos.toLocaleString("es-CO")}</b> puntos.</> : "Sin Punto, no hay ajuste."}
+                {" "}Las puertas no se saltan: sin especialidad (SCA &lt; 80) no hay ajuste y Tyrian sigue exigiendo SCA ≥ 89 y surplus.
+              </p>
+              <div style={{ display: "flex", gap: 10, alignItems: "flex-start", flexWrap: "wrap" }}>
+                <label style={{ display: "grid", gap: 3, fontSize: 12 }}>
+                  Puntos a sumar
+                  <input type="number" min={0} max={AJUSTE_CTCX_MAX} step={1} value={ajusteTxt} onChange={(e) => setAjusteTxt(e.target.value)} placeholder="0" style={{ width: 90 }} aria-label="Puntos del ajuste CTCx" disabled={pending} />
+                </label>
+                <label style={{ display: "grid", gap: 3, fontSize: 12, flex: "1 1 360px" }}>
+                  <span>Argumento que justifica el incremento {ajuste > 0 && <b style={{ color: faltaArgumento ? "var(--red)" : "#2E7D52" }}>(obligatorio · {justificacion.trim().length}/{AJUSTE_CTCX_JUSTIFICACION_MIN} mín.)</b>}</span>
+                  <textarea rows={2} value={justificacion} onChange={(e) => setJustificacion(e.target.value)} placeholder="Qué factor extraordinario, más allá de lo ya registrado, lleva este lote al siguiente grado…" disabled={pending || ajuste === 0} aria-label="Argumento del ajuste CTCx" style={{ width: "100%" }} />
+                </label>
+              </div>
             </div>
             {/* El puntaje manda: el grado se DERIVA del alta del Centro; nadie lo digita. */}
             <p className={styles.meta} style={{ margin: "8px 0 6px" }}>
@@ -621,14 +655,15 @@ export function ConfirmarCentroControls({
                 : pendienteRecata
                   ? <>El Punto homologado cruza los 80 ({alta.punto?.bajo}–{alta.punto?.alto}): ni galardón ni «No supera» — acuerde una recata SCA 2004 nativa.</>
                   : grado
-                    ? <>Punto <b>{puntaje}</b> × tríada <span className="mono">{`${triada.variedad}${triada.proceso}${triada.reconocimiento}`}</span> → Grado firme <b style={{ color: grado.hex }}>{grado.nombre}</b> (derivado — los puntos mandan{decision?.tipo === "galardon" && decision.techo ? <>; hasta {decision.techo.nombre} con recata SCA</> : null}).</>
+                    ? <>Punto <b>{puntaje}</b> × tríada <span className="mono">{`${triada.variedad}${triada.proceso}${triada.reconocimiento}`}</span>{ajuste > 0 && <> + {ajuste} ajuste CTCx</>} → Grado firme <b style={{ color: grado.hex }}>{grado.nombre}</b> (derivado — los puntos mandan{decision?.tipo === "galardon" && decision.techo ? <>; hasta {decision.techo.nombre} con recata SCA</> : null}).</>
                     : <>Punto <b>{puntaje}</b> con tríada <span className="mono">{`${triada.variedad}${triada.proceso}${triada.reconocimiento}`}</span>: los puntos no llegan a Black (un café común entra desde 82) — registre «No supera».</>}
             </p>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               <button
                 className="btn btn-sm btn-solid"
-                disabled={pending || !notes.trim() || !grado}
-                onClick={() => run(() => recordEvaluationVerdict(lotId, "aprobado", notes, undefined, { centroEvaluationId: alta.id }))}
+                disabled={pending || !notes.trim() || !grado || faltaArgumento}
+                title={faltaArgumento ? `Escriba el argumento del ajuste (al menos ${AJUSTE_CTCX_JUSTIFICACION_MIN} caracteres)` : undefined}
+                onClick={() => run(() => recordEvaluationVerdict(lotId, "aprobado", notes, undefined, { centroEvaluationId: alta.id, ...(ajuste > 0 ? { ajusteCtcx: { puntos: ajuste, justificacion } } : {}) }))}
               >
                 {grado ? `Galardonar → ${grado.nombre}` : "Galardonar"}
               </button>
@@ -643,8 +678,30 @@ export function ConfirmarCentroControls({
               </button>
             </div>
             <ErrorLine error={error} />
+            {/* V5.162 (owner): «que queden los comentarios enviados de vuelta en un Log al final». */}
+            <LogDeDevoluciones devoluciones={devoluciones} />
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+/** V5.162: el log de los comentarios con que CTCx devolvió este lote al Centro (más reciente primero). */
+export function LogDeDevoluciones({ devoluciones }: { devoluciones: { fecha: string; motivo: string }[] }) {
+  return (
+    <div style={{ borderTop: "1px solid var(--line)", marginTop: 14, paddingTop: 10 }} aria-label="Log de devoluciones al Centro">
+      <p className={styles.meta} style={{ margin: "0 0 6px", fontWeight: 700, color: "var(--ink)" }}>Log · comentarios enviados de vuelta al Centro ({devoluciones.length})</p>
+      {devoluciones.length === 0 ? (
+        <p className={styles.meta} style={{ margin: 0 }}>Este lote no ha sido devuelto al Centro.</p>
+      ) : (
+        <ol style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 4 }}>
+          {devoluciones.map((d, i) => (
+            <li key={i} className={styles.meta} style={{ margin: 0 }}>
+              <b style={{ color: "var(--ink)" }}>{d.fecha}</b> · {d.motivo}
+            </li>
+          ))}
+        </ol>
       )}
     </div>
   );

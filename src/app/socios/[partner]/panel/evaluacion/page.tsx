@@ -204,7 +204,11 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
                                 La `key` cambia con lo que siembra la planilla, para que arranque con eso. */}
                             {(() => {
                               const semilla = borrador ?? (devuelta ? semillaDeDevuelta(devuelta) : null);
-                              return <DarDeAltaButton key={semilla?.guardadoEl ?? "nuevo"} lotId={l.lot_id} uid={uid} borrador={semilla} />;
+                              const devoluciones = propias
+                                .filter((e) => e.status === "rejected")
+                                .sort((a, b) => (b.reviewed_at ?? b.created_at).localeCompare(a.reviewed_at ?? a.created_at))
+                                .map((e) => ({ fecha: new Date(e.reviewed_at ?? e.created_at).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" }), motivo: separaNotasDevueltas(e.notes).motivo ?? "(sin motivo)" }));
+                              return <DarDeAltaButton key={semilla?.guardadoEl ?? "nuevo"} lotId={l.lot_id} uid={uid} borrador={semilla} devoluciones={devoluciones} />;
                             })()}
                           </>
                         )}

@@ -1,3 +1,4 @@
+import type { EstadoDeRedeclaracion } from "@/lib/trato/modalidades";
 import type { FichaFormData } from "./ficha/fichaData";
 import type { PuntoSca } from "@/lib/arena/homologacion";
 import type { EstadoDeMora } from "@/lib/trato/mesAMes";
@@ -436,6 +437,8 @@ export type ProducerContract = {
   retiroLibrePct: number | null;
   redeclararMinKg: number | null;
   redeclararAt: string | null;
+  /** V5.171: en qué punto está la redeclaración de «Ahora y Siguiente» (`estadoDeRedeclaracion`, calculado al cargar). */
+  redeclaracion: EstadoDeRedeclaracion | null;
   compraInicialRango: { min: number; max: number } | null;
   // V5.84 (fase 7): el trato mes a mes — lo que CTC pide, lo enviado, lo pagado y los retiros; la mora se DERIVA
   // al cargar (`moraDelMes` / `resumenDelTrato`, la misma función que lee el OCP), nunca se guarda.

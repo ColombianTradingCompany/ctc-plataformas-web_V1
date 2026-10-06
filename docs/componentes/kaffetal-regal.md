@@ -152,6 +152,10 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.171 · la redeclaración de «Ahora y Siguiente»** (owner, 2026-10-06: «la opción 1, que quede en el 70 %»; ejecutado desde
+  WRAP-COMMIT-PUSH): se pide `DIAS_ANTES_REDECLARAR` (10) días antes, el botón «Redeclarar» de «Mis contratos» no acepta menos
+  del mínimo y se cierra al terminar el primer día de la temporada; sin respuesta, `/api/cron/redeclaraciones` la deja en el
+  mínimo. Cierra el abierto de la V5.170. Sin manejar con una cuenta real (no hay contratos en producción).
 - **V5.170 · «Siguiente Temporada» al PVC de la edición siguiente** (owner, 2026-10-06; ejecutado desde WRAP-COMMIT-PUSH): el
   precio viaja congelado en la oferta (`price_next_kg`); sin edición siguiente publicada, la modalidad no se abre y dice la fecha
   límite (`fechaLimitePvcSiguiente`). Sustituye el abierto (1) de la V5.169. Abierto: la redeclaración de «Ahora y Siguiente»

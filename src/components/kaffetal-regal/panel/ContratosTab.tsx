@@ -11,8 +11,8 @@ import { LUGAR_DE_ENTREGA_POR_DEFECTO } from "@/lib/trato/terminos";
 import { CalculadoraDelTrato, type DecisionDelTrato } from "./CalculadoraDelTrato";
 import { FirmaDelContrato, type FirmaDelProductor } from "./FirmaDelContrato";
 import { PropuestaSelection } from "./PropuestaSelection";
-import { MODALIDAD_LABEL } from "@/lib/trato/modalidades";
-import { renovarDeclaracionAhora } from "@/lib/trato/producerActions";
+import { MODALIDAD_LABEL, fechaLarga, type EstadoDeRedeclaracion } from "@/lib/trato/modalidades";
+import { redeclararSiguienteTemporada, renovarDeclaracionAhora } from "@/lib/trato/producerActions";
 import { MORA, PENALIDAD_RETIRO_PCT, TRAMO_LIBRE_ACUMULADO_PCT } from "@/lib/trato/terminos";
 import { MORA_LABEL, mesesDelTrato, type Retiro } from "@/lib/trato/mesAMes";
 import { useToast } from "@/components/Toast";
@@ -226,11 +226,7 @@ function ContratoCard({ contract: c, oferta, cuentaCongelada, onRefreshData }: {
           · penalidad por encima: {PENALIDAD_RETIRO_PCT} % por carga{c.termsVersion && <> · términos {c.termsVersion}</>}
         </div>
       )}
-      {c.redeclararMinKg != null && c.redeclararAt && (
-        <div className={styles.sub} style={{ fontWeight: 700 }}>
-          Al empezar la siguiente Temporada Trimestral ({fecha(c.redeclararAt)}) usted redeclara al menos {c.redeclararMinKg} kg.
-        </div>
-      )}
+      {c.redeclaracion && c.redeclaracion.fase !== "no_aplica" && <Redeclaracion contractId={c.id} estado={c.redeclaracion} enCurso={enCurso} onRefreshData={onRefreshData} />}
       {c.declaracion === "30_dias" && c.status === "active" && <RenovarAhora contractId={c.id} actualKg={c.quantityFrozenKg ?? 0} onRefreshData={onRefreshData} />}
       {oferta?.loteDeTemporadaPasada && (
         <div className={styles.sub} style={{ color: "var(--accent)", fontWeight: 700 }}>
@@ -652,6 +648,78 @@ function OfferCard({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshDa
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// V5.171 (owner, 2026-10-06: «la opción 1, que quede en el 70 %»): la redeclaración de «Ahora y Siguiente». Antes de abrirse dice
+// cuándo; abierta (DIAS_ANTES_REDECLARAR días antes, hasta el primer día de la siguiente temporada) trae el botón «Redeclarar», que
+// nunca acepta menos del mínimo; vencida sin respuesta, queda en el mínimo (el barrido diario la guarda). El servidor valida todo.
+function Redeclaracion({ contractId, estado: e, enCurso, onRefreshData }: { contractId: string; estado: EstadoDeRedeclaracion; enCurso: boolean; onRefreshData: () => void }) {
+  const { showToast } = useToast();
+  const [abierto, setAbierto] = useState(false);
+  const [kg, setKg] = useState(String(e.minKg ?? ""));
+  const [busy, setBusy] = useState(false);
+  const caja: React.CSSProperties = { marginTop: 6, padding: "8px 10px", border: "1.5px solid var(--line)", borderRadius: 9, fontSize: 12.5 };
+  const at = e.at ? fechaLarga(e.at) : "";
+  if (e.fase === "hecha")
+    return (
+      <div style={caja}>
+        <b>Redeclarado:</b> {e.kg} kg de CPS disponibles para la Temporada Trimestral que empieza el {at}
+        {e.origen === "automatica" ? " — sin respuesta a tiempo, quedó en el mínimo (el 70 % de lo declarado)." : "."}
+      </div>
+    );
+  if (e.fase === "vencida")
+    return (
+      <div style={caja}>
+        La redeclaración se cerró el {at}: su cantidad para esta temporada queda en el mínimo de <b>{e.minKg} kg</b> (el 70 % de lo declarado).
+      </div>
+    );
+  if (e.fase === "pronto")
+    return (
+      <div style={{ ...caja, fontWeight: 700 }}>
+        Al empezar la siguiente Temporada Trimestral ({at}) usted redeclara cuánto café deja disponible: al menos {e.minKg} kg. El botón «Redeclarar» se abre el{" "}
+        {e.abreEl ? fechaLarga(e.abreEl) : ""}; si no redeclara, queda en ese mínimo.
+      </div>
+    );
+  return (
+    <div style={{ ...caja, borderColor: "var(--accent)" }}>
+      <b>Redeclare para la siguiente Temporada Trimestral</b> (empieza el {at}): ¿cuánto café deja disponible? Al menos <b>{e.minKg} kg</b>; puede dejar más. Si no
+      redeclara a más tardar ese día, queda en {e.minKg} kg.
+      {enCurso &&
+        (!abierto ? (
+          <div style={{ marginTop: 6 }}>
+            <button className="btn btn-sm btn-solid-accent" onClick={() => setAbierto(true)}>
+              Redeclarar…
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 6 }}>
+            Dejo disponibles
+            <input inputMode="decimal" value={kg} onChange={(ev) => setKg(ev.target.value)} style={{ width: 90, padding: "5px 7px", border: "1.5px solid var(--line)", borderRadius: 7 }} aria-label="Kilos disponibles para la siguiente temporada" />
+            kg de CPS
+            <button
+              className="btn btn-sm btn-solid-accent"
+              disabled={busy || !(Number(kg.replace(",", ".")) >= (e.minKg ?? 0))}
+              onClick={async () => {
+                setBusy(true);
+                const r = await redeclararSiguienteTemporada(contractId, Number(kg.replace(",", ".")));
+                setBusy(false);
+                if (r.ok) {
+                  showToast("Redeclaración guardada ✓");
+                  setAbierto(false);
+                  onRefreshData();
+                } else showToast(r.message);
+              }}
+            >
+              {busy ? "Guardando…" : "Redeclarar"}
+            </button>
+            <button className="btn btn-sm" onClick={() => setAbierto(false)}>
+              Cancelar
+            </button>
+            {Number(kg.replace(",", ".")) < (e.minKg ?? 0) && <span style={{ color: "var(--accent)" }}>No puede ser menos de {e.minKg} kg.</span>}
+          </div>
+        ))}
     </div>
   );
 }

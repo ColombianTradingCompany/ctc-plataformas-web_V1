@@ -10,10 +10,10 @@
 // PURO. Es una redacción operativa de los términos del trato; la revisión jurídica la decide el owner.
 
 import { CTC_RAZON, CTC_SEDE, NIT } from "@/lib/legal";
-import { CARGA_KG, MORA, PENALIDAD_RETIRO_PCT, RENOVACION_DIAS, TRAMO_LIBRE_ACUMULADO_PCT } from "./terminos";
+import { CARGA_KG, DIAS_ANTES_REDECLARAR, MORA, PENALIDAD_RETIRO_PCT, RENOVACION_DIAS, TRAMO_LIBRE_ACUMULADO_PCT } from "./terminos";
 import { MODALIDAD_LABEL, textoCompraInicial, type CondicionesDeModalidad } from "./modalidades";
 
-export const CONTRATO_VERSION = "2026-10-06.3";
+export const CONTRATO_VERSION = "2026-10-06.4";
 
 export type DatosDelContrato = {
   /** V5.169: participación en Cherry Picked (con modalidad) o compra de CTCx Selection. */
@@ -90,7 +90,7 @@ export function clausulasDelContrato(d: DatosDelContrato): ClausulaDelContrato[]
       ? `En la modalidad «${modalidad}», el Productor declara disponibles ${kg(d.declaradoKg)} de CPS (${cargas} cargas de ${CARGA_KG} kg) para los próximos 30 días, ${vigencia}. Puede renovar la declaración dentro de la misma Temporada Trimestral mientras falten al menos 30 días para la siguiente; cada renovación enmienda la cantidad declarada, y CTCx no queda obligado a una compra adicional.`
       : c.modalidad === "trimestre"
         ? `En la modalidad «${modalidad}», el Productor declara disponibles ${kg(d.declaradoKg)} de CPS (${cargas} cargas de ${CARGA_KG} kg) para la siguiente Temporada Trimestral, ${vigencia}.`
-        : `En la modalidad «${modalidad}», el Productor declara disponibles ${kg(d.declaradoKg)} de CPS (${cargas} cargas de ${CARGA_KG} kg) desde hoy y durante la siguiente Temporada Trimestral, ${vigencia}. Al empezar la siguiente temporada (${fecha(c.redeclarar!.at)}) el Productor redeclara al menos ${kg(c.redeclarar!.minKg)} (el 70 % de lo declarado, y nunca menos del mínimo de su grado).`;
+        : `En la modalidad «${modalidad}», el Productor declara disponibles ${kg(d.declaradoKg)} de CPS (${cargas} cargas de ${CARGA_KG} kg) desde hoy y durante la siguiente Temporada Trimestral, ${vigencia}. Al empezar la siguiente temporada (${fecha(c.redeclarar!.at)}) el Productor redeclara cuánto deja disponible para ella, al menos ${kg(c.redeclarar!.minKg)} (el 70 % de lo declarado, y nunca menos del mínimo de su grado). La redeclaración se abre en Kaffetal Regal ${DIAS_ANTES_REDECLARAR} días antes y se cierra al terminar ese primer día; si el Productor no redeclara, la cantidad disponible para la siguiente temporada queda en ese mínimo. Lo ya comprado por CTCx y lo ya retirado no cambian.`;
   const compra = `Con la firma, CTCx compra ${textoCompraInicial(c.compraInicial)} de CPS al precio acordado, como inversión en la promoción del lote en Cherry Picked.`;
   const sinCompromiso = {
     titulo: "",

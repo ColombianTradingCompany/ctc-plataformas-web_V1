@@ -19,6 +19,22 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.171] — 2026-10-06 (commit pendiente)
+
+- **Añadido**: **la redeclaración de «Declarar Ahora y Siguiente Temporada»** (owner, 2026-10-06: «la opción 1, que quede en el
+  70 %»). Diez días antes de que empiece la siguiente Temporada Trimestral se le pide al productor (nota y correo) y en «Mis
+  contratos» se abre el botón «Redeclarar»: dice cuánto café deja disponible para la siguiente temporada, nunca menos del mínimo
+  (el 70 % de lo declarado, y nunca menos del mínimo del grado), y puede dejar más. Se cierra al terminar el primer día de la
+  temporada; sin respuesta, el barrido diario `/api/cron/redeclaraciones` (11:20 UTC) la deja en el mínimo. Lo ya pedido por CTCx
+  y lo ya retirado no cambian. Cada redeclaración deja su enmienda en el contrato, su fila en `audit_log` y su nota al productor;
+  el OCP la ve en el contrato (pendiente, hecha por el productor o al mínimo).
+- **Cambiado**: el contrato de «Ahora y Siguiente» dice cuándo se abre la redeclaración y que sin respuesta queda en el mínimo
+  (texto 2026-10-06.4).
+- **Datos**: migración `2026-10-06_redeclaracion_ahora_y_siguiente.sql` (aditiva): `purchase_contracts.redeclarado_at`,
+  `redeclarado_kg`, `redeclaracion_origen` (productor · automatica), `redeclarar_aviso_at`.
+- **Seguridad**: `qa-trato` (137 → 146).
+- **Docs**: charters `kaffetal-regal`, `consolas`; ALINEACION §3.
+
 ## [V5.170] — 2026-10-06 (commit 6b9222f)
 
 - **Cambiado**: **«Declarar Siguiente Temporada Trimestral» va al PVC de la EDICIÓN SIGUIENTE** (owner, 2026-10-06: «esta ancla

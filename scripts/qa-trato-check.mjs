@@ -259,7 +259,7 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   const cl = clausulasDelContrato(datos);
   const todo = cl.map((c) => c.texto).join(" ");
   check("contrato Cherry Picked · trece cláusulas con la modalidad, la vigencia, la compra con la firma y «sin compromiso de compra mensual»", cl.length === 13 && todo.includes("$26.000 COP por kg") && todo.includes("$3.250.000 COP por carga") && todo.includes("750 kg de CPS (6 cargas") && todo.includes("Bucaramanga") && todo.includes("«Declarar Siguiente Temporada Trimestral»") && todo.includes("del 16 de diciembre de 2026") && cl[4].titulo.includes("Sin compromiso de compra mensual") && todo.includes("Grado CTCx Red"));
-  check("contrato · el texto es el mismo con «red» o «Red» (la pantalla y el servidor firman la misma huella)", textoDelContrato(datos) === textoDelContrato({ ...datos, grado: "Red" }) && CONTRATO_VERSION === "2026-10-06.3");
+  check("contrato · el texto es el mismo con «red» o «Red» (la pantalla y el servidor firman la misma huella)", textoDelContrato(datos) === textoDelContrato({ ...datos, grado: "Red" }) && CONTRATO_VERSION === "2026-10-06.4");
   const sel = clausulasDelContrato({ ...datos, tipo: "selection", condiciones: null, declaradoKg: 500, copKg: 22000 });
   check("contrato CTCx Selection · compra en firme de los kilos acordados, «hasta el PVC vigente menos el 8 %», sin modalidad", sel.length === 8 && sel.map((c) => c.texto).join(" ").includes("hasta el PVC vigente menos el 8 %") && sel.map((c) => c.texto).join(" ").includes("$11.000.000 COP"));
   const resp = lee("src/lib/ofertas/producerActions.ts");
@@ -332,6 +332,29 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   check("PVC siguiente · el contrato dice que el precio es el PVC publicado para la siguiente Temporada Trimestral", tri.some((c) => c.texto.includes("publicado para la siguiente Temporada Trimestral") && c.texto.includes("$27.300 COP")));
   const calc = lee("src/components/kaffetal-regal/panel/CalculadoraDelTrato.tsx");
   check("PVC siguiente · la calculadora usa el precio de cada modalidad y lo lleva a la firma; el OCP avisa si aún no se publica", calc.includes('const precioDe = (m: Modalidad) => (m === "trimestre" ? precioSiguienteKg ?? copKg : copKg);') && calc.includes("copKg: copModalidad })") && lee("src/components/kaffetal-regal/panel/ContratosTab.tsx").includes("copKg: decision?.copKg ?? offer.pricePerKg,") && lee("src/app/ocp/(app)/ofertas/OfertaDesplegable.tsx").includes("El PVC de la siguiente temporada aún no se publica"));
+}
+
+// ── V5.171 (owner, 2026-10-06: «la opción 1, que quede en el 70 %») · la redeclaración de «Ahora y Siguiente»: se pide unos días
+//    antes, nunca acepta menos del mínimo, y sin respuesta queda en el mínimo ──────────────────────────────────────────────
+{
+  const { estadoDeRedeclaracion, cantidadTrasRedeclarar, abreLaRedeclaracion, condicionesDe } = await import("../src/lib/trato/modalidades.ts");
+  const { DIAS_ANTES_REDECLARAR } = await import("../src/lib/trato/terminos.ts");
+  const { clausulasDelContrato } = await import("../src/lib/trato/contrato.ts");
+  const base = { redeclararMinKg: 750, redeclararAt: "2026-12-16", redeclaradoAt: null, redeclaradoKg: null, redeclaracionOrigen: null };
+  const f = (hoy, extra = {}) => estadoDeRedeclaracion({ ...base, ...extra, hoy }).fase;
+  check("redeclaración · se abre unos días antes (10) del inicio de la siguiente temporada", DIAS_ANTES_REDECLARAR === 10 && abreLaRedeclaracion("2026-12-16") === "2026-12-06");
+  check("redeclaración · pronto antes de abrirse, abierta desde ese día hasta el primer día de la temporada inclusive, vencida al día siguiente", f("2026-12-05") === "pronto" && f("2026-12-06") === "abierta" && f("2026-12-16") === "abierta" && f("2026-12-17") === "vencida");
+  check("redeclaración · hecha (por el productor o al mínimo) pesa sobre la fecha; sin redeclarar_at no aplica", f("2026-12-20", { redeclaradoAt: "2026-12-10T12:00:00Z", redeclaradoKg: 800, redeclaracionOrigen: "productor" }) === "hecha" && estadoDeRedeclaracion({ ...base, redeclararAt: null, hoy: "2026-12-10" }).fase === "no_aplica" && estadoDeRedeclaracion({ ...base, redeclaradoAt: "x", redeclaradoKg: 750, redeclaracionOrigen: "automatica", hoy: "2026-12-20" }).origen === "automatica");
+  check("redeclaración · lo redeclarado es lo DISPONIBLE para la siguiente: lo pedido y lo retirado se quedan", cantidadTrasRedeclarar({ pedidoKg: 250, retiradoKg: 100, redeclaradoKg: 750 }) === 1100);
+  const ays = clausulasDelContrato({ tipo: "cherry_picked", condiciones: condicionesDe("ahora_y_siguiente", { hoy: "2026-10-26", temporadaHasta: "2026-12-15", declaradoKg: 1000, grado: "red" }), productorNombre: "Ana Pérez", productorDocumento: null, loteNombre: "El Mirador", loteReferencia: "CTC-L-0001", grado: "red", copKg: 26000, declaradoKg: 1000, lugarEntrega: "Bucaramanga.", termsVersion: null, temporada: null });
+  check("redeclaración · el contrato dice el mínimo, cuándo se abre y que sin respuesta queda en el mínimo", ays.some((c) => c.texto.includes("al menos 750 kg") && c.texto.includes(`${DIAS_ANTES_REDECLARAR} días antes`) && c.texto.includes("queda en ese mínimo")));
+  const acc = lee("src/lib/trato/producerActions.ts");
+  const srv = lee("src/lib/trato/redeclaracion.ts");
+  check("redeclaración · el botón del productor valida la modalidad, la ventana y el mínimo en el servidor", acc.includes("export async function redeclararSiguienteTemporada(") && acc.includes('if (e.fase !== "abierta")') && acc.includes("if (nuevo < (e.minKg ?? 0))") && acc.includes('c.declaracion !== "ahora_y_siguiente"'));
+  check("redeclaración · el barrido pide al abrirse y, vencida sin respuesta, la deja en el mínimo (automática), con enmienda, auditoría y nota", srv.includes('e.fase === "abierta" && !c.redeclarar_aviso_at') && srv.includes('aplicarRedeclaracion(service, c, e.minKg, "automatica", null)') && srv.includes('tipo: "redeclaracion"') && srv.includes('"redeclaracion_automatica_minimo"') && srv.includes('.is("redeclarado_at", null)'));
+  check("redeclaración · corre a diario (vercel.json) con CRON_SECRET", lee("vercel.json").includes('"/api/cron/redeclaraciones"') && lee("src/app/api/cron/redeclaraciones/route.ts").includes("Bearer ${secret}"));
+  const tab = lee("src/components/kaffetal-regal/panel/ContratosTab.tsx");
+  check("redeclaración · Mis contratos trae el botón «Redeclarar», que no deja bajar del mínimo; el OCP ve el estado", tab.includes("<Redeclaracion contractId={c.id}") && tab.includes("redeclararSiguienteTemporada(contractId") && tab.includes("No puede ser menos de {e.minKg} kg.") && lee("src/app/ocp/(app)/contratos/[id]/page.tsx").includes("estadoDeRedeclaracion({"));
 }
 
 if (fallos.length) {

@@ -177,6 +177,8 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.171 · el contrato del OCP muestra la redeclaración de «Ahora y Siguiente»** (se abre el…, abierta y pedida, hecha por
+  el productor o al mínimo por el barrido diario). Solo lectura: la decide el productor o el cron.
 - **V5.170 · al emitir, el OCP dice si «Siguiente Temporada» ya tiene precio** (PVC de la edición siguiente) o si conviene
   re-emitir cuando se publique (primeras dos semanas del segundo mes de la temporada vigente).
 - **V5.169 · «Pendiente de Oferta»: Cherry Picked o CTCx Selection; la negociación de Selection vuelve a «Abiertas»** (owner,

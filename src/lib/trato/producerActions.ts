@@ -6,6 +6,7 @@ import { mesEnCurso, mesesDelTrato, retiro, type FilaDelMes, type Retiro } from 
 import { DIAS_DECLARAR_AHORA, VENTANA_DECLARAR_AHORA_DIAS, minimoKg } from "./terminos";
 import { diasHastaLaSiguiente } from "./modalidades";
 import { edicionVigente, hoyEnColombia } from "@/lib/pvc/servicio";
+import { COLUMNAS_REDECLARACION, aplicarRedeclaracion, estadoDelContrato, type ContratoRedeclarable } from "./redeclaracion";
 
 // ── El retiro del productor (fase 7 del PLAN_CIRCUITO_DEL_LOTE, V5.84) ───────────────────────
 // Folio 8, paso 16: «puede retirar el 100 %: lo que exceda el tramo libre paga 4 % sobre el precio de cada carga».
@@ -181,4 +182,29 @@ export async function renovarDeclaracionAhora(contractId: string, kg: number): P
   await service.from("audit_log").insert({ entity_type: "purchase_contract", entity_id: contractId, action: "renovacion_declarar_ahora", performed_by: auth.userId, notes: `Renueva «Declarar Ahora» hasta ${hasta}: ${Number(c.quantity_frozen_kg ?? 0)} → ${nuevo} kg (sin compra adicional obligada).` });
   await service.from("producer_comm_log").insert({ producer_id: auth.userId, context_label: `Lote ${lot.name}`, lot_id: c.lot_id, note: `Usted renovó su declaración «Declarar Ahora»: ${nuevo} kg de CPS disponibles hasta el ${hasta}. CTCx no queda obligado a una compra adicional con esta renovación.`, created_by: auth.userId });
   return { ok: true };
+}
+
+// V5.171 (owner, 2026-10-06: «la opción 1, que quede en el 70 %»): «Ahora y Siguiente» se redeclara al empezar la siguiente Temporada
+// Trimestral. El botón se abre `DIAS_ANTES_REDECLARAR` días antes y se cierra al terminar el primer día de la temporada; nunca acepta
+// menos del mínimo (el 70 % de lo declarado, y nunca menos del mínimo del grado). Si el productor no redeclara, el barrido diario
+// (`/api/cron/redeclaraciones`) la deja en ese mínimo. `kg` = lo DISPONIBLE para la siguiente temporada.
+export async function redeclararSiguienteTemporada(contractId: string, kg: number): Promise<{ ok: true } | { ok: false; message: string }> {
+  const auth = await requireProducer();
+  if ("error" in auth) return { ok: false, message: auth.error };
+  const service = createServiceRoleClient();
+  const { data } = await service.from("purchase_contracts").select(COLUMNAS_REDECLARACION).eq("id", contractId).maybeSingle();
+  const c = data as unknown as ContratoRedeclarable | null;
+  const lot = (Array.isArray(c?.lots) ? c?.lots[0] : c?.lots) as { name: string; producer_id: string } | null;
+  if (!c || lot?.producer_id !== auth.userId) return { ok: false, message: "Contrato no encontrado." };
+  if (c.declaracion !== "ahora_y_siguiente") return { ok: false, message: "Solo se redeclara un trato «Declarar Ahora y Siguiente Temporada»." };
+  if (c.status !== "active" && c.status !== "reconditioning") return { ok: false, message: "Se redeclara un trato vigente (firmado por CTCx)." };
+  const e = estadoDelContrato(c, hoyEnColombia());
+  if (e.fase === "hecha") return { ok: false, message: "Usted ya redeclaró para la siguiente temporada." };
+  if (e.fase === "pronto") return { ok: false, message: `La redeclaración se abre el ${e.abreEl}.` };
+  if (e.fase !== "abierta") return { ok: false, message: "La redeclaración ya se cerró: su cantidad para esta temporada quedó en el mínimo." };
+  const nuevo = Number(kg);
+  if (!Number.isFinite(nuevo) || nuevo <= 0) return { ok: false, message: "Escriba cuántos kilos deja disponibles." };
+  if (nuevo < (e.minKg ?? 0)) return { ok: false, message: `No puede redeclarar menos de ${e.minKg} kg (el 70 % de lo declarado, y nunca menos del mínimo de su grado).` };
+  const r = await aplicarRedeclaracion(service, c, Math.round(nuevo * 10) / 10, "productor", auth.userId);
+  return r.ok ? { ok: true } : { ok: false, message: "No se pudo redeclarar: " + r.error };
 }

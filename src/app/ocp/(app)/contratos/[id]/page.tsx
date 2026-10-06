@@ -21,7 +21,8 @@ import { MORA, PENALIDAD_RETIRO_PCT, RENOVACION_DIAS } from "@/lib/trato/termino
 import { MORA_LABEL, mesesDelTrato, moraDelMes, resumenDelTrato, type FilaDelMes } from "@/lib/trato/mesAMes";
 import { MAX_RECORDATORIOS_MORA } from "@/lib/trato/mora";
 import styles from "@/components/panel/shared.module.css";
-import { MODALIDAD_LABEL, type Modalidad } from "@/lib/trato/modalidades";
+import { MODALIDAD_LABEL, estadoDeRedeclaracion, fechaLarga, type Modalidad } from "@/lib/trato/modalidades";
+import { hoyEnColombia } from "@/lib/pvc/servicio";
 
 // ── El contrato, mes a mes (V5.84 · fase 7 del PLAN_CIRCUITO_DEL_LOTE) ──────────────────────
 // Folio 8, pasos 16–18. Nació lleno de la aceptación con declaración (fase 6); CTCx lo FIRMA y desde ahí lo lleva
@@ -63,7 +64,7 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
   const { data: contract } = await service
     .from("purchase_contracts")
     .select(
-      "id, status, grade_snapshot, signed_at, reference_price_source, reference_price_snapshot, price_per_kg_locked, quantity_frozen_kg, terms_version, declaracion, compra_inicial_kg, modificador_pct, freeze_months, ruptura_at, ruptura_motivo, renovado_at, lugar_entrega, producer_signed_at, producer_signer_name, producer_signature_path, producer_signature_meta, contract_text_version, contract_text_sha256, lots(name, producer_id, fincas(name))"
+      "id, status, grade_snapshot, signed_at, reference_price_source, reference_price_snapshot, price_per_kg_locked, quantity_frozen_kg, terms_version, declaracion, compra_inicial_kg, modificador_pct, freeze_months, ruptura_at, ruptura_motivo, renovado_at, lugar_entrega, producer_signed_at, producer_signer_name, producer_signature_path, producer_signature_meta, contract_text_version, contract_text_sha256, redeclarar_min_kg, redeclarar_at, redeclarado_at, redeclarado_kg, redeclaracion_origen, redeclarar_aviso_at, lots(name, producer_id, fincas(name))"
     )
     .eq("id", id)
     .single();
@@ -168,6 +169,32 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
             {/* Decisión 7 (V5.85): «Ofertas CP Aceptadas» es el staging del Catálogo Activo del lado KR: con un envío registrado, se publica. */}
             {resumen.enviadoKg > 0 && <> · <Link href="/ocp/catalogo">Pasar al Catálogo Activo →</Link></>}
           </p>
+          {/* V5.171 (owner): la redeclaración de «Ahora y Siguiente» — pedida, hecha por el productor o dejada en el mínimo por el barrido diario. */}
+          {contract.declaracion === "ahora_y_siguiente" &&
+            (() => {
+              const r = estadoDeRedeclaracion({
+                redeclararMinKg: contract.redeclarar_min_kg != null ? Number(contract.redeclarar_min_kg) : null,
+                redeclararAt: contract.redeclarar_at ?? null,
+                redeclaradoAt: contract.redeclarado_at ?? null,
+                redeclaradoKg: contract.redeclarado_kg != null ? Number(contract.redeclarado_kg) : null,
+                redeclaracionOrigen: contract.redeclaracion_origen ?? null,
+                hoy: hoyEnColombia(),
+              });
+              if (r.fase === "no_aplica") return null;
+              const at = r.at ? fechaLarga(r.at) : "";
+              return (
+                <p className={r.fase === "abierta" || r.fase === "vencida" ? styles.warn : styles.meta} style={{ marginTop: 6 }}>
+                  Redeclaración para la temporada del {at} (mínimo {r.minKg} kg):{" "}
+                  {r.fase === "hecha"
+                    ? `${r.kg} kg ${r.origen === "automatica" ? "— sin respuesta, quedó en el mínimo" : "— redeclarado por el productor"} (${fecha(contract.redeclarado_at)}).`
+                    : r.fase === "pronto"
+                      ? `se abre el ${r.abreEl ? fechaLarga(r.abreEl) : ""}.`
+                      : r.fase === "abierta"
+                        ? `ABIERTA, pendiente del productor${contract.redeclarar_aviso_at ? ` (pedida el ${fecha(contract.redeclarar_aviso_at)})` : ""}; si no responde, queda en ${r.minKg} kg.`
+                        : `cerrada sin respuesta — el barrido diario la deja en ${r.minKg} kg.`}
+                </p>
+              );
+            })()}
           {contract.status === "ruptura" && (
             <p className={styles.warn} style={{ marginTop: 6 }}>
               Ruptura contractual declarada el {fecha(contract.ruptura_at)}: {contract.ruptura_motivo}

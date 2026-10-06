@@ -1,7 +1,7 @@
 "use client";
 
 import { contratoFirmado } from "@/lib/kaffetal/blindaje";
-import { diasHastaLaSiguiente, fechaLimitePvcSiguiente } from "@/lib/trato/modalidades";
+import { diasHastaLaSiguiente, estadoDeRedeclaracion, fechaLimitePvcSiguiente } from "@/lib/trato/modalidades";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ToastProvider, useToast } from "@/components/Toast";
 import { puedoSer } from "@/lib/identidad/matriz";
@@ -594,6 +594,9 @@ function Experience() {
         retiro_libre_pct?: number | string | null;
         redeclarar_min_kg?: number | string | null;
         redeclarar_at?: string | null;
+        redeclarado_at?: string | null;
+        redeclarado_kg?: number | string | null;
+        redeclaracion_origen?: string | null;
         compra_inicial_min_kg?: number | string | null;
         compra_inicial_max_kg?: number | string | null;
         signed_at: string | null;
@@ -628,6 +631,7 @@ function Experience() {
       // V5.84 (fase 7): lo derivado del trato (la mora de cada mes, el mes en curso) se calcula AQUÍ, al cargar, con la
       // misma función que lee el OCP (`mesAMes.ts`) — nunca en el render (react-hooks/purity) y nunca se guarda.
       const hoy = new Date();
+      const hoyColombia = new Date(hoy.getTime() - 5 * 3_600_000).toISOString().slice(0, 10);
       setContracts(
         ((contractRows as ContractRow[] | null) ?? []).map((c) => {
           const meses = (c.contract_months ?? [])
@@ -666,6 +670,17 @@ function Experience() {
           retiroLibrePct: c.retiro_libre_pct != null ? Number(c.retiro_libre_pct) : null,
           redeclararMinKg: c.redeclarar_min_kg != null ? Number(c.redeclarar_min_kg) : null,
           redeclararAt: c.redeclarar_at ?? null,
+          redeclaracion:
+            c.declaracion === "ahora_y_siguiente"
+              ? estadoDeRedeclaracion({
+                  redeclararMinKg: c.redeclarar_min_kg != null ? Number(c.redeclarar_min_kg) : null,
+                  redeclararAt: c.redeclarar_at ?? null,
+                  redeclaradoAt: c.redeclarado_at ?? null,
+                  redeclaradoKg: c.redeclarado_kg != null ? Number(c.redeclarado_kg) : null,
+                  redeclaracionOrigen: c.redeclaracion_origen ?? null,
+                  hoy: hoyColombia,
+                })
+              : null,
           compraInicialRango: c.compra_inicial_min_kg != null ? { min: Number(c.compra_inicial_min_kg), max: Number(c.compra_inicial_max_kg ?? c.compra_inicial_min_kg) } : null,
           producerSignedAt: c.producer_signed_at ?? null,
           lugarEntrega: c.lugar_entrega ?? null,

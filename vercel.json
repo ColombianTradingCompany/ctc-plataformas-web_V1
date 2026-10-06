@@ -6,6 +6,10 @@
       "schedule": "10 11 * * *"
     },
     {
+      "path": "/api/cron/redeclaraciones",
+      "schedule": "20 11 * * *"
+    },
+    {
       "path": "/api/cron/integraciones",
       "schedule": "35 11 * * *"
     },

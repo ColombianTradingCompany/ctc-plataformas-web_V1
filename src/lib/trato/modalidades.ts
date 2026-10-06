@@ -8,6 +8,7 @@ import {
   CARGA_KG,
   COMPRA_INICIAL_AHORA_KG,
   COMPRA_INICIAL_CTCX_CARGAS,
+  DIAS_ANTES_REDECLARAR,
   DIAS_DECLARAR_AHORA,
   DIAS_TEMPORADA_TRIMESTRAL,
   PERIODO_MESES,
@@ -129,6 +130,51 @@ export function condicionesDe(modalidad: Modalidad, o: { hoy: string; temporadaH
     compraInicial: carga,
     redeclarar: { minKg: Math.max(Math.ceil((o.declaradoKg * REDECLARAR_MIN_PCT) / 100), minimo), at: inicioSig },
   };
+}
+
+// ── La redeclaración de «Ahora y Siguiente» (V5.171, owner 2026-10-06: «la opción 1, que quede en el 70 %») ──────────────────
+// Al empezar la siguiente Temporada Trimestral el productor redeclara cuánto deja disponible para ella, al menos `minKg`. Se le
+// pide `DIAS_ANTES_REDECLARAR` días antes (el botón se abre) y puede hacerlo hasta el primer día de la temporada inclusive; si
+// no responde, el barrido diario la deja en `minKg`. Lo redeclarado es lo DISPONIBLE para la siguiente temporada: lo ya pedido
+// por CTCx y lo ya retirado se quedan donde están (`cantidadTrasRedeclarar`).
+
+export type FaseDeRedeclaracion = "no_aplica" | "pronto" | "abierta" | "vencida" | "hecha";
+export type EstadoDeRedeclaracion = {
+  fase: FaseDeRedeclaracion;
+  minKg: number | null;
+  /** El primer día de la siguiente temporada (la fecha de la redeclaración). */
+  at: string | null;
+  /** El día en que se abre el botón. */
+  abreEl: string | null;
+  /** Lo redeclarado y por quién (solo en «hecha»). */
+  kg: number | null;
+  origen: "productor" | "automatica" | null;
+};
+
+/** El día en que se abre «Redeclarar» para una redeclaración en `at`. */
+export const abreLaRedeclaracion = (at: string) => sumaDias(at, -DIAS_ANTES_REDECLARAR);
+
+/** En qué punto está la redeclaración de un trato, hoy (YYYY-MM-DD en Colombia). */
+export function estadoDeRedeclaracion(c: {
+  redeclararMinKg: number | null;
+  redeclararAt: string | null;
+  redeclaradoAt: string | null;
+  redeclaradoKg: number | null;
+  redeclaracionOrigen: string | null;
+  hoy: string;
+}): EstadoDeRedeclaracion {
+  const base = { minKg: c.redeclararMinKg, at: c.redeclararAt, abreEl: c.redeclararAt ? abreLaRedeclaracion(c.redeclararAt) : null, kg: null, origen: null };
+  if (c.redeclararMinKg == null || !c.redeclararAt) return { ...base, fase: "no_aplica" };
+  if (c.redeclaradoAt)
+    return { ...base, fase: "hecha", kg: c.redeclaradoKg, origen: c.redeclaracionOrigen === "automatica" ? "automatica" : "productor" };
+  if (c.hoy < base.abreEl!) return { ...base, fase: "pronto" };
+  if (c.hoy <= c.redeclararAt) return { ...base, fase: "abierta" };
+  return { ...base, fase: "vencida" };
+}
+
+/** La cantidad comprometida del trato tras redeclarar: lo ya pedido por CTCx y lo ya retirado, más lo disponible para la siguiente. */
+export function cantidadTrasRedeclarar(o: { pedidoKg: number; retiradoKg: number; redeclaradoKg: number }): number {
+  return Math.round((o.pedidoKg + o.retiradoKg + o.redeclaradoKg) * 10) / 10;
 }
 
 /** El texto corto de la compra inicial («125 kg» o «entre 10 y 25 kg, a discreción de CTCx»). */

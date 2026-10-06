@@ -606,4 +606,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-06] V5.170 · «Siguiente Temporada» al PVC de la edición siguiente (fijado en las primeras dos semanas del segundo mes)
 - ANN `src/lib/trato/{modalidades,contrato}.ts`, `src/lib/ofertas/producerActions.ts`, `app/ocp/(app)/{ofertasActions.ts,ofertas/page.tsx,ofertas/OfertasClient.tsx,ofertas/OfertaDesplegable.tsx}`, `src/components/kaffetal-regal/{data.ts,KaffetalExperience.tsx,panel/CalculadoraDelTrato.tsx,panel/ContratosTab.tsx}`, `scripts/qa-trato-check.mjs`, `docs/migraciones/2026-10-06_oferta_pvc_siguiente.sql`, `docs/componentes/{kaffetal-regal,consolas}.md`.
-(commit: pendiente)
+(commit: 6b9222f)

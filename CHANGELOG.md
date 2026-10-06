@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.170] — 2026-10-06 (commit pendiente)
+## [V5.170] — 2026-10-06 (commit 6b9222f)
 
 - **Cambiado**: **«Declarar Siguiente Temporada Trimestral» va al PVC de la EDICIÓN SIGUIENTE** (owner, 2026-10-06: «esta ancla
   debe ser fijada en las primeras dos semanas del segundo mes del trimestre anterior»). La oferta de Cherry Picked guarda ese

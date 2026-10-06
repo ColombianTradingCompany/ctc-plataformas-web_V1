@@ -28,6 +28,7 @@ import {
 import { decidirSubvencion, emitirFactura, guardarCarrilDePago, recibirMuestraAction } from "../solicitudesActions";
 import { carrilConfigurado, type CarrilDePago } from "@/lib/arena/payment";
 import { LabEvalEditor } from "@/components/bcp/LabEvalEditor";
+import { ProgresoDeAccion, aprendeDuracion, estimadoDe, type EnCurso } from "@/components/panel/ProgresoDeAccion";
 import { AdjuntoReporteQGrader } from "@/components/bcp/AdjuntoReporteQGrader";
 import { FichaCompletaLectura } from "@/components/bcp/FichaCompletaLectura";
 import { TriadaDelLote } from "@/components/bcp/TriadaDelLote";
@@ -54,15 +55,29 @@ function useAction() {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const run = (fn: () => Promise<ActionResult>) => {
+  // V5.163 (owner): «si se hizo el trigger pero toma un momento, necesito algo que muestre que es así y cuánto falta».
+  const [enCurso, setEnCurso] = useState<EnCurso | null>(null);
+  const run = (fn: () => Promise<ActionResult>, progreso?: { clave: string; etiqueta: string; tipicoMs: number }) => {
     setError(null);
+    const desde = Date.now();
+    if (progreso) setEnCurso({ clave: progreso.clave, etiqueta: progreso.etiqueta, desde, estimadoMs: estimadoDe(progreso.clave, progreso.tipicoMs) });
     start(async () => {
-      const res = await fn();
-      if (res.ok) router.refresh();
-      else setError(res.error);
+      try {
+        const res = await fn();
+        if (progreso && res.ok) aprendeDuracion(progreso.clave, progreso.tipicoMs, Date.now() - desde);
+        if (res.ok) router.refresh();
+        else setError(res.error);
+      } catch {
+        setError("La acción no respondió. Revise su conexión y vuelva a intentarlo; si persiste, recargue la página.");
+      } finally {
+        setEnCurso(null);
+      }
     });
   };
-  return { pending, error, run };
+  /** V5.163 (owner): «si hay algo bloqueando esta acción, debe aparecer un mensaje» — un botón nunca queda mudo: si falta algo,
+   *  se dice qué, en el mismo sitio donde salen los errores del servidor. */
+  const avisa = (mensaje: string) => setError(mensaje);
+  return { pending, error, run, avisa, enCurso };
 }
 
 function ErrorLine({ error }: { error: string | null }) {
@@ -503,6 +518,20 @@ export type B1DelLote = {
   puntajeEstimado: string | null;
 };
 
+/** V5.163: lo que bloquea un veredicto, en palabras. null si nada lo bloquea. */
+function bloqueoDelVeredicto(o: { resultado: "aprobado" | "rechazado"; resumen: string; hayGrado: boolean; recata: boolean; faltaArgumento?: boolean; sinQGrader?: boolean; sinPunto?: boolean }): string | null {
+  const falta: string[] = [];
+  if (o.recata) return "El Punto homologado cruza los 80: no se galardona ni se registra «No supera» sin una recata SCA 2004 nativa.";
+  if (!o.resumen.trim()) falta.push("escribir el «Resumen del resultado» (el productor lo verá)");
+  if (o.resultado === "aprobado") {
+    if (o.sinPunto) falta.push("registrar una planilla con Punto");
+    else if (!o.hayGrado) falta.push("que los puntos lleguen a Black — con este Punto y esta tríada no hay galardón: registre «No supera» o use el ajuste CTCx si aplica");
+    if (o.faltaArgumento) falta.push(`escribir el argumento del ajuste CTCx (al menos ${AJUSTE_CTCX_JUSTIFICACION_MIN} caracteres)`);
+    if (o.sinQGrader) falta.push("definir el Q-Grader del bache (al enviarlo al Centro)");
+  }
+  return falta.length ? `Para ${o.resultado === "aprobado" ? "galardonar" : "registrar «No supera»"} falta: ${falta.join("; ")}.` : null;
+}
+
 export function ConfirmarCentroControls({
   lotId,
   lotName,
@@ -525,7 +554,7 @@ export function ConfirmarCentroControls({
   const [justificacion, setJustificacion] = useState("");
   // V5.158 (owner): «quiero que se vean todos los datos» — la Ficha completa, abierta por defecto; se puede plegar.
   const [verFicha, setVerFicha] = useState(true);
-  const { pending, error, run } = useAction();
+  const { pending, error, run, avisa, enCurso } = useAction();
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [motivo, setMotivo] = useState("");
@@ -615,7 +644,7 @@ export function ConfirmarCentroControls({
             )}
             <div className={styles.field} style={{ marginTop: 10 }}>
               <label>Resumen del resultado (el productor lo verá)</label>
-              <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Resultado de la evaluación…" />
+              <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Resultado de la evaluación…" id={`resumen-${alta.id}`} />
             </div>
             {/* V5.158 (owner): «debe salir la escala A B C para cada parámetro de la tríada en la que cae». V5.160 (owner): la escala
                 SCA de dos en dos es OBSOLETA y se retiró; EL grado es El Punto y la Tríada — esto es la regla, no una referencia. */}
@@ -659,25 +688,59 @@ export function ConfirmarCentroControls({
                     : <>Punto <b>{puntaje}</b> con tríada <span className="mono">{`${triada.variedad}${triada.proceso}${triada.reconocimiento}`}</span>: los puntos no llegan a Black (un café común entra desde 82) — registre «No supera».</>}
             </p>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {/* V5.163 (owner): «al dar click a Galardonar no sucede nada» — el botón estaba deshabilitado en silencio. Ahora
+                  siempre responde: si falta algo, lo dice debajo y lleva el foco a la casilla que falta. */}
               <button
                 className="btn btn-sm btn-solid"
-                disabled={pending || !notes.trim() || !grado || faltaArgumento}
-                title={faltaArgumento ? `Escriba el argumento del ajuste (al menos ${AJUSTE_CTCX_JUSTIFICACION_MIN} caracteres)` : undefined}
-                onClick={() => run(() => recordEvaluationVerdict(lotId, "aprobado", notes, undefined, { centroEvaluationId: alta.id, ...(ajuste > 0 ? { ajusteCtcx: { puntos: ajuste, justificacion } } : {}) }))}
+                disabled={pending}
+                onClick={() => {
+                  const bloqueo = bloqueoDelVeredicto({ resultado: "aprobado", resumen: notes, hayGrado: !!grado, recata: pendienteRecata, faltaArgumento, sinPunto: puntaje == null });
+                  if (bloqueo) {
+                    avisa(bloqueo);
+                    if (!notes.trim()) document.getElementById(`resumen-${alta.id}`)?.focus();
+                    return;
+                  }
+                  run(() => recordEvaluationVerdict(lotId, "aprobado", notes, undefined, { centroEvaluationId: alta.id, ...(ajuste > 0 ? { ajusteCtcx: { puntos: ajuste, justificacion } } : {}) }), { clave: "galardonar", etiqueta: `Registrando el galardón${grado ? ` (${grado.nombre})` : ""}`, tipicoMs: 4000 });
+                }}
               >
-                {grado ? `Galardonar → ${grado.nombre}` : "Galardonar"}
+                {pending ? "Registrando…" : grado ? `Galardonar → ${grado.nombre}` : "Galardonar"}
               </button>
-              <button className="btn btn-sm" disabled={pending || !notes.trim()} onClick={() => run(() => recordEvaluationVerdict(lotId, "rechazado", notes, undefined, { centroEvaluationId: alta.id }))}>
+              <button
+                className="btn btn-sm"
+                disabled={pending}
+                onClick={() => {
+                  const bloqueo = bloqueoDelVeredicto({ resultado: "rechazado", resumen: notes, hayGrado: !!grado, recata: pendienteRecata });
+                  if (bloqueo) {
+                    avisa(bloqueo);
+                    if (!notes.trim()) document.getElementById(`resumen-${alta.id}`)?.focus();
+                    return;
+                  }
+                  run(() => recordEvaluationVerdict(lotId, "rechazado", notes, undefined, { centroEvaluationId: alta.id }), { clave: "no-supera", etiqueta: "Registrando «No supera» y redactando el reporte de mejoras con IA", tipicoMs: 25000 });
+                }}
+              >
                 No supera (reporte de mejoras, sin costo)
               </button>
             </div>
+            {/* El mensaje (o el avance) va JUSTO debajo de los botones del veredicto. */}
+            <ProgresoDeAccion enCurso={enCurso} />
+            <ErrorLine error={error} />
             <div style={{ borderTop: "1px dashed var(--line)", marginTop: 12, paddingTop: 10, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-              <input placeholder="Nota para el Centro: qué revisar" value={motivo} onChange={(e) => setMotivo(e.target.value)} style={{ maxWidth: 360 }} aria-label="Nota para el Centro" />
-              <button className="btn btn-sm" disabled={pending || !motivo.trim()} onClick={() => run(() => devolverEvaluacionAlCentro(alta.id, motivo))}>
+              <input placeholder="Nota para el Centro: qué revisar" value={motivo} onChange={(e) => setMotivo(e.target.value)} style={{ flex: "1 1 320px", maxWidth: 520 }} aria-label="Nota para el Centro" id={`motivo-${alta.id}`} />
+              <button
+                className="btn btn-sm"
+                disabled={pending}
+                onClick={() => {
+                  if (!motivo.trim()) {
+                    avisa("Para enviarlo de vuelta falta: escribir la nota para el Centro (qué debe revisar el Q-Grader).");
+                    document.getElementById(`motivo-${alta.id}`)?.focus();
+                    return;
+                  }
+                  run(() => devolverEvaluacionAlCentro(alta.id, motivo), { clave: "devolver", etiqueta: "Enviando de vuelta al Centro", tipicoMs: 2500 });
+                }}
+              >
                 Enviar de vuelta al Centro para revisión
               </button>
             </div>
-            <ErrorLine error={error} />
             {/* V5.162 (owner): «que queden los comentarios enviados de vuelta en un Log al final». */}
             <LogDeDevoluciones devoluciones={devoluciones} />
           </div>
@@ -739,7 +802,7 @@ export function SondeoRegistroControls({
   ficha?: Partial<FichaFormData> | null;
 }) {
   const triada = triadaDeLaFicha(ficha).triada;
-  const { pending, error, run } = useAction();
+  const { pending, error, run, avisa, enCurso } = useAction();
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
   const [ev, setEv] = useState<LabEvaluation>(EMPTY_LAB_EVALUATION);
@@ -783,7 +846,7 @@ export function SondeoRegistroControls({
         evaluation: adding && labEvaluationHasData(ev) ? ev : undefined,
         resultFile,
       });
-    });
+    }, resultado === "aprobado" ? { clave: "galardonar", etiqueta: "Registrando el galardón", tipicoMs: 4000 } : { clave: "no-supera", etiqueta: "Registrando «No supera» y redactando el reporte de mejoras con IA", tipicoMs: 25000 });
   }
 
   return (
@@ -876,18 +939,31 @@ export function SondeoRegistroControls({
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <button
                       className="btn btn-sm btn-solid"
-                      disabled={pending || uploading || !notes.trim() || !grado || sinQGrader}
-                      onClick={() => verdict("aprobado")}
+                      disabled={pending || uploading}
+                      onClick={() => {
+                        const bloqueo = bloqueoDelVeredicto({ resultado: "aprobado", resumen: notes, hayGrado: !!grado, recata: false, sinQGrader, sinPunto: puntaje == null });
+                        if (bloqueo) return avisa(bloqueo);
+                        verdict("aprobado");
+                      }}
                     >
                       {grado ? `Galardonar → ${grado.nombre}` : "Galardonar"}
                     </button>
-                    <button className="btn btn-sm" disabled={pending || uploading || !notes.trim()} onClick={() => verdict("rechazado")}>
+                    <button
+                      className="btn btn-sm"
+                      disabled={pending || uploading}
+                      onClick={() => {
+                        const bloqueo = bloqueoDelVeredicto({ resultado: "rechazado", resumen: notes, hayGrado: !!grado, recata: false });
+                        if (bloqueo) return avisa(bloqueo);
+                        verdict("rechazado");
+                      }}
+                    >
                       No supera (reporte de mejoras, sin costo)
                     </button>
                   </div>
                 </>
               );
             })()}
+            <ProgresoDeAccion enCurso={enCurso} />
             <ErrorLine error={error} />
           </div>
         </div>

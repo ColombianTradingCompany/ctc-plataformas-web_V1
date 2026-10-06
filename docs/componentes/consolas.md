@@ -177,6 +177,10 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.163 · ningún botón del veredicto queda mudo; avance con tiempo estimado** (owner, 2026-10-06). `bloqueoDelVeredicto`
+  nombra lo que falta; `ProgresoDeAccion` (`useAction` con `enCurso`) enseña qué corre, cuánto lleva y cuánto falta, con un
+  estimado que aprende por navegador. Abierto: el resto de botones de las consolas sigue el patrón viejo (deshabilitado en
+  silencio, sin avance); se puede extender `ProgresoDeAccion` a las acciones largas (facturas, envíos al Centro, cerrar bache).
 - **V5.162 · ajuste CTCx (hasta +100 puntos, argumento obligatorio) y log de devoluciones en el informe** (owner, 2026-10-06).
   `recordEvaluationVerdict(…, { ajusteCtcx })` valida en el servidor, decide con el ajuste y lo guarda en la evaluación que rige
   (`ajuste_ctcx_*`) con `audit_log` `ajuste_ctcx`. Abierto, **con decisión del owner**: el productor no ve hoy el ajuste ni su

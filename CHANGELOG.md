@@ -19,6 +19,20 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.163] — 2026-10-06 (commit pendiente)
+
+- **Corregido**: en el informe del Centro (OCP) y en «Registrar a mano», **«Galardonar», «No supera» y «Enviar de vuelta» ya no
+  quedan mudos** (owner, 2026-10-06: «al dar click a Galardonar no sucede nada; si hay algo bloqueando, debe aparecer un
+  mensaje»). Se deshabilitaban en silencio cuando faltaba algo —típicamente el «Resumen del resultado»—. Ahora responden
+  siempre: si falta algo, lo dicen justo debajo («Para galardonar falta: escribir el «Resumen del resultado» (el productor lo
+  verá)»; el Punto, los puntos para Black, el argumento del ajuste, el Q-Grader, la recata) y llevan el foco a la casilla.
+- **Añadido**: **el avance de la acción** (owner: «si se hizo el trigger pero toma un momento, necesito algo que muestre que es
+  así y cuánto falta»): mientras corre, «⏳ Registrando el galardón (Red)… 4 s · faltan ~16 s (estimado)» con una barra; si
+  tarda más de lo habitual, lo dice y pide no cerrar la ventana. El estimado parte de un valor típico (galardonar ~4 s; «No
+  supera» ~25 s porque redacta las mejoras con IA; devolver ~2 s) y aprende de lo que de verdad tarda en ese navegador
+  (`src/components/panel/ProgresoDeAccion.tsx`). Un fallo de red ya no deja el botón colgado: se dice.
+- **Seguridad**: `qa-centro-calidad` (250 → 255).
+
 ## [V5.162] — 2026-10-06 (commit 2d671ea)
 
 - **Añadido**: **el ajuste CTCx** en el informe del Centro (OCP): CTCx puede sumar **hasta 100 puntos** al puntaje final, que

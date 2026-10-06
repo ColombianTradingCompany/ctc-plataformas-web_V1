@@ -575,3 +575,7 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 - ANN `app/ocp/(app)/nominadosActions.ts` (`ajusteCtcx`), `app/bcp/(app)/arenaActions.ts`, `nominados/{NominadosClient,CircuitoVista}.tsx` (`LogDeDevoluciones`), `src/components/bcp/TriadaDelLote.tsx`, `app/socios/[partner]/panel/evaluacion/{PlanillaCentro,page}.tsx`.
 - ADD `docs/migraciones/2026-10-06_evaluaciones_ajuste_ctcx.sql`. ANN `scripts/qa-{grados,centro-calidad}-check.mjs`, `docs/ALINEACION.md`, `docs/componentes/{consolas,socios}.md`.
 (commit: 2d671ea)
+
+## [2026-10-06] V5.163 · OCP — los botones del veredicto dicen qué falta; avance de la acción con tiempo estimado
+- ADD `src/components/panel/ProgresoDeAccion.tsx`; ANN `app/ocp/(app)/nominados/NominadosClient.tsx` (`bloqueoDelVeredicto`, `useAction` con `avisa`/`enCurso`), `scripts/qa-centro-calidad-check.mjs`, `docs/componentes/consolas.md`.
+(commit: pendiente)

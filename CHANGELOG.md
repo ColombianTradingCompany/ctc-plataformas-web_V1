@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.169] — 2026-10-06 (commit pendiente)
+## [V5.169] — 2026-10-06 (commit 59b3b8c)
 
 - **Cambiado**: **CTCx ofrece una de dos cosas** (owner, 2026-10-06): **participar en Cherry Picked** (al PVC de la temporada) o
   una **compra de CTCx Selection** (propuesta de venta a **hasta PVC − 8 %**, que no es el PVC). En el OCP el desplegable elige

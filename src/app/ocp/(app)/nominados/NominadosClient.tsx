@@ -28,7 +28,7 @@ import {
 import { decidirSubvencion, emitirFactura, guardarCarrilDePago, recibirMuestraAction } from "../solicitudesActions";
 import { carrilConfigurado, type CarrilDePago } from "@/lib/arena/payment";
 import { LabEvalEditor } from "@/components/bcp/LabEvalEditor";
-import { ProgresoDeAccion, aprendeDuracion, estimadoDe, type EnCurso } from "@/components/panel/ProgresoDeAccion";
+import { AVANCE, ProgresoDeAccion, useAvance, type EnCurso, type Progreso } from "@/components/panel/ProgresoDeAccion";
 import { AdjuntoReporteQGrader } from "@/components/bcp/AdjuntoReporteQGrader";
 import { FichaCompletaLectura } from "@/components/bcp/FichaCompletaLectura";
 import { TriadaDelLote } from "@/components/bcp/TriadaDelLote";
@@ -56,21 +56,17 @@ function useAction() {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   // V5.163 (owner): «si se hizo el trigger pero toma un momento, necesito algo que muestre que es así y cuánto falta».
-  const [enCurso, setEnCurso] = useState<EnCurso | null>(null);
-  const run = (fn: () => Promise<ActionResult>, progreso?: { clave: string; etiqueta: string; tipicoMs: number }) => {
+  // V5.164: sobre el hook compartido `useAvance` (lo usan las demás consolas).
+  const { enCurso, conAvance } = useAvance();
+  const run = (fn: () => Promise<ActionResult>, progreso?: Progreso) => {
     setError(null);
-    const desde = Date.now();
-    if (progreso) setEnCurso({ clave: progreso.clave, etiqueta: progreso.etiqueta, desde, estimadoMs: estimadoDe(progreso.clave, progreso.tipicoMs) });
     start(async () => {
       try {
-        const res = await fn();
-        if (progreso && res.ok) aprendeDuracion(progreso.clave, progreso.tipicoMs, Date.now() - desde);
+        const res = await conAvance(fn, progreso);
         if (res.ok) router.refresh();
         else setError(res.error);
       } catch {
         setError("La acción no respondió. Revise su conexión y vuelva a intentarlo; si persiste, recargue la página.");
-      } finally {
-        setEnCurso(null);
       }
     });
   };
@@ -80,12 +76,16 @@ function useAction() {
   return { pending, error, run, avisa, enCurso };
 }
 
-function ErrorLine({ error }: { error: string | null }) {
-  if (!error) return null;
+function ErrorLine({ error, enCurso = null }: { error: string | null; /** V5.164: el avance de la acción, si corre. */ enCurso?: EnCurso | null }) {
   return (
-    <p className={styles.warn} style={{ marginTop: 6 }}>
-      {error}
-    </p>
+    <>
+      <ProgresoDeAccion enCurso={enCurso} />
+      {error && (
+        <p className={styles.warn} style={{ marginTop: 6 }}>
+          {error}
+        </p>
+      )}
+    </>
   );
 }
 
@@ -144,13 +144,13 @@ export function SubvencionForm({
 }
 
 export function EmitirFacturaButton({ lotId }: { lotId: string }) {
-  const { pending, error, run } = useAction();
+  const { pending, error, run, enCurso } = useAction();
   return (
     <span>
-      <button className="btn btn-sm btn-solid" disabled={pending} onClick={() => run(() => emitirFactura(lotId))}>
+      <button className="btn btn-sm btn-solid" disabled={pending} onClick={() => run(() => emitirFactura(lotId), AVANCE.factura)}>
         {pending ? "Emitiendo…" : "Corroborar y emitir factura de cobro"}
       </button>
-      <ErrorLine error={error} />
+      <ErrorLine error={error} enCurso={enCurso} />
     </span>
   );
 }
@@ -463,7 +463,7 @@ export function EnviarAlCentroForm({
   /** Las credenciales del Centro con Evaluación de Lotes activa. Con una sola, no se pregunta. */
   centros: { id: string; nombre: string; qGrader: string }[];
 }) {
-  const { pending, error, run } = useAction();
+  const { pending, error, run, enCurso } = useAction();
   const [centroId, setCentroId] = useState(centros.length === 1 ? centros[0].id : "");
   const elegido = centros.find((c) => c.id === centroId);
   return (
@@ -486,7 +486,7 @@ export function EnviarAlCentroForm({
           onClick={() => {
             const fd = new FormData();
             fd.set("centro_id", centroId);
-            run(() => enviarAlCentro(batchId, fd));
+            run(() => enviarAlCentro(batchId, fd), AVANCE.alCentro);
           }}
         >
           {pending ? "Enviando…" : `Enviar al Centro de Calidad →${elegido && centros.length === 1 ? ` (${elegido.nombre} · Q-Grader ${elegido.qGrader})` : ""}`}
@@ -497,7 +497,7 @@ export function EnviarAlCentroForm({
           Ningún Centro de Calidad tiene activo el módulo Evaluación de Lotes — actívelo en BCP · Socios.
         </p>
       )}
-      <ErrorLine error={error} />
+      <ErrorLine error={error} enCurso={enCurso} />
     </div>
   );
 }
@@ -522,7 +522,6 @@ export type B1DelLote = {
 function bloqueoDelVeredicto(o: { resultado: "aprobado" | "rechazado"; resumen: string; hayGrado: boolean; recata: boolean; faltaArgumento?: boolean; sinQGrader?: boolean; sinPunto?: boolean }): string | null {
   const falta: string[] = [];
   if (o.recata) return "El Punto homologado cruza los 80: no se galardona ni se registra «No supera» sin una recata SCA 2004 nativa.";
-  if (!o.resumen.trim()) falta.push("escribir el «Resumen del resultado» (el productor lo verá)");
   if (o.resultado === "aprobado") {
     if (o.sinPunto) falta.push("registrar una planilla con Punto");
     else if (!o.hayGrado) falta.push("que los puntos lleguen a Black — con este Punto y esta tríada no hay galardón: registre «No supera» o use el ajuste CTCx si aplica");
@@ -642,10 +641,6 @@ export function ConfirmarCentroControls({
                 <LabEvalEditor value={alta.planilla} onChange={() => {}} disabled />
               </div>
             )}
-            <div className={styles.field} style={{ marginTop: 10 }}>
-              <label>Resumen del resultado (el productor lo verá)</label>
-              <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Resultado de la evaluación…" id={`resumen-${alta.id}`} />
-            </div>
             {/* V5.158 (owner): «debe salir la escala A B C para cada parámetro de la tríada en la que cae». V5.160 (owner): la escala
                 SCA de dos en dos es OBSOLETA y se retiró; EL grado es El Punto y la Tríada — esto es la regla, no una referencia. */}
             <div style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "10px 12px", margin: "8px 0" }} aria-label="Tríada del lote">
@@ -687,7 +682,18 @@ export function ConfirmarCentroControls({
                     ? <>Punto <b>{puntaje}</b> × tríada <span className="mono">{`${triada.variedad}${triada.proceso}${triada.reconocimiento}`}</span>{ajuste > 0 && <> + {ajuste} ajuste CTCx</>} → Grado firme <b style={{ color: grado.hex }}>{grado.nombre}</b> (derivado — los puntos mandan{decision?.tipo === "galardon" && decision.techo ? <>; hasta {decision.techo.nombre} con recata SCA</> : null}).</>
                     : <>Punto <b>{puntaje}</b> con tríada <span className="mono">{`${triada.variedad}${triada.proceso}${triada.reconocimiento}`}</span>: los puntos no llegan a Black (un café común entra desde 82) — registre «No supera».</>}
             </p>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+              {/* V5.164 (owner): «el resumen es muchas veces innecesario y está muy lejos del botón» — opcional y AQUÍ, al lado.
+                  Si se deja vacío, el productor recibe un resumen por defecto con el grado y el Punto. */}
+              <input
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Resumen para el productor (opcional)"
+                aria-label="Resumen para el productor (opcional)"
+                id={`resumen-${alta.id}`}
+                maxLength={600}
+                style={{ flex: "1 1 280px", minWidth: 220 }}
+              />
               {/* V5.163 (owner): «al dar click a Galardonar no sucede nada» — el botón estaba deshabilitado en silencio. Ahora
                   siempre responde: si falta algo, lo dice debajo y lleva el foco a la casilla que falta. */}
               <button
@@ -697,10 +703,9 @@ export function ConfirmarCentroControls({
                   const bloqueo = bloqueoDelVeredicto({ resultado: "aprobado", resumen: notes, hayGrado: !!grado, recata: pendienteRecata, faltaArgumento, sinPunto: puntaje == null });
                   if (bloqueo) {
                     avisa(bloqueo);
-                    if (!notes.trim()) document.getElementById(`resumen-${alta.id}`)?.focus();
                     return;
                   }
-                  run(() => recordEvaluationVerdict(lotId, "aprobado", notes, undefined, { centroEvaluationId: alta.id, ...(ajuste > 0 ? { ajusteCtcx: { puntos: ajuste, justificacion } } : {}) }), { clave: "galardonar", etiqueta: `Registrando el galardón${grado ? ` (${grado.nombre})` : ""}`, tipicoMs: 4000 });
+                  run(() => recordEvaluationVerdict(lotId, "aprobado", notes, undefined, { centroEvaluationId: alta.id, ...(ajuste > 0 ? { ajusteCtcx: { puntos: ajuste, justificacion } } : {}) }), { ...AVANCE.galardonar, etiqueta: `Registrando el galardón${grado ? ` (${grado.nombre})` : ""}` });
                 }}
               >
                 {pending ? "Registrando…" : grado ? `Galardonar → ${grado.nombre}` : "Galardonar"}
@@ -712,18 +717,16 @@ export function ConfirmarCentroControls({
                   const bloqueo = bloqueoDelVeredicto({ resultado: "rechazado", resumen: notes, hayGrado: !!grado, recata: pendienteRecata });
                   if (bloqueo) {
                     avisa(bloqueo);
-                    if (!notes.trim()) document.getElementById(`resumen-${alta.id}`)?.focus();
                     return;
                   }
-                  run(() => recordEvaluationVerdict(lotId, "rechazado", notes, undefined, { centroEvaluationId: alta.id }), { clave: "no-supera", etiqueta: "Registrando «No supera» y redactando el reporte de mejoras con IA", tipicoMs: 25000 });
+                  run(() => recordEvaluationVerdict(lotId, "rechazado", notes, undefined, { centroEvaluationId: alta.id }), AVANCE.noSupera);
                 }}
               >
                 No supera (reporte de mejoras, sin costo)
               </button>
             </div>
             {/* El mensaje (o el avance) va JUSTO debajo de los botones del veredicto. */}
-            <ProgresoDeAccion enCurso={enCurso} />
-            <ErrorLine error={error} />
+            <ErrorLine error={error} enCurso={enCurso} />
             <div style={{ borderTop: "1px dashed var(--line)", marginTop: 12, paddingTop: 10, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
               <input placeholder="Nota para el Centro: qué revisar" value={motivo} onChange={(e) => setMotivo(e.target.value)} style={{ flex: "1 1 320px", maxWidth: 520 }} aria-label="Nota para el Centro" id={`motivo-${alta.id}`} />
               <button
@@ -735,7 +738,7 @@ export function ConfirmarCentroControls({
                     document.getElementById(`motivo-${alta.id}`)?.focus();
                     return;
                   }
-                  run(() => devolverEvaluacionAlCentro(alta.id, motivo), { clave: "devolver", etiqueta: "Enviando de vuelta al Centro", tipicoMs: 2500 });
+                  run(() => devolverEvaluacionAlCentro(alta.id, motivo), AVANCE.devolver);
                 }}
               >
                 Enviar de vuelta al Centro para revisión
@@ -846,7 +849,7 @@ export function SondeoRegistroControls({
         evaluation: adding && labEvaluationHasData(ev) ? ev : undefined,
         resultFile,
       });
-    }, resultado === "aprobado" ? { clave: "galardonar", etiqueta: "Registrando el galardón", tipicoMs: 4000 } : { clave: "no-supera", etiqueta: "Registrando «No supera» y redactando el reporte de mejoras con IA", tipicoMs: 25000 });
+    }, resultado === "aprobado" ? AVANCE.galardonar : AVANCE.noSupera);
   }
 
   return (
@@ -914,10 +917,6 @@ export function SondeoRegistroControls({
                 <UploadProgressRing state={resultUp.state} size={26} />
               </div>
             </div>
-            <div className={styles.field}>
-              <label>Resumen del resultado (el productor lo verá)</label>
-              <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Resultado de la evaluación…" />
-            </div>
             {/* Los puntos mandan (V5.17 → V5.160): el grado se DERIVA de la última planilla con `gradoDelLote` (El Punto y la
                 Tríada) — aquí se previsualiza para que el registrador vea qué va a firmar; nadie digita un grado. */}
             {(() => {
@@ -936,7 +935,9 @@ export function SondeoRegistroControls({
                         : <>Punto <b>{puntaje}</b> con tríada <span className="mono">{`${triada.variedad}${triada.proceso}${triada.reconocimiento}`}</span>: los puntos no llegan a Black — registre «No supera».</>}
                     {grado && sinQGrader && <> ⚠ Defina el Q-Grader del bache (al enviarlo al Centro) antes de galardonar.</>}
                   </p>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                    {/* V5.164: el resumen, opcional y junto a los botones. */}
+                    <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Resumen para el productor (opcional)" aria-label="Resumen para el productor (opcional)" maxLength={600} style={{ flex: "1 1 280px", minWidth: 220 }} />
                     <button
                       className="btn btn-sm btn-solid"
                       disabled={pending || uploading}
@@ -963,8 +964,7 @@ export function SondeoRegistroControls({
                 </>
               );
             })()}
-            <ProgresoDeAccion enCurso={enCurso} />
-            <ErrorLine error={error} />
+            <ErrorLine error={error} enCurso={enCurso} />
           </div>
         </div>
       )}
@@ -988,7 +988,7 @@ export function CashbackControls({ lotId, amountLabel }: { lotId: string; amount
 
 /** V5.82 · la re-evaluación (folio 12): CTCx la acuerda con su razón; la solicitud vuelve a empezar a tarifa plena. */
 export function ReevaluarForm({ lotId }: { lotId: string }) {
-  const { pending, error, run } = useAction();
+  const { pending, error, run, enCurso } = useAction();
   const [open, setOpen] = useState(false);
   const [acuerdo, setAcuerdo] = useState("");
   if (!open) {
@@ -1009,26 +1009,26 @@ export function ReevaluarForm({ lotId }: { lotId: string }) {
             if (!window.confirm("¿Acordar la re-evaluación? La solicitud vuelve a empezar a tarifa plena, sin subvención; el productor recibe factura nueva y manda una muestra nueva. Si sube de grado, se le reembolsa el 80 %.")) return;
             const fd = new FormData();
             fd.set("acuerdo", acuerdo);
-            run(() => reevaluar(lotId, fd));
+            run(() => reevaluar(lotId, fd), AVANCE.reevaluar);
           }}
         >
           {pending ? "Abriendo…" : "Acordar re-evaluación"}
         </button>
         <button className="btn btn-sm" onClick={() => setOpen(false)}>Cancelar</button>
       </div>
-      <ErrorLine error={error} />
+      <ErrorLine error={error} enCurso={enCurso} />
     </div>
   );
 }
 
 export function RegenerateMejorasButton({ lotId, has }: { lotId: string; has: boolean }) {
-  const { pending, error, run } = useAction();
+  const { pending, error, run, enCurso } = useAction();
   return (
     <span>
-      <button className="btn btn-sm" disabled={pending} onClick={() => run(() => regenerateMejoras(lotId))}>
+      <button className="btn btn-sm" disabled={pending} onClick={() => run(() => regenerateMejoras(lotId), AVANCE.mejoras)}>
         {pending ? "Generando…" : has ? "Regenerar mejoras (IA)" : "Generar mejoras (IA)"}
       </button>
-      <ErrorLine error={error} />
+      <ErrorLine error={error} enCurso={enCurso} />
     </span>
   );
 }

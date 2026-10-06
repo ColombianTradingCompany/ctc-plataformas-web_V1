@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { AVANCE, ProgresoDeAccion, useAvance, type Progreso } from "@/components/panel/ProgresoDeAccion";
 import { useRouter } from "next/navigation";
 import { CONSOLE_ORDER, CONSOLES, type PanelConsoleKey } from "@/lib/panel/consoles";
 import type { PanelUserRow, ConsoleLevel } from "@/lib/panel/panelUsers";
@@ -46,10 +47,17 @@ export function UsuariosClient({ users, currentUserId }: { users: PanelUserRow[]
   // Per-row delivery-email editor: which row is open and its draft value.
   const [deliveryEdit, setDeliveryEdit] = useState<{ id: string; value: string } | null>(null);
 
-  function act(fn: () => Promise<{ ok: boolean; error?: string }>, okText: string, onOk?: () => void) {
+  // V5.164 (owner): las acciones que mandan correo enseñan su avance.
+  const { enCurso, conAvance } = useAvance();
+  function act(fn: () => Promise<{ ok: boolean; error?: string }>, okText: string, onOk?: () => void, progreso?: Progreso) {
     setMsg(null);
     startTransition(async () => {
-      const res = await fn();
+      let res: { ok: boolean; error?: string };
+      try {
+        res = await conAvance(fn, progreso);
+      } catch {
+        res = { ok: false, error: "La acción no respondió. Revise su conexión y vuelva a intentarlo." };
+      }
       if (res.ok) {
         setMsg({ ok: true, text: okText });
         onOk?.();
@@ -70,8 +78,7 @@ export function UsuariosClient({ users, currentUserId }: { users: PanelUserRow[]
         setDeliveryEmail("");
         setDisplayName("");
         setLevels(EMPTY_LEVELS);
-      }
-    );
+      }, AVANCE.invitarUsuario);
   }
 
   const hasAnyGrant = CONSOLE_ORDER.some((k) => levels[k]);
@@ -84,6 +91,7 @@ export function UsuariosClient({ users, currentUserId }: { users: PanelUserRow[]
         compradores NO se gestionan desde acá — son cuentas públicas de auto-registro.
       </p>
 
+      <ProgresoDeAccion enCurso={enCurso} />
       {msg && <p className={`${styles.msg} ${msg.ok ? styles.msgOk : styles.msgErr}`}>{msg.text}</p>}
 
       {/* Invite */}
@@ -222,7 +230,7 @@ export function UsuariosClient({ users, currentUserId }: { users: PanelUserRow[]
                   <button
                     className="btn btn-sm"
                     disabled={pending}
-                    onClick={() => act(() => resendPanelInvite(u.profile_id), "Invitación reenviada.")}
+                    onClick={() => act(() => resendPanelInvite(u.profile_id), "Invitación reenviada.", undefined, AVANCE.reenviarUsuario)}
                   >
                     Reenviar invitación
                   </button>
@@ -232,7 +240,7 @@ export function UsuariosClient({ users, currentUserId }: { users: PanelUserRow[]
                     className="btn btn-sm"
                     disabled={pending}
                     onClick={() =>
-                      act(() => resetPanelUserPassword(u.profile_id), "Contraseña restablecida y enviada a su correo de entrega.")
+                      act(() => resetPanelUserPassword(u.profile_id), "Contraseña restablecida y enviada a su correo de entrega.", undefined, AVANCE.restablecer)
                     }
                   >
                     Restablecer contraseña

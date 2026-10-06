@@ -6,6 +6,7 @@ import { LeadModalRow } from "@/components/panel/LeadModalRow";
 import { resumenTerminos, terminosFromRow } from "@/lib/terratalento/terminos";
 import type { ConstanciaInput } from "@/lib/terratalento/constanciaPrint";
 import { ConstanciaButton } from "./ConstanciaButton";
+import { AVANCE, EnviarConAvance } from "@/components/panel/ProgresoDeAccion";
 import { reenviarNotificacionLlamado, setJornadaEstadoAdmin, setPostulacionEstado } from "./actions";
 import { InteresTerratalentoBoard } from "@/components/panel/interes/InteresTerratalentoBoard";
 import styles from "@/components/panel/shared.module.css";
@@ -299,7 +300,8 @@ export default async function EcpTerratalentoPage({
                                               )}
                                               {["llamado", "confirmado"].includes(p.estado) && (
                                                 <form action={async () => { "use server"; await reenviarNotificacionLlamado(p.id); }}>
-                                                  <button className="btn btn-sm" type="submit">Reenviar correo</button>
+                                                  {/* V5.164: el reenvío del correo enseña su avance. */}
+                                                  <EnviarConAvance progreso={AVANCE.reenviarLlamado}>Reenviar correo</EnviarConAvance>
                                                 </form>
                                               )}
                                               {p.estado === "confirmado" && (

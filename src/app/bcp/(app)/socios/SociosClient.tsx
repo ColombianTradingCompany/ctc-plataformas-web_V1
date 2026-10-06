@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
+import { AVANCE, ProgresoDeAccion, useAvance, type Progreso } from "@/components/panel/ProgresoDeAccion";
 import { useRouter } from "next/navigation";
 import { PARTNERS, PARTNER_SLUGS } from "@/lib/partners/partners";
 import { invitePartner, setPartnerStatus, resendPartnerCredential } from "../sociosActions";
@@ -46,10 +47,17 @@ export function SociosClient({ partners }: { partners: PartnerRow[] }) {
   const [contactName, setContactName] = useState("");
   const [node, setNode] = useState<string>(PARTNER_SLUGS[0]);
 
-  function act(fn: () => Promise<{ ok: boolean; error?: string }>, okText: string, onOk?: () => void) {
+  // V5.164 (owner): las acciones que mandan correo enseñan su avance.
+  const { enCurso, conAvance } = useAvance();
+  function act(fn: () => Promise<{ ok: boolean; error?: string }>, okText: string, onOk?: () => void, progreso?: Progreso) {
     setMsg(null);
     startTransition(async () => {
-      const res = await fn();
+      let res: { ok: boolean; error?: string };
+      try {
+        res = await conAvance(fn, progreso);
+      } catch {
+        res = { ok: false, error: "La acción no respondió. Revise su conexión y vuelva a intentarlo." };
+      }
       if (res.ok) {
         setMsg({ ok: true, text: okText });
         onOk?.();
@@ -70,8 +78,7 @@ export function SociosClient({ partners }: { partners: PartnerRow[] }) {
         setDeliveryEmail("");
         setOrgName("");
         setContactName("");
-      }
-    );
+      }, AVANCE.invitarSocio);
   }
 
   return (
@@ -82,6 +89,7 @@ export function SociosClient({ partners }: { partners: PartnerRow[] }) {
         una cuenta interna ni pública. Se emiten aquí y se revocan en un clic.
       </p>
 
+      <ProgresoDeAccion enCurso={enCurso} />
       {msg && <p className={`${styles.msg} ${msg.ok ? styles.msgOk : styles.msgErr}`}>{msg.text}</p>}
 
       <form className={styles.inviteCard} onSubmit={submitInvite}>
@@ -176,8 +184,7 @@ export function SociosClient({ partners }: { partners: PartnerRow[] }) {
                     onClick={() =>
                       act(
                         () => resendPartnerCredential(u.profile_id),
-                        u.status === "invited" ? "Invitación reenviada." : "Contraseña restablecida y enviada."
-                      )
+                        u.status === "invited" ? "Invitación reenviada." : "Contraseña restablecida y enviada.", undefined, AVANCE.reenviarSocio)
                     }
                   >
                     {u.status === "invited" ? "Reenviar invitación" : "Restablecer contraseña"}

@@ -177,6 +177,11 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.164 · el avance en las acciones largas de las cuatro consolas; resumen del veredicto opcional** (owner, 2026-10-06).
+  Patrón: `const { enCurso, conAvance } = useAvance()` + `<ProgresoDeAccion enCurso={enCurso} />`; los tiempos típicos en
+  `AVANCE` (`ProgresoDeAccion.tsx`). Para un `<form action>` de servidor, `EnviarConAvance`. Una acción larga nueva se suma
+  ahí. Abierto: la sincronización del buzón ya enseñaba su propio avance real («quedan N») y no se tocó; las subidas de
+  archivos ya tienen su anillo de progreso.
 - **V5.163 · ningún botón del veredicto queda mudo; avance con tiempo estimado** (owner, 2026-10-06). `bloqueoDelVeredicto`
   nombra lo que falta; `ProgresoDeAccion` (`useAction` con `enCurso`) enseña qué corre, cuánto lleva y cuánto falta, con un
   estimado que aprende por navegador. Abierto: el resto de botones de las consolas sigue el patrón viejo (deshabilitado en

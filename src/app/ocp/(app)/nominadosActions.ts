@@ -619,8 +619,9 @@ export async function recordEvaluationVerdict(
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
-  const cleanNotes = notes.trim();
-  if (!cleanNotes) return { ok: false, error: "Escriba el resultado de la evaluación — el productor lo verá." };
+  // V5.164 (owner): el resumen es OPCIONAL. Si falta, se escribe uno por defecto (grado y Punto) — el productor siempre recibe
+  // algo y el reporte de mejoras IA tiene de dónde partir.
+  let cleanNotes = notes.trim();
 
   const { data: ins } = await service
     .from("arena_inscriptions")
@@ -704,6 +705,10 @@ export async function recordEvaluationVerdict(
       return { ok: false, error: `Con Punto ${puntaje} y tríada ${letras(triada)} los puntos no llegan a Black (un café común entra desde 82; por debajo de 80 no hay especialidad). Registre el veredicto como «rechazado».` };
     }
     const grado = decision.grado;
+    if (!cleanNotes) {
+      cleanNotes = `Galardonado ${grado.nombre} · ${rotuloDelPunto(puntoEfectivo)}.`;
+      resultCols.sondeo_result_notes = cleanNotes;
+    }
     if (!centroRow && !batch.q_grader_name?.trim()) {
       return { ok: false, error: "Defina el Q-Grader del bache (al enviarlo al Centro) — la planilla oficial lleva su nombre." };
     }
@@ -817,6 +822,10 @@ export async function recordEvaluationVerdict(
     // V5.92 (R5): un Punto homologado cuyo intervalo cruza los 80 no se rechaza: pendiente de recata SCA nativa.
     if (puntoEfectivo && decidirPorPunto(puntoEfectivo, triada).tipo === "pendiente_recata") {
       return { ok: false, error: `El Punto homologado ${puntoEfectivo.bajo}–${puntoEfectivo.alto} cruza los 80: no se registra «No supera» sin una recata SCA 2004 nativa.` };
+    }
+    if (!cleanNotes) {
+      cleanNotes = `No superó la evaluación esta vez${puntoEfectivo ? ` · ${rotuloDelPunto(puntoEfectivo)}` : ""}.`;
+      resultCols.sondeo_result_notes = cleanNotes;
     }
     // V5.82 · folio 12 / respuesta 2: el rechazo bajo Black es GRATIS para el productor —se lleva el reporte de
     // mejoras— y ya no hay cashback; el 80 % de reembolso existe solo en la re-evaluación que sube de grado.

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { AVANCE, ProgresoDeAccion, useAvance, type Progreso } from "@/components/panel/ProgresoDeAccion";
 import { useRouter } from "next/navigation";
 import {
   sendBuzonReply,
@@ -70,10 +71,17 @@ export function BuzonMail({ emails, myAddress }: { emails: InboundRow[]; myAddre
     setTagFilter((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
   }
 
-  function act(fn: () => Promise<{ ok: boolean; error?: string }>, okText: string, onOk?: () => void) {
+  // V5.164 (owner): enviar una respuesta enseña su avance.
+  const { enCurso, conAvance } = useAvance();
+  function act(fn: () => Promise<{ ok: boolean; error?: string }>, okText: string, onOk?: () => void, progreso?: Progreso) {
     setMsg(null);
     startTransition(async () => {
-      const res = await fn();
+      let res: { ok: boolean; error?: string };
+      try {
+        res = await conAvance(fn, progreso);
+      } catch {
+        res = { ok: false, error: "La acción no respondió. Revise su conexión y vuelva a intentarlo." };
+      }
       if (res.ok) {
         setMsg({ ok: true, text: okText });
         onOk?.();
@@ -138,6 +146,7 @@ export function BuzonMail({ emails, myAddress }: { emails: InboundRow[]; myAddre
         )}
       </div>
 
+      <ProgresoDeAccion enCurso={enCurso} />
       {msg && msg.text && <p className={msg.ok ? styles.syncOk : styles.syncErr} style={{ marginBottom: 12 }}>{msg.text}</p>}
 
       {!list.length && (
@@ -218,7 +227,7 @@ export function BuzonMail({ emails, myAddress }: { emails: InboundRow[]; myAddre
                       placeholder="etiquetas separadas por coma (ej: gvg, socios, urgente)"
                       aria-label="Etiquetas"
                     />
-                    <button className="btn btn-sm" disabled={pending} onClick={() => act(() => setBuzonTags(e.id, tagsDraft.split(",")), "Etiquetas guardadas.", () => setTagsEditing(false))}>
+                    <button className="btn btn-sm" disabled={pending} onClick={() => act(() => setBuzonTags(e.id, tagsDraft.split(",")), "Etiquetas guardadas.", () => setTagsEditing(false), AVANCE.responderBuzon)}>
                       Guardar
                     </button>
                     <button className="btn btn-sm" type="button" onClick={() => setTagsEditing(false)}>Cancelar</button>

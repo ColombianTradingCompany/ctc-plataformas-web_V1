@@ -10,6 +10,7 @@ import {
   avanceDeUnidad,
   type UnidadId,
 } from "@/lib/direccionamiento/definicion";
+import { AVANCE, ProgresoDeAccion, useAvance } from "@/components/panel/ProgresoDeAccion";
 import styles from "./direccionamiento.module.css";
 
 // ── Definición de contexto (F7 · plataforma V4.32) ──────────────────────────
@@ -57,6 +58,8 @@ export default function DefinicionDeContexto({ adapter, aiComplete, memory, init
   const [unidad, setUnidad] = useState<UnidadId>("ctcx");
   const [estado, setEstado] = useState<"limpio" | "guardando" | "guardado" | "error">("limpio");
   const [redactando, setRedactando] = useState<string | null>(null);
+  // V5.164 (owner): redactar con IA enseña su avance bajo el campo.
+  const { enCurso, conAvance } = useAvance();
 
   // El temporizador vive en una ref para que un re-render no lo duplique. Todo
   // el formulario es estado de React —ni una ref de DOM en el camino del
@@ -116,7 +119,7 @@ export default function DefinicionDeContexto({ adapter, aiComplete, memory, init
         values[clave] ? `Texto actual, para mejorar: ${values[clave]}` : "El campo está vacío.",
         "Devuelva SOLO el texto del campo, sin encabezados ni comillas.",
       ].join("\n");
-      const texto = await aiComplete(prompt);
+      const texto = await conAvance(() => aiComplete(prompt), { ...AVANCE.redactarIa, etiqueta: `Redactando «${label}» con IA` });
       if (texto) escribe(clave, texto.trim());
     } finally {
       setRedactando(null);
@@ -203,6 +206,7 @@ export default function DefinicionDeContexto({ adapter, aiComplete, memory, init
                   </button>
                 </span>
                 <span className={styles.campoHelp}>{c.help}</span>
+                {redactando === clave && <ProgresoDeAccion enCurso={enCurso} />}
                 <textarea
                   value={values[clave] ?? ""}
                   onChange={(e) => escribe(clave, e.target.value)}

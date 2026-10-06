@@ -13,6 +13,7 @@ import styles from "@/components/panel/shared.module.css";
 // productor y administrar el set (oficial · eliminar).
 
 import { type SoporteRef } from "@/lib/fichas/soportes";
+import { AVANCE, ProgresoDeAccion, useAvance, type Progreso } from "@/components/panel/ProgresoDeAccion";
 export type { SoporteRef };
 
 type ActionResult = { ok: true } | { ok: false; error: string };
@@ -21,15 +22,21 @@ function useAction() {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const run = (fn: () => Promise<ActionResult>) => {
+  // V5.164 (owner): el avance de las acciones largas (escaneo IA de los soportes, compilar la ficha).
+  const { enCurso, conAvance } = useAvance();
+  const run = (fn: () => Promise<ActionResult>, progreso?: Progreso) => {
     setError(null);
     start(async () => {
-      const res = await fn();
-      if (res.ok) router.refresh();
-      else setError(res.error);
+      try {
+        const res = await conAvance(fn, progreso);
+        if (res.ok) router.refresh();
+        else setError(res.error);
+      } catch {
+        setError("La acción no respondió. Revise su conexión y vuelva a intentarlo; si persiste, recargue la página.");
+      }
     });
   };
-  return { pending, error, run };
+  return { pending, error, run, enCurso };
 }
 
 function SoporteLink({ s }: { s: SoporteRef }) {
@@ -114,7 +121,7 @@ export function LotFichasCard({
   tieneReporte: boolean;
   fichas: LotFicha[];
 }) {
-  const { pending, error, run } = useAction();
+  const { pending, error, run, enCurso } = useAction();
 
   return (
     <div className={styles.miniCard}>
@@ -139,11 +146,12 @@ export function LotFichasCard({
         </div>
       </div>
 
+      <ProgresoDeAccion enCurso={enCurso} />
       {error && <p className={styles.warn} style={{ marginTop: 6 }}>{error}</p>}
       <FichaManualForm lotId={lotId} />
       <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", marginTop: 10, flexWrap: "wrap" }}>
         {tieneReporte && (
-          <button className="btn btn-sm" disabled={pending} onClick={() => run(() => crearFichaDesdeReporte(lotId))}>
+          <button className="btn btn-sm" disabled={pending} onClick={() => run(() => crearFichaDesdeReporte(lotId), AVANCE.compilar)}>
             {pending ? "…" : "Compilar del reporte del productor"}
           </button>
         )}
@@ -154,7 +162,7 @@ export function LotFichasCard({
             onClick={() => {
               // Paso caro y opt-in (disciplina de costes): se confirma antes de gastar.
               if (confirm(`El escáner enviará ${soportes.length} soporte(s) al modelo de visión (costo de IA). ¿Escanear ahora?`))
-                run(() => scanFichaSoportes(lotId));
+                run(() => scanFichaSoportes(lotId), AVANCE.escanear);
             }}
           >
             {pending ? "Escaneando…" : "Escanear soportes con IA"}

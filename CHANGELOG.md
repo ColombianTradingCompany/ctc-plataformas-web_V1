@@ -19,6 +19,22 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.164] — 2026-10-06 (commit pendiente)
+
+- **Cambiado**: el **resumen del resultado es OPCIONAL y va al lado de los botones** del veredicto (owner, 2026-10-06: «que sea
+  obligatorio lo hace muchas veces innecesario, y además está muy lejos del botón»), en el informe del Centro y en «Registrar a
+  mano». Si se deja vacío, el servidor escribe uno por defecto para el productor («Galardonado Red · SCA 2004 nativo 85.00.» /
+  «No superó la evaluación esta vez · …»), del que también parte el reporte de mejoras con IA.
+- **Añadido**: **el avance se extiende a las demás acciones largas de las consolas** (owner) con un hook compartido
+  (`useAvance` / `conAvance`, `src/components/panel/ProgresoDeAccion.tsx`) y una tabla de tiempos típicos (`AVANCE`) que se
+  ajusta con lo que tarda cada acción en el navegador: OCP — emitir la factura, enviar el bache al Centro, acordar la
+  re-evaluación, generar las mejoras con IA, escanear los soportes con IA y compilar la ficha; BCP — invitar y reenviar la
+  credencial de un socio, invitar, reenviar y restablecer la contraseña de un usuario de las consolas, reenviar el correo de
+  un llamado de Terratalento (`EnviarConAvance`, para formularios de servidor); LCP — responder desde el buzón; ECP —
+  redactar con IA en la Definición de Contexto. Un fallo de red ya no deja ninguno de esos botones colgado.
+- **Seguridad**: `qa-centro-calidad` (255 → 258).
+- **Docs**: charter `consolas`.
+
 ## [V5.163] — 2026-10-06 (commit f70ed29)
 
 - **Corregido**: en el informe del Centro (OCP) y en «Registrar a mano», **«Galardonar», «No supera» y «Enviar de vuelta» ya no

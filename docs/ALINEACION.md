@@ -82,6 +82,7 @@ qué · dónde quedó.** Se escribe en el mismo commit que el cambio; se lee al 
 
 | Fecha | Versión | Origen → afectados | Qué cambió | Dónde quedó |
 |---|---|---|---|---|
+| 2026-10-07 | V5.174 | Herramientas internas (PVC) → consolas (OCP), Kaffetal Regal | Variables de la edición (fechas ISO, mínimos, calidad, auxilio) que leen las ofertas; PVC-F4-2026 re-fechado; Ficha A2 con existencia | `src/lib/trato/{calendario,ventanas,minimos}.ts`, `src/lib/pvc/correccion.ts`, `pvc_editions`, `lots.existencia_cps_kg` |
 | 2026-10-07 | (plan, sin versión) | Owner → Kaffetal Regal, consolas (OCP · ECP), herramientas internas (PVC) | El trato de Cherry Picked pasa de meses y modalidades a ventanas de ciclos de 6–7 semanas; el PVC, a trimestres ISO con agente, corrección por ciclo y auxilio de transporte | `docs/PLAN_CICLOS.md` (tandas 1–4) |
 | 2026-10-06 | V5.173 | Kaffetal Regal (trato) → consolas (OCP) | «Declarar para Temporada Actual» reemplaza a «Declarar Ahora» (`temporada_actual`); la escalera de retiro se reparte en los meses del trato; la renovación se debe también al terminar la vigencia | `src/lib/trato/{modalidades,mesAMes}.ts`, `app/ocp/(app)/contractActions.ts` |
 | 2026-10-06 | V5.171 | Kaffetal Regal (trato) → consolas (OCP) | La redeclaración de «Ahora y Siguiente»: se pide 10 días antes, nunca menos del 70 %, sin respuesta queda en el 70 % (cron diario); el contrato del OCP la muestra | `src/lib/trato/redeclaracion.ts`, `/api/cron/redeclaraciones`, `app/ocp/(app)/contratos/[id]` |

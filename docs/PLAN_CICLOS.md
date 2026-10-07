@@ -139,7 +139,7 @@ evaluación.
 
 Cada tanda es su propia versión (gate, guardianes, CHANGELOG, log, charters, ALINEACION §3, push, badge en vivo).
 
-1. **Calendario y reglas (puro + datos).** `src/lib/trato/calendario.ts` (semanas ISO, trimestres, ciclos, semanas sin
+1. ✅ **HECHA en la V5.174.** **Calendario y reglas (puro + datos).** `src/lib/trato/calendario.ts` (semanas ISO, trimestres, ciclos, semanas sin
    contratos, fechas del agente y de publicación), `ventanas.ts` (firma → ventana, retiro, regla de precio), `minimos.ts`
    (grado, continuidad lineal, existencia insuficiente), `src/lib/pvc/correccion.ts` (bloques de 20, alza/baja, topes).
    Variables de la edición (fechas, mínimos, rangos de calidad, auxilio) en `pvc_editions` y editables en el Modelo

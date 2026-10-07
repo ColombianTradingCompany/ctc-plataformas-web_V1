@@ -111,6 +111,7 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
 
 ## Pendientes
 
+- **V5.174 · variables de la edición** (fechas ISO, mínimos por grado, rangos de calidad, auxilio de transporte) en `pvc_editions` y en la pestaña Ediciones; PVC-F4-2026 re-fechado a 28 sep – 3 ene; `correccion.ts` (pura) lista para la vigilancia de la tanda 4.
 - **2026-10-07 · `docs/PLAN_CICLOS.md` §1 y §6** (owner): ediciones del PVC en trimestres de 13 semanas ISO (14 en años de 53) con fechas, mínimos por grado, rangos de calidad y auxilio de transporte como variables de la edición; agente en la semana 1 del ciclo 2 con publicación a más tardar en la semana 2; corrección por ciclo (15 de 20 lecturas FNC, ±10 %) que reemplaza el «10 de 15». Tandas 1 y 4.
 - **V5.160 · la escala de puntos GOBIERNA** (owner, 2026-10-06; ejecutado desde `consolas`). `escala.ts` deja de ser «la
   que viene»: `definicion.ts` lee sus bandas y `EscalaBoard` ya no avisa «no gobierna». Los rótulos de la escalera del PVC

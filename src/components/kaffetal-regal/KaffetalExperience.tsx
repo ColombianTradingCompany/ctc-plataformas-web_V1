@@ -1034,6 +1034,8 @@ function Experience() {
       ficha_altitud_m: updates.summary.ficha_altitud_m,
       ficha_notas_cata: updates.summary.ficha_notas_cata,
       ficha_puntaje_estimado: updates.summary.ficha_puntaje_estimado,
+      // V5.174 (docs/PLAN_CICLOS.md §7): la existencia de A2 en columna real (la leen las reglas del servidor).
+      existencia_cps_kg: Number(updates.datasheet.existencia_cps_kg) > 0 ? Number(updates.datasheet.existencia_cps_kg) : null,
       ...updates.eudr,
     };
     if (updates.name) patch.name = updates.name;

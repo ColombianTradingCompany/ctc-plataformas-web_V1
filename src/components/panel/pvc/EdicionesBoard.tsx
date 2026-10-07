@@ -5,6 +5,7 @@ import { useState } from "react";
 import styles from "@/components/panel/shared.module.css";
 import table from "@/components/cotizador/quotesTable.module.css";
 import type { PvcEdition } from "@/lib/pvc/tipos";
+import { VariablesDeEdicion } from "./VariablesDeEdicion";
 
 // ── BCP · PVC · Ediciones ────────────────────────────────────────────────────
 // La edición vigente arriba con sus KPIs; debajo el historial. Publicar se hace
@@ -41,8 +42,8 @@ export function EdicionesBoard({
     <>
       <h1 className={styles.title}>PVC · Ponderación de Valor de Cosecha</h1>
       <p className={styles.subtitle}>
-        La referencia de valor en pesos por carga: <strong>se fija por tres meses</strong> y se publica <strong>siete u ocho
-        semanas antes</strong> de su fecha efectiva. Lo que rige hoy es lo que leen la escalera, los contratos y el precio al
+        La referencia de valor en pesos por carga: <strong>se fija por un trimestre de 13 semanas</strong> (14 al cierre de un año de 53) y se
+        publica <strong>a más tardar en la semana 2 del ciclo 2 del trimestre anterior</strong> (≈ 5 semanas antes; docs/PLAN_CICLOS.md). Lo que rige hoy es lo que leen la escalera, los contratos y el precio al
         comprador — no lo último publicado. Modelo vigente: <strong>{modeloVersion ?? "sin versión"}</strong>.
       </p>
 
@@ -89,11 +90,15 @@ export function EdicionesBoard({
             {vigente ? ` Hasta entonces manda ${vigente.code} (${cop(vigente.pvcCop)}).` : ""}
           </p>
           <p className={styles.meta}>
-            El PVC se publica siete u ocho semanas antes de su fecha efectiva: esta cifra ya es pública y sirve para que
+            El PVC se publica unas cinco semanas antes de su fecha efectiva: esta cifra ya es pública y sirve para que
             productores y compradores vean con antelación el precio que viene, pero <strong>no es la que rige hoy</strong>.
           </p>
         </div>
       )}
+
+      {/* V5.174 (docs/PLAN_CICLOS.md): las variables de la edición vigente y de la próxima — fechas, mínimos, calidad, auxilio. */}
+      {vigente && <VariablesDeEdicion key={`${vigente.id}-${vigente.validFrom}-${vigente.ciclo1Hasta}`} edicion={vigente} />}
+      {proxima && <VariablesDeEdicion key={`${proxima.id}-${proxima.validFrom}-${proxima.ciclo1Hasta}`} edicion={proxima} />}
 
       {vigente && (
         <div className={styles.card}>

@@ -36,6 +36,13 @@ export type PvcEdition = {
   publishedAt: string | null;
   notes: string | null;
   createdAt: string;
+  /** V5.174 (docs/PLAN_CICLOS.md §1, §3, §4, §6): las variables de la edición. `ciclo1Hasta` = el domingo en que termina el
+   *  ciclo 1; los mínimos por grado (kg de CPS por ventana); los rangos de calidad con que se recibe; el auxilio de
+   *  transporte por carga (null = por fijar). */
+  ciclo1Hasta: string | null;
+  minimosPorGrado: Partial<Record<"black" | "red" | "blue" | "gold", number>> | null;
+  rangosCalidad: { humedad_min: number; humedad_max: number; aw_max: number } | null;
+  auxilioTransporteCop: number | null;
 };
 
 export type PvcResult = { ok: true; id?: string } | { ok: false; error: string };

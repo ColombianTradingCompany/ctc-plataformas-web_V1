@@ -17,6 +17,7 @@ import {
   VENTANA_TEMPORADA_ACTUAL_DIAS,
   minimoKg,
 } from "./terminos";
+import { trimestreDe } from "./calendario";
 
 export type Modalidad = "temporada_actual" | "trimestre" | "ahora_y_siguiente";
 export const MODALIDADES: readonly Modalidad[] = ["temporada_actual", "trimestre", "ahora_y_siguiente"];
@@ -57,9 +58,9 @@ export type Disponibilidad = { disponible: boolean; motivo: string | null };
  * ventana: el inicio del segundo mes + 13 días.
  */
 export function fechaLimitePvcSiguiente(temporadaDesde: string): string {
-  const d = new Date(`${temporadaDesde}T12:00:00Z`);
-  d.setUTCMonth(d.getUTCMonth() + 1);
-  return sumaDias(soloFecha(d), 13);
+  // V5.174 (docs/PLAN_CICLOS.md §6): el agente propone el PVC siguiente en la semana 1 del ciclo 2 y se publica a más tardar el
+  // domingo de la semana 2. Se ubica el trimestre ISO dos semanas después del inicio (robusto ante fechas viejas de la franja).
+  return trimestreDe(sumaDias(temporadaDesde, 14)).publicaAMasTardar;
 }
 
 /**

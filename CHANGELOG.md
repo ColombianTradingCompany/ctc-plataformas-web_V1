@@ -19,6 +19,30 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.174] — 2026-10-07 (commit pendiente)
+
+- **Añadido**: **tanda 1 de los Ciclos de Cherry Picked** (`docs/PLAN_CICLOS.md`, owner 2026-10-07): las reglas puras del
+  calendario ISO (`src/lib/trato/calendario.ts`: trimestres de 13 semanas, 14 en los años de 53; ciclos 6 + 7 o 7 + 7; semanas
+  sin contratos desde 2027; agente y plazo de publicación del PVC siguiente), de la ventana que decide la fecha de firma
+  (`ventanas.ts`: ciclo con 25 %, extendida con 30 %, promedio de los dos PVC, renovación), de los mínimos (`minimos.ts`:
+  continuidad lineal −10 % por trimestre, existencia insuficiente hasta la mitad sin retiro, producción 5 : 1) y de la
+  corrección del PVC por ciclo (`src/lib/pvc/correccion.ts`: 15 de 20 lecturas FNC, alza y baja con tope del 10 %).
+- **Añadido**: **las variables de cada edición del PVC** en el Modelo Económico (pestaña Ediciones): fechas (con la propuesta
+  ISO a un clic y su validación), mínimos por grado, rangos de calidad de recepción (humedad 10–12 %, aw ≤ 0,70) y auxilio de
+  transporte por carga. Las fija el owner, con auditoría. El mínimo de las ofertas del OCP sale ahora de la edición, y el auxilio
+  se suma al precio del grado (PVC × multiplicador + auxilio; por fijar = $0). D1 §5 del modelo lo tenía en $0 porque las
+  cooperativas no lo pagan por carga.
+- **Añadido**: **Ficha A2**: existencia total del lote (kg de CPS, espejada a `lots.existencia_cps_kg`), número de plantas y
+  producción estimada con selector cereza/pergamino (5 : 1). Se ven en la vista previa de la Ficha y en el OCP.
+- **Cambiado**: **PVC-F4-2026 re-fechado al calendario ISO** (owner: «vale»): 28 sep 2026 – 3 ene 2027, ciclo 1 al 15 nov;
+  la oferta abierta que guardaba las fechas viejas se alineó. El PVC siguiente se publica a más tardar el domingo de la semana 2
+  del ciclo 2 (para T1-2027: el 29 de noviembre).
+- **Datos**: migración `2026-10-07_ciclos_variables_de_edicion.sql`: `pvc_editions.ciclo1_hasta`, `minimos_por_grado`,
+  `rangos_calidad`, `auxilio_transporte_cop` (el guard lo deja fijar una sola vez en una publicada); `lots.existencia_cps_kg`;
+  re-fechado con fila de auditoría.
+- **Seguridad**: guardián nuevo `qa-ciclos-check` (37); `qa-trato` y `qa-pvc-precio` al día.
+- **Docs**: `PLAN_CICLOS.md` (tanda 1 hecha); charters `kaffetal-regal`, `consolas`, `herramientas-internas`; ALINEACION §3.
+
 ## [V5.173] — 2026-10-06 (commit b5f5e4f)
 
 - **Cambiado**: **«Declarar para Temporada Actual» reemplaza a «Declarar Ahora»** (owner, 2026-10-06: «este modelo es demasiado

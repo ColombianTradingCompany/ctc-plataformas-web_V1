@@ -69,7 +69,7 @@ const paridad = JSON.parse(lee("src/lib/pvc/paridad.json"));
 {
   const servicio = lee("src/lib/pvc/servicio.ts");
   check("edicionVigente acepta la fecha (el PVC vigente el día D)", servicio.includes("export async function edicionVigente(fecha?: string)"));
-  check("pvcParaGrado existe y pasa por precioDeLaEscalera", servicio.includes("export async function pvcParaGrado(grado: GradoId, fecha?: string") && servicio.includes("precioDeLaEscalera(escalera, grado, opts?.modificadorPct ?? 0)"));
+  check("pvcParaGrado existe y pasa por precioDeLaEscalera", servicio.includes("export async function pvcParaGrado(grado: GradoId, fecha?: string") && servicio.includes("precioDeLaEscalera(escalera, grado, opts?.modificadorPct ?? 0, edicion.auxilioTransporteCop ?? 0)"));
   const ofertas = lee("src/app/ocp/(app)/ofertasActions.ts");
   const emit = ofertas.slice(ofertas.indexOf("export async function emitOffer("), ofertas.indexOf("export async function retireOffer("));
   check("las ofertas ancladas piden el precio a pvcParaGrado", emit.includes("await pvcParaGrado(lot.grade, undefined, { modificadorPct })") && emit.includes("price = pvc.precio.copKgFinal"));
@@ -78,7 +78,7 @@ const paridad = JSON.parse(lee("src/lib/pvc/paridad.json"));
   check("la oferta guarda de qué edición salió, el COP/kg base y el %", ["pvc_edition_id: pvc?.edicion.id ?? null", "pvc_cop_kg: pvc?.precio.copKg ?? null", "modificador_pct: modificadorPct", "reference_price_source: pvc ? `PVC ${pvc.edicion.code}` : null", "reference_price_snapshot: pvc?.precio.copKg ?? null"].every((s) => emit.includes(s)));
   check("la excepción teclea precio SOLO con motivo", emit.includes('kind === "excepcion" && !notes'));
   const pagina = lee("src/app/ocp/(app)/ofertas/page.tsx");
-  check("la pantalla enseña el anclaje con la MISMA función pura", pagina.includes("precioDeLaEscalera(escalera, grade, 0)") && pagina.includes("edicionVigente()"));
+  check("la pantalla enseña el anclaje con la MISMA función pura", pagina.includes("precioDeLaEscalera(escalera, grade, 0, edicion.auxilioTransporteCop ?? 0)") && pagina.includes("edicionVigente()"));
   const cliente = lee("src/app/ocp/(app)/ofertas/OfertasClient.tsx");
   check("y el precio anclado se ve, no se teclea", cliente.includes("{!anclada && <input placeholder=\"Precio COP/kg *\""));
   check("Tyrian sigue en subasta (mejor postor tecleado), no en el PVC", emit.includes('lot.grade === "tyrian" ? null : await pvcParaGrado'));

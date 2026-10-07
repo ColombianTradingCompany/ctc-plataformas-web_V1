@@ -2,6 +2,7 @@ import "server-only";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { calcular, huella, type PvcEntradas, type PvcParams, type PvcSalida } from "./motor";
 import { precioDeLaEscalera, type EscalonPublicado, type PrecioDeGrado } from "./precio";
+import type { CalendarioDeEdicion } from "@/lib/trato/calendario";
 import type { GradoId } from "@/lib/grados/definicion";
 import type { PvcCurrent, PvcEdition, PvcEditionStatus, PvcModelVersion } from "./tipos";
 
@@ -16,10 +17,11 @@ type EditionRow = {
   cut_date: string | null; publish_date: string | null; valid_from: string | null; valid_to: string | null;
   inputs: PvcEntradas; outputs: PvcSalida; pvc_cop: number | null; hash: string | null;
   correction_of: string | null; published_at: string | null; notes: string | null; created_at: string;
+  ciclo1_hasta: string | null; minimos_por_grado: PvcEdition["minimosPorGrado"]; rangos_calidad: PvcEdition["rangosCalidad"]; auxilio_transporte_cop: number | null;
   pvc_model_versions?: { version: string } | null;
 };
 
-const EDITION_COLS = "id, code, model_version_id, status, cut_date, publish_date, valid_from, valid_to, inputs, outputs, pvc_cop, hash, correction_of, published_at, notes, created_at, pvc_model_versions(version)";
+const EDITION_COLS = "id, code, model_version_id, status, cut_date, publish_date, valid_from, valid_to, inputs, outputs, pvc_cop, hash, correction_of, published_at, notes, created_at, ciclo1_hasta, minimos_por_grado, rangos_calidad, auxilio_transporte_cop, pvc_model_versions(version)";
 
 const toModel = (r: ModelRow): PvcModelVersion => ({ id: r.id, version: r.version, params: r.params, notes: r.notes, createdAt: r.created_at });
 const toEdition = (r: EditionRow): PvcEdition => ({
@@ -27,7 +29,13 @@ const toEdition = (r: EditionRow): PvcEdition => ({
   cutDate: r.cut_date, publishDate: r.publish_date, validFrom: r.valid_from, validTo: r.valid_to,
   inputs: r.inputs, outputs: r.outputs, pvcCop: r.pvc_cop, hash: r.hash, correctionOf: r.correction_of,
   publishedAt: r.published_at, notes: r.notes, createdAt: r.created_at,
+  ciclo1Hasta: r.ciclo1_hasta, minimosPorGrado: r.minimos_por_grado, rangosCalidad: r.rangos_calidad, auxilioTransporteCop: r.auxilio_transporte_cop,
 });
+
+/** V5.174: las fechas de una edición como calendario de Ciclos (null si le falta alguna). */
+export function calendarioDeLaEdicion(e: Pick<PvcEdition, "validFrom" | "validTo" | "ciclo1Hasta">): CalendarioDeEdicion | null {
+  return e.validFrom && e.validTo && e.ciclo1Hasta ? { desde: e.validFrom, ciclo1Hasta: e.ciclo1Hasta, hasta: e.validTo } : null;
+}
 
 export async function listarVersionesModelo(): Promise<PvcModelVersion[]> {
   const service = createServiceRoleClient();
@@ -80,7 +88,7 @@ export async function edicionVigente(fecha?: string): Promise<PvcEdition | null>
 }
 
 export type PvcDeGrado = {
-  edicion: { id: string; code: string; validFrom: string | null; validTo: string | null; pvcCop: number | null };
+  edicion: { id: string; code: string; validFrom: string | null; validTo: string | null; pvcCop: number | null; minimosPorGrado: PvcEdition["minimosPorGrado"]; auxilioTransporteCop: number | null };
   precio: PrecioDeGrado;
 };
 
@@ -94,9 +102,10 @@ export async function pvcParaGrado(grado: GradoId, fecha?: string, opts?: { modi
   const edicion = await edicionVigente(fecha);
   if (!edicion) return null;
   const escalera = (edicion.outputs?.escalera ?? []) as unknown as EscalonPublicado[];
-  const precio = precioDeLaEscalera(escalera, grado, opts?.modificadorPct ?? 0);
+  // V5.174: el auxilio de transporte de la edición se suma al precio del grado (null = por fijar → $0).
+  const precio = precioDeLaEscalera(escalera, grado, opts?.modificadorPct ?? 0, edicion.auxilioTransporteCop ?? 0);
   if (!precio) return null;
-  return { edicion: { id: edicion.id, code: edicion.code, validFrom: edicion.validFrom, validTo: edicion.validTo, pvcCop: edicion.pvcCop }, precio };
+  return { edicion: { id: edicion.id, code: edicion.code, validFrom: edicion.validFrom, validTo: edicion.validTo, pvcCop: edicion.pvcCop, minimosPorGrado: edicion.minimosPorGrado, auxilioTransporteCop: edicion.auxilioTransporteCop }, precio };
 }
 
 /** Lo ya publicado que TODAVÍA no rige. No se esconde: que el precio de la
@@ -112,6 +121,46 @@ export async function edicionProxima(): Promise<PvcEdition | null> {
   const filas = (data ?? []) as unknown as EditionRow[];
   const proxima = filas.find((r) => (r.valid_from ?? r.publish_date ?? "") > hoy);
   return proxima ? toEdition(proxima) : null;
+}
+
+export type VariablesDeEdicion = {
+  desde: string;
+  ciclo1Hasta: string;
+  hasta: string;
+  minimosPorGrado: Record<"black" | "red" | "blue" | "gold", number>;
+  rangosCalidad: { humedad_min: number; humedad_max: number; aw_max: number };
+  auxilioTransporteCop: number | null;
+};
+
+/**
+ * V5.174 (docs/PLAN_CICLOS.md §1, §4, §6): guarda las variables de una edición — fechas, mínimos por grado, rangos de calidad
+ * y auxilio de transporte — con su fila de auditoría. El guard de la base protege lo que no se toca de una publicada (y el
+ * auxilio, que en una publicada solo se fija una vez).
+ */
+export async function guardarVariablesDeEdicion(id: string, v: VariablesDeEdicion, userId: string): Promise<{ ok: true } | { error: string }> {
+  const service = createServiceRoleClient();
+  const { data: antes } = await service.from("pvc_editions").select("code, valid_from, valid_to, ciclo1_hasta, minimos_por_grado, rangos_calidad, auxilio_transporte_cop").eq("id", id).maybeSingle();
+  if (!antes) return { error: "Edición no encontrada." };
+  const { error } = await service
+    .from("pvc_editions")
+    .update({
+      valid_from: v.desde,
+      valid_to: v.hasta,
+      ciclo1_hasta: v.ciclo1Hasta,
+      minimos_por_grado: v.minimosPorGrado,
+      rangos_calidad: v.rangosCalidad,
+      auxilio_transporte_cop: v.auxilioTransporteCop,
+    })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  await service.from("audit_log").insert({
+    entity_type: "pvc_edition",
+    entity_id: id,
+    action: "variables_de_edicion",
+    performed_by: userId,
+    notes: `${antes.code}: ${JSON.stringify({ antes: { valid_from: antes.valid_from, valid_to: antes.valid_to, ciclo1_hasta: antes.ciclo1_hasta, minimos: antes.minimos_por_grado, calidad: antes.rangos_calidad, auxilio: antes.auxilio_transporte_cop }, ahora: v })}`,
+  });
+  return { ok: true };
 }
 
 /** Crea una versión nueva del modelo (nunca se edita una existente). */

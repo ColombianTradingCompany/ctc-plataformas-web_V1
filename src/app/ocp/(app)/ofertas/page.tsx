@@ -10,7 +10,8 @@ import { esGradoValido, GRADO_POR_ID } from "@/lib/grados/definicion";
 import { evaluacionQueRige, type EvaluationRow } from "@/lib/evaluations";
 import { triadaDeLaFicha } from "@/lib/pvc/triadaDelLote";
 import { letras } from "@/lib/pvc/escala";
-import { CARGA_KG, COMPRA_INICIAL_CTCX_CARGAS, minimoKg, MODIFICADOR_DIRECTA_PCT } from "@/lib/trato/terminos";
+import { CARGA_KG, COMPRA_INICIAL_CTCX_CARGAS, MODIFICADOR_DIRECTA_PCT } from "@/lib/trato/terminos";
+import { minimoDelGrado } from "@/lib/trato/minimos";
 import { CatalogoTabs } from "../catalogo/CatalogoTabs";
 import { EmitOfferForm, ReabrirDecisionButton, RespuestaContraoferta, RetireOfferButton, RondasDeNegociacion, type AnclajeDeOferta, type RondaDeNegociacion } from "./OfertasClient";
 import { OfertaDesplegable, type ResumenDelLote } from "./OfertaDesplegable";
@@ -136,18 +137,20 @@ export default async function OcpOfertasPage() {
   // V5.82: el anclaje al PVC de cada lote elegible, calculado con la MISMA función pura que usa la acción.
   const anclajeDe = (grade: string | null): AnclajeDeOferta | null => {
     if (!edicion || !grade || !esGradoValido(grade)) return null;
-    const base = precioDeLaEscalera(escalera, grade, 0);
-    const directa = precioDeLaEscalera(escalera, grade, MODIFICADOR_DIRECTA_PCT);
+    // V5.174: el auxilio de transporte de cada edición se suma al precio del grado (null = por fijar → $0).
+    const base = precioDeLaEscalera(escalera, grade, 0, edicion.auxilioTransporteCop ?? 0);
+    const directa = precioDeLaEscalera(escalera, grade, MODIFICADOR_DIRECTA_PCT, edicion.auxilioTransporteCop ?? 0);
     if (!base || !directa) return null;
-    const sig = proxima ? precioDeLaEscalera(escaleraSiguiente, grade, 0) : null;
+    const sig = proxima ? precioDeLaEscalera(escaleraSiguiente, grade, 0, proxima.auxilioTransporteCop ?? 0) : null;
     return {
       code: edicion.code,
       banda: base.banda,
       mult: base.mult,
-      copKg: base.copKg,
-      copCarga: base.copCarga,
+      copKg: base.copKgFinal,
+      copCarga: base.copCargaFinal,
       copKgDirecta: directa.copKgFinal,
-      minKg: minimoKg(grade),
+      // V5.174: el mínimo del grado sale de la edición (Modelo Económico), no de la constante.
+      minKg: minimoDelGrado(grade, edicion.minimosPorGrado),
       compraInicialKg: COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG,
       siguiente: proxima && sig ? { code: proxima.code, copKg: sig.copKgFinal } : null,
       fechaLimiteSiguiente: edicion.validFrom ? fechaLimitePvcSiguiente(edicion.validFrom) : null,

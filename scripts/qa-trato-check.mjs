@@ -90,7 +90,7 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   check("y le avisa al productor sin devolución", decision.includes('from("producer_comm_log")') && !decision.includes("reembolso"));
   const emit = ofertas.slice(ofertas.indexOf("export async function emitOffer("), ofertas.indexOf("export async function retireOffer("));
   check("emitir una oferta reabre la decisión", emit.includes("decision_comercial: null"));
-  check("la oferta de temporada lleva la compra inicial de CTCx y el mínimo (el del grado, o el que CTCx confirma al emitir, V5.168)", emit.includes("compra_inicial_kg: kind === \"temporada\" ? COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG : null") && emit.includes("min_kg: CON_DECLARACION.includes(kind) ? (minConfirmado ?? minimoKg(lot.grade)) : null") && emit.includes("lugar_entrega: lugarEntrega,") && emit.includes("|| LUGAR_DE_ENTREGA_POR_DEFECTO"));
+  check("la oferta de temporada lleva la compra inicial de CTCx y el mínimo (el de la edición desde la V5.174, o el que CTCx confirma al emitir, V5.168)", emit.includes("compra_inicial_kg: kind === \"temporada\" ? COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG : null") && emit.includes("min_kg: CON_DECLARACION.includes(kind) ? (minConfirmado ?? minimoDelGrado(lot.grade, pvc?.edicion.minimosPorGrado)) : null") && emit.includes("lugar_entrega: lugarEntrega,") && emit.includes("|| LUGAR_DE_ENTREGA_POR_DEFECTO"));
   check("la directa lleva la ventana y su vencimiento", emit.includes("ventana_dias: esDirecta ? VENTANA_DIRECTA_DIAS : null") && emit.includes("expira_at: esDirecta"));
   check("y los términos con los que nace (también la excepción: es un Lote de Temporada)", emit.includes("terms_version: CON_DECLARACION.includes(kind) ? TERMINOS_VERSION : null") && ofertas.includes('const CON_DECLARACION: readonly OfferKind[] = ["temporada", "directa", "excepcion"]'));
 }
@@ -319,7 +319,7 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   const { fechaLimitePvcSiguiente, modalidadesDisponibles } = await import("../src/lib/trato/modalidades.ts");
   const { clausulasDelContrato } = await import("../src/lib/trato/contrato.ts");
   const { condicionesDe } = await import("../src/lib/trato/modalidades.ts");
-  check("PVC siguiente · la fecha límite es el inicio del segundo mes de la temporada + 13 días (15-sep → 28-oct)", fechaLimitePvcSiguiente("2026-09-15") === "2026-10-28");
+  check("PVC siguiente · desde la V5.174 la fecha límite es el domingo de la semana 2 del ciclo 2 (docs/PLAN_CICLOS.md; T4-2026 → 29-nov)", fechaLimitePvcSiguiente("2026-09-28") === "2026-11-29");
   const sinPvc = modalidadesDisponibles(71, { precioKg: null, fechaLimite: "2026-10-28" });
   const conPvc = modalidadesDisponibles(71, { precioKg: 27300, fechaLimite: "2026-10-28" });
   check("PVC siguiente · sin la edición siguiente publicada, «Siguiente Temporada» no se abre (y dice cuándo se fija); con ella, sí", !sinPvc.trimestre.disponible && sinPvc.trimestre.motivo.includes("28 de octubre de 2026") && conPvc.trimestre.disponible && sinPvc.temporada_actual.disponible);

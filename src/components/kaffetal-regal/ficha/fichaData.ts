@@ -306,6 +306,10 @@ export type FichaFormData = {
   origin_category: string; estate: string; country: string; region_dep: string;
   county_muni: string; county_muni_text: string; masl: string; geo_ref: string;
   plantation_age: string; multi_origin_specs: string;
+  // V5.174 (owner, 2026-10-07 · docs/PLAN_CICLOS.md §7): la existencia total del lote en kg de CPS (base de lo disponible:
+  // existencia − vendido − retirado; se espeja a `lots.existencia_cps_kg`), el número de plantas y la producción estimada,
+  // escrita en cereza o en pergamino (la otra se deriva a 5 : 1, `produccionEnLaOtra`).
+  existencia_cps_kg: string; numero_plantas: string; produccion_estimada_kg: string; produccion_unidad: "cereza" | "pergamino";
   // Legacy (pre-F2): ids adicionales del viejo modelo de blend por casillas.
   additional_estate_ids: string[];
   // A3 — Certificados de Origen
@@ -424,6 +428,7 @@ export const EMPTY_FICHA: FichaFormData = {
   origin_category: "", estate: "", country: "", region_dep: "",
   county_muni: "", county_muni_text: "", masl: "", geo_ref: "",
   plantation_age: "", multi_origin_specs: "",
+  existencia_cps_kg: "", numero_plantas: "", produccion_estimada_kg: "", produccion_unidad: "pergamino",
   additional_estate_ids: [],
   origin_cert_dor: false, origin_cert_do: false, origin_cert_igp: false, origin_cert_fedecafe: false,
   origin_cert_other: false, origin_cert_other_text: "", awards: "", about_origin: "",

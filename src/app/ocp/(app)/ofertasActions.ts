@@ -9,7 +9,8 @@ import { formatCop } from "@/lib/arena/inscriptions";
 import { esGradoValido, type GradoId } from "@/lib/grados/definicion";
 import { edicionProxima, lecturaDeMercado, pvcParaGrado, type PvcDeGrado } from "@/lib/pvc/servicio";
 import { esPastCrop } from "@/lib/trato/mesAMes";
-import { CARGA_KG, COMPRA_INICIAL_CTCX_CARGAS, LUGAR_DE_ENTREGA_POR_DEFECTO, minimoKg, modificadorDeOferta, TERMINOS_VERSION, VENTANA_DIRECTA_DIAS } from "@/lib/trato/terminos";
+import { CARGA_KG, COMPRA_INICIAL_CTCX_CARGAS, LUGAR_DE_ENTREGA_POR_DEFECTO, modificadorDeOferta, TERMINOS_VERSION, VENTANA_DIRECTA_DIAS } from "@/lib/trato/terminos";
+import { minimoDelGrado } from "@/lib/trato/minimos";
 
 // ── Ofertas: CTCx decide y oferta, el productor acepta (V5.18 · anclada al PVC desde la V5.82) ────
 // El circuito comercial del galardón, folio 8 del owner (pasos 13–14 y 19; fase 5 del PLAN_CIRCUITO_DEL_LOTE).
@@ -207,7 +208,8 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
     reference_price_snapshot: pvc?.precio.copKg ?? null,
     // V5.83: toda oferta de Lote de Temporada (también la excepción) lleva términos y mínimo: el productor DECLARA al aceptar.
     terms_version: CON_DECLARACION.includes(kind) ? TERMINOS_VERSION : null,
-    min_kg: CON_DECLARACION.includes(kind) ? (minConfirmado ?? minimoKg(lot.grade)) : null,
+    // V5.174: sin mínimo confirmado, el de la edición vigente (Modelo Económico).
+    min_kg: CON_DECLARACION.includes(kind) ? (minConfirmado ?? minimoDelGrado(lot.grade, pvc?.edicion.minimosPorGrado)) : null,
     lugar_entrega: lugarEntrega,
     max_kg: esDirecta ? maxKg : null,
     ventana_dias: esDirecta ? VENTANA_DIRECTA_DIAS : null,
@@ -244,7 +246,7 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
   const donde = kind === "subasta" ? "Subastas Tyrian" : kind === "black" ? "Ofertas Black" : esSelection ? "Compra CTCx Selection" : "Participación en Cherry Picked";
   const detalle =
     kind === "temporada"
-      ? ` Es una invitación a participar en Cherry Picked${renewalOf ? " (renovación de su trato)" : ""}: ${formatCop(price)}/kg de CPS anclados al PVC vigente${pastCrop ? " (past crop, −10 %)" : ""}; CTC compra de inmediato una carga (${COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG} kg) al precio acordado y usted declara cuánto compromete para el trimestre (mínimo ${minConfirmado ?? minimoKg(lot.grade) ?? "—"} kg).`
+      ? ` Es una invitación a participar en Cherry Picked${renewalOf ? " (renovación de su trato)" : ""}: ${formatCop(price)}/kg de CPS anclados al PVC vigente${pastCrop ? " (past crop, −10 %)" : ""}; CTC compra de inmediato una carga (${COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG} kg) al precio acordado y usted declara cuánto compromete para el trimestre (mínimo ${minConfirmado ?? minimoDelGrado(lot.grade, pvc?.edicion.minimosPorGrado) ?? "—"} kg).`
       : kind === "directa"
         ? ` Es una propuesta de compra de CTCx Selection: ${quantity} kg de CPS a ${formatCop(price)}/kg. Ese precio NO es el PVC actual: es hasta el PVC − 8 %. Puede aceptarla, contraofertar o desistir.`
         : ` ${formatCop(price)}/kg de CPS.`;

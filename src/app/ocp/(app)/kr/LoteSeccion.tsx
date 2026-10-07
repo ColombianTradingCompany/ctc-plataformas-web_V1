@@ -424,6 +424,10 @@ function LotCard({
     // V5.150: si la Ficha se cerró antes de que la finca tuviera altura, vale la de la finca (es su dueña).
     row("Altitud", ds.masl ? `${ds.masl} msnm` : lot.ficha_altitud_m ? `${lot.ficha_altitud_m} msnm` : lot.fincas?.altitude_m ? `${lot.fincas.altitude_m} msnm (de la finca)` : ""),
     row("Edad del cultivo", ds.plantation_age),
+    // V5.174 (docs/PLAN_CICLOS.md §7): la existencia del lote, las plantas y la producción estimada (A2).
+    row("Existencia del lote", ds.existencia_cps_kg ? `${ds.existencia_cps_kg} kg de CPS` : ""),
+    row("Número de plantas", ds.numero_plantas),
+    row("Producción estimada", ds.produccion_estimada_kg ? `${ds.produccion_estimada_kg} kg de ${ds.produccion_unidad === "cereza" ? "cereza" : "CPS"}` : ""),
     // V5.120 (owner, 2026-10-01): un blend tiene VARIAS variedades y el proceso es de CADA una (V5.65) — `ficha_variedad` y
     // `base_processing` son solo la proyección de la dominante, y la EVA mostraba únicamente la primera.
     row("Variedad", variedadTexto),

@@ -152,6 +152,7 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.174 · Ficha A2**: existencia total del lote (kg de CPS, espejo en `lots.existencia_cps_kg`), número de plantas y producción estimada cereza/pergamino (5 : 1). Pendiente (tanda 2): en lotes que ya avanzaron del circuito el guard impide editar la Ficha; la existencia se reconfirma en la renovación con una acción de servidor.
 - **2026-10-07 · `docs/PLAN_CICLOS.md` manda sobre el trato** (owner, desde WRAP-COMMIT-PUSH): ventanas de ciclos de 6–7 semanas por la fecha de firma, saco inicial de 70–200 kg fuera de lo declarado, pago 60/40 con humedad y aw, retiro 25/30 % solo de lo no vendido, mínimos por ventana con continuidad lineal −10 %/trimestre, renovación de un paso, Ficha A2 con existencia, plantas y producción 5 : 1. Se ejecuta en cuatro tandas (§9); hasta la tanda 2, las modalidades de la V5.169–V5.173 siguen en el código.
 - **V5.173 · «Declarar para Temporada Actual» reemplaza a «Declarar Ahora»** (owner, 2026-10-06; ejecutado desde WRAP-COMMIT-PUSH):
   lo que queda de la temporada en curso (≥ 30 días), al PVC vigente, 10 a 25 kg con la firma, meses redondeados

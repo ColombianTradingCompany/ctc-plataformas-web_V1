@@ -157,6 +157,8 @@ export function renderFichaHtml(
         ${di("Municipio", data.county_muni || data.county_muni_text)}
         ${di("M.A.S.L.", data.masl && data.masl + " msnm")}
         ${di("Geo Referencia", data.geo_ref)}${di("Edad Plantación", data.plantation_age && data.plantation_age + " años")}
+        ${di("Existencia", data.existencia_cps_kg && data.existencia_cps_kg + " kg de CPS")}${di("Plantas", data.numero_plantas)}
+        ${di("Producción estimada", data.produccion_estimada_kg && `${data.produccion_estimada_kg} kg de ${data.produccion_unidad === "cereza" ? "cereza" : "CPS"}`)}
       </div>
       ${data.multi_origin_specs ? `<p class="prose">Blend specs: ${esc(data.multi_origin_specs)}</p>` : ""}
       ${data.about_origin ? `<p class="prose">${esc(data.about_origin)}</p>` : ""}

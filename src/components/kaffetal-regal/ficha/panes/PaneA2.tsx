@@ -11,6 +11,7 @@
 
 import { deriveArchetype, composicionDeVariedades, ARCHETYPE_LABEL, ARCHETYPE_INFO, type ContributionInput } from "@/lib/lotComposition";
 import { FieldInfo } from "./FieldInfo";
+import { produccionEnLaOtra } from "@/lib/trato/minimos";
 import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
 
@@ -187,6 +188,48 @@ export function PaneA2({ data, onChange, fincas, onOpenNewFinca }: PaneProps) {
         <div className={styles.ff}>
           <label>Edad Plantación (años)</label>
           <input type="number" value={data.plantation_age} onChange={(e) => onChange({ plantation_age: e.target.value })} placeholder="Ej. 5" />
+        </div>
+        {/* V5.174 (owner, 2026-10-07 · docs/PLAN_CICLOS.md §7): la existencia del lote, las plantas y la producción estimada. */}
+        <div className={styles.ff}>
+          <label>
+            Existencia total del lote <small>(kg de CPS)</small>
+            <FieldInfo text="Cuánto café pergamino seco tiene este lote en total. Con esto se calcula lo que le queda disponible (existencia − lo vendido − lo retirado) y el mínimo que puede declarar en cada ventana; lo reconfirma en cada renovación." />
+          </label>
+          <input type="number" min="0" step="1" value={data.existencia_cps_kg} onChange={(e) => onChange({ existencia_cps_kg: e.target.value })} placeholder="Ej. 1500" />
+        </div>
+        <div className={styles.ff}>
+          <label>Número de plantas</label>
+          <input type="number" min="0" step="1" value={data.numero_plantas} onChange={(e) => onChange({ numero_plantas: e.target.value })} placeholder="Ej. 8000" />
+        </div>
+        <div className={styles.ff}>
+          <label>
+            Producción estimada <small>(kg de {data.produccion_unidad === "cereza" ? "cereza" : "pergamino seco"})</small>
+            <FieldInfo text="Escríbala en cereza o en pergamino seco: la otra se calcula a 5 : 1 (5 kg de cereza ≈ 1 kg de CPS)." />
+          </label>
+          <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+            <input type="number" min="0" step="1" value={data.produccion_estimada_kg} onChange={(e) => onChange({ produccion_estimada_kg: e.target.value })} placeholder="kg" style={{ flex: "1 1 120px" }} />
+            {(["cereza", "pergamino"] as const).map((u) => (
+              <button
+                key={u}
+                type="button"
+                className="btn btn-sm"
+                aria-pressed={data.produccion_unidad === u}
+                style={data.produccion_unidad === u ? { background: "var(--accent)", borderColor: "var(--accent)", color: "#fff" } : undefined}
+                onClick={() => {
+                  if (u === data.produccion_unidad) return;
+                  const kg = Number(data.produccion_estimada_kg);
+                  onChange({ produccion_unidad: u, produccion_estimada_kg: Number.isFinite(kg) && kg > 0 ? String(produccionEnLaOtra(kg, data.produccion_unidad)) : data.produccion_estimada_kg });
+                }}
+              >
+                {u === "cereza" ? "Cereza" : "Pergamino"}
+              </button>
+            ))}
+          </div>
+          {Number(data.produccion_estimada_kg) > 0 && (
+            <small style={{ color: "var(--muted)" }}>
+              ≈ {produccionEnLaOtra(Number(data.produccion_estimada_kg), data.produccion_unidad).toLocaleString("es-CO")} kg de {data.produccion_unidad === "cereza" ? "pergamino seco" : "cereza"} (5 : 1)
+            </small>
+          )}
         </div>
         {(archetype === "regional_blend" || archetype === "multiorigin_blend") && (
           <div className={`${styles.ff} ${styles.fw}`}>

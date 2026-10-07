@@ -12,7 +12,8 @@ import { revalidatePath } from "next/cache";
 import { requireConsoleWrite } from "@/lib/panel/requireConsoleWrite";
 import { getPanelUser, isPanelOwner } from "@/lib/panel/panelUsers";
 import { PARAMS_V211, type PvcParams } from "./motor";
-import { crearVersionModelo } from "./servicio";
+import { crearVersionModelo, guardarVariablesDeEdicion, type VariablesDeEdicion } from "./servicio";
+import { validarCalendario } from "@/lib/trato/calendario";
 import type { PvcResult } from "./tipos";
 
 /** Registra una versión nueva del modelo (los parámetros completos, con nota de acta). Owner. */
@@ -26,4 +27,28 @@ export async function crearVersionModeloAction(version: string, params: Partial<
   if ("error" in r) return { ok: false, error: r.error.includes("duplicate") ? `La versión ${v} ya existe.` : r.error };
   revalidatePath("/ecp/pvc/parametros");
   return { ok: true, id: r.id };
+}
+
+/**
+ * V5.174 (docs/PLAN_CICLOS.md §1, §4, §6) · las variables de una edición: fechas (lunes a domingo, ciclos 6 + 7 o 7 + 7),
+ * mínimos por grado, rangos de calidad y auxilio de transporte. Owner. Emite: cambia lo que leen las ofertas.
+ */
+export async function guardarVariablesDeEdicionAction(id: string, v: VariablesDeEdicion): Promise<PvcResult> {
+  const who = await requireConsoleWrite("ecp");
+  if (!who) return { ok: false, error: "No se pudo ejecutar: o tu sesión ya no está activa (vuelve a iniciar sesión), o tu nivel es de lectura y borradores y esta acción emite." };
+  if (!isPanelOwner(await getPanelUser(who.userId))) return { ok: false, error: "Las variables de una edición del PVC las fija el owner." };
+  const malCal = validarCalendario({ desde: v.desde, ciclo1Hasta: v.ciclo1Hasta, hasta: v.hasta });
+  if (malCal) return { ok: false, error: malCal };
+  for (const g of ["black", "red", "blue", "gold"] as const) {
+    const n = Number(v.minimosPorGrado[g]);
+    if (!Number.isFinite(n) || n <= 0) return { ok: false, error: `El mínimo de ${g} tiene que ser un número de kg mayor que 0.` };
+  }
+  const c = v.rangosCalidad;
+  if (!(c.humedad_min > 0 && c.humedad_max > c.humedad_min && c.humedad_max < 30)) return { ok: false, error: "La humedad va de un mínimo a un máximo (en %, p. ej. 10 a 12)." };
+  if (!(c.aw_max > 0 && c.aw_max < 1)) return { ok: false, error: "La actividad de agua máxima va entre 0 y 1 (p. ej. 0,70)." };
+  if (v.auxilioTransporteCop != null && !(Number.isInteger(v.auxilioTransporteCop) && v.auxilioTransporteCop >= 0)) return { ok: false, error: "El auxilio de transporte es un valor entero en pesos por carga (o vacío, por fijar)." };
+  const r = await guardarVariablesDeEdicion(id, v, who.userId);
+  if ("error" in r) return { ok: false, error: r.error };
+  revalidatePath("/ecp/pvc");
+  return { ok: true, id };
 }

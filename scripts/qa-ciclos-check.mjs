@@ -131,7 +131,7 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   const cR = cuentaDeVentana({ declaradoKg: 400, retiroLibrePct: 30, sinRetiro: true, ventas: [], retiros: [] });
   check("retiro · una declaración reducida no tiene retiro libre (todo al 4 %)", cR.libreTotalKg === 0 && retiroDeVentana(cR, 50, 20000).ok && retiroDeVentana(cR, 50, 20000).penalizadoKg === 50);
 
-  check("despachos · el saco sale el domingo de la semana de firma; lo vendido, el domingo de la semana 1 del ciclo siguiente", d.finDeSemana("2026-10-07") === "2026-10-11" && d.plazoDelSaco("2026-10-11") === "2026-10-11" && d.plazoDeLoVendido("2026-11-15") === "2026-11-22");
+  check("despachos · el saco sale el domingo de la semana de firma; lo vendido, por baches: a más tardar el domingo de la 5.ª semana contando la de su primera venta (V5.183)", d.finDeSemana("2026-10-07") === "2026-10-11" && d.plazoDelSaco("2026-10-11") === "2026-10-11" && d.plazoDelBache("2026-10-07") === "2026-11-08" && d.plazoDelBache("2026-10-05") === "2026-11-08");
   const o1 = d.opcionesSiNoSale({ tipo: "saco", firmadoEnSemana1: true, yaProrrogado: false });
   const o2 = d.opcionesSiNoSale({ tipo: "saco", firmadoEnSemana1: false, yaProrrogado: false });
   const o3 = d.opcionesSiNoSale({ tipo: "vendido", firmadoEnSemana1: false, yaProrrogado: false });
@@ -147,7 +147,7 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   const base = { tipo: "cherry_picked", ventana: { tipo: "ciclo", desde: "2027-02-15", hasta: "2027-04-04", ciclos: ["F1-2027 · ciclo 2"], retiroLibrePct: 25, precio: "vigente" }, sinRetiro: false, sacoKg: 0, esRenovacion: true, minimoKg: 675, calidad: null, flete: { region: "centro", carga: 50000 }, productorNombre: "Ana Pérez", productorDocumento: null, loteNombre: "L", loteReferencia: "CTC-L-X", grado: "red", copKg: 21000, declaradoKg: 700, lugarEntrega: "Bucaramanga.", termsVersion: "2026-10-07", temporada: null };
   const ren = clausulasDelContrato(base).map((x) => `${x.titulo} ${x.texto}`).join(" ");
   const red = clausulasDelContrato({ ...base, esRenovacion: false, sacoKg: 70, sinRetiro: true, declaradoKg: 400 }).map((x) => x.texto).join(" ");
-  check("contrato · renovación sin adelanto, Flete a CTCx citado en el precio y en la entrega, mínimo −10 % al cambiar de trimestre; declaración reducida sin retiro libre", CONTRATO_VERSION === "2026-10-07.2" && ren.includes("Compra adelantada") && ren.includes("no compra por adelantado") && ren.includes("e incluye el Flete a CTCx de la región Nacional Centro: $50.000 COP por carga equivalente ($400 COP por kg)") && ren.includes("código de envío corporativo de CTCx en Servientrega") && !/auxilio/i.test(ren) && ren.includes("baja 10 %") && red.includes("sin derecho a retiro libre") && red.includes("no hay retiro libre"));
+  check("contrato · renovación sin adelanto, Flete a CTCx citado en el precio y en la entrega, mínimo −10 % al cambiar de trimestre; declaración reducida sin retiro libre", CONTRATO_VERSION === "2026-10-07.3" && ren.includes("Compra adelantada") && ren.includes("no compra por adelantado") && ren.includes("e incluye el Flete a CTCx de la región Nacional Centro: $50.000 COP por carga equivalente ($400 COP por kg)") && ren.includes("código de envío corporativo de CTCx en Servientrega") && !/auxilio/i.test(ren) && ren.includes("baja 10 %") && red.includes("sin derecho a retiro libre") && red.includes("no hay retiro libre"));
 
   const vo = lee("src/lib/ofertas/ventanaDeOferta.ts");
   const pa = lee("src/lib/ofertas/producerActions.ts");
@@ -170,7 +170,7 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
 {
   const { existsSync } = await import("node:fs");
   const va = lee("src/app/ocp/(app)/ventanaActions.ts");
-  check("OCP · confirmar la venta de la semana: no más de lo que queda en la vitrina, y se agrega al despacho de la semana 1 del ciclo siguiente", va.includes("export async function confirmarVentaSemanal(") && va.includes("if (kg > cuenta.disponibleKg + 1e-9)") && va.includes("const plazo = await plazoDeLoVendidoEn(lunes);") && va.includes("despachoDeLoVendido(service, c.id, plazo, kg, copKg)") && va.includes('.is("anulada_at", null)'));
+  check("OCP · confirmar la venta de la semana: no más de lo que queda en la vitrina, y se agrega al bache abierto del contrato (V5.183)", va.includes("export async function confirmarVentaSemanal(") && va.includes("if (kg > cuenta.disponibleKg + 1e-9)") && va.includes("despachoDeLoVendido(service, c.id, lunes, kg, copKg)") && va.includes('.is("anulada_at", null)'));
   check("OCP · confirmar el tiquete paga el 60 % (CTCx puede registrar la guía por el productor)", va.includes("export async function confirmarDespacho(") && va.includes("const { alDespacho } = pagosDeDespacho(Number(d.total_cop));") && va.includes("pago_despacho_cop: alDespacho"));
   check("OCP · recibir exige humedad y aw: en rango paga el resto sobre lo recibido; fuera de rango, devolución o compra con 0–15 %", va.includes("export async function recibirDespacho(") && va.includes("calidadAlRecibir({ humedadPct: humedad, aw }, c.calidad_snapshot)") && va.includes("Math.max(0, totalRecibido - pagado60)") && va.includes('decision === "devolucion"') && va.includes("pagoAdicionalFueraDeRango(totalRecibido, ajuste)"));
   check("OCP · el saco y el adelanto recibidos quedan en Compras con destino Sample Kits; lo vendido no (se vende a nombre del productor)", va.includes('d.tipo !== "vendido" && resultado !== "devolucion"') && va.includes('destino: "sample_kits"'));
@@ -318,6 +318,31 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   check("arranque · se rehizo una sola vez con todos los registros en orden y la inmutabilidad se restituyó en la misma migración", arr.includes("disable trigger lot_existencia_historial_inmutable") && arr.includes("enable trigger lot_existencia_historial_inmutable") && arr.indexOf("enable trigger") > arr.indexOf("disable trigger"));
   check("escritor · el servidor anota el punto de control y quién (el trigger los lee y los limpia)", lee("src/lib/kaffetal/existencia.ts").includes("existencia_origen, existencia_por: input.porQuien }"));
   check("OCP · la vista del lote enseña el historial calificado y «Pendiente de Oferta» la existencia con su control", lee("src/app/ocp/(app)/kr/LoteSeccion.tsx").includes("<HistorialDeExistencia control={controlExistencia} quien={quienCambio} />") && lee("src/app/ocp/(app)/ofertas/page.tsx").includes("controlDeExistencia(filas.map(cambioDeFila))") && lee("src/app/ocp/(app)/ofertas/OfertaDesplegable.tsx").includes("⚠ cambio abrupto"));
+}
+
+// ── 14. V5.183 (owner, 2026-10-07): «Escenario aleatorio» (cambia en cada clic), «¿Cuándo me pagan?» y lo vendido por BACHES (el
+//     productor despacha cada 1–5 semanas, se recomienda 2 o 3; solo si hay compras confirmadas) ──
+{
+  const sim = await import("../src/lib/trato/simulador.ts");
+  const T = await import("../src/lib/trato/terminos.ts");
+  const a1 = sim.escenarioAleatorio(13, 42);
+  const a1b = sim.escenarioAleatorio(13, 42);
+  const a2 = sim.escenarioAleatorio(13, 43);
+  check("aleatorio · la misma semilla da el mismo escenario y otra semilla otro; vende 10–100 % y siempre hay alguna semana con ventas", JSON.stringify(a1) === JSON.stringify(a1b) && JSON.stringify(a1) !== JSON.stringify(a2) && [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].every((s) => { const e = sim.escenarioAleatorio(13, s); return e.ventaPct >= 10 && e.ventaPct <= 100 && e.ventaPct % 5 === 0 && e.pesos.length === 13 && e.pesos.some((w) => w > 0); }));
+  const v = sim.simularVentasDeVentana({ declaradoKg: 1000, copKg: 20000, semanas: 13, sacoKg: 70, ventaPct: 50, patron: "parejo", fncCargaRef: null, pesos: a1.pesos });
+  check("aleatorio · el reparto propio manda sobre el patrón y lo vendido cuadra", Math.abs(v.vendidoKg - 500) < 0.2 && Math.abs(v.porSemana.reduce((s, x) => s + x.kg, 0) - 500) < 0.2 && v.porSemana.filter((x, i) => a1.pesos[i] === 0).every((x) => x.kg === 0));
+  const semanas = [0, 50, 0, 50, 50, 0, 0, 0, 0, 0, 0, 100, 0].map((kg, i) => ({ semana: i + 1, kg, cop: kg * 20000 }));
+  const p2 = sim.pagosPorBaches({ porSemana: semanas, saco: { kg: 70, cop: 1400000 }, cadencia: 2 });
+  const p5 = sim.pagosPorBaches({ porSemana: semanas, saco: { kg: 70, cop: 1400000 }, cadencia: 5 });
+  check("pagos · el bache abre con la primera venta confirmada y sale al cierre de la semana de su cadencia; sin ventas no hay envío; 60 % con el tiquete y 40 % la semana siguiente", p2.baches.length === 3 && p2.baches[0].desde === 2 && p2.baches[0].envio === 3 && p2.baches[0].kg === 50 && p2.baches[1].desde === 4 && p2.baches[1].kg === 100 && p2.baches[2].desde === 12 && p2.baches[0].pago60 === 600000 && p2.baches[0].pago40 === 400000 && p2.baches[0].semanaPago40 === 4 && p2.envios === 4 && p2.totalCop === 1400000 + 250 * 20000);
+  check("pagos · juntar 5 semanas da menos envíos con el mismo total; la cadencia nunca pasa de 5", p5.baches.length === 2 && p5.baches[0].kg === 150 && p5.baches[0].envio === 6 && p5.totalCop === p2.totalCop && sim.pagosPorBaches({ porSemana: semanas, saco: { kg: 0, cop: 0 }, cadencia: 9 }).cadencia === 5 && T.BACHES_DE_DESPACHO.maxSemanas === 5 && T.BACHES_DE_DESPACHO.recomendadas.join() === "2,3");
+  const { clausulasDelContrato } = await import("../src/lib/trato/contrato.ts");
+  const txt = clausulasDelContrato({ tipo: "cherry_picked", ventana: { tipo: "ciclo", desde: "2027-02-15", hasta: "2027-04-04", ciclos: ["F1-2027 · ciclo 2"], retiroLibrePct: 25, precio: "vigente" }, sinRetiro: false, sacoKg: 70, esRenovacion: false, minimoKg: 750, calidad: null, flete: null, productorNombre: "Ana Pérez", productorDocumento: null, loteNombre: "L", loteReferencia: "CTC-L-X", grado: "red", copKg: 21000, declaradoKg: 750, lugarEntrega: "Bucaramanga.", termsVersion: "2026-10-07", temporada: null }).map((x) => x.texto).join(" ");
+  check("contrato · lo vendido sale por baches que decide el productor (3, 4 o hasta 5 semanas; se recomienda 2 o 3), solo con compras confirmadas", txt.includes("Lo vendido sale por baches, cuando el Productor lo decida y solo si hay compras confirmadas") && txt.includes("juntar 3, 4 o hasta 5 semanas") && txt.includes("se recomienda cada 2 o 3") && txt.includes("al cierre de la 5.ª semana contando la de su primera venta confirmada") && !txt.includes("semana 1 del ciclo siguiente"));
+  const vs = lee("src/lib/trato/ventanaServidor.ts");
+  check("servidor · la venta va al bache abierto (pendiente y en plazo) o abre uno con plazo de 5 semanas", vs.includes('.gte("plazo", finDeSemana(semana))') && vs.includes("const plazo = plazoDelBache(semana);") && !vs.includes("plazoDeLoVendido"));
+  const calc = lee("src/components/kaffetal-regal/panel/CalculadoraDelTrato.tsx");
+  check("KR · la calculadora tiene «🎲 Escenario aleatorio» (semilla nueva en cada clic) y «💵 ¿Cuándo me pagan?» con la cadencia de baches", calc.includes("🎲 Escenario aleatorio") && calc.includes("setSemilla(s);") && calc.includes("💵 ¿Cuándo me pagan?") && calc.includes("pagosPorBaches({ porSemana: v.porSemana, saco: v.saco, cadencia })") && calc.includes("Solo hay envío —y pago— si hay compras confirmadas."));
 }
 
 if (fallos.length) {

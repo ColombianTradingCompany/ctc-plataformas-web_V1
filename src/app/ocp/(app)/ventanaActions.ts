@@ -13,7 +13,7 @@ import { calidadAlRecibir, finDeSemana, pagoAdicionalFueraDeRango, pagosDeDespac
 import { sumaDias, trimestreDe, ubicar } from "@/lib/trato/calendario";
 import { minimoDeContinuidad, minimoDelGrado } from "@/lib/trato/minimos";
 import { ADELANTO_RENOVACION_KG } from "@/lib/trato/terminos";
-import { despachoDeLoVendido, plazoDeLoVendidoEn, sincronizarListado } from "@/lib/trato/ventanaServidor";
+import { despachoDeLoVendido, sincronizarListado } from "@/lib/trato/ventanaServidor";
 import { emitOffer } from "./ofertasActions";
 
 // ── La operación del trato por VENTANAS en el OCP (V5.176 · docs/PLAN_CICLOS.md §3–§5, tanda 3) ────────────────────────────────
@@ -104,15 +104,15 @@ export async function confirmarVentaSemanal(contractId: string, formData: FormDa
     retiros: ((retiros ?? []) as { kg: number | string; libre_kg: number | string }[]).map((r) => ({ kg: Number(r.kg), libreKg: Number(r.libre_kg) })),
   });
   if (kg > cuenta.disponibleKg + 1e-9) return { ok: false, error: `En la vitrina quedan ${cuenta.disponibleKg} kg: no se puede confirmar más.` };
-  const plazo = await plazoDeLoVendidoEn(lunes);
-  if (!plazo) return { ok: false, error: "No hay una edición del PVC con sus ciclos para esa semana." };
   const copKg = Number(c.price_per_kg_locked ?? 0);
-  const d = await despachoDeLoVendido(service, c.id, plazo, kg, copKg);
+  // V5.183: la venta va al bache abierto del contrato (o abre uno, con plazo de hasta 5 semanas).
+  const d = await despachoDeLoVendido(service, c.id, lunes, kg, copKg);
   if ("error" in d) return { ok: false, error: "No se pudo preparar el despacho: " + d.error };
+  const plazo = d.plazo;
   const { error } = await service.from("contract_ventas").insert({ contract_id: c.id, semana: lunes, kg, cop_kg: copKg, total_cop: Math.round(kg * copKg), confirmada_por: p.userId, despacho_id: d.id });
   if (error) return { ok: false, error: "No se pudo confirmar la venta: " + error.message };
   await service.from("audit_log").insert({ entity_type: "purchase_contract", entity_id: c.id, action: "venta_semanal_confirmada", performed_by: p.userId, notes: `Semana del ${lunes}: ${kg} kg · ${formatCop(kg * copKg)} · despacho a más tardar el ${plazo}.` });
-  await avisar(service, lot, c.lot_id, `CTCx confirma la venta de ${kg} kg de CPS de su lote ${lot.name} (semana del ${lunes}): ${formatCop(kg * copKg)}. Despáchelos a más tardar el ${plazo} (semana 1 del ciclo siguiente).`, `Venta confirmada · lote ${lot.name}`, p.userId);
+  await avisar(service, lot, c.lot_id, `CTCx confirma la venta de ${kg} kg de CPS de su lote ${lot.name} (semana del ${lunes}): ${formatCop(kg * copKg)}. Van en su bache de despacho: envíelo cuando le convenga —cada 2 o 3 semanas es lo recomendado— y a más tardar el ${plazo}.`, `Venta confirmada · lote ${lot.name}`, p.userId);
   revalidar(c.id);
   return { ok: true };
 }

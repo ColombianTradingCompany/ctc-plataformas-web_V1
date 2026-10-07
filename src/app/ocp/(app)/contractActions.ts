@@ -55,9 +55,9 @@ export async function signContract(
   const lote = (Array.isArray(contract.lots) ? contract.lots[0] : contract.lots) as { name: string; producer_id: string } | null;
   let aviso = "sin lote: no se avisó";
   if (lote) {
-    // V5.176: un trato por VENTANA no va mes a mes: CTCx confirma lo vendido cada semana y el productor despacha al empezar el ciclo siguiente.
+    // V5.176: un trato por VENTANA no va mes a mes: CTCx confirma lo vendido cada semana; V5.183: el productor lo despacha por baches.
     const texto = contract.ventana_tipo
-      ? `CTCx firmó el contrato de su lote ${lote.name}: ${Number(contract.quantity_frozen_kg)} kg de CPS a ${formatCop(Number(contract.price_per_kg_locked))}/kg, ventana del ${contract.vigencia_desde} al ${contract.vigencia_hasta}. Cada semana CTCx le confirma lo vendido; usted lo despacha en la semana 1 del ciclo siguiente. Todo queda en «Mi trato».`
+      ? `CTCx firmó el contrato de su lote ${lote.name}: ${Number(contract.quantity_frozen_kg)} kg de CPS a ${formatCop(Number(contract.price_per_kg_locked))}/kg, ventana del ${contract.vigencia_desde} al ${contract.vigencia_hasta}. Cada semana CTCx le confirma lo vendido; usted lo despacha por baches cuando le convenga —cada 2 o 3 semanas es lo recomendado, hasta 5—. Todo queda en «Mi trato».`
       : `CTC firmó el contrato de su lote ${lote.name}: ${Number(contract.quantity_frozen_kg)} kg de CPS a ${formatCop(Number(contract.price_per_kg_locked))}/kg` +
         `${contract.freeze_months ? `, ${contract.freeze_months} meses` : ""}. Desde hoy el trato se lleva mes a mes en «Mi trato»: CTC le pide cada mes, usted envía y CTC registra el recibo y el pago.`;
     await service.from("producer_comm_log").insert({ producer_id: lote.producer_id, context_label: `Lote ${lote.name}`, lot_id: contract.lot_id, note: texto, created_by: adminId });

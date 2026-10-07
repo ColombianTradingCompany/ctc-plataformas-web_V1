@@ -220,7 +220,8 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
             La ventana
           </h2>
           <p className={styles.meta} style={{ marginBottom: 10 }}>
-            CTCx confirma cada semana lo vendido en Cherry Picked (se agrega al despacho de la semana 1 del ciclo siguiente); el productor
+            CTCx confirma cada semana lo vendido en Cherry Picked (se agrega al bache abierto del productor, que sale cuando el productor lo decida —cada 2 o 3
+            semanas es lo recomendado— y a más tardar 5 semanas después de su primera venta; V5.183); el productor
             despacha el saco al cierre de la semana de firma; CTCx confirma el tiquete y paga el 60 %, y al recibir —con la humedad y la
             actividad de agua medidas— paga el resto, o resuelve fuera de rango (devolución o compra con 0–15 % adicional). Lo vendido que
             no sale tras su prórroga se cobra como retiro penalizado; la ruptura la declara el owner.

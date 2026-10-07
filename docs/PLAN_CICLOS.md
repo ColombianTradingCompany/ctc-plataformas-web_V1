@@ -60,7 +60,9 @@
 - **El saco/adelanto sale al cierre de la semana de firma.** Si no sale, el productor elige: **pedir prórroga** de una semana
   (si aún hay tiempo; queda una advertencia), **cancelar** el contrato o **pasarlo a la ventana siguiente**. Un contrato
   firmado en la semana 1 **no tiene prórroga** (su saco tiene que llegar al procesamiento de esa semana 2).
-- **Lo vendido** (confirmado semana a semana) sale en la **semana 1 del ciclo siguiente**. Si no sale: una semana de prórroga
+- **Lo vendido** (confirmado semana a semana) sale **por baches que decide el productor** (V5.183, owner 2026-10-07): puede despachar
+  cada semana o juntar 3, 4 y hasta 5 semanas —se recomienda cada 2 o 3—, solo si hay compras confirmadas; cada bache sale a más tardar al
+  cierre de la 5.ª semana contando la de su primera venta (antes: la semana 1 del ciclo siguiente). Si no sale: una semana de prórroga
   con advertencia; después, el faltante se cobra como **retiro penalizado** (4 % por carga) y CTCx puede declarar la
   ruptura (decisión del owner, como hoy).
 - **El transporte lo paga el productor**, con el **código de envío corporativo de CTCx en Servientrega**; al precio final se

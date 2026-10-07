@@ -12,7 +12,7 @@
 //     adicional de 0–15 % (el café queda pagado al 60–75 %).
 
 import { sumaDias } from "./calendario";
-import { AJUSTE_FUERA_DE_RANGO_MAX_PCT, CALIDAD_POR_DEFECTO, CARGA_KG, PAGO_AL_DESPACHO_PCT, PENALIDAD_RETIRO_PCT, PRORROGA_DIAS } from "./terminos";
+import { AJUSTE_FUERA_DE_RANGO_MAX_PCT, BACHES_DE_DESPACHO, CALIDAD_POR_DEFECTO, CARGA_KG, PAGO_AL_DESPACHO_PCT, PENALIDAD_RETIRO_PCT, PRORROGA_DIAS } from "./terminos";
 
 export type TipoDeDespacho = "saco" | "adelanto" | "vendido";
 export type RangosDeCalidad = { humedad_min: number; humedad_max: number; aw_max: number };
@@ -26,8 +26,9 @@ export function finDeSemana(iso: string): string {
 /** El plazo del saco o del adelanto: el domingo de la semana en que se firma. */
 export const plazoDelSaco = (firma: string) => finDeSemana(firma);
 
-/** El plazo de lo vendido en un ciclo que termina el domingo `finDelCiclo`: el domingo de la semana 1 del ciclo siguiente. */
-export const plazoDeLoVendido = (finDelCiclo: string) => sumaDias(finDelCiclo, 7);
+/** V5.183 (owner): lo vendido sale por BACHES. El plazo de un bache es el domingo de la 5.ª semana contando la de su primera venta
+ *  confirmada (puede salir antes: cada 2 o 3 semanas es lo recomendado). Reemplaza «la semana 1 del ciclo siguiente» (V5.175). */
+export const plazoDelBache = (semanaDeLaPrimeraVenta: string) => sumaDias(finDeSemana(semanaDeLaPrimeraVenta), (BACHES_DE_DESPACHO.maxSemanas - 1) * 7);
 
 export type OpcionesSiNoSale = { prorroga: boolean; cancelar: boolean; siguienteVentana: boolean; motivoSinProrroga: string | null };
 

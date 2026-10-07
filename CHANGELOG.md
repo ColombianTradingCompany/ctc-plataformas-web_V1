@@ -19,6 +19,23 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.183] — 2026-10-07 (commit pendiente)
+
+- **Añadido**: en la calculadora de la participación en Cherry Picked, **«🎲 Escenario aleatorio»**: cada clic arma otro escenario
+  al azar —cuánto termina vendiendo CTCx (10–100 %) y cómo se reparte en las semanas, con semanas sin compras y alguna más fuerte—
+  y dice lo que pasa en él (cuánto vende, en cuántas semanas compra, la semana más fuerte, lo que recibe y en cuántos envíos). El
+  azar es reproducible por semilla (`escenarioAleatorio`, simulador.ts).
+- **Añadido**: **«💵 ¿Cuándo me pagan?»**: cada envío se paga 60 % con el tiquete de despacho y 40 % al recibirlo con la calidad en
+  rango; el saco sale con la firma; lo vendido se despacha por baches con la cadencia que el productor elija (cada semana, 2 ★, 3 ★,
+  4 o 5 semanas) y una tabla dice qué sale cuándo y cuánto paga cada parte (`pagosPorBaches`).
+- **Cambiado**: **lo vendido sale por baches que decide el productor** (owner: «tiene la potestad de enviar el café en baches que no
+  sean semanales —cada 3, 4 o hasta 5 semanas—, pero se recomienda cada 2 o 3; depende de que haya compras confirmadas»). Antes
+  salía en la semana 1 del ciclo siguiente. La venta que confirma el OCP se agrega al bache abierto del contrato o abre uno, con
+  plazo al cierre de la 5.ª semana contando la de su primera venta (`plazoDelBache`); el productor lo despacha cuando quiera dentro de
+  ese plazo. Contrato (versión `2026-10-07.3`), aviso de la firma, aviso de cada venta y la vista del contrato en el OCP lo dicen.
+- **Seguridad**: `qa-ciclos` (114 → 121), `qa-trato`.
+- **Docs**: `PLAN_CICLOS.md` §3; charters `kaffetal-regal`, `consolas`; ALINEACION §3.
+
 ## [V5.182] — 2026-10-07 (commit bfe32f3)
 
 - **Añadido**: **el ancla de control de la existencia** (owner: «que este cambio de dato no se pierda, de tal manera que se pueda

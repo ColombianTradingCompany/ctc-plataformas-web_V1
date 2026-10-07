@@ -140,3 +140,9 @@ export const AJUSTE_FUERA_DE_RANGO_MAX_PCT = 15;
 export const PRORROGA_DIAS = 7;
 /** Los rangos de calidad por defecto con que se recibe el café (la edición los puede cambiar). */
 export const CALIDAD_POR_DEFECTO = { humedad_min: 10, humedad_max: 12, aw_max: 0.7 } as const;
+
+/** V5.183 (owner, 2026-10-07): lo vendido sale por BACHES que decide el productor —«tiene la potestad de enviar el café en baches
+ *  que no sean semanales que optimicen este esfuerzo (cada 3, 4 o hasta 5 semanas), pero se recomienda cada 2 o 3 semanas.
+ *  Igualmente, esto depende de que haya compras confirmadas»—. Un bache sale a más tardar al cierre de la 5.ª semana contando la
+ *  de su primera venta confirmada (`plazoDelBache`, despachos.ts); sin compras confirmadas no hay envío. */
+export const BACHES_DE_DESPACHO = { opciones: [1, 2, 3, 4, 5] as const, recomendadas: [2, 3] as const, maxSemanas: 5 } as const;

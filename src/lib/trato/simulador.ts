@@ -9,7 +9,7 @@
 // Es un ESCENARIO, no un pedido: el pedido real de CTCx mes a mes lo hace el trato (fase 7). El reparto mensual se
 // enseña parejo porque es lo único honesto sin conocer la cosecha; el productor decide con eso la cantidad.
 
-import { CARGA_KG, COMPRA_INICIAL_CTCX_CARGAS, PENALIDAD_RETIRO_PCT, PERIODO_MESES, RETIRO_LIBRE_AHORA_Y_SIGUIENTE_PCT, minimoKg, type DECLARACIONES } from "./terminos";
+import { BACHES_DE_DESPACHO, CARGA_KG, COMPRA_INICIAL_CTCX_CARGAS, PAGO_AL_DESPACHO_PCT, PENALIDAD_RETIRO_PCT, PERIODO_MESES, RETIRO_LIBRE_AHORA_Y_SIGUIENTE_PCT, minimoKg, type DECLARACIONES } from "./terminos";
 import { tramoLibrePct } from "./mesAMes";
 
 export type Declaracion = (typeof DECLARACIONES)[number];
@@ -130,6 +130,8 @@ export type EscenarioDeVenta = {
   patron: PatronDeVenta;
   /** La referencia FNC por carga congelada en la oferta (null si no hay). */
   fncCargaRef: number | null;
+  /** V5.183: un reparto propio por periodo (el escenario aleatorio); si viene, manda sobre el patrón. */
+  pesos?: number[];
 };
 
 export type ResultadoDeVenta = {
@@ -154,7 +156,7 @@ export function simularVentas(e: EscenarioDeVenta): ResultadoDeVenta {
   const inicial = Math.min(declarado, Math.max(0, e.compraInicialKg));
   const objetivo = Math.max(inicial, (declarado * Math.min(100, Math.max(0, e.ventaPct))) / 100);
   const resto = r1(objetivo - inicial);
-  const pesos: number[] = Array.from({ length: meses }, (_, i) => {
+  const pesos: number[] = e.pesos && e.pesos.length === meses && e.pesos.some((w) => w > 0) ? e.pesos.map((w) => Math.max(0, w)) : Array.from({ length: meses }, (_, i) => {
     if (e.patron === "primer_dia") return i === 0 ? 1 : 0;
     if (e.patron === "al_final") return i === meses - 1 ? 1 : 0;
     if (e.patron === "mes_sin_venta") return meses === 1 ? 1 : i === 0 ? 0 : 1;
@@ -206,8 +208,8 @@ export type ResultadoDeVentana = {
   diferenciaFncCop: number | null;
 };
 
-export function simularVentasDeVentana(e: { declaradoKg: number; copKg: number; semanas: number; sacoKg: number; ventaPct: number; patron: PatronDeVenta; fncCargaRef: number | null }): ResultadoDeVentana {
-  const v = simularVentas({ declaradoKg: e.declaradoKg, copKg: e.copKg, meses: Math.max(1, Math.round(e.semanas)), compraInicialKg: 0, ventaPct: e.ventaPct, patron: e.patron, fncCargaRef: e.fncCargaRef });
+export function simularVentasDeVentana(e: { declaradoKg: number; copKg: number; semanas: number; sacoKg: number; ventaPct: number; patron: PatronDeVenta; fncCargaRef: number | null; pesos?: number[] }): ResultadoDeVentana {
+  const v = simularVentas({ declaradoKg: e.declaradoKg, copKg: e.copKg, meses: Math.max(1, Math.round(e.semanas)), compraInicialKg: 0, ventaPct: e.ventaPct, patron: e.patron, fncCargaRef: e.fncCargaRef, pesos: e.pesos });
   const sacoKg = Math.max(0, Number(e.sacoKg) || 0);
   const saco = { kg: sacoKg, cop: Math.round(sacoKg * Math.max(0, Number(e.copKg) || 0)) };
   const fncKg = v.fncKg;
@@ -223,4 +225,71 @@ export function simularVentasDeVentana(e: { declaradoKg: number; copKg: number; 
     primaFncPct: v.primaFncPct,
     diferenciaFncCop: ingresoFnc != null ? ingresoCop - ingresoFnc : null,
   };
+}
+
+// ── V5.183 (owner, 2026-10-07) · «Escenario aleatorio» y «¿Cuándo me pagan?» ─────────────────────────────────────────────────
+// «Agreguemos un botón más que diga "Escenario Aleatorio", el cual cambie cada vez que se seleccione y muestre lo que ocurre en
+// cada uno.» El azar es REPRODUCIBLE (una semilla → un escenario): la misma semilla da siempre lo mismo, cada clic da otra.
+function azar(semilla: number): () => number {
+  let a = semilla >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Un escenario de ventas al azar: cuánto termina vendiendo CTCx (10–100 %, de 5 en 5) y cómo se reparte en las semanas (algunas
+ *  sin ventas, alguna más fuerte). */
+export function escenarioAleatorio(semanas: number, semilla: number): { ventaPct: number; pesos: number[] } {
+  const r = azar(semilla);
+  const n = Math.max(1, Math.round(semanas));
+  const ventaPct = 10 + Math.floor(r() * 19) * 5;
+  const pesos = Array.from({ length: n }, () => (r() < 0.35 ? 0 : r() < 0.15 ? 2 + r() * 3 : 0.3 + r()));
+  if (!pesos.some((w) => w > 0)) pesos[Math.floor(r() * n)] = 1;
+  return { ventaPct, pesos };
+}
+
+// «Agregar un botón de "¿Cuándo me pagan?" que explique cómo se paga, añadiendo que el Productor tiene la potestad de enviar el
+// café en baches que no sean semanales que optimicen este esfuerzo (cada 3, 4 o hasta 5 semanas), pero se recomienda cada 2 o 3.
+// Igualmente, esto depende de que haya compras confirmadas.» Un bache abre con la primera venta confirmada y sale al cierre de la
+// semana `cadencia` contando esa (nunca más de 5); lo confirmado mientras tanto viaja en él. Cada envío se paga 60 % con el tiquete
+// de despacho y 40 % al recibirlo (se cuenta la semana siguiente). El saco de la firma sale esa misma semana.
+export type BacheDePago = { desde: number; hasta: number; envio: number; kg: number; cop: number; pago60: number; pago40: number; semanaPago40: number };
+
+export function pagosPorBaches(e: { porSemana: { semana: number; kg: number; cop: number }[]; saco: { kg: number; cop: number }; cadencia: number }): {
+  cadencia: number;
+  saco: { kg: number; cop: number; pago60: number; pago40: number } | null;
+  baches: BacheDePago[];
+  envios: number;
+  totalCop: number;
+} {
+  const cadencia = Math.min(BACHES_DE_DESPACHO.maxSemanas, Math.max(1, Math.round(e.cadencia)));
+  const parte = (cop: number) => {
+    const pago60 = Math.round((cop * PAGO_AL_DESPACHO_PCT) / 100);
+    return { pago60, pago40: cop - pago60 };
+  };
+  const baches: BacheDePago[] = [];
+  const orden = [...e.porSemana].sort((a, b) => a.semana - b.semana);
+  let i = 0;
+  while (i < orden.length) {
+    if (orden[i].kg <= 0) {
+      i++;
+      continue; // sin compras confirmadas esa semana: no abre bache
+    }
+    const desde = orden[i].semana;
+    const hasta = desde + cadencia - 1;
+    let kg = 0;
+    let cop = 0;
+    while (i < orden.length && orden[i].semana <= hasta) {
+      kg += orden[i].kg;
+      cop += orden[i].cop;
+      i++;
+    }
+    const p = parte(cop);
+    baches.push({ desde, hasta, envio: hasta, kg: r1(kg), cop: Math.round(cop), ...p, semanaPago40: hasta + 1 });
+  }
+  const saco = e.saco.kg > 0 ? { kg: e.saco.kg, cop: e.saco.cop, ...parte(e.saco.cop) } : null;
+  return { cadencia, saco, baches, envios: baches.length + (saco ? 1 : 0), totalCop: baches.reduce((a, b) => a + b.cop, 0) + (saco?.cop ?? 0) };
 }

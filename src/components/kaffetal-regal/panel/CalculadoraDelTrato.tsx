@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { simularVentasDeVentana, PATRON_LABEL_VENTANA, type PatronDeVenta } from "@/lib/trato/simulador";
-import { CARGA_KG, PENALIDAD_RETIRO_PCT } from "@/lib/trato/terminos";
+import { escenarioAleatorio, pagosPorBaches, simularVentasDeVentana, PATRON_LABEL_VENTANA, type PatronDeVenta } from "@/lib/trato/simulador";
+import { BACHES_DE_DESPACHO, CARGA_KG, PAGO_AL_DESPACHO_PCT, PENALIDAD_RETIRO_PCT } from "@/lib/trato/terminos";
 import { validarDeclaracion, PISO_EXISTENCIA_INSUFICIENTE } from "@/lib/trato/minimos";
 import { fechaLarga } from "@/lib/trato/modalidades";
 import type { CondicionesDeFirma } from "@/lib/ofertas/ventanaDeOferta";
@@ -35,13 +35,27 @@ export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDec
   const tope = Math.max(piso, Math.min(maxKg ?? Infinity, c.disponibleKg ?? Math.max(c.minimoKg * 4, 40 * CARGA_KG)));
   const [kg, setKg] = useState(insuficiente ? Math.min(tope, c.disponibleKg ?? piso) : c.minimoKg);
   const [ventaPct, setVentaPct] = useState(60);
-  const [patron, setPatron] = useState<PatronDeVenta>("parejo");
+  // V5.183 (owner): «Escenario aleatorio» —cada clic arma otro (semilla nueva)— y «¿Cuándo me pagan?» con el ritmo de baches.
+  const [patron, setPatron] = useState<PatronDeVenta | "aleatorio">("parejo");
+  const [semilla, setSemilla] = useState(0);
+  const [verPagos, setVerPagos] = useState(false);
+  const [cadencia, setCadencia] = useState<number>(BACHES_DE_DESPACHO.recomendadas[0]);
   const [retiroPct, setRetiroPct] = useState(20);
   const [acepta, setAcepta] = useState(false);
 
   const decl = validarDeclaracion({ kg, minimo: c.minimoKg, disponibleKg: c.disponibleKg });
   const sinRetiro = decl.ok && !decl.conRetiro;
-  const v = simularVentasDeVentana({ declaradoKg: kg, copKg: c.precioKg, semanas: c.semanas, sacoKg: c.sacoKg, ventaPct, patron, fncCargaRef });
+  const aleatorio = patron === "aleatorio" ? escenarioAleatorio(c.semanas, semilla) : null;
+  const v = simularVentasDeVentana({ declaradoKg: kg, copKg: c.precioKg, semanas: c.semanas, sacoKg: c.sacoKg, ventaPct, patron: patron === "aleatorio" ? "parejo" : patron, fncCargaRef, pesos: aleatorio?.pesos });
+  const pagos = pagosPorBaches({ porSemana: v.porSemana, saco: v.saco, cadencia });
+  function otroEscenario() {
+    const s = Math.floor(Math.random() * 1_000_000_000) + 1;
+    setSemilla(s);
+    setPatron("aleatorio");
+    setVentaPct(escenarioAleatorio(c.semanas, s).ventaPct);
+  }
+  const conVenta = v.porSemana.filter((s) => s.kg > 0);
+  const masFuerte = conVenta.reduce<{ semana: number; kg: number } | null>((m, s) => (!m || s.kg > m.kg ? s : m), null);
   const pasos = [{ etiqueta: "Firma", kg: v.saco.kg }, ...v.porSemana.map((s) => ({ etiqueta: `S${s.semana}`, kg: s.kg }))];
   const maxPaso = Math.max(...pasos.map((p) => p.kg), 1);
 
@@ -123,8 +137,8 @@ export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDec
       <div>
         <div style={{ fontSize: 12.5, fontWeight: 700 }}>2. Juegue con el escenario: ¿cuánto vende CTCx y cuándo?</div>
         <div style={{ fontSize: 11.5, color: "var(--muted)", margin: "2px 0 6px" }}>
-          CTCx no se compromete a comprar cantidades fijas: puede no vender en una semana, o venderse todo el primer día. Cada semana le confirma lo vendido; lo vendido se despacha al empezar el
-          ciclo siguiente. Lo que no se vende sigue siendo suyo.
+          CTCx no se compromete a comprar cantidades fijas: puede no vender en una semana, o venderse todo el primer día. Cada semana le confirma lo vendido, y
+          usted lo despacha por baches cuando le convenga (vea «¿Cuándo me pagan?»). Lo que no se vende sigue siendo suyo.
         </div>
         <label htmlFor="venta-pct" style={{ fontSize: 12.5 }}>
           CTCx termina vendiendo el <b>{ventaPct} %</b> de lo declarado
@@ -136,6 +150,16 @@ export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDec
               {PATRON_LABEL_VENTANA[p]}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={otroEscenario}
+            aria-pressed={patron === "aleatorio"}
+            className="btn btn-sm"
+            title="Cada clic arma otro escenario al azar"
+            style={patron === "aleatorio" ? { background: "var(--accent)", borderColor: "var(--accent)", color: "#fff" } : undefined}
+          >
+            🎲 Escenario aleatorio
+          </button>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${pasos.length}, minmax(0, 1fr))`, gap: 4, alignItems: "end" }}>
           {pasos.map((p) => (
@@ -146,6 +170,18 @@ export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDec
             </div>
           ))}
         </div>
+        {aleatorio && (
+          <div style={{ fontSize: 12.5, marginTop: 6, padding: "6px 10px", border: "1px dashed var(--accent)", borderRadius: 8 }}>
+            🎲 <b>Escenario aleatorio:</b> CTCx termina vendiendo el <b>{v.vendidoPct.toLocaleString("es-CO")} %</b> ({v.vendidoKg.toLocaleString("es-CO", { maximumFractionDigits: 0 })} kg); compra en{" "}
+            <b>{conVenta.length}</b> de {v.porSemana.length} semanas y en <b>{v.porSemana.length - conVenta.length}</b> no compra nada
+            {masFuerte ? (
+              <>
+                ; la semana más fuerte es la <b>S{masFuerte.semana}</b> ({masFuerte.kg.toLocaleString("es-CO", { maximumFractionDigits: 0 })} kg)
+              </>
+            ) : null}
+            . Usted recibiría <b>{formatCop(v.ingresoCop)}</b> en <b>{pagos.envios}</b> {pagos.envios === 1 ? "envío" : "envíos"} (despachando cada {cadencia} {cadencia === 1 ? "semana" : "semanas"}). Cada clic en «Escenario aleatorio» arma otro.
+          </div>
+        )}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8, marginTop: 10 }}>
           {kpi("Vendido a CTCx", `${v.vendidoPct.toLocaleString("es-CO")} %`, `${v.vendidoKg.toLocaleString("es-CO", { maximumFractionDigits: 1 })} kg de lo declarado`)}
           {kpi("Usted recibe", formatCop(v.ingresoCop), c.sacoKg > 0 ? `incluye el ${c.esRenovacion ? "adelanto" : "saco"} · 60 % al despachar, 40 % al recibir` : "60 % al despachar, 40 % al recibir")}
@@ -153,6 +189,86 @@ export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDec
           {v.diferenciaFncCop != null && kpi("Más que vendiendo a la FNC", formatCop(v.diferenciaFncCop), "por lo vendido a CTCx", v.diferenciaFncCop >= 0 ? "var(--green)" : "var(--red)")}
           {kpi("Le queda sin vender", `${v.sinVenderKg.toLocaleString("es-CO", { maximumFractionDigits: 1 })} kg`, "sigue siendo suyo")}
         </div>
+        <div style={{ marginTop: 10 }}>
+          <button type="button" className="btn btn-sm" aria-expanded={verPagos} onClick={() => setVerPagos((x) => !x)} style={verPagos ? { background: "var(--green)", borderColor: "var(--green)", color: "#fff" } : undefined}>
+            💵 ¿Cuándo me pagan?
+          </button>
+        </div>
+        {verPagos && (
+          <div style={{ marginTop: 8, border: "1px solid var(--line)", borderRadius: 10, padding: "10px 12px", background: "var(--paper)", display: "grid", gap: 8, fontSize: 12.5 }}>
+            <div>
+              CTCx le paga <b>cada envío en dos partes</b>: el <b>{PAGO_AL_DESPACHO_PCT} %</b> cuando usted registra el tiquete de despacho (guía, peso y foto) y el{" "}
+              <b>{100 - PAGO_AL_DESPACHO_PCT} %</b> cuando el café llega a CTCx y la humedad y la actividad de agua están en rango.
+              {c.sacoKg > 0 && <> El {c.esRenovacion ? "adelanto" : "saco"} de la firma sale esta misma semana.</>}
+            </div>
+            <div>
+              Lo vendido lo despacha usted <b>por baches</b>: puede enviar cada semana o juntar 3, 4 y hasta {BACHES_DE_DESPACHO.maxSemanas} semanas para ahorrar
+              envíos; <b>se recomienda cada {BACHES_DE_DESPACHO.recomendadas.join(" o ")} semanas</b>. Cada bache sale a más tardar {BACHES_DE_DESPACHO.maxSemanas} semanas después de su
+              primera venta confirmada. <b>Solo hay envío —y pago— si hay compras confirmadas.</b>
+            </div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+              <span>Despacho cada:</span>
+              {BACHES_DE_DESPACHO.opciones.map((n) => {
+                const rec = (BACHES_DE_DESPACHO.recomendadas as readonly number[]).includes(n);
+                return (
+                  <button key={n} type="button" className="btn btn-sm" aria-pressed={n === cadencia} onClick={() => setCadencia(n)} style={n === cadencia ? { background: "var(--accent)", borderColor: "var(--accent)", color: "#fff" } : undefined}>
+                    {n === 1 ? "semana" : `${n} semanas`}
+                    {rec ? " ★" : n === BACHES_DE_DESPACHO.maxSemanas ? " (máx.)" : ""}
+                  </button>
+                );
+              })}
+              <span style={{ color: "var(--muted)", fontSize: 11.5 }}>★ recomendado</span>
+            </div>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+              <thead>
+                <tr style={{ textAlign: "left", color: "var(--muted)" }}>
+                  <th style={{ padding: "3px 6px" }}>Sale</th>
+                  <th style={{ padding: "3px 6px" }}>Qué lleva</th>
+                  <th style={{ padding: "3px 6px", textAlign: "right" }}>{PAGO_AL_DESPACHO_PCT} % · con el tiquete</th>
+                  <th style={{ padding: "3px 6px", textAlign: "right" }}>{100 - PAGO_AL_DESPACHO_PCT} % · al recibirlo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pagos.saco && (
+                  <tr style={{ borderTop: "1px solid var(--line)" }}>
+                    <td style={{ padding: "3px 6px" }}>Esta semana (firma)</td>
+                    <td style={{ padding: "3px 6px" }}>
+                      {c.esRenovacion ? "Adelanto" : "Saco"} {pagos.saco.kg.toLocaleString("es-CO")} kg
+                    </td>
+                    <td style={{ padding: "3px 6px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCop(pagos.saco.pago60)}</td>
+                    <td style={{ padding: "3px 6px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCop(pagos.saco.pago40)} · S1</td>
+                  </tr>
+                )}
+                {pagos.baches.map((b) => (
+                  <tr key={b.desde} style={{ borderTop: "1px solid var(--line)" }}>
+                    <td style={{ padding: "3px 6px", whiteSpace: "nowrap" }}>
+                      Cierre de la S{b.envio}
+                      {b.envio > v.porSemana.length ? <span style={{ color: "var(--muted)" }}> (tras la ventana)</span> : null}
+                    </td>
+                    <td style={{ padding: "3px 6px" }}>
+                      {b.kg.toLocaleString("es-CO", { maximumFractionDigits: 1 })} kg vendidos en {b.desde === Math.min(b.hasta, v.porSemana.length) ? `la S${b.desde}` : `S${b.desde}–S${Math.min(b.hasta, v.porSemana.length)}`}
+                    </td>
+                    <td style={{ padding: "3px 6px", textAlign: "right", whiteSpace: "nowrap" }}>{formatCop(b.pago60)}</td>
+                    <td style={{ padding: "3px 6px", textAlign: "right", whiteSpace: "nowrap" }}>
+                      {formatCop(b.pago40)} · S{b.semanaPago40}
+                    </td>
+                  </tr>
+                ))}
+                {!pagos.baches.length && (
+                  <tr style={{ borderTop: "1px solid var(--line)" }}>
+                    <td colSpan={4} style={{ padding: "3px 6px", color: "var(--muted)" }}>
+                      En este escenario CTCx no confirma ventas: no hay baches que despachar ni pagos por lo declarado.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            <div style={{ color: "var(--muted)" }}>
+              Despachando cada {cadencia} {cadencia === 1 ? "semana" : "semanas"}: <b>{pagos.envios}</b> {pagos.envios === 1 ? "envío" : "envíos"} y <b>{formatCop(pagos.totalCop)}</b> en total.
+              Menos envíos ahorran flete; más seguidos, el dinero llega antes. El 40 % se cuenta la semana siguiente al envío (lo que tarde en llegar y medirse).
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 3 · ¿Y si necesito retirar café? */}
@@ -200,7 +316,7 @@ export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDec
         <input type="checkbox" checked={acepta} onChange={(e) => setAcepta(e.target.checked)} style={{ marginTop: 3 }} />
         <span>
           {c.esRenovacion && <>Confirmo que esta cantidad está disponible y que la humedad y el bodegaje del café son los adecuados. </>}
-          Entiendo la ventana, los plazos de despacho ({c.sacoKg > 0 ? `${c.esRenovacion ? "la compra adelantada" : "el saco"} sale esta semana; ` : ""}lo vendido, al empezar el ciclo siguiente), el pago 60/40 con la calidad, y el retiro.
+          Entiendo la ventana, los plazos de despacho ({c.sacoKg > 0 ? `${c.esRenovacion ? "la compra adelantada" : "el saco"} sale esta semana; ` : ""}lo vendido, por baches de hasta {BACHES_DE_DESPACHO.maxSemanas} semanas), el pago 60/40 con la calidad, y el retiro.
         </span>
       </label>
       <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 10, flexWrap: "wrap" }}>

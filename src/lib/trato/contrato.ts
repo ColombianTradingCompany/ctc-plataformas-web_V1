@@ -9,13 +9,13 @@
 // PURO. Es una redacción operativa de los términos del trato; la revisión jurídica la decide el owner.
 
 import { CTC_RAZON, CTC_SEDE, NIT } from "@/lib/legal";
-import { AJUSTE_FUERA_DE_RANGO_MAX_PCT, CALIDAD_POR_DEFECTO, CARGA_KG, MORA, PAGO_AL_DESPACHO_PCT, PENALIDAD_RETIRO_PCT, PRORROGA_DIAS } from "./terminos";
+import { AJUSTE_FUERA_DE_RANGO_MAX_PCT, BACHES_DE_DESPACHO, CALIDAD_POR_DEFECTO, CARGA_KG, MORA, PAGO_AL_DESPACHO_PCT, PENALIDAD_RETIRO_PCT, PRORROGA_DIAS } from "./terminos";
 import { CONTINUIDAD_REBAJA_PCT } from "./minimos";
 import type { ReglaDePrecio } from "./ventanas";
 import type { RangosDeCalidad } from "./despachos";
 import { fletePorKg, REGION_DE_FLETE_LABEL, type FleteDelTrato } from "./flete";
 
-export const CONTRATO_VERSION = "2026-10-07.2";
+export const CONTRATO_VERSION = "2026-10-07.3";
 
 export type VentanaDelContrato = { tipo: "ciclo" | "extendida"; desde: string; hasta: string; ciclos: string[]; retiroLibrePct: number; precio: ReglaDePrecio };
 
@@ -122,7 +122,7 @@ export function clausulasDelContrato(d: DatosDelContrato): ClausulaDelContrato[]
   const ventas =
     "CTCx no se compromete a comprar cantidades fijas: puede no haber ventas en una semana, o venderse todo lo declarado el primer día. Cada semana CTCx le confirma al Productor lo vendido en Cherry Picked; lo vendido es de CTCx y ya no se puede retirar.";
   const precio = `El precio queda fijo en ${cop(d.copKg)} por kg de CPS (${cop(d.copKg * CARGA_KG)} por carga), ${REGLA_TEXTO[v.precio]}${fleteEnElPrecio(d.flete)}. No cambia durante la ventana.`;
-  const entrega = `${d.lugarEntrega} ${despachoConFlete(d.flete)} El saco${d.esRenovacion ? " o el adelanto" : ""} sale al cierre de la semana en que se firma; si no sale, el Productor puede pedir una prórroga de ${PRORROGA_DIAS} días —que queda como advertencia—, cancelar el contrato o pasarlo a la ventana siguiente (un contrato firmado en la semana 1 del ciclo no tiene prórroga: su saco tiene que llegar al procesamiento de la semana 2). Lo vendido en cada ciclo sale en la semana 1 del ciclo siguiente; si no sale, tiene ${PRORROGA_DIAS} días de prórroga con advertencia y, después, el faltante se cobra como retiro penalizado y CTCx puede declarar la ruptura contractual, que congela la cuenta del Productor hasta que se resuelva.`;
+  const entrega = `${d.lugarEntrega} ${despachoConFlete(d.flete)} El saco${d.esRenovacion ? " o el adelanto" : ""} sale al cierre de la semana en que se firma; si no sale, el Productor puede pedir una prórroga de ${PRORROGA_DIAS} días —que queda como advertencia—, cancelar el contrato o pasarlo a la ventana siguiente (un contrato firmado en la semana 1 del ciclo no tiene prórroga: su saco tiene que llegar al procesamiento de la semana 2). Lo vendido sale por baches, cuando el Productor lo decida y solo si hay compras confirmadas: puede despachar cada semana o juntar 3, 4 o hasta ${BACHES_DE_DESPACHO.maxSemanas} semanas para optimizar el envío —se recomienda cada ${BACHES_DE_DESPACHO.recomendadas.join(" o ")}—, y cada bache sale a más tardar al cierre de la ${BACHES_DE_DESPACHO.maxSemanas}.ª semana contando la de su primera venta confirmada; si un bache no sale a tiempo, tiene ${PRORROGA_DIAS} días de prórroga con advertencia y, después, el faltante se cobra como retiro penalizado y CTCx puede declarar la ruptura contractual, que congela la cuenta del Productor hasta que se resuelva.`;
   const pago = `CTCx paga el ${PAGO_AL_DESPACHO_PCT} % de cada envío con el tiquete de despacho (guía, peso y foto) y el ${100 - PAGO_AL_DESPACHO_PCT} % al recibirlo, comprobado que la humedad está entre ${num(calidad.humedad_min)} y ${num(calidad.humedad_max)} % y la actividad de agua no pasa de ${num(calidad.aw_max)}. Fuera de rango, CTCx elige: devolverlo (el Productor reintegra el ${PAGO_AL_DESPACHO_PCT} % y CTCx paga el flete de vuelta; cada parte pierde su transporte) o comprarlo con un pago adicional de 0 a ${AJUSTE_FUERA_DE_RANGO_MAX_PCT} % (el café queda pagado entre el ${PAGO_AL_DESPACHO_PCT} y el ${PAGO_AL_DESPACHO_PCT + AJUSTE_FUERA_DE_RANGO_MAX_PCT} %).`;
   const retiro = d.sinRetiro
     ? `Por ser una declaración reducida no hay retiro libre: lo que el Productor retire de lo no vendido paga el ${PENALIDAD_RETIRO_PCT} % del precio de cada carga.`

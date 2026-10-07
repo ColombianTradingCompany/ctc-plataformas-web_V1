@@ -655,3 +655,7 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-10-07] V5.182 · El ancla de control de la existencia: historial inmutable escrito por la base, calificado en el OCP
 - ANN `src/lib/kaffetal/{controlDeExistencia.ts (nuevo),existencia.ts}`, `app/ocp/(app)/kr/{HistorialDeExistencia.tsx (nuevo),LoteSeccion.tsx}`, `app/ocp/(app)/ofertas/{page.tsx,OfertaDesplegable.tsx}`, `scripts/qa-ciclos-check.mjs`, `docs/migraciones/{2026-10-07_historial_de_existencia,2026-10-07_historial_de_existencia_arranque}.sql`, `docs/componentes/{kaffetal-regal,consolas}.md`, `docs/ALINEACION.md`.
 (commit: bfe32f3)
+
+## [2026-10-07] V5.183 · La calculadora: «Escenario aleatorio» y «¿Cuándo me pagan?»; lo vendido sale por baches que decide el productor
+- ANN `src/lib/trato/{simulador,despachos,terminos,ventanaServidor,contrato}.ts`, `src/components/kaffetal-regal/panel/CalculadoraDelTrato.tsx`, `app/ocp/(app)/{ventanaActions.ts,contractActions.ts,contratos/[id]/page.tsx}`, `scripts/{qa-ciclos-check,qa-trato-check}.mjs`, `docs/PLAN_CICLOS.md`, `docs/componentes/{kaffetal-regal,consolas}.md`, `docs/ALINEACION.md`.
+(commit: pendiente)

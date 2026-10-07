@@ -48,11 +48,10 @@ export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDec
   const aleatorio = patron === "aleatorio" ? escenarioAleatorio(c.semanas, semilla) : null;
   const v = simularVentasDeVentana({ declaradoKg: kg, copKg: c.precioKg, semanas: c.semanas, sacoKg: c.sacoKg, ventaPct, patron: patron === "aleatorio" ? "parejo" : patron, fncCargaRef, pesos: aleatorio?.pesos });
   const pagos = pagosPorBaches({ porSemana: v.porSemana, saco: v.saco, cadencia });
+  // V5.184 (owner): el azar reparte las ventas en las semanas; «CTCx termina vendiendo el X %» lo sigue fijando el productor.
   function otroEscenario() {
-    const s = Math.floor(Math.random() * 1_000_000_000) + 1;
-    setSemilla(s);
+    setSemilla(Math.floor(Math.random() * 1_000_000_000) + 1);
     setPatron("aleatorio");
-    setVentaPct(escenarioAleatorio(c.semanas, s).ventaPct);
   }
   const conVenta = v.porSemana.filter((s) => s.kg > 0);
   const masFuerte = conVenta.reduce<{ semana: number; kg: number } | null>((m, s) => (!m || s.kg > m.kg ? s : m), null);
@@ -179,7 +178,7 @@ export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDec
                 ; la semana más fuerte es la <b>S{masFuerte.semana}</b> ({masFuerte.kg.toLocaleString("es-CO", { maximumFractionDigits: 0 })} kg)
               </>
             ) : null}
-            . Usted recibiría <b>{formatCop(v.ingresoCop)}</b> en <b>{pagos.envios}</b> {pagos.envios === 1 ? "envío" : "envíos"} (despachando cada {cadencia} {cadencia === 1 ? "semana" : "semanas"}). Cada clic en «Escenario aleatorio» arma otro.
+            . Usted recibiría <b>{formatCop(v.ingresoCop)}</b> en <b>{pagos.envios}</b> {pagos.envios === 1 ? "envío" : "envíos"} (despachando cada {cadencia} {cadencia === 1 ? "semana" : "semanas"}). Cada clic en «Escenario aleatorio» reparte las ventas de otra forma; el % vendido lo fija usted arriba.
           </div>
         )}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8, marginTop: 10 }}>

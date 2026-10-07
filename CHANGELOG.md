@@ -19,6 +19,12 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.184] — 2026-10-07 (commit pendiente)
+
+- **Cambiado**: **«🎲 Escenario aleatorio» ya no cambia el % vendido** (owner: «no hagas que esto cambie el "CTCx termina vendiendo
+  el 10 % de lo declarado"»): cada clic reparte al azar lo vendido en las semanas; el % lo sigue fijando el productor con su barra.
+- **Seguridad**: `qa-ciclos` vigila que el escenario aleatorio no toque el % vendido.
+
 ## [V5.183] — 2026-10-07 (commit a22f716)
 
 - **Añadido**: en la calculadora de la participación en Cherry Picked, **«🎲 Escenario aleatorio»**: cada clic arma otro escenario

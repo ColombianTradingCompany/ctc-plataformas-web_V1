@@ -240,8 +240,8 @@ function azar(semilla: number): () => number {
   };
 }
 
-/** Un escenario de ventas al azar: cuánto termina vendiendo CTCx (10–100 %, de 5 en 5) y cómo se reparte en las semanas (algunas
- *  sin ventas, alguna más fuerte). */
+/** Un escenario de ventas al azar: cómo se reparte lo vendido en las semanas (algunas sin ventas, alguna más fuerte) y un % de venta
+ *  sugerido (10–100 %, de 5 en 5). V5.184 (owner): la calculadora usa SOLO el reparto; el % lo sigue fijando el productor. */
 export function escenarioAleatorio(semanas: number, semilla: number): { ventaPct: number; pesos: number[] } {
   const r = azar(semilla);
   const n = Math.max(1, Math.round(semanas));

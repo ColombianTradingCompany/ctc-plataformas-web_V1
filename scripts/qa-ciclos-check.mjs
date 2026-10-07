@@ -342,7 +342,7 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   const vs = lee("src/lib/trato/ventanaServidor.ts");
   check("servidor · la venta va al bache abierto (pendiente y en plazo) o abre uno con plazo de 5 semanas", vs.includes('.gte("plazo", finDeSemana(semana))') && vs.includes("const plazo = plazoDelBache(semana);") && !vs.includes("plazoDeLoVendido"));
   const calc = lee("src/components/kaffetal-regal/panel/CalculadoraDelTrato.tsx");
-  check("KR · la calculadora tiene «🎲 Escenario aleatorio» (semilla nueva en cada clic) y «💵 ¿Cuándo me pagan?» con la cadencia de baches", calc.includes("🎲 Escenario aleatorio") && calc.includes("setSemilla(s);") && calc.includes("💵 ¿Cuándo me pagan?") && calc.includes("pagosPorBaches({ porSemana: v.porSemana, saco: v.saco, cadencia })") && calc.includes("Solo hay envío —y pago— si hay compras confirmadas."));
+  check("KR · la calculadora tiene «🎲 Escenario aleatorio» (semilla nueva en cada clic; no toca el % vendido, V5.184) y «💵 ¿Cuándo me pagan?» con la cadencia de baches", calc.includes("🎲 Escenario aleatorio") && calc.includes("setSemilla(Math.floor(Math.random() * 1_000_000_000) + 1);") && !/function otroEscenario\(\) \{[^}]*setVentaPct/.test(calc) && calc.includes("💵 ¿Cuándo me pagan?") && calc.includes("pagosPorBaches({ porSemana: v.porSemana, saco: v.saco, cadencia })") && calc.includes("Solo hay envío —y pago— si hay compras confirmadas."));
 }
 
 if (fallos.length) {

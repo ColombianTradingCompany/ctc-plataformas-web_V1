@@ -630,4 +630,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-07] V5.176 · Ciclos de Cherry Picked, tanda 3: la operación por ventanas en el OCP, la renovación a una aprobación, la vitrina por ventanas y el barrido de renovaciones
 - ANN `app/ocp/(app)/{ventanaActions.ts,contractActions.ts,ofertasActions.ts,catalogActions.ts,ofertas/page.tsx,contratos/[id]/page.tsx}`, `src/lib/trato/{ventanaServidor,renovaciones,producerActions,modalidades,terminos}.ts`, `src/lib/ofertas/{producerActions,ventanaDeOferta}.ts`, `src/app/api/cron/renovaciones/route.ts` (reemplaza `redeclaraciones`), `vercel.json`, `src/components/kaffetal-regal/{KaffetalExperience.tsx,panel/ContratosTab.tsx,panel/CalculadoraDelTrato.tsx}`, `scripts/qa-ciclos-check.mjs`, `docs/migraciones/2026-10-07_ciclos_operacion_ocp.sql`, `docs/PLAN_CICLOS.md`, `docs/componentes/{consolas,kaffetal-regal,cherry-picked}.md`, `docs/ALINEACION.md`. Retirados: `src/lib/trato/redeclaracion.ts`, `src/app/api/cron/redeclaraciones/route.ts`.
-(commit: pendiente)
+(commit: 70ab89b)

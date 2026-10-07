@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.176] — 2026-10-07 (commit pendiente)
+## [V5.176] — 2026-10-07 (commit 70ab89b)
 
 - **Añadido**: **tanda 3 de los Ciclos: la operación del trato por ventanas en el OCP** (`docs/PLAN_CICLOS.md` §3–§5). En el
   contrato: confirmar la venta de la semana (se agrega al despacho de la semana 1 del ciclo siguiente), confirmar el tiquete y

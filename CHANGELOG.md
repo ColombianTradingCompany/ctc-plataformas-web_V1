@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.179] — 2026-10-07 (commit pendiente)
+## [V5.179] — 2026-10-07 (commit d6b7031)
 
 - **Añadido**: **el agente de la edición siguiente del PVC** (tanda 4 de los Ciclos, `docs/PLAN_CICLOS.md` §6; owner: «sí, que
   prepare el borrador ya», presupuesto de IA ~US$10). En la semana 1 del ciclo 2 —o cuando el owner lo pide— deja la edición

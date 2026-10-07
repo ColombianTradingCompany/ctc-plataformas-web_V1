@@ -177,6 +177,7 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **2026-10-07 · `docs/PLAN_CICLOS.md`** (owner): el OCP emite por ventana (la fecha de firma decide), confirma renovaciones prellenadas en la semana 4 de cada ciclo, registra despachos y recepciones (humedad, aw, pago 60/40) y confirmaciones semanales; el trato mes a mes se retira en la tanda 3.
 - **V5.173 · «Ofrecer renovación» se habilita también al terminar la vigencia del trato** (no solo a los 90 días), para los
   tratos de «Temporada Actual»; el aviso de la oferta sin PVC siguiente nombra la nueva modalidad.
 - **V5.172 · «Confirmar la oferta» con cifras que se ven editables** (owner, 2026-10-06): cajas con $ · COP / kg · COP / carga ·

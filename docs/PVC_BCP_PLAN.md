@@ -1205,6 +1205,8 @@ Guardianes del módulo y su línea base: `qa-pvc-vigencia` 28 · `qa-pvc-lectura
 - **§9.3**: el X % del collar de TRM.
 - **§11.7**: ruta `/bcp/pvc` vs `/bcp/modelo` · cuarto KPI · aviso a lotes galardonados si una variedad baja de nivel.
 
+> **2026-10-07 · el calendario y el disparador cambian** (owner, `docs/PLAN_CICLOS.md` §1 y §6): trimestres de 13 semanas ISO (14 en los años de 53), el agente propone la edición siguiente en la semana 1 del ciclo 2 y un responsable la publica a más tardar en la semana 2; la corrección se mide por ciclo (15 de 20 lecturas FNC, alza y baja con tope del 10 %) y reemplaza el «10 de 15» de §5.6 y §9.3; el auxilio de transporte entra como término fijo por carga (D1 §5 lo dejaba en $0). Las fechas de publicación de §5 y §14.1 quedan superadas.
+
 ## 14. Decisiones de narrativa del owner (2026-09-17)
 
 Respuestas del owner a los tres documentos de narrativa —**CTCx · Kaffetal Regal · Cherry Picked**, dos páginas cada

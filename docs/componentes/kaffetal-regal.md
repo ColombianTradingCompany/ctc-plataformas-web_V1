@@ -152,6 +152,7 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **2026-10-07 · `docs/PLAN_CICLOS.md` manda sobre el trato** (owner, desde WRAP-COMMIT-PUSH): ventanas de ciclos de 6–7 semanas por la fecha de firma, saco inicial de 70–200 kg fuera de lo declarado, pago 60/40 con humedad y aw, retiro 25/30 % solo de lo no vendido, mínimos por ventana con continuidad lineal −10 %/trimestre, renovación de un paso, Ficha A2 con existencia, plantas y producción 5 : 1. Se ejecuta en cuatro tandas (§9); hasta la tanda 2, las modalidades de la V5.169–V5.173 siguen en el código.
 - **V5.173 · «Declarar para Temporada Actual» reemplaza a «Declarar Ahora»** (owner, 2026-10-06; ejecutado desde WRAP-COMMIT-PUSH):
   lo que queda de la temporada en curso (≥ 30 días), al PVC vigente, 10 a 25 kg con la firma, meses redondeados
   (`mesesDeLaTemporadaActual`); la escalera de retiro se reparte en los meses (`tramoLibrePct` · `TRAMO_LIBRE_DEL_TRATO_PCT` 75):

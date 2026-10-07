@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.182] — 2026-10-07 (commit pendiente)
+## [V5.182] — 2026-10-07 (commit bfe32f3)
 
 - **Añadido**: **el ancla de control de la existencia** (owner: «que este cambio de dato no se pierda, de tal manera que se pueda
   tener un ancla de control que muestre y demuestre si hay cambios abruptos o desproporcionados»). La base guarda CADA cambio de

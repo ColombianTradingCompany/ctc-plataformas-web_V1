@@ -654,4 +654,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-07] V5.182 · El ancla de control de la existencia: historial inmutable escrito por la base, calificado en el OCP
 - ANN `src/lib/kaffetal/{controlDeExistencia.ts (nuevo),existencia.ts}`, `app/ocp/(app)/kr/{HistorialDeExistencia.tsx (nuevo),LoteSeccion.tsx}`, `app/ocp/(app)/ofertas/{page.tsx,OfertaDesplegable.tsx}`, `scripts/qa-ciclos-check.mjs`, `docs/migraciones/{2026-10-07_historial_de_existencia,2026-10-07_historial_de_existencia_arranque}.sql`, `docs/componentes/{kaffetal-regal,consolas}.md`, `docs/ALINEACION.md`.
-(commit: pendiente)
+(commit: bfe32f3)

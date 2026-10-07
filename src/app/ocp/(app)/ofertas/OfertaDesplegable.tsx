@@ -6,6 +6,7 @@ import { emitOffer, type OfferKind } from "../ofertasActions";
 import { formatCop } from "@/lib/arena/inscriptions";
 import { CARGA_KG, LUGAR_DE_ENTREGA_POR_DEFECTO } from "@/lib/trato/terminos";
 import { fechaLarga } from "@/lib/trato/modalidades";
+import { fletePorKg, REGION_DE_FLETE_EJEMPLOS, REGION_DE_FLETE_LABEL, REGIONES_DE_FLETE, type RegionDeFlete } from "@/lib/trato/flete";
 import type { AnclajeDeOferta } from "./OfertasClient";
 import { NoOfertarForm } from "./OfertasClient";
 import styles from "@/components/panel/shared.module.css";
@@ -16,6 +17,8 @@ import styles from "@/components/panel/shared.module.css";
 // Bucaramanga en las instalaciones de CTCx) y la oferta de precio por kg/carga.»
 // El precio llega del PVC (Lote de Temporada o Directa); si CTCx lo cambia, la oferta pasa a «excepción» y pide motivo: así
 // el anclaje nunca se rompe en silencio. kg y carga se editan juntos (1 carga = 125 kg).
+// V5.177 (owner, 2026-10-07): CTCx elige la REGIÓN del Flete a CTCx (Regional Santander · Nacional Centro · Nacional Sur; la
+// sugiere el departamento de la finca) y su valor por carga se suma al precio final; la oferta congela región y valor.
 
 export type ResumenDelLote = {
   productor: string;
@@ -82,7 +85,9 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [clase, setClase] = useState<OfferKind>("temporada");
-  const precioAncla = anclaje ? (clase === "directa" ? anclaje.copKgDirecta : anclaje.copKg) : null;
+  const [region, setRegion] = useState<RegionDeFlete | null>(anclaje?.regionSugerida ?? null);
+  const anclaDe = (k: OfferKind, r: RegionDeFlete | null) => (anclaje && r ? (k === "directa" ? anclaje.porRegion[r].copKgDirecta : anclaje.porRegion[r].copKg) : null);
+  const precioAncla = anclaDe(clase, region);
   const [precioKg, setPrecioKg] = useState(precioAncla != null ? miles(String(Math.round(precioAncla))) : "");
   const [minKg, setMinKg] = useState(anclaje?.minKg != null ? miles(String(anclaje.minKg)) : "");
   // V5.169: la compra de CTCx Selection propone cuántos kilos compra (todo el lote o una parte).
@@ -105,11 +110,19 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
   const minN = num(minKg);
   const kgSelN = num(kgSelection);
   const listo =
-    Number.isFinite(kgN) && kgN > 0 && !faltaMotivo && lugar.trim() !== "" && !pasaTope && (esSelection ? Number.isFinite(kgSelN) && kgSelN > 0 : Number.isFinite(minN) && minN > 0 && sacoOk);
+    Number.isFinite(kgN) && kgN > 0 && !faltaMotivo && lugar.trim() !== "" && !pasaTope && (!anclaje || region != null) && (esSelection ? Number.isFinite(kgSelN) && kgSelN > 0 : Number.isFinite(minN) && minN > 0 && sacoOk);
 
   function elegirClase(k: OfferKind) {
     setClase(k);
-    if (anclaje && (k === "temporada" || k === "directa")) setPrecioKg(miles(String(Math.round(k === "directa" ? anclaje.copKgDirecta : anclaje.copKg))));
+    const a = anclaDe(k, region);
+    if (a != null && (k === "temporada" || k === "directa")) setPrecioKg(miles(String(Math.round(a))));
+  }
+
+  // Cambiar la región mueve el precio al de esa región (el flete se suma al precio final).
+  function elegirRegion(r: RegionDeFlete) {
+    setRegion(r);
+    const a = anclaDe(clase, r);
+    if (a != null) setPrecioKg(miles(String(Math.round(a))));
   }
 
   function emitir() {
@@ -123,6 +136,7 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
         fd.set("saco_kg", String(sacoN));
       }
       fd.set("lugar_entrega", lugar.trim());
+      if (region) fd.set("flete_region", region);
       if (notas.trim()) fd.set("notes", notas.trim());
       const res = await emitOffer(lotId, claseEfectiva, fd);
       if (res.ok) router.refresh();
@@ -144,7 +158,7 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
         <b>{lotName}</b>
         <span className={styles.meta} style={{ display: "block", margin: "2px 0 0" }}>
           {resumen.productor} · {resumen.finca ?? "—"} · <span className="mono">{resumen.referencia}</span> · <b style={{ color: `var(--t-${resumen.grado})` }}>{resumen.grado}</b>
-          {anclaje && <> · PVC {anclaje.code}: <b>{formatCop(anclaje.copKg)}/kg</b></>}
+          {anclaje && <> · PVC {anclaje.code}: <b>{formatCop(anclaje.copKg)}/kg</b> + flete</>}
         </span>
       </summary>
       <div style={{ padding: "0 12px 12px", display: "grid", gap: 10 }}>
@@ -183,7 +197,32 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
               </label>
             ))}
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 8 }}>
+          {anclaje && (
+            <fieldset style={{ border: "1px solid var(--line)", borderRadius: 8, padding: "8px 10px", margin: 0, display: "grid", gap: 6 }}>
+              <legend style={{ fontSize: 12, fontWeight: 600, padding: "0 4px" }}>Flete a CTCx · región de despacho</legend>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {REGIONES_DE_FLETE.map((r) => (
+                  <label
+                    key={r}
+                    title={REGION_DE_FLETE_EJEMPLOS[r]}
+                    style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12.5, cursor: "pointer", border: `1.5px solid ${region === r ? "var(--ink)" : "var(--line)"}`, borderRadius: 8, padding: "5px 9px" }}
+                  >
+                    <input type="radio" name={`flete-${lotId}`} checked={region === r} onChange={() => elegirRegion(r)} />
+                    <span>
+                      {REGION_DE_FLETE_LABEL[r]} · <b>{formatCop(anclaje.fletes[r])}</b>/carga
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <span className={styles.meta} style={{ margin: 0 }}>
+                {region
+                  ? `${REGION_DE_FLETE_EJEMPLOS[region]}. Suma ${formatCop(fletePorKg(anclaje.fletes[region]))}/kg al precio final; el productor despacha con el código corporativo de CTCx en Servientrega y paga el resto en la oficina.`
+                  : "Elija la región desde donde despacha el productor (no se pudo sugerir por el departamento de la finca)."}
+                {region && anclaje.regionSugerida === region ? " Sugerida por el departamento de la finca." : ""}
+              </span>
+            </fieldset>
+          )}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 8 }}>
             <Campo
               etiqueta="Precio por kg de CPS"
               prefijo="$"
@@ -199,7 +238,7 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
                     </button>
                   </>
                 ) : precioAncla != null ? (
-                  esSelection ? "El tope (PVC − 8 %); puede proponer menos." : "El PVC del grado."
+                  esSelection ? "El tope (PVC − 8 % + flete); puede proponer menos." : "El PVC del grado + el flete de la región."
                 ) : null
               }
             />
@@ -256,12 +295,12 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
           </label>
           {pasaTope && (
             <p className={styles.warn} style={{ margin: 0 }}>
-              Una compra de CTCx Selection va hasta el PVC − 8 %: {formatCop(precioAncla!)}/kg como máximo.
+              Una compra de CTCx Selection va hasta el PVC − 8 % más el flete: {formatCop(precioAncla!)}/kg como máximo.
             </p>
           )}
           {esSelection && !pasaTope && precioAncla != null && (
             <p className={styles.meta} style={{ margin: 0 }}>
-              Tope PVC {anclaje!.code} − 8 %: {formatCop(precioAncla)}/kg. El productor ve que este precio NO es el PVC, puede aceptar, contraofertar o desistir; la
+              Tope PVC {anclaje!.code} − 8 % + Flete a CTCx: {formatCop(precioAncla)}/kg. El productor ve que este precio NO es el PVC, puede aceptar, contraofertar o desistir; la
               negociación vuelve aquí (Abiertas).
             </p>
           )}
@@ -272,8 +311,9 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
               </p>
             ) : (
               <p className={styles.meta} style={{ margin: 0 }}>
-                PVC {anclaje!.code} · banda {anclaje!.banda} ×{anclaje!.mult} → {formatCop(precioAncla)}/kg. Si el lote es de la temporada pasada, se aplica −10 % al
-                emitir. La invitación vence al terminar esta edición del PVC.{" "}
+                PVC {anclaje!.code} · banda {anclaje!.banda} ×{anclaje!.mult} → {formatCop(anclaje!.copKg)}/kg
+                {region ? <> + Flete a CTCx {REGION_DE_FLETE_LABEL[region]} {formatCop(fletePorKg(anclaje!.fletes[region]))}/kg = <b>{formatCop(precioAncla)}/kg</b></> : null}. Si el lote es de la
+                temporada pasada, se aplica −10 % al PVC al emitir. La invitación vence al terminar esta edición del PVC.{" "}
                 {/* V5.175 (docs/PLAN_CICLOS.md §2): la fecha de FIRMA decide la ventana; esto es lo que tocaría hoy. */}
                 {anclaje!.ventanaHoy.abierta ? (
                   <>
@@ -289,7 +329,7 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
                 )}{" "}
                 {anclaje!.siguiente ? (
                   <>
-                    PVC siguiente ({anclaje!.siguiente.code}): {formatCop(anclaje!.siguiente.copKg)}/kg.
+                    PVC siguiente ({anclaje!.siguiente.code}): {formatCop(anclaje!.siguiente.copKg)}/kg + el mismo flete.
                   </>
                 ) : (
                   <>El PVC siguiente se publica a más tardar el {anclaje!.fechaLimiteSiguiente ? fechaLarga(anclaje!.fechaLimiteSiguiente) : "—"}.</>
@@ -314,7 +354,7 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
           </div>
           {!listo && !pending && (
             <p className={styles.meta} style={{ margin: 0, textAlign: "right" }}>
-              {pasaTope ? "El precio supera el tope de PVC − 8 %." : faltaMotivo ? "Falta el motivo de la excepción." : esSelection ? "Falta el precio, los kilos o las condiciones de entrega." : "Falta el precio, la cantidad mínima o las condiciones de entrega."}
+              {pasaTope ? "El precio supera el tope de PVC − 8 %." : faltaMotivo ? "Falta el motivo de la excepción." : anclaje && !region ? "Falta la región del Flete a CTCx." : esSelection ? "Falta el precio, los kilos o las condiciones de entrega." : "Falta el precio, la cantidad mínima o las condiciones de entrega."}
             </p>
           )}
           {error && (

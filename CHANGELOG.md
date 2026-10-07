@@ -19,6 +19,30 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.177] — 2026-10-07 (commit pendiente)
+
+- **Cambiado**: **«Flete a CTCx» reemplaza el «auxilio de transporte»** (owner, 2026-10-07: no existe; las cooperativas le
+  DESCUENTAN el flete a la base FNC, que es puesta en bodega de Almacafé). CTCx suma al precio final un flete fijo por carga
+  equivalente en tres niveles por región de despacho —Regional Santander $25.000, Nacional Centro $50.000, Nacional Sur $70.000
+  (200 · 400 · 560 COP/kg)—; el productor despacha con el código corporativo de CTCx en Servientrega y paga el resto en la
+  oficina. Precio final = PVC × multiplicador del grado (con su %) + flete de la región (`src/lib/trato/flete.ts`).
+- **Añadido**: los tres valores son **variables de la edición** en ECP → Modelo Económico → Ediciones (owner, con auditoría;
+  ajustables, no entran en la huella del PVC). En «Confirmar la oferta» del OCP, CTCx **elige la región** (la sugiere el
+  departamento de la finca) y el precio se mueve con ella; la oferta congela región y valor, y la renovación conserva la región.
+  El precio del PVC siguiente (ventanas al promedio o al siguiente) lleva el mismo flete congelado. CTCx Selection: el tope es
+  PVC − 8 % más el flete.
+- **Cambiado**: el contrato (versión `2026-10-07.2`), la calculadora, la oferta y la propuesta de Selection en Kaffetal Regal
+  citan el Flete a CTCx de su región y el despacho con el código corporativo. Las cajas de cifras de «Confirmar la oferta» se
+  ensanchan (el precio por carga ya no se corta).
+- **Datos**: migración `2026-10-07_flete_a_ctcx.sql` (aditiva): `pvc_editions.flete_por_region` (con su check; PVC-F4-2026 con
+  los valores del owner y auditoría), `lot_offers.flete_region`/`flete_carga`, `purchase_contracts.flete_region`/`flete_carga`;
+  el guard de la edición ya no protege el auxilio. Sus dos columnas (nunca llenadas) se retiran tras el despliegue.
+- **Corregido**: `qa-compras` no contaba `ventanaActions.ts` (V5.176) como escritor de Compras —el saco y el adelanto recibidos—
+  porque el archivo no estaba en git cuando corrió; ahora lo admite y vigila que vaya a Sample Kits.
+- **Seguridad**: `qa-ciclos` (66 → 77), `qa-pvc-precio`, `qa-trato`, `qa-compras` (99 → 101).
+- **Docs**: `PLAN_CICLOS.md` §3, §6, §9 y §10; nota en `PVC_BCP_PLAN.md`; charters `herramientas-internas`, `consolas`,
+  `kaffetal-regal`; ALINEACION §3.
+
 ## [V5.176] — 2026-10-07 (commit 70ab89b)
 
 - **Añadido**: **tanda 3 de los Ciclos: la operación del trato por ventanas en el OCP** (`docs/PLAN_CICLOS.md` §3–§5). En el

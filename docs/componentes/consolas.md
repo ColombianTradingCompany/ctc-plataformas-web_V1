@@ -177,6 +177,7 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.177 · «Confirmar la oferta» elige la región del Flete a CTCx** (sugerida por el departamento de la finca; fuera de Colombia la elige CTCx) y el precio se mueve con ella; `emitOffer` la exige en las ancladas y congela `flete_region`/`flete_carga`; la renovación (`prepararRenovacion`) conserva la región. Selection: tope = PVC − 8 % + flete.
 - **V5.176 · la operación del trato por ventanas** en `/ocp/contratos/[id]` (`ventanaActions.ts`: venta semanal, tiquete y 60 %, recibo con humedad/aw y 40 % o fuera de rango, prórroga y faltante de lo vendido, renovación) y la columna «Renovaciones de ventana» en «Pendiente de Oferta» (desde la semana 4). Pendiente: conducirlo en el navegador con una cuenta real (OTP).
 - **V5.175 · la invitación lleva el saco (70–200; 0–200 si el lote continúa) y vence con su edición**; «Confirmar la oferta» enseña la ventana de hoy; el contrato por ventana se lee por su ventana. Pendiente (tanda 3): confirmar ventas semanales, confirmar despachos y pagar el 60 %, recibir (humedad, aw) y pagar el 40 % o resolver fuera de rango, el despacho de lo vendido al empezar el ciclo, renovaciones prellenadas (semana 4) y retirar el trato mes a mes.
 - **V5.174 · el mínimo y el auxilio de las ofertas salen de la edición del PVC** (`minimoDelGrado`, `precioDeLaEscalera(…, auxilio)`); las variables se editan en ECP → Modelo Económico → Ediciones (owner).

@@ -96,7 +96,7 @@ export function EdicionesBoard({
         </div>
       )}
 
-      {/* V5.174 (docs/PLAN_CICLOS.md): las variables de la edición vigente y de la próxima — fechas, mínimos, calidad, auxilio. */}
+      {/* V5.174 (docs/PLAN_CICLOS.md): las variables de la edición vigente y de la próxima — fechas, mínimos, calidad, flete (V5.177). */}
       {vigente && <VariablesDeEdicion key={`${vigente.id}-${vigente.validFrom}-${vigente.ciclo1Hasta}`} edicion={vigente} />}
       {proxima && <VariablesDeEdicion key={`${proxima.id}-${proxima.validFrom}-${proxima.ciclo1Hasta}`} edicion={proxima} />}
 

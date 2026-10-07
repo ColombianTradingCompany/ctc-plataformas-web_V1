@@ -152,6 +152,7 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.177 · el Flete a CTCx** se lee en la oferta, la propuesta de Selection, la calculadora y el contrato (versión `2026-10-07.2`): región, valor por carga y por kg, y el despacho con el código corporativo de CTCx en Servientrega (el productor paga el resto en la oficina). Ya no se habla de «auxilio de transporte».
 - **V5.176 · la renovación**: la invitación prellenada llega a «Participación en Cherry Picked»; el productor reconfirma disponibilidad, humedad y bodegaje y puede actualizar la existencia. Las ventas anuladas no cuentan en «Mi trato».
 - **V5.175 · el trato de Cherry Picked por ventanas** (docs/PLAN_CICLOS.md, tanda 2): la fecha de firma decide la ventana; calculadora con la vista previa del servidor (`previsualizarOferta`), saco fuera de lo declarado con su despacho, retiro solo de lo no vendido, «Mi trato» con cuenta, ventas y despachos (registrar, prórroga, cancelar, ventana siguiente), existencia registrable desde la oferta. Pendiente (tanda 3): la renovación de un paso desde «Mi trato» y las confirmaciones que escribe el OCP.
 - **V5.174 · Ficha A2**: existencia total del lote (kg de CPS, espejo en `lots.existencia_cps_kg`), número de plantas y producción estimada cereza/pergamino (5 : 1). Pendiente (tanda 2): en lotes que ya avanzaron del circuito el guard impide editar la Ficha; la existencia se reconfirma en la renovación con una acción de servidor.

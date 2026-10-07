@@ -11,6 +11,7 @@ import { plazoDelSaco } from "@/lib/trato/despachos";
 import { hoyEnColombia } from "@/lib/pvc/servicio";
 import { condicionesDeFirma, type CondicionesDeFirma, type OfertaParaVentana } from "./ventanaDeOferta";
 import { sincronizarListado } from "@/lib/trato/ventanaServidor";
+import { fleteDeLaFila } from "@/lib/trato/flete";
 import { ctcLotReference } from "@/components/kaffetal-regal/data";
 
 // ── La respuesta del productor a una oferta (V5.18 · con declaración desde la V5.83 · por ventanas desde la V5.175) ──────────
@@ -64,7 +65,7 @@ export async function respondToOffer(
   const { data: offer } = await service
     .from("lot_offers")
     .select(
-      "id, lot_id, producer_id, status, kind, grade_snapshot, season_id, price_per_kg, quantity_kg, terms_version, min_kg, max_kg, compra_inicial_kg, reference_price_source, reference_price_snapshot, pvc_edition_id, modificador_pct, expira_at, lugar_entrega, season_label, temporada_hasta, temporada_desde, precio_tope_kg, price_next_kg, pvc_next_edition_id, saco_kg, es_renovacion, renovacion_de, lots(name)"
+      "id, lot_id, producer_id, status, kind, grade_snapshot, season_id, price_per_kg, quantity_kg, terms_version, min_kg, max_kg, compra_inicial_kg, reference_price_source, reference_price_snapshot, pvc_edition_id, modificador_pct, expira_at, lugar_entrega, season_label, temporada_hasta, temporada_desde, precio_tope_kg, price_next_kg, pvc_next_edition_id, saco_kg, es_renovacion, renovacion_de, flete_region, flete_carga, lots(name)"
     )
     .eq("id", offerId)
     .maybeSingle();
@@ -155,7 +156,7 @@ export async function respondToOffer(
     esRenovacion: cond?.esRenovacion ?? false,
     minimoKg: cond ? cond.minimoKg : null,
     calidad: cond?.calidad ?? null,
-    auxilioCarga: cond?.auxilioCarga ?? 0,
+    flete: fleteDeLaFila(offer),
     productorNombre: nombreFirma,
     productorDocumento: null,
     loteNombre: lot?.name ?? "—",
@@ -206,7 +207,9 @@ export async function respondToOffer(
       saco_kg: cond?.sacoKg ?? null,
       existencia_al_firmar: cond?.existenciaKg ?? null,
       calidad_snapshot: cond?.calidad ?? null,
-      auxilio_carga: cond?.auxilioCarga ?? 0,
+      // V5.177: el Flete a CTCx de la oferta, congelado en el contrato (el texto firmado lo cita).
+      flete_region: fleteDeLaFila(offer)?.region ?? null,
+      flete_carga: fleteDeLaFila(offer)?.carga ?? null,
       renovacion_de: (offer as { renovacion_de?: string | null }).renovacion_de ?? null,
       pvc_edition_id: cond?.edicionId ?? offer.pvc_edition_id ?? null,
       modificador_pct: offer.modificador_pct != null ? Number(offer.modificador_pct) : null,
@@ -313,7 +316,7 @@ export async function previsualizarOferta(offerId: string): Promise<VistaPreviaD
   const service = createServiceRoleClient();
   const { data: offer } = await service
     .from("lot_offers")
-    .select("id, lot_id, producer_id, status, kind, grade_snapshot, price_per_kg, modificador_pct, min_kg, saco_kg, es_renovacion")
+    .select("id, lot_id, producer_id, status, kind, grade_snapshot, price_per_kg, modificador_pct, min_kg, saco_kg, es_renovacion, flete_region, flete_carga")
     .eq("id", offerId)
     .maybeSingle();
   if (!offer || offer.producer_id !== auth.userId) return { ok: false, message: "Oferta no encontrada." };

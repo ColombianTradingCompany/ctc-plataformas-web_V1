@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import styles from "@/components/panel/shared.module.css";
 import type { PvcEdition } from "@/lib/pvc/tipos";
 import { guardarVariablesDeEdicionAction } from "@/lib/pvc/actions";
+import { fletesDeLaEdicion, fletePorKg, REGION_DE_FLETE_EJEMPLOS, REGION_DE_FLETE_LABEL, REGIONES_DE_FLETE } from "@/lib/trato/flete";
 import { agendaDelPvcSiguiente, calendarioPropuesto, diasEntre, semanasSinContratos, sumaDias, trimestreDe, validarCalendario } from "@/lib/trato/calendario";
 
 // ── Modelo Económico · las variables de una edición (V5.174 · docs/PLAN_CICLOS.md §1, §3, §4, §6) ───────────────────────────
 // Owner, 2026-10-07: «las fechas exactas de cada año son una de las variables a fijar cada vez» y «los mínimos deben poder
 // editarse en el mejor lugar posible dentro del módulo del modelo económico». Aquí: las fechas de la edición (lunes a domingo,
 // ciclos de 6 + 7 o 7 + 7 semanas, con la propuesta ISO a un clic), los mínimos por grado, los rangos de calidad con que se
-// recibe el café y el auxilio de transporte por carga. Cada cambio deja su fila de auditoría (la acción valida y lo exige).
+// recibe el café y (V5.177) el Flete a CTCx por región. Cada cambio deja su fila de auditoría (la acción valida y lo exige).
 
 const GRADOS = [
   ["black", "Black"],
@@ -35,9 +36,12 @@ export function VariablesDeEdicion({ edicion }: { edicion: PvcEdition }) {
   const [humMin, setHumMin] = useState(String(edicion.rangosCalidad?.humedad_min ?? 10));
   const [humMax, setHumMax] = useState(String(edicion.rangosCalidad?.humedad_max ?? 12));
   const [awMax, setAwMax] = useState(String(edicion.rangosCalidad?.aw_max ?? 0.7));
-  const [auxilio, setAuxilio] = useState(edicion.auxilioTransporteCop != null ? String(edicion.auxilioTransporteCop) : "");
-  const publicada = edicion.status === "published" || edicion.status === "corrected";
-  const auxilioFijado = publicada && edicion.auxilioTransporteCop != null;
+  // V5.177 (owner, 2026-10-07): el Flete a CTCx en tres niveles por región de despacho, en COP por carga.
+  const [fletes, setFletes] = useState<Record<string, string>>(() => {
+    const f = fletesDeLaEdicion(edicion.fletePorRegion);
+    return Object.fromEntries(REGIONES_DE_FLETE.map((r) => [r, f[r].toLocaleString("es-CO")]));
+  });
+  const fleteN = (r: string) => Math.round(num(String(fletes[r] ?? "").replace(/\./g, "")));
 
   const cal = desde && ciclo1Hasta && hasta ? { desde, ciclo1Hasta, hasta } : null;
   const error = cal ? validarCalendario(cal) : "Faltan fechas.";
@@ -63,7 +67,7 @@ export function VariablesDeEdicion({ edicion }: { edicion: PvcEdition }) {
         hasta,
         minimosPorGrado: { black: num(minimos.black), red: num(minimos.red), blue: num(minimos.blue), gold: num(minimos.gold) },
         rangosCalidad: { humedad_min: num(humMin), humedad_max: num(humMax), aw_max: num(awMax) },
-        auxilioTransporteCop: auxilio.trim() === "" ? null : Math.round(num(auxilio.replace(/\./g, ""))),
+        fletePorRegion: { santander: fleteN("santander"), centro: fleteN("centro"), sur: fleteN("sur") },
       });
       if (r.ok) {
         setMsg({ ok: true, text: "Variables guardadas ✓" });
@@ -128,14 +132,24 @@ export function VariablesDeEdicion({ edicion }: { edicion: PvcEdition }) {
       </div>
 
       <div>
-        <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 6 }}>Auxilio de transporte (COP por carga)</div>
-        <label style={{ ...campo, maxWidth: 260 }}>
-          Fijo para todos los grados
-          <input inputMode="numeric" value={auxilio} onChange={(e) => setAuxilio(e.target.value)} disabled={auxilioFijado} placeholder="por fijar" style={input} />
-        </label>
+        <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 6 }}>Flete a CTCx (COP por carga equivalente)</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10 }}>
+          {REGIONES_DE_FLETE.map((r) => {
+            const n = fleteN(r);
+            return (
+              <label key={r} style={campo}>
+                {REGION_DE_FLETE_LABEL[r]}
+                <input inputMode="numeric" value={fletes[r]} onChange={(e) => setFletes((f) => ({ ...f, [r]: e.target.value }))} style={input} />
+                <span className={styles.meta} style={{ margin: 0, fontWeight: 400 }}>
+                  {Number.isFinite(n) ? `$${Math.round(fletePorKg(n)).toLocaleString("es-CO")}/kg · $${Math.round(fletePorKg(n) * 70).toLocaleString("es-CO")} por 70 kg` : "—"} · {REGION_DE_FLETE_EJEMPLOS[r]}
+                </span>
+              </label>
+            );
+          })}
+        </div>
         <p className={styles.meta} style={{ margin: "6px 0 0" }}>
-          El productor paga su flete hasta Bucaramanga; el PVC se lo reconoce: precio del grado = PVC × multiplicador + auxilio. D1 §5 del modelo lo tenía en $0 (las
-          cooperativas no lo pagan por carga: absorben el acopio). {publicada ? "En una edición publicada se fija una sola vez; para cambiarlo, se publica una corrección." : ""}
+          Se suma al precio final de la oferta según la región que CTCx elige al emitirla: precio = PVC × multiplicador del grado + flete. El productor despacha con el código
+          corporativo de CTCx en Servientrega y paga el resto en la oficina. Las cooperativas no suman flete: lo descuentan de la base FNC. Cada oferta congela el suyo.
         </p>
       </div>
 

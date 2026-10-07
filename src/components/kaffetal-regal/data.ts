@@ -1,4 +1,5 @@
 import type { CuentaDeVentana } from "@/lib/trato/cuenta";
+import type { FleteDelTrato } from "@/lib/trato/flete";
 import type { FichaFormData } from "./ficha/fichaData";
 import type { PuntoSca } from "@/lib/arena/homologacion";
 import type { EstadoDeMora } from "@/lib/trato/mesAMes";
@@ -402,6 +403,8 @@ export type ProducerOffer = {
   lockedKg: number | null;
   /** V5.168: las condiciones de entrega que CTCx confirmó al emitir. */
   lugarEntrega: string | null;
+  /** V5.177: el Flete a CTCx congelado en la oferta (región de despacho y COP por carga), ya sumado al precio. */
+  flete: FleteDelTrato | null;
   /** V5.169: el tope de una compra de CTCx Selection (PVC − 8 %), la referencia FNC por carga del día de la oferta y las rondas de
    *  la negociación. La ventana, el precio de su regla y lo disponible del lote NO se cargan aquí: los calcula el servidor al
    *  previsualizar y al aceptar (`previsualizarOferta`, V5.175). */

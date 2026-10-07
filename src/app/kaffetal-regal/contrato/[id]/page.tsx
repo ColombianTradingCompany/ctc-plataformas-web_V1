@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { fleteDeLaFila } from "@/lib/trato/flete";
 import { createHash } from "node:crypto";
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
 import { CONTRATO_VERSION, clausulasDelContrato, textoDelContrato, type DatosDelContrato } from "@/lib/trato/contrato";
@@ -50,7 +51,7 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
   const { data: raw } = await service
     .from("purchase_contracts")
     .select(
-      "id, lot_id, status, grade_snapshot, price_per_kg_locked, quantity_frozen_kg, terms_version, lugar_entrega, signed_at, producer_signed_at, producer_signer_name, producer_signature_path, contract_text_version, contract_text_sha256, offer_id, vigencia_desde, vigencia_hasta, retiro_libre_pct, ventana_tipo, ventana_ciclos, precio_regla, sin_retiro, saco_kg, minimo_kg, renovacion_de, calidad_snapshot, auxilio_carga, lots(name, producer_id), lot_offers!purchase_contracts_offer_id_fkey(season_label, kind)"
+      "id, lot_id, status, grade_snapshot, price_per_kg_locked, quantity_frozen_kg, terms_version, lugar_entrega, signed_at, producer_signed_at, producer_signer_name, producer_signature_path, contract_text_version, contract_text_sha256, offer_id, vigencia_desde, vigencia_hasta, retiro_libre_pct, ventana_tipo, ventana_ciclos, precio_regla, sin_retiro, saco_kg, minimo_kg, renovacion_de, calidad_snapshot, flete_region, flete_carga, lots(name, producer_id), lot_offers!purchase_contracts_offer_id_fkey(season_label, kind)"
     )
     .eq("id", id)
     .maybeSingle();
@@ -72,7 +73,8 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
     minimo_kg: number | string | null;
     renovacion_de: string | null;
     calidad_snapshot: RangosDeCalidad | null;
-    auxilio_carga: number | string | null;
+    flete_region: string | null;
+    flete_carga: number | string | null;
     terms_version: string | null;
     lugar_entrega: string | null;
     signed_at: string | null;
@@ -90,7 +92,7 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
   if (!c.producer_signed_at) return gate("Este contrato es anterior a la firma digital: lo encuentra en «Contratos y Compras».");
 
   const oferta = (Array.isArray(c.lot_offers) ? c.lot_offers[0] : c.lot_offers) ?? null;
-  // V5.175: la ventana, el saco, el mínimo, la calidad y el auxilio, tal como quedaron guardados al firmar (la huella los cita).
+  // V5.175: la ventana, el saco, el mínimo, la calidad y (V5.177) el Flete a CTCx, tal como quedaron guardados al firmar (la huella los cita).
   const n = (v: number | string | null) => (v != null ? Number(v) : null);
   const ventana =
     oferta?.kind !== "directa" && c.ventana_tipo && c.vigencia_desde && c.vigencia_hasta && c.precio_regla
@@ -104,7 +106,7 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
     esRenovacion: Boolean(c.renovacion_de),
     minimoKg: n(c.minimo_kg),
     calidad: c.calidad_snapshot ?? null,
-    auxilioCarga: n(c.auxilio_carga) ?? 0,
+    flete: fleteDeLaFila(c),
     productorNombre: c.producer_signer_name ?? "—",
     productorDocumento: null,
     loteNombre: lote.name,

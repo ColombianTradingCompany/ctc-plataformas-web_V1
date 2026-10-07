@@ -63,8 +63,8 @@
 - **Lo vendido** (confirmado semana a semana) sale en la **semana 1 del ciclo siguiente**. Si no sale: una semana de prórroga
   con advertencia; después, el faltante se cobra como **retiro penalizado** (4 % por carga) y CTCx puede declarar la
   ruptura (decisión del owner, como hoy).
-- **El transporte lo paga el productor**; el PVC reconoce un **auxilio de transporte** (§6) y CTCx ofrece tarifas
-  corporativas preferenciales.
+- **El transporte lo paga el productor**, con el **código de envío corporativo de CTCx en Servientrega**; al precio final se
+  le suma el **Flete a CTCx** de su región (§6) y el resto lo paga el productor en la oficina de envíos (V5.177).
 - **Pago 60/40** (toda compra: saco, adelanto, vendido): **60 % con el tiquete de despacho** (el productor registra guía,
   peso y foto) y **40 % al recibir** en CTCx, después de medir **humedad** y **actividad de agua** (rangos por defecto
   10–12 % y aw ≤ 0,70, editables en el Modelo Económico). Fuera de rango, CTCx elige: **devolución** (el productor devuelve
@@ -98,14 +98,18 @@
 ## 6. El PVC
 
 - **Fechas** de la edición = variables (§1). **El agente** corre en la **semana 1 del ciclo 2**: propone la edición siguiente
-  (fechas, insumos de mercado, motor, mínimos, rangos de calidad, auxilio, informe). Un responsable de CTCx la **aprueba y
+  (fechas, insumos de mercado, motor, mínimos, rangos de calidad, flete, informe). Un responsable de CTCx la **aprueba y
   publica a más tardar en la semana 2**.
-- **Auxilio de transporte.** D1 §5 del modelo (investigación al 7-sep-2026) revisó el auxilio que reconocen las cooperativas
-  y lo dejó en **$0**: «no se documenta pago por carga; las cooperativas absorben el acopio; implícito en el precio FNC».
-  Con el productor pagando su flete hasta Bucaramanga, entra como **término propio, fijo por carga** (owner, respuesta 3),
-  variable de la edición: **precio del grado = PVC base × multiplicador + auxilio** (el flete no depende del grado). Se
-  **muestra** en la lectura, la oferta, la calculadora y el contrato. Mientras el owner no fije el valor, la edición lo
-  dice «por fijar» y suma $0.
+- **Flete a CTCx** (owner, 2026-10-07; reemplaza el «auxilio de transporte», que **no existe**: la cooperativa paga la base
+  FNC —puesta en bodega de Almacafé— **menos** un descuento por flete de $1.000–5.000 por arroba). CTCx hace lo contrario:
+  **suma** al precio final un flete fijo por **carga equivalente** según la región de despacho, y el productor despacha con
+  el **código corporativo de CTCx en Servientrega** y paga el resto en la oficina. Tres niveles, **variables de la edición**
+  (Modelo Económico, owner, con auditoría; ajustables, no entran en la huella del PVC):
+  **Regional Santander $25.000** (Santanderes) · **Nacional Centro $50.000** (Antioquia, Eje Cafetero, Tolima, Cundinamarca…)
+  · **Nacional Sur $70.000** (Huila, Cauca, Nariño…) por carga = 200 · 400 · 560 COP/kg (14.000 · 28.000 · 39.200 por 70 kg).
+  **Precio final = PVC × multiplicador del grado (con su %) + flete de la región.** CTCx elige la región al emitir la oferta
+  (la sugiere el departamento de la finca); la oferta y el contrato la **congelan** con su valor; el precio del PVC siguiente
+  lleva el mismo flete. Se **muestra** en la oferta, la calculadora, la propuesta de Selection y el contrato (V5.177).
 - **Corrección dentro del ciclo** (reemplaza el disparador «FNC ≥ PVC 10 de 15»). Lecturas FNC (una por día con lectura),
   en bloques de **20 lecturas consecutivas dentro del mismo ciclo**; si el ciclo tiene pocas lecturas, el bloque puede
   incluir las de la **última semana del ciclo anterior** (nunca dos ciclos enteros):
@@ -142,7 +146,7 @@ Cada tanda es su propia versión (gate, guardianes, CHANGELOG, log, charters, AL
 1. ✅ **HECHA en la V5.174.** **Calendario y reglas (puro + datos).** `src/lib/trato/calendario.ts` (semanas ISO, trimestres, ciclos, semanas sin
    contratos, fechas del agente y de publicación), `ventanas.ts` (firma → ventana, retiro, regla de precio), `minimos.ts`
    (grado, continuidad lineal, existencia insuficiente), `src/lib/pvc/correccion.ts` (bloques de 20, alza/baja, topes).
-   Variables de la edición (fechas, mínimos, rangos de calidad, auxilio) en `pvc_editions` y editables en el Modelo
+   Variables de la edición (fechas, mínimos, rangos de calidad; el auxilio, reemplazado en la V5.177 por el Flete a CTCx) en `pvc_editions` y editables en el Modelo
    Económico (`/ecp/pvc/parametros`). Re-fechado de PVC-F4-2026. Ficha A2 (existencia, plantas, producción 5 : 1).
    Guardián nuevo `qa-ciclos-check`.
 2. ✅ **HECHA en la V5.175** (el OCP lee la ventana; sus acciones van en la tanda 3). **Oferta, contrato y Kaffetal Regal.** La oferta del OCP calcula la ventana por la fecha y vence con su zona; el
@@ -152,8 +156,8 @@ Cada tanda es su propia versión (gate, guardianes, CHANGELOG, log, charters, AL
    (guía, peso, foto) y recepción (humedad, aw), pagos 60/40 y los dos caminos fuera de rango, fallas de envío (prórroga,
    cancelar, siguiente ventana) y advertencias. Se retira el trato mes a mes.
 4. **PVC.** El agente de la semana 1 del ciclo 2 (borrador, informe, aviso; el gasto de IA al ledger), la aprobación y
-   publicación con plazo, la vigilancia diaria de la corrección (alza/baja, vigente y siguiente) con su aprobación, y el
-   auxilio de transporte en el motor, la lectura y el dossier.
+   publicación con plazo, la vigilancia diaria de la corrección (alza/baja, vigente y siguiente) con su aprobación; el
+   agente copia el Flete a CTCx de la edición anterior. (El flete en la oferta, la calculadora y el contrato: ✅ V5.177.)
 
 ## 10. Supuestos tomados (el owner los corrige si no)
 
@@ -161,6 +165,8 @@ Cada tanda es su propia versión (gate, guardianes, CHANGELOG, log, charters, AL
 - «Pago adicional de 0–15 %» se suma al 60 % ya pagado (fuera de rango, el café queda pagado al 60–75 %).
 - El 60/40 aplica a toda compra; el tope de 200 kg también a las compras adelantadas de renovación.
 - Rangos de calidad por defecto: humedad del CPS 10–12 % y aw ≤ 0,70.
-- El auxilio de transporte se suma después del multiplicador del grado (igual para todos los grados).
+- El Flete a CTCx se suma después del multiplicador del grado y de su % (igual para todos los grados); en CTCx Selection el
+  tope es PVC − 8 % más el flete; la región se sugiere por el departamento (Santander y Norte de Santander → Regional;
+  Huila, Cauca, Nariño, Putumayo, Caquetá → Sur; el resto de Colombia → Centro; fuera de Colombia la elige CTCx).
 - La continuidad lineal se cuenta en cambios de trimestre desde el primer contrato del lote; en la práctica un lote no
   pasa de 3–4 trimestres (la regla de cosecha pasada lo castiga a los 9 meses).

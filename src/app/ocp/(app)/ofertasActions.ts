@@ -11,6 +11,7 @@ import { lecturaDeMercado, pvcParaGrado, type PvcDeGrado } from "@/lib/pvc/servi
 import { esPastCrop } from "@/lib/trato/mesAMes";
 import { LUGAR_DE_ENTREGA_POR_DEFECTO, modificadorDeOferta, TERMINOS_VERSION, VENTANA_DIRECTA_DIAS } from "@/lib/trato/terminos";
 import { minimoDelGrado } from "@/lib/trato/minimos";
+import { esRegionDeFlete, REGION_DE_FLETE_LABEL, type RegionDeFlete } from "@/lib/trato/flete";
 import { ADELANTO_RENOVACION_KG, SACO_INICIAL_KG } from "@/lib/trato/terminos";
 
 // ── Ofertas: CTCx decide y oferta, el productor acepta (V5.18 · anclada al PVC desde la V5.82) ────
@@ -90,6 +91,11 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
   // tuvo contrato, la compra adelantada de la renovación (0–200 kg). Por encima de 200 kg ya es CTCx Selection.
   const sacoPedido = numOpcional(formData.get("saco_kg"));
   if (sacoPedido !== null && Number.isNaN(sacoPedido)) return { ok: false, error: "El saco se escribe en kg de CPS." };
+  // V5.177 (owner, 2026-10-07 · docs/PLAN_CICLOS.md §6): la región del Flete a CTCx (de dónde despacha el productor). Su valor por
+  // carga sale de la edición del PVC y se suma al precio final; la oferta congela región y valor.
+  const regionPedida = String(formData.get("flete_region") ?? "").trim();
+  if (regionPedida && !esRegionDeFlete(regionPedida)) return { ok: false, error: "La región del Flete a CTCx no es válida." };
+  const fleteRegion: RegionDeFlete | null = esRegionDeFlete(regionPedida) ? regionPedida : null;
 
   const { data: lot } = await service
     .from("lots")
@@ -137,7 +143,8 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
   // Past crop (paso 18, V5.84): un lote de la temporada pasada O con recolección final a más de 9 meses → −10 %.
   const pastCrop = lotePasado || esPastCrop(lot.harvest_to, new Date());
   const modificadorPct = ANCLADAS.includes(kind) ? modificadorDeOferta({ directa: kind === "directa", pastCrop }) : 0;
-  const pvc: PvcDeGrado | null = lot.grade === "tyrian" ? null : await pvcParaGrado(lot.grade, undefined, { modificadorPct });
+  if (ANCLADAS.includes(kind) && !fleteRegion) return { ok: false, error: "Elija la región del Flete a CTCx (de dónde despacha el productor)." };
+  const pvc: PvcDeGrado | null = lot.grade === "tyrian" ? null : await pvcParaGrado(lot.grade, undefined, { modificadorPct, fleteRegion });
   let price: number;
   // V5.169 (owner): una compra de CTCx SELECTION propone un precio HASTA el PVC − 8 % (el tope) y una cantidad; se negocia.
   const esSelection = kind === "directa";
@@ -152,7 +159,7 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
       const propuesto = numOpcional(formData.get("price_per_kg"));
       if (propuesto !== null) {
         if (Number.isNaN(propuesto) || propuesto <= 0) return { ok: false, error: "El precio propuesto debe ser mayor que 0." };
-        if (propuesto > precioTope) return { ok: false, error: `Una compra de CTCx Selection va hasta el PVC − 8 %: ${formatCop(precioTope)}/kg como máximo.` };
+        if (propuesto > precioTope) return { ok: false, error: `Una compra de CTCx Selection va hasta el PVC − 8 % más el flete: ${formatCop(precioTope)}/kg como máximo.` };
         price = propuesto;
       }
       if (quantity === null) return { ok: false, error: "Una compra de CTCx Selection propone cuántos kilos compra: escriba la cantidad." };
@@ -239,6 +246,9 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
     expira_at: esDirecta ? new Date(now.getTime() + VENTANA_DIRECTA_DIAS * 86_400_000).toISOString() : venceConLaEdicion,
     compra_inicial_kg: null,
     saco_kg: sacoKg,
+    // V5.177: el Flete a CTCx congelado (ya sumado a price_per_kg en las ancladas; en la excepción, el precio a mano lo incluye).
+    flete_region: fleteRegion,
+    flete_carga: fleteRegion && pvc ? pvc.precio.fleteCarga : null,
     es_renovacion: continuacion,
     renovacion_de: renewalOf,
     renewal_of_contract_id: renewalOf,
@@ -257,7 +267,7 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
     await service.from("arena_inscriptions").update({ decision_comercial: null, decision_comercial_at: null, decision_comercial_motivo: null }).eq("id", ins.id);
   }
 
-  const anclaje = pvc ? ` · PVC ${pvc.edicion.code} ${pvc.precio.banda} ×${pvc.precio.mult}${modificadorPct ? ` ${modificadorPct > 0 ? "+" : ""}${modificadorPct} %` : ""}` : "";
+  const anclaje = pvc ? ` · PVC ${pvc.edicion.code} ${pvc.precio.banda} ×${pvc.precio.mult}${modificadorPct ? ` ${modificadorPct > 0 ? "+" : ""}${modificadorPct} %` : ""}${fleteRegion ? ` + flete ${REGION_DE_FLETE_LABEL[fleteRegion]} ${formatCop(pvc.precio.fleteCarga)}/carga` : ""}` : "";
   await service.from("audit_log").insert({
     entity_type: "lot_offer",
     entity_id: lotId,
@@ -269,7 +279,7 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
   const donde = kind === "subasta" ? "Subastas Tyrian" : kind === "black" ? "Ofertas Black" : esSelection ? "Compra CTCx Selection" : "Participación en Cherry Picked";
   const detalle =
     kind === "temporada"
-      ? ` Es una invitación a participar en Cherry Picked${continuacion ? " (renovación)" : ""}: ${formatCop(price)}/kg de CPS anclados al PVC vigente${pastCrop ? " (past crop, −10 %)" : ""}. La fecha en que firme decide su ventana (un ciclo, o extendida al siguiente); usted declara cuánto deja disponible (mínimo ${minConfirmado ?? minimoDelGrado(lot.grade, pvc?.edicion.minimosPorGrado) ?? "—"} kg por ventana)${sacoKg ? ` y CTCx le compra ${sacoKg} kg ${continuacion ? "por adelantado" : "(un saco)"} fuera de lo declarado` : ""}.`
+      ? ` Es una invitación a participar en Cherry Picked${continuacion ? " (renovación)" : ""}: ${formatCop(price)}/kg de CPS anclados al PVC vigente${pastCrop ? " (past crop, −10 %)" : ""}${fleteRegion && pvc ? `, con el Flete a CTCx de ${REGION_DE_FLETE_LABEL[fleteRegion]} (${formatCop(pvc.precio.fleteCarga)} por carga) ya sumado` : ""}. La fecha en que firme decide su ventana (un ciclo, o extendida al siguiente); usted declara cuánto deja disponible (mínimo ${minConfirmado ?? minimoDelGrado(lot.grade, pvc?.edicion.minimosPorGrado) ?? "—"} kg por ventana)${sacoKg ? ` y CTCx le compra ${sacoKg} kg ${continuacion ? "por adelantado" : "(un saco)"} fuera de lo declarado` : ""}.`
       : kind === "directa"
         ? ` Es una propuesta de compra de CTCx Selection: ${quantity} kg de CPS a ${formatCop(price)}/kg. Ese precio NO es el PVC actual: es hasta el PVC − 8 %. Puede aceptarla, contraofertar o desistir.`
         : ` ${formatCop(price)}/kg de CPS.`;

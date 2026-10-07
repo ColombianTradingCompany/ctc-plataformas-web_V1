@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { calcular, huella, type PvcEntradas, type PvcParams, type PvcSalida } from "./motor";
 import { precioDeLaEscalera, type EscalonPublicado, type PrecioDeGrado } from "./precio";
 import type { CalendarioDeEdicion } from "@/lib/trato/calendario";
+import { fletesDeLaEdicion, type FletePorRegion, type RegionDeFlete } from "@/lib/trato/flete";
 import type { GradoId } from "@/lib/grados/definicion";
 import type { PvcCurrent, PvcEdition, PvcEditionStatus, PvcModelVersion } from "./tipos";
 
@@ -17,11 +18,11 @@ type EditionRow = {
   cut_date: string | null; publish_date: string | null; valid_from: string | null; valid_to: string | null;
   inputs: PvcEntradas; outputs: PvcSalida; pvc_cop: number | null; hash: string | null;
   correction_of: string | null; published_at: string | null; notes: string | null; created_at: string;
-  ciclo1_hasta: string | null; minimos_por_grado: PvcEdition["minimosPorGrado"]; rangos_calidad: PvcEdition["rangosCalidad"]; auxilio_transporte_cop: number | null;
+  ciclo1_hasta: string | null; minimos_por_grado: PvcEdition["minimosPorGrado"]; rangos_calidad: PvcEdition["rangosCalidad"]; flete_por_region: PvcEdition["fletePorRegion"];
   pvc_model_versions?: { version: string } | null;
 };
 
-const EDITION_COLS = "id, code, model_version_id, status, cut_date, publish_date, valid_from, valid_to, inputs, outputs, pvc_cop, hash, correction_of, published_at, notes, created_at, ciclo1_hasta, minimos_por_grado, rangos_calidad, auxilio_transporte_cop, pvc_model_versions(version)";
+const EDITION_COLS = "id, code, model_version_id, status, cut_date, publish_date, valid_from, valid_to, inputs, outputs, pvc_cop, hash, correction_of, published_at, notes, created_at, ciclo1_hasta, minimos_por_grado, rangos_calidad, flete_por_region, pvc_model_versions(version)";
 
 const toModel = (r: ModelRow): PvcModelVersion => ({ id: r.id, version: r.version, params: r.params, notes: r.notes, createdAt: r.created_at });
 const toEdition = (r: EditionRow): PvcEdition => ({
@@ -29,7 +30,7 @@ const toEdition = (r: EditionRow): PvcEdition => ({
   cutDate: r.cut_date, publishDate: r.publish_date, validFrom: r.valid_from, validTo: r.valid_to,
   inputs: r.inputs, outputs: r.outputs, pvcCop: r.pvc_cop, hash: r.hash, correctionOf: r.correction_of,
   publishedAt: r.published_at, notes: r.notes, createdAt: r.created_at,
-  ciclo1Hasta: r.ciclo1_hasta, minimosPorGrado: r.minimos_por_grado, rangosCalidad: r.rangos_calidad, auxilioTransporteCop: r.auxilio_transporte_cop,
+  ciclo1Hasta: r.ciclo1_hasta, minimosPorGrado: r.minimos_por_grado, rangosCalidad: r.rangos_calidad, fletePorRegion: r.flete_por_region,
 });
 
 /** V5.174: las fechas de una edición como calendario de Ciclos (null si le falta alguna). */
@@ -88,7 +89,7 @@ export async function edicionVigente(fecha?: string): Promise<PvcEdition | null>
 }
 
 export type PvcDeGrado = {
-  edicion: { id: string; code: string; validFrom: string | null; validTo: string | null; pvcCop: number | null; minimosPorGrado: PvcEdition["minimosPorGrado"]; auxilioTransporteCop: number | null };
+  edicion: { id: string; code: string; validFrom: string | null; validTo: string | null; pvcCop: number | null; minimosPorGrado: PvcEdition["minimosPorGrado"]; fletePorRegion: FletePorRegion };
   precio: PrecioDeGrado;
 };
 
@@ -98,14 +99,15 @@ export type PvcDeGrado = {
  * Devuelve null si no hay edición vigente o el grado no se oferta (Tyrian se subasta). Lee `banda` y `cop` de la
  * escalera publicada, NUNCA su `rango` (`precio.ts`). Quien necesite un precio real lo pide aquí, no a la escalera.
  */
-export async function pvcParaGrado(grado: GradoId, fecha?: string, opts?: { modificadorPct?: number }): Promise<PvcDeGrado | null> {
+export async function pvcParaGrado(grado: GradoId, fecha?: string, opts?: { modificadorPct?: number; fleteRegion?: RegionDeFlete | null }): Promise<PvcDeGrado | null> {
   const edicion = await edicionVigente(fecha);
   if (!edicion) return null;
   const escalera = (edicion.outputs?.escalera ?? []) as unknown as EscalonPublicado[];
-  // V5.174: el auxilio de transporte de la edición se suma al precio del grado (null = por fijar → $0).
-  const precio = precioDeLaEscalera(escalera, grado, opts?.modificadorPct ?? 0, edicion.auxilioTransporteCop ?? 0);
+  // V5.177: con una región, el Flete a CTCx de la edición para esa región se suma al precio final (docs/PLAN_CICLOS.md §6).
+  const fletes = fletesDeLaEdicion(edicion.fletePorRegion);
+  const precio = precioDeLaEscalera(escalera, grado, opts?.modificadorPct ?? 0, opts?.fleteRegion ? fletes[opts.fleteRegion] : 0);
   if (!precio) return null;
-  return { edicion: { id: edicion.id, code: edicion.code, validFrom: edicion.validFrom, validTo: edicion.validTo, pvcCop: edicion.pvcCop, minimosPorGrado: edicion.minimosPorGrado, auxilioTransporteCop: edicion.auxilioTransporteCop }, precio };
+  return { edicion: { id: edicion.id, code: edicion.code, validFrom: edicion.validFrom, validTo: edicion.validTo, pvcCop: edicion.pvcCop, minimosPorGrado: edicion.minimosPorGrado, fletePorRegion: fletes }, precio };
 }
 
 /** Lo ya publicado que TODAVÍA no rige. No se esconde: que el precio de la
@@ -129,17 +131,17 @@ export type VariablesDeEdicion = {
   hasta: string;
   minimosPorGrado: Record<"black" | "red" | "blue" | "gold", number>;
   rangosCalidad: { humedad_min: number; humedad_max: number; aw_max: number };
-  auxilioTransporteCop: number | null;
+  fletePorRegion: FletePorRegion;
 };
 
 /**
  * V5.174 (docs/PLAN_CICLOS.md §1, §4, §6): guarda las variables de una edición — fechas, mínimos por grado, rangos de calidad
- * y auxilio de transporte — con su fila de auditoría. El guard de la base protege lo que no se toca de una publicada (y el
- * auxilio, que en una publicada solo se fija una vez).
+ * y (V5.177) el Flete a CTCx por región — con su fila de auditoría. El guard de la base protege lo que no se toca de una
+ * publicada; el flete es ajustable (no entra en la huella del PVC) y cada oferta congela el suyo.
  */
 export async function guardarVariablesDeEdicion(id: string, v: VariablesDeEdicion, userId: string): Promise<{ ok: true } | { error: string }> {
   const service = createServiceRoleClient();
-  const { data: antes } = await service.from("pvc_editions").select("code, valid_from, valid_to, ciclo1_hasta, minimos_por_grado, rangos_calidad, auxilio_transporte_cop").eq("id", id).maybeSingle();
+  const { data: antes } = await service.from("pvc_editions").select("code, valid_from, valid_to, ciclo1_hasta, minimos_por_grado, rangos_calidad, flete_por_region").eq("id", id).maybeSingle();
   if (!antes) return { error: "Edición no encontrada." };
   const { error } = await service
     .from("pvc_editions")
@@ -149,7 +151,7 @@ export async function guardarVariablesDeEdicion(id: string, v: VariablesDeEdicio
       ciclo1_hasta: v.ciclo1Hasta,
       minimos_por_grado: v.minimosPorGrado,
       rangos_calidad: v.rangosCalidad,
-      auxilio_transporte_cop: v.auxilioTransporteCop,
+      flete_por_region: v.fletePorRegion,
     })
     .eq("id", id);
   if (error) return { error: error.message };
@@ -158,7 +160,7 @@ export async function guardarVariablesDeEdicion(id: string, v: VariablesDeEdicio
     entity_id: id,
     action: "variables_de_edicion",
     performed_by: userId,
-    notes: `${antes.code}: ${JSON.stringify({ antes: { valid_from: antes.valid_from, valid_to: antes.valid_to, ciclo1_hasta: antes.ciclo1_hasta, minimos: antes.minimos_por_grado, calidad: antes.rangos_calidad, auxilio: antes.auxilio_transporte_cop }, ahora: v })}`,
+    notes: `${antes.code}: ${JSON.stringify({ antes: { valid_from: antes.valid_from, valid_to: antes.valid_to, ciclo1_hasta: antes.ciclo1_hasta, minimos: antes.minimos_por_grado, calidad: antes.rangos_calidad, flete: antes.flete_por_region }, ahora: v })}`,
   });
   return { ok: true };
 }

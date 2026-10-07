@@ -73,7 +73,11 @@ const compras = lee("src/app/ocp/(app)/comprasActions.ts");
   check("y exige nota y lote galardonado, nunca Tyrian", compras.includes("if (!nota) return") && compras.includes('lot.stage !== "galardonado"') && compras.includes('lot.grade === "tyrian"') && compras.includes('origen: "manual"'));
   const src = execSync("git ls-files src", { encoding: "utf8" }).split(/\r?\n/).filter((f) => /\.tsx?$/.test(f));
   const escritores = src.filter((f) => /from\("compras"\)\s*\.\s*(insert|update|upsert|delete)/.test(readFileSync(f, "utf8").replace(/\r?\n\s*/g, " ")));
-  check("compras la escriben SOLO contractActions (el pago) y comprasActions (a mano)", escritores.length === 2 && escritores.includes("src/app/ocp/(app)/contractActions.ts") && escritores.includes("src/app/ocp/(app)/comprasActions.ts"), escritores.join(", "));
+  // V5.176 (docs/PLAN_CICLOS.md §5): el trato por ventanas registra el saco y el adelanto RECIBIDOS como compra de CTCx (destino
+  // Sample Kits) al recibir el despacho; lo vendido no (se vende a nombre del productor). Es el tercer escritor, y solo ese.
+  check("compras la escriben SOLO contractActions (el pago), comprasActions (a mano) y ventanaActions (el saco y el adelanto recibidos)", escritores.length === 3 && escritores.includes("src/app/ocp/(app)/contractActions.ts") && escritores.includes("src/app/ocp/(app)/comprasActions.ts") && escritores.includes("src/app/ocp/(app)/ventanaActions.ts"), escritores.join(", "));
+  const ventana = readFileSync("src/app/ocp/(app)/ventanaActions.ts", "utf8");
+  check("y la del trato por ventanas va a Sample Kits, cita su edición, nunca Tyrian ni lo vendido ni una devolución", ventana.includes('d.tipo !== "vendido" && resultado !== "devolucion" && c.grade_snapshot && c.grade_snapshot !== "tyrian"') && ventana.includes('origen: "contrato", destino: "sample_kits"') && ventana.includes("pvc_edition_id: c.pvc_edition_id"));
   // 5. El CRM se retiró
   const conCrm = src.filter((f) => /from\("black_negotiations"\)/.test(readFileSync(f, "utf8")));
   check("black_negotiations no tiene escritor ni lector en src (tabla dormida)", conCrm.length === 0, conCrm.join(", "));

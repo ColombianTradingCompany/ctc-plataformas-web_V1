@@ -31,7 +31,7 @@ export async function crearVersionModeloAction(version: string, params: Partial<
 
 /**
  * V5.174 (docs/PLAN_CICLOS.md §1, §4, §6) · las variables de una edición: fechas (lunes a domingo, ciclos 6 + 7 o 7 + 7),
- * mínimos por grado, rangos de calidad y auxilio de transporte. Owner. Emite: cambia lo que leen las ofertas.
+ * mínimos por grado, rangos de calidad y (V5.177) el Flete a CTCx por región. Owner. Emite: cambia lo que leen las ofertas.
  */
 export async function guardarVariablesDeEdicionAction(id: string, v: VariablesDeEdicion): Promise<PvcResult> {
   const who = await requireConsoleWrite("ecp");
@@ -46,7 +46,10 @@ export async function guardarVariablesDeEdicionAction(id: string, v: VariablesDe
   const c = v.rangosCalidad;
   if (!(c.humedad_min > 0 && c.humedad_max > c.humedad_min && c.humedad_max < 30)) return { ok: false, error: "La humedad va de un mínimo a un máximo (en %, p. ej. 10 a 12)." };
   if (!(c.aw_max > 0 && c.aw_max < 1)) return { ok: false, error: "La actividad de agua máxima va entre 0 y 1 (p. ej. 0,70)." };
-  if (v.auxilioTransporteCop != null && !(Number.isInteger(v.auxilioTransporteCop) && v.auxilioTransporteCop >= 0)) return { ok: false, error: "El auxilio de transporte es un valor entero en pesos por carga (o vacío, por fijar)." };
+  for (const r of ["santander", "centro", "sur"] as const) {
+    const f = Number(v.fletePorRegion?.[r]);
+    if (!(Number.isInteger(f) && f >= 0)) return { ok: false, error: "El Flete a CTCx de cada región es un valor entero en pesos por carga." };
+  }
   const r = await guardarVariablesDeEdicion(id, v, who.userId);
   if ("error" in r) return { ok: false, error: r.error };
   revalidatePath("/ecp/pvc");

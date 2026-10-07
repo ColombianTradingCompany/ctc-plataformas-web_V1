@@ -1,5 +1,6 @@
 "use client";
 
+import { fleteDeLaFila } from "@/lib/trato/flete";
 import { contratoFirmado } from "@/lib/kaffetal/blindaje";
 import { cuentaDeVentana } from "@/lib/trato/cuenta";
 import type { DespachoDelTrato } from "./data";
@@ -454,7 +455,7 @@ function Experience() {
           supabase
             .from("lot_offers")
             .select(
-              "id, lot_id, kind, status, grade_snapshot, score_snapshot, variety_snapshot, process_snapshot, price_per_kg, quantity_kg, notes, season_label, lote_de_temporada_pasada, emitted_at, responded_at, response_note, contract_id, terms_version, min_kg, max_kg, saco_kg, es_renovacion, reference_price_source, modificador_pct, expira_at, locked_kg, lugar_entrega, precio_tope_kg, fnc_carga_ref"
+              "id, lot_id, kind, status, grade_snapshot, score_snapshot, variety_snapshot, process_snapshot, price_per_kg, quantity_kg, notes, season_label, lote_de_temporada_pasada, emitted_at, responded_at, response_note, contract_id, terms_version, min_kg, max_kg, saco_kg, es_renovacion, reference_price_source, modificador_pct, expira_at, locked_kg, lugar_entrega, precio_tope_kg, fnc_carga_ref, flete_region, flete_carga"
             )
             .order("emitted_at", { ascending: false }),
           // RLS (lot_fichas_select_own) scopes this to the producer's own lots
@@ -725,6 +726,8 @@ function Experience() {
         lugar_entrega: string | null;
         precio_tope_kg: number | string | null;
         fnc_carga_ref: number | string | null;
+        flete_region: string | null;
+        flete_carga: number | string | null;
       };
       // V5.169: las rondas de las negociaciones de CTCx Selection (RLS: solo las de sus ofertas) y la fecha de hoy en Colombia.
       const ofertaRows = (offerRows as OfferRow[] | null) ?? [];
@@ -764,6 +767,7 @@ function Experience() {
           expiraAt: o.expira_at ?? null,
           lockedKg: o.locked_kg != null ? Number(o.locked_kg) : null,
           lugarEntrega: o.lugar_entrega ?? null,
+          flete: fleteDeLaFila(o),
           precioTopeKg: o.precio_tope_kg != null ? Number(o.precio_tope_kg) : null,
           fncCargaRef: o.fnc_carga_ref != null ? Number(o.fnc_carga_ref) : null,
           rondas: (((rondasRaw as RondaRow[] | null) ?? []).filter((r) => r.offer_id === o.id)).map((r) => ({

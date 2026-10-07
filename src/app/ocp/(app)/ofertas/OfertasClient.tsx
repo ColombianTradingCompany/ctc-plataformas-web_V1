@@ -1,5 +1,6 @@
 "use client";
 
+import type { FletePorRegion, RegionDeFlete } from "@/lib/trato/flete";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { decidirNoOfertar, emitOffer, reabrirDecision, responderContraoferta, retireOffer, type OfferKind } from "../ofertasActions";
@@ -38,7 +39,8 @@ function ErrorLine({ error }: { error: string | null }) {
   );
 }
 
-/** Lo que la página calculó del PVC vigente para el grado del lote (null = sin edición vigente). */
+/** Lo que la página calculó del PVC vigente para el grado del lote (null = sin edición vigente). `copKg`, `copCarga` y
+ *  `copKgDirecta` son el precio del GRADO (sin flete); `porRegion`, el precio final con el Flete a CTCx de cada región (V5.177). */
 export type AnclajeDeOferta = {
   code: string;
   banda: string;
@@ -54,6 +56,11 @@ export type AnclajeDeOferta = {
   /** El PVC de la edición siguiente (cuenta en las ventanas que se extienden al trimestre siguiente), o cuándo se publica. */
   siguiente: { code: string; copKg: number } | null;
   fechaLimiteSiguiente: string | null;
+  /** V5.177 (docs/PLAN_CICLOS.md §6): el Flete a CTCx de la edición por región (COP/carga), el precio final de cada región y la
+   *  región que sugiere el departamento de la finca (null fuera de Colombia o sin departamento: CTCx la elige). */
+  fletes: FletePorRegion;
+  porRegion: Record<RegionDeFlete, { copKg: number; copCarga: number; copKgDirecta: number }>;
+  regionSugerida: RegionDeFlete | null;
 };
 
 export function EmitOfferForm({

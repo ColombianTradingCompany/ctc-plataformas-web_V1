@@ -7,6 +7,7 @@ import { validarDeclaracion, PISO_EXISTENCIA_INSUFICIENTE } from "@/lib/trato/mi
 import { fechaLarga } from "@/lib/trato/modalidades";
 import type { CondicionesDeFirma } from "@/lib/ofertas/ventanaDeOferta";
 import { formatCop } from "@/lib/arena/inscriptions";
+import { fletePorKg, REGION_DE_FLETE_LABEL } from "@/lib/trato/flete";
 
 // ── La calculadora de la participación en Cherry Picked (V5.168 · por ventanas desde la V5.175, docs/PLAN_CICLOS.md) ────────
 // El productor ya no elige modalidad: la FECHA DE FIRMA decide su ventana, su retiro libre y la regla de precio, y esta pantalla
@@ -67,7 +68,7 @@ export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDec
         <b style={{ fontSize: 14 }}>Si firma hoy, su ventana es</b>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 8, marginTop: 6 }}>
           {kpi("Ventana", `${fechaLarga(c.ventana.desde)} → ${fechaLarga(c.ventana.hasta)}`, `${c.semanas} semanas · ${c.ventana.ciclos.join(" y ")}`)}
-          {kpi("Precio", `${formatCop(c.precioKg)}/kg`, `${formatCop(c.precioKg * CARGA_KG)} por carga · ${REGLA[c.ventana.precio]}${c.auxilioCarga > 0 ? ` · incluye ${formatCop(c.auxilioCarga)}/carga de auxilio de transporte` : ""}`)}
+          {kpi("Precio", `${formatCop(c.precioKg)}/kg`, `${formatCop(c.precioKg * CARGA_KG)} por carga · ${REGLA[c.ventana.precio]}${c.flete ? ` · incluye el Flete a CTCx (${REGION_DE_FLETE_LABEL[c.flete.region]}): ${formatCop(c.flete.carga)}/carga` : ""}`)}
           {kpi("Retiro libre", sinRetiro ? "Sin retiro" : `${c.ventana.retiroLibrePct} %`, sinRetiro ? "declaración reducida" : "de lo declarado, solo de lo no vendido")}
           {c.sacoKg > 0 && kpi(c.esRenovacion ? "Compra adelantada" : "Saco que CTCx le compra", `${c.sacoKg} kg`, `${formatCop(c.sacoKg * c.precioKg)} · fuera de lo declarado · sale esta semana`)}
         </div>
@@ -184,7 +185,11 @@ export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDec
           </span>
         </div>
         <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 6 }}>
-          Entrega: {lugarEntrega} El despacho lo paga usted (el PVC le reconoce el auxilio de transporte). Al recibir, CTCx mide la humedad
+          Entrega: {lugarEntrega}{" "}
+          {c.flete
+            ? `Usted despacha con el código corporativo de CTCx en Servientrega y paga el envío en la oficina; el Flete a CTCx del precio (${formatCop(fletePorKg(c.flete.carga))}/kg) le reconoce parte de ese costo.`
+            : "El despacho lo paga usted."}{" "}
+          Al recibir, CTCx mide la humedad
           {c.calidad ? ` (${c.calidad.humedad_min}–${c.calidad.humedad_max} %)` : ""} y la actividad de agua{c.calidad ? ` (≤ ${c.calidad.aw_max})` : ""}.
         </div>
       </div>

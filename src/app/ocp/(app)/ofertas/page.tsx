@@ -12,6 +12,7 @@ import { triadaDeLaFicha } from "@/lib/pvc/triadaDelLote";
 import { letras } from "@/lib/pvc/escala";
 import { ADELANTO_RENOVACION_KG, MODIFICADOR_DIRECTA_PCT, SACO_INICIAL_KG } from "@/lib/trato/terminos";
 import { ventanaDeFirma } from "@/lib/trato/ventanas";
+import { fletesDeLaEdicion, regionSugerida, REGIONES_DE_FLETE, type RegionDeFlete } from "@/lib/trato/flete";
 import { sumaDias, ubicar } from "@/lib/trato/calendario";
 import { prepararRenovacion } from "../ventanaActions";
 import { ActionForm } from "@/components/panel/ActionForm";
@@ -40,7 +41,7 @@ const STATUS_LABEL: Record<string, string> = {
   expirada: "Expirada",
 };
 
-type FincaMin = { name: string; municipio: string | null; departamento: string | null; altitude_m: number | null };
+type FincaMin = { name: string; municipio: string | null; departamento: string | null; pais: string | null; altitude_m: number | null };
 type LotRow = {
   id: string;
   name: string;
@@ -85,7 +86,7 @@ export default async function OcpOfertasPage() {
   const [{ data: lotsRaw }, { data: offersRaw }, { data: liveContractsRaw }, { data: decisionesRaw }, edicion] = await Promise.all([
     service
       .from("lots")
-      .select("id, name, grade, producer_id, ficha_variedad, ficha_proceso, ficha_altitud_m, harvest_from, harvest_to, datasheet, fincas(name, municipio, departamento, altitude_m)")
+      .select("id, name, grade, producer_id, ficha_variedad, ficha_proceso, ficha_altitud_m, harvest_from, harvest_to, datasheet, fincas(name, municipio, departamento, pais, altitude_m)")
       .eq("stage", "galardonado")
       .order("created_at", { ascending: false }),
     service
@@ -153,13 +154,21 @@ export default async function OcpOfertasPage() {
     : vh.abierta
       ? { abierta: true, tipo: vh.tipo, desde: vh.desde, hasta: vh.hasta, retiroLibrePct: vh.retiroLibrePct, precio: vh.precio }
       : { abierta: false, motivo: vh.motivo, reabre: vh.reabre };
-  const anclajeDe = (grade: string | null, continuacion = false): AnclajeDeOferta | null => {
+  const anclajeDe = (grade: string | null, continuacion = false, finca: FincaMin | null = null): AnclajeDeOferta | null => {
     if (!edicion || !grade || !esGradoValido(grade)) return null;
-    // V5.174: el auxilio de transporte de cada edición se suma al precio del grado (null = por fijar → $0).
-    const base = precioDeLaEscalera(escalera, grade, 0, edicion.auxilioTransporteCop ?? 0);
-    const directa = precioDeLaEscalera(escalera, grade, MODIFICADOR_DIRECTA_PCT, edicion.auxilioTransporteCop ?? 0);
+    const base = precioDeLaEscalera(escalera, grade, 0);
+    const directa = precioDeLaEscalera(escalera, grade, MODIFICADOR_DIRECTA_PCT);
     if (!base || !directa) return null;
-    const sig = proxima ? precioDeLaEscalera(escaleraSiguiente, grade, 0, proxima.auxilioTransporteCop ?? 0) : null;
+    const sig = proxima ? precioDeLaEscalera(escaleraSiguiente, grade, 0) : null;
+    // V5.177 (docs/PLAN_CICLOS.md §6): el Flete a CTCx de la región se suma al precio final — con la MISMA función pura que la acción.
+    const fletes = fletesDeLaEdicion(edicion.fletePorRegion);
+    const porRegion = Object.fromEntries(
+      REGIONES_DE_FLETE.map((r) => {
+        const b = precioDeLaEscalera(escalera, grade, 0, fletes[r]);
+        const d = precioDeLaEscalera(escalera, grade, MODIFICADOR_DIRECTA_PCT, fletes[r]);
+        return [r, { copKg: b?.copKgFinal ?? base.copKgFinal, copCarga: b?.copCargaFinal ?? base.copCargaFinal, copKgDirecta: d?.copKgFinal ?? directa.copKgFinal }];
+      })
+    ) as AnclajeDeOferta["porRegion"];
     return {
       code: edicion.code,
       banda: base.banda,
@@ -173,6 +182,9 @@ export default async function OcpOfertasPage() {
       ventanaHoy,
       siguiente: proxima && sig ? { code: proxima.code, copKg: sig.copKgFinal } : null,
       fechaLimiteSiguiente: edicion.validFrom ? fechaLimitePvcSiguiente(edicion.validFrom) : null,
+      fletes,
+      porRegion,
+      regionSugerida: finca ? regionSugerida(finca.departamento, finca.pais) : (null as RegionDeFlete | null),
     };
   };
 
@@ -200,7 +212,7 @@ export default async function OcpOfertasPage() {
 
   const lotCard = (l: LotRow, kind: "temporada" | "subasta") => {
     const finca = (Array.isArray(l.fincas) ? l.fincas[0] : l.fincas) as FincaMin | null;
-    const anclaje = kind === "temporada" ? anclajeDe(l.grade, conVentanaPrevia.has(l.id)) : null;
+    const anclaje = kind === "temporada" ? anclajeDe(l.grade, conVentanaPrevia.has(l.id), finca) : null;
     // V5.168: el lote de temporada se despliega (resumen + confirmar parámetros) antes de emitir.
     if (kind === "temporada") return <OfertaDesplegable key={l.id} lotId={l.id} lotName={l.name} resumen={resumenDe(l)} anclaje={anclaje} />;
     return (

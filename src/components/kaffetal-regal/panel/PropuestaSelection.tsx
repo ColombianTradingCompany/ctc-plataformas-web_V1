@@ -4,6 +4,7 @@ import { useState } from "react";
 import { contraofertarSeleccion, respondToOffer } from "@/lib/ofertas/producerActions";
 import { CARGA_KG, LUGAR_DE_ENTREGA_POR_DEFECTO } from "@/lib/trato/terminos";
 import { formatCop } from "@/lib/arena/inscriptions";
+import { REGION_DE_FLETE_LABEL } from "@/lib/trato/flete";
 import { ctcLotReference, type ProducerOffer } from "../data";
 import { FirmaDelContrato, type FirmaDelProductor } from "./FirmaDelContrato";
 import { useToast } from "@/components/Toast";
@@ -45,7 +46,8 @@ export function PropuestaSelection({ offer, onRefreshData }: { offer: ProducerOf
         <b style={{ fontSize: 14 }}>Propuesta de compra · CTCx Selection</b>
         <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 2 }}>
           CTCx le propone comprar café de este lote ahora. <b>Este precio no es el PVC actual</b>: es hasta el PVC − 8 %
-          {offer.precioTopeKg != null && <> (el tope de hoy es {formatCop(offer.precioTopeKg)}/kg)</>}, fijado en la propuesta. Puede aceptarla, contraofertar las
+          {offer.precioTopeKg != null && <> (el tope de hoy es {formatCop(offer.precioTopeKg)}/kg)</>}
+          {offer.flete && <>, e incluye el Flete a CTCx de {REGION_DE_FLETE_LABEL[offer.flete.region]} ({formatCop(offer.flete.carga)} por carga)</>}, fijado en la propuesta. Puede aceptarla, contraofertar las
           veces que quiera, o desistir.
         </div>
       </div>
@@ -109,7 +111,7 @@ export function PropuestaSelection({ offer, onRefreshData }: { offer: ProducerOf
             esRenovacion: false,
             minimoKg: null,
             calidad: null,
-            auxilioCarga: 0,
+            flete: offer.flete,
             productorDocumento: null,
             loteNombre: offer.lotName,
             loteReferencia: ctcLotReference(offer.lotId),

@@ -26,8 +26,8 @@ export type PrecioDeGrado = {
   /** El % aplicado (negativo = descuento). */
   modificadorPct: number;
   copCargaFinal: number;
-  /** V5.174 (docs/PLAN_CICLOS.md §6): el auxilio de transporte de la edición por carga, ya sumado a los finales (no lo toca el %). */
-  auxilioCarga: number;
+  /** V5.177 (docs/PLAN_CICLOS.md §6): el Flete a CTCx de la región de la oferta, por carga, ya sumado a los finales (no lo toca el %). */
+  fleteCarga: number;
   copKgFinal: number;
 };
 
@@ -45,7 +45,7 @@ const entero = (n: number) => Math.round(n);
  * El precio de un grado sobre una escalera publicada. Lee `banda` y `cop` (y `cop_kg` si viene); NUNCA `rango`:
  * una edición publicada es inmutable y las de antes de la V5.82 traen los rangos viejos del motor.
  */
-export function precioDeLaEscalera(escalera: readonly EscalonPublicado[], grado: GradoId, modificadorPct = 0, auxilioCarga = 0): PrecioDeGrado | null {
+export function precioDeLaEscalera(escalera: readonly EscalonPublicado[], grado: GradoId, modificadorPct = 0, fleteCarga = 0): PrecioDeGrado | null {
   if (GRADOS_SIN_OFERTA.includes(grado)) return null;
   const banda = bandaDeGrado(grado);
   const fila = escalera.find((e) => e.banda === banda);
@@ -60,9 +60,9 @@ export function precioDeLaEscalera(escalera: readonly EscalonPublicado[], grado:
     copCarga: entero(copCarga),
     copKg: entero(copKg),
     modificadorPct,
-    // V5.174: precio del grado = PVC × multiplicador (con su %) + auxilio de transporte (igual para todos los grados).
-    copCargaFinal: entero(copCarga * factor + auxilioCarga),
-    copKgFinal: entero(copKg * factor + auxilioCarga / CARGA_KG_CPS),
-    auxilioCarga: entero(auxilioCarga),
+    // V5.177: precio final = PVC × multiplicador (con su %) + Flete a CTCx de la región (igual para todos los grados).
+    copCargaFinal: entero(copCarga * factor + fleteCarga),
+    copKgFinal: entero(copKg * factor + fleteCarga / CARGA_KG_CPS),
+    fleteCarga: entero(fleteCarga),
   };
 }

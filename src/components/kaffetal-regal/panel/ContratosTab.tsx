@@ -8,6 +8,7 @@ import { cancelarPorDespacho, pasarALaVentanaSiguiente, pedirProrroga, previsual
 import { formatCop } from "@/lib/arena/inscriptions";
 import { LUGAR_DE_ENTREGA_POR_DEFECTO, MORA, PENALIDAD_RETIRO_PCT, PAGO_AL_DESPACHO_PCT } from "@/lib/trato/terminos";
 import { fechaLarga } from "@/lib/trato/modalidades";
+import { fletePorKg, REGION_DE_FLETE_LABEL } from "@/lib/trato/flete";
 import { MORA_LABEL, mesesDelTrato } from "@/lib/trato/mesAMes";
 import { CalculadoraDelTrato, type DecisionDelTrato } from "./CalculadoraDelTrato";
 import { FirmaDelContrato, type FirmaDelProductor } from "./FirmaDelContrato";
@@ -651,6 +652,13 @@ function OfferCard({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshDa
             Oferta de CTCx: <b>{formatCop(offer.pricePerKg)}/kg</b> de CPS
             {!conDeclaracion && offer.quantityKg != null && <> · <b>{offer.quantityKg} kg</b></>}
           </div>
+          {/* V5.177: el Flete a CTCx de su región, ya sumado al precio. */}
+          {offer.flete && (
+            <div className={styles.sub} style={{ marginTop: 2 }}>
+              Incluye el <b>Flete a CTCx</b> de {REGION_DE_FLETE_LABEL[offer.flete.region]}: {formatCop(offer.flete.carga)} por carga ({formatCop(fletePorKg(offer.flete.carga))}/kg). Usted despacha
+              con el código corporativo de CTCx en Servientrega y paga el envío en la oficina.
+            </div>
+          )}
           {conDeclaracion && (
             <div className={styles.sub} style={{ marginTop: 4 }}>
               {offer.referencePriceSource && <>Anclada a <b>{offer.referencePriceSource}</b>{offer.modificadorPct ? ` (${offer.modificadorPct > 0 ? "+" : ""}${offer.modificadorPct} %)` : ""} · </>}
@@ -719,7 +727,7 @@ function OfferCard({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshDa
                 esRenovacion: abierta?.esRenovacion ?? false,
                 minimoKg: abierta ? abierta.minimoKg : null,
                 calidad: abierta?.calidad ?? null,
-                auxilioCarga: abierta?.auxilioCarga ?? 0,
+                flete: offer.flete,
                 productorDocumento: null,
                 loteNombre: offer.lotName,
                 loteReferencia: ctcLotReference(offer.lotId),

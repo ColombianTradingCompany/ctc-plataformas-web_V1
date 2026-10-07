@@ -50,6 +50,7 @@ type Contrato = {
   vigencia_hasta: string | null;
   calidad_snapshot: RangosDeCalidad | null;
   lugar_entrega: string | null;
+  flete_region: string | null;
   pvc_edition_id: string | null;
   lots: { name: string; producer_id: string } | { name: string; producer_id: string }[] | null;
 };
@@ -57,7 +58,7 @@ type Contrato = {
 async function contrato(service: ReturnType<typeof createServiceRoleClient>, id: string) {
   const { data } = await service
     .from("purchase_contracts")
-    .select("id, lot_id, status, grade_snapshot, quantity_frozen_kg, price_per_kg_locked, retiro_libre_pct, sin_retiro, ventana_tipo, vigencia_desde, vigencia_hasta, calidad_snapshot, lugar_entrega, pvc_edition_id, lots(name, producer_id)")
+    .select("id, lot_id, status, grade_snapshot, quantity_frozen_kg, price_per_kg_locked, retiro_libre_pct, sin_retiro, ventana_tipo, vigencia_desde, vigencia_hasta, calidad_snapshot, lugar_entrega, flete_region, pvc_edition_id, lots(name, producer_id)")
     .eq("id", id)
     .maybeSingle();
   const c = data as unknown as Contrato | null;
@@ -282,6 +283,8 @@ export async function prepararRenovacion(contractId: string): Promise<ActionResu
   fd.set("min_kg", String(minimo));
   fd.set("saco_kg", String(ADELANTO_RENOVACION_KG.tipicoMin));
   if (c.lugar_entrega) fd.set("lugar_entrega", c.lugar_entrega);
+  // V5.177: la renovación despacha desde la misma región (el flete se toma de la edición vigente al emitirla).
+  if (c.flete_region) fd.set("flete_region", c.flete_region);
   fd.set("notes", `Renovación de su ventana: confirme cuánto deja disponible, que la humedad y el bodegaje son los adecuados, y firme antes del ${c.vigencia_hasta}.`);
   const r = await emitOffer(c.lot_id, "temporada", fd);
   if (!r.ok) return r;

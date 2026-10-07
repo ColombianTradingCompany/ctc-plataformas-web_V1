@@ -13,8 +13,9 @@ import { AJUSTE_FUERA_DE_RANGO_MAX_PCT, CALIDAD_POR_DEFECTO, CARGA_KG, MORA, PAG
 import { CONTINUIDAD_REBAJA_PCT } from "./minimos";
 import type { ReglaDePrecio } from "./ventanas";
 import type { RangosDeCalidad } from "./despachos";
+import { fletePorKg, REGION_DE_FLETE_LABEL, type FleteDelTrato } from "./flete";
 
-export const CONTRATO_VERSION = "2026-10-07.1";
+export const CONTRATO_VERSION = "2026-10-07.2";
 
 export type VentanaDelContrato = { tipo: "ciclo" | "extendida"; desde: string; hasta: string; ciclos: string[]; retiroLibrePct: number; precio: ReglaDePrecio };
 
@@ -37,8 +38,8 @@ export type DatosDelContrato = {
   esRenovacion: boolean;
   minimoKg: number | null;
   calidad: RangosDeCalidad | null;
-  /** El auxilio de transporte por carga, ya incluido en el precio. */
-  auxilioCarga: number;
+  /** V5.177: el Flete a CTCx de la oferta (región de despacho y COP por carga), ya incluido en el precio. */
+  flete: FleteDelTrato | null;
   lugarEntrega: string;
   termsVersion: string | null;
   temporada: string | null;
@@ -54,6 +55,14 @@ const fecha = (iso: string) => {
   return `${d} de ${meses[m - 1]} de ${y}`;
 };
 const num = (n: number) => n.toLocaleString("es-CO", { maximumFractionDigits: 2 });
+// V5.177 (owner, 2026-10-07): no hay «auxilio de transporte» (las cooperativas DESCUENTAN el flete de la base FNC). CTCx suma
+// el Flete a CTCx de la región al precio final y el productor despacha con el código corporativo de CTCx en Servientrega.
+const fleteEnElPrecio = (f: FleteDelTrato | null) =>
+  f ? `, e incluye el Flete a CTCx de la región ${REGION_DE_FLETE_LABEL[f.region]}: ${cop(f.carga)} por carga equivalente (${cop(fletePorKg(f.carga))} por kg)` : "";
+const despachoConFlete = (f: FleteDelTrato | null) =>
+  f
+    ? "El Productor despacha con el código de envío corporativo de CTCx en Servientrega y paga el envío en la oficina: el Flete a CTCx incluido en el precio le reconoce parte de ese costo y el resto corre por su cuenta."
+    : "El Productor despacha por su cuenta.";
 
 const REGLA_TEXTO: Record<ReglaDePrecio, string> = {
   vigente: "el Precio de Valor de Compra (PVC) de la temporada vigente",
@@ -87,8 +96,8 @@ export function clausulasDelContrato(d: DatosDelContrato): ClausulaDelContrato[]
       [
         partes,
         { titulo: "", texto: `CTCx compra al Productor ${kg(d.declaradoKg)} de café pergamino seco (CPS) del lote «${d.loteNombre}» (${d.loteReferencia}), Grado CTCx ${grado}, con la calidad con que fue evaluado. Es una compra en firme de CTCx Selection.` },
-        { titulo: "", texto: `El precio acordado es ${cop(d.copKg)} por kg de CPS (${cop(d.copKg * CARGA_KG)} por carga), un precio de compra directa que no es el PVC: es hasta el PVC vigente menos el 8 %, fijado en la negociación. El total es ${cop(d.copKg * d.declaradoKg)}.` },
-        { titulo: "", texto: `${d.lugarEntrega} CTCx registra el recibo, el peso y la humedad de cada entrega en la plataforma.` },
+        { titulo: "", texto: `El precio acordado es ${cop(d.copKg)} por kg de CPS (${cop(d.copKg * CARGA_KG)} por carga), un precio de compra directa que no es el PVC: es hasta el PVC vigente menos el 8 %, fijado en la negociación${fleteEnElPrecio(d.flete)}. El total es ${cop(d.copKg * d.declaradoKg)}.` },
+        { titulo: "", texto: `${d.lugarEntrega}${d.flete ? ` ${despachoConFlete(d.flete)}` : ""} CTCx registra el recibo, el peso y la humedad de cada entrega en la plataforma.` },
         { titulo: "", texto: "CTCx paga cada compra recibida en la primera semana del mes siguiente, por el medio de pago registrado por el Productor." },
         { titulo: "", texto: `Si el Productor no entrega la cantidad pactada, corren ${MORA.semanasSinCargo} semanas sin cargo y ${MORA.semanasConRecargo} más con un recargo del ${MORA.recargoPct} %; pasado ese plazo, CTCx puede declarar la ruptura contractual.` },
         documentos,
@@ -112,8 +121,8 @@ export function clausulasDelContrato(d: DatosDelContrato): ClausulaDelContrato[]
     : `Con la firma, CTCx compra de inmediato ${kg(d.sacoKg ?? 0)} de CPS (un saco), FUERA de lo declarado, al precio acordado. Es el material con que CTCx promociona y posiciona el lote (Sample Kits).`;
   const ventas =
     "CTCx no se compromete a comprar cantidades fijas: puede no haber ventas en una semana, o venderse todo lo declarado el primer día. Cada semana CTCx le confirma al Productor lo vendido en Cherry Picked; lo vendido es de CTCx y ya no se puede retirar.";
-  const precio = `El precio queda fijo en ${cop(d.copKg)} por kg de CPS (${cop(d.copKg * CARGA_KG)} por carga), ${REGLA_TEXTO[v.precio]}${d.auxilioCarga > 0 ? `, e incluye el auxilio de transporte de ${cop(d.auxilioCarga)} por carga` : ""}. No cambia durante la ventana.`;
-  const entrega = `${d.lugarEntrega} El Productor despacha por su cuenta (el PVC le reconoce el auxilio de transporte y CTCx le ofrece tarifas corporativas). El saco${d.esRenovacion ? " o el adelanto" : ""} sale al cierre de la semana en que se firma; si no sale, el Productor puede pedir una prórroga de ${PRORROGA_DIAS} días —que queda como advertencia—, cancelar el contrato o pasarlo a la ventana siguiente (un contrato firmado en la semana 1 del ciclo no tiene prórroga: su saco tiene que llegar al procesamiento de la semana 2). Lo vendido en cada ciclo sale en la semana 1 del ciclo siguiente; si no sale, tiene ${PRORROGA_DIAS} días de prórroga con advertencia y, después, el faltante se cobra como retiro penalizado y CTCx puede declarar la ruptura contractual, que congela la cuenta del Productor hasta que se resuelva.`;
+  const precio = `El precio queda fijo en ${cop(d.copKg)} por kg de CPS (${cop(d.copKg * CARGA_KG)} por carga), ${REGLA_TEXTO[v.precio]}${fleteEnElPrecio(d.flete)}. No cambia durante la ventana.`;
+  const entrega = `${d.lugarEntrega} ${despachoConFlete(d.flete)} El saco${d.esRenovacion ? " o el adelanto" : ""} sale al cierre de la semana en que se firma; si no sale, el Productor puede pedir una prórroga de ${PRORROGA_DIAS} días —que queda como advertencia—, cancelar el contrato o pasarlo a la ventana siguiente (un contrato firmado en la semana 1 del ciclo no tiene prórroga: su saco tiene que llegar al procesamiento de la semana 2). Lo vendido en cada ciclo sale en la semana 1 del ciclo siguiente; si no sale, tiene ${PRORROGA_DIAS} días de prórroga con advertencia y, después, el faltante se cobra como retiro penalizado y CTCx puede declarar la ruptura contractual, que congela la cuenta del Productor hasta que se resuelva.`;
   const pago = `CTCx paga el ${PAGO_AL_DESPACHO_PCT} % de cada envío con el tiquete de despacho (guía, peso y foto) y el ${100 - PAGO_AL_DESPACHO_PCT} % al recibirlo, comprobado que la humedad está entre ${num(calidad.humedad_min)} y ${num(calidad.humedad_max)} % y la actividad de agua no pasa de ${num(calidad.aw_max)}. Fuera de rango, CTCx elige: devolverlo (el Productor reintegra el ${PAGO_AL_DESPACHO_PCT} % y CTCx paga el flete de vuelta; cada parte pierde su transporte) o comprarlo con un pago adicional de 0 a ${AJUSTE_FUERA_DE_RANGO_MAX_PCT} % (el café queda pagado entre el ${PAGO_AL_DESPACHO_PCT} y el ${PAGO_AL_DESPACHO_PCT + AJUSTE_FUERA_DE_RANGO_MAX_PCT} %).`;
   const retiro = d.sinRetiro
     ? `Por ser una declaración reducida no hay retiro libre: lo que el Productor retire de lo no vendido paga el ${PENALIDAD_RETIRO_PCT} % del precio de cada carga.`

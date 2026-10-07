@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.181] — 2026-10-07 (commit pendiente)
+## [V5.181] — 2026-10-07 (commit 4b1300e)
 
 - **Cambiado**: **la existencia del lote es obligatoria al enviar la muestra** (owner: «es un valor no-obligatorio en A2, pero se
   vuelve obligatorio cuando se envía para la muestra, preguntándolo de nuevo si no fue ya registrado, y permite corregirlo»).

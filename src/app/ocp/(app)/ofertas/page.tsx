@@ -3,14 +3,15 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { formatCop } from "@/lib/arena/inscriptions";
-import { edicionProxima, edicionVigente } from "@/lib/pvc/servicio";
+import { calendarioDeLaEdicion, edicionProxima, edicionVigente, hoyEnColombia } from "@/lib/pvc/servicio";
 import { fechaLimitePvcSiguiente } from "@/lib/trato/modalidades";
 import { precioDeLaEscalera, type EscalonPublicado } from "@/lib/pvc/precio";
 import { esGradoValido, GRADO_POR_ID } from "@/lib/grados/definicion";
 import { evaluacionQueRige, type EvaluationRow } from "@/lib/evaluations";
 import { triadaDeLaFicha } from "@/lib/pvc/triadaDelLote";
 import { letras } from "@/lib/pvc/escala";
-import { CARGA_KG, COMPRA_INICIAL_CTCX_CARGAS, MODIFICADOR_DIRECTA_PCT } from "@/lib/trato/terminos";
+import { ADELANTO_RENOVACION_KG, MODIFICADOR_DIRECTA_PCT, SACO_INICIAL_KG } from "@/lib/trato/terminos";
+import { ventanaDeFirma } from "@/lib/trato/ventanas";
 import { minimoDelGrado } from "@/lib/trato/minimos";
 import { CatalogoTabs } from "../catalogo/CatalogoTabs";
 import { EmitOfferForm, ReabrirDecisionButton, RespuestaContraoferta, RetireOfferButton, RondasDeNegociacion, type AnclajeDeOferta, type RondaDeNegociacion } from "./OfertasClient";
@@ -107,6 +108,11 @@ export default async function OcpOfertasPage() {
 
   const elegible = (l: LotRow) => !withOpenOffer.has(l.id) && !withLiveContract.has(l.id) && !sinOferta.has(l.id);
   const colaTemporada = lots.filter((l) => ["red", "blue", "gold"].includes(l.grade ?? "") && elegible(l));
+  // V5.175: los lotes que ya tuvieron un contrato por ventana — su oferta no repite el saco: es una compra adelantada (0–200 kg).
+  const { data: previosRaw } = colaTemporada.length
+    ? await service.from("purchase_contracts").select("lot_id").in("lot_id", colaTemporada.map((l) => l.id)).not("ventana_tipo", "is", null).neq("status", "cancelled")
+    : { data: [] };
+  const conVentanaPrevia = new Set(((previosRaw as { lot_id: string }[] | null) ?? []).map((r) => r.lot_id));
   const colaSubasta = lots.filter((l) => l.grade === "tyrian" && elegible(l));
   const decididos = lots.filter((l) => sinOferta.has(l.id));
   // V5.169: primero las contraofertas (le toca a CTCx), después las que esperan al productor.
@@ -135,7 +141,16 @@ export default async function OcpOfertasPage() {
   const name = (id: string) => producers.get(id)?.fullName ?? producers.get(id)?.companyName ?? "—";
 
   // V5.82: el anclaje al PVC de cada lote elegible, calculado con la MISMA función pura que usa la acción.
-  const anclajeDe = (grade: string | null): AnclajeDeOferta | null => {
+  // V5.175 (docs/PLAN_CICLOS.md §2): la ventana que tocaría si el productor firmara HOY — la misma regla que aplica el servidor.
+  const calVig = edicion ? calendarioDeLaEdicion(edicion) : null;
+  const calSig = proxima ? calendarioDeLaEdicion(proxima) : null;
+  const vh = edicion && calVig ? ventanaDeFirma({ firma: hoyEnColombia(), vigente: { codigo: edicion.code, cal: calVig }, siguiente: proxima && calSig ? { codigo: proxima.code, cal: calSig } : null }) : null;
+  const ventanaHoy: AnclajeDeOferta["ventanaHoy"] = !vh
+    ? { abierta: false, motivo: "La edición vigente del PVC no tiene sus ciclos definidos (Modelo Económico).", reabre: null }
+    : vh.abierta
+      ? { abierta: true, tipo: vh.tipo, desde: vh.desde, hasta: vh.hasta, retiroLibrePct: vh.retiroLibrePct, precio: vh.precio }
+      : { abierta: false, motivo: vh.motivo, reabre: vh.reabre };
+  const anclajeDe = (grade: string | null, continuacion = false): AnclajeDeOferta | null => {
     if (!edicion || !grade || !esGradoValido(grade)) return null;
     // V5.174: el auxilio de transporte de cada edición se suma al precio del grado (null = por fijar → $0).
     const base = precioDeLaEscalera(escalera, grade, 0, edicion.auxilioTransporteCop ?? 0);
@@ -151,7 +166,8 @@ export default async function OcpOfertasPage() {
       copKgDirecta: directa.copKgFinal,
       // V5.174: el mínimo del grado sale de la edición (Modelo Económico), no de la constante.
       minKg: minimoDelGrado(grade, edicion.minimosPorGrado),
-      compraInicialKg: COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG,
+      saco: continuacion ? { kg: ADELANTO_RENOVACION_KG.tipicoMin, min: 0, max: SACO_INICIAL_KG.max, continuacion: true } : { kg: SACO_INICIAL_KG.min, min: SACO_INICIAL_KG.min, max: SACO_INICIAL_KG.max, continuacion: false },
+      ventanaHoy,
       siguiente: proxima && sig ? { code: proxima.code, copKg: sig.copKgFinal } : null,
       fechaLimiteSiguiente: edicion.validFrom ? fechaLimitePvcSiguiente(edicion.validFrom) : null,
     };
@@ -181,7 +197,7 @@ export default async function OcpOfertasPage() {
 
   const lotCard = (l: LotRow, kind: "temporada" | "subasta") => {
     const finca = (Array.isArray(l.fincas) ? l.fincas[0] : l.fincas) as FincaMin | null;
-    const anclaje = kind === "temporada" ? anclajeDe(l.grade) : null;
+    const anclaje = kind === "temporada" ? anclajeDe(l.grade, conVentanaPrevia.has(l.id)) : null;
     // V5.168: el lote de temporada se despliega (resumen + confirmar parámetros) antes de emitir.
     if (kind === "temporada") return <OfertaDesplegable key={l.id} lotId={l.id} lotName={l.name} resumen={resumenDe(l)} anclaje={anclaje} />;
     return (

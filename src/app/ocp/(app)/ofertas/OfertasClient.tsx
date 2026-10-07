@@ -47,8 +47,11 @@ export type AnclajeDeOferta = {
   copCarga: number;
   copKgDirecta: number;
   minKg: number | null;
-  compraInicialKg: number;
-  /** V5.170: el PVC de la edición siguiente («Siguiente Temporada»), o cuándo se fija si aún no se publica. */
+  /** V5.175 (docs/PLAN_CICLOS.md §3): el saco de la firma (70–200 kg) o, si el lote ya tuvo contrato, la compra adelantada (0–200). */
+  saco: { kg: number; min: number; max: number; continuacion: boolean };
+  /** V5.175: la ventana que tocaría si el productor firmara HOY (la decide la fecha de firma, no la oferta). */
+  ventanaHoy: { abierta: true; tipo: "ciclo" | "extendida"; desde: string; hasta: string; retiroLibrePct: number; precio: "vigente" | "promedio" | "siguiente" } | { abierta: false; motivo: string; reabre: string | null };
+  /** El PVC de la edición siguiente (cuenta en las ventanas que se extienden al trimestre siguiente), o cuándo se publica. */
   siguiente: { code: string; copKg: number } | null;
   fechaLimiteSiguiente: string | null;
 };
@@ -117,7 +120,7 @@ export function EmitOfferForm({
             (anclaje ? (
               <p className={styles.meta} style={{ margin: 0 }}>
                 PVC {anclaje.code} · banda {anclaje.banda} ×{anclaje.mult} → <b>{formatCop(clase === "directa" ? anclaje.copKgDirecta : anclaje.copKg)}/kg</b> de CPS
-                {clase === "temporada" && <> ({formatCop(anclaje.copCarga)}/carga · mínimo {anclaje.minKg ?? "—"} kg · CTC compra {anclaje.compraInicialKg} kg de inmediato)</>}
+                {clase === "temporada" && <> ({formatCop(anclaje.copCarga)}/carga · mínimo {anclaje.minKg ?? "—"} kg por ventana · {anclaje.saco.continuacion ? "compra adelantada" : "saco con la firma"} {anclaje.saco.kg} kg)</>}
                 . Si el lote es de la temporada pasada, se aplica −10 % al emitir.
               </p>
             ) : (

@@ -1,4 +1,4 @@
-import type { EstadoDeRedeclaracion } from "@/lib/trato/modalidades";
+import type { CuentaDeVentana } from "@/lib/trato/cuenta";
 import type { FichaFormData } from "./ficha/fichaData";
 import type { PuntoSca } from "@/lib/arena/homologacion";
 import type { EstadoDeMora } from "@/lib/trato/mesAMes";
@@ -393,26 +393,20 @@ export type ProducerOffer = {
   termsVersion: string | null;
   minKg: number | null;
   maxKg: number | null;
-  compraInicialKg: number | null;
+  /** V5.175 (docs/PLAN_CICLOS.md §3): el saco que CTCx compra con la firma (primer contrato, 70–200 kg) o el adelanto (renovación). */
+  sacoKg: number | null;
+  esRenovacion: boolean;
   referencePriceSource: string | null;
   modificadorPct: number;
   expiraAt: string | null;
   lockedKg: number | null;
-  declaracion: "trimestre" | "temporada_actual" | "ahora_y_siguiente" | null;
   /** V5.168: las condiciones de entrega que CTCx confirmó al emitir. */
   lugarEntrega: string | null;
-  /** V5.169: el tope de una compra de CTCx Selection (PVC − 8 %), la referencia FNC por carga del día de la oferta, el fin de la
-   *  Temporada Trimestral, los días que faltan para la siguiente (calculados al cargar) y las rondas de la negociación. */
+  /** V5.169: el tope de una compra de CTCx Selection (PVC − 8 %), la referencia FNC por carga del día de la oferta y las rondas de
+   *  la negociación. La ventana, el precio de su regla y lo disponible del lote NO se cargan aquí: los calcula el servidor al
+   *  previsualizar y al aceptar (`previsualizarOferta`, V5.175). */
   precioTopeKg: number | null;
   fncCargaRef: number | null;
-  temporadaHasta: string | null;
-  diasHastaSiguiente: number | null;
-  hoy: string;
-  /** V5.170: el PVC de la EDICIÓN SIGUIENTE para «Siguiente Temporada» (null si al emitir aún no se publicaba) y la fecha límite
-   *  en que se fija (primeras dos semanas del segundo mes de la temporada vigente). */
-  precioSiguienteKg: number | null;
-  pvcSiguienteCode: string | null;
-  fechaLimiteSiguiente: string | null;
   rondas: { autor: "ctcx" | "productor"; accion: string; precioKg: number | null; kg: number | null; nota: string | null; fecha: string }[];
 };
 
@@ -428,18 +422,24 @@ export type ProducerContract = {
   quantityFrozenKg: number | null;
   // V5.83: el contrato nace LLENO de la oferta aceptada con la declaración del productor.
   termsVersion: string | null;
-  declaracion: "trimestre" | "temporada_actual" | "ahora_y_siguiente" | null;
-  compraInicialKg: number | null;
   referencePriceSource: string | null;
-  /** V5.169: la vigencia del trato, el retiro libre, la redeclaración y la compra discrecional de la modalidad. */
+  /** V5.175 (docs/PLAN_CICLOS.md): la VENTANA del trato — fechas, tipo, ciclos, regla de precio, retiro libre; el saco fuera de lo
+   *  declarado; el mínimo con que nació; si la declaración fue reducida (sin retiro); y lo que pasa en ella: las ventas
+   *  confirmadas semana a semana, los retiros, los despachos, y la cuenta (`cuentaDeVentana`, calculada al cargar). null en
+   *  `ventanaTipo` = un trato viejo por meses o una compra de CTCx Selection. */
   vigenciaDesde: string | null;
   vigenciaHasta: string | null;
   retiroLibrePct: number | null;
-  redeclararMinKg: number | null;
-  redeclararAt: string | null;
-  /** V5.171: en qué punto está la redeclaración de «Ahora y Siguiente» (`estadoDeRedeclaracion`, calculado al cargar). */
-  redeclaracion: EstadoDeRedeclaracion | null;
-  compraInicialRango: { min: number; max: number } | null;
+  ventanaTipo: "ciclo" | "extendida" | null;
+  ventanaCiclos: string[];
+  precioRegla: "vigente" | "promedio" | "siguiente" | null;
+  sacoKg: number | null;
+  minimoKg: number | null;
+  sinRetiro: boolean;
+  ventas: { id: string; semana: string; kg: number; copKg: number; totalCop: number; confirmadaAt: string }[];
+  retiros: { id: string; kg: number; libreKg: number; penalizadoKg: number; penalidadCop: number; nota: string | null; createdAt: string }[];
+  despachos: DespachoDelTrato[];
+  cuenta: CuentaDeVentana | null;
   // V5.84 (fase 7): el trato mes a mes — lo que CTC pide, lo enviado, lo pagado y los retiros; la mora se DERIVA
   // al cargar (`moraDelMes` / `resumenDelTrato`, la misma función que lee el OCP), nunca se guarda.
   signedAt: string | null;
@@ -454,7 +454,32 @@ export type ProducerContract = {
   humidity: HumidityReading[];
 };
 
-/** Un mes del trato (`contract_months`, solo lectura para el productor; retirar pasa por `retirarDelTrato`). */
+/** V5.175: un despacho del trato por ventanas (`contract_despachos`, solo lectura; el productor actúa por `producerActions`). */
+export type DespachoDelTrato = {
+  id: string;
+  tipo: "saco" | "adelanto" | "vendido";
+  kg: number;
+  copKg: number;
+  totalCop: number;
+  plazo: string;
+  prorrogaHasta: string | null;
+  estado: "pendiente" | "despachado" | "recibido" | "cancelado" | "movido";
+  guia: string | null;
+  pesoKg: number | null;
+  despachadoAt: string | null;
+  recibidoAt: string | null;
+  humedadPct: number | null;
+  aw: number | null;
+  resultado: "aceptado" | "devolucion" | "compra_ajustada" | null;
+  pagoDespachoCop: number | null;
+  pagoDespachoAt: string | null;
+  pagoRecepcionCop: number | null;
+  pagoRecepcionAt: string | null;
+  advertencias: number;
+};
+
+/** Un mes del trato (`contract_months`, solo lectura para el productor). Desde la V5.175 solo lo usan los tratos viejos y las
+ *  compras de CTCx Selection (que siguen pagándose por mes); el trato de Cherry Picked va por ventanas. */
 export type ContractMonth = {
   mes: number;
   pedidoKg: number | null;

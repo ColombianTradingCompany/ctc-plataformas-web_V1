@@ -1,7 +1,8 @@
 "use client";
 
 import { contratoFirmado } from "@/lib/kaffetal/blindaje";
-import { diasHastaLaSiguiente, estadoDeRedeclaracion, fechaLimitePvcSiguiente } from "@/lib/trato/modalidades";
+import { cuentaDeVentana } from "@/lib/trato/cuenta";
+import type { DespachoDelTrato } from "./data";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ToastProvider, useToast } from "@/components/Toast";
 import { puedoSer } from "@/lib/identidad/matriz";
@@ -423,7 +424,7 @@ function Experience() {
           supabase.from("lots").select("*").eq("producer_id", uid).order("created_at", { ascending: false }),
           supabase
             .from("purchase_contracts")
-            .select("*, lots(id, name, grade), contract_releases(*), humidity_readings(*), contract_months(*)")
+            .select("*, lots(id, name, grade), contract_releases(*), humidity_readings(*), contract_months(*), contract_ventas(*), contract_retiros(*), contract_despachos(*)")
             .order("created_at", { ascending: false }),
           supabase.from("ficha_completion_snapshots").select("lot_id, completion_pct, recorded_at").order("recorded_at", { ascending: true }),
           // RLS (lot_evaluations_select_own_lot) already scopes this to the producer's own lots.
@@ -453,7 +454,7 @@ function Experience() {
           supabase
             .from("lot_offers")
             .select(
-              "id, lot_id, kind, status, grade_snapshot, score_snapshot, variety_snapshot, process_snapshot, price_per_kg, quantity_kg, notes, season_label, lote_de_temporada_pasada, emitted_at, responded_at, response_note, contract_id, terms_version, min_kg, max_kg, compra_inicial_kg, reference_price_source, modificador_pct, expira_at, locked_kg, declaracion, lugar_entrega, precio_tope_kg, fnc_carga_ref, temporada_hasta, temporada_desde, price_next_kg, pvc_next_code"
+              "id, lot_id, kind, status, grade_snapshot, score_snapshot, variety_snapshot, process_snapshot, price_per_kg, quantity_kg, notes, season_label, lote_de_temporada_pasada, emitted_at, responded_at, response_note, contract_id, terms_version, min_kg, max_kg, saco_kg, es_renovacion, reference_price_source, modificador_pct, expira_at, locked_kg, lugar_entrega, precio_tope_kg, fnc_carga_ref"
             )
             .order("emitted_at", { ascending: false }),
           // RLS (lot_fichas_select_own) scopes this to the producer's own lots
@@ -586,19 +587,19 @@ function Experience() {
         quantity_frozen_kg: number | null;
         season_id: string | null;
         terms_version: string | null;
-        declaracion: "trimestre" | "temporada_actual" | "ahora_y_siguiente" | null;
-        compra_inicial_kg: number | string | null;
         reference_price_source: string | null;
         vigencia_desde?: string | null;
         vigencia_hasta?: string | null;
         retiro_libre_pct?: number | string | null;
-        redeclarar_min_kg?: number | string | null;
-        redeclarar_at?: string | null;
-        redeclarado_at?: string | null;
-        redeclarado_kg?: number | string | null;
-        redeclaracion_origen?: string | null;
-        compra_inicial_min_kg?: number | string | null;
-        compra_inicial_max_kg?: number | string | null;
+        ventana_tipo?: "ciclo" | "extendida" | null;
+        ventana_ciclos?: string[] | null;
+        precio_regla?: "vigente" | "promedio" | "siguiente" | null;
+        saco_kg?: number | string | null;
+        minimo_kg?: number | string | null;
+        sin_retiro?: boolean | null;
+        contract_ventas?: { id: string; semana: string; kg: number | string; cop_kg: number | string; total_cop: number | string; confirmada_at: string }[];
+        contract_retiros?: { id: string; kg: number | string; libre_kg: number | string; penalizado_kg: number | string; penalidad_cop: number | string; nota: string | null; created_at: string }[];
+        contract_despachos?: Record<string, unknown>[];
         signed_at: string | null;
         producer_signed_at?: string | null;
         lugar_entrega?: string | null;
@@ -631,7 +632,6 @@ function Experience() {
       // V5.84 (fase 7): lo derivado del trato (la mora de cada mes, el mes en curso) se calcula AQUÍ, al cargar, con la
       // misma función que lee el OCP (`mesAMes.ts`) — nunca en el render (react-hooks/purity) y nunca se guarda.
       const hoy = new Date();
-      const hoyColombia = new Date(hoy.getTime() - 5 * 3_600_000).toISOString().slice(0, 10);
       setContracts(
         ((contractRows as ContractRow[] | null) ?? []).map((c) => {
           const meses = (c.contract_months ?? [])
@@ -661,27 +661,12 @@ function Experience() {
           pricePerKgLocked: c.price_per_kg_locked,
           quantityFrozenKg: c.quantity_frozen_kg,
           termsVersion: c.terms_version ?? null,
-          declaracion: c.declaracion ?? null,
-          compraInicialKg: c.compra_inicial_kg != null ? Number(c.compra_inicial_kg) : null,
           referencePriceSource: c.reference_price_source ?? null,
           signedAt: c.signed_at ?? null,
           vigenciaDesde: c.vigencia_desde ?? null,
           vigenciaHasta: c.vigencia_hasta ?? null,
           retiroLibrePct: c.retiro_libre_pct != null ? Number(c.retiro_libre_pct) : null,
-          redeclararMinKg: c.redeclarar_min_kg != null ? Number(c.redeclarar_min_kg) : null,
-          redeclararAt: c.redeclarar_at ?? null,
-          redeclaracion:
-            c.declaracion === "ahora_y_siguiente"
-              ? estadoDeRedeclaracion({
-                  redeclararMinKg: c.redeclarar_min_kg != null ? Number(c.redeclarar_min_kg) : null,
-                  redeclararAt: c.redeclarar_at ?? null,
-                  redeclaradoAt: c.redeclarado_at ?? null,
-                  redeclaradoKg: c.redeclarado_kg != null ? Number(c.redeclarado_kg) : null,
-                  redeclaracionOrigen: c.redeclaracion_origen ?? null,
-                  hoy: hoyColombia,
-                })
-              : null,
-          compraInicialRango: c.compra_inicial_min_kg != null ? { min: Number(c.compra_inicial_min_kg), max: Number(c.compra_inicial_max_kg ?? c.compra_inicial_min_kg) } : null,
+          ...ventanaDelContrato(c),
           producerSignedAt: c.producer_signed_at ?? null,
           lugarEntrega: c.lugar_entrega ?? null,
           freezeMonths: c.freeze_months ?? null,
@@ -731,19 +716,15 @@ function Experience() {
         terms_version: string | null;
         min_kg: number | string | null;
         max_kg: number | string | null;
-        compra_inicial_kg: number | string | null;
+        saco_kg: number | string | null;
+        es_renovacion: boolean | null;
         reference_price_source: string | null;
         modificador_pct: number | string | null;
         expira_at: string | null;
         locked_kg: number | string | null;
-        declaracion: "trimestre" | "temporada_actual" | "ahora_y_siguiente" | null;
         lugar_entrega: string | null;
         precio_tope_kg: number | string | null;
         fnc_carga_ref: number | string | null;
-        temporada_hasta: string | null;
-        temporada_desde: string | null;
-        price_next_kg: number | string | null;
-        pvc_next_code: string | null;
       };
       // V5.169: las rondas de las negociaciones de CTCx Selection (RLS: solo las de sus ofertas) y la fecha de hoy en Colombia.
       const ofertaRows = (offerRows as OfferRow[] | null) ?? [];
@@ -752,7 +733,6 @@ function Experience() {
         ? await supabase.from("lot_offer_rondas").select("offer_id, autor, accion, price_per_kg, quantity_kg, nota, created_at").in("offer_id", idsSel).order("created_at", { ascending: true })
         : { data: [] };
       type RondaRow = { offer_id: string; autor: "ctcx" | "productor"; accion: string; price_per_kg: number | string | null; quantity_kg: number | string | null; nota: string | null; created_at: string };
-      const hoyCo = new Date(Date.now() - 5 * 3_600_000).toISOString().slice(0, 10);
       const lotNameById = new Map(lotRowList.map((l) => [l.id, l.name]));
       setOffers(
         ((offerRows as OfferRow[] | null) ?? []).map((o) => ({
@@ -777,21 +757,15 @@ function Experience() {
           termsVersion: o.terms_version ?? null,
           minKg: o.min_kg != null ? Number(o.min_kg) : null,
           maxKg: o.max_kg != null ? Number(o.max_kg) : null,
-          compraInicialKg: o.compra_inicial_kg != null ? Number(o.compra_inicial_kg) : null,
+          sacoKg: o.saco_kg != null ? Number(o.saco_kg) : null,
+          esRenovacion: Boolean(o.es_renovacion),
           referencePriceSource: o.reference_price_source ?? null,
           modificadorPct: Number(o.modificador_pct ?? 0),
           expiraAt: o.expira_at ?? null,
           lockedKg: o.locked_kg != null ? Number(o.locked_kg) : null,
-          declaracion: o.declaracion ?? null,
           lugarEntrega: o.lugar_entrega ?? null,
           precioTopeKg: o.precio_tope_kg != null ? Number(o.precio_tope_kg) : null,
           fncCargaRef: o.fnc_carga_ref != null ? Number(o.fnc_carga_ref) : null,
-          temporadaHasta: o.temporada_hasta ?? null,
-          diasHastaSiguiente: o.temporada_hasta ? diasHastaLaSiguiente(hoyCo, o.temporada_hasta) : null,
-          hoy: hoyCo,
-          precioSiguienteKg: o.price_next_kg != null ? Number(o.price_next_kg) : null,
-          pvcSiguienteCode: o.pvc_next_code ?? null,
-          fechaLimiteSiguiente: o.temporada_desde ? fechaLimitePvcSiguiente(o.temporada_desde) : null,
           rondas: (((rondasRaw as RondaRow[] | null) ?? []).filter((r) => r.offer_id === o.id)).map((r) => ({
             autor: r.autor,
             accion: r.accion,
@@ -2248,6 +2222,65 @@ function Experience() {
       )}
     </div>
   );
+}
+
+// V5.175 (docs/PLAN_CICLOS.md): la ventana de un contrato, sus ventas, retiros y despachos, y la cuenta — armado al cargar.
+type FilaDeVentana = {
+  quantity_frozen_kg: number | null;
+  retiro_libre_pct?: number | string | null;
+  ventana_tipo?: "ciclo" | "extendida" | null;
+  ventana_ciclos?: string[] | null;
+  precio_regla?: "vigente" | "promedio" | "siguiente" | null;
+  saco_kg?: number | string | null;
+  minimo_kg?: number | string | null;
+  sin_retiro?: boolean | null;
+  contract_ventas?: { id: string; semana: string; kg: number | string; cop_kg: number | string; total_cop: number | string; confirmada_at: string }[];
+  contract_retiros?: { id: string; kg: number | string; libre_kg: number | string; penalizado_kg: number | string; penalidad_cop: number | string; nota: string | null; created_at: string }[];
+  contract_despachos?: Record<string, unknown>[];
+};
+const numOrNull = (v: unknown) => (v == null || v === "" ? null : Number(v));
+function ventanaDelContrato(c: FilaDeVentana) {
+  const ventas = (c.contract_ventas ?? []).map((v) => ({ id: v.id, semana: v.semana, kg: Number(v.kg), copKg: Number(v.cop_kg), totalCop: Number(v.total_cop), confirmadaAt: v.confirmada_at })).sort((a, b) => a.semana.localeCompare(b.semana));
+  const retiros = (c.contract_retiros ?? []).map((r) => ({ id: r.id, kg: Number(r.kg), libreKg: Number(r.libre_kg), penalizadoKg: Number(r.penalizado_kg), penalidadCop: Number(r.penalidad_cop), nota: r.nota, createdAt: r.created_at }));
+  const despachos: DespachoDelTrato[] = (c.contract_despachos ?? [])
+    .map((d) => ({
+      id: String(d.id),
+      tipo: d.tipo as DespachoDelTrato["tipo"],
+      kg: Number(d.kg),
+      copKg: Number(d.cop_kg),
+      totalCop: Number(d.total_cop),
+      plazo: String(d.plazo),
+      prorrogaHasta: (d.prorroga_hasta as string | null) ?? null,
+      estado: d.estado as DespachoDelTrato["estado"],
+      guia: (d.guia as string | null) ?? null,
+      pesoKg: numOrNull(d.peso_kg),
+      despachadoAt: (d.despachado_at as string | null) ?? null,
+      recibidoAt: (d.recibido_at as string | null) ?? null,
+      humedadPct: numOrNull(d.humedad_pct),
+      aw: numOrNull(d.aw),
+      resultado: (d.resultado as DespachoDelTrato["resultado"]) ?? null,
+      pagoDespachoCop: numOrNull(d.pago_despacho_cop),
+      pagoDespachoAt: (d.pago_despacho_at as string | null) ?? null,
+      pagoRecepcionCop: numOrNull(d.pago_recepcion_cop),
+      pagoRecepcionAt: (d.pago_recepcion_at as string | null) ?? null,
+      advertencias: Number(d.advertencias ?? 0),
+    }))
+    .sort((a, b) => a.plazo.localeCompare(b.plazo));
+  const ventanaTipo = c.ventana_tipo ?? null;
+  return {
+    ventanaTipo,
+    ventanaCiclos: c.ventana_ciclos ?? [],
+    precioRegla: c.precio_regla ?? null,
+    sacoKg: numOrNull(c.saco_kg),
+    minimoKg: numOrNull(c.minimo_kg),
+    sinRetiro: Boolean(c.sin_retiro),
+    ventas,
+    retiros,
+    despachos,
+    cuenta: ventanaTipo
+      ? cuentaDeVentana({ declaradoKg: Number(c.quantity_frozen_kg ?? 0), retiroLibrePct: numOrNull(c.retiro_libre_pct), sinRetiro: Boolean(c.sin_retiro), ventas, retiros })
+      : null,
+  };
 }
 
 export function KaffetalExperience() {

@@ -1,3 +1,9 @@
+// ⚠ V5.175 (docs/PLAN_CICLOS.md): el trato ya NO va por modalidades — la fecha de firma decide la VENTANA (`ventanas.ts`). De este
+// archivo siguen vivos `fechaLarga`, `fechaLimitePvcSiguiente` (el plazo de publicación del PVC siguiente, del calendario ISO),
+// `MODALIDAD_LABEL` (la lectura de los tratos viejos en el OCP) y la redeclaración de la V5.171 (`estadoDeRedeclaracion`,
+// `cantidadTrasRedeclarar`: la usa el barrido diario `/api/cron/redeclaraciones`, que se reusa para las renovaciones en la tanda 3).
+// Las modalidades (`condicionesDe`, `modalidadesDisponibles`, …) quedan para leer tratos viejos (no hay en producción) y se
+// retiran con la tanda 3; `qa-trato` todavía las prueba como funciones puras.
 // ── Las modalidades de participar en Cherry Picked (V5.169, owner 2026-10-06) ─────────────────────────────────────────────
 // PURO. La Temporada Trimestral es la ventana de la edición del PVC (`valid_from`..`valid_to`); la siguiente empieza el día
 // después de `valid_to`. De cuántos días falten salen las modalidades disponibles y, de la elegida, la vigencia del trato,

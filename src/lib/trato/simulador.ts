@@ -184,3 +184,43 @@ export function simularVentas(e: EscenarioDeVenta): ResultadoDeVenta {
     primaFncPct: fncKg ? Math.round((copKg / fncKg - 1) * 1000) / 10 : null,
   };
 }
+
+// ── V5.175 (docs/PLAN_CICLOS.md §3–§4) · el escenario de una VENTANA, por semanas ───────────────────────────────────────────
+// Lo mismo que `simularVentas`, contado en semanas y con el SACO inicial FUERA de lo declarado: lo que el productor recibe es el
+// saco más lo que CTCx vende de lo declarado. El patrón «un mes sin ventas» se lee aquí como «las primeras semanas sin ventas».
+export const PATRON_LABEL_VENTANA: Record<PatronDeVenta, string> = {
+  primer_dia: "Todo apenas empieza",
+  parejo: "Parejo, semana a semana",
+  al_final: "Todo al final",
+  mes_sin_venta: "Una semana sin ventas, luego parejo",
+};
+
+export type ResultadoDeVentana = {
+  porSemana: { semana: number; kg: number; cop: number }[];
+  saco: { kg: number; cop: number };
+  vendidoKg: number;
+  vendidoPct: number;
+  ingresoCop: number;
+  sinVenderKg: number;
+  primaFncPct: number | null;
+  diferenciaFncCop: number | null;
+};
+
+export function simularVentasDeVentana(e: { declaradoKg: number; copKg: number; semanas: number; sacoKg: number; ventaPct: number; patron: PatronDeVenta; fncCargaRef: number | null }): ResultadoDeVentana {
+  const v = simularVentas({ declaradoKg: e.declaradoKg, copKg: e.copKg, meses: Math.max(1, Math.round(e.semanas)), compraInicialKg: 0, ventaPct: e.ventaPct, patron: e.patron, fncCargaRef: e.fncCargaRef });
+  const sacoKg = Math.max(0, Number(e.sacoKg) || 0);
+  const saco = { kg: sacoKg, cop: Math.round(sacoKg * Math.max(0, Number(e.copKg) || 0)) };
+  const fncKg = v.fncKg;
+  const ingresoCop = v.ingresoCop + saco.cop;
+  const ingresoFnc = fncKg != null ? Math.round((v.vendidoKg + sacoKg) * fncKg) : null;
+  return {
+    porSemana: v.porMes.map((m) => ({ semana: m.mes, kg: m.kg, cop: m.cop })),
+    saco,
+    vendidoKg: v.vendidoKg,
+    vendidoPct: v.vendidoPct,
+    ingresoCop,
+    sinVenderKg: v.sinVenderKg,
+    primaFncPct: v.primaFncPct,
+    diferenciaFncCop: ingresoFnc != null ? ingresoCop - ingresoFnc : null,
+  };
+}

@@ -103,7 +103,13 @@ export function PropuestaSelection({ offer, onRefreshData }: { offer: ProducerOf
         <FirmaDelContrato
           datos={{
             tipo: "selection",
-            condiciones: null,
+            ventana: null,
+            sinRetiro: false,
+            sacoKg: null,
+            esRenovacion: false,
+            minimoKg: null,
+            calidad: null,
+            auxilioCarga: 0,
             productorDocumento: null,
             loteNombre: offer.lotName,
             loteReferencia: ctcLotReference(offer.lotId),

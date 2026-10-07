@@ -113,6 +113,58 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   check("plan · PLAN_CICLOS manda y lo enlazan el plan del circuito y el del PVC", plan.includes("## 9. Las tandas") && lee("docs/PLAN_CIRCUITO_DEL_LOTE.md").includes("docs/PLAN_CICLOS.md") && lee("docs/PVC_BCP_PLAN.md").includes("docs/PLAN_CICLOS.md"));
 }
 
+// ── 6. El trato por ventanas (tanda 2 · V5.175): la cuenta, los despachos, el pago, el contrato y el cableado ──
+{
+  const { cuentaDeVentana, retiroDeVentana } = await import("../src/lib/trato/cuenta.ts");
+  const d = await import("../src/lib/trato/despachos.ts");
+  const { simularVentasDeVentana } = await import("../src/lib/trato/simulador.ts");
+  const { clausulasDelContrato, CONTRATO_VERSION } = await import("../src/lib/trato/contrato.ts");
+  const T = await import("../src/lib/trato/terminos.ts");
+
+  // El ejemplo del owner: declara 100 kg (25 % libre = 25 kg) · sem. 2 retira 15 · sem. 3 CTCx vende 70 · sem. 4 quedan 15.
+  const c0 = cuentaDeVentana({ declaradoKg: 100, retiroLibrePct: 25, sinRetiro: false, ventas: [], retiros: [] });
+  const r1 = retiroDeVentana(c0, 15, 20000);
+  const c1 = cuentaDeVentana({ declaradoKg: 100, retiroLibrePct: 25, sinRetiro: false, ventas: [{ kg: 70 }], retiros: [{ kg: 15, libreKg: 15 }] });
+  const r2 = retiroDeVentana(c1, 15, 20000);
+  const r3 = retiroDeVentana(c1, 30, 20000);
+  check("retiro · el ejemplo del owner: 15 libres; luego CTCx vende 70 y quedan 15 → 10 libres + 5 al 4 %; los 30 que pide el tercero no caben", r1.ok && r1.libreKg === 15 && r1.penalizadoKg === 0 && c1.disponibleKg === 15 && c1.libreRestanteKg === 10 && r2.ok && r2.libreKg === 10 && r2.penalizadoKg === 5 && r2.penalidadCop === Math.round((5 / 125) * 20000 * 125 * 0.04) && !r3.ok);
+  const cR = cuentaDeVentana({ declaradoKg: 400, retiroLibrePct: 30, sinRetiro: true, ventas: [], retiros: [] });
+  check("retiro · una declaración reducida no tiene retiro libre (todo al 4 %)", cR.libreTotalKg === 0 && retiroDeVentana(cR, 50, 20000).ok && retiroDeVentana(cR, 50, 20000).penalizadoKg === 50);
+
+  check("despachos · el saco sale el domingo de la semana de firma; lo vendido, el domingo de la semana 1 del ciclo siguiente", d.finDeSemana("2026-10-07") === "2026-10-11" && d.plazoDelSaco("2026-10-11") === "2026-10-11" && d.plazoDeLoVendido("2026-11-15") === "2026-11-22");
+  const o1 = d.opcionesSiNoSale({ tipo: "saco", firmadoEnSemana1: true, yaProrrogado: false });
+  const o2 = d.opcionesSiNoSale({ tipo: "saco", firmadoEnSemana1: false, yaProrrogado: false });
+  const o3 = d.opcionesSiNoSale({ tipo: "vendido", firmadoEnSemana1: false, yaProrrogado: false });
+  const o4 = d.opcionesSiNoSale({ tipo: "vendido", firmadoEnSemana1: false, yaProrrogado: true });
+  check("despachos · si no sale: prórroga (no si se firmó en la semana 1), cancelar o pasar a la ventana siguiente; lo vendido solo prórroga, una vez", !o1.prorroga && o1.cancelar && o1.siguienteVentana && o2.prorroga && o3.prorroga && !o3.cancelar && !o3.siguienteVentana && !o4.prorroga && d.plazoProrrogado("2026-10-11") === "2026-10-18");
+  const pg = d.pagosDeDespacho(1400000);
+  check("pago · 60 % con el tiquete de despacho, 40 % al recibir; fuera de rango, 0–15 % adicional", pg.alDespacho === 840000 && pg.alRecibir === 560000 && T.PAGO_AL_DESPACHO_PCT === 60 && d.pagoAdicionalFueraDeRango(1400000, 15) === 210000 && d.pagoAdicionalFueraDeRango(1400000, 16) === null);
+  check("calidad · humedad 10–12 % y aw ≤ 0,70 por defecto; fuera de rango se dice por qué", d.calidadAlRecibir({ humedadPct: 11, aw: 0.6 }, null).enRango && !d.calidadAlRecibir({ humedadPct: 12.5, aw: 0.6 }, null).enRango && !d.calidadAlRecibir({ humedadPct: 11, aw: 0.75 }, null).enRango && !d.calidadAlRecibir({ humedadPct: null, aw: null }, null).enRango);
+  check("saco · 70–200 kg con el primer contrato; renovación 0–200 (normalmente 10–20); por encima, CTCx Selection", T.SACO_INICIAL_KG.min === 70 && T.SACO_INICIAL_KG.max === 200 && T.ADELANTO_RENOVACION_KG.tipicoMin === 10 && T.ADELANTO_RENOVACION_KG.tipicoMax === 20 && T.ADELANTO_RENOVACION_KG.max === 200);
+  const sv = simularVentasDeVentana({ declaradoKg: 750, copKg: 20000, semanas: 11, sacoKg: 70, ventaPct: 0, patron: "parejo", fncCargaRef: 2110000 });
+  check("escenario · el saco va FUERA de lo declarado y suma a lo que recibe; las semanas de la ventana", sv.saco.kg === 70 && sv.vendidoKg === 0 && sv.sinVenderKg === 750 && sv.ingresoCop === 70 * 20000 && sv.porSemana.length === 11);
+
+  const base = { tipo: "cherry_picked", ventana: { tipo: "ciclo", desde: "2027-02-15", hasta: "2027-04-04", ciclos: ["F1-2027 · ciclo 2"], retiroLibrePct: 25, precio: "vigente" }, sinRetiro: false, sacoKg: 0, esRenovacion: true, minimoKg: 675, calidad: null, auxilioCarga: 40000, productorNombre: "Ana Pérez", productorDocumento: null, loteNombre: "L", loteReferencia: "CTC-L-X", grado: "red", copKg: 21000, declaradoKg: 700, lugarEntrega: "Bucaramanga.", termsVersion: "2026-10-07", temporada: null };
+  const ren = clausulasDelContrato(base).map((x) => `${x.titulo} ${x.texto}`).join(" ");
+  const red = clausulasDelContrato({ ...base, esRenovacion: false, sacoKg: 70, sinRetiro: true, declaradoKg: 400 }).map((x) => x.texto).join(" ");
+  check("contrato · renovación sin adelanto, auxilio citado en el precio, mínimo −10 % al cambiar de trimestre; declaración reducida sin retiro libre", CONTRATO_VERSION === "2026-10-07.1" && ren.includes("Compra adelantada") && ren.includes("no compra por adelantado") && ren.includes("auxilio de transporte de $40.000 COP por carga") && ren.includes("baja 10 %") && red.includes("sin derecho a retiro libre") && red.includes("no hay retiro libre"));
+
+  const vo = lee("src/lib/ofertas/ventanaDeOferta.ts");
+  const pa = lee("src/lib/ofertas/producerActions.ts");
+  const ta = lee("src/lib/trato/producerActions.ts");
+  check("firma · la ventana, el precio de su regla y lo disponible salen de UNA cuenta del servidor (vista previa = aceptación)", vo.includes("(esRenovacion ? ventanaDeRenovacion : ventanaDeFirma)({ firma: hoy,") && vo.includes("precioDeVentana(ventana.precio, vigenteKg, siguienteKg)") && vo.includes("disponibleDelLote(existenciaKg, suma(ventas), suma(retiros) + suma(despachos))") && pa.includes("export async function previsualizarOferta(") && pa.includes("await condicionesDeFirma(service, offer as unknown as OfertaParaVentana, hoyEnColombia())"));
+  check("aceptar · exige la existencia del lote, crea el despacho del saco con plazo y congela calidad y auxilio en el contrato", pa.includes("if (c.existenciaKg == null) return") && pa.includes('tipo: cond.esRenovacion ? "adelanto" : "saco",') && pa.includes("plazo: plazoDelSaco(hoy),") && pa.includes("calidad_snapshot: cond?.calidad ?? null,") && pa.includes("auxilio_carga: cond?.auxilioCarga ?? 0,") && pa.includes("export async function registrarExistencia("));
+  check("productor · despacho con guía, peso y foto; prórroga con advertencia; cancelar o pasar a la ventana siguiente — todo por servidor y con auditoría", ["export async function registrarDespacho(", "export async function pedirProrroga(", "export async function cancelarPorDespacho(", "export async function pasarALaVentanaSiguiente(", 'action: "advertencia_prorroga"', 'action: "despacho_registrado"', "opcionesSiNoSale({"].every((k) => ta.includes(k)));
+  const mig = lee("docs/migraciones/2026-10-07_ciclos_trato_por_ventanas.sql");
+  check("migración · contratos por ventana, saco en la oferta, ventas semanales, retiros y despachos con lectura solo del dueño", ["add column if not exists ventana_tipo text", "add column if not exists saco_kg numeric", "create table if not exists public.contract_despachos", "create table if not exists public.contract_ventas", "create table if not exists public.contract_retiros", "create policy contract_despachos_select_own", "add column if not exists calidad_snapshot jsonb"].every((k) => mig.includes(k)));
+  const of = lee("src/app/ocp/(app)/ofertasActions.ts");
+  const de = lee("src/app/ocp/(app)/ofertas/OfertaDesplegable.tsx");
+  const tab = lee("src/components/kaffetal-regal/panel/ContratosTab.tsx");
+  check("OCP · la invitación lleva el saco (validado), vence con su edición y enseña la ventana que tocaría hoy", of.includes("sacoKg < min || sacoKg > SACO_INICIAL_KG.max") && of.includes("venceConLaEdicion") && de.includes('fd.set("saco_kg", String(sacoN));') && de.includes("anclaje!.ventanaHoy.abierta") && lee("src/app/ocp/(app)/ofertas/page.tsx").includes("ventanaDeFirma({ firma: hoyEnColombia(),"));
+  check("KR · la existencia se registra aunque la Ficha esté cerrada; los despachos se registran y resuelven desde «Mi trato»", tab.includes("<ExistenciaForm") && tab.includes("registrarDespacho(d.id, {") && tab.includes("pedirProrroga(d.id)") && tab.includes("pasarALaVentanaSiguiente(d.id)") && tab.includes("cancelarPorDespacho(d.id)"));
+  check("OCP · un contrato por ventana se lee por su ventana (no mes a mes)", lee("src/app/ocp/(app)/contratos/[id]/page.tsx").includes("const porVentana = Boolean(") && lee("src/app/ocp/(app)/contratos/[id]/page.tsx").includes('{contract.status !== "pending_signature" && !porVentana && ('));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-ciclos: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("  - " + f);

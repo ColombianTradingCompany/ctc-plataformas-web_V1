@@ -14,7 +14,7 @@
 // past crop y la ventana de CTCx Selection. Los lee la oferta anclada (`ofertasActions.ts`); la mora, la ruptura
 // y la renovación los leerá el trato mes a mes (fase 7). `qa-trato-check` compara cada cifra con §0 del plan.
 
-export const TERMINOS_VERSION = "2026-09-24";
+export const TERMINOS_VERSION = "2026-10-07"; // V5.175: el trato por ventanas de ciclos (docs/PLAN_CICLOS.md)
 
 /** Folio 8, paso 14: CTCx compra de inmediato UNA carga al precio acordado, como inversión en la promoción. */
 export const COMPRA_INICIAL_CTCX_CARGAS = 1;
@@ -125,3 +125,22 @@ export const DIAS_ANTES_REDECLARAR = 10;
 export const DIAS_TEMPORADA_TRIMESTRAL = 91;
 /** El trato más largo («Ahora y Siguiente» con 50 días de esta temporada + la siguiente) cabe en 6 meses de 30 días. */
 export const MESES_MAX_DEL_TRATO = 6;
+
+// ── V5.175 (owner, 2026-10-07 · docs/PLAN_CICLOS.md §3–§5) · el trato por VENTANAS de ciclos ─────────────────────────────────
+// Reemplaza las modalidades (V5.169–V5.173) y el trato mes a mes. La ventana, el retiro libre y la regla de precio salen de la
+// fecha de firma (`ventanas.ts`); los mínimos de la edición (`minimos.ts`); la cuenta y los despachos, de `cuenta.ts` y
+// `despachos.ts`. Lo de arriba que habla de meses, tramos y modalidades queda para los tratos viejos (no hay en producción).
+
+/** El saco que CTCx compra de inmediato con el PRIMER contrato del lote: mínimo 70 kg de CPS (≈ 50 kg de verde), hasta 200 kg,
+ *  a su discreción, FUERA de lo declarado. Por encima de 200 kg ya es CTCx Selection. */
+export const SACO_INICIAL_KG = { min: 70, max: 200 } as const;
+/** En las renovaciones CTCx puede comprar por adelantado: normalmente 10–20 kg; puede ser 0; tope 200 kg. */
+export const ADELANTO_RENOVACION_KG = { tipicoMin: 10, tipicoMax: 20, max: 200 } as const;
+/** CTCx paga el 60 % con el tiquete de despacho y el 40 % al recibir, comprobada la calidad. */
+export const PAGO_AL_DESPACHO_PCT = 60;
+/** Fuera de rango al recibir, CTCx puede comprar con un pago adicional de 0 a 15 % (sobre el 60 % ya pagado). */
+export const AJUSTE_FUERA_DE_RANGO_MAX_PCT = 15;
+/** La prórroga de un despacho: una semana, con advertencia. */
+export const PRORROGA_DIAS = 7;
+/** Los rangos de calidad por defecto con que se recibe el café (la edición los puede cambiar). */
+export const CALIDAD_POR_DEFECTO = { humedad_min: 10, humedad_max: 12, aw_max: 0.7 } as const;

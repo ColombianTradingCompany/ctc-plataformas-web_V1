@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { createHash } from "node:crypto";
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
 import { CONTRATO_VERSION, clausulasDelContrato, textoDelContrato, type DatosDelContrato } from "@/lib/trato/contrato";
-import type { CondicionesDeModalidad, Modalidad } from "@/lib/trato/modalidades";
+import type { RangosDeCalidad } from "@/lib/trato/despachos";
 import { LUGAR_DE_ENTREGA_POR_DEFECTO } from "@/lib/trato/terminos";
 import { AVISO_SIN_CONTRATO, contratoFirmado, textoDeMarca } from "@/lib/kaffetal/blindaje";
 import { ctcLotReference } from "@/components/kaffetal-regal/data";
@@ -50,7 +50,7 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
   const { data: raw } = await service
     .from("purchase_contracts")
     .select(
-      "id, lot_id, status, grade_snapshot, price_per_kg_locked, quantity_frozen_kg, declaracion, compra_inicial_kg, terms_version, lugar_entrega, signed_at, producer_signed_at, producer_signer_name, producer_signature_path, contract_text_version, contract_text_sha256, offer_id, freeze_months, vigencia_desde, vigencia_hasta, retiro_libre_pct, redeclarar_min_kg, redeclarar_at, compra_inicial_min_kg, compra_inicial_max_kg, lots(name, producer_id), lot_offers!purchase_contracts_offer_id_fkey(season_label, kind)"
+      "id, lot_id, status, grade_snapshot, price_per_kg_locked, quantity_frozen_kg, terms_version, lugar_entrega, signed_at, producer_signed_at, producer_signer_name, producer_signature_path, contract_text_version, contract_text_sha256, offer_id, vigencia_desde, vigencia_hasta, retiro_libre_pct, ventana_tipo, ventana_ciclos, precio_regla, sin_retiro, saco_kg, minimo_kg, renovacion_de, calidad_snapshot, auxilio_carga, lots(name, producer_id), lot_offers!purchase_contracts_offer_id_fkey(season_label, kind)"
     )
     .eq("id", id)
     .maybeSingle();
@@ -61,16 +61,18 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
     grade_snapshot: string | null;
     price_per_kg_locked: number | string | null;
     quantity_frozen_kg: number | string | null;
-    declaracion: Modalidad | null;
-    freeze_months: number | null;
     vigencia_desde: string | null;
     vigencia_hasta: string | null;
     retiro_libre_pct: number | string | null;
-    redeclarar_min_kg: number | string | null;
-    redeclarar_at: string | null;
-    compra_inicial_min_kg: number | string | null;
-    compra_inicial_max_kg: number | string | null;
-    compra_inicial_kg: number | string | null;
+    ventana_tipo: "ciclo" | "extendida" | null;
+    ventana_ciclos: string[] | null;
+    precio_regla: "vigente" | "promedio" | "siguiente" | null;
+    sin_retiro: boolean | null;
+    saco_kg: number | string | null;
+    minimo_kg: number | string | null;
+    renovacion_de: string | null;
+    calidad_snapshot: RangosDeCalidad | null;
+    auxilio_carga: number | string | null;
     terms_version: string | null;
     lugar_entrega: string | null;
     signed_at: string | null;
@@ -88,23 +90,21 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
   if (!c.producer_signed_at) return gate("Este contrato es anterior a la firma digital: lo encuentra en «Contratos y Compras».");
 
   const oferta = (Array.isArray(c.lot_offers) ? c.lot_offers[0] : c.lot_offers) ?? null;
-  // Las condiciones de la modalidad, tal como quedaron guardadas al firmar.
+  // V5.175: la ventana, el saco, el mínimo, la calidad y el auxilio, tal como quedaron guardados al firmar (la huella los cita).
   const n = (v: number | string | null) => (v != null ? Number(v) : null);
-  const condiciones: CondicionesDeModalidad | null =
-    oferta?.kind !== "directa" && c.declaracion
-      ? {
-          modalidad: c.declaracion,
-          desde: c.vigencia_desde ?? "",
-          hasta: c.vigencia_hasta ?? "",
-          meses: c.freeze_months ?? 1,
-          retiroLibrePct: n(c.retiro_libre_pct),
-          compraInicial: c.compra_inicial_min_kg != null ? { minKg: Number(c.compra_inicial_min_kg), maxKg: Number(c.compra_inicial_max_kg ?? c.compra_inicial_min_kg) } : { kg: Number(c.compra_inicial_kg ?? 0) },
-          redeclarar: c.redeclarar_min_kg != null && c.redeclarar_at ? { minKg: Number(c.redeclarar_min_kg), at: c.redeclarar_at } : null,
-        }
+  const ventana =
+    oferta?.kind !== "directa" && c.ventana_tipo && c.vigencia_desde && c.vigencia_hasta && c.precio_regla
+      ? { tipo: c.ventana_tipo, desde: c.vigencia_desde, hasta: c.vigencia_hasta, ciclos: c.ventana_ciclos ?? [], retiroLibrePct: n(c.retiro_libre_pct) ?? 0, precio: c.precio_regla }
       : null;
   const datos: DatosDelContrato = {
     tipo: oferta?.kind === "directa" ? "selection" : "cherry_picked",
-    condiciones,
+    ventana,
+    sinRetiro: Boolean(c.sin_retiro),
+    sacoKg: n(c.saco_kg),
+    esRenovacion: Boolean(c.renovacion_de),
+    minimoKg: n(c.minimo_kg),
+    calidad: c.calidad_snapshot ?? null,
+    auxilioCarga: n(c.auxilio_carga) ?? 0,
     productorNombre: c.producer_signer_name ?? "—",
     productorDocumento: null,
     loteNombre: lote.name,

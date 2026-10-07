@@ -88,6 +88,10 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
   // V5.169: la compra de CTCx Selection propone cuántos kilos compra (todo el lote o una parte).
   const [kgSelection, setKgSelection] = useState("");
   const [lugar, setLugar] = useState(LUGAR_DE_ENTREGA_POR_DEFECTO);
+  // V5.175 (docs/PLAN_CICLOS.md §3): el saco de la firma (70–200 kg) o la compra adelantada de un lote que continúa (0–200 kg).
+  const [saco, setSaco] = useState(anclaje ? miles(String(anclaje.saco.kg)) : "");
+  const sacoN = saco.trim() === "" ? 0 : num(saco);
+  const sacoOk = !anclaje || (Number.isFinite(sacoN) && sacoN >= anclaje.saco.min && sacoN <= anclaje.saco.max);
   const [notas, setNotas] = useState("");
 
   const kgN = num(precioKg);
@@ -101,7 +105,7 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
   const minN = num(minKg);
   const kgSelN = num(kgSelection);
   const listo =
-    Number.isFinite(kgN) && kgN > 0 && !faltaMotivo && lugar.trim() !== "" && !pasaTope && (esSelection ? Number.isFinite(kgSelN) && kgSelN > 0 : Number.isFinite(minN) && minN > 0);
+    Number.isFinite(kgN) && kgN > 0 && !faltaMotivo && lugar.trim() !== "" && !pasaTope && (esSelection ? Number.isFinite(kgSelN) && kgSelN > 0 : Number.isFinite(minN) && minN > 0 && sacoOk);
 
   function elegirClase(k: OfferKind) {
     setClase(k);
@@ -114,7 +118,10 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
       const fd = new FormData();
       if (claseEfectiva === "excepcion" || claseEfectiva === "directa") fd.set("price_per_kg", String(kgN));
       if (claseEfectiva === "directa") fd.set("quantity_kg", String(kgSelN));
-      else fd.set("min_kg", String(minN));
+      else {
+        fd.set("min_kg", String(minN));
+        fd.set("saco_kg", String(sacoN));
+      }
       fd.set("lugar_entrega", lugar.trim());
       if (notas.trim()) fd.set("notes", notas.trim());
       const res = await emitOffer(lotId, claseEfectiva, fd);
@@ -224,8 +231,21 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
                 ayuda={
                   <>
                     {Number.isFinite(minN) && minN > 0 ? `${(minN / CARGA_KG).toLocaleString("es-CO", { maximumFractionDigits: 2 })} cargas` : "—"}
-                    {anclaje?.minKg != null ? ` · el mínimo del grado es ${anclaje.minKg} kg` : ""}
+                    {anclaje?.minKg != null ? ` · el mínimo del grado es ${anclaje.minKg} kg (por ventana)` : ""}
                   </>
+                }
+              />
+            )}
+            {!esSelection && anclaje && (
+              <Campo
+                etiqueta={anclaje.saco.continuacion ? "Compra adelantada (renovación)" : "Saco que CTCx compra con la firma"}
+                sufijo="kg de CPS"
+                valor={saco}
+                onCambio={setSaco}
+                ayuda={
+                  sacoOk
+                    ? `${anclaje.saco.continuacion ? "Normalmente 10–20 kg; puede ser 0" : "Mínimo 70 kg (≈ 50 kg de verde)"}; hasta ${anclaje.saco.max} kg. Fuera de lo declarado${Number.isFinite(kgN) && sacoN > 0 ? ` · ${formatCop(sacoN * kgN)}` : ""}.`
+                    : `Entre ${anclaje.saco.min} y ${anclaje.saco.max} kg: por encima ya es CTCx Selection.`
                 }
               />
             )}
@@ -252,22 +272,28 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
               </p>
             ) : (
               <p className={styles.meta} style={{ margin: 0 }}>
-                PVC {anclaje!.code} · banda {anclaje!.banda} ×{anclaje!.mult} → {formatCop(precioAncla)}/kg
-                {clase === "temporada" && <> · CTC compra {anclaje!.compraInicialKg} kg de inmediato</>}. Si el lote es de la temporada pasada, se aplica −10 % al emitir.
-                {/* V5.170: «Siguiente Temporada» va al PVC de la edición siguiente. */}
-                {clase === "temporada" &&
-                  (anclaje!.siguiente ? (
-                    <>
-                      {" "}«Siguiente Temporada» va al PVC {anclaje!.siguiente.code}: <b>{formatCop(anclaje!.siguiente.copKg)}/kg</b>.
-                    </>
-                  ) : (
-                    <>
-                      {" "}
-                      <b>El PVC de la siguiente temporada aún no se publica</b>
-                      {anclaje!.fechaLimiteSiguiente ? ` (a más tardar el ${fechaLarga(anclaje!.fechaLimiteSiguiente)})` : ""}: si emite hoy, el productor podrá
-                      «Declarar para Temporada Actual» (o «Ahora y Siguiente», si ya se abre), pero no «Siguiente Temporada»; re-emita cuando se publique.
-                    </>
-                  ))}
+                PVC {anclaje!.code} · banda {anclaje!.banda} ×{anclaje!.mult} → {formatCop(precioAncla)}/kg. Si el lote es de la temporada pasada, se aplica −10 % al
+                emitir. La invitación vence al terminar esta edición del PVC.{" "}
+                {/* V5.175 (docs/PLAN_CICLOS.md §2): la fecha de FIRMA decide la ventana; esto es lo que tocaría hoy. */}
+                {anclaje!.ventanaHoy.abierta ? (
+                  <>
+                    Si el productor firma hoy: ventana <b>{fechaLarga(anclaje!.ventanaHoy.desde)} → {fechaLarga(anclaje!.ventanaHoy.hasta)}</b> (
+                    {anclaje!.ventanaHoy.tipo === "extendida" ? "extendida al ciclo siguiente" : "un ciclo"}), retiro libre {anclaje!.ventanaHoy.retiroLibrePct} %
+                    {anclaje!.ventanaHoy.precio === "promedio" ? ", al promedio de este PVC y el siguiente" : ""}.
+                  </>
+                ) : (
+                  <>
+                    <b>Hoy no se firman contratos nuevos</b>: {anclaje!.ventanaHoy.motivo}
+                    {anclaje!.ventanaHoy.reabre ? ` Se puede firmar desde el ${fechaLarga(anclaje!.ventanaHoy.reabre)}.` : ""} La oferta se puede emitir igual.
+                  </>
+                )}{" "}
+                {anclaje!.siguiente ? (
+                  <>
+                    PVC siguiente ({anclaje!.siguiente.code}): {formatCop(anclaje!.siguiente.copKg)}/kg.
+                  </>
+                ) : (
+                  <>El PVC siguiente se publica a más tardar el {anclaje!.fechaLimiteSiguiente ? fechaLarga(anclaje!.fechaLimiteSiguiente) : "—"}.</>
+                )}
               </p>
             )
           ) : (

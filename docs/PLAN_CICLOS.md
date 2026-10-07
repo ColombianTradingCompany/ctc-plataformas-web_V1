@@ -145,7 +145,7 @@ Cada tanda es su propia versión (gate, guardianes, CHANGELOG, log, charters, AL
    Variables de la edición (fechas, mínimos, rangos de calidad, auxilio) en `pvc_editions` y editables en el Modelo
    Económico (`/ecp/pvc/parametros`). Re-fechado de PVC-F4-2026. Ficha A2 (existencia, plantas, producción 5 : 1).
    Guardián nuevo `qa-ciclos-check`.
-2. **Oferta, contrato y Kaffetal Regal.** La oferta del OCP calcula la ventana por la fecha y vence con su zona; el
+2. ✅ **HECHA en la V5.175** (el OCP lee la ventana; sus acciones van en la tanda 3). **Oferta, contrato y Kaffetal Regal.** La oferta del OCP calcula la ventana por la fecha y vence con su zona; el
    contrato nuevo (ventana, saco, 60/40, calidad, envíos, retiro, mínimos, renovación; texto con versión); la calculadora
    en semanas con el escenario de ventas; «Mis contratos» con su ventana, lo vendido, el retiro y la renovación de un paso.
 3. **Operación en el OCP.** Renovaciones prellenadas (confirmación en semana 4), confirmaciones semanales, despachos

@@ -90,7 +90,7 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   check("y le avisa al productor sin devolución", decision.includes('from("producer_comm_log")') && !decision.includes("reembolso"));
   const emit = ofertas.slice(ofertas.indexOf("export async function emitOffer("), ofertas.indexOf("export async function retireOffer("));
   check("emitir una oferta reabre la decisión", emit.includes("decision_comercial: null"));
-  check("la oferta de temporada lleva la compra inicial de CTCx y el mínimo (el de la edición desde la V5.174, o el que CTCx confirma al emitir, V5.168)", emit.includes("compra_inicial_kg: kind === \"temporada\" ? COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG : null") && emit.includes("min_kg: CON_DECLARACION.includes(kind) ? (minConfirmado ?? minimoDelGrado(lot.grade, pvc?.edicion.minimosPorGrado)) : null") && emit.includes("lugar_entrega: lugarEntrega,") && emit.includes("|| LUGAR_DE_ENTREGA_POR_DEFECTO"));
+  check("la invitación de Cherry Picked lleva el saco (70–200 kg; adelanto 0–200 si el lote continúa) y el mínimo (de la edición, o el que CTCx confirma)", emit.includes("saco_kg: sacoKg,") && emit.includes("es_renovacion: continuacion,") && emit.includes("compra_inicial_kg: null,") && emit.includes("min_kg: CON_DECLARACION.includes(kind) ? (minConfirmado ?? minimoDelGrado(lot.grade, pvc?.edicion.minimosPorGrado)) : null") && emit.includes("lugar_entrega: lugarEntrega,") && emit.includes("|| LUGAR_DE_ENTREGA_POR_DEFECTO"));
   check("la directa lleva la ventana y su vencimiento", emit.includes("ventana_dias: esDirecta ? VENTANA_DIRECTA_DIAS : null") && emit.includes("expira_at: esDirecta"));
   check("y los términos con los que nace (también la excepción: es un Lote de Temporada)", emit.includes("terms_version: CON_DECLARACION.includes(kind) ? TERMINOS_VERSION : null") && ofertas.includes('const CON_DECLARACION: readonly OfferKind[] = ["temporada", "directa", "excepcion"]'));
 }
@@ -122,10 +122,10 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
 
   const kr = lee("src/lib/ofertas/producerActions.ts");
   check("aceptar una oferta con términos exige la declaración", kr.includes("if (offer.terms_version) {") && kr.includes("if (!declaracion) return"));
-  check("la cantidad respeta el mínimo del grado y el máximo de la directa", kr.includes("kg < minKg") && kr.includes("kg > maxKg"));
+  check("V5.175 · la cantidad respeta el mínimo y la existencia del lote (validarDeclaracion) y el máximo de la directa", kr.includes("validarDeclaracion({ kg: Number(declaracion.lockedKg), minimo: c.minimoKg, disponibleKg: c.disponibleKg })") && kr.includes("Number(declaracion.lockedKg) > maxKg"));
   check("y hay que marcar las condiciones", kr.includes("if (!declaracion.aceptaTerminos) return"));
-  check("el contrato NACE LLENO: precio de la oferta (V5.170: el de la modalidad), cantidad declarada, referencia, términos", ["price_per_kg_locked: copKgTrato", "quantity_frozen_kg: lockedKg", "reference_price_source: offer.reference_price_source", "terms_version: offer.terms_version", "declaracion: declarado", "compra_inicial_kg:"].every((x) => kr.includes(x)));
-  check("y la oferta guarda lo declarado y cuándo aceptó los términos", kr.includes("locked_kg: lockedKg, declaracion: declarado, terms_accepted_at: now"));
+  check("el contrato NACE LLENO: precio de su ventana, cantidad declarada, referencia, términos, la ventana y el saco", ["price_per_kg_locked: copKgTrato", "quantity_frozen_kg: lockedKg", "reference_price_source: offer.reference_price_source", "terms_version: offer.terms_version", "ventana_tipo: cond?.ventana.tipo ?? null", "saco_kg: cond?.sacoKg ?? null", "sin_retiro: sinRetiro,"].every((x) => kr.includes(x)));
+  check("y la oferta guarda lo declarado y cuándo aceptó los términos", kr.includes("locked_kg: lockedKg, terms_accepted_at: now"));
   check("una directa vencida no se acepta (queda expirada)", kr.includes('status: "expirada"') && kr.includes("offer.expira_at"));
   const firma = lee("src/app/ocp/(app)/contractActions.ts");
   const sign = firma.slice(firma.indexOf("export async function signContract("), firma.indexOf("async function contratoYMeses("));
@@ -134,9 +134,9 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   const tab = lee("src/components/kaffetal-regal/panel/ContratosTab.tsx");
   const calc = lee("src/components/kaffetal-regal/panel/CalculadoraDelTrato.tsx");
   const firmaUi = lee("src/components/kaffetal-regal/panel/FirmaDelContrato.tsx");
-  check("el productor decide con la calculadora (V5.169: modalidades y escenarios de venta) y después FIRMA el contrato", tab.includes("<CalculadoraDelTrato") && tab.includes("<FirmaDelContrato") && calc.includes("simularVentas({ declaradoKg: kg, copKg: copModalidad, meses: cond.meses, compraInicialKg, ventaPct, patron, fncCargaRef })") && calc.includes("modalidadesDisponibles(diasHastaSiguiente, { precioKg: precioSiguienteKg, fechaLimite: fechaLimiteSiguiente })") && tab.includes("declaracion: decision.modalidad, aceptaTerminos: true") && tab.includes('respuesta === "aceptar" ? firma : undefined'));
-  check("y no puede decidir por debajo del mínimo ni con una modalidad cerrada, ni firmar sin nombre, trazo y la casilla", calc.includes("const cumple = kg >= minimo && (maxKg == null || kg <= maxKg) && disp[modalidad].disponible;") && calc.includes("disabled={!cumple}") && firmaUi.includes("const listo = firmaSuficiente && nombre.trim().length >= 5 && leido && !ocupado;") && firmaUi.includes('touchAction: "none"'));
-  check("«Mi trato» enseña lo declarado, la compra inicial y los tramos", tab.includes("CTC compra de inmediato") && tab.includes("retiro libre al cerrar cada mes"));
+  check("el productor decide con la calculadora (V5.175: la ventana que decide la fecha, escenarios por semana) y después FIRMA el contrato", tab.includes("<CalculadoraDelTrato") && tab.includes("<FirmaDelContrato") && tab.includes("previsualizarOferta(offer.id)") && calc.includes("simularVentasDeVentana({ declaradoKg: kg, copKg: c.precioKg, semanas: c.semanas, sacoKg: c.sacoKg, ventaPct, patron, fncCargaRef })") && tab.includes("{ lockedKg: decision.kg, aceptaTerminos: true }") && tab.includes('respuesta === "aceptar" ? firma : undefined'));
+  check("y no puede decidir fuera del mínimo y la existencia, ni sin la casilla, ni firmar sin nombre y trazo", calc.includes("const decl = validarDeclaracion({ kg, minimo: c.minimoKg, disponibleKg: c.disponibleKg });") && calc.includes("const cumple = decl.ok && acepta;") && calc.includes("disabled={!cumple}") && firmaUi.includes("const listo = firmaSuficiente && nombre.trim().length >= 5 && leido && !ocupado;") && firmaUi.includes('touchAction: "none"'));
+  check("«Mi trato» enseña la ventana, la cuenta (declarado · vendido · retirado · en la vitrina) y los despachos", tab.includes("function ContratoPorVentana(") && tab.includes('["En la vitrina", kgTxt(k.disponibleKg)]') && tab.includes("<DespachoItem"));
 }
 
 // ── 6. El trato mes a mes (V5.84, fase 7): lo derivado se deriva; la ruptura la declara el owner ──
@@ -206,7 +206,7 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
 
   // KR: el retiro pasa por el servidor con la misma cuenta; la mora se deriva al cargar, no en el render.
   const kr = lee("src/lib/trato/producerActions.ts");
-  check("el productor retira desde su panel con retiro() (misma cuenta) y solo de un trato vigente y hasta lo comprometido", kr.includes("retiro({") && kr.includes('contract.status !== "active"') && kr.includes("retira > vigenteKg"));
+  check("V5.175 · el productor retira desde su panel con retiroDeVentana (misma cuenta), solo de un trato vigente y de lo no vendido", kr.includes("retiroDeVentana(cuenta, kg, Number(c.price_per_kg_locked ?? 0))") && kr.includes('c.status !== "active"') && kr.includes('from("contract_retiros").insert('));
   check("y una cuenta congelada no retira ni acepta ofertas", kr.includes('perfil?.estado_cuenta === "congelada"') && lee("src/lib/ofertas/producerActions.ts").includes('perfil?.estado_cuenta === "congelada"'));
   const exp = lee("src/components/kaffetal-regal/KaffetalExperience.tsx");
   check("KR deriva la mora al CARGAR con mesAMes.ts (nunca en el render, nunca guardada)", exp.includes("resumenDelTrato(") && exp.includes("moraDelMes(m, hoy)"));
@@ -253,13 +253,11 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   const { clausulasDelContrato, textoDelContrato, CONTRATO_VERSION } = await import("../src/lib/trato/contrato.ts");
   const { contratoFirmado, textoDeMarca, ESTADOS_DE_CONTRATO_FIRMADO } = await import("../src/lib/kaffetal/blindaje.ts");
   const { LUGAR_DE_ENTREGA_POR_DEFECTO } = await import("../src/lib/trato/terminos.ts");
-  const { condicionesDe } = await import("../src/lib/trato/modalidades.ts");
-  const condTri = condicionesDe("trimestre", { hoy: "2026-10-06", temporadaHasta: "2026-12-15", declaradoKg: 750, grado: "red" });
-  const datos = { tipo: "cherry_picked", condiciones: condTri, productorNombre: "Ana Pérez", productorDocumento: null, loteNombre: "Lote X", loteReferencia: "CTC-L-AAAA0000", grado: "red", copKg: 26000, declaradoKg: 750, lugarEntrega: LUGAR_DE_ENTREGA_POR_DEFECTO, termsVersion: "2026-09-24", temporada: "Q4 2026" };
+  const datos = { tipo: "cherry_picked", ventana: { tipo: "extendida", desde: "2026-10-07", hasta: "2027-01-03", ciclos: ["F4-2026 · ciclo 1", "F4-2026 · ciclo 2"], retiroLibrePct: 30, precio: "vigente" }, sinRetiro: false, sacoKg: 70, esRenovacion: false, minimoKg: 750, calidad: { humedad_min: 10, humedad_max: 12, aw_max: 0.7 }, auxilioCarga: 0, productorNombre: "Ana Pérez", productorDocumento: null, loteNombre: "Lote X", loteReferencia: "CTC-L-AAAA0000", grado: "red", copKg: 26000, declaradoKg: 750, lugarEntrega: LUGAR_DE_ENTREGA_POR_DEFECTO, termsVersion: "2026-10-07", temporada: "Q4 2026" };
   const cl = clausulasDelContrato(datos);
   const todo = cl.map((c) => c.texto).join(" ");
-  check("contrato Cherry Picked · trece cláusulas con la modalidad, la vigencia, la compra con la firma y «sin compromiso de compra mensual»", cl.length === 13 && todo.includes("$26.000 COP por kg") && todo.includes("$3.250.000 COP por carga") && todo.includes("750 kg de CPS (6 cargas") && todo.includes("Bucaramanga") && todo.includes("«Declarar Siguiente Temporada Trimestral»") && todo.includes("del 16 de diciembre de 2026") && cl[4].titulo.includes("Sin compromiso de compra mensual") && todo.includes("Grado CTCx Red"));
-  check("contrato · el texto es el mismo con «red» o «Red» (la pantalla y el servidor firman la misma huella)", textoDelContrato(datos) === textoDelContrato({ ...datos, grado: "Red" }) && CONTRATO_VERSION === "2026-10-06.5");
+  check("contrato Cherry Picked (V5.175) · doce cláusulas: la ventana, el saco fuera de lo declarado, ventas semanales, despachos, pago 60/40 con calidad, retiro, renovación", cl.length === 12 && todo.includes("$26.000 COP por kg") && todo.includes("$3.250.000 COP por carga") && todo.includes("750 kg de CPS (6 cargas") && todo.includes("Bucaramanga") && todo.includes("del 7 de octubre de 2026 al 3 de enero de 2027") && todo.includes("FUERA de lo declarado") && cl[4].titulo.includes("Ventas y confirmaciones") && todo.includes("Grado CTCx Red") && todo.includes("el 60 % de cada envío con el tiquete de despacho") && todo.includes("hasta el 30 % de lo declarado sin penalidad"));
+  check("contrato · el texto es el mismo con «red» o «Red» (la pantalla y el servidor firman la misma huella)", textoDelContrato(datos) === textoDelContrato({ ...datos, grado: "Red" }) && CONTRATO_VERSION === "2026-10-07.1");
   const sel = clausulasDelContrato({ ...datos, tipo: "selection", condiciones: null, declaradoKg: 500, copKg: 22000 });
   check("contrato CTCx Selection · compra en firme de los kilos acordados, «hasta el PVC vigente menos el 8 %», sin modalidad", sel.length === 8 && sel.map((c) => c.texto).join(" ").includes("hasta el PVC vigente menos el 8 %") && sel.map((c) => c.texto).join(" ").includes("$11.000.000 COP"));
   const resp = lee("src/lib/ofertas/producerActions.ts");
@@ -303,7 +301,7 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   const prod = lee("src/lib/ofertas/producerActions.ts");
   check("Selection · CTCx propone precio HASTA el tope (PVC − 8 %) y kilos; la oferta guarda el tope, la FNC y el fin de temporada", ofertas.includes("if (propuesto > precioTope) return") && ofertas.includes('if (quantity === null) return { ok: false, error: "Una compra de CTCx Selection propone cuántos kilos compra') && ofertas.includes("precio_tope_kg: precioTope,") && ofertas.includes("fnc_carga_ref: mercado.fncHoy,") && ofertas.includes("temporada_hasta: pvc?.edicion.validTo ?? null,"));
   check("Selection · la negociación: el productor contraoferta (queda «contraofertada»), CTCx acepta (si cabe en el tope), contraoferta o desiste; las rondas quedan guardadas", prod.includes("export async function contraofertarSeleccion(") && prod.includes('update({ status: "contraofertada" })') && ofertas.includes("export async function responderContraoferta(") && ofertas.includes("if (tope != null && precio > tope) return") && ofertas.includes('accion: accion === "aceptar" ? "acepta" : "contraoferta"'));
-  check("Selection · se acepta tal cual se negoció (sin declaración) y se firma; Cherry Picked valida la modalidad con la fecha REAL de la temporada", prod.includes('const esSelection = offer.kind === "directa";') && prod.includes("const disp = modalidadesDisponibles(dias, { precioKg: precioSiguiente, fechaLimite: o.temporada_desde ? fechaLimitePvcSiguiente(o.temporada_desde) : null })[declaracion.declaracion];") && prod.includes("const vigente = await edicionVigente();"));
+  check("Selection · se acepta tal cual se negoció (sin declaración) y se firma; Cherry Picked toma su ventana de la fecha de firma (condicionesDeFirma)", prod.includes('const esSelection = offer.kind === "directa";') && prod.includes("const c = await condicionesDeFirma(service, offer as unknown as OfertaParaVentana, hoy);"));
   const mig = lee("docs/migraciones/2026-10-06_modalidades_y_contraofertas.sql");
   check("migración · contraofertada cuenta como oferta abierta (una por lote) y las rondas solo las lee el dueño", mig.includes("where (status = any (array['emitida'::text, 'contraofertada'::text]))") && mig.includes("create policy lot_offer_rondas_select_own"));
   const { nombreDeArchivo } = await import("../src/lib/kaffetal/nombreDeArchivo.ts");
@@ -313,49 +311,6 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   check("la Visa del lote enlaza el Pasaporte EUDR de cada finca de origen (y el dossier también)", lee("src/components/kaffetal-regal/LotEudrCertDoc.tsx").includes("href={`/kaffetal-regal/certificacion/${f.id}`}") && lee("src/components/kaffetal-regal/dossier/DossierCtcx.tsx").includes("t.verPasaporte(f.name, f.code)"));
 }
 
-// ── V5.170 (owner, 2026-10-06) · «Siguiente Temporada» va al PVC de la EDICIÓN SIGUIENTE (fijado en las primeras dos semanas del
-//    segundo mes de la temporada anterior) ─────────────────────────────────────────────────────────────────────────────────
-{
-  const { fechaLimitePvcSiguiente, modalidadesDisponibles } = await import("../src/lib/trato/modalidades.ts");
-  const { clausulasDelContrato } = await import("../src/lib/trato/contrato.ts");
-  const { condicionesDe } = await import("../src/lib/trato/modalidades.ts");
-  check("PVC siguiente · desde la V5.174 la fecha límite es el domingo de la semana 2 del ciclo 2 (docs/PLAN_CICLOS.md; T4-2026 → 29-nov)", fechaLimitePvcSiguiente("2026-09-28") === "2026-11-29");
-  const sinPvc = modalidadesDisponibles(71, { precioKg: null, fechaLimite: "2026-10-28" });
-  const conPvc = modalidadesDisponibles(71, { precioKg: 27300, fechaLimite: "2026-10-28" });
-  check("PVC siguiente · sin la edición siguiente publicada, «Siguiente Temporada» no se abre (y dice cuándo se fija); con ella, sí", !sinPvc.trimestre.disponible && sinPvc.trimestre.motivo.includes("28 de octubre de 2026") && conPvc.trimestre.disponible && sinPvc.temporada_actual.disponible);
-  const ofertas = lee("src/app/ocp/(app)/ofertasActions.ts");
-  const prod = lee("src/lib/ofertas/producerActions.ts");
-  check("PVC siguiente · la oferta guarda el precio de la edición siguiente (con el mismo % del trato) y el inicio de la temporada", ofertas.includes("await pvcParaGrado(lot.grade, proxima.validFrom, { modificadorPct })") && ofertas.includes("price_next_kg: pvcSiguiente ? pvcSiguiente.precio.copKgFinal : null,") && ofertas.includes("temporada_desde: pvc?.edicion.validFrom ?? null,"));
-  check("PVC siguiente · al aceptar «Siguiente Temporada» el contrato fija ese precio y esa edición", prod.includes('const copKgTrato = declarado === "trimestre" && precioNext != null ? Number(precioNext) : Number(offer.price_per_kg);') && prod.includes("price_per_kg_locked: copKgTrato,") && prod.includes("pvc_edition_id: edicionTrato,"));
-  const tri = clausulasDelContrato({ tipo: "cherry_picked", condiciones: condicionesDe("trimestre", { hoy: "2026-10-06", temporadaHasta: "2026-12-15", declaradoKg: 750, grado: "red" }), productorNombre: "Ana Pérez", productorDocumento: null, loteNombre: "Lote X", loteReferencia: "CTC-L-AAAA0000", grado: "red", copKg: 27300, declaradoKg: 750, lugarEntrega: "Bucaramanga.", termsVersion: null, temporada: null });
-  check("PVC siguiente · el contrato dice que el precio es el PVC publicado para la siguiente Temporada Trimestral", tri.some((c) => c.texto.includes("publicado para la siguiente Temporada Trimestral") && c.texto.includes("$27.300 COP")));
-  const calc = lee("src/components/kaffetal-regal/panel/CalculadoraDelTrato.tsx");
-  check("PVC siguiente · la calculadora usa el precio de cada modalidad y lo lleva a la firma; el OCP avisa si aún no se publica", calc.includes('const precioDe = (m: Modalidad) => (m === "trimestre" ? precioSiguienteKg ?? copKg : copKg);') && calc.includes("copKg: copModalidad })") && lee("src/components/kaffetal-regal/panel/ContratosTab.tsx").includes("copKg: decision?.copKg ?? offer.pricePerKg,") && lee("src/app/ocp/(app)/ofertas/OfertaDesplegable.tsx").includes("El PVC de la siguiente temporada aún no se publica"));
-}
-
-// ── V5.171 (owner, 2026-10-06: «la opción 1, que quede en el 70 %») · la redeclaración de «Ahora y Siguiente»: se pide unos días
-//    antes, nunca acepta menos del mínimo, y sin respuesta queda en el mínimo ──────────────────────────────────────────────
-{
-  const { estadoDeRedeclaracion, cantidadTrasRedeclarar, abreLaRedeclaracion, condicionesDe } = await import("../src/lib/trato/modalidades.ts");
-  const { DIAS_ANTES_REDECLARAR } = await import("../src/lib/trato/terminos.ts");
-  const { clausulasDelContrato } = await import("../src/lib/trato/contrato.ts");
-  const base = { redeclararMinKg: 750, redeclararAt: "2026-12-16", redeclaradoAt: null, redeclaradoKg: null, redeclaracionOrigen: null };
-  const f = (hoy, extra = {}) => estadoDeRedeclaracion({ ...base, ...extra, hoy }).fase;
-  check("redeclaración · se abre unos días antes (10) del inicio de la siguiente temporada", DIAS_ANTES_REDECLARAR === 10 && abreLaRedeclaracion("2026-12-16") === "2026-12-06");
-  check("redeclaración · pronto antes de abrirse, abierta desde ese día hasta el primer día de la temporada inclusive, vencida al día siguiente", f("2026-12-05") === "pronto" && f("2026-12-06") === "abierta" && f("2026-12-16") === "abierta" && f("2026-12-17") === "vencida");
-  check("redeclaración · hecha (por el productor o al mínimo) pesa sobre la fecha; sin redeclarar_at no aplica", f("2026-12-20", { redeclaradoAt: "2026-12-10T12:00:00Z", redeclaradoKg: 800, redeclaracionOrigen: "productor" }) === "hecha" && estadoDeRedeclaracion({ ...base, redeclararAt: null, hoy: "2026-12-10" }).fase === "no_aplica" && estadoDeRedeclaracion({ ...base, redeclaradoAt: "x", redeclaradoKg: 750, redeclaracionOrigen: "automatica", hoy: "2026-12-20" }).origen === "automatica");
-  check("redeclaración · lo redeclarado es lo DISPONIBLE para la siguiente: lo pedido y lo retirado se quedan", cantidadTrasRedeclarar({ pedidoKg: 250, retiradoKg: 100, redeclaradoKg: 750 }) === 1100);
-  const ays = clausulasDelContrato({ tipo: "cherry_picked", condiciones: condicionesDe("ahora_y_siguiente", { hoy: "2026-10-26", temporadaHasta: "2026-12-15", declaradoKg: 1000, grado: "red" }), productorNombre: "Ana Pérez", productorDocumento: null, loteNombre: "El Mirador", loteReferencia: "CTC-L-0001", grado: "red", copKg: 26000, declaradoKg: 1000, lugarEntrega: "Bucaramanga.", termsVersion: null, temporada: null });
-  check("redeclaración · el contrato dice el mínimo, cuándo se abre y que sin respuesta queda en el mínimo", ays.some((c) => c.texto.includes("al menos 750 kg") && c.texto.includes(`${DIAS_ANTES_REDECLARAR} días antes`) && c.texto.includes("queda en ese mínimo")));
-  const acc = lee("src/lib/trato/producerActions.ts");
-  const srv = lee("src/lib/trato/redeclaracion.ts");
-  check("redeclaración · el botón del productor valida la modalidad, la ventana y el mínimo en el servidor", acc.includes("export async function redeclararSiguienteTemporada(") && acc.includes('if (e.fase !== "abierta")') && acc.includes("if (nuevo < (e.minKg ?? 0))") && acc.includes('c.declaracion !== "ahora_y_siguiente"'));
-  check("redeclaración · el barrido pide al abrirse y, vencida sin respuesta, la deja en el mínimo (automática), con enmienda, auditoría y nota", srv.includes('e.fase === "abierta" && !c.redeclarar_aviso_at') && srv.includes('aplicarRedeclaracion(service, c, e.minKg, "automatica", null)') && srv.includes('tipo: "redeclaracion"') && srv.includes('"redeclaracion_automatica_minimo"') && srv.includes('.is("redeclarado_at", null)'));
-  check("redeclaración · corre a diario (vercel.json) con CRON_SECRET", lee("vercel.json").includes('"/api/cron/redeclaraciones"') && lee("src/app/api/cron/redeclaraciones/route.ts").includes("Bearer ${secret}"));
-  const tab = lee("src/components/kaffetal-regal/panel/ContratosTab.tsx");
-  check("redeclaración · Mis contratos trae el botón «Redeclarar», que no deja bajar del mínimo; el OCP ve el estado", tab.includes("<Redeclaracion contractId={c.id}") && tab.includes("redeclararSiguienteTemporada(contractId") && tab.includes("No puede ser menos de {e.minKg} kg.") && lee("src/app/ocp/(app)/contratos/[id]/page.tsx").includes("estadoDeRedeclaracion({"));
-}
-
 // ── V5.172 (owner, 2026-10-06) · en «Confirmar la oferta» se ve que las cifras son dinero y kilos, y que se cambian ──
 {
   const desp = lee("src/app/ocp/(app)/ofertas/OfertaDesplegable.tsx");
@@ -363,26 +318,10 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   check("oferta · precio por kg y por carga en cajas con $ y COP, los kilos con su unidad, separador de miles y lápiz; volver al precio del PVC", desp.includes('prefijo="$"') && desp.includes('sufijo="COP / kg"') && desp.includes('sufijo="COP / carga"') && desp.includes('sufijo="kg de CPS"') && desp.includes("onCambio(miles(e.target.value))") && desp.includes("volver a ese precio") && css.includes(".campoCifra:focus-within") && css.includes(".campoCifraLapiz"));
 }
 
-// ── V5.173 (owner, 2026-10-06: «reemplazar "Declarar Ahora" por "Declarar para Temporada Actual" […] solo son 2 meses, la lógica
-//    de retirar debe ajustarse») ─────────────────────────────────────────────────────────────────────────────────────────────
-{
-  const { condicionesDe, mesesDeLaTemporadaActual, MODALIDADES, MODALIDAD_LABEL } = await import("../src/lib/trato/modalidades.ts");
-  const { tramoLibrePct, retiro, renovacionDebida } = await import("../src/lib/trato/mesAMes.ts");
-  const { TRAMO_LIBRE_DEL_TRATO_PCT, DECLARACIONES } = await import("../src/lib/trato/terminos.ts");
-  const { clausulasDelContrato, textoDeLaEscalera } = await import("../src/lib/trato/contrato.ts");
-  check("Temporada Actual · reemplaza a «Declarar Ahora» en las modalidades, las declaraciones y la base", MODALIDADES.join() === "temporada_actual,trimestre,ahora_y_siguiente" && MODALIDAD_LABEL.temporada_actual === "Declarar para Temporada Actual" && DECLARACIONES.join() === "trimestre,temporada_actual,ahora_y_siguiente" && lee("docs/migraciones/2026-10-06_declarar_temporada_actual.sql").includes("'temporada_actual'::text") && !/30_dias/.test(lee("src/lib/trato/modalidades.ts")));
-  check("Temporada Actual · los meses son los que le quedan a la temporada, redondeados (30–44 días: 1; 45–74: 2; 75+: 3)", mesesDeLaTemporadaActual(30) === 1 && mesesDeLaTemporadaActual(44) === 1 && mesesDeLaTemporadaActual(45) === 2 && mesesDeLaTemporadaActual(71) === 2 && mesesDeLaTemporadaActual(80) === 3);
-  check("escalera · repartida en los meses del trato: en 3 meses reproduce 0 · 25 · 50 (la tabla de siempre); en 2, 0 · 37,5; en 1, nada", TRAMO_LIBRE_DEL_TRATO_PCT === 75 && [1, 2, 3].every((m) => tramoLibrePct(m, 3) === TRAMO_LIBRE_ACUMULADO_PCT[m]) && tramoLibrePct(1, 2) === 0 && tramoLibrePct(2, 2) === 37.5 && tramoLibrePct(1, 1) === 0 && tramoLibrePct(4, 5, 30) === 30);
-  check("escalera · el retiro en el mes 2 de un trato de dos meses libera 37,5 % y cobra el resto", retiro({ declaradoKg: 1000, mes: 2, meses: 2, retiradoLibreAcumKg: 0, retiraKg: 500, copKg: 26000 }).libreKg === 375 && retiro({ declaradoKg: 1000, mes: 2, meses: 2, retiradoLibreAcumKg: 0, retiraKg: 500, copKg: 26000 }).penalizadoKg === 125);
-  const ta = clausulasDelContrato({ tipo: "cherry_picked", condiciones: condicionesDe("temporada_actual", { hoy: "2026-10-06", temporadaHasta: "2026-12-15", declaradoKg: 800, grado: "red" }), productorNombre: "Ana Pérez", productorDocumento: null, loteNombre: "El Mirador", loteReferencia: "CTC-L-0001", grado: "red", copKg: 26000, declaradoKg: 800, lugarEntrega: "Bucaramanga.", termsVersion: null, temporada: null });
-  check("contrato · Temporada Actual: lo que queda de la temporada en 2 meses, compra de 10 a 25 kg, escalera de 37,5 %, renovación al terminar la temporada", ta.some((c) => c.texto.includes("lo que queda de la Temporada Trimestral en curso") && c.texto.includes("2 meses de 30 días")) && ta.some((c) => c.texto.includes("entre 10 y 25 kg, a discreción de CTCx")) && ta.some((c) => c.texto.startsWith("Al cerrar el mes 1 el Productor puede retirar sin penalidad hasta el 37,5 % de lo declarado.")) && ta.some((c) => c.texto.startsWith("Al terminar la temporada (15 de diciembre de 2026)")) && ta.some((c) => c.texto.includes("de la temporada vigente")));
-  check("contrato · la escalera del trimestre se lee igual que antes", textoDeLaEscalera(3) === "Al cerrar el mes 1 el Productor puede retirar sin penalidad hasta el 25 % de lo declarado y, al cerrar el mes 2, hasta el 50 % acumulado.");
-  const hoy = new Date("2026-12-17T12:00:00Z");
-  check("renovación · también al terminar la vigencia (un trato de 70 días no espera los 90)", renovacionDebida("2026-10-06T12:00:00Z", hoy, "2026-12-15") && !renovacionDebida("2026-10-06T12:00:00Z", hoy, "2026-12-31") && !renovacionDebida("2026-10-06T12:00:00Z", hoy));
-  const calc = lee("src/components/kaffetal-regal/panel/CalculadoraDelTrato.tsx");
-  const tab = lee("src/components/kaffetal-regal/panel/ContratosTab.tsx");
-  check("calculadora y Mi trato · el retiro sale de `tramoLibrePct` con los meses del trato; ya no hay renovación de 30 días", calc.includes("const libreModalidad = tramoLibrePct(mesR, cond.meses, cond.retiroLibrePct);") && tab.includes("tramoLibrePct(contract.mesEnCurso, mesesDelTrato(contract.freezeMonths), contract.retiroLibrePct)") && !tab.includes("RenovarAhora") && !lee("src/lib/trato/producerActions.ts").includes("renovarDeclaracionAhora") && !/30_dias/.test(calc + tab));
-}
+
+// ── V5.175 · los bloques de la V5.170 (PVC siguiente para «Siguiente Temporada»), la V5.171 (redeclaración al 70 %) y la V5.173
+//    («Temporada Actual» y la escalera repartida) se retiraron: el trato va por VENTANAS de ciclos (docs/PLAN_CICLOS.md) y sus
+//    reglas las vigila `qa-ciclos-check`. Lo de arriba que sigue aquí es lo que todavía rige (o lo que leen los tratos viejos).
 
 if (fallos.length) {
   console.error(`✗ qa-trato: ${fallos.length} fallo(s), ${ok} OK\n`);

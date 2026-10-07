@@ -19,6 +19,35 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.175] — 2026-10-07 (commit pendiente)
+
+- **Cambiado**: **tanda 2 de los Ciclos: el trato de Cherry Picked va por VENTANAS** (`docs/PLAN_CICLOS.md` §2–§5). El productor
+  ya no elige modalidad: la fecha de firma decide la ventana (un ciclo con 25 % de retiro libre, o extendida al ciclo siguiente
+  con 30 %) y la regla de precio (vigente · promedio con el PVC siguiente · siguiente). Una sola cuenta del servidor
+  (`condicionesDeFirma`) alimenta la vista previa de la calculadora y la aceptación. La calculadora enseña la ventana de hoy, el
+  saco, la cantidad con el mínimo y la existencia del lote, el escenario de ventas por semanas y el retiro.
+- **Añadido**: **el saco y los despachos**: con el primer contrato del lote CTCx compra un saco de 70–200 kg FUERA de lo declarado
+  (en las renovaciones, una compra adelantada de 0–200 kg); su despacho nace con plazo al cierre de la semana de firma. El
+  productor lo registra (guía, peso, foto), pide prórroga (con advertencia; no si firmó en la semana 1), cancela el contrato o lo
+  pasa a la ventana siguiente. «Mi trato» enseña la ventana, la cuenta (declarado · vendido · retirado · en la vitrina · retiro
+  libre que queda), las ventas semanales y los despachos con sus pagos 60/40.
+- **Cambiado**: **el retiro** se hace solo sobre lo no vendido (`cuenta.ts`, con el ejemplo del owner como prueba); una
+  declaración reducida por existencia insuficiente no tiene retiro libre. La existencia del lote (A2) se registra desde la oferta
+  aunque la Ficha ya no se edite.
+- **Cambiado**: **el contrato** (texto 2026-10-07.1): ventana y cantidad, compra con la firma (o adelantada), ventas y
+  confirmaciones semanales, precio con el auxilio citado, entrega y despachos (prórroga, cancelar, ventana siguiente), pago 60/40
+  con humedad y actividad de agua, retiro, renovación con el mínimo −10 % por trimestre. La calidad y el auxilio quedan congelados
+  en el contrato para que la huella siga íntegra. CTCx Selection no cambia.
+- **Cambiado**: **la invitación del OCP** lleva el saco (validado 70–200, o 0–200 si el lote continúa), vence al terminar su
+  edición del PVC y «Confirmar la oferta» enseña la ventana que tocaría si el productor firmara hoy. El contrato del OCP se lee
+  por su ventana (las acciones de CTCx sobre ventas, despachos y pagos llegan en la tanda 3).
+- **Datos**: migración `2026-10-07_ciclos_trato_por_ventanas.sql` (aditiva): columnas de ventana, saco, mínimo, sin retiro,
+  existencia, renovación, calidad y auxilio en `purchase_contracts`; saco y renovación en `lot_offers`; tablas `contract_ventas`,
+  `contract_retiros` y `contract_despachos` con lectura solo del dueño.
+- **Seguridad**: `qa-ciclos` (37 → 53); `qa-trato` retira los bloques de la V5.170, V5.171 y V5.173 y queda en 131; `qa-ofertas`
+  al día.
+- **Docs**: `PLAN_CICLOS.md` (tanda 2 hecha); charters `kaffetal-regal`, `consolas`; ALINEACION §3.
+
 ## [V5.174] — 2026-10-07 (commit 4af0619)
 
 - **Añadido**: **tanda 1 de los Ciclos de Cherry Picked** (`docs/PLAN_CICLOS.md`, owner 2026-10-07): las reglas puras del

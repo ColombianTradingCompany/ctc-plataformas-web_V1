@@ -74,7 +74,7 @@ check("signContract sigue siendo la firma de CTC", contratos.includes("export as
 
 // ── 5. Las cuatro secciones del productor ─────────────────────────────────
 // V5.169 (owner): «Ofertas de Temporada» se separa en la participación en Cherry Picked y las compras de CTCx Selection.
-for (const s of ["Participación en Cherry Picked", "Compras de CTCx Selection", "Contratos de Temporada", "Ofertas Black", "Subastas Tyrian"]) {
+for (const s of ["Participación en Cherry Picked", "Compras de CTCx Selection", "Contratos", "Ofertas Black", "Subastas Tyrian"]) {
   check(`la pestaña pinta «${s}»`, tab.includes(s));
 }
 check("el podio tiene su lema", tab.includes("El podio de los mejores, al mejor postor"));

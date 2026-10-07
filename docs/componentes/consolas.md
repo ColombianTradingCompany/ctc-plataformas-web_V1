@@ -177,6 +177,7 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.175 · la invitación lleva el saco (70–200; 0–200 si el lote continúa) y vence con su edición**; «Confirmar la oferta» enseña la ventana de hoy; el contrato por ventana se lee por su ventana. Pendiente (tanda 3): confirmar ventas semanales, confirmar despachos y pagar el 60 %, recibir (humedad, aw) y pagar el 40 % o resolver fuera de rango, el despacho de lo vendido al empezar el ciclo, renovaciones prellenadas (semana 4) y retirar el trato mes a mes.
 - **V5.174 · el mínimo y el auxilio de las ofertas salen de la edición del PVC** (`minimoDelGrado`, `precioDeLaEscalera(…, auxilio)`); las variables se editan en ECP → Modelo Económico → Ediciones (owner).
 - **2026-10-07 · `docs/PLAN_CICLOS.md`** (owner): el OCP emite por ventana (la fecha de firma decide), confirma renovaciones prellenadas en la semana 4 de cada ciclo, registra despachos y recepciones (humedad, aw, pago 60/40) y confirmaciones semanales; el trato mes a mes se retira en la tanda 3.
 - **V5.173 · «Ofrecer renovación» se habilita también al terminar la vigencia del trato** (no solo a los 90 días), para los

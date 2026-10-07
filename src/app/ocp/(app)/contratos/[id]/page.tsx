@@ -22,6 +22,7 @@ import { MORA_LABEL, mesesDelTrato, moraDelMes, resumenDelTrato, type FilaDelMes
 import { MAX_RECORDATORIOS_MORA } from "@/lib/trato/mora";
 import styles from "@/components/panel/shared.module.css";
 import { MODALIDAD_LABEL, estadoDeRedeclaracion, fechaLarga, type Modalidad } from "@/lib/trato/modalidades";
+import { cuentaDeVentana } from "@/lib/trato/cuenta";
 import { hoyEnColombia } from "@/lib/pvc/servicio";
 
 // ── El contrato, mes a mes (V5.84 · fase 7 del PLAN_CIRCUITO_DEL_LOTE) ──────────────────────
@@ -64,7 +65,7 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
   const { data: contract } = await service
     .from("purchase_contracts")
     .select(
-      "id, status, grade_snapshot, signed_at, reference_price_source, reference_price_snapshot, price_per_kg_locked, quantity_frozen_kg, terms_version, declaracion, compra_inicial_kg, modificador_pct, freeze_months, ruptura_at, ruptura_motivo, renovado_at, lugar_entrega, producer_signed_at, producer_signer_name, producer_signature_path, producer_signature_meta, contract_text_version, contract_text_sha256, vigencia_hasta, redeclarar_min_kg, redeclarar_at, redeclarado_at, redeclarado_kg, redeclaracion_origen, redeclarar_aviso_at, lots(name, producer_id, fincas(name))"
+      "id, status, grade_snapshot, signed_at, reference_price_source, reference_price_snapshot, price_per_kg_locked, quantity_frozen_kg, terms_version, declaracion, compra_inicial_kg, modificador_pct, freeze_months, ruptura_at, ruptura_motivo, renovado_at, lugar_entrega, producer_signed_at, producer_signer_name, producer_signature_path, producer_signature_meta, contract_text_version, contract_text_sha256, vigencia_hasta, redeclarar_min_kg, redeclarar_at, redeclarado_at, redeclarado_kg, redeclaracion_origen, redeclarar_aviso_at, lots(name, producer_id, fincas(name)), ventana_tipo, ventana_ciclos, precio_regla, saco_kg, minimo_kg, sin_retiro, vigencia_desde, retiro_libre_pct"
     )
     .eq("id", id)
     .single();
@@ -101,6 +102,29 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
   const resumen = resumenDelTrato({ quantityFrozenKg: contract.quantity_frozen_kg != null ? Number(contract.quantity_frozen_kg) : null, freezeMonths: nMeses, signedAt: contract.signed_at, vigenciaHasta: contract.vigencia_hasta ?? null }, meses, hoy);
   const vigente = contract.status === "active";
   const cuentaCongelada = perfil?.estado_cuenta === "congelada";
+  // V5.175 (docs/PLAN_CICLOS.md): un contrato por VENTANA no se lleva mes a mes — su ventana, sus ventas semanales, sus retiros y
+  // sus despachos (saco · adelanto · vendido). Las operaciones de CTCx sobre ellos llegan en la tanda 3.
+  const porVentana = Boolean((contract as { ventana_tipo?: string | null }).ventana_tipo);
+  const cv = contract as unknown as { ventana_tipo: string | null; ventana_ciclos: string[] | null; saco_kg: number | string | null; minimo_kg: number | string | null; sin_retiro: boolean | null; vigencia_desde: string | null; vigencia_hasta: string | null; retiro_libre_pct: number | string | null };
+  const [{ data: despachosRaw }, { data: ventasRaw }, { data: retirosRaw }] = porVentana
+    ? await Promise.all([
+        service.from("contract_despachos").select("*").eq("contract_id", id).order("plazo"),
+        service.from("contract_ventas").select("*").eq("contract_id", id).order("semana"),
+        service.from("contract_retiros").select("*").eq("contract_id", id).order("created_at"),
+      ])
+    : [{ data: [] }, { data: [] }, { data: [] }];
+  const despachos = (despachosRaw as Record<string, unknown>[] | null) ?? [];
+  const ventas = (ventasRaw as Record<string, unknown>[] | null) ?? [];
+  const retiros = (retirosRaw as Record<string, unknown>[] | null) ?? [];
+  const cuenta = porVentana
+    ? cuentaDeVentana({
+        declaradoKg: Number(contract.quantity_frozen_kg ?? 0),
+        retiroLibrePct: cv.retiro_libre_pct != null ? Number(cv.retiro_libre_pct) : null,
+        sinRetiro: Boolean(cv.sin_retiro),
+        ventas: ventas.map((v) => ({ kg: Number(v.kg) })),
+        retiros: retiros.map((r) => ({ kg: Number(r.kg), libreKg: Number(r.libre_kg) })),
+      })
+    : null;
 
   return (
     <div>
@@ -148,6 +172,8 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
             Nació de la oferta aceptada por el productor: precio <b>{contract.price_per_kg_locked != null ? `${formatCop(Number(contract.price_per_kg_locked))}/kg` : "—"}</b>
             {contract.reference_price_source && <> (referencia {contract.reference_price_source}{contract.modificador_pct ? ` ${Number(contract.modificador_pct) > 0 ? "+" : ""}${Number(contract.modificador_pct)} %` : ""})</>} · cantidad declarada{" "}
             <b>{contract.quantity_frozen_kg != null ? `${Number(contract.quantity_frozen_kg)} kg` : "—"}</b>
+            {porVentana && cv.vigencia_desde && cv.vigencia_hasta && <> · ventana {fechaLarga(cv.vigencia_desde)} → {fechaLarga(cv.vigencia_hasta)} ({cv.ventana_tipo === "extendida" ? "extendida" : "un ciclo"})</>}
+            {porVentana && Number(cv.saco_kg ?? 0) > 0 && <> · saco de {Number(cv.saco_kg)} kg fuera de lo declarado (sale al cierre de la semana de firma)</>}
             {contract.declaracion && <> · «{MODALIDAD_LABEL[contract.declaracion as Modalidad] ?? contract.declaracion}»</>}
             {contract.compra_inicial_kg != null && <> · CTC compra de inmediato {Number(contract.compra_inicial_kg)} kg</>}
             {contract.terms_version && <> · términos {contract.terms_version}</>}. Firmar activa el trato.
@@ -162,6 +188,13 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
             {contract.compra_inicial_kg != null && <> · compra inicial {Number(contract.compra_inicial_kg)} kg</>}
             {contract.terms_version && <> · términos {contract.terms_version}</>} · Firmado: {fecha(contract.signed_at)}
           </p>
+          {porVentana && cuenta ? (
+            <p className={styles.meta} style={{ marginTop: 6 }}>
+              Ventana <b>{cv.vigencia_desde ? fechaLarga(cv.vigencia_desde) : "—"} → {cv.vigencia_hasta ? fechaLarga(cv.vigencia_hasta) : "—"}</b> ({cv.ventana_tipo === "extendida" ? "extendida" : "un ciclo"}
+              {cv.ventana_ciclos?.length ? ` · ${cv.ventana_ciclos.join(" y ")}` : ""}) · declarado <b>{cuenta.declaradoKg} kg</b> · vendido {cuenta.vendidoKg} kg · retirado {cuenta.retiradoKg} kg · <b>en la vitrina {cuenta.disponibleKg} kg</b>
+              {cv.sin_retiro ? " · sin retiro libre (declaración reducida)" : ` · retiro libre ${Number(cv.retiro_libre_pct ?? 0)} % (quedan ${cuenta.libreRestanteKg} kg)`}
+            </p>
+          ) : (
           <p className={styles.meta} style={{ marginTop: 6 }}>
             Comprometido <b>{resumen.comprometidoKg} kg</b> · retirado {resumen.retiradoKg} kg · <b>vigente {resumen.vigenteKg} kg</b> · pedido {resumen.pedidoKg} kg · enviado{" "}
             {resumen.enviadoKg} kg · pagado <b>{formatCop(resumen.pagadoCop)}</b>
@@ -169,6 +202,7 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
             {/* Decisión 7 (V5.85): «Ofertas CP Aceptadas» es el staging del Catálogo Activo del lado KR: con un envío registrado, se publica. */}
             {resumen.enviadoKg > 0 && <> · <Link href="/ocp/catalogo">Pasar al Catálogo Activo →</Link></>}
           </p>
+          )}
           {/* V5.171 (owner): la redeclaración de «Ahora y Siguiente» — pedida, hecha por el productor o dejada en el mínimo por el barrido diario. */}
           {contract.declaracion === "ahora_y_siguiente" &&
             (() => {
@@ -204,7 +238,42 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
         </div>
       )}
 
-      {contract.status !== "pending_signature" && (
+      {porVentana && (
+        <div style={{ marginBottom: 28 }}>
+          <h2 className={styles.title} style={{ fontSize: 16 }}>
+            La ventana
+          </h2>
+          <p className={styles.meta} style={{ marginBottom: 10 }}>
+            CTCx confirma cada semana lo vendido; el productor despacha el saco al cierre de la semana de firma y lo vendido en la semana 1 del
+            ciclo siguiente; CTCx paga el 60 % con el tiquete de despacho y el 40 % al recibir, medidas la humedad y la actividad de agua. Las
+            acciones de CTCx sobre la ventana (confirmar ventas, confirmar despachos y pagos, recibir) llegan con la tanda 3 de los Ciclos.
+          </p>
+          <div className={styles.list}>
+            {despachos.length === 0 && <p className={styles.empty}>Sin despachos todavía.</p>}
+            {despachos.map((d) => (
+              <div key={String(d.id)} className={styles.card} style={{ flexDirection: "column", alignItems: "stretch" }}>
+                <p className={styles.meta} style={{ margin: 0 }}>
+                  <b>{d.tipo === "saco" ? "Saco de la firma" : d.tipo === "adelanto" ? "Compra adelantada" : "Lo vendido"}</b> · {Number(d.kg)} kg · {formatCop(Number(d.total_cop))} · {String(d.estado)} · plazo {fechaLarga(String(d.prorroga_hasta ?? d.plazo))}
+                  {d.guia ? ` · guía ${String(d.guia)}` : ""}
+                  {Number(d.advertencias ?? 0) > 0 ? ` · advertencias ${Number(d.advertencias)}` : ""}
+                </p>
+              </div>
+            ))}
+          </div>
+          {ventas.length > 0 && (
+            <p className={styles.meta} style={{ marginTop: 8 }}>
+              Ventas confirmadas: {ventas.map((v) => `semana del ${fecha(String(v.semana))}: ${Number(v.kg)} kg`).join(" · ")}
+            </p>
+          )}
+          {retiros.length > 0 && (
+            <p className={styles.meta} style={{ marginTop: 4 }}>
+              Retiros: {retiros.map((r) => `${Number(r.kg)} kg (${Number(r.libre_kg)} libres${Number(r.penalidad_cop) > 0 ? ` · penalidad ${formatCop(Number(r.penalidad_cop))}` : ""})`).join(" · ")}
+            </p>
+          )}
+        </div>
+      )}
+
+      {contract.status !== "pending_signature" && !porVentana && (
         <>
           <h2 className={styles.title} style={{ fontSize: 16 }}>
             El trato mes a mes

@@ -1,23 +1,25 @@
-// ── El texto del contrato (V5.168 · por modalidad desde la V5.169, owner 2026-10-06) ────────────────────────────────────
+// ── El texto del contrato (V5.168 · por ventanas de ciclos desde la V5.175, owner 2026-10-07) ────────────────────────────────
 // «El Productor recibe esta oferta […] Al final debe tomar la decisión y con ella se formula un contrato con un feature de
 // firmar con el dedo.» El contrato se ARMA de la oferta aceptada y de la decisión del productor con las cifras de
-// `terminos.ts` y `modalidades.ts` (las mismas que leen la calculadora y el trato mes a mes): nada de lo que dice se teclea.
-// Dos clases:
-//   · PARTICIPACIÓN EN CHERRY PICKED — con su modalidad («Temporada Actual» desde la V5.173, «Siguiente Temporada Trimestral», «Ahora y
-//     Siguiente»), y la cláusula de que CTCx NO se compromete a comprar fracciones mes a mes.
-//   · COMPRA CTCx SELECTION — una venta en firme de una cantidad a un precio acordado (hasta PVC − 8 %).
+// `terminos.ts`, `ventanas.ts`, `despachos.ts` y la edición del PVC: nada de lo que dice se teclea. Dos clases:
+//   · PARTICIPACIÓN EN CHERRY PICKED — desde la V5.175 por VENTANAS de ciclos (docs/PLAN_CICLOS.md): la fecha de firma decide
+//     la ventana, el retiro libre y la regla de precio; el saco inicial va fuera de lo declarado; pago 60/40 con calidad.
+//   · COMPRA CTCx SELECTION — una venta en firme de una cantidad a un precio acordado (hasta PVC − 8 %). No cambia.
 // El texto tiene VERSIÓN propia y el servidor guarda la huella SHA-256 del texto exacto que el productor firmó.
 // PURO. Es una redacción operativa de los términos del trato; la revisión jurídica la decide el owner.
 
 import { CTC_RAZON, CTC_SEDE, NIT } from "@/lib/legal";
-import { CARGA_KG, DIAS_ANTES_REDECLARAR, MORA, PENALIDAD_RETIRO_PCT, RENOVACION_DIAS } from "./terminos";
-import { tramoLibrePct } from "./mesAMes";
-import { MODALIDAD_LABEL, textoCompraInicial, type CondicionesDeModalidad } from "./modalidades";
+import { AJUSTE_FUERA_DE_RANGO_MAX_PCT, CALIDAD_POR_DEFECTO, CARGA_KG, MORA, PAGO_AL_DESPACHO_PCT, PENALIDAD_RETIRO_PCT, PRORROGA_DIAS } from "./terminos";
+import { CONTINUIDAD_REBAJA_PCT } from "./minimos";
+import type { ReglaDePrecio } from "./ventanas";
+import type { RangosDeCalidad } from "./despachos";
 
-export const CONTRATO_VERSION = "2026-10-06.5";
+export const CONTRATO_VERSION = "2026-10-07.1";
+
+export type VentanaDelContrato = { tipo: "ciclo" | "extendida"; desde: string; hasta: string; ciclos: string[]; retiroLibrePct: number; precio: ReglaDePrecio };
 
 export type DatosDelContrato = {
-  /** V5.169: participación en Cherry Picked (con modalidad) o compra de CTCx Selection. */
+  /** V5.169: participación en Cherry Picked (por ventana) o compra de CTCx Selection. */
   tipo: "cherry_picked" | "selection";
   productorNombre: string;
   productorDocumento: string | null;
@@ -26,8 +28,17 @@ export type DatosDelContrato = {
   grado: string;
   copKg: number;
   declaradoKg: number;
-  /** Solo Cherry Picked: la modalidad y sus condiciones (`condicionesDe`). */
-  condiciones: CondicionesDeModalidad | null;
+  /** Solo Cherry Picked: la ventana que decidió la fecha de firma (`ventanas.ts`). */
+  ventana: VentanaDelContrato | null;
+  /** Declaración reducida por existencia insuficiente: sin derecho a retiro. */
+  sinRetiro: boolean;
+  /** El saco inicial (primer contrato) o el adelanto (renovación), kg de CPS fuera de lo declarado. */
+  sacoKg: number | null;
+  esRenovacion: boolean;
+  minimoKg: number | null;
+  calidad: RangosDeCalidad | null;
+  /** El auxilio de transporte por carga, ya incluido en el precio. */
+  auxilioCarga: number;
   lugarEntrega: string;
   termsVersion: string | null;
   temporada: string | null;
@@ -42,23 +53,13 @@ const fecha = (iso: string) => {
   const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
   return `${d} de ${meses[m - 1]} de ${y}`;
 };
+const num = (n: number) => n.toLocaleString("es-CO", { maximumFractionDigits: 2 });
 
-const pct = (n: number) => n.toLocaleString("es-CO", { maximumFractionDigits: 1 });
-
-/** V5.173: la escalera de retiro libre dicha para los meses del trato («Al cerrar el mes 1 … hasta el 25 % … y, al cerrar el mes 2,
- *  hasta el 50 % acumulado.»). En 3 meses es el texto de siempre. */
-export function textoDeLaEscalera(meses: number): string {
-  const cierres = Array.from({ length: Math.max(0, meses - 1) }, (_, i) => i + 1);
-  return (
-    cierres
-      .map((m, i) =>
-        i === 0
-          ? `Al cerrar el mes 1 el Productor puede retirar sin penalidad hasta el ${pct(tramoLibrePct(2, meses))} % de lo declarado`
-          : `${i === cierres.length - 1 ? " y" : ""}, al cerrar el mes ${m}, hasta el ${pct(tramoLibrePct(m + 1, meses))} % acumulado`
-      )
-      .join("") + "."
-  );
-}
+const REGLA_TEXTO: Record<ReglaDePrecio, string> = {
+  vigente: "el Precio de Valor de Compra (PVC) de la temporada vigente",
+  promedio: "el promedio simple de los PVC de la temporada vigente y de la siguiente, ya publicado",
+  siguiente: "el PVC publicado para la siguiente Temporada Trimestral",
+};
 
 /** Las cláusulas del contrato, en el orden en que se firman. */
 export function clausulasDelContrato(d: DatosDelContrato): ClausulaDelContrato[] {
@@ -69,8 +70,6 @@ export function clausulasDelContrato(d: DatosDelContrato): ClausulaDelContrato[]
     titulo: "1. Las partes",
     texto: `De una parte, ${CTC_RAZON} (CTCx), ${NIT}, con sede en ${CTC_SEDE}, en adelante «CTCx». De otra, ${d.productorNombre}${d.productorDocumento ? `, identificado(a) con ${d.productorDocumento}` : ""}, en adelante «el Productor». Las partes celebran este contrato sobre el lote descrito abajo, nacido de la aceptación de la oferta de CTCx en Kaffetal Regal.`,
   };
-  const entrega: ClausulaDelContrato = { titulo: "", texto: `${d.lugarEntrega} CTCx registra el recibo, el peso y la humedad de cada entrega en la plataforma.` };
-  const pago: ClausulaDelContrato = { titulo: "", texto: "CTCx paga cada compra recibida en la primera semana del mes siguiente, por el medio de pago registrado por el Productor." };
   const documentos: ClausulaDelContrato = {
     titulo: "",
     texto:
@@ -82,15 +81,15 @@ export function clausulasDelContrato(d: DatosDelContrato): ClausulaDelContrato[]
   };
   const numerar = (cs: ClausulaDelContrato[], titulos: string[]) => cs.map((c, i) => ({ titulo: `${i + 1}. ${titulos[i]}`, texto: c.texto }));
 
-  // ── CTCx Selection: una compra en firme ──
-  if (d.tipo === "selection" || !d.condiciones) {
+  // ── CTCx Selection: una compra en firme (no cambia con los ciclos) ──
+  if (d.tipo === "selection" || !d.ventana) {
     return numerar(
       [
         partes,
         { titulo: "", texto: `CTCx compra al Productor ${kg(d.declaradoKg)} de café pergamino seco (CPS) del lote «${d.loteNombre}» (${d.loteReferencia}), Grado CTCx ${grado}, con la calidad con que fue evaluado. Es una compra en firme de CTCx Selection.` },
         { titulo: "", texto: `El precio acordado es ${cop(d.copKg)} por kg de CPS (${cop(d.copKg * CARGA_KG)} por carga), un precio de compra directa que no es el PVC: es hasta el PVC vigente menos el 8 %, fijado en la negociación. El total es ${cop(d.copKg * d.declaradoKg)}.` },
-        entrega,
-        pago,
+        { titulo: "", texto: `${d.lugarEntrega} CTCx registra el recibo, el peso y la humedad de cada entrega en la plataforma.` },
+        { titulo: "", texto: "CTCx paga cada compra recibida en la primera semana del mes siguiente, por el medio de pago registrado por el Productor." },
         { titulo: "", texto: `Si el Productor no entrega la cantidad pactada, corren ${MORA.semanasSinCargo} semanas sin cargo y ${MORA.semanasConRecargo} más con un recargo del ${MORA.recargoPct} %; pasado ese plazo, CTCx puede declarar la ruptura contractual.` },
         documentos,
         firma,
@@ -99,58 +98,43 @@ export function clausulasDelContrato(d: DatosDelContrato): ClausulaDelContrato[]
     );
   }
 
-  // ── Participación en Cherry Picked ──
-  const c = d.condiciones;
-  const modalidad = MODALIDAD_LABEL[c.modalidad];
-  const vigencia = `del ${fecha(c.desde)} al ${fecha(c.hasta)}`;
+  // ── Participación en Cherry Picked, por ventana ──
+  const v = d.ventana;
+  const calidad = d.calidad ?? CALIDAD_POR_DEFECTO;
   const cantidad =
-    c.modalidad === "temporada_actual"
-      ? `En la modalidad «${modalidad}», el Productor declara disponibles ${kg(d.declaradoKg)} de CPS (${cargas} cargas de ${CARGA_KG} kg) para lo que queda de la Temporada Trimestral en curso, ${vigencia}: ${c.meses} ${c.meses === 1 ? "mes" : "meses"} de 30 días, y el último llega hasta el fin de la temporada.`
-      : c.modalidad === "trimestre"
-        ? `En la modalidad «${modalidad}», el Productor declara disponibles ${kg(d.declaradoKg)} de CPS (${cargas} cargas de ${CARGA_KG} kg) para la siguiente Temporada Trimestral, ${vigencia}.`
-        : `En la modalidad «${modalidad}», el Productor declara disponibles ${kg(d.declaradoKg)} de CPS (${cargas} cargas de ${CARGA_KG} kg) desde hoy y durante la siguiente Temporada Trimestral, ${vigencia}. Al empezar la siguiente temporada (${fecha(c.redeclarar!.at)}) el Productor redeclara cuánto deja disponible para ella, al menos ${kg(c.redeclarar!.minKg)} (el 70 % de lo declarado, y nunca menos del mínimo de su grado). La redeclaración se abre en Kaffetal Regal ${DIAS_ANTES_REDECLARAR} días antes y se cierra al terminar ese primer día; si el Productor no redeclara, la cantidad disponible para la siguiente temporada queda en ese mínimo. Lo ya comprado por CTCx y lo ya retirado no cambian.`;
-  const compra = `Con la firma, CTCx compra ${textoCompraInicial(c.compraInicial)} de CPS al precio acordado, como inversión en la promoción del lote en Cherry Picked.`;
-  const sinCompromiso = {
-    titulo: "",
-    texto:
-      "CTCx no se compromete a comprar fracciones fijas del café declarado mes a mes. Puede no haber compras en un mes cualquiera, o venderse todo lo declarado el primer día: el café declarado queda disponible para la venta en Cherry Picked y CTCx lo compra a medida que se vende, al precio acordado.",
-  };
-  const retiro =
-    c.retiroLibrePct != null
-      ? `El Productor puede retirar sin penalidad hasta el ${c.retiroLibrePct} % de lo declarado en cualquier momento, sin escalones mensuales. Lo que retire por encima paga el ${PENALIDAD_RETIRO_PCT} % del precio de cada carga.`
-      : c.meses <= 1
-        ? `Por ser un trato de un solo mes no hay tramo libre de retiro: lo que el Productor retire paga el ${PENALIDAD_RETIRO_PCT} % del precio de cada carga retirada.`
-        : `${textoDeLaEscalera(c.meses)} Lo que retire por encima paga el ${PENALIDAD_RETIRO_PCT} % del precio de cada carga.`;
+    `El Productor declara disponibles ${kg(d.declaradoKg)} de CPS (${cargas} cargas de ${CARGA_KG} kg) para la ventana del ${fecha(v.desde)} al ${fecha(v.hasta)} (${v.ciclos.join(" y ")}), en una sola declaración.` +
+    (v.tipo === "extendida" ? " Como se firma después de la semana 1 del ciclo, la ventana se extiende al ciclo siguiente para que las muestras del lote viajen en el flete consolidado." : "") +
+    (d.sinRetiro && d.minimoKg ? ` Declara por debajo del mínimo de su grado (${kg(d.minimoKg)}) porque la existencia del lote no le alcanza: lo hace sin derecho a retiro libre.` : "");
+  const compra = d.esRenovacion
+    ? d.sacoKg && d.sacoKg > 0
+      ? `En esta renovación CTCx compra por adelantado ${kg(d.sacoKg)} de CPS, fuera de lo declarado, al precio acordado.`
+      : "En esta renovación CTCx no compra por adelantado; se reserva el derecho de hacerlo en renovaciones futuras."
+    : `Con la firma, CTCx compra de inmediato ${kg(d.sacoKg ?? 0)} de CPS (un saco), FUERA de lo declarado, al precio acordado. Es el material con que CTCx promociona y posiciona el lote (Sample Kits).`;
+  const ventas =
+    "CTCx no se compromete a comprar cantidades fijas: puede no haber ventas en una semana, o venderse todo lo declarado el primer día. Cada semana CTCx le confirma al Productor lo vendido en Cherry Picked; lo vendido es de CTCx y ya no se puede retirar.";
+  const precio = `El precio queda fijo en ${cop(d.copKg)} por kg de CPS (${cop(d.copKg * CARGA_KG)} por carga), ${REGLA_TEXTO[v.precio]}${d.auxilioCarga > 0 ? `, e incluye el auxilio de transporte de ${cop(d.auxilioCarga)} por carga` : ""}. No cambia durante la ventana.`;
+  const entrega = `${d.lugarEntrega} El Productor despacha por su cuenta (el PVC le reconoce el auxilio de transporte y CTCx le ofrece tarifas corporativas). El saco${d.esRenovacion ? " o el adelanto" : ""} sale al cierre de la semana en que se firma; si no sale, el Productor puede pedir una prórroga de ${PRORROGA_DIAS} días —que queda como advertencia—, cancelar el contrato o pasarlo a la ventana siguiente (un contrato firmado en la semana 1 del ciclo no tiene prórroga: su saco tiene que llegar al procesamiento de la semana 2). Lo vendido en cada ciclo sale en la semana 1 del ciclo siguiente; si no sale, tiene ${PRORROGA_DIAS} días de prórroga con advertencia y, después, el faltante se cobra como retiro penalizado y CTCx puede declarar la ruptura contractual, que congela la cuenta del Productor hasta que se resuelva.`;
+  const pago = `CTCx paga el ${PAGO_AL_DESPACHO_PCT} % de cada envío con el tiquete de despacho (guía, peso y foto) y el ${100 - PAGO_AL_DESPACHO_PCT} % al recibirlo, comprobado que la humedad está entre ${num(calidad.humedad_min)} y ${num(calidad.humedad_max)} % y la actividad de agua no pasa de ${num(calidad.aw_max)}. Fuera de rango, CTCx elige: devolverlo (el Productor reintegra el ${PAGO_AL_DESPACHO_PCT} % y CTCx paga el flete de vuelta; cada parte pierde su transporte) o comprarlo con un pago adicional de 0 a ${AJUSTE_FUERA_DE_RANGO_MAX_PCT} % (el café queda pagado entre el ${PAGO_AL_DESPACHO_PCT} y el ${PAGO_AL_DESPACHO_PCT + AJUSTE_FUERA_DE_RANGO_MAX_PCT} %).`;
+  const retiro = d.sinRetiro
+    ? `Por ser una declaración reducida no hay retiro libre: lo que el Productor retire de lo no vendido paga el ${PENALIDAD_RETIRO_PCT} % del precio de cada carga.`
+    : `El Productor puede retirar en cualquier momento, solo de lo no vendido, hasta el ${v.retiroLibrePct} % de lo declarado sin penalidad; por encima, paga el ${PENALIDAD_RETIRO_PCT} % del precio de cada carga retirada.`;
+  const renovacion = `En la semana 4 de cada ciclo CTCx deja lista la renovación de la ventana siguiente: el Productor confirma la cantidad disponible, que la humedad y el bodegaje son los adecuados, y firma. Si no responde antes de terminar su ventana, el contrato vence y CTCx puede ofrecerle uno nuevo. Con cada cambio de Temporada Trimestral el mínimo de su grado baja ${CONTINUIDAD_REBAJA_PCT} %.`;
   return numerar(
     [
       partes,
       { titulo: "", texto: `El Productor participa en Cherry Picked con café pergamino seco (CPS) del lote «${d.loteNombre}» (${d.loteReferencia}), Grado CTCx ${grado}${d.temporada ? `, temporada ${d.temporada}` : ""}, con la calidad con que fue evaluado y galardonado.` },
       { titulo: "", texto: cantidad },
-      { titulo: "", texto: `${compra}` },
-      sinCompromiso,
-      {
-        titulo: "",
-        // V5.170 (owner): «Siguiente Temporada» va al PVC de la edición siguiente (fijado en las primeras dos semanas del segundo mes
-        // de la temporada anterior); «Ahora» y «Ahora y Siguiente», al PVC de la temporada vigente.
-        texto: `El precio queda fijo en ${cop(d.copKg)} por kg de CPS (${cop(d.copKg * CARGA_KG)} por carga), ${
-          c.modalidad === "trimestre" ? "el Precio de Valor de Compra (PVC) publicado para la siguiente Temporada Trimestral" : "el Precio de Valor de Compra (PVC) de la temporada vigente"
-        }. No cambia durante la vigencia.`,
-      },
-      entrega,
-      pago,
+      { titulo: "", texto: compra },
+      { titulo: "", texto: ventas },
+      { titulo: "", texto: precio },
+      { titulo: "", texto: entrega },
+      { titulo: "", texto: pago },
       { titulo: "", texto: retiro },
-      { titulo: "", texto: `Si una compra no se entrega, corren ${MORA.semanasSinCargo} semanas sin cargo y ${MORA.semanasConRecargo} más con un recargo del ${MORA.recargoPct} %. Pasado ese plazo, CTCx puede declarar la ruptura contractual, que congela la cuenta del Productor hasta que se resuelva.` },
-      {
-        titulo: "",
-        texto:
-          c.modalidad === "temporada_actual"
-            ? `Al terminar la temporada (${fecha(c.hasta)}), CTCx puede ofrecer participar en la siguiente Temporada Trimestral con el PVC publicado para ella. Es una oferta nueva que el Productor acepta o rechaza.`
-            : `A los ${RENOVACION_DIAS} días CTCx puede ofrecer renovar con el PVC vigente en ese momento. Renovar es una oferta nueva que el Productor acepta o rechaza.`,
-      },
+      { titulo: "", texto: renovacion },
       documentos,
       firma,
     ],
-    ["Las partes", "Objeto", "Cantidad y vigencia", "Compra con la firma", "Sin compromiso de compra mensual", "Precio", "Entrega", "Pago", "Retiro de cantidad", "Mora y ruptura", "Renovación", "Documentos y confidencialidad", "Firma"]
+    ["Las partes", "Objeto", "Ventana y cantidad", d.esRenovacion ? "Compra adelantada" : "Compra con la firma", "Ventas y confirmaciones", "Precio", "Entrega y despachos", "Pago y calidad", "Retiro de cantidad", "Renovación", "Documentos y confidencialidad", "Firma"]
   );
 }
 

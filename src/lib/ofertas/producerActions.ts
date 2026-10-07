@@ -3,24 +3,24 @@
 import { createHash } from "node:crypto";
 import { headers } from "next/headers";
 import { createSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
-import { DECLARACIONES, LUGAR_DE_ENTREGA_POR_DEFECTO } from "@/lib/trato/terminos";
+import { LUGAR_DE_ENTREGA_POR_DEFECTO } from "@/lib/trato/terminos";
 import { formatCop } from "@/lib/arena/inscriptions";
 import { CONTRATO_VERSION, textoDelContrato } from "@/lib/trato/contrato";
-import { condicionesDe, diasHastaLaSiguiente, fechaLimitePvcSiguiente, modalidadesDisponibles, MODALIDAD_LABEL, type CondicionesDeModalidad } from "@/lib/trato/modalidades";
-import { edicionVigente, hoyEnColombia } from "@/lib/pvc/servicio";
+import { validarDeclaracion } from "@/lib/trato/minimos";
+import { plazoDelSaco } from "@/lib/trato/despachos";
+import { hoyEnColombia } from "@/lib/pvc/servicio";
+import { condicionesDeFirma, type CondicionesDeFirma, type OfertaParaVentana } from "./ventanaDeOferta";
 import { ctcLotReference } from "@/components/kaffetal-regal/data";
 
-// ── La respuesta del productor a una oferta (V5.18 · con declaración desde la V5.83) ────────
-// lot_offers es de solo lectura para el productor (RLS select-own); TODA
-// escritura pasa por aquí con service role — el mismo patrón de
-// src/lib/arena/producerActions.ts (cliente de sesión para la identidad +
-// cliente service-role para la escritura). Devuelve resultado, nunca lanza.
+// ── La respuesta del productor a una oferta (V5.18 · con declaración desde la V5.83 · por ventanas desde la V5.175) ──────────
+// lot_offers es de solo lectura para el productor (RLS select-own); TODA escritura pasa por aquí con service role — el mismo
+// patrón de src/lib/arena/producerActions.ts. Devuelve resultado, nunca lanza.
 //
-// ACEPTAR ES DONDE NACE EL CONTRATO — y desde la V5.83 (folio 8, paso 15; fase 6 del PLAN_CIRCUITO_DEL_LOTE)
-// nace LLENO: el precio es el de la oferta, la cantidad es la que el productor DECLARA (≥ el mínimo del grado,
-// ≤ el máximo de una directa), por trimestre o por 30 días, aceptando los términos de retiro, mora y ruptura
-// (`terms_version`). CTCx ya no teclea nada al firmar: solo firma. Rechazar cierra la oferta con la nota del
-// productor — y no crea nada. Una oferta con ventana (directa) vencida no se puede aceptar.
+// ACEPTAR ES DONDE NACE EL CONTRATO, lleno y firmado por el productor. Desde la V5.175 (docs/PLAN_CICLOS.md) una participación en
+// Cherry Picked ya no elige modalidad: la FECHA DE FIRMA decide la ventana, el retiro libre y la regla de precio
+// (`condicionesDeFirma`, la misma cuenta que enseña la calculadora). El productor declara una cantidad (>= el mínimo; o, si la
+// existencia del lote no le alcanza, hasta la mitad sin retiro), CTCx compra el SACO fuera de lo declarado y su despacho queda
+// con plazo al cierre de la semana. Rechazar cierra la oferta con la nota del productor — y no crea nada.
 
 export type RespuestaOferta = { ok: true } | { ok: false; message: string };
 
@@ -31,10 +31,9 @@ const FIRMA_PREFIJO = "data:image/png;base64,";
 const FIRMA_MAX_BYTES = 600_000;
 
 export type DeclaracionDelProductor = {
-  /** Lo que compromete, kg de CPS. */
+  /** Lo que declara disponible para la ventana, kg de CPS. */
   lockedKg: number;
-  declaracion: (typeof DECLARACIONES)[number];
-  /** Marcó la casilla de las condiciones de retiro, mora y ruptura. */
+  /** Marcó la casilla de las condiciones (ventana, despachos, pago y calidad, retiro). */
   aceptaTerminos: boolean;
 };
 
@@ -64,7 +63,7 @@ export async function respondToOffer(
   const { data: offer } = await service
     .from("lot_offers")
     .select(
-      "id, lot_id, producer_id, status, kind, grade_snapshot, season_id, price_per_kg, quantity_kg, terms_version, min_kg, max_kg, compra_inicial_kg, reference_price_source, reference_price_snapshot, pvc_edition_id, modificador_pct, expira_at, lugar_entrega, season_label, temporada_hasta, temporada_desde, precio_tope_kg, price_next_kg, pvc_next_edition_id, lots(name)"
+      "id, lot_id, producer_id, status, kind, grade_snapshot, season_id, price_per_kg, quantity_kg, terms_version, min_kg, max_kg, compra_inicial_kg, reference_price_source, reference_price_snapshot, pvc_edition_id, modificador_pct, expira_at, lugar_entrega, season_label, temporada_hasta, temporada_desde, precio_tope_kg, price_next_kg, pvc_next_edition_id, saco_kg, es_renovacion, renovacion_de, lots(name)"
     )
     .eq("id", offerId)
     .maybeSingle();
@@ -111,35 +110,28 @@ export async function respondToOffer(
   }
 
   // V5.169 (owner): CTCx ofrece una de dos cosas. Una compra de CTCx SELECTION se acepta tal cual se negoció (precio y kilos de la
-  // última propuesta de CTCx): no lleva declaración. La PARTICIPACIÓN EN CHERRY PICKED se acepta con la declaración y su modalidad.
+  // última propuesta de CTCx): no lleva declaración. La PARTICIPACIÓN EN CHERRY PICKED se acepta con la declaración y la ventana
+  // que decide la fecha de firma (V5.175).
   const esSelection = offer.kind === "directa";
-  const minKg = offer.min_kg != null ? Number(offer.min_kg) : null;
   const maxKg = offer.max_kg != null ? Number(offer.max_kg) : null;
   let lockedKg: number | null = offer.quantity_kg != null ? Number(offer.quantity_kg) : null;
-  let declarado: DeclaracionDelProductor["declaracion"] | null = null;
-  let condiciones: CondicionesDeModalidad | null = null;
+  let cond: Extract<CondicionesDeFirma, { abierta: true }> | null = null;
+  let sinRetiro = false;
   const hoy = hoyEnColombia();
   if (esSelection) {
     if (lockedKg == null || lockedKg <= 0) return { ok: false, message: "Esta propuesta no tiene la cantidad acordada: pídale a CTCx que la precise." };
   } else if (offer.terms_version) {
-    if (!declaracion) return { ok: false, message: "Esta oferta se acepta con su declaración: cuánto compromete, en qué modalidad, y las condiciones." };
-    const kg = Number(declaracion.lockedKg);
-    if (!Number.isFinite(kg) || kg <= 0) return { ok: false, message: "Escriba cuántos kilos de CPS compromete." };
-    if (minKg != null && kg < minKg) return { ok: false, message: `El mínimo para este grado es ${minKg} kg de CPS.` };
-    if (maxKg != null && kg > maxKg) return { ok: false, message: `Esta oferta admite hasta ${maxKg} kg.` };
-    if (!DECLARACIONES.includes(declaracion.declaracion)) return { ok: false, message: "Elija la modalidad de su declaración." };
-    if (!declaracion.aceptaTerminos) return { ok: false, message: "Para aceptar hay que marcar las condiciones de retiro, mora y ruptura." };
-    // La modalidad se valida con la fecha REAL de la siguiente Temporada Trimestral (la edición vigente del PVC; si no hay, la de la oferta).
-    const vigente = await edicionVigente();
-    const temporadaHasta = vigente?.validTo ?? ((offer as { temporada_hasta?: string | null }).temporada_hasta ?? null);
-    const dias = temporadaHasta ? diasHastaLaSiguiente(hoy, temporadaHasta) : null;
-    const o = offer as { price_next_kg?: number | string | null; temporada_desde?: string | null };
-    const precioSiguiente = o.price_next_kg != null ? Number(o.price_next_kg) : null;
-    const disp = modalidadesDisponibles(dias, { precioKg: precioSiguiente, fechaLimite: o.temporada_desde ? fechaLimitePvcSiguiente(o.temporada_desde) : null })[declaracion.declaracion];
-    if (!disp.disponible) return { ok: false, message: disp.motivo ?? `«${MODALIDAD_LABEL[declaracion.declaracion]}» no está disponible hoy.` };
-    lockedKg = kg;
-    declarado = declaracion.declaracion;
-    condiciones = condicionesDe(declarado, { hoy, temporadaHasta, declaradoKg: kg, grado: offer.grade_snapshot });
+    if (!declaracion) return { ok: false, message: "Esta oferta se acepta con su declaración: cuánto deja disponible y las condiciones." };
+    if (!declaracion.aceptaTerminos) return { ok: false, message: "Para aceptar hay que marcar las condiciones de la ventana, los despachos, el pago y el retiro." };
+    const c = await condicionesDeFirma(service, offer as unknown as OfertaParaVentana, hoy);
+    if (!c.abierta) return { ok: false, message: c.motivo + (c.reabre ? ` Se puede firmar desde el ${c.reabre}.` : "") };
+    if (c.existenciaKg == null) return { ok: false, message: "Antes de aceptar, registre la existencia total del lote (Ficha · A2): con ella se calcula lo que puede declarar." };
+    const v = validarDeclaracion({ kg: Number(declaracion.lockedKg), minimo: c.minimoKg, disponibleKg: c.disponibleKg });
+    if (!v.ok) return { ok: false, message: v.motivo };
+    if (maxKg != null && Number(declaracion.lockedKg) > maxKg) return { ok: false, message: `Esta oferta admite hasta ${maxKg} kg.` };
+    lockedKg = Number(declaracion.lockedKg);
+    sinRetiro = !v.conRetiro;
+    cond = c;
   }
 
   // V5.168 · LA FIRMA DEL PRODUCTOR: aceptar es firmar. Se valida y se guarda ANTES de crear el contrato (si la imagen no se
@@ -152,13 +144,17 @@ export async function respondToOffer(
   const firmaBytes = Buffer.from(firma.imagenPng.slice(FIRMA_PREFIJO.length), "base64");
   if (firmaBytes.length < 200 || firmaBytes.length > FIRMA_MAX_BYTES) return { ok: false, message: "La firma no llegó bien. Fírmela de nuevo." };
   const lugarEntrega = (offer as { lugar_entrega?: string | null }).lugar_entrega?.trim() || LUGAR_DE_ENTREGA_POR_DEFECTO;
-  // V5.170: el precio del trato según la modalidad — «Siguiente Temporada» al PVC de la edición siguiente (congelado en la oferta).
-  const precioNext = (offer as { price_next_kg?: number | string | null }).price_next_kg;
-  const copKgTrato = declarado === "trimestre" && precioNext != null ? Number(precioNext) : Number(offer.price_per_kg);
-  const edicionTrato = declarado === "trimestre" ? ((offer as { pvc_next_edition_id?: string | null }).pvc_next_edition_id ?? null) : offer.pvc_edition_id ?? null;
+  // V5.175: el precio del trato es el de la regla de su ventana (vigente · promedio · siguiente); Selection, el negociado.
+  const copKgTrato = cond ? cond.precioKg : Number(offer.price_per_kg);
   const texto = textoDelContrato({
     tipo: esSelection ? "selection" : "cherry_picked",
-    condiciones,
+    ventana: cond ? { tipo: cond.ventana.tipo, desde: cond.ventana.desde, hasta: cond.ventana.hasta, ciclos: cond.ventana.ciclos, retiroLibrePct: cond.ventana.retiroLibrePct, precio: cond.ventana.precio } : null,
+    sinRetiro,
+    sacoKg: cond ? cond.sacoKg : null,
+    esRenovacion: cond?.esRenovacion ?? false,
+    minimoKg: cond ? cond.minimoKg : null,
+    calidad: cond?.calidad ?? null,
+    auxilioCarga: cond?.auxilioCarga ?? 0,
     productorNombre: nombreFirma,
     productorDocumento: null,
     loteNombre: lot?.name ?? "—",
@@ -194,19 +190,24 @@ export async function respondToOffer(
       quantity_frozen_kg: lockedKg,
       reference_price_source: offer.reference_price_source ?? null,
       reference_price_snapshot: offer.reference_price_snapshot != null ? Number(offer.reference_price_snapshot) : null,
-      freeze_months: condiciones?.meses ?? 1,
+      // V5.175 · la ventana (docs/PLAN_CICLOS.md): la decidió la fecha de firma. Las columnas del trato por meses quedan vacías.
+      freeze_months: null,
       terms_version: offer.terms_version ?? null,
-      declaracion: declarado,
-      // V5.169: la compra con la firma de la modalidad (125 kg, o 10 a 25 kg a discreción de CTCx en «Temporada Actual»).
-      compra_inicial_kg: condiciones && "kg" in condiciones.compraInicial ? condiciones.compraInicial.kg : null,
-      compra_inicial_min_kg: condiciones && "minKg" in condiciones.compraInicial ? condiciones.compraInicial.minKg : null,
-      compra_inicial_max_kg: condiciones && "maxKg" in condiciones.compraInicial ? condiciones.compraInicial.maxKg : null,
-      vigencia_desde: condiciones?.desde ?? hoy,
-      vigencia_hasta: condiciones?.hasta ?? null,
-      retiro_libre_pct: condiciones?.retiroLibrePct ?? null,
-      redeclarar_min_kg: condiciones?.redeclarar?.minKg ?? null,
-      redeclarar_at: condiciones?.redeclarar?.at ?? null,
-      pvc_edition_id: edicionTrato,
+      declaracion: null,
+      vigencia_desde: cond?.ventana.desde ?? hoy,
+      vigencia_hasta: cond?.ventana.hasta ?? null,
+      ventana_tipo: cond?.ventana.tipo ?? null,
+      ventana_ciclos: cond?.ventana.ciclos ?? null,
+      precio_regla: cond?.ventana.precio ?? null,
+      retiro_libre_pct: cond ? (sinRetiro ? 0 : cond.ventana.retiroLibrePct) : null,
+      sin_retiro: sinRetiro,
+      minimo_kg: cond?.minimoKg ?? null,
+      saco_kg: cond?.sacoKg ?? null,
+      existencia_al_firmar: cond?.existenciaKg ?? null,
+      calidad_snapshot: cond?.calidad ?? null,
+      auxilio_carga: cond?.auxilioCarga ?? 0,
+      renovacion_de: (offer as { renovacion_de?: string | null }).renovacion_de ?? null,
+      pvc_edition_id: cond?.edicionId ?? offer.pvc_edition_id ?? null,
       modificador_pct: offer.modificador_pct != null ? Number(offer.modificador_pct) : null,
       lugar_entrega: lugarEntrega,
       producer_signed_at: now,
@@ -220,6 +221,18 @@ export async function respondToOffer(
     .single();
   if (error || !contract) return { ok: false, message: "No se pudo crear el contrato. Intente de nuevo." };
 
+  // V5.175: el SACO (primer contrato) o el ADELANTO (renovación) queda con su despacho: sale al cierre de la semana de firma.
+  if (cond && cond.sacoKg > 0) {
+    await service.from("contract_despachos").insert({
+      contract_id: contract.id,
+      tipo: cond.esRenovacion ? "adelanto" : "saco",
+      kg: cond.sacoKg,
+      cop_kg: copKgTrato,
+      total_cop: Math.round(cond.sacoKg * copKgTrato),
+      plazo: plazoDelSaco(hoy),
+    });
+  }
+
   await service
     .from("lot_offers")
     .update({
@@ -227,17 +240,17 @@ export async function respondToOffer(
       responded_at: now,
       response_note: cleanNote,
       contract_id: contract.id,
-      ...(declarado ? { locked_kg: lockedKg, declaracion: declarado, terms_accepted_at: now } : {}),
+      ...(cond ? { locked_kg: lockedKg, terms_accepted_at: now } : {}),
     })
     .eq("id", offerId);
-  const declaradoTxt = declarado ? ` · declaró ${lockedKg} kg («${MODALIDAD_LABEL[declarado]}») · términos ${offer.terms_version}` : esSelection ? ` · compra CTCx Selection de ${lockedKg} kg` : "";
+  const ventanaTxt = cond ? ` · ventana ${cond.ventana.desde} → ${cond.ventana.hasta} (${cond.ventana.tipo}, retiro libre ${sinRetiro ? 0 : cond.ventana.retiroLibrePct} %) · declaró ${lockedKg} kg${sinRetiro ? " sin retiro (existencia insuficiente)" : ""} · saco ${cond.sacoKg} kg · términos ${offer.terms_version}` : esSelection ? ` · compra CTCx Selection de ${lockedKg} kg` : "";
   await service.from("audit_log").insert({
     entity_type: "purchase_contract",
     entity_id: contract.id,
     action: "created",
     new_status: "pending_signature",
     performed_by: auth.userId,
-    notes: `Nace de la oferta ${offer.kind} aceptada y FIRMADA por el productor (${nombreFirma}, texto ${CONTRATO_VERSION}, sha256 ${huella.slice(0, 12)}…) · ${formatCop(copKgTrato)}/kg${lockedKg ? ` · ${lockedKg} kg` : ""}${declaradoTxt}.`,
+    notes: `Nace de la oferta ${offer.kind} aceptada y FIRMADA por el productor (${nombreFirma}, texto ${CONTRATO_VERSION}, sha256 ${huella.slice(0, 12)}…) · ${formatCop(copKgTrato)}/kg${lockedKg ? ` · ${lockedKg} kg` : ""}${ventanaTxt}.`,
   });
   await service.from("audit_log").insert({
     entity_type: "lot_offer",
@@ -246,14 +259,14 @@ export async function respondToOffer(
     previous_status: "emitida",
     new_status: "aceptada",
     performed_by: auth.userId,
-    notes: declaradoTxt.trim() || null,
+    notes: ventanaTxt.trim() || null,
   });
   await service.from("producer_comm_log").insert({
     producer_id: auth.userId,
     context_label: lot ? `Lote ${lot.name}` : null,
     lot_id: offer.lot_id,
-    note: declarado
-      ? `Usted aceptó la oferta de CTC y declaró ${lockedKg} kg de CPS («${MODALIDAD_LABEL[declarado]}») a ${formatCop(copKgTrato)}/kg. El contrato quedó creado con ese precio y esa cantidad, pendiente solo de la firma de CTC${offer.compra_inicial_kg ? `; CTC compra de inmediato ${Number(offer.compra_inicial_kg)} kg` : ""}. Lo verá en «Contratos y Compras» → Contratos de Temporada.`
+    note: cond
+      ? `Usted aceptó la invitación de CTCx y declaró ${lockedKg} kg de CPS para la ventana del ${cond.ventana.desde} al ${cond.ventana.hasta}, a ${formatCop(copKgTrato)}/kg.${cond.sacoKg > 0 ? ` CTCx le compra ${cond.sacoKg} kg ${cond.esRenovacion ? "por adelantado" : "(el saco)"}: despáchelo a más tardar el ${plazoDelSaco(hoy)}.` : ""} El contrato queda vigente con la firma de CTCx; lo verá en «Contratos y Compras».`
       : "Usted aceptó la oferta de CTC. El contrato quedó creado con el precio de la oferta, pendiente de la firma de CTC — lo verá avanzar en «Contratos y Compras» → Contratos de Temporada.",
     created_by: auth.userId,
   });
@@ -284,5 +297,41 @@ export async function contraofertarSeleccion(offerId: string, precioKg: number, 
   const lot = (Array.isArray(offer.lots) ? offer.lots[0] : offer.lots) as { name: string } | null;
   await service.from("audit_log").insert({ entity_type: "lot_offer", entity_id: offer.lot_id, action: "offer_countered", previous_status: "emitida", new_status: "contraofertada", performed_by: auth.userId, notes: `Contraoferta del productor: ${formatCop(p)}/kg · ${q} kg${limpia ? ` · ${limpia.slice(0, 200)}` : ""}` });
   await service.from("producer_comm_log").insert({ producer_id: auth.userId, context_label: lot ? `Lote ${lot.name}` : null, lot_id: offer.lot_id, note: `Usted envió una contraoferta a CTCx Selection: ${formatCop(p)}/kg por ${q} kg. CTCx la responde (acepta, contraoferta o desiste).`, created_by: auth.userId });
+  return { ok: true };
+}
+
+// ── V5.175 (docs/PLAN_CICLOS.md §2–§4) · la VISTA PREVIA de lo que el productor firmaría hoy ─────────────────────────────────
+// La calculadora no decide nada: le pide al servidor la misma cuenta que hará al aceptar (`condicionesDeFirma`).
+export type VistaPreviaDeOferta = { ok: true; c: CondicionesDeFirma } | { ok: false; message: string };
+
+export async function previsualizarOferta(offerId: string): Promise<VistaPreviaDeOferta> {
+  const auth = await requireProducer();
+  if ("error" in auth) return { ok: false, message: auth.error };
+  const service = createServiceRoleClient();
+  const { data: offer } = await service
+    .from("lot_offers")
+    .select("id, lot_id, producer_id, status, kind, grade_snapshot, price_per_kg, modificador_pct, min_kg, saco_kg, es_renovacion")
+    .eq("id", offerId)
+    .maybeSingle();
+  if (!offer || offer.producer_id !== auth.userId) return { ok: false, message: "Oferta no encontrada." };
+  if (offer.kind === "directa") return { ok: false, message: "Una compra de CTCx Selection no lleva ventana." };
+  return { ok: true, c: await condicionesDeFirma(service, offer as unknown as OfertaParaVentana, hoyEnColombia()) };
+}
+
+// ── V5.175 (docs/PLAN_CICLOS.md §7) · la EXISTENCIA del lote, también cuando la Ficha ya no se edita ───────────────────────────
+// El guard de `lots` impide al productor tocar un lote que avanzó en el circuito; la existencia (A2) se registra o reconfirma
+// aquí, con service role, solo para su dueño, con auditoría — y se espeja en la Ficha (`datasheet.existencia_cps_kg`).
+export async function registrarExistencia(lotId: string, kg: number): Promise<RespuestaOferta> {
+  const auth = await requireProducer();
+  if ("error" in auth) return { ok: false, message: auth.error };
+  const n = Math.round(Number(kg) * 10) / 10;
+  if (!Number.isFinite(n) || n <= 0) return { ok: false, message: "Escriba la existencia del lote en kg de CPS." };
+  const service = createServiceRoleClient();
+  const { data: lot } = await service.from("lots").select("id, producer_id, existencia_cps_kg, datasheet").eq("id", lotId).maybeSingle();
+  if (!lot || lot.producer_id !== auth.userId) return { ok: false, message: "Lote no encontrado." };
+  const datasheet = { ...((lot.datasheet as Record<string, unknown> | null) ?? {}), existencia_cps_kg: String(n) };
+  const { error } = await service.from("lots").update({ existencia_cps_kg: n, datasheet }).eq("id", lotId);
+  if (error) return { ok: false, message: "No se pudo guardar la existencia: " + error.message };
+  await service.from("audit_log").insert({ entity_type: "lot", entity_id: lotId, action: "existencia_registrada", performed_by: auth.userId, notes: `Existencia de CPS: ${lot.existencia_cps_kg ?? "—"} → ${n} kg.` });
   return { ok: true };
 }

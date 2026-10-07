@@ -622,4 +622,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-07] V5.174 · Ciclos de Cherry Picked, tanda 1: calendario ISO, ventanas, mínimos, corrección del PVC, variables de la edición y Ficha A2
 - ANN `src/lib/trato/{calendario,ventanas,minimos,modalidades}.ts`, `src/lib/pvc/{correccion,servicio,actions,precio,tipos}.ts`, `src/components/panel/pvc/{VariablesDeEdicion,EdicionesBoard}.tsx`, `app/ocp/(app)/{ofertas/page.tsx,ofertasActions.ts,kr/LoteSeccion.tsx}`, `src/components/kaffetal-regal/{KaffetalExperience.tsx,ficha/fichaData.ts,ficha/fichaPreviewHtml.ts,ficha/panes/PaneA2.tsx}`, `scripts/{qa-ciclos-check,qa-trato-check,qa-pvc-precio}.mjs`, `docs/migraciones/2026-10-07_ciclos_variables_de_edicion.sql`, `docs/PLAN_CICLOS.md`, `docs/componentes/{kaffetal-regal,consolas,herramientas-internas}.md`, `docs/ALINEACION.md`.
-(commit: pendiente)
+(commit: 4af0619)

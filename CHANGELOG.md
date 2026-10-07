@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.174] — 2026-10-07 (commit pendiente)
+## [V5.174] — 2026-10-07 (commit 4af0619)
 
 - **Añadido**: **tanda 1 de los Ciclos de Cherry Picked** (`docs/PLAN_CICLOS.md`, owner 2026-10-07): las reglas puras del
   calendario ISO (`src/lib/trato/calendario.ts`: trimestres de 13 semanas, 14 en los años de 53; ciclos 6 + 7 o 7 + 7; semanas

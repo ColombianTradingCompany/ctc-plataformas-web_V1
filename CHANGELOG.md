@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.180] — 2026-10-07 (commit pendiente)
+## [V5.180] — 2026-10-07 (commit 9b01703)
 
 - **Corregido**: **la calculadora de la participación en Cherry Picked desaparecía** cuando el lote no tenía registrada su
   existencia total (owner: «no quedó ninguna herramienta de análisis de escenarios»): la tarjeta solo pedía la existencia.

@@ -646,4 +646,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-07] V5.180 · Kaffetal Regal: la calculadora de escenarios se enseña aunque falte la existencia del lote (solo la decisión espera)
 - ANN `src/components/kaffetal-regal/panel/{ContratosTab,CalculadoraDelTrato}.tsx`, `scripts/{qa-ciclos-check,qa-trato-check}.mjs`, `docs/componentes/kaffetal-regal.md`.
-(commit: pendiente)
+(commit: 9b01703)

@@ -638,4 +638,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-07] V5.178 · Ciclos, tanda 4 (a): la vigilancia de la corrección del PVC por ciclo, con propuesta, aviso, aprobación y edición corregida
 - ANN `src/lib/pvc/{vigilancia.ts (nuevo),correccion.ts,motor.ts,servicio.ts,actions.ts}`, `src/app/api/cron/vigilancia-pvc/route.ts` (nuevo), `vercel.json`, `src/components/panel/pvc/{VigilanciaDeCorreccion.tsx (nuevo),EdicionesBoard.tsx,LecturaBoard.tsx}`, `src/app/ecp/(app)/pvc/page.tsx`, `src/lib/panel/{tareas,tareasCarga}.ts`, `src/lib/ofertas/{ventanaDeOferta,producerActions}.ts`, `src/lib/trato/ventanas.ts`, `scripts/qa-ciclos-check.mjs`, `docs/migraciones/{2026-10-07_vigilancia_correccion_pvc,2026-10-07_flete_retira_auxilio}.sql`, `docs/PLAN_CICLOS.md`, `docs/componentes/{herramientas-internas,consolas}.md`, `docs/ALINEACION.md`.
-(commit: pendiente)
+(commit: 605110b)

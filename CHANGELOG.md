@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.178] — 2026-10-07 (commit pendiente)
+## [V5.178] — 2026-10-07 (commit 605110b)
 
 - **Añadido**: **la vigilancia de la corrección del PVC** (tanda 4 de los Ciclos, `docs/PLAN_CICLOS.md` §6). Cada día, después de
   leer el FNC, el cron `/api/cron/vigilancia-pvc` (11:25 UTC) mide el ciclo en curso contra el PVC vigente y, en el ciclo 2 con
@@ -34,8 +34,8 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
   que se corrigió firma con el PVC corregido (mismo %, mismo flete congelado); los contratos ya firmados no cambian. La
   pestaña Lectura deja de hablar del disparador «10 de 15» y enlaza la vigilancia; el estado «corrected» se lee «Corregida».
 - **Datos**: migración `2026-10-07_vigilancia_correccion_pvc.sql` (aditiva): `pvc_correcciones` (una por ciclo y por PVC,
-  service-role only); `pvc_trigger_watch` y `pvc_cycles` quedan documentadas como dormidas. También se sube
-  `2026-10-07_flete_retira_auxilio.sql` (V5.177), aplicada tras el despliegue: las dos columnas vacías del auxilio.
+  service-role only); `pvc_trigger_watch` y `pvc_cycles` quedan documentadas como dormidas. La V5.177 cerró con
+  `2026-10-07_flete_retira_auxilio.sql` (commit 47a9722), aplicada tras su despliegue: las dos columnas vacías del auxilio.
 - **Seguridad**: `qa-ciclos` (77 → 89: paridad de `calcularConPvc`, la medición del ciclo, el cableado y los permisos).
 - **Docs**: `PLAN_CICLOS.md` §6 y §9; charters `herramientas-internas`, `consolas`; ALINEACION §3.
 

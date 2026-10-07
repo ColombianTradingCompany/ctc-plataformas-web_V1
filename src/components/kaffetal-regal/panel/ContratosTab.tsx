@@ -600,6 +600,7 @@ function OfferCard({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshDa
   const [decision, setDecision] = useState<DecisionDelTrato | null>(null);
   const [vista, setVista] = useState<VistaPreviaDeOferta | null>(null);
   const [recarga, setRecarga] = useState(0);
+  const [cambiarExistencia, setCambiarExistencia] = useState(false);
   const lugarEntrega = offer.lugarEntrega ?? LUGAR_DE_ENTREGA_POR_DEFECTO;
 
   useEffect(() => {
@@ -675,7 +676,25 @@ function OfferCard({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshDa
                   {vista.c.reabre && <> Se puede firmar desde el <b>{fechaLarga(vista.c.reabre)}</b>.</>}
                 </div>
               )}
-              {abierta && abierta.existenciaKg == null && <ExistenciaForm lotId={offer.lotId} onGuardada={() => { setVista(null); setRecarga((n) => n + 1); }} />}
+              {abierta && (abierta.existenciaKg == null || cambiarExistencia) && (
+                <ExistenciaForm
+                  lotId={offer.lotId}
+                  onGuardada={() => {
+                    setCambiarExistencia(false);
+                    setVista(null);
+                    setRecarga((n) => n + 1);
+                  }}
+                />
+              )}
+              {/* V5.176: en una renovación el productor reconfirma su existencia (A2) antes de declarar. */}
+              {abierta && abierta.existenciaKg != null && !cambiarExistencia && (
+                <div className={styles.sub} style={{ marginTop: 8 }}>
+                  Existencia registrada del lote: <b>{abierta.existenciaKg} kg</b> de CPS{abierta.disponibleKg != null && <> (le quedan {abierta.disponibleKg} kg)</>}.{" "}
+                  <button type="button" onClick={() => setCambiarExistencia(true)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "var(--green)", fontWeight: 700, font: "inherit" }}>
+                    ¿Cambió? Actualizarla
+                  </button>
+                </div>
+              )}
               {abierta && abierta.existenciaKg != null && (
                 <CalculadoraDelTrato
                   c={abierta}

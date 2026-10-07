@@ -6,6 +6,7 @@ import { cuentaDeVentana, retiroDeVentana, type CuentaDeVentana, type RetiroDeVe
 import { finDeSemana, opcionesSiNoSale, plazoProrrogado, type TipoDeDespacho } from "./despachos";
 import { ventanaDeRenovacion } from "./ventanas";
 import { calendarioDeLaEdicion, edicionProxima, edicionVigente, hoyEnColombia, pvcParaGrado } from "@/lib/pvc/servicio";
+import { sincronizarListado } from "./ventanaServidor";
 import type { GradoId } from "@/lib/grados/definicion";
 
 // ── Lo que el productor hace sobre su contrato (V5.84 · por ventanas desde la V5.175, docs/PLAN_CICLOS.md §3–§4) ─────────────
@@ -67,7 +68,7 @@ async function contratoDelProductor(contractId: string, userId: string) {
 
 async function cuentaDe(service: ReturnType<typeof createServiceRoleClient>, c: ContratoDelProductor): Promise<CuentaDeVentana> {
   const [{ data: ventas }, { data: retiros }] = await Promise.all([
-    service.from("contract_ventas").select("kg").eq("contract_id", c.id),
+    service.from("contract_ventas").select("kg").eq("contract_id", c.id).is("anulada_at", null),
     service.from("contract_retiros").select("kg, libre_kg").eq("contract_id", c.id),
   ]);
   return cuentaDeVentana({
@@ -104,6 +105,8 @@ export async function retirarDelTrato(contractId: string, kg: number, nota?: str
   const nota_ = nota?.trim().slice(0, 600) || null;
   const { error } = await service.from("contract_retiros").insert({ contract_id: c.id, kg: Number(kg), libre_kg: r.libreKg, penalizado_kg: r.penalizadoKg, penalidad_cop: r.penalidadCop, nota: nota_, created_by: auth.userId });
   if (error) return { ok: false, message: "No se pudo registrar el retiro: " + error.message };
+  // V5.176: lo retirado sale de la vitrina de Cherry Picked.
+  await sincronizarListado(service, c.lot_id);
   await service.from("audit_log").insert({
     entity_type: "purchase_contract",
     entity_id: c.id,
@@ -194,6 +197,7 @@ export async function cancelarPorDespacho(despachoId: string): Promise<Respuesta
   const now = new Date().toISOString();
   await service.from("contract_despachos").update({ estado: "cancelado", updated_at: now }).eq("id", d.id);
   await service.from("purchase_contracts").update({ status: "cancelled" }).eq("id", c.id);
+  await sincronizarListado(service, c.lot_id);
   await service.from("audit_log").insert({ entity_type: "purchase_contract", entity_id: c.id, action: "cancelado_por_despacho", previous_status: c.status, new_status: "cancelled", performed_by: auth.userId, notes: `El ${d.tipo} no salió; el productor cancela el contrato.` });
   await service.from("producer_comm_log").insert({ producer_id: auth.userId, context_label: `Lote ${lot.name}`, lot_id: c.lot_id, note: "Usted canceló el contrato porque el saco no pudo salir. CTCx puede ofrecerle uno nuevo.", created_by: auth.userId });
   return { ok: true };

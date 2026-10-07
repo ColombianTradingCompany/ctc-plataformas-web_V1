@@ -10,6 +10,7 @@ import { validarDeclaracion } from "@/lib/trato/minimos";
 import { plazoDelSaco } from "@/lib/trato/despachos";
 import { hoyEnColombia } from "@/lib/pvc/servicio";
 import { condicionesDeFirma, type CondicionesDeFirma, type OfertaParaVentana } from "./ventanaDeOferta";
+import { sincronizarListado } from "@/lib/trato/ventanaServidor";
 import { ctcLotReference } from "@/components/kaffetal-regal/data";
 
 // ── La respuesta del productor a una oferta (V5.18 · con declaración desde la V5.83 · por ventanas desde la V5.175) ──────────
@@ -221,6 +222,8 @@ export async function respondToOffer(
     .single();
   if (error || !contract) return { ok: false, message: "No se pudo crear el contrato. Intente de nuevo." };
 
+  // V5.176: si el lote ya está publicado (una renovación), lo declarado entra a la vitrina de Cherry Picked.
+  if (cond) await sincronizarListado(service, offer.lot_id);
   // V5.175: el SACO (primer contrato) o el ADELANTO (renovación) queda con su despacho: sale al cierre de la semana de firma.
   if (cond && cond.sacoKg > 0) {
     await service.from("contract_despachos").insert({

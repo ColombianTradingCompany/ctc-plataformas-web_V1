@@ -191,7 +191,10 @@ export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDec
 
       <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12.5 }}>
         <input type="checkbox" checked={acepta} onChange={(e) => setAcepta(e.target.checked)} style={{ marginTop: 3 }} />
-        <span>Entiendo la ventana, los plazos de despacho (el saco sale esta semana; lo vendido, al empezar el ciclo siguiente), el pago 60/40 con la calidad, y el retiro.</span>
+        <span>
+          {c.esRenovacion && <>Confirmo que esta cantidad está disponible y que la humedad y el bodegaje del café son los adecuados. </>}
+          Entiendo la ventana, los plazos de despacho ({c.sacoKg > 0 ? `${c.esRenovacion ? "la compra adelantada" : "el saco"} sale esta semana; ` : ""}lo vendido, al empezar el ciclo siguiente), el pago 60/40 con la calidad, y el retiro.
+        </span>
       </label>
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <button className="btn btn-sm btn-solid-accent" type="button" disabled={!cumple} onClick={() => onDecidir({ kg, sinRetiro })}>

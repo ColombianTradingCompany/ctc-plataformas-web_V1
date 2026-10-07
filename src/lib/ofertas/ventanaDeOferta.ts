@@ -50,7 +50,7 @@ export async function disponibleDe(service: SupabaseClient, lotId: string): Prom
   const ids = ((contratos ?? []) as { id: string }[]).map((c) => c.id);
   if (!ids.length) return { existenciaKg, disponibleKg: existenciaKg };
   const [{ data: ventas }, { data: retiros }, { data: despachos }] = await Promise.all([
-    service.from("contract_ventas").select("kg").in("contract_id", ids),
+    service.from("contract_ventas").select("kg").in("contract_id", ids).is("anulada_at", null),
     service.from("contract_retiros").select("kg").in("contract_id", ids),
     service.from("contract_despachos").select("kg, tipo, estado").in("contract_id", ids).in("tipo", ["saco", "adelanto"]).neq("estado", "cancelado"),
   ]);

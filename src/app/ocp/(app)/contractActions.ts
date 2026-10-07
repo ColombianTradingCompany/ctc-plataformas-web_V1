@@ -27,7 +27,7 @@ export async function signContract(
 
   const { data: contract } = await service
     .from("purchase_contracts")
-    .select("status, lot_id, price_per_kg_locked, quantity_frozen_kg, freeze_months, lots(name, producer_id)")
+    .select("status, lot_id, price_per_kg_locked, quantity_frozen_kg, freeze_months, ventana_tipo, vigencia_desde, vigencia_hasta, lots(name, producer_id)")
     .eq("id", contractId)
     .single();
   if (!contract) return { ok: false, error: "Contrato no encontrado." };
@@ -55,9 +55,11 @@ export async function signContract(
   const lote = (Array.isArray(contract.lots) ? contract.lots[0] : contract.lots) as { name: string; producer_id: string } | null;
   let aviso = "sin lote: no se avisó";
   if (lote) {
-    const texto =
-      `CTC firmó el contrato de su lote ${lote.name}: ${Number(contract.quantity_frozen_kg)} kg de CPS a ${formatCop(Number(contract.price_per_kg_locked))}/kg` +
-      `${contract.freeze_months ? `, ${contract.freeze_months} meses` : ""}. Desde hoy el trato se lleva mes a mes en «Mi trato»: CTC le pide cada mes, usted envía y CTC registra el recibo y el pago.`;
+    // V5.176: un trato por VENTANA no va mes a mes: CTCx confirma lo vendido cada semana y el productor despacha al empezar el ciclo siguiente.
+    const texto = contract.ventana_tipo
+      ? `CTCx firmó el contrato de su lote ${lote.name}: ${Number(contract.quantity_frozen_kg)} kg de CPS a ${formatCop(Number(contract.price_per_kg_locked))}/kg, ventana del ${contract.vigencia_desde} al ${contract.vigencia_hasta}. Cada semana CTCx le confirma lo vendido; usted lo despacha en la semana 1 del ciclo siguiente. Todo queda en «Mi trato».`
+      : `CTC firmó el contrato de su lote ${lote.name}: ${Number(contract.quantity_frozen_kg)} kg de CPS a ${formatCop(Number(contract.price_per_kg_locked))}/kg` +
+        `${contract.freeze_months ? `, ${contract.freeze_months} meses` : ""}. Desde hoy el trato se lleva mes a mes en «Mi trato»: CTC le pide cada mes, usted envía y CTC registra el recibo y el pago.`;
     await service.from("producer_comm_log").insert({ producer_id: lote.producer_id, context_label: `Lote ${lote.name}`, lot_id: contract.lot_id, note: texto, created_by: adminId });
     const { data: perfil } = await service.from("profiles").select("email").eq("id", lote.producer_id).maybeSingle();
     const correo = (perfil as { email: string | null } | null)?.email ?? null;

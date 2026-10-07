@@ -2234,13 +2234,14 @@ type FilaDeVentana = {
   saco_kg?: number | string | null;
   minimo_kg?: number | string | null;
   sin_retiro?: boolean | null;
-  contract_ventas?: { id: string; semana: string; kg: number | string; cop_kg: number | string; total_cop: number | string; confirmada_at: string }[];
+  contract_ventas?: { id: string; semana: string; kg: number | string; cop_kg: number | string; total_cop: number | string; confirmada_at: string; anulada_at?: string | null }[];
   contract_retiros?: { id: string; kg: number | string; libre_kg: number | string; penalizado_kg: number | string; penalidad_cop: number | string; nota: string | null; created_at: string }[];
   contract_despachos?: Record<string, unknown>[];
 };
 const numOrNull = (v: unknown) => (v == null || v === "" ? null : Number(v));
 function ventanaDelContrato(c: FilaDeVentana) {
-  const ventas = (c.contract_ventas ?? []).map((v) => ({ id: v.id, semana: v.semana, kg: Number(v.kg), copKg: Number(v.cop_kg), totalCop: Number(v.total_cop), confirmadaAt: v.confirmada_at })).sort((a, b) => a.semana.localeCompare(b.semana));
+  // V5.176: una venta anulada (no se despachó y se cobró como retiro penalizado) ya no cuenta como vendida.
+  const ventas = (c.contract_ventas ?? []).filter((v) => !v.anulada_at).map((v) => ({ id: v.id, semana: v.semana, kg: Number(v.kg), copKg: Number(v.cop_kg), totalCop: Number(v.total_cop), confirmadaAt: v.confirmada_at })).sort((a, b) => a.semana.localeCompare(b.semana));
   const retiros = (c.contract_retiros ?? []).map((r) => ({ id: r.id, kg: Number(r.kg), libreKg: Number(r.libre_kg), penalizadoKg: Number(r.penalizado_kg), penalidadCop: Number(r.penalidad_cop), nota: r.nota, createdAt: r.created_at }));
   const despachos: DespachoDelTrato[] = (c.contract_despachos ?? [])
     .map((d) => ({

@@ -12,6 +12,9 @@ import { triadaDeLaFicha } from "@/lib/pvc/triadaDelLote";
 import { letras } from "@/lib/pvc/escala";
 import { ADELANTO_RENOVACION_KG, MODIFICADOR_DIRECTA_PCT, SACO_INICIAL_KG } from "@/lib/trato/terminos";
 import { ventanaDeFirma } from "@/lib/trato/ventanas";
+import { sumaDias, ubicar } from "@/lib/trato/calendario";
+import { prepararRenovacion } from "../ventanaActions";
+import { ActionForm } from "@/components/panel/ActionForm";
 import { minimoDelGrado } from "@/lib/trato/minimos";
 import { CatalogoTabs } from "../catalogo/CatalogoTabs";
 import { EmitOfferForm, ReabrirDecisionButton, RespuestaContraoferta, RetireOfferButton, RondasDeNegociacion, type AnclajeDeOferta, type RondaDeNegociacion } from "./OfertasClient";
@@ -259,6 +262,19 @@ export default async function OcpOfertasPage() {
     );
   };
 
+  // V5.176 (docs/PLAN_CICLOS.md §5): las RENOVACIONES listas — contratos por ventana vigentes, desde la semana 4 del último ciclo
+  // de su ventana y hasta que termina, sin oferta abierta: la invitación de la ventana siguiente queda a una aprobación.
+  const hoyCo = hoyEnColombia();
+  const { data: ventanasRaw } = await service.from("purchase_contracts").select("id, lot_id, quantity_frozen_kg, vigencia_desde, vigencia_hasta, ventana_tipo").eq("status", "active").not("ventana_tipo", "is", null);
+  const conOfertaAbierta = new Set(offers.filter((o) => o.status === "emitida" || o.status === "contraofertada").map((o) => o.lot_id));
+  const renovaciones = (((ventanasRaw as { id: string; lot_id: string; quantity_frozen_kg: number | string | null; vigencia_desde: string | null; vigencia_hasta: string | null; ventana_tipo: string }[] | null) ?? [])).filter((c) => {
+    if (!c.vigencia_hasta || conOfertaAbierta.has(c.lot_id)) return false;
+    const cal = edicion ? calendarioDeLaEdicion(edicion) : null;
+    const u = cal ? ubicar(c.vigencia_hasta, cal) : null;
+    return !!u && hoyCo >= sumaDias(u.inicioCiclo, 21) && hoyCo <= c.vigencia_hasta;
+  });
+  const nombreLote = new Map(lots.map((l) => [l.id, l.name]));
+
   return (
     <div>
       <CatalogoTabs />
@@ -266,7 +282,7 @@ export default async function OcpOfertasPage() {
       <p className={styles.subtitle}>
         CTCx decide aquí si tiene sentido comercial ofertar cada lote galardonado (por defecto, sí) y emite la oferta{" "}
         <b>anclada al PVC vigente</b>{edicion ? <> ({edicion.code}, {formatCop(edicion.pvcCop ?? 0)}/carga, hasta el {edicion.validTo ?? "—"})</> : <> — <span className={styles.warn}>hoy no hay edición vigente</span></>}:
-        Lote de Temporada (PVC × banda, mínimo por grado, CTC compra una carga de inmediato), directa de CTCx Selection (PVC − 8 %,
+        participación en Cherry Picked (PVC × banda, mínimo por ventana, CTCx compra un saco de 70–200 kg con la firma; la fecha de firma decide la ventana), directa de CTCx Selection (PVC − 8 %,
         30 días) o excepción con motivo. El productor la acepta o rechaza desde su panel, y <b>el contrato nace de su aceptación</b>.
         Las ofertas <b>Black</b> no se emiten aquí: salen del desenlace «comprar» de su negociación en{" "}
         <Link href="/ocp/ctc-selection">CTC Selection</Link>. Solo se ofertan lotes de esta temporada o la pasada.
@@ -281,6 +297,28 @@ export default async function OcpOfertasPage() {
           <div className={styles.columnList}>
             {!colaTemporada.length && <p className={styles.empty}>Sin lotes Red/Blue/Gold por ofertar.</p>}
             {colaTemporada.map((l) => lotCard(l, "temporada"))}
+          </div>
+        </div>
+        <div className={styles.column}>
+          <div className={styles.columnHead}>
+            <h3>Renovaciones de ventana</h3>
+            <span className={styles.columnCount}>{renovaciones.length}</span>
+          </div>
+          <div className={styles.columnList}>
+            <p className={styles.meta} style={{ margin: "0 0 8px" }}>
+              Desde la semana 4 del último ciclo de cada ventana: la invitación de la siguiente sale prellenada (mínimo de continuidad, compra
+              adelantada típica, la misma entrega) y vence al terminar la ventana.
+            </p>
+            {!renovaciones.length && <p className={styles.empty}>Ninguna ventana por renovar hoy.</p>}
+            {renovaciones.map((c) => (
+              <div key={c.id} className={styles.miniCard} style={{ display: "grid", gap: 6 }}>
+                <b>{nombreLote.get(c.lot_id) ?? "Lote"}</b>
+                <span className={styles.meta} style={{ margin: 0 }}>
+                  Ventana {c.vigencia_desde} → {c.vigencia_hasta} · {Number(c.quantity_frozen_kg ?? 0)} kg declarados · <Link href={`/ocp/contratos/${c.id}`}>ver el contrato</Link>
+                </span>
+                <ActionForm action={prepararRenovacion.bind(null, c.id)} submitLabel="Confirmar la renovación" pendingLabel="Preparando…" buttonClassName="btn btn-sm btn-solid" />
+              </div>
+            ))}
           </div>
         </div>
         <div className={styles.column}>

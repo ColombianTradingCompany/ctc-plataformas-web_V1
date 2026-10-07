@@ -21,8 +21,9 @@ import { MORA, PENALIDAD_RETIRO_PCT, RENOVACION_DIAS } from "@/lib/trato/termino
 import { MORA_LABEL, mesesDelTrato, moraDelMes, resumenDelTrato, type FilaDelMes } from "@/lib/trato/mesAMes";
 import { MAX_RECORDATORIOS_MORA } from "@/lib/trato/mora";
 import styles from "@/components/panel/shared.module.css";
-import { MODALIDAD_LABEL, estadoDeRedeclaracion, fechaLarga, type Modalidad } from "@/lib/trato/modalidades";
+import { MODALIDAD_LABEL, fechaLarga, type Modalidad } from "@/lib/trato/modalidades";
 import { cuentaDeVentana } from "@/lib/trato/cuenta";
+import { cobrarFaltante, confirmarDespacho, confirmarVentaSemanal, prepararRenovacion, prorrogarLoVendido, recibirDespacho } from "../../ventanaActions";
 import { hoyEnColombia } from "@/lib/pvc/servicio";
 
 // ── El contrato, mes a mes (V5.84 · fase 7 del PLAN_CIRCUITO_DEL_LOTE) ──────────────────────
@@ -115,13 +116,14 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
     : [{ data: [] }, { data: [] }, { data: [] }];
   const despachos = (despachosRaw as Record<string, unknown>[] | null) ?? [];
   const ventas = (ventasRaw as Record<string, unknown>[] | null) ?? [];
+  const ventasVigentes = ventas.filter((v) => !v.anulada_at);
   const retiros = (retirosRaw as Record<string, unknown>[] | null) ?? [];
   const cuenta = porVentana
     ? cuentaDeVentana({
         declaradoKg: Number(contract.quantity_frozen_kg ?? 0),
         retiroLibrePct: cv.retiro_libre_pct != null ? Number(cv.retiro_libre_pct) : null,
         sinRetiro: Boolean(cv.sin_retiro),
-        ventas: ventas.map((v) => ({ kg: Number(v.kg) })),
+        ventas: ventasVigentes.map((v) => ({ kg: Number(v.kg) })),
         retiros: retiros.map((r) => ({ kg: Number(r.kg), libreKg: Number(r.libre_kg) })),
       })
     : null;
@@ -203,32 +205,6 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
             {resumen.enviadoKg > 0 && <> · <Link href="/ocp/catalogo">Pasar al Catálogo Activo →</Link></>}
           </p>
           )}
-          {/* V5.171 (owner): la redeclaración de «Ahora y Siguiente» — pedida, hecha por el productor o dejada en el mínimo por el barrido diario. */}
-          {contract.declaracion === "ahora_y_siguiente" &&
-            (() => {
-              const r = estadoDeRedeclaracion({
-                redeclararMinKg: contract.redeclarar_min_kg != null ? Number(contract.redeclarar_min_kg) : null,
-                redeclararAt: contract.redeclarar_at ?? null,
-                redeclaradoAt: contract.redeclarado_at ?? null,
-                redeclaradoKg: contract.redeclarado_kg != null ? Number(contract.redeclarado_kg) : null,
-                redeclaracionOrigen: contract.redeclaracion_origen ?? null,
-                hoy: hoyEnColombia(),
-              });
-              if (r.fase === "no_aplica") return null;
-              const at = r.at ? fechaLarga(r.at) : "";
-              return (
-                <p className={r.fase === "abierta" || r.fase === "vencida" ? styles.warn : styles.meta} style={{ marginTop: 6 }}>
-                  Redeclaración para la temporada del {at} (mínimo {r.minKg} kg):{" "}
-                  {r.fase === "hecha"
-                    ? `${r.kg} kg ${r.origen === "automatica" ? "— sin respuesta, quedó en el mínimo" : "— redeclarado por el productor"} (${fecha(contract.redeclarado_at)}).`
-                    : r.fase === "pronto"
-                      ? `se abre el ${r.abreEl ? fechaLarga(r.abreEl) : ""}.`
-                      : r.fase === "abierta"
-                        ? `ABIERTA, pendiente del productor${contract.redeclarar_aviso_at ? ` (pedida el ${fecha(contract.redeclarar_aviso_at)})` : ""}; si no responde, queda en ${r.minKg} kg.`
-                        : `cerrada sin respuesta — el barrido diario la deja en ${r.minKg} kg.`}
-                </p>
-              );
-            })()}
           {contract.status === "ruptura" && (
             <p className={styles.warn} style={{ marginTop: 6 }}>
               Ruptura contractual declarada el {fecha(contract.ruptura_at)}: {contract.ruptura_motivo}
@@ -244,31 +220,97 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
             La ventana
           </h2>
           <p className={styles.meta} style={{ marginBottom: 10 }}>
-            CTCx confirma cada semana lo vendido; el productor despacha el saco al cierre de la semana de firma y lo vendido en la semana 1 del
-            ciclo siguiente; CTCx paga el 60 % con el tiquete de despacho y el 40 % al recibir, medidas la humedad y la actividad de agua. Las
-            acciones de CTCx sobre la ventana (confirmar ventas, confirmar despachos y pagos, recibir) llegan con la tanda 3 de los Ciclos.
+            CTCx confirma cada semana lo vendido en Cherry Picked (se agrega al despacho de la semana 1 del ciclo siguiente); el productor
+            despacha el saco al cierre de la semana de firma; CTCx confirma el tiquete y paga el 60 %, y al recibir —con la humedad y la
+            actividad de agua medidas— paga el resto, o resuelve fuera de rango (devolución o compra con 0–15 % adicional). Lo vendido que
+            no sale tras su prórroga se cobra como retiro penalizado; la ruptura la declara el owner.
           </p>
+          {vigente && (
+            <ActionForm action={confirmarVentaSemanal.bind(null, id)} submitLabel="Confirmar la venta de la semana" pendingLabel="Confirmando…" buttonClassName="btn btn-sm btn-solid" className={styles.card} style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "end", marginBottom: 12 }}>
+              <div className={styles.field} style={{ marginBottom: 0 }}>
+                <label>Semana (cualquier día)</label>
+                <input name="semana" type="date" defaultValue={hoyEnColombia()} />
+              </div>
+              <div className={styles.field} style={{ marginBottom: 0 }}>
+                <label>Kilos vendidos</label>
+                <input name="kg" inputMode="decimal" placeholder="kg" style={{ width: 110 }} required />
+              </div>
+              <p className={styles.meta} style={{ margin: 0 }}>En la vitrina quedan {cuenta?.disponibleKg ?? 0} kg.</p>
+            </ActionForm>
+          )}
           <div className={styles.list}>
             {despachos.length === 0 && <p className={styles.empty}>Sin despachos todavía.</p>}
-            {despachos.map((d) => (
-              <div key={String(d.id)} className={styles.card} style={{ flexDirection: "column", alignItems: "stretch" }}>
-                <p className={styles.meta} style={{ margin: 0 }}>
-                  <b>{d.tipo === "saco" ? "Saco de la firma" : d.tipo === "adelanto" ? "Compra adelantada" : "Lo vendido"}</b> · {Number(d.kg)} kg · {formatCop(Number(d.total_cop))} · {String(d.estado)} · plazo {fechaLarga(String(d.prorroga_hasta ?? d.plazo))}
-                  {d.guia ? ` · guía ${String(d.guia)}` : ""}
-                  {Number(d.advertencias ?? 0) > 0 ? ` · advertencias ${Number(d.advertencias)}` : ""}
-                </p>
-              </div>
-            ))}
+            {despachos.map((d) => {
+              const did = String(d.id);
+              const estado = String(d.estado);
+              const tipo = String(d.tipo);
+              const vence = String(d.prorroga_hasta ?? d.plazo);
+              const vencido = hoyEnColombia() > vence;
+              return (
+                <div key={did} className={styles.card} style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
+                  <p className={styles.meta} style={{ margin: 0 }}>
+                    <b>{tipo === "saco" ? "Saco de la firma" : tipo === "adelanto" ? "Compra adelantada" : "Lo vendido"}</b> · {Number(d.kg)} kg · {formatCop(Number(d.total_cop))} ·{" "}
+                    <span className={estado === "pendiente" && vencido ? styles.badgeBad : estado === "recibido" ? styles.badgeGood : styles.badge}>{estado}</span> · plazo {fechaLarga(vence)}
+                    {d.prorroga_hasta ? " (prorrogado)" : ""}
+                    {d.guia ? ` · guía ${String(d.guia)}` : ""}
+                    {d.peso_kg != null ? ` · ${Number(d.peso_kg)} kg` : ""}
+                    {d.pago_despacho_at ? ` · 60 % pagado (${formatCop(Number(d.pago_despacho_cop))})` : ""}
+                    {d.recibido_at ? ` · recibido: humedad ${Number(d.humedad_pct)} %, aw ${Number(d.aw)} · ${String(d.resultado)}${d.pago_recepcion_cop != null ? ` · al recibir ${formatCop(Number(d.pago_recepcion_cop))}` : ""}` : ""}
+                    {Number(d.advertencias ?? 0) > 0 ? ` · advertencias ${Number(d.advertencias)}` : ""}
+                    {d.nota ? ` · ${String(d.nota)}` : ""}
+                  </p>
+                  {(estado === "pendiente" || estado === "despachado") && !d.pago_despacho_at && (
+                    <ActionForm action={confirmarDespacho.bind(null, did)} submitLabel="Confirmar el tiquete y pagar el 60 %" pendingLabel="Confirmando…" buttonClassName="btn btn-sm btn-solid" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "end" }}>
+                      <input name="guia" placeholder="Guía / tiquete" defaultValue={d.guia ? String(d.guia) : ""} style={{ width: 150 }} />
+                      <input name="peso_kg" inputMode="decimal" placeholder="Peso (kg)" defaultValue={d.peso_kg != null ? String(d.peso_kg) : ""} style={{ width: 100 }} />
+                      <input name="pago_ref" placeholder="Referencia del pago" style={{ width: 150 }} />
+                    </ActionForm>
+                  )}
+                  {estado === "despachado" && Boolean(d.pago_despacho_at) && (
+                    <ActionForm action={recibirDespacho.bind(null, did)} submitLabel="Registrar el recibo" pendingLabel="Registrando…" buttonClassName="btn btn-sm btn-solid" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "end" }}>
+                      <input name="peso_kg" inputMode="decimal" placeholder="Peso recibido (kg)" required style={{ width: 130 }} />
+                      <input name="humedad_pct" inputMode="decimal" placeholder="Humedad (%)" required style={{ width: 100 }} />
+                      <input name="aw" inputMode="decimal" placeholder="aw" required style={{ width: 70 }} />
+                      <select name="decision" defaultValue="">
+                        <option value="">Si sale fuera de rango…</option>
+                        <option value="devolucion">Devolución (CTCx paga el flete)</option>
+                        <option value="compra_ajustada">Comprar con pago adicional</option>
+                      </select>
+                      <input name="ajuste_pct" inputMode="decimal" placeholder="0–15 %" style={{ width: 80 }} />
+                      <input name="pago_ref" placeholder="Referencia del pago" style={{ width: 150 }} />
+                    </ActionForm>
+                  )}
+                  {estado === "pendiente" && tipo === "vendido" && !d.prorroga_hasta && (
+                    <ActionForm action={prorrogarLoVendido.bind(null, did)} submitLabel="Registrar la prórroga (advertencia)" pendingLabel="Guardando…" buttonClassName="btn btn-sm" />
+                  )}
+                  {estado === "pendiente" && tipo === "vendido" && Boolean(d.prorroga_hasta) && vencido && (
+                    <ActionForm action={cobrarFaltante.bind(null, did)} submitLabel="Cobrar el faltante como retiro penalizado" pendingLabel="Cobrando…" buttonClassName="btn btn-sm" buttonStyle={{ borderColor: "var(--red)", color: "var(--red)" }} />
+                  )}
+                </div>
+              );
+            })}
           </div>
           {ventas.length > 0 && (
             <p className={styles.meta} style={{ marginTop: 8 }}>
-              Ventas confirmadas: {ventas.map((v) => `semana del ${fecha(String(v.semana))}: ${Number(v.kg)} kg`).join(" · ")}
+              Ventas confirmadas:{" "}
+              {ventas.map((v) => `semana del ${fecha(String(v.semana))}: ${Number(v.kg)} kg${v.anulada_at ? " (anulada: no se despachó)" : ""}`).join(" · ")}
             </p>
           )}
           {retiros.length > 0 && (
             <p className={styles.meta} style={{ marginTop: 4 }}>
-              Retiros: {retiros.map((r) => `${Number(r.kg)} kg (${Number(r.libre_kg)} libres${Number(r.penalidad_cop) > 0 ? ` · penalidad ${formatCop(Number(r.penalidad_cop))}` : ""})`).join(" · ")}
+              Retiros: {retiros.map((r) => `${Number(r.kg)} kg (${Number(r.libre_kg)} libres${Number(r.penalidad_cop) > 0 ? ` · penalidad ${formatCop(Number(r.penalidad_cop))}` : ""}${r.nota ? ` · ${String(r.nota)}` : ""})`).join(" · ")}
             </p>
+          )}
+          {vigente && (
+            <div className={styles.card} style={{ flexDirection: "column", alignItems: "stretch", marginTop: 12 }}>
+              <h3 style={{ margin: 0 }}>Renovación de la ventana</h3>
+              <p className={styles.meta}>
+                Desde la semana 4 del último ciclo de la ventana, la invitación de la ventana siguiente queda prellenada (mínimo de continuidad,
+                compra adelantada típica, la misma entrega) y vence al terminar esta ventana. El productor confirma cuánto deja disponible, la
+                humedad y el bodegaje, y firma.
+              </p>
+              <ActionForm action={prepararRenovacion.bind(null, id)} submitLabel="Preparar la renovación" pendingLabel="Preparando…" buttonClassName="btn btn-sm btn-solid" />
+            </div>
           )}
         </div>
       )}

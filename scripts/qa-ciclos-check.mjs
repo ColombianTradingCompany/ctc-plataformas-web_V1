@@ -165,6 +165,34 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   check("OCP · un contrato por ventana se lee por su ventana (no mes a mes)", lee("src/app/ocp/(app)/contratos/[id]/page.tsx").includes("const porVentana = Boolean(") && lee("src/app/ocp/(app)/contratos/[id]/page.tsx").includes('{contract.status !== "pending_signature" && !porVentana && ('));
 }
 
+// ── 7. La operación en el OCP (tanda 3 · V5.176): ventas semanales, despacho y pago 60/40, recibo con calidad, faltante,
+//    renovación prellenada, la vitrina de Cherry Picked y el barrido diario ──
+{
+  const { existsSync } = await import("node:fs");
+  const va = lee("src/app/ocp/(app)/ventanaActions.ts");
+  check("OCP · confirmar la venta de la semana: no más de lo que queda en la vitrina, y se agrega al despacho de la semana 1 del ciclo siguiente", va.includes("export async function confirmarVentaSemanal(") && va.includes("if (kg > cuenta.disponibleKg + 1e-9)") && va.includes("const plazo = await plazoDeLoVendidoEn(lunes);") && va.includes("despachoDeLoVendido(service, c.id, plazo, kg, copKg)") && va.includes('.is("anulada_at", null)'));
+  check("OCP · confirmar el tiquete paga el 60 % (CTCx puede registrar la guía por el productor)", va.includes("export async function confirmarDespacho(") && va.includes("const { alDespacho } = pagosDeDespacho(Number(d.total_cop));") && va.includes("pago_despacho_cop: alDespacho"));
+  check("OCP · recibir exige humedad y aw: en rango paga el resto sobre lo recibido; fuera de rango, devolución o compra con 0–15 %", va.includes("export async function recibirDespacho(") && va.includes("calidadAlRecibir({ humedadPct: humedad, aw }, c.calidad_snapshot)") && va.includes("Math.max(0, totalRecibido - pagado60)") && va.includes('decision === "devolucion"') && va.includes("pagoAdicionalFueraDeRango(totalRecibido, ajuste)"));
+  check("OCP · el saco y el adelanto recibidos quedan en Compras con destino Sample Kits; lo vendido no (se vende a nombre del productor)", va.includes('d.tipo !== "vendido" && resultado !== "devolucion"') && va.includes('destino: "sample_kits"'));
+  check("OCP · el faltante de lo vendido: solo tras la prórroga; la venta se ANULA (no se borra) y entra como retiro penalizado; la ruptura la declara el owner", va.includes("export async function cobrarFaltante(") && va.includes("if (!d.prorroga_hasta) return") && va.includes("anulada_at: now") && va.includes("libre_kg: 0, penalizado_kg: kg") && !va.includes('.from("contract_ventas").delete('));
+  check("OCP · la renovación se prepara desde la semana 4 del último ciclo, con el mínimo de continuidad y el adelanto típico", va.includes("export async function prepararRenovacion(") && va.includes("const abre = sumaDias(u.inicioCiclo, 21);") && va.includes("minimoDeContinuidad(base, cambios)") && va.includes('fd.set("renewal_of_contract_id", c.id);') && va.includes("ADELANTO_RENOVACION_KG.tipicoMin"));
+  const of = lee("src/app/ocp/(app)/ofertasActions.ts");
+  check("OCP · la renovación convive con el contrato que renueva y vence al terminar su ventana", of.includes(".filter((c) => c.id !== renewalOf)") && of.includes("renovado?.vigencia_hasta"));
+  const pag = lee("src/app/ocp/(app)/ofertas/page.tsx");
+  check("OCP · «Pendiente de Oferta» tiene la columna de renovaciones a una aprobación", pag.includes("Renovaciones de ventana") && pag.includes("prepararRenovacion.bind(null, c.id)") && pag.includes("sumaDias(u.inicioCiclo, 21)"));
+  const pc = lee("src/app/ocp/(app)/contratos/[id]/page.tsx");
+  check("OCP · el contrato por ventana trae sus acciones (venta, tiquete y 60 %, recibo, prórroga, faltante, renovación)", ["confirmarVentaSemanal.bind(null, id)", "confirmarDespacho.bind(null, did)", "recibirDespacho.bind(null, did)", "prorrogarLoVendido.bind(null, did)", "cobrarFaltante.bind(null, did)", "prepararRenovacion.bind(null, id)"].every((k) => pc.includes(k)));
+  const vs = lee("src/lib/trato/ventanaServidor.ts");
+  const cat = lee("src/app/ocp/(app)/catalogActions.ts");
+  check("vitrina · un lote por ventanas se vende con el café en la finca: total = declarado − retirado (suma de sus ventanas); el catálogo lleva lo vendido", vs.includes("export async function sincronizarListado(") && vs.includes("Math.max(0, Math.round((declarado - retirado) * 10) / 10)") && cat.includes("const porVentanas = await totalEnVentaPorVentanas(service, lotId);") && lee("src/lib/trato/producerActions.ts").includes("await sincronizarListado(service, c.lot_id);") && lee("src/lib/ofertas/producerActions.ts").includes("if (cond) await sincronizarListado(service, offer.lot_id);"));
+  const rn = lee("src/lib/trato/renovaciones.ts");
+  check("barrido · recuerda una vez la renovación que vence (7 días), expira las invitaciones vencidas y cierra las ventanas cumplidas", rn.includes("export async function correrRenovaciones(") && rn.includes("o.es_renovacion && !o.recordatorio_at") && rn.includes('update({ status: "expirada"') && rn.includes('update({ status: "completed" })') && lee("vercel.json").includes('"/api/cron/renovaciones"') && lee("src/app/api/cron/renovaciones/route.ts").includes("Bearer ${secret}"));
+  check("V5.171 retirada · ni redeclaración ni su cron (las columnas quedan dormidas, documentadas)", !existsSync(new URL("../src/lib/trato/redeclaracion.ts", import.meta.url)) && !existsSync(new URL("../src/app/api/cron/redeclaraciones/route.ts", import.meta.url)) && !lee("vercel.json").includes("redeclaraciones") && lee("docs/migraciones/2026-10-07_ciclos_operacion_ocp.sql").includes("quedan DORMIDAS"));
+  const tab = lee("src/components/kaffetal-regal/panel/ContratosTab.tsx");
+  const calc = lee("src/components/kaffetal-regal/panel/CalculadoraDelTrato.tsx");
+  check("KR · la renovación reconfirma disponibilidad, humedad y bodegaje, y deja actualizar la existencia", calc.includes("Confirmo que esta cantidad está disponible y que la humedad y el bodegaje del café son los adecuados.") && tab.includes("¿Cambió? Actualizarla") && lee("src/components/kaffetal-regal/KaffetalExperience.tsx").includes(".filter((v) => !v.anulada_at)"));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-ciclos: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("  - " + f);

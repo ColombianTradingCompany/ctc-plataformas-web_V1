@@ -168,10 +168,14 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
   // el error legible). Y un lote con contrato vivo no se re-oferta.
   const [{ data: abierta }, { data: contratoVivo }] = await Promise.all([
     service.from("lot_offers").select("id").eq("lot_id", lotId).in("status", ["emitida", "contraofertada"]).maybeSingle(),
-    service.from("purchase_contracts").select("id").eq("lot_id", lotId).in("status", ["pending_signature", "active", "reconditioning"]).maybeSingle(),
+    service.from("purchase_contracts").select("id, vigencia_hasta").eq("lot_id", lotId).in("status", ["pending_signature", "active", "reconditioning"]),
   ]);
   if (abierta) return { ok: false, error: "Este lote ya tiene una oferta abierta — retírela antes de emitir otra." };
-  if (contratoVivo) return { ok: false, error: "Este lote ya tiene un contrato vivo." };
+  // V5.176 (docs/PLAN_CICLOS.md §5): la RENOVACIÓN de una ventana convive con el contrato que renueva (las ventanas se pueden
+  // sobrelapar); cualquier otro contrato vivo impide re-ofertar.
+  const vivos = ((contratoVivo as { id: string; vigencia_hasta: string | null }[] | null) ?? []).filter((c) => c.id !== renewalOf);
+  if (vivos.length) return { ok: false, error: "Este lote ya tiene un contrato vivo." };
+  const renovado = renewalOf ? ((contratoVivo as { id: string; vigencia_hasta: string | null }[] | null) ?? []).find((c) => c.id === renewalOf) ?? null : null;
 
   // El puntaje del snapshot: la evaluación que RIGE el grado (V5.77; antes el promedio de las aceptadas).
   const { data: evalRows } = await service
@@ -194,7 +198,11 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
     }
   }
   // V5.175: la invitación vence al terminar la edición del PVC con que se emitió (su precio es de esa edición).
-  const venceConLaEdicion = CON_DECLARACION.includes(kind) && pvc?.edicion.validTo ? new Date(`${pvc.edicion.validTo}T23:59:59-05:00`).toISOString() : null;
+  const venceConLaEdicion = renovado?.vigencia_hasta
+    ? new Date(`${renovado.vigencia_hasta}T23:59:59-05:00`).toISOString() // la renovación vence al terminar la ventana que renueva
+    : CON_DECLARACION.includes(kind) && pvc?.edicion.validTo
+      ? new Date(`${pvc.edicion.validTo}T23:59:59-05:00`).toISOString()
+      : null;
   // V5.169: la referencia FNC del día y el fin de la Temporada Trimestral viajan congelados (la calculadora del productor los usa).
   const mercado = await lecturaDeMercado(10);
   // V5.175: el precio del PVC siguiente ya no viaja en la oferta: lo calcula el servidor al firmar, si la ventana lo pide

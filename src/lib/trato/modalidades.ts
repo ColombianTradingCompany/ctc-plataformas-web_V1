@@ -1,9 +1,8 @@
 // ⚠ V5.175 (docs/PLAN_CICLOS.md): el trato ya NO va por modalidades — la fecha de firma decide la VENTANA (`ventanas.ts`). De este
 // archivo siguen vivos `fechaLarga`, `fechaLimitePvcSiguiente` (el plazo de publicación del PVC siguiente, del calendario ISO),
-// `MODALIDAD_LABEL` (la lectura de los tratos viejos en el OCP) y la redeclaración de la V5.171 (`estadoDeRedeclaracion`,
-// `cantidadTrasRedeclarar`: la usa el barrido diario `/api/cron/redeclaraciones`, que se reusa para las renovaciones en la tanda 3).
-// Las modalidades (`condicionesDe`, `modalidadesDisponibles`, …) quedan para leer tratos viejos (no hay en producción) y se
-// retiran con la tanda 3; `qa-trato` todavía las prueba como funciones puras.
+// y `MODALIDAD_LABEL` (la lectura de los tratos viejos en el OCP). Las modalidades (`condicionesDe`, `modalidadesDisponibles`, …)
+// quedan solo para leer tratos viejos (no hay en producción); `qa-trato` todavía las prueba como funciones puras. Se pueden
+// retirar cuando el owner dé por cerrado el modelo viejo.
 // ── Las modalidades de participar en Cherry Picked (V5.169, owner 2026-10-06) ─────────────────────────────────────────────
 // PURO. La Temporada Trimestral es la ventana de la edición del PVC (`valid_from`..`valid_to`); la siguiente empieza el día
 // después de `valid_to`. De cuántos días falten salen las modalidades disponibles y, de la elegida, la vigencia del trato,
@@ -14,7 +13,6 @@ import {
   CARGA_KG,
   COMPRA_INICIAL_CTCX_CARGAS,
   COMPRA_INICIAL_TEMPORADA_ACTUAL_KG,
-  DIAS_ANTES_REDECLARAR,
   DIAS_TEMPORADA_TRIMESTRAL,
   PERIODO_MESES,
   REDECLARAR_MIN_PCT,
@@ -155,50 +153,8 @@ export function condicionesDe(modalidad: Modalidad, o: { hoy: string; temporadaH
   };
 }
 
-// ── La redeclaración de «Ahora y Siguiente» (V5.171, owner 2026-10-06: «la opción 1, que quede en el 70 %») ──────────────────
-// Al empezar la siguiente Temporada Trimestral el productor redeclara cuánto deja disponible para ella, al menos `minKg`. Se le
-// pide `DIAS_ANTES_REDECLARAR` días antes (el botón se abre) y puede hacerlo hasta el primer día de la temporada inclusive; si
-// no responde, el barrido diario la deja en `minKg`. Lo redeclarado es lo DISPONIBLE para la siguiente temporada: lo ya pedido
-// por CTCx y lo ya retirado se quedan donde están (`cantidadTrasRedeclarar`).
-
-export type FaseDeRedeclaracion = "no_aplica" | "pronto" | "abierta" | "vencida" | "hecha";
-export type EstadoDeRedeclaracion = {
-  fase: FaseDeRedeclaracion;
-  minKg: number | null;
-  /** El primer día de la siguiente temporada (la fecha de la redeclaración). */
-  at: string | null;
-  /** El día en que se abre el botón. */
-  abreEl: string | null;
-  /** Lo redeclarado y por quién (solo en «hecha»). */
-  kg: number | null;
-  origen: "productor" | "automatica" | null;
-};
-
-/** El día en que se abre «Redeclarar» para una redeclaración en `at`. */
-export const abreLaRedeclaracion = (at: string) => sumaDias(at, -DIAS_ANTES_REDECLARAR);
-
-/** En qué punto está la redeclaración de un trato, hoy (YYYY-MM-DD en Colombia). */
-export function estadoDeRedeclaracion(c: {
-  redeclararMinKg: number | null;
-  redeclararAt: string | null;
-  redeclaradoAt: string | null;
-  redeclaradoKg: number | null;
-  redeclaracionOrigen: string | null;
-  hoy: string;
-}): EstadoDeRedeclaracion {
-  const base = { minKg: c.redeclararMinKg, at: c.redeclararAt, abreEl: c.redeclararAt ? abreLaRedeclaracion(c.redeclararAt) : null, kg: null, origen: null };
-  if (c.redeclararMinKg == null || !c.redeclararAt) return { ...base, fase: "no_aplica" };
-  if (c.redeclaradoAt)
-    return { ...base, fase: "hecha", kg: c.redeclaradoKg, origen: c.redeclaracionOrigen === "automatica" ? "automatica" : "productor" };
-  if (c.hoy < base.abreEl!) return { ...base, fase: "pronto" };
-  if (c.hoy <= c.redeclararAt) return { ...base, fase: "abierta" };
-  return { ...base, fase: "vencida" };
-}
-
-/** La cantidad comprometida del trato tras redeclarar: lo ya pedido por CTCx y lo ya retirado, más lo disponible para la siguiente. */
-export function cantidadTrasRedeclarar(o: { pedidoKg: number; retiradoKg: number; redeclaradoKg: number }): number {
-  return Math.round((o.pedidoKg + o.retiradoKg + o.redeclaradoKg) * 10) / 10;
-}
+// La redeclaración de «Ahora y Siguiente» (V5.171) se retiró en la V5.176: ningún contrato la usó y el trato va por ventanas
+// (docs/PLAN_CICLOS.md); el barrido diario ahora atiende las renovaciones (`renovaciones.ts`).
 
 /** El texto corto de la compra inicial («125 kg» o «entre 10 y 25 kg, a discreción de CTCx»). */
 export function textoCompraInicial(c: CondicionesDeModalidad["compraInicial"]): string {

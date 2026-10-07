@@ -148,7 +148,7 @@ Cada tanda es su propia versión (gate, guardianes, CHANGELOG, log, charters, AL
 2. ✅ **HECHA en la V5.175** (el OCP lee la ventana; sus acciones van en la tanda 3). **Oferta, contrato y Kaffetal Regal.** La oferta del OCP calcula la ventana por la fecha y vence con su zona; el
    contrato nuevo (ventana, saco, 60/40, calidad, envíos, retiro, mínimos, renovación; texto con versión); la calculadora
    en semanas con el escenario de ventas; «Mis contratos» con su ventana, lo vendido, el retiro y la renovación de un paso.
-3. **Operación en el OCP.** Renovaciones prellenadas (confirmación en semana 4), confirmaciones semanales, despachos
+3. ✅ **HECHA en la V5.176** (más la vitrina por ventanas y el barrido de renovaciones). **Operación en el OCP.** Renovaciones prellenadas (confirmación en semana 4), confirmaciones semanales, despachos
    (guía, peso, foto) y recepción (humedad, aw), pagos 60/40 y los dos caminos fuera de rango, fallas de envío (prórroga,
    cancelar, siguiente ventana) y advertencias. Se retira el trato mes a mes.
 4. **PVC.** El agente de la semana 1 del ciclo 2 (borrador, informe, aviso; el gasto de IA al ledger), la aprobación y

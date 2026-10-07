@@ -117,10 +117,6 @@ export const COMPRA_INICIAL_TEMPORADA_ACTUAL_KG = { min: 10, max: 25 } as const;
 export const RETIRO_LIBRE_AHORA_Y_SIGUIENTE_PCT = 30;
 /** «Ahora y Siguiente»: al empezar la siguiente temporada se redeclara al menos este % de lo declarado. */
 export const REDECLARAR_MIN_PCT = 70;
-/** V5.171 (owner, 2026-10-06 · «la opción 1, que quede en el 70 %»): el botón «Redeclarar» se abre estos días antes de que empiece
- *  la siguiente Temporada Trimestral y se cierra al terminar su primer día. Si el productor no redeclara, la cantidad para la
- *  siguiente temporada queda en el mínimo (`REDECLARAR_MIN_PCT`, nunca menos del mínimo del grado). */
-export const DIAS_ANTES_REDECLARAR = 10;
 /** La Temporada Trimestral dura tres meses (≈ 91 días). */
 export const DIAS_TEMPORADA_TRIMESTRAL = 91;
 /** El trato más largo («Ahora y Siguiente» con 50 días de esta temporada + la siguiente) cabe en 6 meses de 30 días. */

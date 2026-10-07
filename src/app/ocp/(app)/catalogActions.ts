@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
+import { totalEnVentaPorVentanas } from "@/lib/trato/ventanaServidor";
 
 
 /** Un código público libre, pedido a `public.ctc_public_code()` — la ÚNICA
@@ -54,12 +55,15 @@ export async function publishLot(formData: FormData): Promise<{ ok: true } | { o
     return { ok: false, error: "Este lote necesita un contrato firmado (activo o cumplido) antes de poder publicarse." };
   }
 
-  const { data: releases } = await service
+  // V5.176 (docs/PLAN_CICLOS.md): un lote por VENTANAS se vende mientras el café sigue en la finca — su stock es lo declarado
+  // menos lo retirado (`totalEnVentaPorVentanas`); los tratos viejos siguen publicando lo ya recibido (`contract_releases`).
+  const porVentanas = await totalEnVentaPorVentanas(service, lotId);
+  const { data: releases } = porVentanas != null ? { data: [] } : await service
     .from("contract_releases")
     .select("released_kg")
     .eq("contract_id", contract.id)
     .not("released_at", "is", null);
-  const releasedSoFar = (releases ?? []).reduce((a, r) => a + Number(r.released_kg ?? 0), 0);
+  const releasedSoFar = porVentanas ?? (releases ?? []).reduce((a, r) => a + Number(r.released_kg ?? 0), 0);
   if (releasedSoFar <= 0) {
     return {
       ok: false,

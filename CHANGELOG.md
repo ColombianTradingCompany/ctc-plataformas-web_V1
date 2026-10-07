@@ -19,6 +19,30 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.176] — 2026-10-07 (commit pendiente)
+
+- **Añadido**: **tanda 3 de los Ciclos: la operación del trato por ventanas en el OCP** (`docs/PLAN_CICLOS.md` §3–§5). En el
+  contrato: confirmar la venta de la semana (se agrega al despacho de la semana 1 del ciclo siguiente), confirmar el tiquete y
+  pagar el 60 % (CTCx puede registrar la guía por el productor), recibir con peso, humedad y actividad de agua (en rango paga el
+  resto sobre lo recibido; fuera de rango, devolución o compra con 0–15 % adicional), la prórroga de lo vendido y el cobro del
+  faltante (la venta se anula —no se borra— y entra como retiro penalizado). El saco y el adelanto recibidos quedan en Compras
+  con destino Sample Kits. Cada acción deja auditoría y avisa al productor por su feed y por correo.
+- **Añadido**: **la renovación a una aprobación**: desde la semana 4 del último ciclo de una ventana, «Pendiente de Oferta» tiene
+  la columna «Renovaciones de ventana» con la invitación siguiente prellenada (mínimo de continuidad −10 % por trimestre, compra
+  adelantada de 10 kg, la misma entrega); convive con el contrato que renueva y vence al terminar su ventana. El productor
+  reconfirma la disponibilidad, la humedad y el bodegaje, y puede actualizar la existencia del lote.
+- **Cambiado**: **la vitrina de Cherry Picked para los lotes por ventana**: se venden con el café en la finca (owner, V5.169: «el
+  café declarado queda disponible para la venta en Cherry Picked»): el stock publicado es lo declarado menos lo retirado,
+  sumado sobre las ventanas del lote, y se sincroniza al aceptar, retirar o cancelar; lo vendido lo lleva el catálogo. Los
+  tratos viejos siguen publicando lo recibido (`contract_releases`).
+- **Cambiado**: el barrido diario de la redeclaración (V5.171) se reemplaza por `/api/cron/renovaciones`: recuerda una vez la
+  renovación que vence en 7 días, expira las invitaciones vencidas y cierra las ventanas cumplidas. La redeclaración y su código
+  se retiran (sus columnas quedan dormidas). Al firmar, el aviso al productor habla de su ventana.
+- **Datos**: migración `2026-10-07_ciclos_operacion_ocp.sql` (aditiva): `contract_ventas.anulada_at`/`anulada_motivo`,
+  `lot_offers.recordatorio_at`.
+- **Seguridad**: `qa-ciclos` (53 → 66).
+- **Docs**: `PLAN_CICLOS.md` (tanda 3 hecha); charters `consolas`, `kaffetal-regal`, `cherry-picked`; ALINEACION §3.
+
 ## [V5.175] — 2026-10-07 (commit 23c4210)
 
 - **Cambiado**: **tanda 2 de los Ciclos: el trato de Cherry Picked va por VENTANAS** (`docs/PLAN_CICLOS.md` §2–§5). El productor

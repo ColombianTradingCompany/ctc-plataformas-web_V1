@@ -12,6 +12,7 @@ import { recibirMuestra } from "@/lib/muestras/recibo";
 import { lotEudrGate } from "@/lib/arena/eudrGate";
 import { isEvaChecklistKey, missingEvaItems, type EvaChecklist } from "./kr/evaChecklist";
 import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
+import { guardarExistencia } from "@/lib/kaffetal/existencia";
 
 type KeyedFiles = Record<string, { assetId: string; fileName: string }>;
 
@@ -1140,4 +1141,30 @@ export async function renombrarProducto(lotId: string, nombre: string): Promise<
   });
   revalidatePath("/ocp/kr");
   return { ok: true, nombre: nuevo };
+}
+
+/**
+ * V5.181 (owner, 2026-10-07: «no puedo registrar la existencia en este punto»): CTCx registra o corrige la existencia total del
+ * lote (kg de CPS) desde su vista en el OCP — p. ej. cuando el productor la dio por teléfono o es un Proveedor Desacoplado. Va
+ * por el mismo escritor que el productor (`guardarExistencia`: lots + Ficha A2 + auditoría) y se le avisa en su feed. Emite.
+ */
+export async function registrarExistenciaOcp(lotId: string, kg: number): Promise<{ ok: true } | { ok: false; error: string }> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const service = createServiceRoleClient();
+  const { data: lot } = await service.from("lots").select("id, name, producer_id").eq("id", lotId).maybeSingle();
+  if (!lot) return { ok: false, error: "Lote no encontrado." };
+  const r = await guardarExistencia(service, { lotId, kg, porQuien: permiso.userId, origen: "ctcx" });
+  if (!r.ok) return { ok: false, error: r.error };
+  if (r.cambio) {
+    await service.from("producer_comm_log").insert({
+      producer_id: lot.producer_id,
+      context_label: `Lote ${lot.name}`,
+      lot_id: lotId,
+      note: `CTCx registró la existencia total de su lote: ${Number(kg).toLocaleString("es-CO")} kg de café pergamino seco${r.antes != null ? ` (antes ${r.antes.toLocaleString("es-CO")} kg)` : ""}. Si no es correcta, corríjala en su Ficha (A2) o al responder la invitación.`,
+      created_by: permiso.userId,
+    });
+  }
+  revalidatePath("/ocp/kr");
+  return { ok: true };
 }

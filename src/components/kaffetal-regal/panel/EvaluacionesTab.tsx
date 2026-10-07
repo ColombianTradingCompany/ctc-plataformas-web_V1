@@ -213,6 +213,11 @@ function SolicitudCard({
   const [peek, setPeek] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const ins = lot.inscription;
+  // V5.181 (owner): la existencia es opcional en A2 y OBLIGATORIA al solicitar (se envía la muestra): se pregunta de nuevo,
+  // prellenada con la registrada, y se puede corregir. «5.000» se lee cinco mil.
+  const [existencia, setExistencia] = useState(lot.datasheet?.existencia_cps_kg ? String(lot.datasheet.existencia_cps_kg) : "");
+  const existenciaN = Number(existencia.trim().replace(/\./g, "").replace(",", "."));
+  const existenciaOk = Number.isFinite(existenciaN) && existenciaN > 0;
 
   async function revealCode() {
     if (!code.trim()) return;
@@ -226,7 +231,7 @@ function SolicitudCard({
 
   async function solicitar() {
     setBusy(true);
-    const res = await postularLote(lot.id, code.trim() || undefined, nota.trim() || undefined);
+    const res = await postularLote(lot.id, code.trim() || undefined, nota.trim() || undefined, existenciaOk ? existenciaN : undefined);
     setBusy(false);
     if (res.ok) {
       showToast(`Evaluación solicitada ✓ · código ${res.entryCode}`);
@@ -274,6 +279,18 @@ function SolicitudCard({
         // Apto sin solicitar: la decisión es del productor.
         <div>
           <div style={{ fontSize: 13, color: "var(--green)", fontWeight: 700 }}>✓ Apto — listo para solicitar su evaluación</div>
+          <label style={{ display: "grid", gap: 4, marginTop: 8, fontSize: 12.5, fontWeight: 700 }}>
+            Existencia total del lote (kg de café pergamino seco) *
+            <span style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", fontWeight: 400 }}>
+              <input inputMode="decimal" value={existencia} onChange={(e) => setExistencia(e.target.value)} placeholder="Ej. 5.000" style={{ maxWidth: 140 }} aria-label="Existencia total del lote en kg de CPS" />
+              kg de CPS
+            </span>
+            <span style={{ fontSize: 12, color: existenciaOk ? "var(--muted)" : "var(--accent)", fontWeight: 400 }}>
+              {lot.datasheet?.existencia_cps_kg
+                ? "La que registró en su Ficha (A2). Si cambió, corríjala aquí: con ella se calcula lo que podrá declarar en Cherry Picked."
+                : "Obligatoria para enviar la muestra: con ella se calcula lo que podrá declarar en Cherry Picked. Queda en su Ficha (A2)."}
+            </span>
+          </label>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginTop: 8 }}>
             <input
               placeholder="¿Código de subvención? (opcional)"
@@ -285,7 +302,7 @@ function SolicitudCard({
               onBlur={revealCode}
               style={{ maxWidth: 220 }}
             />
-            <button className="btn btn-sm btn-solid-accent" disabled={busy} onClick={solicitar}>
+            <button className="btn btn-sm btn-solid-accent" disabled={busy || !existenciaOk} onClick={solicitar}>
               {busy ? "Solicitando…" : "Solicitar evaluación"}
             </button>
           </div>

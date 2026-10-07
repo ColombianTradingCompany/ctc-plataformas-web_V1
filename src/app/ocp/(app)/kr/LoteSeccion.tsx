@@ -3,7 +3,7 @@ import Link from "next/link";
 import { deleteAbandonedLot } from "../actions";
 import { DeleteAbandonedButton } from "../DeleteAbandonedButton";
 import { ConfirmReceiptButton } from "./ConfirmReceiptButton";
-import { RegisterDdsButton, RevertNoAptoButton } from "./LotePiezas";
+import { ExistenciaDelLote, RegisterDdsButton, RevertNoAptoButton } from "./LotePiezas";
 import { PostularOnBehalfButton } from "../nominados/NominadosClient";
 import { ActionForm } from "@/components/panel/ActionForm";
 import { reviewEvaluationClaim, revisarReferencia } from "../evaluationActions";
@@ -120,6 +120,12 @@ function toFincaEudrFields(f: FincaJoin): FincaEudrFields | null {
 //
 // Ninguna Server Action cambió.
 
+
+// V5.181: la existencia del lote (A2) como texto, o null.
+const existenciaDe = (datasheet: unknown): string | null => {
+  const v = (datasheet as { existencia_cps_kg?: string | number } | null)?.existencia_cps_kg;
+  return v != null && String(v).trim() !== "" ? String(v) : null;
+};
 export async function LoteSeccion({ service, loteId }: { service: SupabaseClient; loteId: string }) {
   const [{ data: lots }] = await Promise.all([
     service
@@ -315,7 +321,9 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
       />
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-start", marginTop: 14 }}>
         {lot.stage === "no_apto" && <RevertNoAptoButton lotId={lot.id} />}
-        {lot.stage === "apto" && !postulatedLots.has(lot.id) && <PostularOnBehalfButton lotId={lot.id} />}
+        {/* V5.181: la existencia del lote, que CTCx registra o corrige (se pide de nuevo al enviar la muestra). */}
+        <ExistenciaDelLote lotId={lot.id} actual={existenciaDe(lot.datasheet)} />
+        {lot.stage === "apto" && !postulatedLots.has(lot.id) && <PostularOnBehalfButton lotId={lot.id} existencia={existenciaDe(lot.datasheet)} />}
         {ARENA_PATH_STAGES.has(lot.stage) && <RegisterDdsButton lotId={lot.id} ddsReference={lot.dds_reference} />}
       </div>
       {lot.stage === "no_apto" && lot.eva_no_apto_reason && <p className={styles.warn}>Razón del No apto: {lot.eva_no_apto_reason}</p>}

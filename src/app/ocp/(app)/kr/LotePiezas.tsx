@@ -12,7 +12,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { revertNoApto } from "../actions";
-import { registerLotDds } from "../actions";
+import { registerLotDds, registrarExistenciaOcp } from "../actions";
 import styles from "@/components/panel/shared.module.css";
 
 // ── El dial de temporadas: botón → popover con DOS perillas (desde/hasta) ────
@@ -134,5 +134,56 @@ export function RegisterDdsButton({ lotId, ddsReference }: { lotId: string; ddsR
       </button>
       {error && <span style={{ fontSize: 10.5, color: "var(--red)", maxWidth: 260, whiteSpace: "normal", textAlign: "right" }}>{error}</span>}
     </span>
+  );
+}
+
+// ── V5.181 · la existencia del lote, que CTCx registra o corrige (owner: «no puedo registrar la existencia en este punto») ────
+export function ExistenciaDelLote({ lotId, actual }: { lotId: string; actual: string | null }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [editando, setEditando] = useState(!actual);
+  const [kg, setKg] = useState(actual ?? "");
+  const [error, setError] = useState<string | null>(null);
+  const n = Number(kg.trim().replace(/\./g, "").replace(",", "."));
+  const ok = Number.isFinite(n) && n > 0;
+  if (!editando) {
+    return (
+      <div className={styles.meta} style={{ margin: "8px 0 0" }}>
+        Existencia del lote: <b>{Number(actual).toLocaleString("es-CO")} kg de CPS</b>{" "}
+        <button type="button" className={styles.enlaceBoton} onClick={() => setEditando(true)}>
+          corregir
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginTop: 8, fontSize: 12.5 }}>
+      Existencia del lote
+      <input inputMode="decimal" value={kg} onChange={(e) => setKg(e.target.value)} placeholder="kg de CPS" style={{ maxWidth: 120 }} aria-label="Existencia del lote en kg de CPS" />
+      kg de CPS
+      <button
+        type="button"
+        className="btn btn-sm btn-solid"
+        disabled={pending || !ok}
+        onClick={() =>
+          start(async () => {
+            setError(null);
+            const r = await registrarExistenciaOcp(lotId, n);
+            if (r.ok) {
+              setEditando(false);
+              router.refresh();
+            } else setError(r.error);
+          })
+        }
+      >
+        {pending ? "Guardando…" : "Guardar"}
+      </button>
+      {actual && (
+        <button type="button" className="btn btn-sm" disabled={pending} onClick={() => setEditando(false)}>
+          Cancelar
+        </button>
+      )}
+      {error && <span className={styles.warn} style={{ margin: 0 }}>{error}</span>}
+    </div>
   );
 }

@@ -19,6 +19,22 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.181] — 2026-10-07 (commit pendiente)
+
+- **Cambiado**: **la existencia del lote es obligatoria al enviar la muestra** (owner: «es un valor no-obligatorio en A2, pero se
+  vuelve obligatorio cuando se envía para la muestra, preguntándolo de nuevo si no fue ya registrado, y permite corregirlo»).
+  «Solicitar evaluación» en Kaffetal Regal la pide (prellenada con la de la Ficha, corregible) y no deja solicitar sin ella; el
+  servidor la exige igual, también cuando CTCx postula en nombre del productor. En la Ficha (A2) sigue opcional y lo dice.
+- **Añadido**: CTCx registra o corrige la existencia desde la vista del lote en el OCP (owner: «no puedo registrar la existencia
+  en este punto»), con aviso al productor. Un solo escritor fuera de la Ficha (`src/lib/kaffetal/existencia.ts`: columna + A2 +
+  auditoría) para el productor, la solicitud y el OCP.
+- **Datos**: `2026-10-07_existencia_de_lotes.sql`: la existencia de CPS de los lotes registrados y por evaluar —CTC-L-0B9C1C04
+  5.000 kg y los seis de la tabla del owner (016DF280 10.000 · 323FEDE6 4.000 · 7E360302 15.000 · 8946DC24 4.000 · FDA6B795
+  8.500 · 7AEDF5A4 700)— y dos ESTIMADOS por la región, que el productor confirma al solicitar: 403D5C8B 2.500 (Castillo Honey,
+  Piedecuesta, cultivo de 1 año) y DA154613 500 (Gesha Natural, micro-lote). Solo llenó vacíos; una fila de auditoría por lote.
+- **Seguridad**: `qa-ciclos` (102 → 107).
+- **Docs**: charters `kaffetal-regal`, `consolas`; ALINEACION §3.
+
 ## [V5.180] — 2026-10-07 (commit 9b01703)
 
 - **Corregido**: **la calculadora de la participación en Cherry Picked desaparecía** cuando el lote no tenía registrada su

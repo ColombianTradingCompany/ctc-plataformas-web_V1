@@ -152,6 +152,7 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.181 · la existencia del lote es obligatoria al solicitar la evaluación** (prellenada desde A2, corregible; `postularLote` la exige). En A2 sigue opcional. Dos lotes llevan una existencia ESTIMADA por CTCx (CTC-L-403D5C8B 2.500 kg, CTC-L-DA154613 500 kg): la confirma su productor al solicitar.
 - **V5.180 · la calculadora de escenarios va siempre** que la ventana esté abierta (antes se escondía hasta registrar la existencia del lote); sin existencia, solo «Tomar la decisión» espera (`puedeDecidir`).
 - **V5.177 · el Flete a CTCx** se lee en la oferta, la propuesta de Selection, la calculadora y el contrato (versión `2026-10-07.2`): región, valor por carga y por kg, y el despacho con el código corporativo de CTCx en Servientrega (el productor paga el resto en la oficina). Ya no se habla de «auxilio de transporte».
 - **V5.176 · la renovación**: la invitación prellenada llega a «Participación en Cherry Picked»; el productor reconfirma disponibilidad, humedad y bodegaje y puede actualizar la existencia. Las ventas anuladas no cuentan en «Mi trato».

@@ -287,6 +287,21 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   check("KR · la calculadora no depende de la existencia; «Tomar la decisión» sí (y el servidor la exige al aceptar)", tab.includes("puedeDecidir={abierta.existenciaKg != null}") && !/abierta\.existenciaKg != null && \(\s*<CalculadoraDelTrato/.test(tab) && calc.includes("const cumple = decl.ok && acepta && puedeDecidir;") && lee("src/lib/ofertas/producerActions.ts").includes("if (c.existenciaKg == null) return"));
 }
 
+// ── 12. V5.181 (owner, 2026-10-07): la existencia del lote es opcional en A2 y OBLIGATORIA al enviar la muestra (se pregunta de
+//     nuevo, prellenada, y se corrige); CTCx la registra o corrige en el OCP; un solo escritor fuera de la Ficha ──
+{
+  const ex = lee("src/lib/kaffetal/existencia.ts");
+  const arena = lee("src/lib/arena/producerActions.ts");
+  const nom = lee("src/app/ocp/(app)/nominadosActions.ts");
+  const ocp = lee("src/app/ocp/(app)/actions.ts");
+  const evs = lee("src/components/kaffetal-regal/panel/EvaluacionesTab.tsx");
+  check("existencia · un solo escritor (columna + Ficha A2 + auditoría); «5.000» se lee cinco mil", ex.includes("export async function guardarExistencia(") && ex.includes("existencia_cps_kg: String(kg)") && ex.includes('action: "existencia_registrada"') && ex.includes('.replace(/\\./g, "").replace(",", ".")') && lee("src/lib/ofertas/producerActions.ts").includes('guardarExistencia(service, { lotId, kg, porQuien: auth.userId, origen: "productor" })'));
+  check("solicitud · el productor no solicita la evaluación sin existencia; la registrada vale y la escrita la corrige", arena.includes("if (existencia == null) return { ok: false, message: EXISTENCIA_REQUERIDA };") && arena.includes('origen: "solicitud"') && evs.includes("disabled={busy || !existenciaOk}") && evs.includes("Existencia total del lote (kg de café pergamino seco) *"));
+  check("OCP · postular en nombre del productor también la exige; CTCx la registra o corrige en la vista del lote (emite, con aviso al productor)", nom.includes("if (existencia == null) return { ok: false, error: EXISTENCIA_REQUERIDA };") && ocp.includes("export async function registrarExistenciaOcp(") && ocp.includes('permisoDeEscritura("ocp", "emite")') && ocp.includes("CTCx registró la existencia total de su lote") && lee("src/app/ocp/(app)/kr/LoteSeccion.tsx").includes("<ExistenciaDelLote lotId={lot.id}"));
+  check("A2 · la existencia sigue opcional en la Ficha y lo dice", lee("src/components/kaffetal-regal/ficha/panes/PaneA2.tsx").includes("(kg de CPS · opcional aquí)"));
+  check("datos · la existencia de los lotes registrados y por evaluar (los del owner y dos estimados), sin pisar lo registrado", ["'0b9c1c04-ae6a-4c83-bfcd-cc466af124de'::uuid, 5000", "'7e360302-e549-4fe7-8f49-4c12ec010a83'::uuid, 15000", "'7aedf5a4-b85d-461b-b552-e8b5ff13947e'::uuid, 700", "and l.existencia_cps_kg is null", "'existencia_registrada'"].every((k) => lee("docs/migraciones/2026-10-07_existencia_de_lotes.sql").includes(k)));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-ciclos: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("  - " + f);

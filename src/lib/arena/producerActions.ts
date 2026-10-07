@@ -1,6 +1,7 @@
 "use server";
 
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
+import { EXISTENCIA_REQUERIDA, existenciaValida, guardarExistencia } from "@/lib/kaffetal/existencia";
 import { ARENA_FEE_COP, formatCop, dueFor } from "@/lib/arena/inscriptions";
 import { claimCampaignCode, insertEntryCode, peekCampaignCode } from "@/lib/arena/entryCodes";
 import { currentSeason, lotSeasonCount, MAX_SEASONS_PER_LOT } from "@/lib/arena/seasons";
@@ -30,21 +31,25 @@ async function requireProducer(): Promise<{ userId: string } | { error: string }
   return { userId: user.id };
 }
 
-/** V5.80 (folio 7, paso 7): el productor puede pedir un descuento por NOTA; CTCx decide la subvención al corroborar. */
-export async function postularLote(lotId: string, campaignCode?: string, notaSolicitud?: string): Promise<PostularResult> {
+/** V5.80 (folio 7, paso 7): el productor puede pedir un descuento por NOTA; CTCx decide la subvención al corroborar.
+ *  V5.181 (owner): la existencia del lote es OBLIGATORIA al solicitar (se envía la muestra): la que ya tenga registrada vale, y si
+ *  la escribe aquí la corrige. */
+export async function postularLote(lotId: string, campaignCode?: string, notaSolicitud?: string, existenciaKg?: number): Promise<PostularResult> {
   const auth = await requireProducer();
   if ("error" in auth) return { ok: false, message: auth.error };
   const service = createServiceRoleClient();
 
   const { data: lot } = await service
     .from("lots")
-    .select("id, name, stage, producer_id")
+    .select("id, name, stage, producer_id, existencia_cps_kg")
     .eq("id", lotId)
     .maybeSingle();
   if (!lot || lot.producer_id !== auth.userId) return { ok: false, message: "Lote no encontrado." };
   if (lot.stage !== "apto") {
     return { ok: false, message: "Solo un lote declarado Apto por CTC puede solicitar evaluación." };
   }
+  const existencia = existenciaKg != null ? existenciaValida(existenciaKg) : lot.existencia_cps_kg != null ? Number(lot.existencia_cps_kg) : null;
+  if (existencia == null) return { ok: false, message: EXISTENCIA_REQUERIDA };
   const { data: existing } = await service.from("arena_inscriptions").select("id").eq("lot_id", lotId).maybeSingle();
   if (existing) return { ok: false, message: "Este lote ya está postulado." };
   // Regla: un lote participa en máximo 2 temporadas.
@@ -97,6 +102,8 @@ export async function postularLote(lotId: string, campaignCode?: string, notaSol
     // UNIQUE(lot_id) — carrera con otra postulación simultánea.
     return { ok: false, message: "Este lote ya está postulado." };
   }
+  // V5.181: la existencia confirmada (o corregida) al solicitar.
+  await guardarExistencia(service, { lotId, kg: existencia, porQuien: auth.userId, origen: "solicitud" });
 
   const due = dueFor(codeRow.discount_pct);
   await service.from("audit_log").insert({

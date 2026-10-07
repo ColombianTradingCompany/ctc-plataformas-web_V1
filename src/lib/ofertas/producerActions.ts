@@ -12,6 +12,7 @@ import { hoyEnColombia } from "@/lib/pvc/servicio";
 import { condicionesDeFirma, type CondicionesDeFirma, type OfertaParaVentana } from "./ventanaDeOferta";
 import { sincronizarListado } from "@/lib/trato/ventanaServidor";
 import { fleteDeLaFila } from "@/lib/trato/flete";
+import { guardarExistencia } from "@/lib/kaffetal/existencia";
 import { ctcLotReference } from "@/components/kaffetal-regal/data";
 
 // ── La respuesta del productor a una oferta (V5.18 · con declaración desde la V5.83 · por ventanas desde la V5.175) ──────────
@@ -330,14 +331,10 @@ export async function previsualizarOferta(offerId: string): Promise<VistaPreviaD
 export async function registrarExistencia(lotId: string, kg: number): Promise<RespuestaOferta> {
   const auth = await requireProducer();
   if ("error" in auth) return { ok: false, message: auth.error };
-  const n = Math.round(Number(kg) * 10) / 10;
-  if (!Number.isFinite(n) || n <= 0) return { ok: false, message: "Escriba la existencia del lote en kg de CPS." };
   const service = createServiceRoleClient();
-  const { data: lot } = await service.from("lots").select("id, producer_id, existencia_cps_kg, datasheet").eq("id", lotId).maybeSingle();
+  const { data: lot } = await service.from("lots").select("id, producer_id").eq("id", lotId).maybeSingle();
   if (!lot || lot.producer_id !== auth.userId) return { ok: false, message: "Lote no encontrado." };
-  const datasheet = { ...((lot.datasheet as Record<string, unknown> | null) ?? {}), existencia_cps_kg: String(n) };
-  const { error } = await service.from("lots").update({ existencia_cps_kg: n, datasheet }).eq("id", lotId);
-  if (error) return { ok: false, message: "No se pudo guardar la existencia: " + error.message };
-  await service.from("audit_log").insert({ entity_type: "lot", entity_id: lotId, action: "existencia_registrada", performed_by: auth.userId, notes: `Existencia de CPS: ${lot.existencia_cps_kg ?? "—"} → ${n} kg.` });
-  return { ok: true };
+  // V5.181: un solo escritor de la existencia fuera de la Ficha (lots + A2 + auditoría).
+  const r = await guardarExistencia(service, { lotId, kg, porQuien: auth.userId, origen: "productor" });
+  return r.ok ? { ok: true } : { ok: false, message: r.error };
 }

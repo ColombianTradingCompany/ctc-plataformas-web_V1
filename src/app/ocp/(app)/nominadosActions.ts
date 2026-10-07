@@ -1,5 +1,6 @@
 "use server";
 
+import { EXISTENCIA_REQUERIDA, existenciaValida, guardarExistencia } from "@/lib/kaffetal/existencia";
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { columnasDeReporte, prepararSubidaDeReporte, registrarReporteSubido, type MetaDeReporte } from "@/lib/evaluaciones/reporte";
@@ -41,15 +42,19 @@ function revalidateAll() {
 
 /** CTCx postula en nombre del productor. V5.95 (owner, 2026-09-30): esta es la puerta de quien pide SOLO la evaluación y paga la
  *  tarifa plena — nace sin subvención (KRA-, 0 %); si el productor sí sigue el circuito, CTCx decide la subvención en Solicitudes. */
-export async function postularOnBehalf(lotId: string): Promise<Result> {
+// V5.181 (owner): como en Kaffetal Regal, la existencia del lote es obligatoria para enviar la muestra: la registrada vale y la que
+// se escriba aquí la corrige.
+export async function postularOnBehalf(lotId: string, existenciaKg?: number): Promise<Result> {
   const permiso = await permisoDeEscritura("ocp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
-  const { data: lot } = await service.from("lots").select("id, name, stage, producer_id").eq("id", lotId).maybeSingle();
+  const { data: lot } = await service.from("lots").select("id, name, stage, producer_id, existencia_cps_kg").eq("id", lotId).maybeSingle();
   if (!lot) return { ok: false, error: "Lote no encontrado." };
   if (lot.stage !== "apto") return { ok: false, error: "Solo un lote Apto puede postularse." };
+  const existencia = existenciaKg != null ? existenciaValida(existenciaKg) : lot.existencia_cps_kg != null ? Number(lot.existencia_cps_kg) : null;
+  if (existencia == null) return { ok: false, error: EXISTENCIA_REQUERIDA };
   const { data: existing } = await service.from("arena_inscriptions").select("id").eq("lot_id", lotId).maybeSingle();
   if (existing) return { ok: false, error: "Este lote ya está postulado." };
   // Regla del owner: un lote participa en máximo 2 temporadas.
@@ -79,6 +84,7 @@ export async function postularOnBehalf(lotId: string): Promise<Result> {
     season_id: season?.id ?? null,
   });
   if (error) return { ok: false, error: "Este lote ya está postulado." };
+  await guardarExistencia(service, { lotId, kg: existencia, porQuien: adminId, origen: "ctcx" });
 
   await service.from("audit_log").insert({
     entity_type: "arena_inscription",

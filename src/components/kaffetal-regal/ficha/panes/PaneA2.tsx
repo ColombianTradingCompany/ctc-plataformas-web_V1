@@ -192,8 +192,8 @@ export function PaneA2({ data, onChange, fincas, onOpenNewFinca }: PaneProps) {
         {/* V5.174 (owner, 2026-10-07 · docs/PLAN_CICLOS.md §7): la existencia del lote, las plantas y la producción estimada. */}
         <div className={styles.ff}>
           <label>
-            Existencia total del lote <small>(kg de CPS)</small>
-            <FieldInfo text="Cuánto café pergamino seco tiene este lote en total. Con esto se calcula lo que le queda disponible (existencia − lo vendido − lo retirado) y el mínimo que puede declarar en cada ventana; lo reconfirma en cada renovación." />
+            Existencia total del lote <small>(kg de CPS · opcional aquí)</small>
+            <FieldInfo text="Cuánto café pergamino seco tiene este lote en total. Con esto se calcula lo que le queda disponible (existencia − lo vendido − lo retirado) y el mínimo que puede declarar en cada ventana. Es opcional en la Ficha, pero OBLIGATORIA al solicitar la evaluación (cuando envía la muestra): allí se la volvemos a preguntar y la puede corregir; también la reconfirma en cada renovación." />
           </label>
           <input type="number" min="0" step="1" value={data.existencia_cps_kg} onChange={(e) => onChange({ existencia_cps_kg: e.target.value })} placeholder="Ej. 1500" />
         </div>

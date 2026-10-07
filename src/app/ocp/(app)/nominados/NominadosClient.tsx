@@ -89,13 +89,24 @@ function ErrorLine({ error, enCurso = null }: { error: string | null; /** V5.164
   );
 }
 
-export function PostularOnBehalfButton({ lotId }: { lotId: string }) {
+// V5.181: la existencia del lote va con la solicitud (obligatoria para enviar la muestra), prellenada con la registrada.
+export function PostularOnBehalfButton({ lotId, existencia }: { lotId: string; existencia?: string | null }) {
   const { pending, error, run } = useAction();
+  const [kg, setKg] = useState(existencia ?? "");
+  const n = Number(kg.trim().replace(/\./g, "").replace(",", "."));
+  const ok = Number.isFinite(n) && n > 0;
   return (
-    <div style={{ marginTop: 8 }}>
-      <button className="btn btn-sm btn-solid" disabled={pending} onClick={() => run(() => postularOnBehalf(lotId))}>
-        {pending ? "Registrando…" : "Registrar la solicitud de evaluación en nombre del productor"}
-      </button>
+    <div style={{ marginTop: 8, display: "grid", gap: 6 }}>
+      <label style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", fontSize: 12.5 }}>
+        Existencia total del lote
+        <input inputMode="decimal" value={kg} onChange={(e) => setKg(e.target.value)} placeholder="kg de CPS" style={{ maxWidth: 120 }} />
+        kg de CPS {!ok && <span style={{ color: "var(--warn, #b5532a)" }}>· obligatoria para enviar la muestra</span>}
+      </label>
+      <div>
+        <button className="btn btn-sm btn-solid" disabled={pending || !ok} onClick={() => run(() => postularOnBehalf(lotId, n))}>
+          {pending ? "Registrando…" : "Registrar la solicitud de evaluación en nombre del productor"}
+        </button>
+      </div>
       <ErrorLine error={error} />
     </div>
   );

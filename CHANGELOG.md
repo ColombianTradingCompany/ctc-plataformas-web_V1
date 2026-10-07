@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.186] — 2026-10-07 (commit pendiente)
+## [V5.186] — 2026-10-07 (commit 45ea226)
 
 - **Añadido**: en «Mi trato», **el bache abierto con su plazo** (owner): qué lleva (las ventas de cada semana), cuánto vale, a más
   tardar cuándo sale (o hasta cuándo con la prórroga), los días que faltan —verde, ámbar a 7 días, rojo si venció—, cuánto le pagan

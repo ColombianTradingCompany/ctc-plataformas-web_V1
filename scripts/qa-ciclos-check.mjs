@@ -279,6 +279,14 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   check("Tablero de Ejecución · el borrador por publicar es una tarea de la ECP", lee("src/lib/panel/tareasCarga.ts").includes("key: `pvc:edicion:${ag.destino.codigo}`") && lee("src/lib/panel/tareasCarga.ts").includes('href: "/ecp/pvc#siguiente"'));
 }
 
+// ── 11. V5.180 (owner, 2026-10-07: «no quedó ninguna herramienta de análisis de escenarios»): la calculadora va siempre que la
+//     ventana esté abierta; sin la existencia del lote se juega igual y solo la decisión espera ──
+{
+  const tab = lee("src/components/kaffetal-regal/panel/ContratosTab.tsx");
+  const calc = lee("src/components/kaffetal-regal/panel/CalculadoraDelTrato.tsx");
+  check("KR · la calculadora no depende de la existencia; «Tomar la decisión» sí (y el servidor la exige al aceptar)", tab.includes("puedeDecidir={abierta.existenciaKg != null}") && !/abierta\.existenciaKg != null && \(\s*<CalculadoraDelTrato/.test(tab) && calc.includes("const cumple = decl.ok && acepta && puedeDecidir;") && lee("src/lib/ofertas/producerActions.ts").includes("if (c.existenciaKg == null) return"));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-ciclos: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("  - " + f);

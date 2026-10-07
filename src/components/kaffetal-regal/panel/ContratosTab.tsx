@@ -562,6 +562,7 @@ function ExistenciaForm({ lotId, onGuardada }: { lotId: string; onGuardada: () =
       <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 4 }}>¿Cuánto café pergamino seco tiene este lote en total?</div>
       <div className={styles.sub} style={{ marginBottom: 6 }}>
         Con la existencia del lote se calcula lo que puede declarar en cada ventana (existencia − lo vendido − lo retirado). Queda en su Ficha (A2).
+        Se necesita para firmar; mientras tanto, puede jugar con el escenario abajo.
       </div>
       <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
         <input inputMode="decimal" value={kg} onChange={(e) => setKg(e.target.value)} placeholder="Ej. 1500" style={{ ...inputCss, width: 110 }} /> kg de CPS
@@ -703,9 +704,11 @@ function OfferCard({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshDa
                   </button>
                 </div>
               )}
-              {abierta && abierta.existenciaKg != null && (
+              {/* V5.180: la calculadora va siempre que la ventana esté abierta; sin existencia, solo la decisión espera. */}
+              {abierta && (
                 <CalculadoraDelTrato
                   c={abierta}
+                  puedeDecidir={abierta.existenciaKg != null}
                   maxKg={offer.maxKg}
                   lugarEntrega={lugarEntrega}
                   fncCargaRef={offer.fncCargaRef}

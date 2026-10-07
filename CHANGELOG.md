@@ -19,6 +19,16 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.180] — 2026-10-07 (commit pendiente)
+
+- **Corregido**: **la calculadora de la participación en Cherry Picked desaparecía** cuando el lote no tenía registrada su
+  existencia total (owner: «no quedó ninguna herramienta de análisis de escenarios»): la tarjeta solo pedía la existencia.
+  Ahora la calculadora —la ventana de hoy, el precio con el Flete a CTCx, la cantidad, el escenario de ventas y el retiro— se
+  enseña siempre que la ventana esté abierta; sin la existencia se juega igual con el escenario y solo «Tomar la decisión»
+  espera, con el aviso de registrarla arriba (el servidor la sigue exigiendo al aceptar).
+- **Seguridad**: `qa-ciclos` (101 → 102), `qa-trato` (la casilla de decidir también espera la existencia).
+- **Docs**: charter `kaffetal-regal`.
+
 ## [V5.179] — 2026-10-07 (commit d6b7031)
 
 - **Añadido**: **el agente de la edición siguiente del PVC** (tanda 4 de los Ciclos, `docs/PLAN_CICLOS.md` §6; owner: «sí, que

@@ -27,7 +27,9 @@ const REGLA: Record<Abierta["ventana"]["precio"], string> = {
   siguiente: "el PVC de la siguiente temporada",
 };
 
-export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDecidir }: { c: Abierta; maxKg: number | null; lugarEntrega: string; fncCargaRef: number | null; onDecidir: (d: DecisionDelTrato) => void }) {
+// V5.180 (owner, 2026-10-07: «no quedó ninguna herramienta de análisis de escenarios»): la calculadora se enseña SIEMPRE que la
+// ventana esté abierta; sin la existencia del lote se juega igual con el escenario y solo «Tomar la decisión» espera (`puedeDecidir`).
+export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDecidir, puedeDecidir = true }: { c: Abierta; maxKg: number | null; lugarEntrega: string; fncCargaRef: number | null; onDecidir: (d: DecisionDelTrato) => void; puedeDecidir?: boolean }) {
   const insuficiente = c.disponibleKg != null && c.disponibleKg < c.minimoKg;
   const piso = insuficiente ? Math.round(c.minimoKg * PISO_EXISTENCIA_INSUFICIENTE * 10) / 10 : c.minimoKg;
   const tope = Math.max(piso, Math.min(maxKg ?? Infinity, c.disponibleKg ?? Math.max(c.minimoKg * 4, 40 * CARGA_KG)));
@@ -51,7 +53,7 @@ export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDec
   const libreKg = Math.min(retiroPosible, libreTotal);
   const penalizadoKg = Math.max(0, retiroPosible - libreKg);
   const penalidad = (cargasDe(penalizadoKg) * c.precioKg * CARGA_KG * PENALIDAD_RETIRO_PCT) / 100;
-  const cumple = decl.ok && acepta;
+  const cumple = decl.ok && acepta && puedeDecidir;
 
   const kpi = (titulo: string, valor: string, nota?: string, color?: string) => (
     <div style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "8px 10px", background: "var(--paper)", display: "grid", gap: 2 }}>
@@ -201,7 +203,8 @@ export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDec
           Entiendo la ventana, los plazos de despacho ({c.sacoKg > 0 ? `${c.esRenovacion ? "la compra adelantada" : "el saco"} sale esta semana; ` : ""}lo vendido, al empezar el ciclo siguiente), el pago 60/40 con la calidad, y el retiro.
         </span>
       </label>
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+      <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        {!puedeDecidir && <span style={{ fontSize: 12, color: "var(--accent)", fontWeight: 700 }}>Para tomar la decisión y firmar, registre arriba la existencia total del lote.</span>}
         <button className="btn btn-sm btn-solid-accent" type="button" disabled={!cumple} onClick={() => onDecidir({ kg, sinRetiro })}>
           Tomar la decisión · {fmtCargas(kg)}
         </button>

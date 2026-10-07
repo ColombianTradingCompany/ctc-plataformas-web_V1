@@ -34,6 +34,8 @@ export type ResumenDelLote = {
   altitud: number | null;
   cosecha: string | null;
   referencia: string;
+  /** V5.182: la existencia de CPS de hoy y el control de sus cambios (`controlDeExistencia`). */
+  existencia: { kg: number | null; nivel: "normal" | "notable" | "abrupto"; resumen: string } | null;
 };
 
 const num = (s: string) => Number(String(s).replace(/\./g, "").replace(",", "."));
@@ -177,6 +179,19 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
             {dato("Altitud", resumen.altitud != null ? `${resumen.altitud.toLocaleString("es-CO")} m` : null)}
             {dato("Origen", resumen.lugar)}
             {dato("Cosecha", resumen.cosecha)}
+            {dato(
+              "Existencia de CPS",
+              resumen.existencia ? (
+                <span title={resumen.existencia.resumen}>
+                  {resumen.existencia.kg != null ? `${Math.round(resumen.existencia.kg).toLocaleString("es-CO")} kg` : "—"}
+                  {resumen.existencia.nivel !== "normal" && (
+                    <span style={{ color: "var(--warn, #b5532a)" }}> · {resumen.existencia.nivel === "abrupto" ? "⚠ cambio abrupto" : "cambio notable"}</span>
+                  )}
+                </span>
+              ) : (
+                "sin registrar"
+              )
+            )}
           </div>
         </div>
         <a href={`/ocp/kr?lote=${lotId}`} className={styles.meta} style={{ margin: 0 }}>

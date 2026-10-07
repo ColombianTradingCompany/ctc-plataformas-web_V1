@@ -302,6 +302,24 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   check("datos · la existencia de los lotes registrados y por evaluar (los del owner y dos estimados), sin pisar lo registrado", ["'0b9c1c04-ae6a-4c83-bfcd-cc466af124de'::uuid, 5000", "'7e360302-e549-4fe7-8f49-4c12ec010a83'::uuid, 15000", "'7aedf5a4-b85d-461b-b552-e8b5ff13947e'::uuid, 700", "and l.existencia_cps_kg is null", "'existencia_registrada'"].every((k) => lee("docs/migraciones/2026-10-07_existencia_de_lotes.sql").includes(k)));
 }
 
+// ── 13. V5.182 (owner, 2026-10-07): el ancla de control de la existencia — cada cambio lo guarda la base (inmutable), con su punto
+//     de control y quién; el OCP lo califica (notable / abrupto) en la vista del lote y antes de ofertar ──
+{
+  const ce = await import("../src/lib/kaffetal/controlDeExistencia.ts");
+  const c = (fecha, antes, nuevo, origen = "invitacion", prod = null) => ({ fecha, antes, nuevo, origen, produccionEstimadaCps: prod });
+  const hoy = ce.controlDeExistencia([c("2026-10-07T13:25:05Z", null, 5000, "sistema"), c("2026-10-07T13:54:20Z", 5000, 2000)]);
+  check("control · el caso real: 5.000 → 2.000 desde la invitación es ABRUPTO (−60 %) y el resumen lo dice", hoy.cambios[1].nivel === "abrupto" && Math.round(hoy.cambios[1].cambioPct) === -60 && hoy.nivel === "abrupto" && hoy.alertas === 1 && hoy.actual === 2000 && hoy.primero.nuevo === 5000 && hoy.resumen.includes("primera 5.000 kg, hoy 2.000 kg (-60 %)"));
+  check("control · +12 % es normal, +25 % notable, por encima de la producción estimada (A2) +10 % es abrupto, borrarla es notable", ce.evaluarCambio(c("2026-10-01", 4000, 4500), []).nivel === "normal" && ce.evaluarCambio(c("2026-10-01", 4000, 5000), []).nivel === "notable" && ce.evaluarCambio(c("2026-10-01", 4000, 4600, "ficha", 4000), []).nivel === "abrupto" && ce.evaluarCambio(c("2026-10-01", 4000, null), []).nivel === "notable");
+  const tres = ce.controlDeExistencia([c("2026-09-01", null, 4000, "ficha"), c("2026-09-05", 4000, 4200), c("2026-09-10", 4200, 4300), c("2026-09-20", 4300, 4400)]);
+  check("control · el 3.º cambio en 30 días es notable aunque cada uno sea pequeño", tres.cambios[3].nivel === "notable" && tres.cambios[3].motivos.some((m) => m.includes("3 cambios en 30 días")) && tres.cambios[1].nivel === "normal");
+  const mig = lee("docs/migraciones/2026-10-07_historial_de_existencia.sql");
+  check("migración · historial append-only (ni el service role edita o borra), sin FK (sobrevive al lote), trigger de lots como único escritor, la sesión del productor queda como «ficha»", ["create table if not exists public.lot_existencia_historial", "before update or delete on public.lot_existencia_historial", "no se edita ni se borra", "create trigger lots_historial_existencia before insert or update on public.lots", "security definer", "if v_rol = 'authenticated' then", "v_origen := 'ficha';", "new.existencia_origen := null;"].every((k) => mig.includes(k)) && !mig.includes("references public.lots"));
+  const arr = lee("docs/migraciones/2026-10-07_historial_de_existencia_arranque.sql");
+  check("arranque · se rehizo una sola vez con todos los registros en orden y la inmutabilidad se restituyó en la misma migración", arr.includes("disable trigger lot_existencia_historial_inmutable") && arr.includes("enable trigger lot_existencia_historial_inmutable") && arr.indexOf("enable trigger") > arr.indexOf("disable trigger"));
+  check("escritor · el servidor anota el punto de control y quién (el trigger los lee y los limpia)", lee("src/lib/kaffetal/existencia.ts").includes("existencia_origen, existencia_por: input.porQuien }"));
+  check("OCP · la vista del lote enseña el historial calificado y «Pendiente de Oferta» la existencia con su control", lee("src/app/ocp/(app)/kr/LoteSeccion.tsx").includes("<HistorialDeExistencia control={controlExistencia} quien={quienCambio} />") && lee("src/app/ocp/(app)/ofertas/page.tsx").includes("controlDeExistencia(filas.map(cambioDeFila))") && lee("src/app/ocp/(app)/ofertas/OfertaDesplegable.tsx").includes("⚠ cambio abrupto"));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-ciclos: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("  - " + f);

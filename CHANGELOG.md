@@ -19,6 +19,23 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.182] — 2026-10-07 (commit pendiente)
+
+- **Añadido**: **el ancla de control de la existencia** (owner: «que este cambio de dato no se pierda, de tal manera que se pueda
+  tener un ancla de control que muestre y demuestre si hay cambios abruptos o desproporcionados»). La base guarda CADA cambio de
+  la existencia de CPS en `lot_existencia_historial` —antes, ahora, punto de control (Ficha A2 · invitación/renovación ·
+  solicitud de evaluación · CTCx en el OCP · sistema), quién, la etapa y la producción estimada de A2— con un trigger en `lots`
+  que ningún camino esquiva (una sesión de productor queda siempre como «Ficha»). El historial es inmutable: ni el service role
+  lo edita o borra, y no depende del lote (sobrevive si se borra).
+- **Añadido**: la vista del lote en el OCP enseña el **Historial de la existencia** calificado (`controlDeExistencia.ts`): notable si
+  cambia ≥ 20 % de una vez, se borra o es el 3.º cambio en 30 días; abrupto si cambia ≥ 50 % o supera la producción estimada de A2
+  en más de 10 %. «Pendiente de Oferta» muestra la existencia de cada lote con su alerta antes de ofertar.
+- **Datos**: migraciones `2026-10-07_historial_de_existencia.sql` (tabla, triggers y arranque) y `…_arranque.sql` (corrección
+  única del arranque: tomaba solo el último registro; CTC-L-0B9C1C04 pasó de 5.000 a 2.000 kg desde la invitación a las 13:54 y el
+  ancla perdía el 5.000 — ahora tiene los dos, y el cambio sale ABRUPTO, −60 %).
+- **Seguridad**: `qa-ciclos` (107 → 114).
+- **Docs**: charters `kaffetal-regal`, `consolas`; ALINEACION §3.
+
 ## [V5.181] — 2026-10-07 (commit 4b1300e)
 
 - **Cambiado**: **la existencia del lote es obligatoria al enviar la muestra** (owner: «es un valor no-obligatorio en A2, pero se

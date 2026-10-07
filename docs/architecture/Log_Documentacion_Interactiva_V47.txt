@@ -651,3 +651,7 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-10-07] V5.181 · La existencia del lote: obligatoria al enviar la muestra, corregible, registrable por CTCx en el OCP; datos de los lotes por evaluar
 - ANN `src/lib/kaffetal/existencia.ts` (nuevo), `src/lib/arena/producerActions.ts` (`postularLote`), `src/lib/ofertas/producerActions.ts` (`registrarExistencia`), `src/components/kaffetal-regal/{panel/EvaluacionesTab.tsx,ficha/panes/PaneA2.tsx}`, `app/ocp/(app)/{actions.ts,nominadosActions.ts,nominados/NominadosClient.tsx,kr/LotePiezas.tsx,kr/LoteSeccion.tsx}`, `scripts/qa-ciclos-check.mjs`, `docs/migraciones/2026-10-07_existencia_de_lotes.sql`, `docs/componentes/{kaffetal-regal,consolas}.md`, `docs/ALINEACION.md`.
 (commit: 4b1300e)
+
+## [2026-10-07] V5.182 · El ancla de control de la existencia: historial inmutable escrito por la base, calificado en el OCP
+- ANN `src/lib/kaffetal/{controlDeExistencia.ts (nuevo),existencia.ts}`, `app/ocp/(app)/kr/{HistorialDeExistencia.tsx (nuevo),LoteSeccion.tsx}`, `app/ocp/(app)/ofertas/{page.tsx,OfertaDesplegable.tsx}`, `scripts/qa-ciclos-check.mjs`, `docs/migraciones/{2026-10-07_historial_de_existencia,2026-10-07_historial_de_existencia_arranque}.sql`, `docs/componentes/{kaffetal-regal,consolas}.md`, `docs/ALINEACION.md`.
+(commit: pendiente)

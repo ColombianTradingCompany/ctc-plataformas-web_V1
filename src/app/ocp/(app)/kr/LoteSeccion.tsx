@@ -4,6 +4,8 @@ import { deleteAbandonedLot } from "../actions";
 import { DeleteAbandonedButton } from "../DeleteAbandonedButton";
 import { ConfirmReceiptButton } from "./ConfirmReceiptButton";
 import { ExistenciaDelLote, RegisterDdsButton, RevertNoAptoButton } from "./LotePiezas";
+import { HistorialDeExistencia } from "./HistorialDeExistencia";
+import { cambioDeFila, controlDeExistencia } from "@/lib/kaffetal/controlDeExistencia";
 import { PostularOnBehalfButton } from "../nominados/NominadosClient";
 import { ActionForm } from "@/components/panel/ActionForm";
 import { reviewEvaluationClaim, revisarReferencia } from "../evaluationActions";
@@ -284,6 +286,14 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
     commsByLot.set(c.lot_id, [...(commsByLot.get(c.lot_id) ?? []), c]);
   }
   const lot = lotRows[0];
+  // V5.182 (owner): el ancla de control de la existencia — cada cambio, de dónde y de quién (lo escribe la base; inmutable).
+  const { data: histRows } = await service
+    .from("lot_existencia_historial")
+    .select("creado_at, kg_antes, kg_nuevo, origen, produccion_estimada_cps, etapa, por_quien, nota")
+    .eq("lot_id", lot.id)
+    .order("creado_at", { ascending: true });
+  const controlExistencia = controlDeExistencia(((histRows ?? []) as Parameters<typeof cambioDeFila>[0][]).map(cambioDeFila));
+  const quienCambio = (uid: string | null | undefined) => (!uid ? "sistema" : uid === lot.producer_id ? "el productor" : "CTCx");
   // V5.143 (owner): lo que el productor AGREGÓ con la Ficha ya cerrada — fotos, videos y otros reportes (`lot_referencias`).
   const { data: refRowsRaw } = await service.from("lot_referencias").select("*").eq("lot_id", lot.id).order("created_at", { ascending: false });
   const referencias = ((refRowsRaw as LotReferenciaRow[] | null) ?? []).map(rowToReferencia).filter((r): r is LotReferencia => r !== null);
@@ -323,6 +333,7 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
         {lot.stage === "no_apto" && <RevertNoAptoButton lotId={lot.id} />}
         {/* V5.181: la existencia del lote, que CTCx registra o corrige (se pide de nuevo al enviar la muestra). */}
         <ExistenciaDelLote lotId={lot.id} actual={existenciaDe(lot.datasheet)} />
+        <HistorialDeExistencia control={controlExistencia} quien={quienCambio} />
         {lot.stage === "apto" && !postulatedLots.has(lot.id) && <PostularOnBehalfButton lotId={lot.id} existencia={existenciaDe(lot.datasheet)} />}
         {ARENA_PATH_STAGES.has(lot.stage) && <RegisterDdsButton lotId={lot.id} ddsReference={lot.dds_reference} />}
       </div>

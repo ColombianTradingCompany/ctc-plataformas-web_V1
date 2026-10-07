@@ -12,6 +12,7 @@ import { triadaDeLaFicha } from "@/lib/pvc/triadaDelLote";
 import { letras } from "@/lib/pvc/escala";
 import { ADELANTO_RENOVACION_KG, MODIFICADOR_DIRECTA_PCT, SACO_INICIAL_KG } from "@/lib/trato/terminos";
 import { ventanaDeFirma } from "@/lib/trato/ventanas";
+import { cambioDeFila, controlDeExistencia } from "@/lib/kaffetal/controlDeExistencia";
 import { fletesDeLaEdicion, regionSugerida, REGIONES_DE_FLETE, type RegionDeFlete } from "@/lib/trato/flete";
 import { sumaDias, ubicar } from "@/lib/trato/calendario";
 import { prepararRenovacion } from "../ventanaActions";
@@ -137,6 +138,17 @@ export default async function OcpOfertasPage() {
     ? await service.from("lot_evaluations").select("lot_id, status, sca_total, factor_rendimiento, rige_grado, source, created_at").in("lot_id", colaTemporada.map((l) => l.id))
     : { data: [] };
   const evalsDe = (id: string) => (((evalsRaw as (EvaluationRow & { lot_id: string })[] | null) ?? []).filter((e) => e.lot_id === id));
+  // V5.182 (owner): el ancla de control de la existencia de cada lote (cambios abruptos o desproporcionados), antes de ofertar.
+  const { data: histRaw } = colaTemporada.length
+    ? await service.from("lot_existencia_historial").select("lot_id, creado_at, kg_antes, kg_nuevo, origen, produccion_estimada_cps, etapa").in("lot_id", colaTemporada.map((l) => l.id))
+    : { data: [] };
+  type HistRow = Parameters<typeof cambioDeFila>[0] & { lot_id: string };
+  const existenciaDe = (id: string) => {
+    const filas = ((histRaw as HistRow[] | null) ?? []).filter((h) => h.lot_id === id);
+    if (!filas.length) return null;
+    const c = controlDeExistencia(filas.map(cambioDeFila));
+    return { kg: c.actual, nivel: c.nivel, resumen: c.resumen };
+  };
 
   const producers = await fetchProducerContacts(service, [
     ...lots.map((l) => l.producer_id),
@@ -207,6 +219,7 @@ export default async function OcpOfertasPage() {
       altitud: l.ficha_altitud_m ?? finca?.altitude_m ?? null,
       cosecha: l.harvest_from && l.harvest_to ? `${fecha(l.harvest_from)} a ${fecha(l.harvest_to)}` : null,
       referencia: ctcLotReferenceShort(l.id),
+      existencia: existenciaDe(l.id),
     };
   };
 

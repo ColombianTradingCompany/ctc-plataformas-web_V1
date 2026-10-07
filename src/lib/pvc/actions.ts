@@ -17,6 +17,8 @@ import { PARAMS_V211, type PvcParams } from "./motor";
 import { crearVersionModelo, guardarVariablesDeEdicion, type VariablesDeEdicion } from "./servicio";
 import { validarCalendario } from "@/lib/trato/calendario";
 import { aprobarCorreccion, rechazarCorreccion } from "./vigilancia";
+import { prepararBorrador } from "./agente";
+import { hoyEnColombia } from "./servicio";
 import type { PvcResult } from "./tipos";
 
 /** Registra una versión nueva del modelo (los parámetros completos, con nota de acta). Owner. */
@@ -85,4 +87,19 @@ export async function rechazarCorreccionAction(id: string, nota: string): Promis
   revalidatePath("/ecp/pvc");
   revalidatePath("/ecp");
   return { ok: true, id };
+}
+
+/**
+ * V5.179 (docs/PLAN_CICLOS.md §6) · que el agente prepare (o regenere) YA el borrador de la edición siguiente, sin esperar a la
+ * semana 1 del ciclo 2. Gasta IA (el informe en dos pasos, ~US$0,15): la pantalla lo dice antes. Owner. Emite.
+ */
+export async function prepararBorradorAction(): Promise<PvcResult> {
+  const who = await requireConsoleWrite("ecp", "emite");
+  if (!who) return { ok: false, error: "No se pudo ejecutar: o tu sesión ya no está activa (vuelve a iniciar sesión), o tu nivel es de lectura y borradores y esta acción emite." };
+  if (!isPanelOwner(await getPanelUser(who.userId))) return { ok: false, error: "Pedir el borrador del agente es una decisión del owner." };
+  const r = await prepararBorrador({ hoy: hoyEnColombia(), porQuien: "owner", userId: who.userId });
+  if ("error" in r) return { ok: false, error: r.error };
+  revalidatePath("/ecp/pvc");
+  revalidatePath("/ecp");
+  return { ok: true, id: r.id };
 }

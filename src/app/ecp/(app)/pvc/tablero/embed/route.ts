@@ -6,9 +6,11 @@ import { tableroConPuente } from "@/lib/pvc/tablero";
 // redirige si la sesión no vale, así que el archivo nunca sale sin identidad.
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   await requireConsoleAccess("ecp");
-  const html = await tableroConPuente();
+  // V5.179: `?borrador=<uuid>` arranca el tablero desde el borrador del agente.
+  const b = new URL(request.url).searchParams.get("borrador");
+  const html = await tableroConPuente(b && /^[0-9a-f-]{36}$/i.test(b) ? b : null);
   if (!html) return new Response("El tablero no está disponible en este despliegue.", { status: 404 });
   return new Response(html, {
     headers: {

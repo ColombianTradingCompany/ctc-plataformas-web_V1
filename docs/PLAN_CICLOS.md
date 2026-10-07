@@ -157,8 +157,10 @@ Cada tanda es su propia versión (gate, guardianes, CHANGELOG, log, charters, AL
    cancelar, siguiente ventana) y advertencias. Se retira el trato mes a mes.
 4. **PVC.** (a) ✅ **HECHA en la V5.178**: la vigilancia diaria de la corrección (`src/lib/pvc/vigilancia.ts`, cron 11:25 UTC,
    `pvc_correcciones`, tarjeta en Ediciones, tarea en el Tablero; aprobar publica la edición corregida, que aplica a lo que se
-   firme después). (b) Pendiente: el agente de la semana 1 del ciclo 2 (borrador, informe, aviso; el gasto de IA al ledger), la aprobación y
-   publicación con plazo; el agente copia el Flete a CTCx de la edición anterior. (El flete en la oferta, la calculadora y el contrato: ✅ V5.177.)
+   firme después). (b) ✅ **HECHA en la V5.179**: el agente de la semana 1 del ciclo 2 (`src/lib/pvc/agente.ts`, cron 11:40 UTC):
+   borrador con los insumos FNC y la TRM medidos, lo demás arrastrado y marcado (también el Flete a CTCx, los mínimos y la
+   calidad), informe en dos pasos con fuentes (sugiere, no aplica), aviso, tarea y recordatorios del plazo; se publica desde
+   el Tablero (`?borrador=`). (El flete en la oferta, la calculadora y el contrato: ✅ V5.177.)
 
 ## 10. Supuestos tomados (el owner los corrige si no)
 

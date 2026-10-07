@@ -77,6 +77,7 @@ formato toca el trigger, la action y el cliente a la vez — y las tres superfic
 
 ## Pendientes
 
+- **V5.179 · `claude.ts` acepta `webSearchDirecto`** (opt-in, lo usa el agente del PVC): la búsqueda web con `allowed_callers: ["direct"]`. Los usos de Coffeed/Datawave/RT-Scriptor no cambian; valdría probarlo en ellos (el modo por defecto, «programmatic tool calling», fue lo que hizo lento al agente y Haiku 4.5 no lo soporta).
 - **La primera generación real de Redacción** (falló por credenciales en V5.10 — `CLAVES_IA_Y_COSTE.md`)
   y **el escenario de Make** colgado de `coffeed.redaccion.post_creado` (owner).
 - **RT-Scriptor nunca fue recorrido por el owner** (V3.1): cuatro decisiones de arquitectura tomadas sin

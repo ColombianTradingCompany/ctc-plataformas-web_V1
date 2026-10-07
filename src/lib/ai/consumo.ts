@@ -51,6 +51,9 @@ export const USOS = {
   // api/herramientas/cromatografia). La primera herramienta de la suite que
   // gasta: una lectura por análisis, opt-in, nivel Plus, techo diario.
   herramientasCromatografia: "herramientas:cromatografia",
+  // V5.179: el agente de la edición siguiente del PVC (src/lib/pvc/agente.ts): un informe con búsqueda web por trimestre,
+  // dentro del presupuesto que fijó el owner (~US$10 por el flujo); sin clave, el borrador sale igual, sin informe.
+  pvcAgente: "pvc:agente",
   // `gvg:match` y `gvg:reporte` se retiran en V5.1: el CV App Manager se fue a
   // CommaaS y anota su gasto en el libro del hub. Las filas históricas de
   // `ai_usage` conservan esas cadenas y el tablero las sigue mostrando.

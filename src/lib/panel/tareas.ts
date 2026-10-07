@@ -28,8 +28,8 @@ export type TareaDeConsola = {
 /** Los tipos de tarea que existen. Uno nuevo se declara aquí o su casilla no se puede marcar.
  *  `muestra` (V5.88): la revisión de almacenaje a los 90 días de la catación (Gestión de Muestras, 2.ª tanda); su clave lleva
  *  el ciclo (`muestra:<lote>:<fecha>`) para que una casilla marcada no tape la revisión siguiente. */
-//  `pvc` (V5.178): una corrección del PVC propuesta por la vigilancia del ciclo (`pvc:correccion:<id>`); la resuelve el owner en
-//  ECP → Modelo Económico → Ediciones.
+//  `pvc` (V5.178): una corrección del PVC propuesta por la vigilancia del ciclo (`pvc:correccion:<id>`) y (V5.179) el borrador
+//  del agente por publicar (`pvc:edicion:<código>`); los resuelve el owner en ECP → Modelo Económico.
 export const TIPOS_DE_TAREA = ["lead", "finca", "comm", "humidity", "lot", "muestra", "pvc"] as const;
 export type TipoDeTarea = (typeof TIPOS_DE_TAREA)[number];
 

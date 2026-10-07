@@ -13,13 +13,17 @@ import { edicionVigente, listarEdiciones } from "./servicio";
 
 export const TABLERO_FILE = path.join(process.cwd(), "docs", "pvc", "tablero", "PVC_Tablero.html");
 
-export async function tableroConPuente(): Promise<string | null> {
+// V5.179: con `borradorId` (el borrador del agente, `?borrador=` en la página) el tablero ARRANCA de sus entradas en vez de las
+// de la vigente; se publica como cualquier edición y el borrador queda sustituido (`publicarEdicion`).
+export async function tableroConPuente(borradorId?: string | null): Promise<string | null> {
   let html: string;
   try { html = await readFile(TABLERO_FILE, "utf8"); } catch { return null; }
   const [vigente, ediciones] = await Promise.all([edicionVigente(), listarEdiciones(30)]);
+  const borrador = borradorId ? ediciones.find((e) => e.id === borradorId && e.status === "draft") ?? null : null;
+  const base = borrador ?? vigente;
   const puente = {
     publishUrl: "/ecp/pvc/tablero/embed/publicar",
-    current: vigente ? { code: vigente.code, pvc: vigente.pvcCop, status: vigente.status, date: vigente.publishedAt, hash: vigente.hash, S: vigente.inputs, modelVersion: vigente.modelVersion } : null,
+    current: base ? { code: base.code, pvc: base.pvcCop, status: base.status, date: base.publishedAt ?? base.createdAt, hash: borrador ? null : base.hash, S: base.inputs, modelVersion: base.modelVersion } : null,
     editions: ediciones.map((e) => ({ id: e.id, code: e.code, pvc: e.pvcCop, status: e.status, date: e.publishedAt ?? e.createdAt, hash: e.hash, gob: e.outputs?.edicion?.gob ?? null, prima: e.outputs?.kpis?.prima_coop ?? null, modelVersion: e.modelVersion, S: e.inputs })),
   };
   // `<` escapado: el JSON va dentro de un <script> y una cadena con "</script>" lo cerraría.

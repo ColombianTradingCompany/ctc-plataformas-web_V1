@@ -49,6 +49,10 @@ export type ClaudeOpts = {
   maxTokens?: number;
   /** Búsqueda web del lado del servidor — solo donde hace falta salir a mirar. */
   webSearch?: number;
+  /** V5.179 (agente del PVC): la búsqueda la llama el modelo DIRECTAMENTE (`allowed_callers: ["direct"]`), sin el bucle de
+   *  código del «programmatic tool calling» — con él, una corrida pasó de 200 s; directo, 3 búsquedas tardan ~7 s. Es además
+   *  lo que exige Haiku 4.5, que no soporta el otro modo. Opt-in: los usos que ya existían no cambian. */
+  webSearchDirecto?: boolean;
   timeoutMs?: number;
   /** Cuántas veces se reintenta un TIMEOUT (los 529/429 tienen su propia
    *  cuenta). Por defecto 1. Ponerlo a 0 cuando quien llama ya tiene su propio
@@ -86,7 +90,7 @@ export async function claudeSourced(opts: ClaudeOpts): Promise<{ text: string; s
           model: opts.model,
           max_tokens: opts.maxTokens ?? 2000,
           system: opts.system,
-          ...(opts.webSearch ? { tools: [{ type: "web_search_20260209", name: "web_search", max_uses: opts.webSearch }] } : {}),
+          ...(opts.webSearch ? { tools: [{ type: "web_search_20260209", name: "web_search", max_uses: opts.webSearch, ...(opts.webSearchDirecto ? { allowed_callers: ["direct"] } : {}) }] } : {}),
           messages: [{ role: "user", content: opts.user }],
         }),
         signal: AbortSignal.timeout(opts.timeoutMs ?? REQUEST_TIMEOUT_MS),

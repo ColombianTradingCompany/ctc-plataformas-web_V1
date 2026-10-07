@@ -14,6 +14,10 @@
       "schedule": "25 11 * * *"
     },
     {
+      "path": "/api/cron/agente-pvc",
+      "schedule": "40 11 * * *"
+    },
+    {
       "path": "/api/cron/integraciones",
       "schedule": "35 11 * * *"
     },

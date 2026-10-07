@@ -43,6 +43,44 @@ export type PvcEdition = {
   minimosPorGrado: Partial<Record<"black" | "red" | "blue" | "gold", number>> | null;
   rangosCalidad: { humedad_min: number; humedad_max: number; aw_max: number } | null;
   fletePorRegion: Partial<Record<"santander" | "centro" | "sur", number>> | null;
+  /** V5.179: lo que hizo el agente, si la edición es (o fue) su borrador. */
+  agente: AgenteDeEdicion | null;
+};
+
+/** V5.179 (docs/PLAN_CICLOS.md §6) · el informe del agente: lo que lee del mercado y lo que sugiere para los insumos que arrastra. */
+export type InformeDelAgente = {
+  resumen: string;
+  mercado: string[];
+  insumos: { campo: string; valor: number | null; unidad?: string; fuente?: string; nota?: string }[];
+  score: { factor: string; signo: number; razon: string }[];
+  riesgos: string[];
+  recomendacion: string;
+};
+
+export type FuenteDeInsumo = "fnc_diaria" | "fnc_mensual" | "trm_oficial" | "arrastrado" | "edicion_vigente" | "calendario";
+
+export type AgenteDeEdicion = {
+  version: 1;
+  creadoAt: string;
+  porQuien: "cron" | "owner";
+  corte: string;
+  agenteEl: string;
+  publicaAMasTardar: string;
+  pvcVigente: number | null;
+  vigenteCodigo: string | null;
+  fuentes: Record<string, FuenteDeInsumo>;
+  arrastradas: string[];
+  meses: { mes: string; valor: number; fuente: "oficial" | "diaria"; dias: number }[];
+  cobertura180: number;
+  trm: { valor: number; fecha: string } | null;
+  informe: InformeDelAgente | null;
+  fuentesWeb: { url: string; title: string }[];
+  ia: { modelo: string; ok: boolean; error: string | null; ms: number } | null;
+  /** Los dos pasos del informe (investigar con búsqueda web · redactar), cada uno con su modelo, tiempo y error. */
+  pasos?: { paso: "investigar" | "redactar"; modelo: string; ok: boolean; error: string | null; ms: number }[];
+  /** Lo que el paso de investigación encontró (datos con fuente), aunque el informe no se haya escrito. */
+  investigacion?: unknown;
+  avisos: { creadoAt?: string | null; creadoError?: string | null; recordatorioAt?: string | null; vencidoAt?: string | null };
 };
 
 export type PvcResult = { ok: true; id?: string } | { ok: false; error: string };

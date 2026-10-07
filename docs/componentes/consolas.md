@@ -177,6 +177,7 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.179 · el Tablero de Ejecución** lista el borrador del agente por publicar (`pvc:edicion:<código>`, de la ECP) hasta que se publique.
 - **V5.178 · el Tablero de Ejecución** lista la corrección del PVC por resolver (tipo de tarea `pvc`, de la ECP). Una invitación de Cherry Picked anclada a una edición que se corrigió firma con el PVC corregido (`condicionesDeFirma`).
 - **V5.177 · «Confirmar la oferta» elige la región del Flete a CTCx** (sugerida por el departamento de la finca; fuera de Colombia la elige CTCx) y el precio se mueve con ella; `emitOffer` la exige en las ancladas y congela `flete_region`/`flete_carga`; la renovación (`prepararRenovacion`) conserva la región. Selection: tope = PVC − 8 % + flete.
 - **V5.176 · la operación del trato por ventanas** en `/ocp/contratos/[id]` (`ventanaActions.ts`: venta semanal, tiquete y 60 %, recibo con humedad/aw y 40 % o fuera de rango, prórroga y faltante de lo vendido, renovación) y la columna «Renovaciones de ventana» en «Pendiente de Oferta» (desde la semana 4). Pendiente: conducirlo en el navegador con una cuenta real (OTP).

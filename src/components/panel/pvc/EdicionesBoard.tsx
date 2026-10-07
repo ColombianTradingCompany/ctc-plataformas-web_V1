@@ -7,6 +7,7 @@ import table from "@/components/cotizador/quotesTable.module.css";
 import type { PvcEdition } from "@/lib/pvc/tipos";
 import { VariablesDeEdicion } from "./VariablesDeEdicion";
 import { VigilanciaDeCorreccion, type EstadoDeLaVigilancia } from "./VigilanciaDeCorreccion";
+import { EdicionSiguiente, type EstadoDelAgente } from "./EdicionSiguiente";
 
 // ── BCP · PVC · Ediciones ────────────────────────────────────────────────────
 // La edición vigente arriba con sus KPIs; debajo el historial. Publicar se hace
@@ -23,12 +24,12 @@ const ESTADO: Record<string, { label: string; cls: string }> = {
   corrected: { label: "Corregida (ciclo)", cls: styles.badgeWarn },
   superseded: { label: "Sustituida", cls: styles.badge },
   computed: { label: "Calculada", cls: styles.badge },
-  draft: { label: "Borrador", cls: styles.badge },
+  draft: { label: "Borrador del agente", cls: styles.badge },
 };
 
 export function EdicionesBoard({
-  ediciones, modeloVersion, vigenteId, proximaId, vigilancia,
-}: { ediciones: PvcEdition[]; modeloVersion: string | null; vigenteId: string | null; proximaId: string | null; vigilancia: EstadoDeLaVigilancia }) {
+  ediciones, modeloVersion, vigenteId, proximaId, vigilancia, agente,
+}: { ediciones: PvcEdition[]; modeloVersion: string | null; vigenteId: string | null; proximaId: string | null; vigilancia: EstadoDeLaVigilancia; agente: EstadoDelAgente }) {
   // Vigente y próxima llegan RESUELTAS del servidor (ventana de vigencia). No
   // se deriva aquí: «la última publicada» no es «la que rige» — hay 7–8 semanas
   // entre publicar y entrar en vigor.
@@ -99,6 +100,9 @@ export function EdicionesBoard({
 
       {/* V5.178 (docs/PLAN_CICLOS.md §6): la vigilancia de la corrección por ciclo — lo medido hoy y lo que hay por aprobar. */}
       <VigilanciaDeCorreccion estado={vigilancia} />
+
+      {/* V5.179 (docs/PLAN_CICLOS.md §6): el borrador del agente de la edición siguiente — lo medido, lo arrastrado y el informe. */}
+      <EdicionSiguiente estado={agente} />
 
       {/* V5.174 (docs/PLAN_CICLOS.md): las variables de la edición vigente y de la próxima — fechas, mínimos, calidad, flete (V5.177). */}
       {vigente && <VariablesDeEdicion key={`${vigente.id}-${vigente.validFrom}-${vigente.ciclo1Hasta}`} edicion={vigente} />}

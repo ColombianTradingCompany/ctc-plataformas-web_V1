@@ -253,6 +253,32 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   check("Modelo Económico · Ediciones enseña la vigilancia (lo medido y lo por resolver)", lee("src/components/panel/pvc/EdicionesBoard.tsx").includes("<VigilanciaDeCorreccion estado={vigilancia} />") && lee("src/app/ecp/(app)/pvc/page.tsx").includes("estadoDeLaVigilancia()") && lee("src/components/panel/pvc/VigilanciaDeCorreccion.tsx").includes('id="vigilancia"'));
 }
 
+// ── 10. El agente de la edición siguiente (V5.179 · tanda 4 b): insumos FNC medidos, TRM oficial, lo demás ARRASTRADO y marcado;
+//     borrador en pvc_editions; informe con búsqueda web que SUGIERE y no aplica; aviso, recordatorios y publicación por el Tablero ──
+{
+  const ins = await import("../src/lib/pvc/insumos.ts");
+  const { FNC_MENSUAL } = await import("../src/lib/pvc/motor.ts");
+  check("insumos · los días sin lectura repiten la anterior; los anteriores a la primera no cuentan", JSON.stringify(ins.serieRellenada([{ fecha: "2026-10-01", valor: 100 }, { fecha: "2026-10-03", valor: 300 }], "2026-09-30", "2026-10-04")) === "[100,100,300,300]");
+  check("insumos · corte a mitad de mes → los 5 meses completos anteriores (como F4-2026: 4-sep → abr–ago); en los últimos días del mes, ese mes cuenta", ins.mesesDelCorte("2026-09-04").join() === "2026-04,2026-05,2026-06,2026-07,2026-08" && ins.mesesDelCorte("2026-11-16").join() === "2026-06,2026-07,2026-08,2026-09,2026-10" && ins.mesesDelCorte("2026-11-28").at(-1) === "2026-11" && ins.mesesDelCorte("2027-02-15").join() === "2026-09,2026-10,2026-11,2026-12,2027-01");
+  const serie = [["2026-04-15", 2100000], ["2026-08-25", 2350000], ["2026-09-04", 2090000], ["2026-09-20", 2030000], ["2026-10-06", 2110000]].map(([fecha, valor]) => ({ fecha, valor }));
+  const f4 = ins.insumosDeLaFnc(serie, "2026-09-04");
+  const f1 = ins.insumosDeLaFnc(serie, "2026-11-16");
+  check("insumos · con el corte de F4-2026 reproducen sus 5 meses oficiales; después, los meses sin cifra oficial salen de la serie diaria", JSON.stringify(f4.fnc) === JSON.stringify(FNC_MENSUAL[2026].slice(3, 8)) && f4.fnc_corte === 2090000 && f1.meses.map((m) => m.fuente).join() === "oficial,oficial,oficial,diaria,diaria" && f1.fnc_corte === 2110000 && f1.fnc_max90 === 2350000 && ins.insumosDeLaFnc([], "2026-11-16") === null);
+  const ag = lee("src/lib/pvc/agente.ts");
+  check("agente · mide la FNC y la TRM oficial (datos.gov.co); ARRASTRA y marca C strip, diferencial, costo, escalamiento y score; nunca aplica lo que sugiere el informe", ag.includes('export const ARRASTRADAS_SIEMPRE = ["c_strip", "delta", "costo", "escalamiento", "score"] as const;') && ag.includes("datos.gov.co/resource/32sa-8pi3.json") && ag.includes("c_strip: vi.c_strip,") && ag.includes("trm: trm?.valor ?? vi.trm,") && ag.includes('trm: trm ? "trm_oficial" : "arrastrado",') && !/c_strip:\s*informe/.test(ag));
+  check("agente · el informe va en dos pasos acotados por el cliente de la casa (investigar: modelo pequeño con búsqueda web · redactar: mediano sin búsqueda), al libro (pvc:agente); sin clave el borrador sale igual", ag.includes("claudeSourced({ model: MODEL_CHEAP,") && ag.includes("webSearch: BUSQUEDAS_MAX, webSearchDirecto: true") && ag.includes("await claude({ model: MODEL_WRITE,") && !/claude\(\{ model: MODEL_WRITE[^}]*webSearch/.test(ag) && ag.includes("superficie: USOS.pvcAgente") && ag.includes("msg === NO_KEY") && lee("src/lib/ai/consumo.ts").includes('pvcAgente: "pvc:agente"'));
+  check("agente · un solo borrador vivo por código (el anterior queda sustituido, no se borra); nunca toca una publicada; el aviso deja su resultado", ag.includes('.update({ status: "superseded" }).eq("code", d.codigo).eq("status", "draft")') && ag.includes("ya está publicada: no hay borrador que preparar") && ag.includes("creadoError: env.error") && !ag.includes(".delete("));
+  check("agente · el cron espera a la semana 1 del ciclo 2; después solo recuerda el plazo (3 días antes y al vencer)", ag.includes("if (hoy < est.destino.agenteEl) return") && ag.includes("hoy >= sumaDias(plazo, -3)") && ag.includes("if (hoy > plazo && !avisos.vencidoAt)") && lee("vercel.json").includes('"path": "/api/cron/agente-pvc"') && lee("src/app/api/cron/agente-pvc/route.ts").includes("Bearer ${secret}"));
+  const mig = lee("docs/migraciones/2026-10-07_agente_pvc.sql");
+  check("migración · pvc_editions.agente y un borrador por código (índice único parcial)", mig.includes("add column if not exists agente jsonb") && mig.includes("on public.pvc_editions (code) where status = 'draft'"));
+  const sv = lee("src/lib/pvc/servicio.ts");
+  check("publicar · la edición nace con sus variables (del borrador, de la que reemplaza o de la última) y sus ciclos ISO; el borrador queda sustituido", sv.includes("ciclo1_hasta: ciclo1, minimos_por_grado: fuenteVars?.minimos_por_grado ?? null") && sv.includes("calendarioPropuesto(trimestreDe(sumaDias(input.entradas.valid_from, 14)))") && sv.includes('.update({ status: "superseded" }).eq("code", input.entradas.codigo).eq("status", "draft")'));
+  check("Tablero · `?borrador=` arranca desde el borrador (la publicación sigue siendo una sola, la del Tablero)", lee("src/lib/pvc/tablero.ts").includes("export async function tableroConPuente(borradorId?: string | null)") && lee("src/app/ecp/(app)/pvc/tablero/embed/route.ts").includes('searchParams.get("borrador")') && lee("src/app/ecp/(app)/pvc/tablero/page.tsx").includes("`/ecp/pvc/tablero/embed?borrador=${b}`"));
+  const ac = lee("src/lib/pvc/actions.ts");
+  check("Ediciones · «Edición siguiente» enseña lo medido, lo arrastrado y el informe; pedirla ya es del owner, con el costo a la vista", ac.includes("export async function prepararBorradorAction(") && ac.includes("Pedir el borrador del agente es una decisión del owner.") && lee("src/components/panel/pvc/EdicionSiguiente.tsx").includes("≈ US$0,15 de IA") && lee("src/components/panel/pvc/EdicionesBoard.tsx").includes("<EdicionSiguiente estado={agente} />"));
+  check("Tablero de Ejecución · el borrador por publicar es una tarea de la ECP", lee("src/lib/panel/tareasCarga.ts").includes("key: `pvc:edicion:${ag.destino.codigo}`") && lee("src/lib/panel/tareasCarga.ts").includes('href: "/ecp/pvc#siguiente"'));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-ciclos: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("  - " + f);

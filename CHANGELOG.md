@@ -19,6 +19,33 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.179] — 2026-10-07 (commit pendiente)
+
+- **Añadido**: **el agente de la edición siguiente del PVC** (tanda 4 de los Ciclos, `docs/PLAN_CICLOS.md` §6; owner: «sí, que
+  prepare el borrador ya», presupuesto de IA ~US$10). En la semana 1 del ciclo 2 —o cuando el owner lo pide— deja la edición
+  siguiente como BORRADOR (`pvc_editions`, status draft): las fechas del trimestre ISO siguiente con sus ciclos, los insumos FNC
+  medidos (5 meses —oficiales o de la serie diaria—, corte, 30, 90 y 180 días: `src/lib/pvc/insumos.ts`), la TRM oficial del día
+  (datos.gov.co) y lo que no se puede medir —C strip, diferencial, costo, escalamiento, score— ARRASTRADO de la vigente y marcado.
+  El motor da el PVC; el informe va en dos pasos acotados (investigar: modelo pequeño con 3 búsquedas web directas · redactar:
+  modelo mediano sin búsqueda) y SUGIERE valores con fuente para lo arrastrado, sin aplicarlos. Aviso por correo, tarea en el
+  Tablero de Ejecución y recordatorios del plazo (3 días antes y al vencer). Cron `/api/cron/agente-pvc` (11:40 UTC).
+- **Añadido**: en ECP → Modelo Económico → Ediciones, la tarjeta **«Edición siguiente»**: el PVC propuesto frente al vigente, de
+  dónde sale cada insumo (lo arrastrado resaltado), el informe con sus fuentes y los botones «Revisar y publicar en el Tablero»
+  (`/ecp/pvc/tablero?borrador=<id>` arranca el tablero desde el borrador) y «Regenerar» (owner, ≈ US$0,15 de IA).
+- **Cambiado**: una edición publicada nace con sus variables —del borrador del mismo código, de la que reemplaza o de la última
+  publicada— y con los ciclos del calendario ISO (antes nacía sin ciclos y las ventanas de firma quedaban cerradas hasta fijarlos a
+  mano); el borrador de ese código queda sustituido.
+- **Cambiado**: el cliente compartido de IA (`src/lib/coffeed/claude.ts`) acepta `webSearchDirecto` (opt-in): la búsqueda web la
+  llama el modelo directamente (`allowed_callers: ["direct"]`). Con el modo por defecto una corrida del agente pasó de 200 s y se
+  abortó; directo, 3 búsquedas tardan ~10 s. Los usos que ya existían no cambian.
+- **Datos**: migración `2026-10-07_agente_pvc.sql` (aditiva): `pvc_editions.agente` (jsonb) y un solo borrador por código (índice
+  único parcial). Primer borrador, pedido por el owner: **PVC-F1-2027 = $2.500.000** (gobierna el piso; TRM oficial 3.216,01;
+  4–ene → 4–abr 2027, se publica a más tardar el 29-nov-2026). Gasto de IA de la puesta a punto: US$0,32 anotados en `ai_usage`
+  (`pvc:agente`) más dos llamadas abortadas por tiempo, que el libro no puede anotar, y las búsquedas (~US$0,01 cada una).
+- **Seguridad**: `qa-ciclos` (89 → 101: insumos FNC con la paridad de F4-2026, lo arrastrado, los dos pasos del informe, el
+  borrador único, la herencia de variables, el Tablero con borrador, la tarea).
+- **Docs**: `PLAN_CICLOS.md` §9 (tanda 4 hecha); charters `herramientas-internas`, `consolas`, `coffeed`; ALINEACION §3.
+
 ## [V5.178] — 2026-10-07 (commit 605110b)
 
 - **Añadido**: **la vigilancia de la corrección del PVC** (tanda 4 de los Ciclos, `docs/PLAN_CICLOS.md` §6). Cada día, después de

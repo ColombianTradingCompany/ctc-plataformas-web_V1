@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { calcular, calcularConPvc, huella, type PvcEntradas, type PvcParams, type PvcSalida } from "./motor";
 import { precioDeLaEscalera, type EscalonPublicado, type PrecioDeGrado } from "./precio";
-import type { CalendarioDeEdicion } from "@/lib/trato/calendario";
+import { calendarioPropuesto, sumaDias, trimestreDe, type CalendarioDeEdicion } from "@/lib/trato/calendario";
 import { fletesDeLaEdicion, type FletePorRegion, type RegionDeFlete } from "@/lib/trato/flete";
 import type { GradoId } from "@/lib/grados/definicion";
 import type { PvcCurrent, PvcEdition, PvcEditionStatus, PvcModelVersion } from "./tipos";
@@ -19,11 +19,11 @@ type EditionRow = {
   cut_date: string | null; publish_date: string | null; valid_from: string | null; valid_to: string | null;
   inputs: PvcEntradas; outputs: PvcSalida; pvc_cop: number | null; hash: string | null;
   correction_of: string | null; published_at: string | null; notes: string | null; created_at: string;
-  ciclo1_hasta: string | null; minimos_por_grado: PvcEdition["minimosPorGrado"]; rangos_calidad: PvcEdition["rangosCalidad"]; flete_por_region: PvcEdition["fletePorRegion"];
+  ciclo1_hasta: string | null; minimos_por_grado: PvcEdition["minimosPorGrado"]; rangos_calidad: PvcEdition["rangosCalidad"]; flete_por_region: PvcEdition["fletePorRegion"]; agente: PvcEdition["agente"];
   pvc_model_versions?: { version: string } | null;
 };
 
-const EDITION_COLS = "id, code, model_version_id, status, cut_date, publish_date, valid_from, valid_to, inputs, outputs, pvc_cop, hash, correction_of, published_at, notes, created_at, ciclo1_hasta, minimos_por_grado, rangos_calidad, flete_por_region, pvc_model_versions(version)";
+const EDITION_COLS = "id, code, model_version_id, status, cut_date, publish_date, valid_from, valid_to, inputs, outputs, pvc_cop, hash, correction_of, published_at, notes, created_at, ciclo1_hasta, minimos_por_grado, rangos_calidad, flete_por_region, agente, pvc_model_versions(version)";
 
 const toModel = (r: ModelRow): PvcModelVersion => ({ id: r.id, version: r.version, params: r.params, notes: r.notes, createdAt: r.created_at });
 const toEdition = (r: EditionRow): PvcEdition => ({
@@ -31,7 +31,7 @@ const toEdition = (r: EditionRow): PvcEdition => ({
   cutDate: r.cut_date, publishDate: r.publish_date, validFrom: r.valid_from, validTo: r.valid_to,
   inputs: r.inputs, outputs: r.outputs, pvcCop: r.pvc_cop, hash: r.hash, correctionOf: r.correction_of,
   publishedAt: r.published_at, notes: r.notes, createdAt: r.created_at,
-  ciclo1Hasta: r.ciclo1_hasta, minimosPorGrado: r.minimos_por_grado, rangosCalidad: r.rangos_calidad, fletePorRegion: r.flete_por_region,
+  ciclo1Hasta: r.ciclo1_hasta, minimosPorGrado: r.minimos_por_grado, rangosCalidad: r.rangos_calidad, fletePorRegion: r.flete_por_region, agente: r.agente ?? null,
 });
 
 /** V5.174: las fechas de una edición como calendario de Ciclos (null si le falta alguna). */
@@ -190,7 +190,18 @@ export async function publicarEdicion(input: {
   const salida = calcular(input.params, input.entradas);
   const service = createServiceRoleClient();
   const now = new Date().toISOString();
-  const { data: prev } = await service.from("pvc_editions").select("id").eq("code", input.entradas.codigo).in("status", ["published", "corrected"]);
+  const VARS = "id, ciclo1_hasta, minimos_por_grado, rangos_calidad, flete_por_region";
+  type Vars = { id: string; ciclo1_hasta: string | null; minimos_por_grado: unknown; rangos_calidad: unknown; flete_por_region: unknown };
+  const { data: prev } = await service.from("pvc_editions").select(VARS).eq("code", input.entradas.codigo).in("status", ["published", "corrected"]);
+  // V5.179 (docs/PLAN_CICLOS.md §6): la edición nace con sus variables —del borrador del agente del mismo código, o de la que
+  // reemplaza, o de la última publicada— y, si nadie fijó sus ciclos, los del calendario ISO. Antes nacía sin ciclos y las
+  // ventanas de firma quedaban cerradas hasta que el owner los ponía a mano.
+  const { data: borrador } = await service.from("pvc_editions").select(VARS).eq("code", input.entradas.codigo).eq("status", "draft").maybeSingle();
+  const { data: ultima } = await service.from("pvc_editions").select(VARS).in("status", ["published", "corrected"]).order("published_at", { ascending: false }).limit(1).maybeSingle();
+  const mismaClave = ((borrador as Vars | null) ?? ((prev as Vars[] | null) ?? [])[0] ?? null) as Vars | null;
+  const fuenteVars = mismaClave ?? (ultima as Vars | null);
+  const propuesto = input.entradas.valid_from ? calendarioPropuesto(trimestreDe(sumaDias(input.entradas.valid_from, 14))) : null;
+  const ciclo1 = mismaClave?.ciclo1_hasta ?? (propuesto && propuesto.desde === input.entradas.valid_from && propuesto.hasta === input.entradas.valid_to ? propuesto.ciclo1Hasta : null);
   const { data, error } = await service
     .from("pvc_editions")
     .insert({
@@ -199,10 +210,13 @@ export async function publicarEdicion(input: {
       inputs: input.entradas, outputs: salida, pvc_cop: salida.edicion.pvc, hash: huella(input.params, input.entradas),
       previous_edition_id: prev?.[0]?.id ?? null, correction_of: input.correctionOf ?? null,
       published_by: input.userId, published_at: now, notes: input.notes ?? null, created_by: input.userId,
+      ciclo1_hasta: ciclo1, minimos_por_grado: fuenteVars?.minimos_por_grado ?? null, rangos_calidad: fuenteVars?.rangos_calidad ?? null, flete_por_region: fuenteVars?.flete_por_region ?? null,
     })
     .select("id").single();
   if (error) return { error: error.message };
   for (const p of prev ?? []) await service.from("pvc_editions").update({ status: "superseded" }).eq("id", p.id);
+  // El borrador del agente con ese código queda sustituido: lo publicado manda (no se borra).
+  await service.from("pvc_editions").update({ status: "superseded" }).eq("code", input.entradas.codigo).eq("status", "draft");
   await service.from("audit_log").insert({
     entity_type: "pvc_edition", entity_id: data.id, action: input.correctionOf ? "corrected" : "published", new_status: "published",
     performed_by: input.userId, notes: `${input.entradas.codigo} · ${salida.edicion.pvc}`,

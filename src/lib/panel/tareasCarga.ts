@@ -1,5 +1,6 @@
 import "server-only";
 import { propuestasPendientes } from "@/lib/pvc/vigilancia";
+import { estadoDelAgente } from "@/lib/pvc/agente";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { consolaDelPilar, tableroDelPilar } from "./leadsPilares";
@@ -136,6 +137,19 @@ export async function cargarTareas(service: SupabaseClient): Promise<{
       label: `${c.relacion === "vigente" ? "Corrección" : "Enmienda"} del PVC propuesta — ${c.codigo} ${c.tipo === "alza" ? "+" : "−"}$${c.monto.toLocaleString("es-CO")} → $${c.pvcNuevo.toLocaleString("es-CO")}`,
       sublabel: `${c.ciclo} · ${c.aciertos} de 20 lecturas FNC · vence el ${c.cicloHasta}`,
       href: "/ecp/pvc#vigilancia",
+      consola: "ecp",
+    });
+  }
+
+  // V5.179: el borrador del agente de la edición siguiente, hasta que se publique.
+  const ag = await estadoDelAgente(service);
+  if (ag.ok && ag.borrador && !ag.publicada) {
+    pon({
+      key: `pvc:edicion:${ag.destino.codigo}`,
+      icon: "🗓️",
+      label: `Publicar la edición siguiente — ${ag.destino.codigo} (borrador del agente: $${(ag.borrador.pvc ?? 0).toLocaleString("es-CO")})`,
+      sublabel: `revisar lo arrastrado y publicar desde el Tablero a más tardar el ${ag.destino.publicaAMasTardar}`,
+      href: "/ecp/pvc#siguiente",
       consola: "ecp",
     });
   }

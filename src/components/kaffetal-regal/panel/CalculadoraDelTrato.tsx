@@ -66,6 +66,9 @@ export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDec
   const libreKg = Math.min(retiroPosible, libreTotal);
   const penalizadoKg = Math.max(0, retiroPosible - libreKg);
   const penalidad = (cargasDe(penalizadoKg) * c.precioKg * CARGA_KG * PENALIDAD_RETIRO_PCT) / 100;
+  // V5.185 (owner): la penalidad frente a lo que el productor gana de más vendiendo a CTCx en vez de a la FNC.
+  const ventajaFnc = v.diferenciaFncCop;
+  const penalidadSobreVentajaPct = ventajaFnc != null && ventajaFnc > 0 ? (penalidad / ventajaFnc) * 100 : null;
   const cumple = decl.ok && acepta && puedeDecidir;
 
   const kpi = (titulo: string, valor: string, nota?: string, color?: string) => (
@@ -294,12 +297,38 @@ export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDec
             Retira {retiroPosible.toLocaleString("es-CO", { maximumFractionDigits: 1 })} kg: <b style={{ color: "var(--green)" }}>{libreKg.toLocaleString("es-CO", { maximumFractionDigits: 1 })} kg sin costo</b>
             {penalizadoKg > 0 ? (
               <>
-                {" "}y <b style={{ color: "var(--accent)" }}>{penalizadoKg.toLocaleString("es-CO", { maximumFractionDigits: 1 })} kg con penalidad</b> ({PENALIDAD_RETIRO_PCT} % del precio de cada carga): <b>{formatCop(penalidad)}</b>.
+                {" "}y <b style={{ color: "var(--accent)" }}>{penalizadoKg.toLocaleString("es-CO", { maximumFractionDigits: 1 })} kg con penalidad</b>.{" "}
+                <b>Penalidad total a pagar: {formatCop(penalidad)}</b> (el {PENALIDAD_RETIRO_PCT} % del precio de cada una de las{" "}
+                {cargasDe(penalizadoKg).toLocaleString("es-CO", { maximumFractionDigits: 2 })} cargas penalizadas, a {formatCop(c.precioKg * CARGA_KG)} la carga).
               </>
             ) : (
               "."
             )}
           </span>
+          {/* V5.185 (owner): «un número comparativo que relacione el costo de retirar con lo ya ganado en "Más que vendiendo a la FNC"». */}
+          {ventajaFnc != null && (
+            <div style={{ fontSize: 12.5, border: "1px solid var(--line)", borderRadius: 8, padding: "6px 10px", background: "var(--paper)" }}>
+              {penalidad <= 0 ? (
+                <>
+                  Este retiro no le cuesta nada: conserva toda su ventaja frente a la FNC, <b style={{ color: "var(--green)" }}>{formatCop(ventajaFnc)}</b>.
+                </>
+              ) : penalidadSobreVentajaPct != null ? (
+                <>
+                  La penalidad equivale al <b>{penalidadSobreVentajaPct.toLocaleString("es-CO", { maximumFractionDigits: 1 })} %</b> de lo que gana de más vendiendo a CTCx en
+                  vez de a la FNC ({formatCop(ventajaFnc)}).{" "}
+                  {penalidad < ventajaFnc ? (
+                    <>
+                      Aun pagándola, le quedan <b style={{ color: "var(--green)" }}>{formatCop(ventajaFnc - penalidad)}</b> de ventaja.
+                    </>
+                  ) : (
+                    <b style={{ color: "var(--red)" }}>Se come toda la ventaja: quedaría {formatCop(penalidad - ventajaFnc)} por debajo de vender a la FNC.</b>
+                  )}
+                </>
+              ) : (
+                <>En este escenario no hay ventaja frente a la FNC que compense la penalidad de {formatCop(penalidad)}.</>
+              )}
+            </div>
+          )}
         </div>
         <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 6 }}>
           Entrega: {lugarEntrega}{" "}

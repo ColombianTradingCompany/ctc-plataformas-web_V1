@@ -19,6 +19,18 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.185] — 2026-10-07 (commit pendiente)
+
+- **Cambiado**: en la calculadora, el retiro dice **«Penalidad total a pagar: $X»** con su desglose (el 4 % del precio de cada una de las
+  N cargas penalizadas, a $Y la carga); antes se leía como si el monto fuera solo el 4 %. «Mi trato» y su confirmación usan la misma
+  palabra.
+- **Añadido**: el número comparativo del owner: la penalidad como % de lo que el productor gana de más vendiendo a CTCx en vez de a la
+  FNC («Más que vendiendo a la FNC»), y lo que le queda de ventaja después de pagarla —o, si se la come, cuánto quedaría por debajo—.
+- **Cambiado**: en la invitación, justo después de «Oferta de CTCx: $X/kg de CPS», el precio por carga y, entre paréntesis, el Flete a
+  CTCx que incluye.
+- **Seguridad**: `qa-ciclos` (121 → 123).
+- **Docs**: charter `kaffetal-regal`.
+
 ## [V5.184] — 2026-10-07 (commit c5e9a47)
 
 - **Cambiado**: **«🎲 Escenario aleatorio» ya no cambia el % vendido** (owner: «no hagas que esto cambie el "CTCx termina vendiendo

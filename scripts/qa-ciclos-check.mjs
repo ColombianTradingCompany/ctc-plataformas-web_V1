@@ -345,6 +345,15 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   check("KR · la calculadora tiene «🎲 Escenario aleatorio» (semilla nueva en cada clic; no toca el % vendido, V5.184) y «💵 ¿Cuándo me pagan?» con la cadencia de baches", calc.includes("🎲 Escenario aleatorio") && calc.includes("setSemilla(Math.floor(Math.random() * 1_000_000_000) + 1);") && !/function otroEscenario\(\) \{[^}]*setVentaPct/.test(calc) && calc.includes("💵 ¿Cuándo me pagan?") && calc.includes("pagosPorBaches({ porSemana: v.porSemana, saco: v.saco, cadencia })") && calc.includes("Solo hay envío —y pago— si hay compras confirmadas."));
 }
 
+// ── 15. V5.185 (owner, 2026-10-07): la penalidad del retiro se lee como TOTAL a pagar; se compara con lo ganado de más frente a la
+//     FNC; la oferta enseña el precio por carga con el Flete a CTCx entre paréntesis ──
+{
+  const calc = lee("src/components/kaffetal-regal/panel/CalculadoraDelTrato.tsx");
+  const tab = lee("src/components/kaffetal-regal/panel/ContratosTab.tsx");
+  check("retiro · «Penalidad total a pagar» con su desglose por cargas, y su peso frente a «Más que vendiendo a la FNC» (lo que queda de ventaja, o si se la come)", calc.includes("Penalidad total a pagar: {formatCop(penalidad)}") && calc.includes("const penalidadSobreVentajaPct = ventajaFnc != null && ventajaFnc > 0 ? (penalidad / ventajaFnc) * 100 : null;") && calc.includes("Aun pagándola, le quedan") && calc.includes("Se come toda la ventaja") && tab.includes("penalidad total a pagar: <b>{formatCop(vista.penalidadCop)}</b>"));
+  check("oferta · después del precio por kg, el precio por carga y, entre paréntesis, el Flete a CTCx que incluye", tab.includes("{formatCop(offer.pricePerKg * CARGA_KG)}</b> por carga") && tab.includes("(incluye {formatCop(offer.flete.carga)} de Flete a CTCx)"));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-ciclos: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("  - " + f);

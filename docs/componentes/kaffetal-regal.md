@@ -152,6 +152,7 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.185 · el retiro** dice «Penalidad total a pagar» y la compara con «Más que vendiendo a la FNC» (cuánto de la ventaja se come); la invitación enseña el precio por carga con el Flete a CTCx entre paréntesis.
 - **V5.183 · la calculadora** suma «🎲 Escenario aleatorio» (otro en cada clic) y «💵 ¿Cuándo me pagan?» (60/40 por envío, cadencia de baches 1–5 semanas, ★ 2 y 3). Lo vendido sale por baches que decide el productor (contrato `2026-10-07.3`). Pendiente: en «Mi trato», enseñar el bache abierto con su plazo de forma más visible.
 - **V5.182 · cada cambio de la existencia queda en `lot_existencia_historial`** (trigger en `lots`, inmutable), también el de la Ficha A2: el productor puede cambiarla en cada punto de control y el cambio no se pierde.
 - **V5.181 · la existencia del lote es obligatoria al solicitar la evaluación** (prellenada desde A2, corregible; `postularLote` la exige). En A2 sigue opcional. Dos lotes llevan una existencia ESTIMADA por CTCx (CTC-L-403D5C8B 2.500 kg, CTC-L-DA154613 500 kg): la confirma su productor al solicitar.

@@ -6,7 +6,7 @@ import { CONTRACT_STATUS_LABEL, GRADES, ctcLotReference, type DespachoDelTrato, 
 import { previsualizarOferta, registrarExistencia, respondToOffer, type VistaPreviaDeOferta } from "@/lib/ofertas/producerActions";
 import { cancelarPorDespacho, pasarALaVentanaSiguiente, pedirProrroga, previsualizarRetiro, registrarDespacho, retirarDelTrato } from "@/lib/trato/producerActions";
 import { formatCop } from "@/lib/arena/inscriptions";
-import { LUGAR_DE_ENTREGA_POR_DEFECTO, MORA, PENALIDAD_RETIRO_PCT, PAGO_AL_DESPACHO_PCT } from "@/lib/trato/terminos";
+import { CARGA_KG, LUGAR_DE_ENTREGA_POR_DEFECTO, MORA, PENALIDAD_RETIRO_PCT, PAGO_AL_DESPACHO_PCT } from "@/lib/trato/terminos";
 import { fechaLarga } from "@/lib/trato/modalidades";
 import { fletePorKg, REGION_DE_FLETE_LABEL } from "@/lib/trato/flete";
 import { MORA_LABEL, mesesDelTrato } from "@/lib/trato/mesAMes";
@@ -391,7 +391,7 @@ function RetiroForm({ contract, onRefreshData }: { contract: ProducerContract; o
 
   async function confirmar() {
     if (!vista) return;
-    if (!window.confirm(`¿Retirar ${n} kg de su ventana por ${contract.lotName}?\n\n${vista.libreKg} kg libres · ${vista.penalizadoKg} kg con penalidad de ${formatCop(vista.penalidadCop)}.\nQuedarán ${vista.quedaKg} kg en la vitrina.`)) return;
+    if (!window.confirm(`¿Retirar ${n} kg de su ventana por ${contract.lotName}?\n\n${vista.libreKg} kg libres · ${vista.penalizadoKg} kg con penalidad: penalidad total a pagar ${formatCop(vista.penalidadCop)}.\nQuedarán ${vista.quedaKg} kg en la vitrina.`)) return;
     setBusy(true);
     const r = await retirarDelTrato(contract.id, n, nota);
     setBusy(false);
@@ -439,7 +439,7 @@ function RetiroForm({ contract, onRefreshData }: { contract: ProducerContract; o
       {kg && !valido && <div className={styles.sub} style={{ color: "var(--accent)", fontWeight: 700, marginTop: 4 }}>Escriba entre 0 y {disponible} kg.</div>}
       {vista && (
         <div className={styles.alist} style={{ marginTop: 6 }}>
-          <b>{vista.libreKg} kg</b> libres · <b>{vista.penalizadoKg} kg</b> con penalidad de <b>{formatCop(vista.penalidadCop)}</b> · quedan {vista.quedaKg} kg en la vitrina
+          <b>{vista.libreKg} kg</b> libres · <b>{vista.penalizadoKg} kg</b> con penalidad · penalidad total a pagar: <b>{formatCop(vista.penalidadCop)}</b> · quedan {vista.quedaKg} kg en la vitrina
         </div>
       )}
       <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end", marginTop: 10 }}>
@@ -651,6 +651,9 @@ function OfferCard({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshDa
           {offer.loteDeTemporadaPasada && <div className={styles.sub} style={{ color: "var(--accent)", fontWeight: 700, marginTop: 4 }}>Lote de la temporada pasada — su valor está enmarcado como tal.</div>}
           <div style={{ fontSize: 15, marginTop: 8 }}>
             Oferta de CTCx: <b>{formatCop(offer.pricePerKg)}/kg</b> de CPS
+            {/* V5.185 (owner): justo después, el equivalente por carga y, entre paréntesis, el Flete a CTCx que ya incluye. */}
+            {" "}· <b>{formatCop(offer.pricePerKg * CARGA_KG)}</b> por carga
+            {offer.flete && <span style={{ fontSize: 13, color: "var(--muted)" }}> (incluye {formatCop(offer.flete.carga)} de Flete a CTCx)</span>}
             {!conDeclaracion && offer.quantityKg != null && <> · <b>{offer.quantityKg} kg</b></>}
           </div>
           {/* V5.177: el Flete a CTCx de su región, ya sumado al precio. */}

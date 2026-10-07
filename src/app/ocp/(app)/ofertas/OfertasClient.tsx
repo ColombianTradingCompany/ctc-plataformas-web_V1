@@ -61,6 +61,8 @@ export type AnclajeDeOferta = {
   fletes: FletePorRegion;
   porRegion: Record<RegionDeFlete, { copKg: number; copCarga: number; copKgDirecta: number }>;
   regionSugerida: RegionDeFlete | null;
+  /** V5.186: la última lectura de la FNC (COP por carga) y su fecha, como referencia del precio por carga. */
+  fnc: { carga: number; fecha: string } | null;
 };
 
 export function EmitOfferForm({

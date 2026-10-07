@@ -667,3 +667,7 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-10-07] V5.185 · Kaffetal Regal: la penalidad del retiro como total a pagar y frente a la ventaja sobre la FNC; la oferta con su precio por carga y el Flete a CTCx
 - ANN `src/components/kaffetal-regal/panel/{CalculadoraDelTrato,ContratosTab}.tsx`, `scripts/qa-ciclos-check.mjs`, `docs/componentes/kaffetal-regal.md`.
 (commit: 37672f3)
+
+## [2026-10-07] V5.186 · «Mi trato» enseña el bache abierto con su plazo; «Pendiente de Oferta», la FNC del día junto al precio por carga
+- ANN `src/components/kaffetal-regal/{data.ts,KaffetalExperience.tsx,panel/ContratosTab.tsx}`, `app/ocp/(app)/ofertas/{page.tsx,OfertasClient.tsx,OfertaDesplegable.tsx}`, `scripts/qa-ciclos-check.mjs`, `docs/componentes/{kaffetal-regal,consolas}.md`.
+(commit: pendiente)

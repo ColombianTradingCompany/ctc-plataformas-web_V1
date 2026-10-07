@@ -439,7 +439,8 @@ export type ProducerContract = {
   sacoKg: number | null;
   minimoKg: number | null;
   sinRetiro: boolean;
-  ventas: { id: string; semana: string; kg: number; copKg: number; totalCop: number; confirmadaAt: string }[];
+  /** V5.186: `despachoId` = el bache (despacho «vendido») en que viaja la venta. */
+  ventas: { id: string; semana: string; kg: number; copKg: number; totalCop: number; confirmadaAt: string; despachoId: string | null }[];
   retiros: { id: string; kg: number; libreKg: number; penalizadoKg: number; penalidadCop: number; nota: string | null; createdAt: string }[];
   despachos: DespachoDelTrato[];
   cuenta: CuentaDeVentana | null;

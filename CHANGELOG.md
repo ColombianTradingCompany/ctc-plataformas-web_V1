@@ -19,6 +19,18 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.186] — 2026-10-07 (commit pendiente)
+
+- **Añadido**: en «Mi trato», **el bache abierto con su plazo** (owner): qué lleva (las ventas de cada semana), cuánto vale, a más
+  tardar cuándo sale (o hasta cuándo con la prórroga), los días que faltan —verde, ámbar a 7 días, rojo si venció—, cuánto le pagan
+  al registrar el tiquete (60 %) y al recibirlo (40 %), y su registro de despacho. Sin bache abierto, dice que se abre con la próxima
+  venta confirmada. Las ventas saben ya a qué bache van (`despachoId`).
+- **Añadido**: en «Pendiente de Oferta», bajo el precio por carga, **la FNC del día** (última lectura y su fecha) y cuánto está la
+  oferta por encima o por debajo de ella.
+- **Corregido**: «Pedir prórroga» ya no se ofrece en un despacho que ya la tuvo (el servidor la rechazaba).
+- **Seguridad**: `qa-ciclos` (123 → 125).
+- **Docs**: charters `kaffetal-regal`, `consolas`.
+
 ## [V5.185] — 2026-10-07 (commit 37672f3)
 
 - **Cambiado**: en la calculadora, el retiro dice **«Penalidad total a pagar: $X»** con su desglose (el 4 % del precio de cada una de las

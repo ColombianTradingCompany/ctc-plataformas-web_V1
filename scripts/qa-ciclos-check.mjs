@@ -354,6 +354,13 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   check("oferta · después del precio por kg, el precio por carga y, entre paréntesis, el Flete a CTCx que incluye", tab.includes("{formatCop(offer.pricePerKg * CARGA_KG)}</b> por carga") && tab.includes("(incluye {formatCop(offer.flete.carga)} de Flete a CTCx)"));
 }
 
+// ── 16. V5.186 (owner, 2026-10-07): «Mi trato» enseña el bache abierto con su plazo; «Pendiente de Oferta», la FNC del día ──
+{
+  const tab = lee("src/components/kaffetal-regal/panel/ContratosTab.tsx");
+  check("KR · el bache abierto (vendido y pendiente) con lo que lleva, su plazo (o la prórroga), los días que faltan y el 60 % al despachar", tab.includes('const esBacheAbierto = (d: DespachoDelTrato) => d.tipo === "vendido" && d.estado === "pendiente";') && tab.includes("<BacheAbierto contract={c}") && tab.includes("a más tardar el {fecha(plazo)}") && tab.includes("v.despachoId === d.id") && lee("src/components/kaffetal-regal/KaffetalExperience.tsx").includes("despachoId: v.despacho_id ?? null"));
+  check("OCP · «Pendiente de Oferta» da la FNC del día junto al precio por carga, con el % de la oferta sobre ella", lee("src/app/ocp/(app)/ofertas/page.tsx").includes("const mercado = await lecturaDeMercado(10);") && lee("src/app/ocp/(app)/ofertas/OfertaDesplegable.tsx").includes("FNC del día (") && lee("src/app/ocp/(app)/ofertas/OfertasClient.tsx").includes("fnc: { carga: number; fecha: string } | null;"));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-ciclos: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("  - " + f);

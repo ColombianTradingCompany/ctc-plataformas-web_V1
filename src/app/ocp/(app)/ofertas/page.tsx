@@ -3,7 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { formatCop } from "@/lib/arena/inscriptions";
-import { calendarioDeLaEdicion, edicionProxima, edicionVigente, hoyEnColombia } from "@/lib/pvc/servicio";
+import { calendarioDeLaEdicion, edicionProxima, edicionVigente, hoyEnColombia, lecturaDeMercado } from "@/lib/pvc/servicio";
 import { fechaLimitePvcSiguiente } from "@/lib/trato/modalidades";
 import { precioDeLaEscalera, type EscalonPublicado } from "@/lib/pvc/precio";
 import { esGradoValido, GRADO_POR_ID } from "@/lib/grados/definicion";
@@ -158,6 +158,9 @@ export default async function OcpOfertasPage() {
 
   // V5.82: el anclaje al PVC de cada lote elegible, calculado con la MISMA función pura que usa la acción.
   // V5.175 (docs/PLAN_CICLOS.md §2): la ventana que tocaría si el productor firmara HOY — la misma regla que aplica el servidor.
+  // V5.186 (owner): la FNC del día, como referencia junto al precio por carga de la oferta.
+  const mercado = await lecturaDeMercado(10);
+  const fncDelDia = mercado.fncHoy != null && mercado.fncAsOf ? { carga: mercado.fncHoy, fecha: mercado.fncAsOf } : null;
   const calVig = edicion ? calendarioDeLaEdicion(edicion) : null;
   const calSig = proxima ? calendarioDeLaEdicion(proxima) : null;
   const vh = edicion && calVig ? ventanaDeFirma({ firma: hoyEnColombia(), vigente: { codigo: edicion.code, cal: calVig }, siguiente: proxima && calSig ? { codigo: proxima.code, cal: calSig } : null }) : null;
@@ -196,6 +199,7 @@ export default async function OcpOfertasPage() {
       fechaLimiteSiguiente: edicion.validFrom ? fechaLimitePvcSiguiente(edicion.validFrom) : null,
       fletes,
       porRegion,
+      fnc: fncDelDia,
       regionSugerida: finca ? regionSugerida(finca.departamento, finca.pais) : (null as RegionDeFlete | null),
     };
   };

@@ -266,7 +266,27 @@ export function OfertaDesplegable({ lotId, lotName, resumen, anclaje }: { lotId:
                 const c = num(v);
                 setPrecioKg(Number.isFinite(c) && c > 0 ? miles(String(Math.round(c / CARGA_KG))) : "");
               }}
-              ayuda="Se mueve junto con el precio por kg."
+              ayuda={
+                <>
+                  Se mueve junto con el precio por kg.
+                  {/* V5.186 (owner): la FNC del día como referencia. */}
+                  {anclaje?.fnc && (
+                    <>
+                      <br />
+                      FNC del día ({new Date(`${anclaje.fnc.fecha}T12:00:00Z`).toLocaleDateString("es-CO", { day: "2-digit", month: "short", timeZone: "UTC" })}):{" "}
+                      <b>{formatCop(anclaje.fnc.carga)}</b>/carga
+                      {Number.isFinite(kgN) && kgN > 0 && (
+                        <>
+                          {" "}· esta oferta,{" "}
+                          <b style={{ color: kgN * CARGA_KG >= anclaje.fnc.carga ? "var(--good, #2e7d4f)" : "var(--warn, #b5532a)" }}>
+                            {`${kgN * CARGA_KG >= anclaje.fnc.carga ? "+" : ""}${((kgN * CARGA_KG / anclaje.fnc.carga - 1) * 100).toLocaleString("es-CO", { maximumFractionDigits: 1 })} %`}
+                          </b>
+                        </>
+                      )}
+                    </>
+                  )}
+                </>
+              }
             />
             {esSelection ? (
               <Campo

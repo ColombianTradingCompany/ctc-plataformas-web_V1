@@ -6,7 +6,7 @@ import { CONTRACT_STATUS_LABEL, GRADES, ctcLotReference, type DespachoDelTrato, 
 import { previsualizarOferta, registrarExistencia, respondToOffer, type VistaPreviaDeOferta } from "@/lib/ofertas/producerActions";
 import { cancelarPorDespacho, pasarALaVentanaSiguiente, pedirProrroga, previsualizarRetiro, registrarDespacho, retirarDelTrato } from "@/lib/trato/producerActions";
 import { formatCop } from "@/lib/arena/inscriptions";
-import { CARGA_KG, LUGAR_DE_ENTREGA_POR_DEFECTO, MORA, PENALIDAD_RETIRO_PCT, PAGO_AL_DESPACHO_PCT } from "@/lib/trato/terminos";
+import { BACHES_DE_DESPACHO, CARGA_KG, LUGAR_DE_ENTREGA_POR_DEFECTO, MORA, PENALIDAD_RETIRO_PCT, PAGO_AL_DESPACHO_PCT } from "@/lib/trato/terminos";
 import { fechaLarga } from "@/lib/trato/modalidades";
 import { fletePorKg, REGION_DE_FLETE_LABEL } from "@/lib/trato/flete";
 import { MORA_LABEL, mesesDelTrato } from "@/lib/trato/mesAMes";
@@ -245,16 +245,82 @@ function ContratoPorVentana({ contract: c, cuentaCongelada, onRefreshData }: { c
         </table>
       )}
 
-      {c.despachos.length > 0 && (
+      {/* V5.186 (owner): el bache abierto de lo vendido, con su plazo, a la vista (V5.183: lo vendido sale por baches). */}
+      <BacheAbierto contract={c} contratoVigente={vigente} onRefreshData={onRefreshData} />
+
+      {c.despachos.some((d) => !esBacheAbierto(d)) && (
         <div style={{ display: "grid", gap: 6, marginTop: 8 }}>
-          {c.despachos.map((d) => (
-            <DespachoItem key={d.id} d={d} contratoVigente={vigente} onRefreshData={onRefreshData} />
-          ))}
+          {c.despachos
+            .filter((d) => !esBacheAbierto(d))
+            .map((d) => (
+              <DespachoItem key={d.id} d={d} contratoVigente={vigente} onRefreshData={onRefreshData} />
+            ))}
         </div>
       )}
 
       {c.status === "active" && k && k.disponibleKg > 0 && c.pricePerKgLocked != null &&
         (cuentaCongelada ? <div className={styles.sub} style={{ marginTop: 6 }}>Con la cuenta congelada no se puede retirar de este trato.</div> : <RetiroForm contract={c} onRefreshData={onRefreshData} />)}
+    </div>
+  );
+}
+
+// ── V5.186 · el bache abierto (owner: «muestra el bache abierto con su plazo en "Mi trato"») ───────────────────────────────────
+// Lo vendido sale por baches que decide el productor (V5.183): cada venta confirmada se suma al bache abierto —el despacho «vendido»
+// pendiente— hasta que el productor lo despacha; tiene plazo al cierre de la 5.ª semana desde su primera venta. Aquí se ve qué lleva,
+// cuánto vale, cuánto falta para el plazo y cuánto le pagan al despachar; el registro del tiquete es el de siempre (DespachoItem).
+const esBacheAbierto = (d: DespachoDelTrato) => d.tipo === "vendido" && d.estado === "pendiente";
+
+function diasHasta(iso: string): number {
+  const fin = new Date(`${iso}T23:59:59-05:00`).getTime();
+  return Math.ceil((fin - Date.now()) / 86_400_000) - 1;
+}
+
+function BacheAbierto({ contract: c, contratoVigente, onRefreshData }: { contract: ProducerContract; contratoVigente: boolean; onRefreshData: () => void }) {
+  if (c.ventanaTipo == null) return null;
+  const abiertos = c.despachos.filter(esBacheAbierto).sort((a, b) => (a.prorrogaHasta ?? a.plazo).localeCompare(b.prorrogaHasta ?? b.plazo));
+  if (!abiertos.length) {
+    if (c.status !== "active") return null;
+    return (
+      <div className={styles.sub} style={{ marginTop: 8 }}>
+        📦 No hay un bache abierto: se abre con la próxima venta que CTCx le confirme y usted lo despacha cuando le convenga (se recomienda cada{" "}
+        {BACHES_DE_DESPACHO.recomendadas.join(" o ")} semanas; a más tardar {BACHES_DE_DESPACHO.maxSemanas} semanas después de su primera venta).
+      </div>
+    );
+  }
+  return (
+    <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
+      {abiertos.map((d) => {
+        const plazo = d.prorrogaHasta ?? d.plazo;
+        const dias = diasHasta(plazo);
+        const ventas = c.ventas.filter((v) => v.despachoId === d.id);
+        const color = dias < 0 ? "var(--red)" : dias <= 7 ? "var(--accent)" : "var(--green)";
+        const pago60 = Math.round((d.totalCop * PAGO_AL_DESPACHO_PCT) / 100);
+        return (
+          <div key={d.id} style={{ border: `1.5px solid ${color}`, borderRadius: 10, padding: "10px 12px", background: "var(--paper)", display: "grid", gap: 4 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "baseline" }}>
+              <b style={{ fontSize: 14 }}>📦 Bache abierto · {kgTxt(d.kg)} vendidos · {formatCop(d.totalCop)}</b>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color }}>
+                {dias < 0 ? `El plazo venció hace ${-dias} ${dias === -1 ? "día" : "días"}` : dias === 0 ? "El plazo vence hoy" : `Faltan ${dias} ${dias === 1 ? "día" : "días"}`}
+              </span>
+            </div>
+            <div style={{ fontSize: 12.5 }}>
+              Despáchelo cuando le convenga y <b>a más tardar el {fecha(plazo)}</b>
+              {d.prorrogaHasta ? <> (con la prórroga; el plazo era el {fecha(d.plazo)})</> : null}. Se recomienda despachar cada {BACHES_DE_DESPACHO.recomendadas.join(" o ")} semanas;
+              lo que CTCx le confirme mientras tanto se suma a este bache.
+            </div>
+            {ventas.length > 0 && (
+              <div className={styles.sub}>
+                Lleva {ventas.length === 1 ? "la venta" : `${ventas.length} ventas`} de {ventas.map((v) => `la semana del ${fecha(v.semana)} (${kgTxt(v.kg)})`).join(", ")}.
+              </div>
+            )}
+            <div className={styles.sub}>
+              Al registrar el tiquete recibe el {PAGO_AL_DESPACHO_PCT} %: <b>{formatCop(pago60)}</b>; el {100 - PAGO_AL_DESPACHO_PCT} % ({formatCop(d.totalCop - pago60)}) al recibirlo CTCx con la
+              humedad y la actividad de agua en rango.
+            </div>
+            <DespachoItem d={d} contratoVigente={contratoVigente} onRefreshData={onRefreshData} />
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -326,9 +392,12 @@ function DespachoItem({ d, contratoVigente, onRefreshData }: { d: DespachoDelTra
               <button className="btn btn-sm btn-solid-accent" type="button" disabled={busy} onClick={() => setAbierto(true)}>
                 Registrar el despacho…
               </button>
-              <button className="btn btn-sm" type="button" disabled={busy} onClick={() => correr(() => pedirProrroga(d.id), "Prórroga registrada ✓ (queda como advertencia)", "¿Pedir una prórroga de una semana? Queda como advertencia en su cuenta.")}>
-                Pedir prórroga
-              </button>
+              {/* V5.186: una sola prórroga por despacho; ya concedida, el botón no se ofrece (el servidor la rechazaría). */}
+              {!d.prorrogaHasta && (
+                <button className="btn btn-sm" type="button" disabled={busy} onClick={() => correr(() => pedirProrroga(d.id), "Prórroga registrada ✓ (queda como advertencia)", "¿Pedir una prórroga de una semana? Queda como advertencia en su cuenta.")}>
+                  Pedir prórroga
+                </button>
+              )}
               {d.tipo !== "vendido" && (
                 <>
                   <button className="btn btn-sm" type="button" disabled={busy} onClick={() => correr(() => pasarALaVentanaSiguiente(d.id), "Contrato pasado a la ventana siguiente ✓", "¿Pasar el contrato a la ventana siguiente? El saco sale a más tardar al cierre de su semana 1.")}>

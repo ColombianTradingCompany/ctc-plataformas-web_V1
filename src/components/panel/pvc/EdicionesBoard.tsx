@@ -6,6 +6,7 @@ import styles from "@/components/panel/shared.module.css";
 import table from "@/components/cotizador/quotesTable.module.css";
 import type { PvcEdition } from "@/lib/pvc/tipos";
 import { VariablesDeEdicion } from "./VariablesDeEdicion";
+import { VigilanciaDeCorreccion, type EstadoDeLaVigilancia } from "./VigilanciaDeCorreccion";
 
 // ── BCP · PVC · Ediciones ────────────────────────────────────────────────────
 // La edición vigente arriba con sus KPIs; debajo el historial. Publicar se hace
@@ -19,15 +20,15 @@ const day = (d: string | null) => (d ? new Date(d.length > 10 ? d : `${d}T12:00:
 
 const ESTADO: Record<string, { label: string; cls: string }> = {
   published: { label: "Publicada", cls: styles.badgeGood },
-  corrected: { label: "Corrección al alza", cls: styles.badgeWarn },
+  corrected: { label: "Corregida (ciclo)", cls: styles.badgeWarn },
   superseded: { label: "Sustituida", cls: styles.badge },
   computed: { label: "Calculada", cls: styles.badge },
   draft: { label: "Borrador", cls: styles.badge },
 };
 
 export function EdicionesBoard({
-  ediciones, modeloVersion, vigenteId, proximaId,
-}: { ediciones: PvcEdition[]; modeloVersion: string | null; vigenteId: string | null; proximaId: string | null }) {
+  ediciones, modeloVersion, vigenteId, proximaId, vigilancia,
+}: { ediciones: PvcEdition[]; modeloVersion: string | null; vigenteId: string | null; proximaId: string | null; vigilancia: EstadoDeLaVigilancia }) {
   // Vigente y próxima llegan RESUELTAS del servidor (ventana de vigencia). No
   // se deriva aquí: «la última publicada» no es «la que rige» — hay 7–8 semanas
   // entre publicar y entrar en vigor.
@@ -95,6 +96,9 @@ export function EdicionesBoard({
           </p>
         </div>
       )}
+
+      {/* V5.178 (docs/PLAN_CICLOS.md §6): la vigilancia de la corrección por ciclo — lo medido hoy y lo que hay por aprobar. */}
+      <VigilanciaDeCorreccion estado={vigilancia} />
 
       {/* V5.174 (docs/PLAN_CICLOS.md): las variables de la edición vigente y de la próxima — fechas, mínimos, calidad, flete (V5.177). */}
       {vigente && <VariablesDeEdicion key={`${vigente.id}-${vigente.validFrom}-${vigente.ciclo1Hasta}`} edicion={vigente} />}

@@ -459,8 +459,10 @@ export function LecturaBoard({
           <strong>{cop0(fnc)}</strong> — una desviación de <strong>{pct(desv)}</strong> frente a lo que se supuso.
         </p>
         <p className={styles.meta}>
-          El disparador de corrección al alza se cumple cuando el FNC alcanza el PVC ({cop0(pvc)}): al precio de hoy le
-          faltaría subir <strong>{pct(holgura, 0)}</strong>. {mercado.serie.length} lecturas diarias en los últimos 90 días.
+          {/* V5.178 (docs/PLAN_CICLOS.md §6): el «10 de 15» se reemplazó por la vigilancia por ciclo (15 de 20, alza y baja). */}
+          La corrección del ciclo se propone con 15 de 20 lecturas FNC por encima del PVC ({cop0(pvc)}) o en o bajo PVC / 1,2: al precio
+          de hoy le faltaría subir <strong>{pct(holgura, 0)}</strong> para contar como alza. {mercado.serie.length} lecturas diarias en
+          los últimos 90 días. La medición del ciclo y las propuestas están en <a href="/ecp/pvc#vigilancia">Ediciones → Vigilancia de la corrección</a>.
         </p>
         {proxima && (
           <p className={styles.meta}>

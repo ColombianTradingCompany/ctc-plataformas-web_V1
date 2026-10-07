@@ -19,6 +19,26 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.178] — 2026-10-07 (commit pendiente)
+
+- **Añadido**: **la vigilancia de la corrección del PVC** (tanda 4 de los Ciclos, `docs/PLAN_CICLOS.md` §6). Cada día, después de
+  leer el FNC, el cron `/api/cron/vigilancia-pvc` (11:25 UTC) mide el ciclo en curso contra el PVC vigente y, en el ciclo 2 con
+  el siguiente publicado, contra ese por separado (se enmienda). Con 15 de 20 lecturas seguidas —alza si FNC > PVC, baja si
+  FNC ≤ PVC / 1,2— PROPONE la corrección (tope ±10 %, redondeo a $1.000), una por ciclo y por PVC, avisa por correo (el
+  resultado queda en la fila) y la pone en el Tablero de Ejecución. Lo que nadie resuelve en su ciclo, vence.
+- **Añadido**: en ECP → Modelo Económico → Ediciones, la tarjeta **«Vigilancia de la corrección»**: lo medido hoy (lecturas del
+  ciclo, cuántas cuentan como alza y como baja, el umbral) y las propuestas por resolver. **Aprobar** (owner) publica la edición
+  corregida —las mismas entradas y variables (fechas, ciclos, mínimos, calidad, flete), el PVC nuevo, escalera y pila
+  recalculadas (`calcularConPvc`)—; la anterior queda sustituida. **Rechazar** pide el motivo.
+- **Cambiado**: la corrección aplica a lo que se firme DESPUÉS de aprobarla: una invitación de Cherry Picked anclada a una edición
+  que se corrigió firma con el PVC corregido (mismo %, mismo flete congelado); los contratos ya firmados no cambian. La
+  pestaña Lectura deja de hablar del disparador «10 de 15» y enlaza la vigilancia; el estado «corrected» se lee «Corregida».
+- **Datos**: migración `2026-10-07_vigilancia_correccion_pvc.sql` (aditiva): `pvc_correcciones` (una por ciclo y por PVC,
+  service-role only); `pvc_trigger_watch` y `pvc_cycles` quedan documentadas como dormidas. También se sube
+  `2026-10-07_flete_retira_auxilio.sql` (V5.177), aplicada tras el despliegue: las dos columnas vacías del auxilio.
+- **Seguridad**: `qa-ciclos` (77 → 89: paridad de `calcularConPvc`, la medición del ciclo, el cableado y los permisos).
+- **Docs**: `PLAN_CICLOS.md` §6 y §9; charters `herramientas-internas`, `consolas`; ALINEACION §3.
+
 ## [V5.177] — 2026-10-07 (commit 2ed009d)
 
 - **Cambiado**: **«Flete a CTCx» reemplaza el «auxilio de transporte»** (owner, 2026-10-07: no existe; las cooperativas le

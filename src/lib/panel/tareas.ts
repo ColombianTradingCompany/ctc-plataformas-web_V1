@@ -28,7 +28,9 @@ export type TareaDeConsola = {
 /** Los tipos de tarea que existen. Uno nuevo se declara aquí o su casilla no se puede marcar.
  *  `muestra` (V5.88): la revisión de almacenaje a los 90 días de la catación (Gestión de Muestras, 2.ª tanda); su clave lleva
  *  el ciclo (`muestra:<lote>:<fecha>`) para que una casilla marcada no tape la revisión siguiente. */
-export const TIPOS_DE_TAREA = ["lead", "finca", "comm", "humidity", "lot", "muestra"] as const;
+//  `pvc` (V5.178): una corrección del PVC propuesta por la vigilancia del ciclo (`pvc:correccion:<id>`); la resuelve el owner en
+//  ECP → Modelo Económico → Ediciones.
+export const TIPOS_DE_TAREA = ["lead", "finca", "comm", "humidity", "lot", "muestra", "pvc"] as const;
 export type TipoDeTarea = (typeof TIPOS_DE_TAREA)[number];
 
 export function tipoDeLaTarea(key: string): TipoDeTarea | null {
@@ -51,7 +53,9 @@ export function consolasDeLaTarea(key: string): PanelConsoleKey[] {
       ? CONSOLAS_DE_LEADS
       : tipo === "lot"
         ? [consolaDelModulo("arena") ?? "ocp"] // el lote espera en la fila de la Arena
-        : ["ocp"]; // finca, mensaje de productor y humedad son del pasaporte del lote
+        : tipo === "pvc"
+          ? ["ecp"] // el Modelo Económico vive en la ECP
+          : ["ocp"]; // finca, mensaje de productor y humedad son del pasaporte del lote
   return [...new Set<PanelConsoleKey>([...duenas, CONSOLA_DEL_TABLERO])];
 }
 

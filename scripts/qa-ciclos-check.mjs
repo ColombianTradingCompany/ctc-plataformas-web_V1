@@ -217,6 +217,42 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   check("sin «auxilio de transporte» · ni en el precio, ni en el Modelo Económico, ni en la oferta, ni en lo que lee el productor", !/auxilio/i.test(kr) && lee("src/app/kaffetal-regal/contrato/[id]/page.tsx").includes("flete: fleteDeLaFila(c),") && lee("src/components/kaffetal-regal/KaffetalExperience.tsx").includes("flete: fleteDeLaFila(o),"));
 }
 
+// ── 9. La vigilancia de la corrección (V5.178 · tanda 4): medir el ciclo, proponer una por ciclo y PVC, aprobar = publicar la
+//    edición corregida (mismas entradas y variables, PVC nuevo), que aplica solo a lo que se firme después ──
+{
+  const { calcular, calcularConPvc, PARAMS_V211, ENTRADAS_F4_2026 } = await import("../src/lib/pvc/motor.ts");
+  const { medirCiclo } = await import("../src/lib/pvc/correccion.ts");
+  const base = calcular(PARAMS_V211, ENTRADAS_F4_2026);
+  const igual = calcularConPvc(PARAMS_V211, ENTRADAS_F4_2026, base.edicion.pvc);
+  const corr = calcularConPvc(PARAMS_V211, ENTRADAS_F4_2026, base.edicion.pvc + 100000);
+  check("motor · calcularConPvc con el PVC de la edición es idéntica a calcular; con otro PVC rehace escalera, pila y KPIs", JSON.stringify(igual) === JSON.stringify(base) && corr.edicion.pvc === base.edicion.pvc + 100000 && corr.escalera[0].cop > base.escalera[0].cop && corr.kpis.usd_carga === (base.edicion.pvc + 100000) / ENTRADAS_F4_2026.trm);
+  const dias = (desde, n) => Array.from({ length: n }, (_, i) => { const d = new Date(`${desde}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + i); return d.toISOString().slice(0, 10); });
+  const ciclo = { pvc: 2500000, ciclo: "F4-2026 · ciclo 1", inicioCiclo: "2026-09-28", finCiclo: "2026-11-15" };
+  const alzaL = dias("2026-10-01", 20).map((fecha, i) => ({ fecha, valor: i % 4 === 0 ? 2400000 : 2600000 }));
+  const mA = medirCiclo({ ...ciclo, lecturas: [{ fecha: "2026-09-20", valor: 1 }, ...alzaL] });
+  check("medición · 15 de 20 por encima del PVC → alza al promedio de las que lo superan (+$100.000), lo de fuera de la semana previa no cuenta", mA.resultado.tipo === "alza" && mA.resultado.aciertos === 15 && mA.resultado.monto === 100000 && mA.resultado.nuevoPvc === 2600000 && mA.lecturas === 20 && mA.previas === 0 && mA.umbralBaja === 2083333);
+  const bajaL = dias("2026-10-01", 20).map((fecha, i) => ({ fecha, valor: i % 4 === 0 ? 2300000 : 2000000 }));
+  const mB = medirCiclo({ ...ciclo, lecturas: bajaL });
+  check("medición · 15 de 20 en o bajo PVC / 1,2 → baja de (PVC/1,2 − promedio) redondeada a $1.000: 2.500.000 → 2.417.000", mB.resultado.tipo === "baja" && mB.resultado.monto === 83000 && mB.resultado.nuevoPvc === 2417000);
+  const hoyL = dias("2026-10-01", 20).map((fecha, i) => ({ fecha, valor: i < 8 ? 2050000 : 2150000 }));
+  const mH = medirCiclo({ ...ciclo, lecturas: hoyL });
+  check("medición · como hoy (8 de 20 bajo $2.083.333) no se propone nada; las previas completan bloques", mH.resultado.tipo === null && mH.resultado.aciertosBaja === 8 && medirCiclo({ ...ciclo, lecturas: [...dias("2026-09-21", 7).map((fecha) => ({ fecha, valor: 2600000 })), ...dias("2026-09-28", 13).map((fecha) => ({ fecha, valor: 2600000 }))] }).resultado.tipo === "alza");
+  const mig = lee("docs/migraciones/2026-10-07_vigilancia_correccion_pvc.sql");
+  check("migración · pvc_correcciones con una por ciclo y por PVC, estados propuesta/aprobada/rechazada/vencida, aviso persistido, sin políticas", ["create table if not exists public.pvc_correcciones", "constraint pvc_correcciones_una_por_ciclo unique (edition_code, ciclo)", "estado in ('propuesta', 'aprobada', 'rechazada', 'vencida')", "aviso_error text", "enable row level security"].every((k) => mig.includes(k)) && !mig.includes("create policy"));
+  const vg = lee("src/lib/pvc/vigilancia.ts");
+  check("vigilancia · mide el vigente y, en el ciclo 2, el siguiente aparte; una por ciclo (también si se rechazó); el aviso deja su resultado; lo no resuelto vence", vg.includes('if (u.ciclo === 2) {') && vg.includes('relacion: "siguiente"') && vg.includes('.eq("edition_code", m.codigo).eq("ciclo", m.medicion.ciclo)') && vg.includes("aviso_error: env.error") && vg.includes('update({ estado: "vencida"') && vg.includes('.lt("ciclo_hasta", hoy)'));
+  const sv = lee("src/lib/pvc/servicio.ts");
+  check("aprobar · publica la edición corregida con las mismas entradas y variables (fechas, ciclos, mínimos, calidad, flete) y la anterior queda sustituida", sv.includes("export async function publicarEdicionCorregida(") && sv.includes("calcularConPvc(mv.params as PvcParams, e.inputs as PvcEntradas, input.nuevoPvc)") && sv.includes("flete_por_region: e.flete_por_region,") && sv.includes("ciclo1_hasta: e.ciclo1_hasta,") && sv.includes('status: "corrected"') && sv.includes("correction_of: e.id"));
+  const ac = lee("src/lib/pvc/actions.ts");
+  check("aprobar y rechazar · el owner, con la clase emite; rechazar pide el motivo", ac.includes("export async function aprobarCorreccionAction(") && ac.includes("export async function rechazarCorreccionAction(") && (ac.match(/requireConsoleWrite\("ecp", "emite"\)/g) ?? []).length >= 2 && ac.includes("Escriba por qué se rechaza"));
+  check("firma · una invitación anclada a una edición que se corrigió firma con el PVC corregido (mismo %, mismo flete)", lee("src/lib/ofertas/ventanaDeOferta.ts").includes("offer.pvc_edition_id !== vigente.id && offer.reference_price_source === `PVC ${vigente.code}`"));
+  const cron = lee("src/app/api/cron/vigilancia-pvc/route.ts");
+  check("cron · /api/cron/vigilancia-pvc a las 11:25 UTC (después del FNC de las 11:10), con CRON_SECRET", lee("vercel.json").includes('"path": "/api/cron/vigilancia-pvc"') && lee("vercel.json").includes('"schedule": "25 11 * * *"') && cron.includes("Bearer ${secret}") && cron.includes("correrVigilancia("));
+  const { consolasDeLaTarea, TIPOS_DE_TAREA } = await import("../src/lib/panel/tareas.ts");
+  check("Tablero de Ejecución · la propuesta es una tarea de la ECP que lleva a la tarjeta", TIPOS_DE_TAREA.includes("pvc") && consolasDeLaTarea("pvc:correccion:x").includes("ecp") && !consolasDeLaTarea("pvc:correccion:x").includes("ocp") && lee("src/lib/panel/tareasCarga.ts").includes("await propuestasPendientes(service)") && lee("src/lib/panel/tareasCarga.ts").includes('href: "/ecp/pvc#vigilancia"'));
+  check("Modelo Económico · Ediciones enseña la vigilancia (lo medido y lo por resolver)", lee("src/components/panel/pvc/EdicionesBoard.tsx").includes("<VigilanciaDeCorreccion estado={vigilancia} />") && lee("src/app/ecp/(app)/pvc/page.tsx").includes("estadoDeLaVigilancia()") && lee("src/components/panel/pvc/VigilanciaDeCorreccion.tsx").includes('id="vigilancia"'));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-ciclos: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("  - " + f);

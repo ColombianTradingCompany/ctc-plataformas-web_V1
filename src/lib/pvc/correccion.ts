@@ -59,3 +59,46 @@ export function evaluarCorreccion(pvc: number, delCiclo: Lectura[], previas: Lec
   }
   return { tipo: null, aciertosAlza: maxAlza, aciertosBaja: maxBaja };
 }
+
+/** V5.178 · lo que la vigilancia mide de UN PVC en el ciclo en curso (la página y el barrido diario usan la misma cuenta). */
+export type MedicionDelCiclo = {
+  ciclo: string;
+  desde: string;
+  hasta: string;
+  /** Lecturas del ciclo hasta hoy y de la última semana del anterior (las que pueden completar el primer bloque). */
+  lecturas: number;
+  previas: number;
+  umbralBaja: number;
+  resultado: Correccion;
+  ultima: Lectura | null;
+  /** Las últimas lecturas (hasta 20, las del bloque que se está formando): cuántas cuentan como alza y cuántas como baja. */
+  ultimas: { n: number; alza: number; baja: number };
+};
+
+/**
+ * Mide un PVC contra las lecturas del ciclo `[inicioCiclo, finCiclo]`; las de los 7 días anteriores al ciclo son las previas.
+ * `lecturas` puede traer de más: se filtran por fecha aquí.
+ */
+export function medirCiclo(input: { pvc: number; ciclo: string; inicioCiclo: string; finCiclo: string; lecturas: Lectura[] }): MedicionDelCiclo {
+  const inicioPrevias = (() => {
+    const d = new Date(`${input.inicioCiclo}T12:00:00Z`);
+    d.setUTCDate(d.getUTCDate() - 7);
+    return d.toISOString().slice(0, 10);
+  })();
+  const orden = [...input.lecturas].sort((a, b) => a.fecha.localeCompare(b.fecha));
+  const delCiclo = orden.filter((l) => l.fecha >= input.inicioCiclo && l.fecha <= input.finCiclo);
+  const previas = orden.filter((l) => l.fecha >= inicioPrevias && l.fecha < input.inicioCiclo);
+  const umbralBaja = input.pvc / CORRECCION.margenBaja;
+  const ventana = [...previas, ...delCiclo].slice(-CORRECCION.bloque);
+  return {
+    ciclo: input.ciclo,
+    desde: input.inicioCiclo,
+    hasta: input.finCiclo,
+    lecturas: delCiclo.length,
+    previas: previas.length,
+    umbralBaja: Math.round(input.pvc / CORRECCION.margenBaja),
+    resultado: evaluarCorreccion(input.pvc, delCiclo, previas),
+    ultima: delCiclo.length ? delCiclo[delCiclo.length - 1] : null,
+    ultimas: { n: ventana.length, alza: ventana.filter((l) => l.valor > input.pvc).length, baja: ventana.filter((l) => l.valor <= umbralBaja).length },
+  };
+}

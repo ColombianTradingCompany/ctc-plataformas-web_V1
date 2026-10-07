@@ -1,4 +1,5 @@
 import "server-only";
+import { propuestasPendientes } from "@/lib/pvc/vigilancia";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { consolaDelPilar, tableroDelPilar } from "./leadsPilares";
@@ -124,6 +125,18 @@ export async function cargarTareas(service: SupabaseClient): Promise<{
       sublabel: r.saldoReservaKg > 0 ? `${r.saldoReservaKg} kg de reserva CPS en la casa` : "sin contramuestra de reserva con saldo: pedir una",
       href: `/ocp/muestras?tab=almacenaje#lote-${r.lotId}`,
       consola: "ocp",
+    });
+  }
+
+  // V5.178 (docs/PLAN_CICLOS.md §6): la corrección del PVC que propuso la vigilancia del ciclo, hasta que el owner la resuelva.
+  for (const c of await propuestasPendientes(service)) {
+    pon({
+      key: `pvc:correccion:${c.id}`,
+      icon: "📈",
+      label: `${c.relacion === "vigente" ? "Corrección" : "Enmienda"} del PVC propuesta — ${c.codigo} ${c.tipo === "alza" ? "+" : "−"}$${c.monto.toLocaleString("es-CO")} → $${c.pvcNuevo.toLocaleString("es-CO")}`,
+      sublabel: `${c.ciclo} · ${c.aciertos} de 20 lecturas FNC · vence el ${c.cicloHasta}`,
+      href: "/ecp/pvc#vigilancia",
+      consola: "ecp",
     });
   }
 

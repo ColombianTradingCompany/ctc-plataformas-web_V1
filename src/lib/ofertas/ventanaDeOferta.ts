@@ -24,6 +24,9 @@ export type OfertaParaVentana = {
   es_renovacion: boolean | null;
   flete_region?: string | null;
   flete_carga?: number | string | null;
+  kind?: string | null;
+  pvc_edition_id?: string | null;
+  reference_price_source?: string | null;
 };
 
 export type CondicionesDeFirma =
@@ -75,8 +78,14 @@ export async function condicionesDeFirma(service: SupabaseClient, offer: OfertaP
   if (!ventana.abierta) return ventana;
   // El precio de la oferta se congeló al emitir (PVC vigente con su % + el flete); el siguiente, de la edición publicada con el
   // mismo % y el MISMO flete congelado (V5.177: el flete no cambia dentro de un trato).
-  const vigenteKg = Number(offer.price_per_kg);
+  let vigenteKg = Number(offer.price_per_kg);
   const flete = fleteDeLaFila(offer);
+  // V5.178 (docs/PLAN_CICLOS.md §6): una corrección aprobada aplica a lo que se firme DESPUÉS. Una invitación de Cherry Picked
+  // anclada a una edición que luego se corrigió (mismo código, otra fila) firma con el PVC corregido: mismo %, mismo flete.
+  if (offer.kind === "temporada" && offer.grade_snapshot && offer.pvc_edition_id && offer.pvc_edition_id !== vigente.id && offer.reference_price_source === `PVC ${vigente.code}`) {
+    const corregido = await pvcParaGrado(offer.grade_snapshot as GradoId, hoy, { modificadorPct: Number(offer.modificador_pct ?? 0) });
+    if (corregido) vigenteKg = Math.round(corregido.precio.copKgFinal + (flete ? fletePorKg(flete.carga) : 0));
+  }
   let siguienteKg: number | null = null;
   if (ventana.precio !== "vigente" && proxima?.validFrom && offer.grade_snapshot) {
     const sig = await pvcParaGrado(offer.grade_snapshot as GradoId, proxima.validFrom, { modificadorPct: Number(offer.modificador_pct ?? 0) });

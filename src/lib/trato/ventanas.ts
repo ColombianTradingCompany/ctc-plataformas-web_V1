@@ -34,7 +34,8 @@ export type Ventana =
 
 export type EdicionParaVentana = { codigo: string; cal: CalendarioDeEdicion };
 
-const nombreCiclo = (codigo: string, n: 1 | 2) => `${codigo.replace(/^PVC-/, "")} · ciclo ${n}`;
+/** «F4-2026 · ciclo 1» (el código de la edición sin «PVC-»). */
+export const nombreCiclo = (codigo: string, n: 1 | 2) => `${codigo.replace(/^PVC-/, "")} · ciclo ${n}`;
 
 /** La ventana de un contrato NUEVO firmado en `firma`. `siguiente` = la edición siguiente si ya está publicada. */
 export function ventanaDeFirma(o: { firma: string; vigente: EdicionParaVentana; siguiente: EdicionParaVentana | null }): Ventana {

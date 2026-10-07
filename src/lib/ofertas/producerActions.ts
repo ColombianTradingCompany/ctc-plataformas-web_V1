@@ -316,7 +316,7 @@ export async function previsualizarOferta(offerId: string): Promise<VistaPreviaD
   const service = createServiceRoleClient();
   const { data: offer } = await service
     .from("lot_offers")
-    .select("id, lot_id, producer_id, status, kind, grade_snapshot, price_per_kg, modificador_pct, min_kg, saco_kg, es_renovacion, flete_region, flete_carga")
+    .select("id, lot_id, producer_id, status, kind, grade_snapshot, price_per_kg, modificador_pct, min_kg, saco_kg, es_renovacion, flete_region, flete_carga, pvc_edition_id, reference_price_source")
     .eq("id", offerId)
     .maybeSingle();
   if (!offer || offer.producer_id !== auth.userId) return { ok: false, message: "Oferta no encontrada." };

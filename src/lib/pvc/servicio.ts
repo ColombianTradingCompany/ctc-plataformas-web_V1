@@ -1,6 +1,7 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { calcular, huella, type PvcEntradas, type PvcParams, type PvcSalida } from "./motor";
+import { calcular, calcularConPvc, huella, type PvcEntradas, type PvcParams, type PvcSalida } from "./motor";
 import { precioDeLaEscalera, type EscalonPublicado, type PrecioDeGrado } from "./precio";
 import type { CalendarioDeEdicion } from "@/lib/trato/calendario";
 import { fletesDeLaEdicion, type FletePorRegion, type RegionDeFlete } from "@/lib/trato/flete";
@@ -207,6 +208,47 @@ export async function publicarEdicion(input: {
     performed_by: input.userId, notes: `${input.entradas.codigo} · ${salida.edicion.pvc}`,
   });
   return { id: data.id as string, pvc: salida.edicion.pvc };
+}
+
+/**
+ * V5.178 (docs/PLAN_CICLOS.md §6) · publica la edición CORREGIDA de una corrección aprobada: el mismo código, las mismas entradas
+ * y variables (fechas, ciclos, mínimos, calidad, flete), el PVC nuevo y la escalera y la pila recalculadas con él
+ * (`calcularConPvc`). La fila anterior pasa a `superseded` (el guard lo permite) y la nueva queda `corrected`, con `correction_of`.
+ * Aplica solo a lo que se firme después: las ofertas y los contratos guardan su precio.
+ */
+export async function publicarEdicionCorregida(input: { edicionId: string; nuevoPvc: number; userId: string; notas: string }): Promise<{ id: string; code: string } | { error: string }> {
+  const service = createServiceRoleClient();
+  const { data: e } = await service
+    .from("pvc_editions")
+    .select("id, code, model_version_id, status, cut_date, publish_date, valid_from, valid_to, inputs, hash, ciclo1_hasta, minimos_por_grado, rangos_calidad, flete_por_region")
+    .eq("id", input.edicionId)
+    .maybeSingle();
+  if (!e) return { error: "Edición no encontrada." };
+  if (e.status !== "published" && e.status !== "corrected") return { error: "Esa edición ya no rige (otra la reemplazó): la propuesta no aplica." };
+  const { data: mv } = await service.from("pvc_model_versions").select("params").eq("id", e.model_version_id).maybeSingle();
+  if (!mv) return { error: "No se encontró la versión del modelo de la edición." };
+  const salida = calcularConPvc(mv.params as PvcParams, e.inputs as PvcEntradas, input.nuevoPvc);
+  const now = new Date().toISOString();
+  const { data, error } = await service
+    .from("pvc_editions")
+    .insert({
+      code: e.code, model_version_id: e.model_version_id, status: "corrected",
+      cut_date: e.cut_date, publish_date: e.publish_date, valid_from: e.valid_from, valid_to: e.valid_to,
+      ciclo1_hasta: e.ciclo1_hasta, minimos_por_grado: e.minimos_por_grado, rangos_calidad: e.rangos_calidad, flete_por_region: e.flete_por_region,
+      inputs: e.inputs, outputs: salida, pvc_cop: input.nuevoPvc,
+      hash: createHash("sha256").update(`${e.hash ?? ""}|correccion|${input.nuevoPvc}`).digest("hex").slice(0, 16),
+      previous_edition_id: e.id, correction_of: e.id,
+      published_by: input.userId, published_at: now, notes: input.notas, created_by: input.userId,
+    })
+    .select("id")
+    .single();
+  if (error) return { error: error.message };
+  await service.from("pvc_editions").update({ status: "superseded" }).eq("id", e.id);
+  await service.from("audit_log").insert({
+    entity_type: "pvc_edition", entity_id: data.id, action: "corrected", new_status: "corrected",
+    performed_by: input.userId, notes: `${e.code} · ${input.nuevoPvc} · ${input.notas}`.slice(0, 500),
+  });
+  return { id: data.id as string, code: e.code as string };
 }
 
 type PublicRow = { code: string; pvc_cop: number; cut_date: string | null; publish_date: string | null; valid_from: string | null; valid_to: string | null; model_version: string | null; escalera: PvcSalida["escalera"]; pila: PvcSalida["pila"]; kpis: PvcSalida["kpis"] };

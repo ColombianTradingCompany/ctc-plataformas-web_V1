@@ -301,7 +301,17 @@ export type PvcSalida = {
 /** Todo lo que una edición publica, calculado de una vez. Es lo que se guarda
  *  en `pvc_editions.outputs` y lo que expone la vista pública. */
 export function calcular(p: PvcParams, e: PvcEntradas, destinoIdx = 0): PvcSalida {
-  const ed = edicion(p, e);
+  return salidaDe(p, e, edicion(p, e), destinoIdx);
+}
+
+/** V5.178 (docs/PLAN_CICLOS.md §6) · la salida de una edición CORREGIDA: las mismas entradas, el PVC aprobado por la corrección
+ *  del ciclo (± hasta 10 %); la escalera, la pila y los KPIs se recalculan con él. `calcularConPvc(p, e, calcular(p, e).edicion.pvc)`
+ *  es idéntica a `calcular(p, e)` (lo vigila `qa-ciclos`). */
+export function calcularConPvc(p: PvcParams, e: PvcEntradas, pvc: number, destinoIdx = 0): PvcSalida {
+  return salidaDe(p, e, { ...edicion(p, e), pvc }, destinoIdx);
+}
+
+function salidaDe(p: PvcParams, e: PvcEntradas, ed: PvcEdicion, destinoIdx: number): PvcSalida {
   const esc = escalera(p, ed.pvc, e.trm);
   const pi = pila(p, ed.pvc, e.trm, destinoIdx);
   const B = pi[0];

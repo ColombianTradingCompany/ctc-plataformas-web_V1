@@ -7,6 +7,8 @@
 // el número — dos caminos para el mismo acto habrían acabado con dos ediciones
 // distintas del mismo código. La lectura de ediciones la hacen las páginas en el
 // servidor (lib/pvc/servicio.ts). Ninguna action lanza: devuelve {ok:false,error}.
+// V5.178: aprobar una CORRECCIÓN del ciclo sí publica aquí, pero no una edición nueva: la corregida de una ya publicada, con el
+// PVC que la vigilancia propuso (`vigilancia.ts`); el número no se teclea, así que no compite con el tablero.
 
 import { revalidatePath } from "next/cache";
 import { requireConsoleWrite } from "@/lib/panel/requireConsoleWrite";
@@ -14,6 +16,7 @@ import { getPanelUser, isPanelOwner } from "@/lib/panel/panelUsers";
 import { PARAMS_V211, type PvcParams } from "./motor";
 import { crearVersionModelo, guardarVariablesDeEdicion, type VariablesDeEdicion } from "./servicio";
 import { validarCalendario } from "@/lib/trato/calendario";
+import { aprobarCorreccion, rechazarCorreccion } from "./vigilancia";
 import type { PvcResult } from "./tipos";
 
 /** Registra una versión nueva del modelo (los parámetros completos, con nota de acta). Owner. */
@@ -53,5 +56,33 @@ export async function guardarVariablesDeEdicionAction(id: string, v: VariablesDe
   const r = await guardarVariablesDeEdicion(id, v, who.userId);
   if ("error" in r) return { ok: false, error: r.error };
   revalidatePath("/ecp/pvc");
+  return { ok: true, id };
+}
+
+/**
+ * V5.178 (docs/PLAN_CICLOS.md §6) · aprobar la corrección (o enmienda) que propuso la vigilancia: publica la edición corregida
+ * con el PVC nuevo. Aplica solo a lo que se firme después. Owner (el módulo es suyo en el rail). Emite.
+ */
+export async function aprobarCorreccionAction(id: string): Promise<PvcResult> {
+  const who = await requireConsoleWrite("ecp", "emite");
+  if (!who) return { ok: false, error: "No se pudo ejecutar: o tu sesión ya no está activa (vuelve a iniciar sesión), o tu nivel es de lectura y borradores y esta acción emite." };
+  if (!isPanelOwner(await getPanelUser(who.userId))) return { ok: false, error: "Aprobar una corrección del PVC es una decisión del owner." };
+  const r = await aprobarCorreccion(id, who.userId);
+  if ("error" in r) return { ok: false, error: r.error };
+  revalidatePath("/ecp/pvc");
+  revalidatePath("/ecp");
+  return { ok: true, id };
+}
+
+/** V5.178 · rechazar la propuesta (con su motivo). En ese ciclo ya no se propone otra para ese PVC. Owner. Emite. */
+export async function rechazarCorreccionAction(id: string, nota: string): Promise<PvcResult> {
+  const who = await requireConsoleWrite("ecp", "emite");
+  if (!who) return { ok: false, error: "No se pudo ejecutar: o tu sesión ya no está activa (vuelve a iniciar sesión), o tu nivel es de lectura y borradores y esta acción emite." };
+  if (!isPanelOwner(await getPanelUser(who.userId))) return { ok: false, error: "Rechazar una corrección del PVC es una decisión del owner." };
+  if (nota.trim().length < 5) return { ok: false, error: "Escriba por qué se rechaza (queda en el registro)." };
+  const r = await rechazarCorreccion(id, who.userId, nota.trim());
+  if ("error" in r) return { ok: false, error: r.error };
+  revalidatePath("/ecp/pvc");
+  revalidatePath("/ecp");
   return { ok: true, id };
 }

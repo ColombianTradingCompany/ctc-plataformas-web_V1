@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { EdicionesBoard } from "@/components/panel/pvc/EdicionesBoard";
 import { edicionProxima, edicionVigente, listarEdiciones, versionModeloVigente } from "@/lib/pvc/servicio";
+import { estadoDeLaVigilancia } from "@/lib/pvc/vigilancia";
 
 export const metadata: Metadata = { title: "PVC · Ediciones · ECP", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -11,8 +12,8 @@ export const dynamic = "force-dynamic";
 // (V5.43, hallazgo A1): la pantalla no vuelve a derivarlo, que era justo donde
 // se colaba el error — «la última publicada» no es «la que rige».
 export default async function PvcEdicionesPage() {
-  const [ediciones, modelo, vigente, proxima] = await Promise.all([
-    listarEdiciones(), versionModeloVigente(), edicionVigente(), edicionProxima(),
+  const [ediciones, modelo, vigente, proxima, vigilancia] = await Promise.all([
+    listarEdiciones(), versionModeloVigente(), edicionVigente(), edicionProxima(), estadoDeLaVigilancia(),
   ]);
   return (
     <EdicionesBoard
@@ -20,6 +21,7 @@ export default async function PvcEdicionesPage() {
       modeloVersion={modelo?.version ?? null}
       vigenteId={vigente?.id ?? null}
       proximaId={proxima?.id ?? null}
+      vigilancia={vigilancia}
     />
   );
 }

@@ -10,6 +10,10 @@
       "schedule": "20 11 * * *"
     },
     {
+      "path": "/api/cron/vigilancia-pvc",
+      "schedule": "25 11 * * *"
+    },
+    {
       "path": "/api/cron/integraciones",
       "schedule": "35 11 * * *"
     },

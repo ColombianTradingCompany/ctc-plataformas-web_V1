@@ -155,9 +155,10 @@ Cada tanda es su propia versión (gate, guardianes, CHANGELOG, log, charters, AL
 3. ✅ **HECHA en la V5.176** (más la vitrina por ventanas y el barrido de renovaciones). **Operación en el OCP.** Renovaciones prellenadas (confirmación en semana 4), confirmaciones semanales, despachos
    (guía, peso, foto) y recepción (humedad, aw), pagos 60/40 y los dos caminos fuera de rango, fallas de envío (prórroga,
    cancelar, siguiente ventana) y advertencias. Se retira el trato mes a mes.
-4. **PVC.** El agente de la semana 1 del ciclo 2 (borrador, informe, aviso; el gasto de IA al ledger), la aprobación y
-   publicación con plazo, la vigilancia diaria de la corrección (alza/baja, vigente y siguiente) con su aprobación; el
-   agente copia el Flete a CTCx de la edición anterior. (El flete en la oferta, la calculadora y el contrato: ✅ V5.177.)
+4. **PVC.** (a) ✅ **HECHA en la V5.178**: la vigilancia diaria de la corrección (`src/lib/pvc/vigilancia.ts`, cron 11:25 UTC,
+   `pvc_correcciones`, tarjeta en Ediciones, tarea en el Tablero; aprobar publica la edición corregida, que aplica a lo que se
+   firme después). (b) Pendiente: el agente de la semana 1 del ciclo 2 (borrador, informe, aviso; el gasto de IA al ledger), la aprobación y
+   publicación con plazo; el agente copia el Flete a CTCx de la edición anterior. (El flete en la oferta, la calculadora y el contrato: ✅ V5.177.)
 
 ## 10. Supuestos tomados (el owner los corrige si no)
 

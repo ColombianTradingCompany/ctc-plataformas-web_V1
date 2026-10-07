@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.175] — 2026-10-07 (commit pendiente)
+## [V5.175] — 2026-10-07 (commit 23c4210)
 
 - **Cambiado**: **tanda 2 de los Ciclos: el trato de Cherry Picked va por VENTANAS** (`docs/PLAN_CICLOS.md` §2–§5). El productor
   ya no elige modalidad: la fecha de firma decide la ventana (un ciclo con 25 % de retiro libre, o extendida al ciclo siguiente

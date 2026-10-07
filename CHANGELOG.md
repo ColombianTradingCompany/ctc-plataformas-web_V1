@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.184] — 2026-10-07 (commit pendiente)
+## [V5.184] — 2026-10-07 (commit c5e9a47)
 
 - **Cambiado**: **«🎲 Escenario aleatorio» ya no cambia el % vendido** (owner: «no hagas que esto cambie el "CTCx termina vendiendo
   el 10 % de lo declarado"»): cada clic reparte al azar lo vendido en las semanas; el % lo sigue fijando el productor con su barra.

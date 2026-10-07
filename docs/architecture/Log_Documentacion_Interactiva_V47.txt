@@ -662,4 +662,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-07] V5.184 · «Escenario aleatorio» reparte las ventas sin tocar el % vendido
 - ANN `src/components/kaffetal-regal/panel/CalculadoraDelTrato.tsx`, `src/lib/trato/simulador.ts` (comentario), `scripts/qa-ciclos-check.mjs`.
-(commit: pendiente)
+(commit: c5e9a47)

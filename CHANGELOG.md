@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.183] — 2026-10-07 (commit pendiente)
+## [V5.183] — 2026-10-07 (commit a22f716)
 
 - **Añadido**: en la calculadora de la participación en Cherry Picked, **«🎲 Escenario aleatorio»**: cada clic arma otro escenario
   al azar —cuánto termina vendiendo CTCx (10–100 %) y cómo se reparte en las semanas, con semanas sin compras y alguna más fuerte—

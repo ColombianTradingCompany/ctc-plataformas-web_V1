@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.177] — 2026-10-07 (commit pendiente)
+## [V5.177] — 2026-10-07 (commit 2ed009d)
 
 - **Cambiado**: **«Flete a CTCx» reemplaza el «auxilio de transporte»** (owner, 2026-10-07: no existe; las cooperativas le
   DESCUENTAN el flete a la base FNC, que es puesta en bodega de Almacafé). CTCx suma al precio final un flete fijo por carga

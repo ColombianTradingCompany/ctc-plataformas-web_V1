@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.185] — 2026-10-07 (commit pendiente)
+## [V5.185] — 2026-10-07 (commit 37672f3)
 
 - **Cambiado**: en la calculadora, el retiro dice **«Penalidad total a pagar: $X»** con su desglose (el 4 % del precio de cada una de las
   N cargas penalizadas, a $Y la carga); antes se leía como si el monto fuera solo el 4 %. «Mi trato» y su confirmación usan la misma

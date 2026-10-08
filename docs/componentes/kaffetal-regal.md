@@ -152,6 +152,10 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.191 · la referencia revisada en formato CTCx** (código tocado desde el nodo final): bajo una referencia que CTCx revisó con
+  «Hacer revisión», «Agregar Referencias, Fotos y Videos» enseña la línea del reporte en formato CTCx (`resumenDePlanillaCtcx`: el
+  Punto del perfil de taza, o el factor, las humedades y las mallas del análisis físico) y su feed lo dice. La política de INSERT de
+  `lot_referencias` exige en null las dos columnas nuevas de CTCx (`planilla_ctcx`, `lectura_ctcx`). **Queda**: nada.
 - **V5.190 · el contrato provisional de la sesión asistida y su ratificación** (`PLAN_CICLOS.md` §11): bajo la casilla de la firma, en
   una sesión asistida, «Aceptar contrato provisionalmente» (CTCx, con el nombre de su responsable; sin firma, nombre ni documento del
   productor); en «Contratos», el aviso del contrato provisional con «Ratificar y firmar» (`RatificarContrato.tsx`), donde el productor

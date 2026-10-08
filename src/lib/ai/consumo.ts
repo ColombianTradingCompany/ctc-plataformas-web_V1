@@ -54,6 +54,9 @@ export const USOS = {
   // V5.179: el agente de la edición siguiente del PVC (src/lib/pvc/agente.ts): un informe con búsqueda web por trimestre,
   // dentro del presupuesto que fijó el owner (~US$10 por el flujo); sin clave, el borrador sale igual, sin informe.
   pvcAgente: "pvc:agente",
+  // V5.191: la lectura con IA del adjunto de una referencia del productor («Hacer revisión» del OCP, referenciasActions): lo que
+  // el texto del PDF no trae —el radar de atributos de la FNC, la foto de un reporte—. Opt-in, un botón; el texto se lee gratis.
+  referenciaLector: "kr:referencia-lector",
   // `gvg:match` y `gvg:reporte` se retiran en V5.1: el CV App Manager se fue a
   // CommaaS y anota su gasto en el libro del hub. Las filas históricas de
   // `ai_usage` conservan esas cadenas y el tablero las sigue mostrando.

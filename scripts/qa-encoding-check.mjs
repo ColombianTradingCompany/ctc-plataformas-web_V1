@@ -89,7 +89,9 @@ function tramosCorruptos(texto) {
   return encontrados;
 }
 
-const archivos = execFileSync("git", ["ls-files", "src", "scripts", "docs"], {
+// V5.191: `--others --exclude-standard` suma lo NUEVO que aún no está en git. La compuerta corre ANTES del commit, y sin
+// esto un archivo nuevo era invisible justo cuando importa: así entró `src/lib/ofertas/aceptacion.ts` (V5.190) sin declararse.
+const archivos = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "src", "scripts", "docs"], {
   encoding: "utf8",
 })
   .split("\n")

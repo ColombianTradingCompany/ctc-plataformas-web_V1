@@ -8,9 +8,10 @@ import { HistorialDeExistencia } from "./HistorialDeExistencia";
 import { cambioDeFila, controlDeExistencia } from "@/lib/kaffetal/controlDeExistencia";
 import { PostularOnBehalfButton } from "../nominados/NominadosClient";
 import { ActionForm } from "@/components/panel/ActionForm";
-import { reviewEvaluationClaim, revisarReferencia } from "../evaluationActions";
+import { reviewEvaluationClaim } from "../evaluationActions";
+import { RevisionDeReferencia } from "./RevisionDeReferencia";
 import { IMAGEN_DE_ORIGEN_POR_DEFECTO } from "@/lib/imagenDeOrigen";
-import { esReporte, estadoDeReferencia, resumenDeReferencia, rowToReferencia, type LotReferencia, type LotReferenciaRow } from "@/lib/kaffetal/referencias";
+import { esReporte, estadoDeReferencia, resumenDePlanillaCtcx, resumenDeReferencia, rowToReferencia, type LotReferencia, type LotReferenciaRow } from "@/lib/kaffetal/referencias";
 import { LotFichasCard } from "./FichasClient";
 import { soportesDe, tieneReporte } from "@/lib/fichas/soportes";
 import { ordenaFichas, rowToLotFicha, type LotFicha } from "@/lib/fichas/tipos";
@@ -573,6 +574,8 @@ function LotCard({
   const naCerts = [ds.ft2_a3_na && "A3 Cert. Origen", ds.ft2_a4_na && "A4 Cert. Intl."].filter(Boolean) as string[];
 
   const refsPorRevisar = referencias.filter((r) => estadoDeReferencia(r) === "en_revision").length;
+  // V5.191: contra qué se coteja la identidad de un reporte (el nombre, la finca, el municipio y la vereda del lote).
+  const contextoDelLote = { productor: producer?.fullName ?? null, finca: lot.fincas?.name ?? null, municipio: lot.fincas?.municipio ?? null, vereda: lot.fincas?.vereda ?? null };
 
   const eudrFields: EvaEudrFields = {
     custodyStages: lot.eudr_custody_stages ?? [],
@@ -608,6 +611,7 @@ function LotCard({
           </h4>
           <p className={styles.meta} style={{ margin: "0 0 8px" }}>
             Lo sumó después de cerrar la Ficha, sin pedir revisión de la Ficha. No reemplaza lo que ya envió ni cambia el puntaje del lote. De un reporte puede pedir revisión.
+            «Hacer revisión» abre el adjunto al lado de la planilla, con solo el bloque del reporte (B2 o B3) ya prellenado por el lector, para llevarlo al formato CTCx.
           </p>
           {referencias.map((r) => {
             const estado = estadoDeReferencia(r);
@@ -618,15 +622,13 @@ function LotCard({
                   <b>{resumenDeReferencia(r)}</b> · {new Date(r.createdAt).toLocaleDateString("es-CO")} ·{" "}
                   {url ? <a href={url} target="_blank" rel="noopener noreferrer">📎 {r.fileName}</a> : `📎 ${r.fileName}`}
                   {r.nota && <span style={{ display: "block", color: "var(--muted)" }}>«{r.nota}»</span>}
+                  {r.planillaCtcx && <span style={{ display: "block" }}><b>{resumenDePlanillaCtcx(r.planillaCtcx)}</b></span>}
                   {r.notaCtc && <span style={{ display: "block" }}><b>Nota de CTCx:</b> {r.notaCtc}</span>}
                 </span>
                 {estado === "revisada" && <span className={`${styles.badge} ${styles.badgeGood}`}>revisada · {new Date(r.revisadaAt!).toLocaleDateString("es-CO")}</span>}
                 {estado === "en_revision" && <span className={`${styles.badge} ${styles.badgeWarn}`}>revisión solicitada</span>}
-                {esReporte(r.tipo) && estado !== "revisada" && (
-                  <ActionForm action={revisarReferencia.bind(null, r.id)} submitLabel="Marcar revisada" pendingLabel="Guardando…" buttonClassName="btn btn-sm" style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-                    <input name="nota_ctc" maxLength={1200} placeholder="Nota para el productor (opcional)" style={{ fontSize: 12.5, minWidth: 220 }} />
-                  </ActionForm>
-                )}
+                {/* V5.191 (owner): «Hacer revisión» — el adjunto y la planilla (solo su bloque) lado a lado; ya revisada, «Ver la revisión». */}
+                {esReporte(r.tipo) && (estado !== "revisada" || r.planillaCtcx) && <RevisionDeReferencia referencia={r} url={url ?? null} contexto={contextoDelLote} />}
               </div>
             );
           })}

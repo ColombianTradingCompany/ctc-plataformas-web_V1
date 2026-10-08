@@ -1,0 +1,39 @@
+/* V5.191 · «Hacer revisión» de una referencia del productor: el adjunto y la planilla, lado a lado. */
+.fondo { position: fixed; inset: 0; z-index: 60; background: rgba(15, 12, 28, 0.55); }
+.panel { position: absolute; inset: 10px; display: flex; flex-direction: column; background: var(--card, #fff); color: var(--ink, #12101a); border-radius: 12px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35); overflow: hidden; }
+.cabecera { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.cabecera h3 { margin: 0; font-size: 15px; flex: 1; min-width: 220px; }
+.cerrar { border: 1px solid var(--line); background: var(--paper, #f7f6fb); color: var(--ink, #12101a); border-radius: 8px; font-size: 18px; line-height: 1; padding: 4px 10px; cursor: pointer; }
+.cuerpo { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.adjunto { min-height: 0; display: flex; flex-direction: column; border-right: 1px solid var(--line); background: var(--paper, #f7f6fb); }
+.adjuntoBarra { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 10px; font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--line); }
+.visor { flex: 1; min-height: 0; width: 100%; border: 0; background: #fff; }
+.imagen { flex: 1; min-height: 0; overflow: auto; padding: 8px; text-align: center; }
+.imagen img { max-width: 100%; height: auto; }
+.vacio { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; font-size: 13px; color: var(--muted); text-align: center; }
+.columna { min-height: 0; display: flex; flex-direction: column; }
+.planilla { flex: 1; min-height: 0; overflow: auto; padding: 12px 14px 22px; }
+.caja { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; font-size: 12.5px; }
+.caja h4 { margin: 0 0 6px; font-size: 13px; }
+.campos { width: 100%; border-collapse: collapse; font-size: 12px; }
+.campos td { padding: 3px 6px; border-bottom: 1px dashed var(--line); vertical-align: top; }
+.fuente { color: var(--muted); font-size: 11px; }
+.modo { display: inline-block; font-size: 10.5px; font-weight: 700; border-radius: 999px; padding: 1px 7px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.modoDerivado { border-color: #3C0A86; color: #3C0A86; }
+.modoInterpretado { border-color: #B45309; color: #B45309; }
+.avisos { margin: 6px 0 0; padding-left: 18px; color: #92400E; font-size: 12px; }
+.cotejo { display: grid; grid-template-columns: max-content 1fr; gap: 2px 10px; font-size: 12px; }
+.difiere { color: #B45309; font-weight: 700; }
+.coincide { color: #166534; font-weight: 700; }
+.comparacion { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; padding: 8px 12px; border-radius: 10px; background: var(--paper, #f7f6fb); margin-bottom: 12px; }
+.pie { border-top: 1px solid var(--line); padding: 10px 14px; display: grid; gap: 6px; }
+.pie textarea { width: 100%; padding: 6px 8px; border: 1.5px solid var(--line); border-radius: 7px; font: inherit; font-size: 12.5px; background: var(--paper, #f7f6fb); color: var(--ink, #12101a); }
+.error { color: #B91C1C; font-size: 12.5px; font-weight: 600; }
+
+/* En una pantalla angosta, el adjunto arriba y la planilla debajo: todo corre junto. */
+@media (max-width: 900px) {
+  .cuerpo { grid-template-columns: minmax(0, 1fr); grid-template-rows: 48vh auto; overflow: auto; }
+  .adjunto { border-right: none; border-bottom: 1px solid var(--line); }
+  .columna { display: block; }
+  .planilla { overflow: visible; }
+}

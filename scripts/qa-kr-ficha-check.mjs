@@ -237,7 +237,166 @@ const lee = (r) => readFileSync(new URL(`../${r}`, import.meta.url), "utf8");
   check("los archivos suben a la carpeta del lote (el borrado nuclear los recoge por patrón)", pane.includes("`lots/${lot.id}/refs/${tipo}-${Date.now()}`"));
   check("la tabla es de solo AGREGAR: políticas de SELECT e INSERT, ninguna de UPDATE ni DELETE", (acta.match(/create policy /g) ?? []).length === 2 && acta.includes("for select to authenticated") && acta.includes("for insert to authenticated") && !/for (update|delete|all) /.test(acta) && acta.includes("enable row level security"));
   check("solo sobre un lote propio con la Ficha cerrada y un archivo propio; sin tocar los campos de CTCx", acta.includes("(coalesce(l.intake_step, 0) >= 4 or l.stage::text <> 'borrador')") && acta.includes("m.uploaded_by = (select auth.uid())") && acta.includes("revisada_at is null and revisada_por is null and nota_ctc is null"));
-  check("el OCP lista lo agregado y CTCx lo marca revisado (acción `emite`, con nota al productor)", leeTexto("src/app/ocp/(app)/kr/LoteSeccion.tsx").includes("revisarReferencia.bind(null, r.id)") && /export async function revisarReferencia[\s\S]{0,260}permisoDeEscritura\("ocp", "emite"\)/.test(leeTexto("src/app/ocp/(app)/evaluationActions.ts")) && leeTexto("src/app/ocp/(app)/evaluationActions.ts").includes('context_label: "Referencia revisada"'));
+  // V5.191: «Marcar revisada» se volvió «Hacer revisión» (la sección de abajo); la acción vive en `referenciasActions.ts`.
+  check("el OCP lista lo agregado y CTCx lo revisa (acción `emite`, con nota al productor)", leeTexto("src/app/ocp/(app)/kr/LoteSeccion.tsx").includes("<RevisionDeReferencia referencia={r}") && /export async function guardarRevisionDeReferencia[\s\S]{0,320}permisoDeEscritura\("ocp", "emite"\)/.test(leeTexto("src/app/ocp/(app)/referenciasActions.ts")) && leeTexto("src/app/ocp/(app)/referenciasActions.ts").includes('context_label: "Referencia revisada"'));
+}
+
+// ── V5.191 (owner, 2026-10-08) · «Hacer revisión»: el adjunto y la planilla —solo el bloque del reporte— lado a lado, prellenada ──
+//    «Cambiemos este botón de "Marcar Revisada" por "Hacer Revisión", lo cual abre un panel igual al de la evaluación, pero solo con
+//    la parte relevante (solo B2 o solo B3 si es de granulometría). Agrega un script que analice el adjunto para encontrar matches de
+//    la información a introducir para tener esto pre-hecho. Haz que el adjunto y la interfaz de evaluación estén en bloques
+//    paralelos lado a lado para compararse.»
+{
+  const { readFileSync: leeArchivo } = await import("node:fs");
+  const leeTexto = (ruta) => leeArchivo(new URL(`../${ruta}`, import.meta.url), "utf8").replace(/\r\n/g, "\n");
+  const L = await import("../src/lib/kaffetal/lectorDeReportes.ts");
+  const E = await import("../src/lib/arena/labEvaluation.ts");
+  const R = await import("../src/lib/kaffetal/referencias.ts");
+  const acciones = leeTexto("src/app/ocp/(app)/referenciasActions.ts");
+  const panel = leeTexto("src/app/ocp/(app)/kr/RevisionDeReferencia.tsx");
+  const estilos = leeTexto("src/app/ocp/(app)/kr/revisionDeReferencia.module.css");
+  const seccionLote = leeTexto("src/app/ocp/(app)/kr/LoteSeccion.tsx");
+  const editor = leeTexto("src/components/bcp/LabEvalEditor.tsx");
+  const acta = leeTexto("docs/migraciones/2026-10-08_referencia_planilla_ctcx.sql");
+  const extractor = leeTexto("src/lib/kaffetal/textoDelPdf.ts");
+  const paneKr = leeTexto("src/components/kaffetal-regal/ficha/panes/PaneReferencias.tsx");
+
+  // Un reporte con el formato de la Federación (la capa de texto de su PDF). DATOS INVENTADOS: el repositorio es público.
+  const FNC = [
+    "ANÁLISIS FÍSICO DEL PERGAMINO",
+    "Porcentaje de humedad 10.5% Factor de rendimiento 89.74",
+    "Porcentaje de merma 18.00% Peso almendra (g) 205.00",
+    "Porcentaje almendra sana 78.00% Almendra sana (g) 195.00",
+    "Granulometría",
+    "Nº Gramos %Retenido %Acumulado",
+    "Malla 18 40.00 19.51 19.51", "Malla 17 70.00 34.15 53.66", "Malla 16 50.00 24.39 78.05", "Malla 15 30.00 14.63 92.68",
+    "Malla 14 10.00 4.88 97.56", "Malla 13 4.00 1.95 99.51", "Malla 12 0.50 0.24 99.76", "Malla 0 0.50 0.24 100.00",
+    "ANÁLISIS FÍSICO DE LA ALMENDRA",
+    "Porcentaje Almendra defectuosa 4.88% Almendra defectuosa (g) 10.00",
+    "Porcentaje broca 0.00% Broca (g) 0.00",
+    "Defectos físicos SIN DEFECTOS FISICOS PREDOMINANTES",
+    "ANÁLISIS SENSORIAL",
+    "Puntaje SCA",
+    "84.50",
+    "En fragancia y aroma se perciben notas a panela, floral, En sabor se",
+    "pueden percibir notas a mandarina, chocolate amargo, Sabor residual",
+    "prolongado. Acidez con notas media alta, cítrica. Cuerpo sedoso. En balance se",
+    "puede notar que es un café limpio",
+    "Ana Prueba - Luis Ensayo",
+    "Q Grader",
+    "FEDERACIÓN NACIONAL DE CAFETEROS DE COLOMBIA - COMITÉ DE CAFETEROS DE PRUEBA",
+    "INFORMACIÓN GENERAL",
+    "Documento 1000000 Nombre PRODUCTOR DE PRUEBA",
+    "Finca LOTE 1 EL ENSAYO Código SICA 0000000000",
+    "Municipio PRUEBAS Vereda LA MUESTRA",
+    "Fecha de Análisis 2026-01-15 Fecha de Registro SGR 2026-01-20",
+    "Tipo beneficio LAVADO Tipo secado MARQUESINAS",
+    'Humedad verde 11.0% Observación Muestra rotulada "Tanque',
+    '1"',
+    "Muestra: 2026-XX-0001 - Resultado solo válido de manera educativa para la muestra analizada y no podrá ser usado con fines comerciales.",
+  ].join("\n");
+  const fnc = L.lecturaDeLosDatos(L.leerTextoDeReporte(FNC, { escala: "sca" }));
+  const campo = (lectura, clave) => lectura.campos.find((c) => c.clave === clave);
+  const vale = (lectura, clave) => Object.values(campo(lectura, clave)?.parche ?? {})[0];
+  check("lector · reconoce el formato de la FNC y su total (SCA 2004) y su factor, para compararlos con la planilla",
+    fnc.formato === "fnc" && fnc.puntaje?.valor === 84.5 && fnc.puntaje?.protocolo === "sca2004" && fnc.factor === 89.74 && campo(fnc, "protocolo")?.parche.vista === "sca");
+  check("lector · B3 leído tal cual: humedad del pergamino (la «humedad» sin apellido de un reporte de pergamino), del verde, factor y almendra",
+    vale(fnc, "fa_parch_hum") === "10.5" && vale(fnc, "b3_humedad_verde") === "11" && vale(fnc, "b3_factor_reportado") === "89.74" && vale(fnc, "fa_green_remainder") === "205" &&
+    ["fa_parch_hum", "b3_humedad_verde", "b3_factor_reportado", "fa_green_remainder"].every((k) => campo(fnc, k).modo === "leido" && campo(fnc, k).bloque === "b3"));
+  check("lector · el pergamino de la muestra se DERIVA de la merma (205 g ÷ 0,82 = 250 g) y los defectos sin separar van a secundarios, INTERPRETADO y avisado",
+    vale(fnc, "fa_start") === "250" && campo(fnc, "fa_start").modo === "derivado" && vale(fnc, "fa_secondary_defect") === "10" && campo(fnc, "fa_secondary_defect").modo === "interpretado" &&
+    !campo(fnc, "fa_primary_defect") && fnc.avisos.some((a) => a.includes("sin separar primarios de secundarios")));
+  check("lector · las mallas van a las de CTCx (13 y 12 juntas en Pea Berry, derivado); lo de menos de 12 lo calcula la planilla como residuo",
+    vale(fnc, "mesh_supremo_plus") === "40" && vale(fnc, "mesh_supremo") === "70" && vale(fnc, "mesh_extra") === "50" && vale(fnc, "mesh_europa") === "30" && vale(fnc, "mesh_ugq") === "10" &&
+    vale(fnc, "mesh_peaberry") === "4.5" && campo(fnc, "mesh_peaberry").modo === "derivado" && !campo(fnc, "mesh_residue"));
+  const planillaFnc = L.aplicaLectura(E.EMPTY_LAB_EVALUATION, fnc.campos, ["b2", "b3"]).planilla;
+  const factorFnc = E.computeFactor(planillaFnc);
+  const mallasFnc = E.computeMesh(planillaFnc, factorFnc.remainder);
+  check("lector · con lo leído, la planilla da el MISMO factor del reporte y las mallas cuadran (residuo 0,5 g)",
+    Math.abs(factorFnc.yieldFactor - 89.74) < 0.01 && mallasFnc.state === "ok" && mallasFnc.residueGrams === 0.5);
+  check("lector · el perfil es el párrafo tras el puntaje, sin la firma del Q-Grader (que va a la identidad)",
+    vale(fnc, "cupping_profile").startsWith("En fragancia y aroma se perciben notas a panela") && vale(fnc, "cupping_profile").endsWith("es un café limpio") &&
+    !vale(fnc, "cupping_profile").includes("Ana Prueba") && fnc.identidad.some((i) => i.etiqueta === "Q Grader" && i.valor === "Ana Prueba - Luis Ensayo"));
+  const rueda = campo(fnc, "rueda")?.parche;
+  check("lector · la rueda con la etapa en que el perfil nombra cada nota; la más larga gana («chocolate amargo», no «chocolate»)",
+    rueda && JSON.stringify(rueda.rueda) === JSON.stringify(["floral-floral", "cacao-cacao|chocolate-amargo"]) &&
+    JSON.stringify(rueda.rueda_detalle["floral-floral"].etapas) === JSON.stringify(["fragancia", "aroma"]) && JSON.stringify(rueda.rueda_detalle["cacao-cacao|chocolate-amargo"].etapas) === JSON.stringify(["sabor"]));
+  check("lector · la acidez y la boca del formato descriptivo: «media alta» → 9 de 15 (interpretado), «sedoso» → Suave, y su frase como comentario",
+    vale(fnc, "acidez_intensidad") === "9" && campo(fnc, "acidez_intensidad").modo === "interpretado" && vale(fnc, "acidez_nota") === "Acidez con notas media alta, cítrica." &&
+    JSON.stringify(vale(fnc, "boca_texturas")) === JSON.stringify(["smooth"]) && vale(fnc, "boca_nota") === "Cuerpo sedoso.");
+  check("lector · «pera» no caza «pero» (una etiqueta en «a» no toma la «o»), y lo que se dice de la acidez no es rueda",
+    !L.marcasDelPerfil("notas a chocolate pero suave").ids.some((id) => id.includes("pera")) && L.marcasDelPerfil("Acidez vinosa.").ids.length === 0 && L.marcasDelPerfil("notas vinosas").ids.includes("acido-fermentado|vinoso"));
+  check("lector · la identidad del reporte (con el renglón que continúa) y su advertencia de uso; el radar sin texto se avisa",
+    fnc.identidad.some((i) => i.etiqueta === "Nombre" && i.valor === "PRODUCTOR DE PRUEBA") && fnc.identidad.some((i) => i.etiqueta === "Observación" && i.valor === 'Muestra rotulada "Tanque 1"') &&
+    !fnc.identidad.some((i) => i.etiqueta === "Humedad verde") && fnc.avisos.some((a) => a.includes("no podrá ser usado con fines comerciales")) && fnc.avisos.some((a) => a.includes("en la gráfica")));
+  const cotejo = L.cotejoDeIdentidad(fnc.identidad, { productor: "Otra Persona Distinta", finca: "El Ensayo", municipio: "Pruebas", vereda: null });
+  check("lector · el cotejo con el lote: la finca y el municipio coinciden, el nombre NO",
+    cotejo.find((c) => c.etiqueta === "Finca").coincide === true && cotejo.find((c) => c.etiqueta === "Municipio").coincide === true && cotejo.find((c) => c.etiqueta === "Nombre").coincide === false && cotejo.find((c) => c.etiqueta === "Vereda").coincide === null);
+
+  // Otro laboratorio, con los atributos escritos (SCA 2004) y otro en CVA.
+  const sca = L.lecturaDeLosDatos(L.leerTextoDeReporte("Laboratorio de Calidad Ejemplo\nReporte de catación SCA 2004\nFragancia/Aroma: 8.25\nSabor: 8.00\nSabor residual: 7.75\nAcidez: 8.00\nCuerpo: 7.75\nBalance: 8.00\nUniformidad: 10\nTaza limpia: 10\nDulzor: 10\nPuntaje del catador: 8.00\nPuntaje total: 85.75\nNotas de catación: caramelo, naranja, té negro."));
+  const planillaSca = L.aplicaLectura(E.toLabEvaluation({}), sca.campos, ["b2"]).planilla;
+  check("lector · un reporte con los diez atributos en texto: la planilla queda en SCA 2004 y su total es el del reporte (85,75)",
+    sca.formato === "generico" && sca.campos.filter((c) => c.clave.startsWith("sca_")).length === 10 && vale(sca, "sca_aftertaste") === "7.75" && vale(sca, "sca_flavor") === "8" &&
+    planillaSca.vista === "sca" && E.computeSca2004(planillaSca).total === 85.75 && JSON.stringify(vale(sca, "rueda")) === JSON.stringify(["frutal-citricos|naranja", "floral-te|te-negro"]));
+  const cva = L.lecturaDeLosDatos(L.leerTextoDeReporte("Coffee Value Assessment (CVA)\nFragancia: 7\nAroma: 7.5\nSabor: 7\nSabor residual: 6.5\nAcidez: 7\nDulzor: 7\nSensación en boca: 6.5\nImpresión general: 7\nPuntaje CVA: 89.25"));
+  const planillaCva = L.aplicaLectura(E.toLabEvaluation({}), cva.campos, ["b2"]).planilla;
+  check("lector · un reporte CVA: las ocho secciones a la planilla en CVA (Fragancia y Aroma aparte) y su total",
+    cva.puntaje?.protocolo === "cva" && vale(cva, "cva_aroma") === "7.5" && vale(cva, "cva_mouthfeel") === "6.5" && vale(cva, "cva_overall") === "7" && planillaCva.vista === "cva" && E.computeCva(planillaCva).total === 89.25);
+
+  // La IA (opt-in): su respuesta pasa por el mismo mapeo, saneada.
+  const ia = L.lecturaDeLosDatos(L.datosDesdeIa({ protocolo: "sca2004", puntaje: 85.75, sca: { fragrance: 8, flavor: "8,25", aftertaste: 11, cuppers: 8 }, almendra_g: 200, mallas: [{ malla: 18, gramos: null, porcentaje: 20 }, { malla: 17, gramos: 80 }], confianza: "alta", observaciones: "radar legible", inventado: "x" }));
+  check("IA · lo que devuelve se sanea (fuera de rango, fuera; coma decimal) y una malla en % pasa a gramos con la almendra (derivado)",
+    ia.origen === "ia" && vale(ia, "sca_fragrance") === "8" && vale(ia, "sca_flavor") === "8.25" && !campo(ia, "sca_aftertaste") && vale(ia, "mesh_supremo_plus") === "40" &&
+    campo(ia, "mesh_supremo_plus").modo === "derivado" && vale(ia, "mesh_supremo") === "80" && ia.confianza === "alta" && ia.avisos.includes("La IA anota: radar legible"));
+  const trabajada = E.toLabEvaluation({ vista: "sca", escala: "sca", sca_fragrance: "7.75" });
+  const conIa = L.aplicaLectura(trabajada, ia.campos, ["b2"], { soloVacios: true });
+  check("IA · sobre una planilla ya trabajada no pisa nada: llena lo vacío y devuelve lo que difiere como choque",
+    conIa.planilla.sca_fragrance === "7.75" && conIa.planilla.sca_flavor === "8.25" && conIa.choques.length === 1 && conIa.choques[0].campo.clave === "sca_fragrance" && conIa.choques[0].actual === "7.75" && conIa.planilla.mesh_supremo === "");
+  check("IA · opt-in y con su libro: el botón pide confirmación con el aviso de costo; la acción es `emite`, anota el gasto (`kr:referencia-lector`) y abrir el panel no la llama",
+    /confirm\("La lectura con IA[^"]*costo de IA/.test(panel) && panel.indexOf("confirm(") < panel.indexOf("leerReferenciaConIA(referencia.id)") &&
+    /export async function leerReferenciaConIA[\s\S]{0,200}permisoDeEscritura\("ocp", "emite"\)/.test(acciones) && acciones.includes("superficie: USOS.referenciaLector") &&
+    acciones.includes("system: LECTOR_IA_SYSTEM") && leeTexto("src/lib/ai/consumo.ts").includes('referenciaLector: "kr:referencia-lector"') &&
+    !/const abrir = [\s\S]{0,400}leerReferenciaConIA/.test(panel) && !seccionLote.includes("leerReferencia"));
+
+  // Los bloques: la planilla de la revisión enseña solo el del reporte.
+  check("bloques · un reporte de taza revisa B2; uno físico, B3; una foto o un video, nada",
+    JSON.stringify(R.bloquesDeLaReferencia("taza")) === '["b2"]' && JSON.stringify(R.bloquesDeLaReferencia("fisico")) === '["b3"]' && R.bloquesDeLaReferencia("foto").length === 0 && R.bloquesDeLaReferencia("video").length === 0);
+  check("bloques · el editor de la planilla enseña solo los bloques pedidos (por defecto, los dos) y sin B2 el idioma pasa a B3",
+    editor.includes("bloques = BLOQUES_DE_PLANILLA,") && editor.includes('const verB2 = bloques.includes("b2");') && editor.includes("{verB2 && (") && editor.includes("{verB3 && (") && editor.includes("{!verB2 && selectorDeIdioma}"));
+  const recortada = E.recortaABloques(planillaFnc, ["b2"]);
+  const fila = R.filaDePlanillaCtcx({ ...planillaFnc, inventado: "x" }, ["b3"]);
+  check("bloques · lo que se guarda lleva solo los bloques revisados y solo campos de la planilla (nada que agregue el navegador)",
+    recortada.fa_green_remainder === "" && recortada.mesh_supremo === "" && recortada.cupping_profile !== "" && fila.version === 1 && JSON.stringify(fila.bloques) === '["b3"]' &&
+    fila.planilla.cupping_profile === "" && fila.planilla.fa_green_remainder === "205" && !("inventado" in fila.planilla) && E.bloqueDeLaClave("mesh_peaberry") === "b3" && E.bloqueDeLaClave("sca_body") === "b2");
+  check("bloques · el resumen de una línea que leen el OCP y el productor",
+    R.resumenDePlanillaCtcx(fila).startsWith("Análisis físico en formato CTCx: factor 89.74 · humedad del pergamino 10.5 %") &&
+    R.resumenDePlanillaCtcx(R.filaDePlanillaCtcx(planillaSca, ["b2"])) === "Perfil de taza en formato CTCx: SCA 2004 85.75 · vale lo mismo en CVA" &&
+    R.rowToReferencia({ id: "1", lot_id: "L", tipo: "taza", asset_id: "A", file_name: "r.pdf", emisor: null, puntaje: null, escala: null, factor: null, nota: null, revision_solicitada_at: null, revisada_at: "t", nota_ctc: null, planilla_ctcx: fila, created_at: "t" }).planillaCtcx?.planilla.fa_green_remainder === "205");
+
+  // La pantalla: el botón, el panel lado a lado, la lectura al abrir.
+  check("panel · «Hacer revisión» reemplaza a «Marcar revisada»; ya revisada (con planilla) se puede «Ver la revisión»",
+    !seccionLote.includes("Marcar revisada") && seccionLote.includes("(estado !== \"revisada\" || r.planillaCtcx) && <RevisionDeReferencia") && panel.includes('"Hacer revisión"') && panel.includes('"Ver la revisión"') &&
+    !leeTexto("src/app/ocp/(app)/evaluationActions.ts").includes("export async function revisarReferencia"));
+  check("panel · el adjunto (el PDF en su visor, o la foto) y la planilla van en dos columnas paralelas que corren cada una por su cuenta",
+    /\.cuerpo \{[^}]*grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\)/.test(estilos) && /\.planilla \{[^}]*overflow: auto/.test(estilos) &&
+    panel.includes("<iframe className={css.visor} src={adjunto.url}") && panel.includes("<LabEvalEditor value={planilla} onChange={cambiar} disabled={soloVer || pending} lang={lang} onLang={setLang} ocultaGrado bloques={bloques} />"));
+  check("panel · al abrir, el lector lee el texto (gratis) y prellena SOLO el bloque del reporte, sin pisar lo que el revisor ya escribió; el otro bloque se incluye si él quiere",
+    /const abrir = [\s\S]{0,500}leerReferencia\(referencia\.id\)/.test(panel) && panel.includes("aplicaLectura(planillaRef.current, r.lectura.campos, propios, { soloVacios: true })") &&
+    panel.includes("Incluir también {NOMBRE_DEL_BLOQUE[otro]}") && panel.includes("Puntaje del reporte") && panel.includes("Factor del reporte"));
+  check("acciones · leer es solo lectura (descarga y lee, no escribe) y la capa de texto la saca `unpdf` en un módulo de solo servidor",
+    /export async function leerReferencia\([\s\S]{0,400}await requireActiveAdmin\(\);/.test(acciones) &&
+    !/\.(insert|update|upsert|delete)\(|registrarConsumo/.test(acciones.slice(acciones.indexOf("export async function leerReferencia("), acciones.indexOf("export async function leerReferenciaConIA("))) &&
+    extractor.startsWith('import "server-only";') && extractor.includes('await import("unpdf")') && JSON.parse(leeTexto("package.json")).dependencies.unpdf);
+  check("acciones · guardar es `emite`, una sola vez, con la planilla saneada (o una nota que diga por qué no) y avisa al productor",
+    /export async function guardarRevisionDeReferencia[\s\S]{0,320}permisoDeEscritura\("ocp", "emite"\)/.test(acciones) && acciones.includes('.is("revisada_at", null)') &&
+    acciones.includes("const fila = filaDePlanillaCtcx(entrada.planilla, bloques);") && acciones.includes("planilla_ctcx: conDatos ? fila : null,") && acciones.includes("if (!conDatos && !nota)") &&
+    acciones.includes('context_label: "Referencia revisada"'));
+  check("base · dos columnas de CTCx (nulas), sin revisión no hay planilla ni lectura, y el productor no puede insertarlas",
+    acta.includes("add column if not exists planilla_ctcx jsonb") && acta.includes("add column if not exists lectura_ctcx jsonb") &&
+    acta.includes("check ((planilla_ctcx is null and lectura_ctcx is null) or revisada_at is not null)") &&
+    acta.includes("and planilla_ctcx is null and lectura_ctcx is null") && acta.includes("revisada_at is null and revisada_por is null and nota_ctc is null"));
+  check("productor · ve su referencia revisada con el resumen del formato CTCx", paneKr.includes("{r.planillaCtcx && <div>{resumenDePlanillaCtcx(r.planillaCtcx)}</div>}"));
 }
 
 if (fallos.length) {

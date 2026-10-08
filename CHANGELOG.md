@@ -19,6 +19,38 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.191] — 2026-10-08 (commit pendiente)
+
+- **Cambiado**: **«Marcar revisada» → «Hacer revisión»** en las referencias que el productor agrega a su lote (OCP · vista del lote;
+  owner, sobre CTC-L-323FEDE6). El botón abre un panel a pantalla completa con el ADJUNTO y la planilla de evaluación LADO A LADO —dos
+  columnas que corren cada una por su cuenta—, con SOLO el bloque del reporte: B2 si es de perfil de taza, B3 si es de análisis físico o
+  granulometría (el otro se puede incluir con una casilla, si el adjunto lo trae). Se guarda en formato CTCx (`planilla_ctcx`), la
+  referencia queda revisada (una vez) y el productor lo lee bajo su referencia y en su feed. Sigue sin cambiar el puntaje ni el grado del
+  lote. Ya revisada, «Ver la revisión».
+- **Añadido**: **el lector de reportes** (`src/lib/kaffetal/lectorDeReportes.ts`, puro): lee la capa de texto del PDF (`unpdf`, solo
+  servidor) y propone la planilla, cada dato con el trozo del reporte de donde salió y su modo —leído, derivado o interpretado—. Con el
+  formato de la FNC: humedades, factor, almendra, el pergamino de la muestra derivado de la merma, los defectos, las mallas a las de CTCx
+  (13 y 12 en Pea Berry), el puntaje y su protocolo, el perfil, la rueda con la etapa en que se nombra cada nota, y la acidez y la boca
+  del formato descriptivo. La identidad del reporte se coteja con el lote (nombre, finca, municipio, vereda) y sus advertencias («solo
+  educativo») se avisan. Probado con el reporte real: el factor de los pesos da el del reporte (86,46) y las mallas cuadran.
+- **Añadido**: **«Leer también con IA»** (opt-in, con su aviso de costo; vía de gasto nueva `kr:referencia-lector`): para lo que el texto
+  no trae —el radar de atributos de la FNC es una imagen— o un reporte en foto. Pasa por el mismo mapeo y no pisa lo ya llenado: lo que
+  difiere se enseña como choque.
+- **Cambiado**: `LabEvalEditor` acepta `bloques` (B2, B3 o los dos, por defecto); sin B2 el idioma se elige en B3. `labEvaluation.ts`:
+  `BloqueDePlanilla`, `CLAVES_B3`, `recortaABloques`. La acción vieja `revisarReferencia` se retiró con su botón.
+- **Datos**: migración `referencia_planilla_ctcx` (`planilla_ctcx` y `lectura_ctcx`, nulas; un check: sin revisión no hay planilla ni
+  lectura; la política de INSERT del productor las exige en null; 0 filas tocadas).
+- **Seguridad**: `qa-kr-ficha` 250 → 277 (§ V5.191: el lector con un reporte de formato FNC inventado, otro con los atributos en texto y
+  uno CVA; la IA saneada y opt-in; los bloques; el panel lado a lado; leer no escribe, guardar es `emite` y una vez; el acta).
+- **Seguridad**: **el punto ciego de la compuerta**: `qa-rutas-consolas`, `qa-niveles` y `qa-encoding` listaban las fuentes con
+  `git ls-files`, que no ve lo NUEVO antes del commit —justo cuando corre la compuerta—. Así entró en la V5.190
+  `src/lib/ofertas/aceptacion.ts` con la compuerta del OCP sin declararse (lo cazó la compuerta de esta versión, ya versionado). Los
+  tres suman `--others --exclude-standard`; `aceptacion.ts` queda declarado en `MODULOS_LIB` (vive en la Asistencia del OCP);
+  `qa-rutas-consolas` 521 → 527, probado con un módulo nuevo sin versionar.
+- **Añadido**: la dependencia `unpdf` 1.8.1 (MIT, sin dependencias). `npm audit` sigue en 26 por avisos nuevos de paquetes que ya estaban (`next`,
+  `nodemailer`, `undici`…); `unpdf` no está entre ellos.
+- **Docs**: charters `consolas`, `kaffetal-regal`; ALINEACION §3.
+
 ## [V5.190] — 2026-10-08 (commit acfd605)
 
 - **Corregido**: **la firma de una invitación «cargaba, pero no hacía nada»** (sesión asistida de «Castillo Lavado Ruizeñores 2026»,

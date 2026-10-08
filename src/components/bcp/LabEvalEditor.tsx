@@ -45,7 +45,8 @@ import {
   type EstadoDeTazaSca,
   type LabEvaluation,
   type ScaTaza,
-  type VistaDePlanilla, NOTA_DESCRIPTIVA_MAX, TAZAS_SCA, TAZAS_CVA, factorDeLaPlanilla, normalizaScaTazas, normalizaTazas, tazasCvaUsadas, tazasUsadas } from "@/lib/arena/labEvaluation";
+  type VistaDePlanilla, NOTA_DESCRIPTIVA_MAX, TAZAS_SCA, TAZAS_CVA, factorDeLaPlanilla, normalizaScaTazas, normalizaTazas, tazasCvaUsadas, tazasUsadas,
+  BLOQUES_DE_PLANILLA, type BloqueDePlanilla } from "@/lib/arena/labEvaluation";
 import { INFO_PLANILLA, type ClaveDeInfo } from "@/lib/arena/planillaInfo";
 import { CVA_PROPOSITO, decidirPorPunto, rotuloDelPunto } from "@/lib/arena/punto";
 import { CLAVES_CVA, CLAVES_SCA_ESCALADAS } from "@/lib/arena/equivalencia";
@@ -122,6 +123,7 @@ export function LabEvalEditor({
   onLang,
   ocultaGrado = false,
   triada = null,
+  bloques = BLOQUES_DE_PLANILLA,
 }: {
   value: LabEvaluation;
   onChange: (patch: Partial<LabEvaluation>) => void;
@@ -133,6 +135,9 @@ export function LabEvalEditor({
   ocultaGrado?: boolean;
   /** V5.160: la tríada del lote (variedad · proceso · reconocimiento). Sin ella no se puede derivar un grado: solo se enseña el Punto. */
   triada?: Triada | null;
+  /** V5.191 (owner, 2026-10-08): qué bloques enseña — los dos (por defecto), o solo B2 (un reporte de taza) o solo B3 (un análisis
+   *  físico) en «Hacer revisión» de una referencia del productor. Lo que no se enseña no se toca. */
+  bloques?: readonly BloqueDePlanilla[];
 }) {
   const [langPropio, setLangPropio] = useState<IdiomaDePlanilla>("es");
   const lang = langProp ?? langPropio;
@@ -152,6 +157,8 @@ export function LabEvalEditor({
   const decision = punto && triada ? decidirPorPunto(punto, triada) : null;
   const verSca = value.vista !== "cva";
   const verCva = value.vista !== "sca";
+  const verB2 = bloques.includes("b2");
+  const verB3 = bloques.includes("b3");
 
   const numInput = (key: keyof LabEvaluation, opts?: { step?: string; max?: number; min?: number; ancho?: number }) => (
     <input
@@ -268,27 +275,33 @@ export function LabEvalEditor({
   // V5.189: la planilla del otro protocolo que vale lo mismo (la equivalencia), junto al Punto.
   const equivalente = equivalenteDeLaPlanilla(value);
 
+  const selectorDeIdioma = (
+    <div role="group" aria-label={t.idioma} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "var(--muted)" }}>
+      {t.idioma}
+      <span style={{ display: "inline-flex", border: "1.5px solid var(--line)", borderRadius: 999, overflow: "hidden" }}>
+        {IDIOMAS_DE_PLANILLA.map((l) => (
+          <button
+            key={l}
+            type="button"
+            aria-pressed={lang === l}
+            onClick={() => setLang(l)}
+            style={{ padding: "3px 12px", fontSize: 11.5, fontWeight: 800, border: "none", cursor: "pointer", background: lang === l ? "var(--primary, #3C0A86)" : "transparent", color: lang === l ? "#fff" : "var(--muted)" }}
+          >
+            {l.toUpperCase()}
+          </button>
+        ))}
+      </span>
+    </div>
+  );
+
   return (
     <div>
+      {verB2 && (
+      <>
       {/* ── B2 · Perfil de Taza: la vista y el idioma se eligen; el Punto y su procedencia se ven ── */}
       <div style={{ ...S.seccion, marginTop: 0 }}>
         <h5 style={S.h}>{t.b2}</h5>
-        <div role="group" aria-label={t.idioma} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "var(--muted)" }}>
-          {t.idioma}
-          <span style={{ display: "inline-flex", border: "1.5px solid var(--line)", borderRadius: 999, overflow: "hidden" }}>
-            {IDIOMAS_DE_PLANILLA.map((l) => (
-              <button
-                key={l}
-                type="button"
-                aria-pressed={lang === l}
-                onClick={() => setLang(l)}
-                style={{ padding: "3px 12px", fontSize: 11.5, fontWeight: 800, border: "none", cursor: "pointer", background: lang === l ? "var(--primary, #3C0A86)" : "transparent", color: lang === l ? "#fff" : "var(--muted)" }}
-              >
-                {l.toUpperCase()}
-              </button>
-            ))}
-          </span>
-        </div>
+        {selectorDeIdioma}
       </div>
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 4 }}>
         {VISTAS.map((k) => (
@@ -646,12 +659,19 @@ export function LabEvalEditor({
         </div>
       </div>
 
+      </>
+      )}
+
+      {verB3 && (
+      <>
       {/* ── B3 · Caracterización Física ── */}
-      <div style={S.seccion}>
+      <div style={{ ...S.seccion, ...(verB2 ? {} : { marginTop: 0 }) }}>
         <h5 style={S.h}>{t.b3}</h5>
         <span style={{ fontSize: 11.5, color: "var(--muted)" }}>
           {t.apoyo} <a href={URL_DEFECTOS} target="_blank" rel="noreferrer">{t.defectosTool}</a> · <a href={URL_VARIEDADES} target="_blank" rel="noreferrer">{t.variedadesTool}</a>
         </span>
+        {/* V5.191: sin B2, el idioma se elige aquí. */}
+        {!verB2 && selectorDeIdioma}
       </div>
       <div style={S.dosCol}>
         {/* Los pesos de la trilla y el factor. */}
@@ -840,6 +860,8 @@ export function LabEvalEditor({
           <p style={{ ...(mesh.state === "excede" || mesh.state === "residuo_alto" ? S.err : S.hint), margin: "6px 0 0" }}>{ESTADO_DE_MALLAS[lang][mesh.state]}</p>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }

@@ -10,6 +10,7 @@ import {
   errorDeReferencia,
   esReporte,
   estadoDeReferencia,
+  resumenDePlanillaCtcx,
   resumenDeReferencia,
   type LotReferencia,
   type NuevaReferencia,
@@ -230,6 +231,8 @@ export function PaneReferencias({
                   </a>
                 </div>
                 {r.nota && <div style={{ color: "var(--muted)" }}>«{r.nota}»</div>}
+                {/* V5.191: CTCx llevó el reporte a su formato (la planilla B2 o B3) al revisarlo. */}
+                {r.planillaCtcx && <div>{resumenDePlanillaCtcx(r.planillaCtcx)}</div>}
                 {r.notaCtc && <div><b>CTCx:</b> {r.notaCtc}</div>}
               </div>
             );

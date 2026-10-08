@@ -83,7 +83,9 @@ const tablaBlanca = seccion.slice(seccion.indexOf("**La lista blanca de borrador
 for (const [, fn] of tablaBlanca.matchAll(/^\| `(\w+)` \|/gm)) blancaPlan.add(fn);
 check("el plan trae la lista blanca de borradores", blancaPlan.size >= 5, `${blancaPlan.size} acciones`);
 
-const fuentes = execFileSync("git", ["ls-files", "src"], { encoding: "utf8" })
+// V5.191: `--others --exclude-standard` suma lo NUEVO que aún no está en git. La compuerta corre ANTES del commit, y sin
+// esto un archivo nuevo era invisible justo cuando importa: así entró `src/lib/ofertas/aceptacion.ts` (V5.190) sin declararse.
+const fuentes = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "src"], { encoding: "utf8" })
   .split("\n")
   .filter((f) => /\.(ts|tsx)$/.test(f) && existsSync(f));
 const RX_FUNC = /^(?:export )?(?:default )?async function (\w+)\s*[<(]/gm;

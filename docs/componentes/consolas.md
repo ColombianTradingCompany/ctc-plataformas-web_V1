@@ -177,6 +177,12 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.191 · OCP · «Hacer revisión» de una referencia del productor** (owner, sobre CTC-L-323FEDE6): reemplaza a «Marcar revisada».
+  Abre el adjunto y la planilla de evaluación lado a lado (`RevisionDeReferencia.tsx`), con solo el bloque del reporte —B2 de un perfil
+  de taza, B3 de un análisis físico— prellenado por el lector de reportes (`lectorDeReportes.ts`: la capa de texto del PDF, gratis; la
+  IA, opt-in, para el radar de la FNC, `kr:referencia-lector`). Guardar (`emite`, una vez) deja la planilla en formato CTCx en
+  `lot_referencias.planilla_ctcx` y avisa al productor. **Queda**: conducirlo con las dos referencias de CTC-L-323FEDE6 (el mismo PDF,
+  como taza → B2 y como físico → B3); los atributos del radar se leen con IA o se digitan.
 - **V5.190 · OCP y la aceptación provisional**: desde una sesión asistida («Entrar como el productor»), un colaborador con nivel para
   emitir acepta provisionalmente una participación en Cherry Picked anclada al PVC (`aceptarProvisionalmente`, que lee su sesión de
   consola con `requireConsoleWrite("ocp", "emite")`); el contrato nace vigente y el OCP lo marca «Provisional · por ratificar» en la

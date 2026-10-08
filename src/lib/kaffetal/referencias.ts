@@ -8,6 +8,23 @@
 // productor (acta `docs/migraciones/2026-10-02_lot_referencias_y_fotos_opcionales.sql`): fotos, videos y REPORTES —otro
 // perfil de taza, otro análisis físico—. De un reporte se puede pedir revisión a CTCx; de una foto o un video, no.
 // Este módulo lo comparten Kaffetal Regal (el productor agrega), el OCP (CTCx lo ve y lo revisa) y el guardián.
+//
+// V5.191 (owner, 2026-10-08): la revisión ya no es solo «Marcar revisada» con una nota. «Hacer revisión» abre, al lado del adjunto,
+// la planilla de evaluación con SOLO el bloque del reporte (B2 si es de taza, B3 si es físico), prellenada por el lector del adjunto
+// (`lectorDeReportes.ts`), y CTCx la guarda en formato CTCx (`planilla_ctcx`). Sigue sin cambiar el puntaje ni el grado del lote.
+
+import {
+  BLOQUES_DE_PLANILLA,
+  EMPTY_LAB_EVALUATION,
+  factorDeLaPlanilla,
+  labEvaluationHasData,
+  puntoDeLaPlanilla,
+  recortaABloques,
+  toLabEvaluation,
+  type BloqueDePlanilla,
+  type LabEvaluation,
+} from "@/lib/arena/labEvaluation";
+import { rotuloDelPunto } from "@/lib/arena/punto";
 
 export const TIPOS_DE_REFERENCIA = ["taza", "fisico", "foto", "video"] as const;
 export type TipoDeReferencia = (typeof TIPOS_DE_REFERENCIA)[number];
@@ -47,6 +64,8 @@ export type LotReferencia = {
   revisionSolicitadaAt: string | null;
   revisadaAt: string | null;
   notaCtc: string | null;
+  /** V5.191: el reporte en formato CTCx que guardó la revisión (null si no se llevó a la planilla). */
+  planillaCtcx: PlanillaCtcx | null;
   createdAt: string;
 };
 
@@ -64,6 +83,7 @@ export type LotReferenciaRow = {
   revision_solicitada_at: string | null;
   revisada_at: string | null;
   nota_ctc: string | null;
+  planilla_ctcx?: unknown;
   created_at: string;
 };
 
@@ -89,6 +109,7 @@ export function rowToReferencia(r: LotReferenciaRow): LotReferencia | null {
     revisionSolicitadaAt: r.revision_solicitada_at,
     revisadaAt: r.revisada_at,
     notaCtc: r.nota_ctc,
+    planillaCtcx: planillaCtcxDeFila(r.planilla_ctcx),
     createdAt: r.created_at,
   };
 }
@@ -157,4 +178,59 @@ export function estadoDeReferencia(r: Pick<LotReferencia, "tipo" | "revisionSoli
   if (!esReporte(r.tipo)) return "no_aplica";
   if (r.revisadaAt) return "revisada";
   return r.revisionSolicitadaAt ? "en_revision" : "sin_pedir";
+}
+
+// ── V5.191 · el reporte en formato CTCx ─────────────────────────────────────────────────────────────────────────────────
+/** Los bloques de la planilla que revisa cada tipo de reporte. Una foto o un video no se revisan: ninguno. */
+export function bloquesDeLaReferencia(tipo: string): BloqueDePlanilla[] {
+  return tipo === "taza" ? ["b2"] : tipo === "fisico" ? ["b3"] : [];
+}
+
+/** Lo que guarda la revisión en `lot_referencias.planilla_ctcx`: la planilla y los bloques que se revisaron. */
+export type PlanillaCtcx = { version: 1; bloques: BloqueDePlanilla[]; planilla: LabEvaluation };
+
+const TOPE_DE_TEXTO: Partial<Record<keyof LabEvaluation, number>> = { cupping_profile: 2000, analysis_notes: 1200, acidez_nota: 240, boca_nota: 240 };
+
+/** La planilla que se guarda: solo los campos de la planilla (nada que el navegador agregue), los textos con tope, y solo los bloques revisados. */
+export function filaDePlanillaCtcx(ev: unknown, bloques: readonly BloqueDePlanilla[]): PlanillaCtcx {
+  const validos = BLOQUES_DE_PLANILLA.filter((b) => bloques.includes(b));
+  const recortada = recortaABloques(toLabEvaluation(ev), validos);
+  const planilla = Object.fromEntries(
+    (Object.keys(EMPTY_LAB_EVALUATION) as (keyof LabEvaluation)[]).map((k) => {
+      const v = recortada[k];
+      return [k, typeof v === "string" ? v.slice(0, TOPE_DE_TEXTO[k] ?? 40) : v];
+    }),
+  ) as LabEvaluation;
+  return { version: 1, bloques: validos, planilla };
+}
+
+export function planillaCtcxDeFila(raw: unknown): PlanillaCtcx | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as { bloques?: unknown; planilla?: unknown };
+  const bloques = BLOQUES_DE_PLANILLA.filter((b) => Array.isArray(r.bloques) && r.bloques.includes(b));
+  if (!bloques.length || !r.planilla) return null;
+  return { version: 1, bloques, planilla: toLabEvaluation(r.planilla) };
+}
+
+/** «Perfil de taza en formato CTCx: SCA 2004 85.75 · vale lo mismo en CVA · Análisis físico: factor 86.46 …» — una línea. */
+export function resumenDePlanillaCtcx(p: PlanillaCtcx): string {
+  const partes: string[] = [];
+  if (p.bloques.includes("b2")) {
+    const punto = puntoDeLaPlanilla(p.planilla);
+    const b2 = recortaABloques(p.planilla, ["b2"]);
+    if (punto) partes.push(`Perfil de taza en formato CTCx: ${rotuloDelPunto(punto, "es")}`);
+    else if (labEvaluationHasData(b2)) partes.push("Perfil de taza transcrito al formato CTCx (sin Punto: la planilla no está completa)");
+  }
+  if (p.bloques.includes("b3")) {
+    const factor = factorDeLaPlanilla(p.planilla);
+    const mallas = (["mesh_supremo_plus", "mesh_supremo", "mesh_extra", "mesh_europa", "mesh_ugq", "mesh_peaberry"] as const).filter((k) => p.planilla[k].trim() !== "").length;
+    const fisico = [
+      factor != null ? `factor ${factor.toFixed(2)}` : null,
+      p.planilla.fa_parch_hum.trim() ? `humedad del pergamino ${p.planilla.fa_parch_hum} %` : null,
+      p.planilla.b3_humedad_verde.trim() ? `humedad del verde ${p.planilla.b3_humedad_verde} %` : null,
+      mallas ? `granulometría en ${mallas} mallas` : null,
+    ].filter(Boolean);
+    if (fisico.length) partes.push(`Análisis físico en formato CTCx: ${fisico.join(" · ")}`);
+  }
+  return partes.join(" — ");
 }

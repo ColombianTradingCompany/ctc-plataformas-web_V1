@@ -75,6 +75,10 @@ export const AVANCE = {
   responderBuzon: { clave: "responder-buzon", etiqueta: "Enviando la respuesta (y archivando la copia)", tipicoMs: 5000 },
   redactarIa: { clave: "redactar-contexto", etiqueta: "Redactando el campo con IA", tipicoMs: 15000 },
   reenviarLlamado: { clave: "reenviar-llamado", etiqueta: "Reenviando la notificación del llamado", tipicoMs: 5000 },
+  // V5.191: «Hacer revisión» de una referencia del productor (OCP · vista del lote).
+  leerReferencia: { clave: "leer-referencia", etiqueta: "Leyendo el adjunto (el texto del PDF)", tipicoMs: 3000 },
+  leerReferenciaIa: { clave: "leer-referencia-ia", etiqueta: "Leyendo el adjunto con IA (gráficas incluidas)", tipicoMs: 30000 },
+  guardarRevision: { clave: "guardar-revision-ref", etiqueta: "Guardando la revisión y avisando al productor", tipicoMs: 3000 },
 } satisfies Record<string, Progreso>;
 
 export function ProgresoDeAccion({ enCurso }: { enCurso: EnCurso | null }) {

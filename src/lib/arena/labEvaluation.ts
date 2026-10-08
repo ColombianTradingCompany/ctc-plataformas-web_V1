@@ -495,4 +495,27 @@ export function labEvaluationScaData(ev: LabEvaluation): Record<string, number> 
   return out;
 }
 
+// ── V5.191 (owner, 2026-10-08): los dos BLOQUES de la planilla ───────────────────────────────────────────────────────
+// «Hacer revisión» de un reporte que el productor agregó a su lote abre la planilla con SOLO la parte que el reporte trae: B2 (perfil
+// de taza) o B3 (análisis físico y granulometría). Lo que no es B3 es B2: la escala, la vista, el SCA 2004, el CVA, la rueda, el
+// descriptivo y el perfil.
+export type BloqueDePlanilla = "b2" | "b3";
+export const BLOQUES_DE_PLANILLA: readonly BloqueDePlanilla[] = ["b2", "b3"];
+export const CLAVES_B3: readonly (keyof LabEvaluation)[] = [
+  "fa_start", "fa_green_remainder", "fa_primary_defect", "fa_secondary_defect", "fa_parch_hum", "b3_humedad_verde",
+  "b3_factor_reportado", "b3_actividad_agua", "b3_densidad_verde", "fa_color", "defectos_detalle",
+  "mesh_supremo_plus", "mesh_supremo", "mesh_extra", "mesh_europa", "mesh_ugq", "mesh_peaberry", "mesh_residue", "analysis_notes",
+];
+const ES_DE_B3 = new Set<string>(CLAVES_B3);
+export const bloqueDeLaClave = (clave: string): BloqueDePlanilla => (ES_DE_B3.has(clave) ? "b3" : "b2");
+
+/** La planilla con SOLO los bloques pedidos: los campos de los otros vuelven al vacío. */
+export function recortaABloques(ev: LabEvaluation, bloques: readonly BloqueDePlanilla[]): LabEvaluation {
+  const out: Record<string, unknown> = { ...ev };
+  for (const k of Object.keys(EMPTY_LAB_EVALUATION) as (keyof LabEvaluation)[]) {
+    if (!bloques.includes(bloqueDeLaClave(k))) out[k] = EMPTY_LAB_EVALUATION[k];
+  }
+  return out as LabEvaluation;
+}
+
 export { computeFactor, computeMesh, computeSca };

@@ -6,7 +6,8 @@ import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { officialAverages, type EvaluationRow } from "@/lib/evaluations";
 import { currentSeason, seasonKey, seasonLabel, type Season } from "@/lib/arena/seasons";
 import { formatCop } from "@/lib/arena/inscriptions";
-import { esGradoValido, type GradoId } from "@/lib/grados/definicion";
+import { esGradoValido } from "@/lib/grados/definicion";
+import { kindAllowsGrade, type OfferKind } from "@/lib/ofertas/gradosPorClase";
 import { lecturaDeMercado, pvcParaGrado, type PvcDeGrado } from "@/lib/pvc/servicio";
 import { esPastCrop } from "@/lib/trato/mesAMes";
 import { LUGAR_DE_ENTREGA_POR_DEFECTO, modificadorDeOferta, TERMINOS_VERSION, VENTANA_DIRECTA_DIAS } from "@/lib/trato/terminos";
@@ -43,21 +44,13 @@ function revalidateAll() {
   for (const p of PATHS) revalidatePath(p);
 }
 
-export type OfferKind = "temporada" | "directa" | "excepcion" | "black" | "subasta";
+// V5.193: la clase y qué grado admite viven en `src/lib/ofertas/gradosPorClase.ts` — la misma tabla que arma la cola de la página.
+export type { OfferKind };
 
 /** Las clases cuyo precio sale del PVC. */
 const ANCLADAS: readonly OfferKind[] = ["temporada", "directa"];
 /** Las clases que el productor acepta CON declaración (cantidad ≥ mínimo, trimestre | 30 días, términos): las de temporada. */
 const CON_DECLARACION: readonly OfferKind[] = ["temporada", "directa", "excepcion"];
-
-/** El grado que cada clase de oferta admite — la puerta es por CLASE. */
-function kindAllowsGrade(kind: OfferKind, grade: GradoId): boolean {
-  // V5.85 (fase 8): el CRM de Black se retiró — un Black recibe las mismas clases que Red/Blue/Gold (el PVC tiene su banda ×1,15 y
-  // `terminos.ts` su mínimo de 6 cargas); `black` (precio negociado a mano) queda como clase histórica, solo para Black.
-  if (kind === "temporada" || kind === "directa" || kind === "excepcion") return grade === "black" || grade === "red" || grade === "blue" || grade === "gold";
-  if (kind === "black") return grade === "black";
-  return grade === "tyrian";
-}
 
 const numOpcional = (v: FormDataEntryValue | null): number | null => {
   const s = String(v ?? "").replace(",", ".").trim();

@@ -83,7 +83,11 @@ const compras = lee("src/app/ocp/(app)/comprasActions.ts");
   check("black_negotiations no tiene escritor ni lector en src (tabla dormida)", conCrm.length === 0, conCrm.join(", "));
   check("decideBlackNegotiation y el kanban se fueron", !acciones.includes("export async function decideBlackNegotiation") && !src.some((f) => /ctcSelectionActions|SelectionBoard|BlackStockCard|\(app\)\/ctc-selection\/seleccion/.test(f)));
   check("el veredicto ya no abre negociaciones", !/from\("black_negotiations"\)/.test(lee("src/app/ocp/(app)/nominadosActions.ts")));
-  check("un Black recibe temporada/directa/excepción como los demás grados", lee("src/app/ocp/(app)/ofertasActions.ts").includes('return grade === "black" || grade === "red" || grade === "blue" || grade === "gold"'));
+  // V5.193: la regla vive en UNA tabla (`gradosPorClase.ts`) que leen la acción y la cola de «Pendiente Oferta».
+  const { kindAllowsGrade: admite, vaALaColaDeTemporada: aLaCola } = await import("../src/lib/ofertas/gradosPorClase.ts");
+  check("un Black recibe temporada/directa/excepción como los demás grados (y entra a la cola de Pendiente Oferta)",
+    ["temporada", "directa", "excepcion"].every((k) => admite(k, "black")) && aLaCola("black") &&
+    lee("src/app/ocp/(app)/ofertasActions.ts").includes('from "@/lib/ofertas/gradosPorClase"'));
 }
 
 // ── 6. El perfil único y la imagen por lote (respuesta 7) ───────────────────

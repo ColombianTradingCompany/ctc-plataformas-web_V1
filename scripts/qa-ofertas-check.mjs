@@ -8,7 +8,8 @@
 //
 //   · La máquina de estados: solo una oferta `emitida` se puede responder;
 //     aceptar crea el contrato Y enlaza contract_id; rechazar NO crea nada.
-//   · La elegibilidad por clase: temporada ⇒ red|blue|gold · black ⇒ black ·
+//   · La elegibilidad por clase (UNA tabla, `src/lib/ofertas/gradosPorClase.ts`, V5.193): temporada · directa · excepción ⇒
+//     black|red|blue|gold · black ⇒ black ·
 //     subasta ⇒ tyrian; solo lotes galardonados; la ventana «esta temporada o
 //     la pasada» (seasonKey, diff ≤ 1) — y el encuadre viaja CONGELADO en la
 //     oferta porque harvest_seasons es service-role-only.
@@ -49,9 +50,18 @@ check("retirar exige oferta abierta", emisor.includes('offer.status !== "emitida
 
 // ── 2. La elegibilidad ────────────────────────────────────────────────────
 check("solo lotes galardonados", emisor.includes('lot.stage !== "galardonado"'));
-check("temporada ⇒ red|blue|gold", emisor.includes('grade === "red" || grade === "blue" || grade === "gold"'));
-check("black ⇒ black", emisor.includes('if (kind === "black") return grade === "black"'));
-check("subasta ⇒ tyrian", emisor.includes('return grade === "tyrian"'));
+// V5.193 (owner, 2026-10-08): los Black galardonados no aparecían en «Pendiente Oferta» — la cola de la página llevaba su propia lista
+// de la V5.18 (red|blue|gold) mientras la acción ya admitía Black (V5.85). Ahora las dos leen la misma tabla, y aquí se prueba la tabla.
+const { kindAllowsGrade, vaALaColaDeTemporada, GRADOS_DE_TEMPORADA } = await import("../src/lib/ofertas/gradosPorClase.ts");
+check("temporada · directa · excepción ⇒ black|red|blue|gold (Black desde la V5.85), nunca Tyrian",
+  ["temporada", "directa", "excepcion"].every((k) => ["black", "red", "blue", "gold"].every((g) => kindAllowsGrade(k, g)) && !kindAllowsGrade(k, "tyrian")));
+check("black ⇒ black (clase histórica)", kindAllowsGrade("black", "black") && !kindAllowsGrade("black", "red"));
+check("subasta ⇒ tyrian", kindAllowsGrade("subasta", "tyrian") && !kindAllowsGrade("subasta", "black"));
+check("V5.193 · la acción que emite y la cola de la página leen la MISMA tabla; un Black galardonado entra a la cola",
+  emisor.includes('import { kindAllowsGrade, type OfferKind } from "@/lib/ofertas/gradosPorClase";') && !/function kindAllowsGrade/.test(emisor) &&
+  lee("src/app/ocp/(app)/ofertas/page.tsx").includes("const colaTemporada = lots.filter((l) => vaALaColaDeTemporada(l.grade) && elegible(l));") &&
+  !/\["red", "blue", "gold"\]/.test(lee("src/app/ocp/(app)/ofertas/page.tsx")) &&
+  vaALaColaDeTemporada("black") && !vaALaColaDeTemporada("tyrian") && !vaALaColaDeTemporada(null) && GRADOS_DE_TEMPORADA.length === 4);
 check("la ventana es de dos temporadas (seasonKey)", emisor.includes("seasonKey(vigente") && emisor.includes("diff > 1"));
 check("seasonKey ordena mitaca antes que principal", seasons.includes('s.year * 2 + (s.kind === "principal" ? 1 : 0)'));
 check("el encuadre viaja congelado", emisor.includes("lote_de_temporada_pasada: lotePasado") && emisor.includes("season_label: seasonLabel(vigente)"));

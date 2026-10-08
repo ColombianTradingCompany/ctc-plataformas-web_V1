@@ -7,6 +7,7 @@ import { calendarioDeLaEdicion, edicionProxima, edicionVigente, hoyEnColombia, l
 import { fechaLimitePvcSiguiente } from "@/lib/trato/modalidades";
 import { precioDeLaEscalera, type EscalonPublicado } from "@/lib/pvc/precio";
 import { esGradoValido, GRADO_POR_ID } from "@/lib/grados/definicion";
+import { vaALaColaDeTemporada } from "@/lib/ofertas/gradosPorClase";
 import { evaluacionQueRige, type EvaluationRow } from "@/lib/evaluations";
 import { triadaDeLaFicha } from "@/lib/pvc/triadaDelLote";
 import { letras } from "@/lib/pvc/escala";
@@ -112,7 +113,9 @@ export default async function OcpOfertasPage() {
   const escalera = ((edicion?.outputs?.escalera ?? []) as unknown as EscalonPublicado[]);
 
   const elegible = (l: LotRow) => !withOpenOffer.has(l.id) && !withLiveContract.has(l.id) && !sinOferta.has(l.id);
-  const colaTemporada = lots.filter((l) => ["red", "blue", "gold"].includes(l.grade ?? "") && elegible(l));
+  // V5.193 (owner): Black también — la cola lee la MISMA tabla que la acción que emite (`gradosPorClase.ts`); hasta aquí llevaba su
+  // propia lista de la V5.18 (red|blue|gold) y un Black galardonado no aparecía en ninguna parte.
+  const colaTemporada = lots.filter((l) => vaALaColaDeTemporada(l.grade) && elegible(l));
   // V5.175: los lotes que ya tuvieron un contrato por ventana — su oferta no repite el saco: es una compra adelantada (0–200 kg).
   const { data: previosRaw } = colaTemporada.length
     ? await service.from("purchase_contracts").select("lot_id").in("lot_id", colaTemporada.map((l) => l.id)).not("ventana_tipo", "is", null).neq("status", "cancelled")

@@ -177,6 +177,8 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.193 · OCP · los Black en «Pendiente Oferta»** (owner): la cola de la página dejaba fuera a Black con una lista propia de la
+  V5.18; la acción y la cola leen ahora una sola tabla (`src/lib/ofertas/gradosPorClase.ts`). **Queda**: nada.
 - **V5.192 · OCP · la evaluación que rige y el Dossier, en la vista del lote** (owner): «FT2 · Análisis Físico (B2/B3)» —marcada
   «evaluado ✓»— enseña la evaluación que rige el grado (`evaluacionQueRige`, la regla del dossier) con su planilla completa en solo
   lectura; junto a las fichas del lote (UID · Visa · grado), «Dossier ↗» abre el Dossier CTCx en Kaffetal Regal con la sesión de

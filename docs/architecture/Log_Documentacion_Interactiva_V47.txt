@@ -695,3 +695,7 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 ## [2026-10-08] V5.192 · La evaluación que rige, en FT2 del OCP, con el Dossier junto a las fichas; «Ver planilla» en el Centro; las referencias se envían con un botón y el formulario queda en blanco
 - ANN `src/app/ocp/(app)/kr/{LoteSeccion.tsx,EvaReviewCard.tsx}` (`EvaluacionFt2`, «Dossier ↗»), `src/app/socios/[partner]/panel/evaluacion/{PlanillaCentro.tsx,page.tsx}` (`VerPlanillaButton`), `src/components/kaffetal-regal/ficha/panes/PaneReferencias.tsx`, `src/app/kaffetal-regal/{dossier/[id]/page.tsx,certificacion-lote/[id]/page.tsx}` (la segunda llave), `src/lib/panel/requireConsoleAccess.ts` (`leerIdentidad`, `tieneConsola`), `scripts/{qa-kr-ficha-check,qa-evaluaciones-check,qa-centro-calidad-check,qa-visa-check,qa-registro-check,qa-rutas-consolas}.mjs`, `docs/PLAN_CICLOS.md`, `src/lib/version.ts`, `docs/componentes/{consolas,kaffetal-regal,socios}.md`, `docs/ALINEACION.md`.
 (commit: 7ca21be)
+
+## [2026-10-08] V5.193 · Los lotes Black galardonados entran a «Pendiente Oferta»: una sola tabla de grados por clase de oferta
+- ANN `src/lib/ofertas/gradosPorClase.ts (nuevo)`, `src/app/ocp/(app)/{ofertasActions.ts,ofertas/page.tsx}`, `scripts/{qa-ofertas-check,qa-compras-check}.mjs`, `src/lib/version.ts`, `docs/componentes/consolas.md`.
+(commit: pendiente)

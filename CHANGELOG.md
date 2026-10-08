@@ -19,6 +19,17 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.193] — 2026-10-08 (commit pendiente)
+
+- **Corregido**: **los lotes Black galardonados no aparecían en «Lotes Evaluados → Pendiente Oferta»** (owner, tras galardonar la fila
+  de «Lotes en Evaluación»). La acción que emite ya admitía Black en temporada, directa y excepción desde la V5.85 (al retirarse el CRM
+  de `black_negotiations`), pero la cola de la página seguía con su lista de la V5.18 (`red | blue | gold`): un Black galardonado no
+  estaba en ninguna parte. Los dos Black de hoy entran a la cola, con su precio anclado al PVC (banda Black) y su mínimo (6 cargas).
+- **Cambiado**: la regla «qué grado admite cada clase de oferta» vive en UNA tabla pura (`src/lib/ofertas/gradosPorClase.ts`:
+  `kindAllowsGrade`, `GRADOS_DE_TEMPORADA`, `vaALaColaDeTemporada`) que leen la acción que emite y la cola de la página.
+- **Seguridad**: `qa-ofertas` 38 → 39: la tabla se prueba por comportamiento y se exige que la acción y la cola la lean (probado
+  devolviendo la lista vieja: falla); `qa-compras` lee también la tabla en vez del texto de la acción.
+
 ## [V5.192] — 2026-10-08 (commit 7ca21be)
 
 - **Cambiado**: **«Agregar Referencias, Fotos y Videos»** (Kaffetal Regal; owner): «Lo que ya agregó a este lote» va ARRIBA y solo

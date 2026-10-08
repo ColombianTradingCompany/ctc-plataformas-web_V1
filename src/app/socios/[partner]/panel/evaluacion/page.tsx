@@ -9,7 +9,8 @@ import { marcaLabel, normalizaDetalle, normalizaRueda } from "@/lib/catacion/rue
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { puntoDeFila, rotuloDelPunto } from "@/lib/arena/punto";
 import { BUILD_SHA, VERSION_LABEL } from "@/lib/version";
-import { AnularAltaButton, DarDeAltaButton } from "./PlanillaCentro";
+import { AnularAltaButton, DarDeAltaButton, VerPlanillaButton } from "./PlanillaCentro";
+import { planillaDeEvaluacion } from "@/lib/kaffetal/dossierEvaluacion";
 import { PestanasDeBaches } from "./PestanasDeBaches";
 import { SesionViva } from "../SesionViva";
 import styles from "../../socios.module.css";
@@ -182,6 +183,24 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
                           ) : null;
                         })()}
                         <span style={{ flex: 1 }} />
+                        {/* V5.192 (owner): lo dado de alta se ABRE, en solo lectura — la confirmada y la que espera a CTC. */}
+                        {(() => {
+                          const vista = confirmada ?? pendiente;
+                          const planilla = vista ? planillaDeEvaluacion(vista) : null;
+                          if (!vista || !planilla) return null;
+                          const rep = reporteDeFila(vista);
+                          return (
+                            <VerPlanillaButton
+                              uid={uid}
+                              planilla={planilla}
+                              estado={confirmada ? "confirmada" : "pendiente"}
+                              fecha={fecha(vista.created_at)}
+                              codigoInterno={vista.codigo_interno}
+                              notas={separaNotasDevueltas(vista.notes).notasQGrader || null}
+                              reporte={rep ? { nombre: rep.fileName, url: urlDeReporte.get(rep.assetId) ?? null } : null}
+                            />
+                          );
+                        })()}
                         {confirmada || l.phase !== "sondeo" ? (
                           <span className={styles.orgLine}>✓ Confirmado por CTC</span>
                         ) : pendiente ? (

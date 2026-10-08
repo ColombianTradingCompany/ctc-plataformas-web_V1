@@ -349,6 +349,25 @@ const completa = (extra = {}) => ({
   check("ocp · el botón vive en FT · Identidad y Origen, en línea, con Enter/Escape", lee("src/app/ocp/(app)/kr/EvaReviewCard.tsx").includes("<RenombrarProducto lotId={lotId} nombre={lotName} />") && pieza.includes("✎ Cambiar el nombre") && pieza.includes('if (e.key === "Enter") guardar();') && pieza.includes("maxLength={120}"));
 }
 
+// ── V5.192 (owner, 2026-10-08) · el Dossier y la Visa de un lote los abre también el OCP: la SEGUNDA llave ──
+//    El dossier se pidió accesible desde la vista del lote del OCP; vive en Kaffetal Regal (con la Visa, que enlaza). La primera
+//    llave sigue siendo el dueño; la segunda, un operador ACTIVO del OCP (`tieneConsola`), que no redirige y no escribe.
+{
+  const acceso = lee("src/lib/panel/requireConsoleAccess.ts").replace(/\r\n/g, "\n");
+  const visa = lee("src/app/kaffetal-regal/certificacion-lote/[id]/page.tsx").replace(/\r\n/g, "\n");
+  const dossier = lee("src/app/kaffetal-regal/dossier/[id]/page.tsx").replace(/\r\n/g, "\n");
+  const tiene = acceso.slice(acceso.indexOf("export async function tieneConsola("));
+  check("V5.192 · `tieneConsola` lee la MISMA identidad que la compuerta (rol, fila activa, contraseña cambiada) y no redirige",
+    acceso.includes("async function leerIdentidad(): Promise<LecturaDeIdentidad>") && acceso.includes("const r = await leerIdentidad();\n  if (!r.ok) redirect(r.destino);") &&
+    tiene.includes("const r = await leerIdentidad();") && !tiene.slice(0, 400).includes("redirect(") && tiene.includes("return false;") &&
+    !acceso.slice(acceso.indexOf("async function leerIdentidad()"), acceso.indexOf("async function loadPanelIdentity()")).includes("redirect("));
+  for (const [nombre, t] of [["la Visa", visa], ["el dossier", dossier]]) {
+    check(`V5.192 · ${nombre}: el dueño, o un operador del OCP (preguntado solo si no es el dueño); el título también`,
+      t.includes('const esDelOcp = async () => (delOcp ??= await tieneConsola("ocp"));') && t.includes("!delDueno && !(await esDelOcp())") &&
+      t.includes('{ verificarDueno: !(await tieneConsola("ocp")) }') && !t.includes("requireConsoleAccess("));
+  }
+}
+
 if (fallos.length) {
   console.error(`✗ qa-visa: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("   " + f);

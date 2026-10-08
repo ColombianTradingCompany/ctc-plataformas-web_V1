@@ -19,6 +19,31 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.192] — 2026-10-08 (commit pendiente)
+
+- **Cambiado**: **«Agregar Referencias, Fotos y Videos»** (Kaffetal Regal; owner): «Lo que ya agregó a este lote» va ARRIBA y solo
+  cuando hay al menos una; y un REPORTE ya no se agrega al elegir el archivo —así se iba sin lo que se escribía después: el factor de
+  un análisis físico tecleado tras elegir el PDF nunca llegó (CTC-L-323FEDE6)—. El archivo queda elegido, los datos se llenan en
+  cualquier orden y se envía con «Agregar este reporte»; enviado, TODO vuelve a quedar en blanco (datos, casilla, archivo) para
+  agregar otro. Una foto o un video siguen agregándose al elegirlos.
+- **Añadido**: **la evaluación que rige, en el OCP** (owner: «si entro a un lote galardonado no puedo ver ninguna información de la
+  Evaluación»). En la vista del lote, «FT2 · Análisis Físico (B2/B3)» —marcada «evaluado ✓»— enseña la evaluación que rige el grado
+  (la misma regla del dossier y de las ofertas, `evaluacionQueRige`): su Punto, de dónde vino, el Q-Grader, la fecha, el código del
+  laboratorio, el reporte adjunto y el ajuste de CTCx, con la planilla completa (B2 y B3) en solo lectura; debajo, lo que declaró el
+  productor en su Ficha.
+- **Añadido**: **el Dossier, junto a las fichas del lote** (UID · Visa · grado) en el OCP: «Dossier ↗» abre el Dossier CTCx en Kaffetal
+  Regal. Su página —y la de la Visa, que el dossier enlaza— admiten una SEGUNDA llave: un operador activo del OCP
+  (`tieneConsola("ocp")`, sin redirigir; la cookie del panel se comparte entre subdominios), preguntada solo cuando no es el dueño;
+  el título (= el nombre del PDF) también lleva el lote.
+- **Añadido**: **«Ver planilla» en el Centro de Calidad** (owner: «que pueda abrir las fichas ya dadas de alta, ¡sin poder editarlas!»):
+  la hoja de un alta confirmada o en espera de CTC, con el editor apagado, sus notas, su código y su reporte; sin botón que guarde.
+- **Cambiado**: `requireConsoleAccess.ts` lee la identidad en un solo sitio (`leerIdentidad`); quien la exige redirige y `tieneConsola`
+  solo pregunta. `qa-rutas-consolas` reconoce `tieneConsola("…")` como una forma más de nombrar la consola.
+- **Docs**: `PLAN_CICLOS.md` §11 con las decisiones del owner sobre el contrato provisional (1–3 confirmadas; las tres firmas huérfanas
+  de los intentos, pendientes de borrar por el owner); charters `consolas`, `kaffetal-regal`, `socios`; ALINEACION §3.
+- **Seguridad**: `qa-kr-ficha` 277 → 281, `qa-evaluaciones` 61 → 65, `qa-centro-calidad` 302 → 304, `qa-visa` 97 → 100; `qa-registro`
+  y `qa-centro-calidad` leen la segunda llave del dossier. Cada comprobación nueva se probó haciéndola morder.
+
 ## [V5.191] — 2026-10-08 (commit f90b2f1)
 
 - **Cambiado**: **«Marcar revisada» → «Hacer revisión»** en las referencias que el productor agrega a su lote (OCP · vista del lote;

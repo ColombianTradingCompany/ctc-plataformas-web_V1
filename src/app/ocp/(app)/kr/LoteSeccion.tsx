@@ -15,7 +15,13 @@ import { esReporte, estadoDeReferencia, resumenDePlanillaCtcx, resumenDeReferenc
 import { LotFichasCard } from "./FichasClient";
 import { soportesDe, tieneReporte } from "@/lib/fichas/soportes";
 import { ordenaFichas, rowToLotFicha, type LotFicha } from "@/lib/fichas/tipos";
-import { EvaReviewCard, type CertItem, type EvaEudrFields, type EvaEudrFinca, type FileLink, type FisicoPanel, type Row } from "./EvaReviewCard";
+import { EvaReviewCard, type CertItem, type EvaEudrFields, type EvaEudrFinca, type EvaluacionFt2, type FileLink, type FisicoPanel, type Row } from "./EvaReviewCard";
+import { evaluacionQueRige, type EvaluationRow } from "@/lib/evaluations";
+import { planillaDeEvaluacion } from "@/lib/kaffetal/dossierEvaluacion";
+import { puntoDeFila, rotuloDelPunto } from "@/lib/arena/punto";
+import { urlsDeReportes } from "@/lib/evaluaciones/reporte";
+import { reporteDeFila } from "@/lib/evaluaciones/reporteReglas";
+import { origenDeSuperficie } from "@/lib/red/subdominios";
 import { CERT_REGISTRY } from "@/lib/certRegistry";
 import { deriveClaims, deriveArchetype, composicionDeVariedades, ARCHETYPE_LABEL, type ContributionInput, type CertInput } from "@/lib/lotComposition";
 import type { EvaChecklist } from "./evaChecklist";
@@ -299,6 +305,50 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
   const { data: refRowsRaw } = await service.from("lot_referencias").select("*").eq("lot_id", lot.id).order("created_at", { ascending: false });
   const referencias = ((refRowsRaw as LotReferenciaRow[] | null) ?? []).map(rowToReferencia).filter((r): r is LotReferencia => r !== null);
   const refUrls = await signedKaffetalMediaUrls(service, referencias.map((r) => r.assetId));
+  // V5.192 (owner, 2026-10-08): «si entro a un lote que ya esté galardonado, no puedo ver ninguna de la información de la
+  // Evaluación». La que RIGE el grado —la misma regla del dossier y de las ofertas, `evaluacionQueRige`— va a «FT2 · Análisis
+  // Físico (B2/B3)» con su planilla completa (la guardada entera desde la V5.81, o reconstruida de sus columnas).
+  const { data: evRaw } = await service
+    .from("lot_evaluations")
+    .select("id, source, status, rige_grado, sca_total, factor_rendimiento, punto, created_at, reviewed_at, q_grader_reference, codigo_interno, reference_asset_id, reference_file_name, physical_data, sca_data, rueda, rueda_detalle, ajuste_ctcx_puntos, ajuste_ctcx_justificacion")
+    .eq("lot_id", lot.id)
+    .eq("status", "accepted");
+  type FilaQueRige = EvaluationRow & {
+    id: string;
+    punto: unknown;
+    reviewed_at: string | null;
+    q_grader_reference: string | null;
+    codigo_interno: string | null;
+    reference_asset_id: string | null;
+    reference_file_name: string | null;
+    physical_data: unknown;
+    sca_data: unknown;
+    rueda: unknown;
+    rueda_detalle: unknown;
+    ajuste_ctcx_puntos: number | null;
+    ajuste_ctcx_justificacion: string | null;
+  };
+  const aceptadas = (evRaw as FilaQueRige[] | null) ?? [];
+  const rige = evaluacionQueRige(aceptadas);
+  const planillaQueRige = rige ? planillaDeEvaluacion(rige) : null;
+  const reporteQueRige = rige ? reporteDeFila(rige) : null;
+  const urlDelReporte = reporteQueRige ? ((await urlsDeReportes(service, [reporteQueRige.assetId])).get(reporteQueRige.assetId) ?? null) : null;
+  const puntoQueRige = rige ? puntoDeFila(rige) : null;
+  const evaluacionFt2: EvaluacionFt2 | null =
+    rige && planillaQueRige
+      ? {
+          planilla: planillaQueRige,
+          rotulo: puntoQueRige ? rotuloDelPunto(puntoQueRige, "es") : null,
+          fuente: FUENTE_DE_EVALUACION[rige.source ?? ""] ?? rige.source ?? "—",
+          rige: Boolean(rige.rige_grado),
+          qGrader: rige.q_grader_reference,
+          confirmada: rige.reviewed_at ?? rige.created_at ?? null,
+          codigoInterno: rige.codigo_interno,
+          reporte: reporteQueRige ? { nombre: reporteQueRige.fileName, url: urlDelReporte } : null,
+          ajuste: rige.ajuste_ctcx_puntos ? { puntos: rige.ajuste_ctcx_puntos, justificacion: rige.ajuste_ctcx_justificacion } : null,
+          otras: aceptadas.length - 1,
+        }
+      : null;
   const ARENA_PATH_STAGES = new Set(["apto", "fila_arena", "evaluado", "galardonado"]);
 
   return (
@@ -321,6 +371,7 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
         signedUrls={signedUrls}
         referencias={referencias}
         refUrls={refUrls}
+        evaluacionFt2={evaluacionFt2}
         // El recibo «a mano» es solo de los lotes que el BCP registró por su cuenta (su muestra ya está en
         // manos de CTC y no pasan por el veredicto de la EVA).
         showConfirmReceipt={lot.source === "bcp_manual_entry"}
@@ -342,6 +393,13 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
     </div>
   );
 }
+
+// V5.192: de dónde vino la evaluación que rige (`lot_evaluations.source`).
+const FUENTE_DE_EVALUACION: Record<string, string> = {
+  q_grader_batch: "Centro de Calidad (Q-Grader)",
+  bcp_arena: "Apreciación en Arena",
+  producer_claim: "Reportada por el productor (oficializada)",
+};
 
 // Etiquetas amistosas para las claves de cert_attachments (A3/A4).
 const CERT_KEY_LABEL: Record<string, string> = {
@@ -383,6 +441,7 @@ function LotCard({
   eudrFincas,
   referencias,
   refUrls,
+  evaluacionFt2,
 }: {
   lot: LotRow;
   producer: ProducerContact | undefined;
@@ -404,6 +463,8 @@ function LotCard({
   /** V5.143: lo que el productor agregó con la Ficha ya cerrada, y sus enlaces firmados. */
   referencias: LotReferencia[];
   refUrls: Map<string, string>;
+  /** V5.192: la evaluación que rige el grado, con su planilla, para «FT2 · Análisis Físico (B2/B3)». */
+  evaluacionFt2: EvaluacionFt2 | null;
 }) {
   const finca = toFincaEudrFields(lot.fincas);
   const eudrStatus: EudrStatus = lotEudrStatus(lot, finca ? [finca] : []);
@@ -598,6 +659,18 @@ function LotCard({
         <span className={`${styles.badge} mono`}>{ctcLotReferenceShort(lot.id)}</span>
         <EudrStatusBadge status={eudrStatus} />
         {lot.grade && <span className={styles.badge}>{GRADE_LABEL[lot.grade] ?? lot.grade}</span>}
+        {/* V5.192 (owner): «el Dossier completo debe también ser accesible desde aquí, al lado de las fichas». Vive en Kaffetal Regal y
+            se abre con la sesión de consola (la segunda llave de su página, `tieneConsola("ocp")`). */}
+        <a
+          className={`${styles.badge} ${styles.badgeGood}`}
+          href={`${origenDeSuperficie("/kaffetal-regal")}/kaffetal-regal/dossier/${lot.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="El Dossier CTCx del lote: Visa, finca, grado y caracterización (B1·B2·B3), en hojas A4"
+          style={{ textDecoration: "none" }}
+        >
+          Dossier ↗
+        </a>
         {lot.source === "bcp_manual_entry" && <span className={styles.badge}>registrado por BCP</span>}
       </div>
       <ProducerContactLine producer={producer} />
@@ -691,6 +764,7 @@ function LotCard({
         certExtraRows={certExtraRows}
         naCerts={naCerts}
         fisico={fisico}
+        evaluacion={evaluacionFt2}
         videoLinks={videoLinks}
         comms={comms.map((c) => ({
           id: c.id,

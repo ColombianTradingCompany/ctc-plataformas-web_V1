@@ -152,6 +152,11 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.192 · «Agregar Referencias»: la lista arriba, el reporte con su botón, el formulario en blanco** (código tocado desde el nodo
+  final): «Lo que ya agregó a este lote» va arriba y solo con al menos una; un reporte se elige, se completan sus datos y se envía con
+  «Agregar este reporte» (ya no al elegir el archivo, que se llevaba la fila sin lo escrito después); enviado, todo queda en blanco.
+  Y el Dossier y la Visa del lote admiten una segunda llave —un operador activo del OCP, solo lectura— para que el OCP los abra desde
+  la vista del lote. **Queda**: nada.
 - **V5.191 · la referencia revisada en formato CTCx** (código tocado desde el nodo final): bajo una referencia que CTCx revisó con
   «Hacer revisión», «Agregar Referencias, Fotos y Videos» enseña la línea del reporte en formato CTCx (`resumenDePlanillaCtcx`: el
   Punto del perfil de taza, o el factor, las humedades y las mallas del análisis físico) y su feed lo dice. La política de INSERT de

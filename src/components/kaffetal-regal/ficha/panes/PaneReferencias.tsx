@@ -27,6 +27,15 @@ import styles from "../../FichaView.module.css";
 //   · Solo AGREGA. No hay botón de quitar ni de reemplazar: lo que la base no deja hacer, la pantalla no lo ofrece.
 //   · De un REPORTE se puede pedir revisión a CTCx (al agregarlo o después). Una foto o un video no se revisan.
 // El archivo sube primero a Storage (carpeta del lote) y solo entonces se escribe la fila.
+//
+// V5.192 (owner, 2026-10-08): «una vez se envíen nuevas referencias, estas deben quedar en el bloque "Lo que ya agregó a este
+// lote", el cual debe aparecer arriba cuando haya al menos un entry. Además, una vez enviado, la parte de casillas de formulario
+// deben quedar limpias de nuevo, permitiendo agregar más.» Dos cambios:
+//   · la lista de lo agregado va ARRIBA, y solo cuando hay algo;
+//   · un REPORTE ya no se agrega al elegir el archivo —así se iba sin lo que se escribía después (pasó: el factor de un análisis
+//     físico tecleado tras elegir el PDF nunca llegó)—: el archivo queda elegido, los datos se llenan en cualquier orden y se envía
+//     con «Agregar este reporte»; enviado, TODO vuelve a quedar en blanco (datos, archivo, casilla). Una foto o un video siguen
+//     agregándose al elegirlos: no tienen datos que llenar.
 
 type Subir = (subpath: string, file: File, onProgress?: (fraction: number) => void) => Promise<{ assetId: string } | { error: string }>;
 
@@ -62,6 +71,37 @@ function Bloque({
   const [pedirRevision, setPedirRevision] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hecho, setHecho] = useState<string | null>(null);
+  // V5.192: el archivo ELEGIDO de un reporte, que espera a «Agregar este reporte». La `key` del selector lo deja en blanco.
+  const [archivo, setArchivo] = useState<File | null>(null);
+  const [selector, setSelector] = useState(0);
+
+  /** Todo en blanco para el que sigue: los datos, el archivo, la casilla. */
+  function enBlanco() {
+    setEmisor("");
+    setPuntaje("");
+    setEscala("");
+    setFactor("");
+    setNota("");
+    setPedirRevision(false);
+    setArchivo(null);
+    setSelector((n) => n + 1);
+  }
+  /** Al empezar el siguiente, el aviso del anterior («✓ … agregado», el anillo «Listo») se va. */
+  function empiezaOtro() {
+    if (hecho) setHecho(null);
+    if (up.state.status === "done") up.reset();
+  }
+
+  /** Elegir el archivo: una foto o un video se agregan ya; un reporte queda elegido hasta «Agregar este reporte». */
+  function elegir(file: File | undefined) {
+    empiezaOtro();
+    setError(null);
+    if (!file) return;
+    if (!reporte) return void agregar(file);
+    const { ok, mb } = checkFileSizeMb(file, MAX_MB_DE_REFERENCIA[tipo]);
+    if (!ok) return setError(`El archivo pesa ${mb.toFixed(0)} MB — el máximo es ${MAX_MB_DE_REFERENCIA[tipo]} MB.`);
+    setArchivo(file);
+  }
 
   async function agregar(file: File | undefined) {
     setHecho(null);
@@ -82,13 +122,8 @@ function Bloque({
         setError("El archivo subió, pero no se pudo registrar. Inténtelo otra vez; si persiste, pida ayuda a CTCx.");
         return false;
       }
-      setHecho(`✓ ${file.name} agregado${reporte && pedirRevision ? " — CTCx recibió su solicitud de revisión" : ""}.`);
-      setEmisor("");
-      setPuntaje("");
-      setEscala("");
-      setFactor("");
-      setNota("");
-      setPedirRevision(false);
+      setHecho(`✓ ${file.name} agregado${reporte && pedirRevision ? " — CTCx recibió su solicitud de revisión" : ""}. Ya está arriba, en «Lo que ya agregó a este lote»; puede agregar otro.`);
+      enBlanco();
       return true;
     });
   }
@@ -101,17 +136,17 @@ function Bloque({
         <div className={styles.fgrid} style={{ marginTop: 10 }}>
           <div className={styles.ff}>
             <label>¿Quién lo emitió?</label>
-            <input value={emisor} onChange={(e) => setEmisor(e.target.value)} maxLength={300} placeholder="Laboratorio, catador o Q-Grader" />
+            <input value={emisor} onChange={(e) => { empiezaOtro(); setEmisor(e.target.value); }} maxLength={300} placeholder="Laboratorio, catador o Q-Grader" />
           </div>
           {tipo === "taza" ? (
             <>
               <div className={styles.ff}>
                 <label>Puntaje del reporte <small style={{ fontWeight: 400 }}>(opcional)</small></label>
-                <input value={puntaje} onChange={(e) => setPuntaje(e.target.value)} type="number" step="0.25" min={0} max={100} placeholder="85.75" />
+                <input value={puntaje} onChange={(e) => { empiezaOtro(); setPuntaje(e.target.value); }} type="number" step="0.25" min={0} max={100} placeholder="85.75" />
               </div>
               <div className={styles.ff}>
                 <label>Escala <small style={{ fontWeight: 400 }}>(opcional)</small></label>
-                <select value={escala} onChange={(e) => setEscala(e.target.value as "sca" | "cva" | "")}>
+                <select value={escala} onChange={(e) => { empiezaOtro(); setEscala(e.target.value as "sca" | "cva" | ""); }}>
                   <option value="">—</option>
                   <option value="sca">SCA 2004</option>
                   <option value="cva">CVA</option>
@@ -121,35 +156,51 @@ function Bloque({
           ) : (
             <div className={styles.ff}>
               <label>Factor de rendimiento <small style={{ fontWeight: 400 }}>(opcional)</small></label>
-              <input value={factor} onChange={(e) => setFactor(e.target.value)} type="number" step="0.1" min={60} max={150} placeholder="92.5" />
+              <input value={factor} onChange={(e) => { empiezaOtro(); setFactor(e.target.value); }} type="number" step="0.1" min={60} max={150} placeholder="92.5" />
             </div>
           )}
           <div className={`${styles.ff} ${styles.fw}`}>
             <label>Comentario <small style={{ fontWeight: 400 }}>(opcional)</small></label>
-            <input value={nota} onChange={(e) => setNota(e.target.value)} maxLength={1200} placeholder="Qué muestra este reporte, de cuándo es…" />
+            <input value={nota} onChange={(e) => { empiezaOtro(); setNota(e.target.value); }} maxLength={1200} placeholder="Qué muestra este reporte, de cuándo es…" />
           </div>
           <label className={`${styles.chip} ${styles.fw}`} style={{ display: "inline-flex", gap: 6 }}>
-            <input type="checkbox" checked={pedirRevision} onChange={(e) => setPedirRevision(e.target.checked)} /> Pedir a CTCx que revise este reporte
+            <input type="checkbox" checked={pedirRevision} onChange={(e) => { empiezaOtro(); setPedirRevision(e.target.checked); }} /> Pedir a CTCx que revise este reporte
           </label>
         </div>
       )}
       <div style={{ marginTop: 10 }}>
-        <FileDrop onFile={(file) => void agregar(file)}>
+        <FileDrop onFile={(file) => elegir(file)}>
           <input
+            key={selector}
             type="file"
             accept={ACEPTA_DE_REFERENCIA[tipo]}
             aria-label={`Elegir archivo: ${TIPO_DE_REFERENCIA_LABEL[tipo]}`}
             onChange={(e) => {
               const file = e.target.files?.[0];
               e.target.value = ""; // el mismo archivo se puede volver a elegir tras un error
-              void agregar(file);
+              elegir(file);
             }}
           />
           <UploadProgressRing state={up.state} />
         </FileDrop>
         <p className={styles.fexample} style={{ marginTop: 4 }}>
-          {reporte ? "PDF o foto del reporte" : tipo === "foto" ? "Una foto por vez" : "Un video por vez, de unos 30 segundos"} · máximo {MAX_MB_DE_REFERENCIA[tipo]} MB. Se agrega al elegirlo.
+          {reporte
+            ? `PDF o foto del reporte · máximo ${MAX_MB_DE_REFERENCIA[tipo]} MB. Elíjalo, complete los datos y pulse «Agregar este reporte».`
+            : `${tipo === "foto" ? "Una foto por vez" : "Un video por vez, de unos 30 segundos"} · máximo ${MAX_MB_DE_REFERENCIA[tipo]} MB. Se agrega al elegirlo.`}
         </p>
+        {reporte && archivo && (
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginTop: 8 }}>
+            <span style={{ fontSize: 13 }}>
+              📎 <b>{archivo.name}</b>
+            </span>
+            <button type="button" className="btn btn-sm" onClick={() => { setArchivo(null); setSelector((n) => n + 1); }} disabled={up.state.status === "uploading"}>
+              Cambiar el archivo
+            </button>
+            <button type="button" className="btn btn-sm btn-solid" onClick={() => void agregar(archivo)} disabled={up.state.status === "uploading"}>
+              {up.state.status === "uploading" ? "Agregando…" : "Agregar este reporte"}
+            </button>
+          </div>
+        )}
       </div>
       {error && <p style={{ margin: "6px 0 0", fontSize: 12.5, color: "var(--t-red, #B91C1C)" }}>{error}</p>}
       {hecho && <p style={{ margin: "6px 0 0", fontSize: 12.5, color: "#2E7D52", fontWeight: 600 }}>{hecho}</p>}
@@ -189,56 +240,57 @@ export function PaneReferencias({
         agregue queda en el expediente del lote y <b>no se puede retirar</b>; tampoco reemplaza lo que ya envió.
       </p>
 
+      {/* V5.192 (owner): lo agregado, ARRIBA y solo cuando hay algo; lo más reciente primero. */}
+      {referencias.length > 0 && (
+        <div style={{ marginTop: 14 }}>
+          <p style={{ margin: "0 0 6px", fontSize: 13.5, fontWeight: 700 }}>Lo que ya agregó a este lote ({referencias.length})</p>
+          <div style={{ display: "grid", gap: 6 }}>
+            {referencias.map((r) => {
+              const estado = estadoDeReferencia(r);
+              return (
+                <div key={r.id} style={{ border: "1px solid var(--line)", borderRadius: 8, padding: "8px 10px", fontSize: 13, display: "grid", gap: 3 }}>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                    <b>{resumenDeReferencia(r)}</b>
+                    <span style={{ color: "var(--muted)", fontSize: 12 }}>{fecha(r.createdAt)}</span>
+                    <span style={{ flex: 1 }} />
+                    {estado === "revisada" && <span className={styles.chip}>✓ Revisada por CTCx</span>}
+                    {estado === "en_revision" && <span className={styles.chip}>Revisión solicitada · {fecha(r.revisionSolicitadaAt!)}</span>}
+                    {estado === "sin_pedir" && (
+                      <button
+                        type="button"
+                        className="btn btn-sm"
+                        disabled={pidiendo === r.id}
+                        onClick={async () => {
+                          setPidiendo(r.id);
+                          await onSolicitarRevision(r);
+                          setPidiendo(null);
+                        }}
+                      >
+                        {pidiendo === r.id ? "Enviando…" : "Solicitar revisión"}
+                      </button>
+                    )}
+                  </div>
+                  <div>
+                    {/* Ancla, no botón: lo ya agregado se puede volver a abrir siempre. */}
+                    <a href="#" onClick={(e) => { e.preventDefault(); void abrir(r.assetId); }}>
+                      📎 {r.fileName}
+                    </a>
+                  </div>
+                  {r.nota && <div style={{ color: "var(--muted)" }}>«{r.nota}»</div>}
+                  {/* V5.191: CTCx llevó el reporte a su formato (la planilla B2 o B3) al revisarlo. */}
+                  {r.planillaCtcx && <div>{resumenDePlanillaCtcx(r.planillaCtcx)}</div>}
+                  {r.notaCtc && <div><b>CTCx:</b> {r.notaCtc}</div>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <Bloque tipo="taza" titulo="Otro reporte de perfil de taza" ayuda="Una catación nueva de este lote: la hoja del laboratorio, del catador o del Q-Grader." lot={lot} onUploadFile={onUploadFile} onAdd={onAdd} />
       <Bloque tipo="fisico" titulo="Otro reporte de análisis físico o granulometría" ayuda="Un análisis nuevo de este lote: factor de rendimiento, mallas, humedad, defectos." lot={lot} onUploadFile={onUploadFile} onAdd={onAdd} />
       <Bloque tipo="foto" titulo="Más fotos del café" ayuda="Las fotos son parte del atractivo de su lote: el cafetal, el grano, el secado, el empaque." lot={lot} onUploadFile={onUploadFile} onAdd={onAdd} />
       <Bloque tipo="video" titulo="Más videos del café" ayuda="Tomas cortas, continuas y estables, con buena luz natural." lot={lot} onUploadFile={onUploadFile} onAdd={onAdd} />
-
-      <p style={{ margin: "22px 0 6px", fontSize: 13.5, fontWeight: 700 }}>Lo que ya agregó a este lote ({referencias.length})</p>
-      {referencias.length === 0 ? (
-        <p className={styles.fexample}>Todavía no ha agregado nada después de cerrar la Ficha.</p>
-      ) : (
-        <div style={{ display: "grid", gap: 6 }}>
-          {referencias.map((r) => {
-            const estado = estadoDeReferencia(r);
-            return (
-              <div key={r.id} style={{ border: "1px solid var(--line)", borderRadius: 8, padding: "8px 10px", fontSize: 13, display: "grid", gap: 3 }}>
-                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                  <b>{resumenDeReferencia(r)}</b>
-                  <span style={{ color: "var(--muted)", fontSize: 12 }}>{fecha(r.createdAt)}</span>
-                  <span style={{ flex: 1 }} />
-                  {estado === "revisada" && <span className={styles.chip}>✓ Revisada por CTCx</span>}
-                  {estado === "en_revision" && <span className={styles.chip}>Revisión solicitada · {fecha(r.revisionSolicitadaAt!)}</span>}
-                  {estado === "sin_pedir" && (
-                    <button
-                      type="button"
-                      className="btn btn-sm"
-                      disabled={pidiendo === r.id}
-                      onClick={async () => {
-                        setPidiendo(r.id);
-                        await onSolicitarRevision(r);
-                        setPidiendo(null);
-                      }}
-                    >
-                      {pidiendo === r.id ? "Enviando…" : "Solicitar revisión"}
-                    </button>
-                  )}
-                </div>
-                <div>
-                  {/* Ancla, no botón: lo ya agregado se puede volver a abrir siempre. */}
-                  <a href="#" onClick={(e) => { e.preventDefault(); void abrir(r.assetId); }}>
-                    📎 {r.fileName}
-                  </a>
-                </div>
-                {r.nota && <div style={{ color: "var(--muted)" }}>«{r.nota}»</div>}
-                {/* V5.191: CTCx llevó el reporte a su formato (la planilla B2 o B3) al revisarlo. */}
-                {r.planillaCtcx && <div>{resumenDePlanillaCtcx(r.planillaCtcx)}</div>}
-                {r.notaCtc && <div><b>CTCx:</b> {r.notaCtc}</div>}
-              </div>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }

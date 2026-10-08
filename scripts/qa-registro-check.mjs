@@ -139,7 +139,7 @@ const HOY = new Date("2026-10-01T12:00:00Z");
   const ruta = lee("src/app/kaffetal-regal/dossier/[id]/page.tsx");
   const cargador = lee("src/lib/kaffetal/dossierDatos.ts");
   check("el dossier del lote existe en español e inglés", doc.includes("const ES = {") && doc.includes("const EN: Textos = {") && doc.includes("Record<Lang, Textos>"));
-  check("la ruta acepta ?lang= y exige ser el dueño", ruta.includes('sp.lang === "en"') && ruta.includes("datos.producerId !== user.id"));
+  check("la ruta acepta ?lang= y exige ser el dueño (o, desde la V5.192, un operador del OCP)", ruta.includes('sp.lang === "en"') && ruta.includes("datos.producerId === user.id") && ruta.includes("!delDueno && !(await esDelOcp())"));
   check("solo imprime certificaciones corroboradas", cargador.includes('.filter((c) => c.status === "corroborada")'));
   check("y la caracterización sale de la ficha oficial y de la evaluación que rige", cargador.includes('.eq("is_official", true)') && cargador.includes("evaluacionQueRige("));
   check("el galardón enlaza a los dos idiomas", lee("src/components/kaffetal-regal/panel/EvaluacionesTab.tsx").includes("/kaffetal-regal/dossier/${lot.id}?lang=en"));

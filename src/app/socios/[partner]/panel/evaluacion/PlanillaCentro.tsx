@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { LabEvalEditor } from "@/components/bcp/LabEvalEditor";
 import { EMPTY_LAB_EVALUATION, labEvaluationHasData, puntoDeLaPlanilla, toLabEvaluation, type LabEvaluation } from "@/lib/arena/labEvaluation";
@@ -196,6 +196,101 @@ export function DarDeAltaButton({ lotId, uid, borrador, devoluciones = [] }: { l
                 </ol>
               </div>
             )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── V5.192 (owner, 2026-10-08): «Permite que el Centro de Calidad pueda abrir las fichas de evaluación ya dadas de alta (sin poder
+// editarlo no obstante!)». La misma hoja del alta, con el editor APAGADO: se lee, se cambia de idioma y se cierra; no hay botón que
+// guarde. Lo que ya se dio de alta solo cambia si CTC lo devuelve (entonces se reabre con «Evaluar y dar de alta»).
+const TXT_VER: Record<IdiomaDePlanilla, { ver: string; soloLectura: string; pendiente: (f: string) => string; confirmada: string; codigo: string; notas: string; reporte: string; sinPunto: string; cerrar: string }> = {
+  es: {
+    ver: "Ver planilla",
+    soloLectura: "Solo lectura: lo dado de alta no se edita.",
+    pendiente: (f) => `Dada de alta el ${f} · esperando a CTC`,
+    confirmada: "Confirmada por CTC",
+    codigo: "Su código interno",
+    notas: "Notas para CTC",
+    reporte: "Reporte adjunto",
+    sinPunto: "La planilla no tiene Punto.",
+    cerrar: "Cerrar",
+  },
+  en: {
+    ver: "View sheet",
+    soloLectura: "Read only: a submitted sheet cannot be edited.",
+    pendiente: (f) => `Submitted on ${f} · waiting for CTC`,
+    confirmada: "Confirmed by CTC",
+    codigo: "Your internal code",
+    notas: "Notes for CTC",
+    reporte: "Attached report",
+    sinPunto: "The sheet has no Point.",
+    cerrar: "Close",
+  },
+};
+
+export function VerPlanillaButton({
+  uid,
+  planilla,
+  estado,
+  fecha,
+  codigoInterno,
+  notas,
+  reporte,
+}: {
+  uid: string;
+  planilla: unknown;
+  estado: "pendiente" | "confirmada";
+  fecha: string;
+  codigoInterno: string | null;
+  notas: string | null;
+  reporte: { nombre: string; url: string | null } | null;
+}) {
+  const [open, setOpen] = useState(false);
+  const [lang, setLang] = useState<IdiomaDePlanilla>("es");
+  const tx = TXT_VER[lang];
+  const ev = useMemo(() => toLabEvaluation(planilla), [planilla]);
+  const punto = labEvaluationHasData(ev) ? puntoDeLaPlanilla(ev) : null;
+  return (
+    <div>
+      <button className="btn btn-sm" onClick={() => setOpen(true)}>
+        {tx.ver}
+      </button>
+      {open && (
+        <div className="modal-bg open" onClick={() => setOpen(false)}>
+          <div className="modal modal-wide" onClick={(e) => e.stopPropagation()}>
+            <button className="close" onClick={() => setOpen(false)} aria-label={tx.cerrar}>
+              ×
+            </button>
+            <h3 style={{ margin: 0, paddingRight: 34 }}>
+              {TXT[lang].muestra} <span className="mono">{uid}</span>
+            </h3>
+            <p className={styles.orgLine} style={{ marginTop: 2 }}>
+              {estado === "pendiente" ? tx.pendiente(fecha) : tx.confirmada} · <b>{tx.soloLectura}</b>
+              {codigoInterno && (
+                <>
+                  {" "}· {tx.codigo}: <span className="mono">{codigoInterno}</span>
+                </>
+              )}
+            </p>
+            <LabEvalEditor value={ev} onChange={() => undefined} disabled lang={lang} onLang={setLang} ocultaGrado />
+            {notas && (
+              <div className={styles.field} style={{ marginTop: 12 }}>
+                <label>{tx.notas}</label>
+                <p style={{ margin: 0, whiteSpace: "pre-wrap", fontSize: 13 }}>{notas}</p>
+              </div>
+            )}
+            {reporte && (
+              <p className={styles.orgLine} style={{ marginTop: 8 }}>
+                {tx.reporte}: 📎 {reporte.url ? <a href={reporte.url} target="_blank" rel="noopener noreferrer">{reporte.nombre}</a> : reporte.nombre}
+              </p>
+            )}
+            <p style={{ fontSize: 13, margin: "8px 0 6px" }}>{punto ? rotuloDelPunto(punto, lang) : tx.sinPunto}</p>
+            <button className="btn btn-sm" onClick={() => setOpen(false)}>
+              {tx.cerrar}
+            </button>
           </div>
         </div>
       )}

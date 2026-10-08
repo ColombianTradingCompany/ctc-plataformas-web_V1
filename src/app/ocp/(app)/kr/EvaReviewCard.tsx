@@ -9,6 +9,8 @@ import { EVA_CHECKLIST_ITEMS, type EvaChecklist, type EvaChecklistKey } from "./
 import { Fichas, SiNo } from "./EudrPiezas";
 import { RenombrarProducto } from "./RenombrarProducto";
 import { PRODUCT_RISK_AFFIRMATIONS } from "@/lib/eudr";
+import { LabEvalEditor } from "@/components/bcp/LabEvalEditor";
+import type { LabEvaluation } from "@/lib/arena/labEvaluation";
 import styles from "@/components/panel/shared.module.css";
 
 // ── La revisión de la VISA como checklist (2026-07-18) ───────────────────────
@@ -73,6 +75,22 @@ export type FisicoPanel = {
   notas: string;
 };
 
+/** V5.192 (owner): la evaluación que RIGE el grado (`evaluacionQueRige`), para «FT2 · Análisis Físico (B2/B3)»: su planilla
+ *  completa en solo lectura y de dónde salió. null si el lote no tiene una evaluación aceptada con planilla. */
+export type EvaluacionFt2 = {
+  planilla: LabEvaluation;
+  rotulo: string | null;
+  fuente: string;
+  rige: boolean;
+  qGrader: string | null;
+  confirmada: string | null;
+  codigoInterno: string | null;
+  reporte: { nombre: string; url: string | null } | null;
+  ajuste: { puntos: number; justificacion: string | null } | null;
+  /** Cuántas evaluaciones aceptadas más tiene el lote (Arena, reclamos): rige una. */
+  otras: number;
+};
+
 /** V5.125: lo que la FINCA de origen declaró y CTC evaluó en su cuestionario EUDR — la fuente del panel EUDR de la EVA. */
 export type EvaEudrFinca = {
   id: string;
@@ -117,6 +135,7 @@ export function EvaReviewCard({
   certExtraRows,
   naCerts,
   fisico,
+  evaluacion = null,
   videoLinks,
   comms,
 }: {
@@ -136,6 +155,7 @@ export function EvaReviewCard({
   certExtraRows: Row[];
   naCerts: string[];
   fisico: FisicoPanel;
+  evaluacion?: EvaluacionFt2 | null;
   videoLinks: FileLink[];
   comms: { id: string; role: string; date: string; note: string }[];
 }) {
@@ -329,6 +349,8 @@ export function EvaReviewCard({
                 style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12.5, fontWeight: open ? 700 : 500, color: "var(--ink)", padding: 0 }}
               >
                 {item.label}
+                {/* V5.192: la pestaña dice que ahí está la evaluación que rige. */}
+                {item.key === "ft2_fisico" && evaluacion && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: "var(--good, #2c7a4b)" }}>· evaluado ✓</span>}
               </button>
             </span>
           );
@@ -445,6 +467,47 @@ export function EvaReviewCard({
           {openPanel === "ft2_fisico" && (
             <>
               <h4 style={{ margin: "0 0 8px", fontSize: 13.5 }}>FT2 · Análisis Físico (B2/B3)</h4>
+
+              {/* V5.192 (owner): la evaluación que rige el grado, con su planilla completa (B2 y B3) en solo lectura. Debajo, lo que
+                  el productor declaró en su Ficha, que es lo que la Visa revisó. */}
+              {evaluacion && (
+                <div style={{ border: "1.5px solid var(--primary, #3C0A86)", borderRadius: 10, padding: "10px 12px", margin: "0 0 14px" }}>
+                  <p style={{ margin: "0 0 4px", fontWeight: 800, fontSize: 13.5, color: "var(--ink)" }}>
+                    Evaluación {evaluacion.rige ? "que rige el grado" : "confirmada"} · {evaluacion.rotulo ?? "sin Punto"}
+                  </p>
+                  <p className={styles.meta} style={{ margin: "0 0 8px" }}>
+                    {evaluacion.fuente}
+                    {evaluacion.confirmada && ` · confirmada el ${new Date(evaluacion.confirmada).toLocaleDateString("es-CO")}`}
+                    {evaluacion.qGrader && ` · Q-Grader: ${evaluacion.qGrader}`}
+                    {evaluacion.codigoInterno && ` · código del laboratorio: ${evaluacion.codigoInterno}`}
+                    {evaluacion.reporte && (
+                      <>
+                        {" "}· 📎{" "}
+                        {evaluacion.reporte.url ? (
+                          <a href={evaluacion.reporte.url} target="_blank" rel="noopener noreferrer">
+                            {evaluacion.reporte.nombre}
+                          </a>
+                        ) : (
+                          evaluacion.reporte.nombre
+                        )}
+                      </>
+                    )}
+                    {evaluacion.ajuste && ` · ajuste de CTCx: ${evaluacion.ajuste.puntos > 0 ? "+" : ""}${evaluacion.ajuste.puntos} punto(s)${evaluacion.ajuste.justificacion ? ` (${evaluacion.ajuste.justificacion})` : ""}`}
+                    {evaluacion.otras > 0 && ` · el lote tiene ${evaluacion.otras} evaluación(es) aceptada(s) más: rige esta`}
+                  </p>
+                  <details open>
+                    <summary style={{ cursor: "pointer", fontWeight: 600, fontSize: 12.5 }}>La planilla completa (B2 y B3) · solo lectura</summary>
+                    <div style={{ marginTop: 8 }}>
+                      <LabEvalEditor value={evaluacion.planilla} onChange={() => undefined} disabled ocultaGrado />
+                    </div>
+                  </details>
+                </div>
+              )}
+              {evaluacion && (
+                <p className={styles.meta} style={{ fontWeight: 700, margin: "0 0 4px", color: "var(--ink)" }}>
+                  Lo que declaró el productor en su Ficha
+                </p>
+              )}
 
               <p className={styles.meta} style={{ fontWeight: 600, margin: "6px 0 2px" }}>B2 · Perfil de Taza (SCA declarado)</p>
               {/* V5.120: lo reportado en B2, en fichas: «No lo sé» / puntaje grande con su escala / reporte / soportes. */}

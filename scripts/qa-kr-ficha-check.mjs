@@ -399,6 +399,27 @@ const lee = (r) => readFileSync(new URL(`../${r}`, import.meta.url), "utf8");
   check("productor · ve su referencia revisada con el resumen del formato CTCx", paneKr.includes("{r.planillaCtcx && <div>{resumenDePlanillaCtcx(r.planillaCtcx)}</div>}"));
 }
 
+// ── V5.192 (owner, 2026-10-08) · «Lo que ya agregó» arriba, y el formulario en blanco después de enviar ──
+//    «En KR, una vez se envíen nuevas referencias, estas deben quedar en el bloque "Lo que ya agregó a este lote", el cual debe
+//    aparecer arriba cuando haya al menos un entry. Además, una vez enviado, la parte de casillas de formulario deben quedar limpias
+//    de nuevo, permitiendo agregar más.»
+{
+  const { readFileSync: leeArchivo } = await import("node:fs");
+  const pane = leeArchivo(new URL("../src/components/kaffetal-regal/ficha/panes/PaneReferencias.tsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
+  const lista = pane.indexOf("Lo que ya agregó a este lote ({referencias.length})");
+  check("V5.192 · la lista de lo agregado va ARRIBA de los cuatro bloques y solo cuando hay al menos uno",
+    lista > 0 && lista < pane.indexOf('<Bloque tipo="taza"') && pane.includes("{referencias.length > 0 && (") && !pane.includes("Todavía no ha agregado nada"));
+  check("V5.192 · un reporte ya no se agrega al elegir el archivo: queda elegido y se envía con «Agregar este reporte»; una foto o un video, sí al elegirlos",
+    pane.includes("if (!reporte) return void agregar(file);") && pane.includes("setArchivo(file);") && pane.includes("onClick={() => void agregar(archivo)}") &&
+    pane.includes('"Agregar este reporte"') && pane.includes("<FileDrop onFile={(file) => elegir(file)}>") && !pane.includes("void agregar(file);\n            }}"));
+  const enBlanco = pane.slice(pane.indexOf("function enBlanco()"), pane.indexOf("function empiezaOtro()"));
+  check("V5.192 · enviado, TODO queda en blanco: los datos, la casilla, el archivo elegido y el selector (su `key`)",
+    ["setEmisor(\"\")", "setPuntaje(\"\")", "setEscala(\"\")", "setFactor(\"\")", "setNota(\"\")", "setPedirRevision(false)", "setArchivo(null)", "setSelector((n) => n + 1)"].every((x) => enBlanco.includes(x)) &&
+    pane.includes("key={selector}") && /setHecho\(`✓ \$\{file\.name\} agregado[\s\S]{0,200}`\);\n\s*enBlanco\(\);\n\s*return true;/.test(pane));
+  check("V5.192 · al empezar el siguiente, el aviso del anterior se va (cada campo llama a `empiezaOtro`)",
+    (pane.match(/onChange=\{\(e\) => \{ empiezaOtro\(\); set/g) ?? []).length === 6 && pane.includes('if (up.state.status === "done") up.reset();'));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-kr-ficha: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("   " + f);

@@ -22,12 +22,16 @@ export type PanelIdentity = {
  * navigation) and the per-console grant. A suspended collaborator keeps the role
  * but is rejected here. Partner accounts are a separate tier — never here.
  */
-async function loadPanelIdentity(): Promise<PanelIdentity> {
+// V5.192: la identidad se LEE en un solo sitio; quien la exige redirige (`loadPanelIdentity`) y quien solo pregunta, no
+// (`tieneConsola`). Las mismas reglas para las dos: rol, fila activa, contraseña ya cambiada.
+type LecturaDeIdentidad = { ok: true; identity: PanelIdentity } | { ok: false; destino: "/login" | "/cambiar-contrasena" };
+
+async function leerIdentidad(): Promise<LecturaDeIdentidad> {
   const session = await createPanelSessionClient();
   const {
     data: { user },
   } = await session.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) return { ok: false, destino: "/login" };
 
   const { data: profile } = await session
     .from("profiles")
@@ -35,26 +39,49 @@ async function loadPanelIdentity(): Promise<PanelIdentity> {
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "bcp_admin") redirect("/login");
+  if (profile?.role !== "bcp_admin") return { ok: false, destino: "/login" };
 
   const row = await getPanelUser(user.id);
-  if (row && row.status !== "active") redirect("/login"); // suspended / not-yet-activated
+  if (row && row.status !== "active") return { ok: false, destino: "/login" }; // suspended / not-yet-activated
   // Security follow-up: a fresh/reset temp password must be replaced before any
   // console is usable. The page does its own light auth (no loop through here).
-  if (row?.must_change_password) redirect("/cambiar-contrasena");
+  if (row?.must_change_password) return { ok: false, destino: "/cambiar-contrasena" };
 
   return {
-    userId: user.id,
-    displayName: row?.display_name ?? profile.full_name ?? profile.email ?? "",
-    consoles: grantedConsoles(row),
-    isOwner: isPanelOwner(row),
-    niveles: Object.fromEntries(
-      grantedConsoles(row).flatMap((k) => {
-        const n = nivelDeConsola(row, k);
-        return n ? [[k, n]] : [];
-      }),
-    ),
+    ok: true,
+    identity: {
+      userId: user.id,
+      displayName: row?.display_name ?? profile.full_name ?? profile.email ?? "",
+      consoles: grantedConsoles(row),
+      isOwner: isPanelOwner(row),
+      niveles: Object.fromEntries(
+        grantedConsoles(row).flatMap((k) => {
+          const n = nivelDeConsola(row, k);
+          return n ? [[k, n]] : [];
+        }),
+      ),
+    },
   };
+}
+
+async function loadPanelIdentity(): Promise<PanelIdentity> {
+  const r = await leerIdentidad();
+  if (!r.ok) redirect(r.destino);
+  return r.identity;
+}
+
+/**
+ * V5.192 (owner): ¿hay aquí un operador ACTIVO con acceso a esta consola? Sin redirigir: es la SEGUNDA llave de una página que no
+ * es de la consola — el Dossier y la Visa de un lote son del productor (Kaffetal Regal) y el OCP los abre desde la vista del lote.
+ * La cookie del panel se comparte entre subdominios (`sharedCookieDomain`). Solo LECTURA: no reemplaza a ninguna compuerta de escritura.
+ */
+export async function tieneConsola(consoleKey: PanelConsoleKey): Promise<boolean> {
+  try {
+    const r = await leerIdentidad();
+    return r.ok && r.identity.consoles.includes(consoleKey);
+  } catch {
+    return false;
+  }
 }
 
 /**

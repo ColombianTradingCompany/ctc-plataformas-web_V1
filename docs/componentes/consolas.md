@@ -177,6 +177,10 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.192 · OCP · la evaluación que rige y el Dossier, en la vista del lote** (owner): «FT2 · Análisis Físico (B2/B3)» —marcada
+  «evaluado ✓»— enseña la evaluación que rige el grado (`evaluacionQueRige`, la regla del dossier) con su planilla completa en solo
+  lectura; junto a las fichas del lote (UID · Visa · grado), «Dossier ↗» abre el Dossier CTCx en Kaffetal Regal con la sesión de
+  consola (`tieneConsola("ocp")`, la segunda llave de esa página y de la Visa). **Queda**: nada.
 - **V5.191 · OCP · «Hacer revisión» de una referencia del productor** (owner, sobre CTC-L-323FEDE6): reemplaza a «Marcar revisada».
   Abre el adjunto y la planilla de evaluación lado a lado (`RevisionDeReferencia.tsx`), con solo el bloque del reporte —B2 de un perfil
   de taza, B3 de un análisis físico— prellenado por el lector de reportes (`lectorDeReportes.ts`: la capa de texto del PDF, gratis; la

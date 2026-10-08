@@ -200,3 +200,11 @@ maduración del sistema. Ningún cambio será unilateral.»
    ventana y lo demás no cambian. El texto pasa a nombrarlo con su nombre y su documento y la fecha de la ratificación; se guarda su
    firma y la huella nueva (la provisional queda en `provisional_sha256`).
 5. **La firma con la mano en una sesión asistida** sigue posible (el productor presente) y queda sellada con el operador de consola.
+
+**Las decisiones del owner (2026-10-08, sobre la V5.190).** (1) El contrato provisional nace vigente sin la contrafirma de CTCx en el
+OCP —la aceptación ya es de CTCx—: **sí**. (2) «Siempre y cuando se usen los valores del PVC correspondiente al grado» = solo
+participaciones en Cherry Picked ancladas al PVC, ni excepciones de precio ni compras de CTCx Selection: **correcto**. (3) La firma con
+la mano en una sesión asistida se queda (marcada «firmada en una sesión asistida de CTCx»), no se bloquea: **sí**. (4) Las tres
+imágenes de firma de los intentos fallidos del 2026-10-08 (`kaffetal-media/contratos/oferta-3a609a57-…/firma-productor-*.png`, ningún
+contrato las referencia; la del «RZ ctcx» la trazó CTCx): **borrarlas, sí** — el borrado de archivos es permanente y lo hace el owner
+desde el panel de Supabase (el agente no borra archivos).

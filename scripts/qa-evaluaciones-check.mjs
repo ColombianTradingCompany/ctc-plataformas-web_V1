@@ -190,6 +190,27 @@ check("y avanza la inscripción a la fila", acciones.includes("recibirMuestra(se
   check("el código de subvención usado enlaza al lote que lo usó", lee("src/app/ocp/(app)/subvenciones/campanas/[id]/page.tsx").includes("href={`/ocp/kr?lote=${lot.id}`}"));
 }
 
+// ── V5.192 (owner, 2026-10-08) · la evaluación que RIGE, en «FT2 · Análisis Físico (B2/B3)» del OCP; y el Dossier junto a las fichas ──
+//    «si entro a un Lote cualquiera que ya esté galardonado, no puedo ver ninguna de la información de la Evaluación. Necesito que
+//    cuando haya información completa, esta aparezca en el módulo correspondiente de FT2. Además, el Dossier completo debe también
+//    ser accesible desde aquí en la parte superior, al lado de las fichas que dicen el UID, Visa Lista, y el grado.»
+{
+  const seccion = lee("src/app/ocp/(app)/kr/LoteSeccion.tsx").replace(/\r\n/g, "\n");
+  const tarjeta = lee("src/app/ocp/(app)/kr/EvaReviewCard.tsx").replace(/\r\n/g, "\n");
+  check("V5.192 · la vista del lote elige la evaluación con la MISMA regla del dossier y de las ofertas, y reconstruye su planilla",
+    seccion.includes("const rige = evaluacionQueRige(aceptadas);") && seccion.includes("planillaDeEvaluacion(rige)") && seccion.includes('.eq("status", "accepted");') &&
+    lee("src/lib/kaffetal/dossierDatos.ts").includes("evaluacionQueRige(") && seccion.includes("evaluacion={evaluacionFt2}"));
+  check("V5.192 · en «FT2 · Análisis Físico» la planilla completa va en SOLO LECTURA (editor apagado, sin onChange), con su Punto, de dónde vino y el reporte",
+    tarjeta.includes('{openPanel === "ft2_fisico" && (') && tarjeta.includes("<LabEvalEditor value={evaluacion.planilla} onChange={() => undefined} disabled ocultaGrado />") &&
+    tarjeta.indexOf("<LabEvalEditor value={evaluacion.planilla}") > tarjeta.indexOf('{openPanel === "ft2_fisico" && (') &&
+    tarjeta.includes('Evaluación {evaluacion.rige ? "que rige el grado" : "confirmada"}') && tarjeta.includes("evaluacion.reporte.url") && tarjeta.includes("Lo que declaró el productor en su Ficha"));
+  check("V5.192 · la pestaña dice que ahí está la evaluación", tarjeta.includes('{item.key === "ft2_fisico" && evaluacion && <span'));
+  check("V5.192 · el Dossier, junto a las fichas del lote (UID · Visa · grado), abre la página del dossier en Kaffetal Regal",
+    seccion.includes("href={`${origenDeSuperficie(\"/kaffetal-regal\")}/kaffetal-regal/dossier/${lot.id}`}") &&
+    seccion.indexOf("/kaffetal-regal/dossier/${lot.id}") > seccion.indexOf("<EudrStatusBadge status={eudrStatus} />") &&
+    seccion.indexOf("/kaffetal-regal/dossier/${lot.id}") < seccion.indexOf("<ProducerContactLine producer={producer} />"));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-evaluaciones: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("   " + f);

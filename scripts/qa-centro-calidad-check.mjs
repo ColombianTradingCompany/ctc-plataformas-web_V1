@@ -560,7 +560,8 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   const centro = uso("src/app/socios/[partner]/panel/evaluacion/PlanillaCentro.tsx");
   const deCtcx = [...uso("src/app/ocp/(app)/nominados/NominadosClient.tsx"), ...uso("src/app/bcp/(app)/arena/ArenaClient.tsx")];
   check("grado: el editor lo oculta a pedido — ni «grado firme» ni «sin grado»; el Punto que rige se sigue enseñando", editor.includes("ocultaGrado = false,") && editor.includes('{!ocultaGrado && decision?.tipo === "galardon" && (') && editor.includes('{!ocultaGrado && decision?.tipo === "sin_grado" &&') && editor.includes("{t.puntoQueRige}: <b"));
-  check("grado: la planilla del Centro de Calidad lo pide oculto", centro.length === 1 && centro[0].includes(" ocultaGrado "));
+  // V5.192: dos editores en el Centro —el de dar de alta y el de «Ver planilla»—, y los DOS ocultan el grado.
+  check("grado: la planilla del Centro de Calidad lo pide oculto (dar de alta y ver)", centro.length === 2 && centro.every((l) => l.includes(" ocultaGrado ")));
   check("grado: CTCx («Registrar a mano» y el informe del Centro, V5.155) y la Arena lo siguen viendo", deCtcx.length === 3 && deCtcx.every((l) => !l.includes("ocultaGrado")));
 }
 
@@ -727,7 +728,7 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   const doc = lee("src/components/kaffetal-regal/dossier/DossierCtcx.tsx");
   const textosDossier = lee("src/components/kaffetal-regal/dossier/textos.ts");
   const cssDossier = lee("src/components/kaffetal-regal/dossier/dossier.module.css");
-  check("dossier · la ruta exige sesión y ser el dueño, y delega en el cargador", pagina.includes("cargarDossier(createServiceRoleClient(), id, lang)") && pagina.includes("datos.producerId !== user.id") && pagina.includes("<DossierCtcx d={datos} />") && !(await import("node:fs")).existsSync(new URL("../src/components/kaffetal-regal/LotDossierDoc.tsx", import.meta.url)));
+  check("dossier · la ruta exige sesión y ser el dueño, y delega en el cargador", pagina.includes("cargarDossier(createServiceRoleClient(), id, lang)") && pagina.includes("const delDueno = Boolean(datos && user && datos.producerId === user.id);") && pagina.includes('const esDelOcp = async () => (delOcp ??= await tieneConsola("ocp"));') && pagina.includes("<DossierCtcx d={datos} />") && !(await import("node:fs")).existsSync(new URL("../src/components/kaffetal-regal/LotDossierDoc.tsx", import.meta.url)));
   check("dossier · el cargador lee la planilla de la evaluación que rige (aceptada) y arma B1/B2/B3", datosDossier.includes("physical_data, sca_data, rueda, rueda_detalle") && datosDossier.includes("caracterizacionDelDossier(ds as Record<string, unknown>, aceptada ? planillaDeEvaluacion(aceptada) : null, lang)"));
   check("dossier · reúne finca (geometría, foto, infraestructura), productor (avatar, galería), Visa, grado y certificaciones corroboradas", ["eudr_polygon_geojson", "profile_photo_asset_id", "eudr_local_infra", "avatar_asset_id, gallery_asset_ids", "lotEudrStatus(", "criteriosDeLaFinca(", "triadaDeLaFicha(", "gradoDelLote(", 'c.status === "corroborada"', "finca_parcelas"].every((k) => datosDossier.includes(k)));
   check("dossier · las fotos van orientadas, reducidas y en JPEG (un PDF pesaba 29 MB); los mapas en JPG", datosDossier.includes("async function fotoParaImprimir(") && datosDossier.includes('.rotate().resize({ width: 1600, height: 1600, fit: "inside"') && (datosDossier.match(/format: "jpg"/g) ?? []).length === 2);
@@ -779,6 +780,21 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("Kaffetal Regal · «Mis Lotes»: el lote galardonado trae su botón al Dossier (fila completa y tarjeta); las etiquetas dicen Grado CTCx", (perfilKr.match(/\{botonDelDossier\(l\)\}/g) ?? []).length === 2 && perfilKr.includes("l.grade ? (") && perfilKr.includes("Ver el Dossier del lote") && !/Grado CTC/.test(perfilKr + kr));
   const mej = lee("src/lib/arena/mejoras.ts");
   check("mejoras IA · el reporte parte de las anotaciones de la rueda", mej.includes("const anotaciones = anotacionesDeMejora(") && mej.includes("i.anotaciones?.length ?") && mej.includes("              anotaciones,"));
+}
+
+// ── V5.192 (owner, 2026-10-08) · «Permite que el Centro de Calidad pueda abrir las fichas de evaluación ya dadas de alta (sin poder
+//    editarlo no obstante!)» ──
+{
+  const planillaCentro = lee("src/app/socios/[partner]/panel/evaluacion/PlanillaCentro.tsx").replace(/\r\n/g, "\n");
+  const paginaCentro = lee("src/app/socios/[partner]/panel/evaluacion/page.tsx").replace(/\r\n/g, "\n");
+  const ver = planillaCentro.slice(planillaCentro.indexOf("export function VerPlanillaButton("), planillaCentro.indexOf("export function AnularAltaButton("));
+  check("V5.192 · «Ver planilla» abre la hoja del alta con el editor APAGADO y no llama ninguna acción (no hay con qué guardar)",
+    ver.length > 200 && ver.includes("<LabEvalEditor value={ev} onChange={() => undefined} disabled lang={lang} onLang={setLang} ocultaGrado />") &&
+    !/registrarEvaluacion|guardarBorrador|anularRegistro|confirmarReporteQGrader|prepararReporteQGrader|run\(/.test(ver) && ver.includes("{tx.soloLectura}") &&
+    planillaCentro.includes('soloLectura: "Solo lectura: lo dado de alta no se edita.",') && planillaCentro.includes('soloLectura: "Read only: a submitted sheet cannot be edited.",'));
+  check("V5.192 · se ofrece para lo dado de alta (la confirmada o la que espera a CTC), con su planilla guardada, sus notas y su reporte",
+    paginaCentro.includes("const vista = confirmada ?? pendiente;") && paginaCentro.includes("planillaDeEvaluacion(vista)") && paginaCentro.includes('estado={confirmada ? "confirmada" : "pendiente"}') &&
+    paginaCentro.includes("notas={separaNotasDevueltas(vista.notes).notasQGrader || null}"));
 }
 
 if (fallos.length) {

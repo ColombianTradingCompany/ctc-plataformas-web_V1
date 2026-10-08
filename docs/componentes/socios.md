@@ -98,6 +98,10 @@ fórmula del CVA y la rueda única). Lo tocan también `qa-recuperacion-check.mj
 
 ## Pendientes
 
+- **V5.192 · Centro de Calidad · «Ver planilla»** (owner: «que pueda abrir las fichas de evaluación ya dadas de alta, sin poder
+  editarlas»): la hoja de un alta confirmada o en espera de CTC, con el editor apagado, sus notas, su código interno y su reporte; sin
+  ningún botón que guarde (`VerPlanillaButton` en `PlanillaCentro.tsx`). Lo dado de alta solo vuelve a editarse si CTC lo devuelve.
+  **Queda**: nada.
 - **V5.189 · la planilla del Centro abre en CVA, el protocolo principal** (ejecutado desde `consolas`, plan §10.6): un SCA 2004 vale lo
   mismo por la equivalencia y la planilla enseña, junto al Punto, su equivalente en el otro protocolo (calculado, mismo total). Las
   ayudas «i» ya no dicen que los dos «no son comparables». Pedirles a los Q-Graders del Centro que catén en CVA por defecto.

@@ -9,6 +9,7 @@ import { impresionDelProductor } from "@/lib/kaffetal/blindajeServidor";
 import { textoDeMarca } from "@/lib/kaffetal/blindaje";
 import type { Metadata } from "next";
 import { tituloDeLote } from "@/lib/kaffetal/tituloDeDocumento";
+import { tieneConsola } from "@/lib/panel/requireConsoleAccess";
 
 type CommRow = { id: string; note: string; created_at: string; author_role: string };
 
@@ -74,7 +75,8 @@ function gate(message: string) {
 // determined by CTC as insignificante).
 // V5.169: el título (= el nombre del PDF) lleva el nombre general y el código.
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  return tituloDeLote("Visa EUDR", (await params).id);
+  // V5.192: abierta desde el OCP (el dossier la enlaza), el título también lleva el nombre del lote y su código.
+  return tituloDeLote("Visa EUDR", (await params).id, { verificarDueno: !(await tieneConsola("ocp")) });
 }
 
 export default async function LotEudrCertPage({ params }: { params: Promise<{ id: string }> }) {
@@ -83,7 +85,11 @@ export default async function LotEudrCertPage({ params }: { params: Promise<{ id
   const {
     data: { user },
   } = await session.auth.getUser();
-  if (!user) return gate("Inicie sesión para ver la certificación de su lote.");
+  // V5.192 (owner): el Dossier del lote se abre desde el OCP y enlaza esta Visa: la misma segunda llave, un operador activo del OCP
+  // (`tieneConsola`, solo lectura), preguntada solo cuando no es el dueño quien la abre.
+  let delOcp: boolean | null = null;
+  const esDelOcp = async () => (delOcp ??= await tieneConsola("ocp"));
+  if (!user && !(await esDelOcp())) return gate("Inicie sesión para ver la certificación de su lote.");
 
   const service = createServiceRoleClient();
   const { data } = await service
@@ -99,7 +105,8 @@ export default async function LotEudrCertPage({ params }: { params: Promise<{ id
     .single();
   const lot = data as (CertLot & { producer_id: string; eudr_mitigation_effective: boolean | null; harvest_from: string | null; harvest_to: string | null; dds_reference: string | null; dds_verification_code: string | null; dds_filed_at: string | null; fincas: FincaJoin }) | null;
 
-  if (!lot || lot.producer_id !== user.id) return gate("No encontramos este lote en su cuenta.");
+  const delDueno = Boolean(lot && user && lot.producer_id === user.id);
+  if (!lot || (!delDueno && !(await esDelOcp()))) return gate("No encontramos este lote en su cuenta.");
   // F2: el origen del lote son sus APORTES; fallback a la finca primaria para
   // lotes pre-F2 sin aportes espejados.
   type ContribJoin = { weight_kg: number | string | null; fincas: FincaJoin | FincaJoin[] | null };

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.190] — 2026-10-08 (commit pendiente)
+## [V5.190] — 2026-10-08 (commit acfd605)
 
 - **Corregido**: **la firma de una invitación «cargaba, pero no hacía nada»** (sesión asistida de «Castillo Lavado Ruizeñores 2026»,
   2026-10-08). No era un bloqueo de seguridad: la V5.175 dejó `purchase_contracts.freeze_months` NOT NULL y el insert de un trato por

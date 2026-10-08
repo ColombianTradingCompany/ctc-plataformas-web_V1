@@ -25,7 +25,7 @@ const check = (n, c) => (c ? ok++ : fallos.push(n));
 const lee = (r) => readFileSync(new URL(`../${r}`, import.meta.url), "utf8");
 
 const emisor = lee("src/app/ocp/(app)/ofertasActions.ts");
-const respuesta = lee("src/lib/ofertas/producerActions.ts");
+const respuesta = lee("src/lib/ofertas/producerActions.ts") + "\n" + lee("src/lib/ofertas/aceptacion.ts"); // V5.190: la aceptación vive entre producerActions.ts y aceptacion.ts
 const nominados = lee("src/app/ocp/(app)/nominadosActions.ts");
 const contratos = lee("src/app/ocp/(app)/contractActions.ts");
 const tab = lee("src/components/kaffetal-regal/panel/ContratosTab.tsx");
@@ -35,7 +35,9 @@ const seasons = lee("src/lib/arena/seasons.ts");
 
 // ── 1. La máquina de estados ──────────────────────────────────────────────
 check("solo una oferta emitida se responde", respuesta.includes('offer.status !== "emitida"'));
-check("aceptar crea el contrato", respuesta.includes('status: "pending_signature"') && respuesta.includes("grade_snapshot: offer.grade_snapshot"));
+// V5.190: el insert vive en `crearContratoDeOferta` (aceptacion.ts): firmado por el productor nace pendiente de CTCx; aceptado
+// provisionalmente por CTCx en una sesión asistida nace vigente.
+check("aceptar crea el contrato", respuesta.includes('status: n.provisional ? "active" : "pending_signature",') && respuesta.includes("grade_snapshot: offer.grade_snapshot"));
 check("con la temporada de la oferta", respuesta.includes("season_id: offer.season_id"));
 check("y enlaza contract_id", respuesta.includes("contract_id: contract.id"));
 {

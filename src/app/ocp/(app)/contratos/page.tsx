@@ -23,7 +23,7 @@ export default async function BcpContratosPage({ searchParams }: { searchParams:
   // V5.85: la señal de negociaciones Black abiertas se fue con el CRM de `black_negotiations` (fase 8).
   const { data: contracts } = await service
     .from("purchase_contracts")
-    .select("id, status, grade_snapshot, price_per_kg_locked, quantity_frozen_kg, lots(name, fincas(name))")
+    .select("id, status, grade_snapshot, price_per_kg_locked, quantity_frozen_kg, provisional_at, ratificado_at, lots(name, fincas(name))")
     .eq("status", activeStatus)
     .order("created_at", { ascending: false });
 
@@ -57,6 +57,8 @@ export default async function BcpContratosPage({ searchParams }: { searchParams:
                   <p className={styles.meta}>{lot?.fincas?.name ?? "—"}</p>
                 </div>
                 <div className={styles.actions}>
+                  {/* V5.190: aceptado provisionalmente por CTCx en una sesión asistida, hasta que el productor lo ratifique. */}
+                  {c.provisional_at && !c.ratificado_at && <span className={styles.badge} style={{ background: "#FFE2A8", color: "#3A2C00" }}>Provisional · por ratificar</span>}
                   {c.grade_snapshot && <span className={styles.badge}>{GRADE_LABEL[c.grade_snapshot] ?? c.grade_snapshot}</span>}
                   {c.price_per_kg_locked && <span className={styles.meta}>{c.price_per_kg_locked} $/kg · {c.quantity_frozen_kg} kg</span>}
                 </div>

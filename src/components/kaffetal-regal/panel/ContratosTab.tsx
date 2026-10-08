@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { CONTRACT_STATUS_LABEL, GRADES, ctcLotReference, type DespachoDelTrato, type GeneralInfo, type Lot, type ProducerContract, type ProducerOffer } from "../data";
-import { previsualizarOferta, registrarExistencia, respondToOffer, type VistaPreviaDeOferta } from "@/lib/ofertas/producerActions";
+import { aceptarProvisionalmente, previsualizarOferta, registrarExistencia, respondToOffer, type VistaPreviaDeOferta } from "@/lib/ofertas/producerActions";
 import { cancelarPorDespacho, pasarALaVentanaSiguiente, pedirProrroga, previsualizarRetiro, registrarDespacho, retirarDelTrato } from "@/lib/trato/producerActions";
 import { formatCop } from "@/lib/arena/inscriptions";
 import { BACHES_DE_DESPACHO, CARGA_KG, LUGAR_DE_ENTREGA_POR_DEFECTO, MORA, PENALIDAD_RETIRO_PCT, PAGO_AL_DESPACHO_PCT } from "@/lib/trato/terminos";
@@ -15,6 +15,7 @@ import { CalculadoraDelTrato, type DecisionDelTrato } from "./CalculadoraDelTrat
 import { FirmaDelContrato, type FirmaDelProductor } from "./FirmaDelContrato";
 import { PropuestaSelection } from "./PropuestaSelection";
 import { GlosarioDelTrato } from "./GlosarioDelTrato";
+import { RatificarContrato } from "./RatificarContrato";
 import { useToast } from "@/components/Toast";
 import { CtcRef } from "./CtcRef";
 import styles from "../AppDashboard.module.css";
@@ -32,6 +33,8 @@ import styles from "../AppDashboard.module.css";
 //   4. OFERTAS BLACK y 5. SUBASTAS TYRIAN — sin cambios.
 export function ContratosTab({
   gi,
+  asistida = false,
+  cuenta = "",
   contracts,
   offers,
   lots,
@@ -40,6 +43,10 @@ export function ContratosTab({
 }: {
   /** V5.84: de aquí sale el estado de la cuenta (`producer_profiles.estado_cuenta`, lo escribe solo el owner). */
   gi: GeneralInfo;
+  /** V5.190: la sesión la abrió CTCx desde el OCP: la invitación ofrece «Aceptar contrato provisionalmente». */
+  asistida?: boolean;
+  /** V5.190: el código del productor (CTC-P-…), que nombra al Productor en el texto provisional. */
+  cuenta?: string;
   contracts: ProducerContract[];
   offers: ProducerOffer[];
   lots: Lot[];
@@ -82,7 +89,7 @@ export function ContratosTab({
           ventas: <b>CTCx no se compromete a comprar cantidades fijas</b>. Con la firma, CTCx le compra un saco fuera de lo declarado. Aceptar es
           firmar el contrato con el dedo.
         </div>
-        <OfferList offers={abiertas("temporada")} historial={historial("temporada")} vacio="Sin invitaciones abiertas. Cuando un lote suyo salga galardonado Red o superior, la invitación de CTCx aparecerá aquí." onRefreshData={onRefreshData} />
+        <OfferList offers={abiertas("temporada")} historial={historial("temporada")} vacio="Sin invitaciones abiertas. Cuando un lote suyo salga galardonado Red o superior, la invitación de CTCx aparecerá aquí." onRefreshData={onRefreshData} asistida={asistida} cuenta={cuenta} />
       </section>
 
       <section>
@@ -114,7 +121,7 @@ export function ContratosTab({
           <div style={{ marginTop: 10 }}>
             {contracts.map((c) =>
               c.ventanaTipo ? (
-                <ContratoPorVentana key={c.id} contract={c} cuentaCongelada={cuentaCongelada} onRefreshData={onRefreshData} />
+                <ContratoPorVentana key={c.id} contract={c} cuentaCongelada={cuentaCongelada} onRefreshData={onRefreshData} asistida={asistida} />
               ) : (
                 <ContratoPorMeses key={c.id} contract={c} oferta={ofertaDeContrato.get(c.id)} />
               )
@@ -175,14 +182,49 @@ const ESTADO_DESPACHO: Record<DespachoDelTrato["estado"], string> = { pendiente:
 
 // «Mi trato» por ventana (V5.175): la ventana, la cuenta (declarado · vendido · retirado · en la vitrina · retiro libre que queda),
 // las ventas confirmadas semana a semana, los despachos con sus acciones, y el retiro.
-function ContratoPorVentana({ contract: c, cuentaCongelada, onRefreshData }: { contract: ProducerContract; cuentaCongelada: boolean; onRefreshData: () => void }) {
+function ContratoPorVentana({ contract: c, cuentaCongelada, onRefreshData, asistida = false }: { contract: ProducerContract; cuentaCongelada: boolean; onRefreshData: () => void; asistida?: boolean }) {
   const k = c.cuenta;
   const vigente = c.status === "active" || c.status === "pending_signature";
+  const [ratificando, setRatificando] = useState(false);
+  const porRatificar = Boolean(c.provisionalAt) && !c.ratificadoAt && vigente;
   return (
     <div className={styles.fincarow} style={{ marginTop: 10 }}>
       <h5>
         <CtcRef id={c.lotId} /> · {c.lotName} {c.grade && <b style={{ color: GRADES[c.grade] }}>· {c.grade}</b>}
       </h5>
+      {/* V5.190 (owner): un contrato que CTCx aceptó PROVISIONALMENTE en una sesión asistida: vigente, y el productor lo ratifica. */}
+      {porRatificar && (
+        <div style={{ margin: "6px 0 8px", border: "1.5px solid #E8A317", background: "#FFF4DC", color: "#3A2C00", borderRadius: 10, padding: "10px 12px", fontSize: 12.5, lineHeight: 1.55 }}>
+          <b>Contrato provisional.</b> CTCx lo aceptó el {fecha(c.provisionalAt)} en una sesión asistida, en su favor y como parte del grupo de
+          Pioneros{c.provisionalResponsable ? <> (responsable de CTCx: <b>{c.provisionalResponsable}</b>)</> : null}. Ya está vigente. Revíselo y
+          ratifíquelo con su firma: al ratificar puede ajustar la cantidad declarada; el precio, la ventana y lo demás no cambian. Ningún cambio
+          será unilateral.
+          {asistida ? (
+            <div style={{ marginTop: 6, fontWeight: 700 }}>La ratificación la hace el Productor desde su propia cuenta, no en esta sesión asistida.</div>
+          ) : !ratificando ? (
+            <div style={{ marginTop: 8, textAlign: "right" }}>
+              <button type="button" className="btn btn-sm btn-solid-accent" onClick={() => setRatificando(true)}>
+                Ratificar y firmar
+              </button>
+            </div>
+          ) : null}
+          {ratificando && !asistida && (
+            <RatificarContrato
+              contractId={c.id}
+              onCancelar={() => setRatificando(false)}
+              onListo={() => {
+                setRatificando(false);
+                onRefreshData();
+              }}
+            />
+          )}
+        </div>
+      )}
+      {c.provisionalAt && c.ratificadoAt && (
+        <div className={styles.sub} style={{ marginBottom: 4 }}>
+          Ratificado y firmado por usted el {fecha(c.ratificadoAt)} (CTCx lo había aceptado provisionalmente el {fecha(c.provisionalAt)}).
+        </div>
+      )}
       <div className={styles.sub}>
         Estado: <b>{CONTRACT_STATUS_LABEL[c.status]}</b>
         {c.vigenciaDesde && c.vigenciaHasta && (
@@ -592,14 +634,14 @@ function ContratoPorMeses({ contract: c, oferta }: { contract: ProducerContract;
   );
 }
 
-function OfferList({ offers, historial, vacio, onRefreshData }: { offers: ProducerOffer[]; historial: ProducerOffer[]; vacio: string; onRefreshData: () => void }) {
+function OfferList({ offers, historial, vacio, onRefreshData, asistida = false, cuenta = "" }: { offers: ProducerOffer[]; historial: ProducerOffer[]; vacio: string; onRefreshData: () => void; asistida?: boolean; cuenta?: string }) {
   return (
     <>
       {offers.length === 0 && vacio && <div className={styles.alist} style={{ marginTop: 10 }}>{vacio}</div>}
       {offers.length > 0 && (
         <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
           {offers.map((o) => (
-            <OfferCard key={o.id} offer={o} onRefreshData={onRefreshData} />
+            <OfferCard key={o.id} offer={o} onRefreshData={onRefreshData} asistida={asistida} cuenta={cuenta} />
           ))}
         </div>
       )}
@@ -663,9 +705,11 @@ function ExistenciaForm({ lotId, onGuardada }: { lotId: string; onGuardada: () =
 
 // La tarjeta de una oferta abierta: los snapshots congelados, el anclaje y —para Cherry Picked— la ventana que decide la fecha de
 // hoy (`previsualizarOferta`), la calculadora y la firma. Botones abajo a la derecha, apilados — la regla de la casa.
-function OfferCard({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshData: () => void }) {
+function OfferCard({ offer, onRefreshData, asistida = false, cuenta = "" }: { offer: ProducerOffer; onRefreshData: () => void; asistida?: boolean; cuenta?: string }) {
   const { showToast } = useToast();
   const [busy, setBusy] = useState(false);
+  // V5.190: el error del último intento de firmar se queda junto al botón (el aviso fugaz no bastaba: «carga, pero no hace nada»).
+  const [errorFirma, setErrorFirma] = useState<string | null>(null);
   const [rechazando, setRechazando] = useState(false);
   const [nota, setNota] = useState("");
   const color = offer.grade ? GRADES[offer.grade] : "var(--line)";
@@ -698,12 +742,34 @@ function OfferCard({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshDa
     const res = await respondToOffer(offer.id, respuesta, respuesta === "rechazar" ? nota : undefined, respuesta === "aceptar" ? declaracionParaEnviar : undefined, respuesta === "aceptar" ? firma : undefined);
     setBusy(false);
     if (res.ok) {
+      setErrorFirma(null);
       showToast(respuesta === "aceptar" ? "Contrato firmado ✓ · CTCx lo firma y queda vigente" : "Oferta rechazada, sin compromiso");
       setRechazando(false);
       setNota("");
       onRefreshData();
-    } else showToast(res.message);
+    } else {
+      setErrorFirma(res.message);
+      showToast(res.message);
+    }
   }
+
+  // V5.190 (owner): en una sesión asistida, CTCx acepta PROVISIONALMENTE en favor del productor (sin su firma, su nombre ni su documento).
+  async function aceptarProvisional(responsable: string) {
+    if (!decision) return;
+    setBusy(true);
+    const res = await aceptarProvisionalmente(offer.id, { lockedKg: decision.kg, aceptaTerminos: true }, responsable);
+    setBusy(false);
+    if (res.ok) {
+      setErrorFirma(null);
+      showToast("Contrato aceptado provisionalmente ✓ · queda vigente; el Productor lo ratifica desde su cuenta");
+      onRefreshData();
+    } else {
+      setErrorFirma(res.message);
+      showToast(res.message);
+    }
+  }
+  // Solo una participación en Cherry Picked anclada al PVC de su grado (el servidor lo vuelve a comprobar).
+  const puedeProvisional = asistida && offer.kind === "temporada" && Boolean(offer.referencePriceSource) && conVentana;
 
   return (
     <div style={{ border: `1.5px solid ${color}`, borderRadius: 10, padding: "12px 14px", background: "var(--paper)" }}>
@@ -831,7 +897,12 @@ function OfferCard({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshDa
               }}
               ocupado={busy}
               onFirmar={(f) => responder("aceptar", f)}
-              onVolver={() => setFase("calcular")}
+              onVolver={() => {
+                setErrorFirma(null);
+                setFase("calcular");
+              }}
+              error={errorFirma}
+              provisional={puedeProvisional ? { cuenta, onAceptar: aceptarProvisional } : null}
             />
           )}
 

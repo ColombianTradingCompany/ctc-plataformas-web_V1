@@ -29,6 +29,8 @@ export type DashboardModule = "info" | "arena" | "retro" | "solicitudes" | "finc
 
 export function AppDashboard({
   userName,
+  asistida,
+  cuenta,
   lots,
   fincas,
   parcelas,
@@ -57,6 +59,10 @@ export function AppDashboard({
   onConfirmSampleShipped,
 }: {
   userName: string;
+  /** V5.190: la sesión la abrió CTCx desde el OCP («Entrar como el productor»): habilita la aceptación provisional. */
+  asistida: boolean;
+  /** V5.190: el código del productor (CTC-P-…), que nombra al Productor en un contrato provisional. */
+  cuenta: string;
   lots: Lot[];
   fincas: Finca[];
   /** F3: parcelas de las fincas del productor — la aptitud EUDR se juzga por
@@ -184,6 +190,8 @@ export function AppDashboard({
         {tab === "contratos" && (
           <ContratosTab
             gi={gi}
+            asistida={asistida}
+            cuenta={cuenta}
             contracts={contracts}
             offers={offers}
             lots={lots}

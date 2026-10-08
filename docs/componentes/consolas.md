@@ -177,6 +177,10 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.190 · OCP y la aceptación provisional**: desde una sesión asistida («Entrar como el productor»), un colaborador con nivel para
+  emitir acepta provisionalmente una participación en Cherry Picked anclada al PVC (`aceptarProvisionalmente`, que lee su sesión de
+  consola con `requireConsoleWrite("ocp", "emite")`); el contrato nace vigente y el OCP lo marca «Provisional · por ratificar» en la
+  lista y en su vista (responsable, operador, fecha, ratificación). Una firma del productor trazada en una sesión asistida queda sellada.
 - **V5.189 · la escala de valor de los Grados CTCx: CVA principal y SCA 2004 equivalente** (owner; plan `PLAN_CIRCUITO_DEL_LOTE`
   §10.6): `src/lib/arena/equivalencia.ts` (la recta 3,25 + 0,75 × sección, el ajuste proporcional, las tazas con su efecto, ida y
   vuelta) y `src/lib/arena/punto.ts` (antes `homologacion.ts`: un solo valor, `decidirPorPunto` sin recata). La planilla abre en CVA y

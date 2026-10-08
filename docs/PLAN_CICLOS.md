@@ -175,3 +175,28 @@ Cada tanda es su propia versión (gate, guardianes, CHANGELOG, log, charters, AL
   Huila, Cauca, Nariño, Putumayo, Caquetá → Sur; el resto de Colombia → Centro; fuera de Colombia la elige CTCx).
 - La continuidad lineal se cuenta en cambios de trimestre desde el primer contrato del lote; en la práctica un lote no
   pasa de 3–4 trimestres (la regla de cosecha pasada lo castiga a los 9 meses).
+
+## 11. La aceptación provisional de la sesión asistida (V5.190, owner 2026-10-08)
+
+**Lo que pidió el owner.** «Necesitamos un mecanismo para hacer un contrato provisional que queda vigente y podrá ser revisado en cuanto
+a la cantidad declarada (lo demás es fijo, siempre y cuando se usen los valores del PVC correspondiente al grado) […] que el contrato
+llegue a "Contratos" y muestre un botón de "Ratificar y Firmar", y del lado de CTCx, si está en la cuenta de KR desde una sesión asistida
+y detecta que está en ese punto, agregue un botón que permita hacer un "Aceptar contrato provisionalmente", con un color resaltando, justo
+debajo del checkbox; si es seleccionado, no se inserta firma, ni nombre ni documento del Productor, sino que pedirá un "Nombre de
+responsable CTCx".» Su nota para la oferta: «Este contrato está siendo manejado por el backend del sistema en favor del Productor como
+parte del grupo de Pioneros. Por esta razón, podrá ser sujeto a reajustes que consideren particularidades del periodo de desarrollo y
+maduración del sistema. Ningún cambio será unilateral.»
+
+**Las reglas (en código).**
+1. **Quién.** Solo un colaborador del OCP con nivel para emitir, con su sesión de consola en el mismo navegador, dentro de una sesión
+   asistida de ESE productor (la marca de la asistida es un rótulo: lo que autoriza es la sesión de consola). Queda en el contrato el
+   nombre del responsable que se escribió y el usuario de consola que lo hizo.
+2. **Qué.** Solo una participación en Cherry Picked anclada al PVC de su grado (ni una excepción de precio, ni una compra de CTCx
+   Selection). Con la misma validación de una firma: la ventana de hoy, la existencia, el mínimo, la declaración.
+3. **Cómo nace.** Vigente (firmado por CTCx), sin firma, nombre ni documento del productor. El texto lo nombra por su cuenta (CTC-P-…),
+   dice que queda vigente desde la aceptación y lleva la cláusula 13 (Pioneros). Aviso al productor por su feed y por correo.
+4. **La ratificación.** «Ratificar y firmar» en «Contratos y Compras», desde la cuenta del productor (no en una sesión asistida): puede
+   ajustar lo declarado —no por debajo de lo ya vendido o retirado, ni fuera del mínimo y de lo que le queda al lote—; el precio, la
+   ventana y lo demás no cambian. El texto pasa a nombrarlo con su nombre y su documento y la fecha de la ratificación; se guarda su
+   firma y la huella nueva (la provisional queda en `provisional_sha256`).
+5. **La firma con la mano en una sesión asistida** sigue posible (el productor presente) y queda sellada con el operador de consola.

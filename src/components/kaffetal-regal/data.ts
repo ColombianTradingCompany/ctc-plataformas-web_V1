@@ -449,6 +449,10 @@ export type ProducerContract = {
   signedAt: string | null;
   /** V5.168: la firma del productor (con el dedo, al aceptar) y las condiciones de entrega del contrato. */
   producerSignedAt: string | null;
+  /** V5.190: la aceptación PROVISIONAL de CTCx en una sesión asistida (vigente; el productor la ratifica) y la ratificación. */
+  provisionalAt: string | null;
+  provisionalResponsable: string | null;
+  ratificadoAt: string | null;
   lugarEntrega: string | null;
   freezeMonths: number | null;
   months: ContractMonth[];

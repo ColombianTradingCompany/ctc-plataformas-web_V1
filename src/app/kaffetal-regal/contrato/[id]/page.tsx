@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
-import { fleteDeLaFila } from "@/lib/trato/flete";
 import { createHash } from "node:crypto";
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
-import { CONTRATO_VERSION, clausulasDelContrato, textoDelContrato, type DatosDelContrato } from "@/lib/trato/contrato";
-import type { RangosDeCalidad } from "@/lib/trato/despachos";
-import { LUGAR_DE_ENTREGA_POR_DEFECTO } from "@/lib/trato/terminos";
+import { CONTRATO_VERSION, clausulasDelContrato, textoDelContrato } from "@/lib/trato/contrato";
+import { COLUMNAS_DEL_CONTRATO, datosDeLaFila, type FilaDelContrato } from "@/lib/trato/contratoDeFila";
 import { AVISO_SIN_CONTRATO, contratoFirmado, textoDeMarca } from "@/lib/kaffetal/blindaje";
 import { documentoDelFirmante, esTipoDeDocumento } from "@/lib/trato/documento";
-import { ctcLotReference } from "@/components/kaffetal-regal/data";
+import { ctcLotReference, supplierCode } from "@/components/kaffetal-regal/data";
 import { CONTRACT_STATUS_LABEL } from "@/components/kaffetal-regal/data";
 import { MarcaDeAgua } from "@/components/kaffetal-regal/blindaje/MarcaDeAgua";
 import { Blindaje } from "@/components/kaffetal-regal/blindaje/Blindaje";
@@ -25,6 +23,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 // El contrato que el productor firmó con el dedo al aceptar la oferta: las cláusulas (regeneradas de los datos guardados con
 // la misma función que firmó, `clausulasDelContrato`), la huella SHA-256 comprobada contra la guardada, su firma y la de
 // CTCx. Lleva marca de agua y se imprime solo cuando el contrato está firmado por las dos partes. Solo lo ve su dueño.
+// V5.190: un contrato que CTCx aceptó PROVISIONALMENTE en una sesión asistida se ve aquí antes de la ratificación —con el texto
+// provisional, su huella y quién lo aceptó por CTCx— y, ratificado, con la firma del productor y la fecha de la ratificación. Los
+// datos salen de `datosDeLaFila` (`contratoDeFila.ts`), el mismo armador de la ratificación.
 
 function gate(message: string) {
   return (
@@ -51,81 +52,18 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
   if (!user) return gate("Inicie sesión para ver su contrato.");
 
   const service = createServiceRoleClient();
-  const { data: raw } = await service
-    .from("purchase_contracts")
-    .select(
-      "id, lot_id, status, grade_snapshot, price_per_kg_locked, quantity_frozen_kg, terms_version, lugar_entrega, signed_at, producer_signed_at, producer_signer_name, producer_signer_doc_tipo, producer_signer_doc_numero, producer_signature_path, contract_text_version, contract_text_sha256, offer_id, vigencia_desde, vigencia_hasta, retiro_libre_pct, ventana_tipo, ventana_ciclos, precio_regla, sin_retiro, saco_kg, minimo_kg, renovacion_de, calidad_snapshot, flete_region, flete_carga, lots(name, producer_id), lot_offers!purchase_contracts_offer_id_fkey(season_label, kind)"
-    )
-    .eq("id", id)
-    .maybeSingle();
-  type Row = {
-    id: string;
-    lot_id: string;
-    status: string;
-    grade_snapshot: string | null;
-    price_per_kg_locked: number | string | null;
-    quantity_frozen_kg: number | string | null;
-    vigencia_desde: string | null;
-    vigencia_hasta: string | null;
-    retiro_libre_pct: number | string | null;
-    ventana_tipo: "ciclo" | "extendida" | null;
-    ventana_ciclos: string[] | null;
-    precio_regla: "vigente" | "promedio" | "siguiente" | null;
-    sin_retiro: boolean | null;
-    saco_kg: number | string | null;
-    minimo_kg: number | string | null;
-    renovacion_de: string | null;
-    calidad_snapshot: RangosDeCalidad | null;
-    flete_region: string | null;
-    flete_carga: number | string | null;
-    terms_version: string | null;
-    lugar_entrega: string | null;
-    signed_at: string | null;
-    producer_signed_at: string | null;
-    producer_signer_name: string | null;
-    producer_signer_doc_tipo: string | null;
-    producer_signer_doc_numero: string | null;
-    producer_signature_path: string | null;
-    contract_text_version: string | null;
-    contract_text_sha256: string | null;
-    lots: { name: string; producer_id: string } | { name: string; producer_id: string }[] | null;
-    lot_offers: { season_label: string | null; kind: string } | { season_label: string | null; kind: string }[] | null;
-  };
-  const c = raw as Row | null;
+  const { data: raw } = await service.from("purchase_contracts").select(COLUMNAS_DEL_CONTRATO).eq("id", id).maybeSingle();
+  const c = raw as FilaDelContrato | null;
   const lote = c ? ((Array.isArray(c.lots) ? c.lots[0] : c.lots) ?? null) : null;
   if (!c || !lote || lote.producer_id !== user.id) return gate("No encontramos este contrato en su cuenta.");
-  if (!c.producer_signed_at) return gate("Este contrato es anterior a la firma digital: lo encuentra en «Contratos y Compras».");
+  if (!c.producer_signed_at && !c.provisional_at) return gate("Este contrato es anterior a la firma digital: lo encuentra en «Contratos y Compras».");
   const documentoFirmante =
     c.producer_signer_doc_numero && esTipoDeDocumento(c.producer_signer_doc_tipo) ? documentoDelFirmante(c.producer_signer_doc_tipo, c.producer_signer_doc_numero) : null;
-
-  const oferta = (Array.isArray(c.lot_offers) ? c.lot_offers[0] : c.lot_offers) ?? null;
+  // Firmado (o ratificado) por el productor: su nombre y su documento entran al texto y a la huella. Provisional sin ratificar: no.
+  const firmante = c.producer_signed_at && c.producer_signer_name ? { nombre: c.producer_signer_name, documento: documentoFirmante } : null;
   // V5.175: la ventana, el saco, el mínimo, la calidad y (V5.177) el Flete a CTCx, tal como quedaron guardados al firmar (la huella los cita).
-  const n = (v: number | string | null) => (v != null ? Number(v) : null);
-  const ventana =
-    oferta?.kind !== "directa" && c.ventana_tipo && c.vigencia_desde && c.vigencia_hasta && c.precio_regla
-      ? { tipo: c.ventana_tipo, desde: c.vigencia_desde, hasta: c.vigencia_hasta, ciclos: c.ventana_ciclos ?? [], retiroLibrePct: n(c.retiro_libre_pct) ?? 0, precio: c.precio_regla }
-      : null;
-  const datos: DatosDelContrato = {
-    tipo: oferta?.kind === "directa" ? "selection" : "cherry_picked",
-    ventana,
-    sinRetiro: Boolean(c.sin_retiro),
-    sacoKg: n(c.saco_kg),
-    esRenovacion: Boolean(c.renovacion_de),
-    minimoKg: n(c.minimo_kg),
-    calidad: c.calidad_snapshot ?? null,
-    flete: fleteDeLaFila(c),
-    productorNombre: c.producer_signer_name ?? "—",
-    // V5.188: el documento de quien firmó entra al texto (y a su huella) igual que al firmar.
-    productorDocumento: documentoFirmante,
-    loteNombre: lote.name,
-    loteReferencia: ctcLotReference(c.lot_id),
-    grado: c.grade_snapshot ?? "—",
-    copKg: Number(c.price_per_kg_locked ?? 0),
-    declaradoKg: Number(c.quantity_frozen_kg ?? 0),
-    lugarEntrega: c.lugar_entrega ?? LUGAR_DE_ENTREGA_POR_DEFECTO,
-    termsVersion: c.terms_version,
-    temporada: oferta?.season_label ?? null,
-  };
+  const datos = datosDeLaFila(c, { loteNombre: lote.name, loteReferencia: ctcLotReference(c.lot_id), cuenta: supplierCode(lote.producer_id), firmante });
+  const provisionalSinRatificar = Boolean(c.provisional_at) && !c.ratificado_at;
   const huella = createHash("sha256").update(textoDelContrato(datos), "utf8").digest("hex");
   // Un contrato firmado con un texto de otra versión conserva su huella; aquí se dice, no se compara a ciegas.
   const mismaVersion = (c.contract_text_version ?? CONTRATO_VERSION) === CONTRATO_VERSION;
@@ -135,7 +73,7 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
 
   return (
     <div style={{ position: "relative", background: "#fff", color: "#17121F", maxWidth: 820, margin: "0 auto", padding: "28px 36px 40px", fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif", fontSize: 13.5, lineHeight: 1.55 }}>
-      <MarcaDeAgua texto={textoDeMarca({ referencia: ctcLotReference(c.lot_id), productor: c.producer_signer_name, fecha: new Date() })} />
+      <MarcaDeAgua texto={textoDeMarca({ referencia: ctcLotReference(c.lot_id), productor: c.producer_signer_name ?? supplierCode(lote.producer_id), fecha: new Date() })} />
       <Blindaje puedeImprimir={puedeImprimir} aviso={AVISO_SIN_CONTRATO.es} />
       <style>{`@media print { .no-print { display: none !important } }`}</style>
       <div className="no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
@@ -159,15 +97,28 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
         </p>
       ))}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginTop: 28 }}>
-        <div style={{ borderTop: "1px solid #17121F", paddingTop: 8 }}>
-          {firmaUrl?.signedUrl && (
-            // eslint-disable-next-line @next/next/no-img-element -- la firma, URL firmada de Storage privado
-            <img src={firmaUrl.signedUrl} alt={`Firma de ${c.producer_signer_name}`} style={{ height: 70, width: "auto", display: "block", marginTop: -78, background: "transparent" }} />
-          )}
-          <b>{c.producer_signer_name}</b>
-          {documentoFirmante && <div style={{ fontSize: 12.5 }}>{documentoFirmante}</div>}
-          <div style={{ fontSize: 12, color: "#5B5568" }}>El Productor · firmó el {fecha(c.producer_signed_at)}</div>
-        </div>
+        {provisionalSinRatificar ? (
+          <div style={{ borderTop: "1px solid #17121F", paddingTop: 8 }}>
+            <b>Pendiente de la ratificación del Productor</b>
+            <div style={{ fontSize: 12.5 }}>{supplierCode(lote.producer_id)}</div>
+            <div style={{ fontSize: 12, color: "#5B5568" }}>
+              Aceptado provisionalmente por CTCx el {fecha(c.provisional_at)} en una sesión asistida (responsable: {c.provisional_responsable}). El Productor lo ratifica
+              y firma desde su cuenta.
+            </div>
+          </div>
+        ) : (
+          <div style={{ borderTop: "1px solid #17121F", paddingTop: 8 }}>
+            {firmaUrl?.signedUrl && (
+              // eslint-disable-next-line @next/next/no-img-element -- la firma, URL firmada de Storage privado
+              <img src={firmaUrl.signedUrl} alt={`Firma de ${c.producer_signer_name}`} style={{ height: 70, width: "auto", display: "block", marginTop: -78, background: "transparent" }} />
+            )}
+            <b>{c.producer_signer_name}</b>
+            {documentoFirmante && <div style={{ fontSize: 12.5 }}>{documentoFirmante}</div>}
+            <div style={{ fontSize: 12, color: "#5B5568" }}>
+              El Productor · {c.ratificado_at ? `ratificó y firmó el ${fecha(c.ratificado_at)} (aceptación provisional de CTCx del ${fecha(c.provisional_at)}, responsable: ${c.provisional_responsable})` : `firmó el ${fecha(c.producer_signed_at)}`}
+            </div>
+          </div>
+        )}
         <div style={{ borderTop: "1px solid #17121F", paddingTop: 8 }}>
           <b>Colombian Trading Company (CTCx)</b>
           <div style={{ fontSize: 12, color: "#5B5568" }}>{c.signed_at ? `Firmó el ${fecha(c.signed_at)}` : "Pendiente de la firma de CTCx"}</div>

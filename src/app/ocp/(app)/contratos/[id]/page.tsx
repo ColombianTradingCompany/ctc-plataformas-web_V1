@@ -67,7 +67,7 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
   const { data: contract } = await service
     .from("purchase_contracts")
     .select(
-      "id, status, grade_snapshot, signed_at, reference_price_source, reference_price_snapshot, price_per_kg_locked, quantity_frozen_kg, terms_version, declaracion, compra_inicial_kg, modificador_pct, freeze_months, ruptura_at, ruptura_motivo, renovado_at, lugar_entrega, producer_signed_at, producer_signer_name, producer_signer_doc_tipo, producer_signer_doc_numero, producer_signature_path, producer_signature_meta, contract_text_version, contract_text_sha256, vigencia_hasta, redeclarar_min_kg, redeclarar_at, redeclarado_at, redeclarado_kg, redeclaracion_origen, redeclarar_aviso_at, lots(name, producer_id, fincas(name)), ventana_tipo, ventana_ciclos, precio_regla, saco_kg, minimo_kg, sin_retiro, vigencia_desde, retiro_libre_pct"
+      "id, status, grade_snapshot, signed_at, reference_price_source, reference_price_snapshot, price_per_kg_locked, quantity_frozen_kg, terms_version, declaracion, compra_inicial_kg, modificador_pct, freeze_months, ruptura_at, ruptura_motivo, renovado_at, lugar_entrega, producer_signed_at, producer_signer_name, producer_signer_doc_tipo, producer_signer_doc_numero, producer_signature_path, provisional_at, provisional_responsable, provisional_por, ratificado_at, producer_signature_meta, contract_text_version, contract_text_sha256, vigencia_hasta, redeclarar_min_kg, redeclarar_at, redeclarado_at, redeclarado_kg, redeclaracion_origen, redeclarar_aviso_at, lots(name, producer_id, fincas(name)), ventana_tipo, ventana_ciclos, precio_regla, saco_kg, minimo_kg, sin_retiro, vigencia_desde, retiro_libre_pct"
     )
     .eq("id", id)
     .single();
@@ -142,6 +142,23 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
         {cuentaCongelada && <> · <span className={styles.badgeBad}>cuenta del productor congelada</span></>}
       </p>
 
+      {/* V5.190 (owner): aceptado PROVISIONALMENTE por CTCx en una sesión asistida — vigente, pendiente de la ratificación del productor. */}
+      {contract.provisional_at && (
+        <div className={styles.card} style={{ marginBottom: 14, borderLeft: "4px solid #E8A317", background: "#FFF8E8" }}>
+          <p className={styles.meta} style={{ margin: 0, color: "#3A2C00" }}>
+            <b>Contrato provisional</b> · aceptado por CTCx el {fecha(contract.provisional_at)} en una sesión asistida, en favor del productor (grupo de Pioneros) ·
+            responsable: <b>{contract.provisional_responsable}</b> · operador de consola <span className="mono">{String(contract.provisional_por ?? "").slice(0, 8)}</span> ·{" "}
+            {contract.ratificado_at ? <>el productor lo <b>ratificó</b> el {fecha(contract.ratificado_at)}</> : <b>pendiente de la ratificación del productor</b>}
+            {!contract.ratificado_at && (
+              <>
+                <br />
+                Vigente desde la aceptación. El productor lo ratifica y firma desde su cuenta («Contratos y Compras»), donde puede ajustar la cantidad declarada.
+              </>
+            )}
+          </p>
+        </div>
+      )}
+
       {/* V5.168 · la firma del PRODUCTOR (con el dedo, al aceptar la oferta): su trazo, nombre, fecha y la huella del texto. */}
       {contract.producer_signed_at ? (
         <div className={styles.card} style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap", marginBottom: 14 }}>
@@ -160,9 +177,11 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
             <br />
             Texto {contract.contract_text_version ?? "—"} · SHA-256 <span className="mono">{String(contract.contract_text_sha256 ?? "").slice(0, 16)}…</span>
             {(contract.producer_signature_meta as { ip?: string | null } | null)?.ip && <> · IP {(contract.producer_signature_meta as { ip?: string | null }).ip}</>}
+            {/* V5.190: si la firma se trazó dentro de una sesión asistida de CTCx (el productor presente), queda dicho. */}
+            {Boolean((contract.producer_signature_meta as { sesion_asistida?: unknown } | null)?.sesion_asistida) && <> · <b>firmada en una sesión asistida de CTCx</b></>}
           </p>
         </div>
-      ) : (
+      ) : contract.provisional_at ? null : (
         <p className={styles.meta}>Contrato anterior a la firma digital del productor (V5.168).</p>
       )}
 

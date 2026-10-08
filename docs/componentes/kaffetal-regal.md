@@ -152,6 +152,11 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.190 · el contrato provisional de la sesión asistida y su ratificación** (`PLAN_CICLOS.md` §11): bajo la casilla de la firma, en
+  una sesión asistida, «Aceptar contrato provisionalmente» (CTCx, con el nombre de su responsable; sin firma, nombre ni documento del
+  productor); en «Contratos», el aviso del contrato provisional con «Ratificar y firmar» (`RatificarContrato.tsx`), donde el productor
+  ajusta lo declarado y firma; la página del contrato enseña el texto provisional y después el ratificado. Y el arreglo: la firma no
+  creaba el contrato (`freeze_months` NOT NULL, 23502) y el error no se veía. **Queda**: conducirlo con la oferta de Ruizeñores.
 - **V5.189 · el Punto dice con qué protocolo se cató** (ejecutado desde `consolas`, plan §10.6): «Lotes Galardonados» enseña «Punto
   (CVA)» o «Punto (SCA 2004)» —valen lo mismo— y el dossier «Punto CVA (SCA-104)» o «Punto SCA 2004 (vale lo mismo en CVA)»; ya no hay
   «Punto homologado (piso)» ni «recata». La Ficha B2 del productor sigue siendo SCA 2004 (su total vale lo mismo en CVA).

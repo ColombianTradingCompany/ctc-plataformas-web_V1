@@ -19,6 +19,34 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.190] — 2026-10-08 (commit pendiente)
+
+- **Corregido**: **la firma de una invitación «cargaba, pero no hacía nada»** (sesión asistida de «Castillo Lavado Ruizeñores 2026»,
+  2026-10-08). No era un bloqueo de seguridad: la V5.175 dejó `purchase_contracts.freeze_months` NOT NULL y el insert de un trato por
+  ventana la manda en null; Postgres rechazaba el contrato (23502) después de subir la firma, y la pantalla solo lo decía en un aviso
+  fugaz con un mensaje genérico. La columna admite null; el error sale ahora con su código, se queda escrito junto al botón y va al
+  registro del servidor, y la firma subida de un intento fallido se retira. Las tres imágenes de los intentos del 2026-10-08 quedan
+  en Storage, sin contrato.
+- **Añadido**: **el contrato PROVISIONAL de la sesión asistida** (owner). Justo debajo de la casilla, resaltado, «Aceptar contrato
+  provisionalmente»: CTCx acepta en favor del Productor («grupo de Pioneros») sin insertar su firma, su nombre ni su documento, con el
+  «Nombre de responsable CTCx». Solo lo puede hacer un colaborador del OCP con nivel para emitir, con su sesión de consola, dentro de una
+  sesión asistida de ese productor, y solo sobre una participación en Cherry Picked anclada al PVC de su grado. El contrato nace
+  **vigente** (firmado por CTCx) y su texto nombra al Productor por su cuenta (CTC-P-…), dice que queda vigente desde la aceptación y
+  lleva la cláusula 13 con la nota de Pioneros («ningún cambio será unilateral»). Texto `2026-10-08.3`.
+- **Añadido**: **«Ratificar y firmar»** en «Contratos»: el productor, desde su cuenta (no en una sesión asistida), lee el texto ya con
+  su nombre y su documento, puede ajustar la cantidad declarada —dentro del mínimo de su ventana, de lo que le queda al lote y de lo ya
+  vendido o retirado— y firma con el dedo; el precio, la ventana y lo demás no cambian. Una sola vez; la huella nueva se guarda.
+- **Cambiado**: la validación y el insert del contrato viven en `src/lib/ofertas/aceptacion.ts`, compartidos por la firma y la
+  aceptación provisional (un solo insert); `src/lib/trato/contratoDeFila.ts` arma los datos del texto desde la fila (la página del
+  contrato y la ratificación). Una firma trazada dentro de una sesión asistida queda sellada con el operador de consola y el OCP lo dice.
+- **Cambiado**: el OCP marca el contrato provisional (quién lo aceptó, cuándo, si ya se ratificó) y lo lista «Provisional · por
+  ratificar»; la página del contrato del productor enseña el texto provisional y su huella, y después el ratificado.
+- **Datos**: migración `contrato_provisional` (`freeze_months` admite null; cinco columnas nulas y un check; 0 filas tocadas).
+- **Seguridad**: `qa-ciclos` 133 → 145 (§18: la regresión de `freeze_months`, el texto provisional y el ratificado, la sesión de consola
+  y la marca, la ratificación una vez y fuera de la asistida, las pantallas); `qa-ofertas`, `qa-trato` y `qa-ciclos` leen la aceptación
+  en sus dos archivos.
+- **Docs**: `PLAN_CICLOS.md` §11; charters `kaffetal-regal`, `consolas`; ALINEACION §3.
+
 ## [V5.189] — 2026-10-08 (commit bdec167)
 
 - **Hito**: **la escala de valor de los Grados CTCx cambia de protocolo** (owner): «CVA y SCA 2004 deben tener un valor EQUIVALENTE

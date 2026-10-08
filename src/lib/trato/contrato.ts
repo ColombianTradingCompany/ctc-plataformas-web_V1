@@ -7,6 +7,10 @@
 //   · COMPRA CTCx SELECTION — una venta en firme de una cantidad a un precio acordado (hasta PVC − 8 %). No cambia.
 // El texto tiene VERSIÓN propia y el servidor guarda la huella SHA-256 del texto exacto que el productor firmó.
 // PURO. Es una redacción operativa de los términos del trato; la revisión jurídica la decide el owner.
+// V5.190 (owner, 2026-10-08): en una SESIÓN ASISTIDA, CTCx no firma por el productor: ACEPTA PROVISIONALMENTE en su favor («grupo de
+// Pioneros»), con el nombre de un responsable de CTCx. Ese texto nombra al Productor por su CUENTA (aún no escribió su nombre ni su
+// documento), queda vigente desde la aceptación y lleva la cláusula 13; el Productor lo ratifica y firma desde su cuenta, y entonces
+// el texto lo nombra con su nombre y su documento y dice la fecha de la ratificación.
 
 import { CTC_RAZON, CTC_SEDE, NIT } from "@/lib/legal";
 import { AJUSTE_FUERA_DE_RANGO_MAX_PCT, BACHES_DE_DESPACHO, CALIDAD_POR_DEFECTO, CARGA_KG, MORA, PAGO_AL_DESPACHO_PCT, PENALIDAD_RETIRO_PCT, PRORROGA_DIAS } from "./terminos";
@@ -15,7 +19,7 @@ import type { ReglaDePrecio } from "./ventanas";
 import type { RangosDeCalidad } from "./despachos";
 import { fletePorKg, REGION_DE_FLETE_LABEL, type FleteDelTrato } from "./flete";
 
-export const CONTRATO_VERSION = "2026-10-08.2"; // V5.188: Cherry Picked y CTCx Selection definidos; el documento de quien firma (V5.187: la sigla del PVC)
+export const CONTRATO_VERSION = "2026-10-08.3"; // V5.190: la aceptación provisional y su ratificación (V5.188: Cherry Picked y Selection definidos, el documento)
 
 export type VentanaDelContrato = { tipo: "ciclo" | "extendida"; desde: string; hasta: string; ciclos: string[]; retiroLibrePct: number; precio: ReglaDePrecio };
 
@@ -43,6 +47,10 @@ export type DatosDelContrato = {
   lugarEntrega: string;
   termsVersion: string | null;
   temporada: string | null;
+  /** V5.190: la aceptación PROVISIONAL de CTCx en una sesión asistida (solo Cherry Picked). `fecha` y `ratificado` son días de Colombia
+   *  (AAAA-MM-DD); `cuenta` es el código del productor (CTC-P-…), que no cambia. Sin `ratificado`, el texto no lleva ni su nombre ni su
+   *  documento. */
+  provisional?: { responsable: string; fecha: string; cuenta: string; ratificado: string | null } | null;
 };
 
 export type ClausulaDelContrato = { titulo: string; texto: string };
@@ -75,19 +83,35 @@ export function clausulasDelContrato(d: DatosDelContrato): ClausulaDelContrato[]
   // El grado llega «red» del servidor y «Red» de la pantalla: el texto es el mismo (la huella también).
   const grado = d.grado ? d.grado.charAt(0).toUpperCase() + d.grado.slice(1).toLowerCase() : "—";
   const cargas = (d.declaradoKg / CARGA_KG).toLocaleString("es-CO", { maximumFractionDigits: 2 });
+  const prov = d.tipo === "cherry_picked" && d.ventana ? (d.provisional ?? null) : null;
+  const elProductor = prov && !prov.ratificado
+    ? `el titular de la cuenta ${prov.cuenta} de Kaffetal Regal, en adelante «el Productor», que ratificará este contrato con su nombre y su documento`
+    : `${d.productorNombre}${d.productorDocumento ? `, identificado(a) con ${d.productorDocumento}` : ""}, en adelante «el Productor»`;
   const partes: ClausulaDelContrato = {
     titulo: "1. Las partes",
-    texto: `De una parte, ${CTC_RAZON} (CTCx), ${NIT}, con sede en ${CTC_SEDE}, en adelante «CTCx». De otra, ${d.productorNombre}${d.productorDocumento ? `, identificado(a) con ${d.productorDocumento}` : ""}, en adelante «el Productor». Las partes celebran este contrato sobre el lote descrito abajo, nacido de la aceptación de la oferta de CTCx en Kaffetal Regal.`,
+    texto: `De una parte, ${CTC_RAZON} (CTCx), ${NIT}, con sede en ${CTC_SEDE}, en adelante «CTCx». De otra, ${elProductor}. Las partes celebran este contrato sobre el lote descrito abajo, nacido de la aceptación de la oferta de CTCx en Kaffetal Regal.`,
   };
   const documentos: ClausulaDelContrato = {
     titulo: "",
     texto:
       "El dossier del lote, la Visa EUDR, el Pasaporte de la finca, la Ficha Técnica y los análisis que CTCx produce o certifica son de uso exclusivo dentro de la relación comercial con CTCx. El Productor no los presentará a terceros compradores para vender el lote por fuera de este contrato, ni los alterará o reproducirá sin autorización escrita de CTCx.",
   };
+  const versiones = `${d.termsVersion ? ` Términos del trato versión ${d.termsVersion}.` : ""} Texto del contrato versión ${CONTRATO_VERSION}.`;
   const firma: ClausulaDelContrato = {
     titulo: "",
-    texto: `El Productor firma este contrato en la plataforma Kaffetal Regal con su firma manuscrita digital; la plataforma guarda la fecha, el nombre, los datos del dispositivo y la huella del texto firmado. El contrato queda vigente cuando CTCx lo firma.${d.termsVersion ? ` Términos del trato versión ${d.termsVersion}.` : ""} Texto del contrato versión ${CONTRATO_VERSION}.`,
+    texto: !prov
+      ? `El Productor firma este contrato en la plataforma Kaffetal Regal con su firma manuscrita digital; la plataforma guarda la fecha, el nombre, los datos del dispositivo y la huella del texto firmado. El contrato queda vigente cuando CTCx lo firma.${versiones}`
+      : prov.ratificado
+        ? `El Productor ratificó y firmó este contrato el ${fecha(prov.ratificado)} en la plataforma Kaffetal Regal con su firma manuscrita digital; la plataforma guarda la fecha, el nombre, el documento, los datos del dispositivo y la huella del texto firmado. El contrato está vigente desde la aceptación provisional de CTCx (cláusula 13).${versiones}`
+        : `CTCx aceptó este contrato provisionalmente (cláusula 13) y queda vigente desde esa aceptación. El Productor lo ratifica y lo firma en la plataforma Kaffetal Regal con su firma manuscrita digital; la plataforma guarda la fecha, el nombre, el documento, los datos del dispositivo y la huella del texto.${versiones}`,
   };
+  // V5.190: la cláusula de la aceptación provisional (la nota del owner para el grupo de Pioneros), en el contrato y en su huella.
+  const provisional: ClausulaDelContrato | null = prov
+    ? {
+        titulo: "",
+        texto: `CTCx aceptó este contrato provisionalmente el ${fecha(prov.fecha)}, en una sesión asistida de Kaffetal Regal, en favor del Productor como parte del grupo de Pioneros (responsable de CTCx: ${prov.responsable}). Por estar la plataforma en su periodo de desarrollo y maduración, el contrato podrá ajustarse a sus particularidades; ningún cambio será unilateral. Al ratificarlo, el Productor puede ajustar la cantidad declarada; el precio —el de la Ponderación de Valor de Cosecha (PVC) para su grado—, la ventana y las demás condiciones no cambian.`,
+      }
+    : null;
   const numerar = (cs: ClausulaDelContrato[], titulos: string[]) => cs.map((c, i) => ({ titulo: `${i + 1}. ${titulos[i]}`, texto: c.texto }));
 
   // ── CTCx Selection: una compra en firme (no cambia con los ciclos) ──
@@ -142,8 +166,9 @@ export function clausulasDelContrato(d: DatosDelContrato): ClausulaDelContrato[]
       { titulo: "", texto: renovacion },
       documentos,
       firma,
+      ...(provisional ? [provisional] : []),
     ],
-    ["Las partes", "Objeto", "Ventana y cantidad", d.esRenovacion ? "Compra adelantada" : "Compra con la firma", "Ventas y confirmaciones", "Precio", "Entrega y despachos", "Pago y calidad", "Retiro de cantidad", "Renovación", "Documentos y confidencialidad", "Firma"]
+    ["Las partes", "Objeto", "Ventana y cantidad", d.esRenovacion ? "Compra adelantada" : "Compra con la firma", "Ventas y confirmaciones", "Precio", "Entrega y despachos", "Pago y calidad", "Retiro de cantidad", "Renovación", "Documentos y confidencialidad", "Firma", "Aceptación provisional"]
   );
 }
 

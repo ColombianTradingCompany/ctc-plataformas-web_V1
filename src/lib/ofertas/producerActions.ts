@@ -1,21 +1,25 @@
 "use server";
 
-import { fechaParaElProductor } from "@/lib/trato/fechas";
+import { diaEnColombia, fechaParaElProductor } from "@/lib/trato/fechas";
 import { createHash } from "node:crypto";
 import { headers } from "next/headers";
-import { createSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
-import { LUGAR_DE_ENTREGA_POR_DEFECTO } from "@/lib/trato/terminos";
+import { createServiceRoleClient } from "@/lib/supabase/server";
 import { formatCop } from "@/lib/arena/inscriptions";
-import { CONTRATO_VERSION, textoDelContrato } from "@/lib/trato/contrato";
+import { CONTRATO_VERSION, textoDelContrato, type DatosDelContrato } from "@/lib/trato/contrato";
+import { COLUMNAS_DEL_CONTRATO, datosDeLaFila, type FilaDelContrato } from "@/lib/trato/contratoDeFila";
 import { documentoDelFirmante, validarDocumento } from "@/lib/trato/documento";
 import { validarDeclaracion } from "@/lib/trato/minimos";
 import { plazoDelSaco } from "@/lib/trato/despachos";
 import { hoyEnColombia } from "@/lib/pvc/servicio";
-import { condicionesDeFirma, type CondicionesDeFirma, type OfertaParaVentana } from "./ventanaDeOferta";
+import { RETIRO_LIBRE_CICLO_PCT, RETIRO_LIBRE_EXTENDIDA_PCT } from "@/lib/trato/ventanas";
+import { condicionesDeFirma, disponibleDe, type CondicionesDeFirma, type OfertaParaVentana } from "./ventanaDeOferta";
 import { sincronizarListado } from "@/lib/trato/ventanaServidor";
 import { fleteDeLaFila } from "@/lib/trato/flete";
 import { guardarExistencia } from "@/lib/kaffetal/existencia";
-import { ctcLotReference } from "@/components/kaffetal-regal/data";
+import { sendTransactionalEmail } from "@/lib/email/leadEmails";
+import { origenDeSuperficie } from "@/lib/red/subdominios";
+import { ctcLotReference, supplierCode } from "@/components/kaffetal-regal/data";
+import { cargarOferta, crearContratoDeOferta, operadorDeLaAsistida, requireProducer, validarAceptacion, type Aceptable, type DeclaracionDelProductor } from "./aceptacion";
 
 // ── La respuesta del productor a una oferta (V5.18 · con declaración desde la V5.83 · por ventanas desde la V5.175) ──────────
 // lot_offers es de solo lectura para el productor (RLS select-own); TODA escritura pasa por aquí con service role — el mismo
@@ -26,8 +30,11 @@ import { ctcLotReference } from "@/components/kaffetal-regal/data";
 // (`condicionesDeFirma`, la misma cuenta que enseña la calculadora). El productor declara una cantidad (>= el mínimo; o, si la
 // existencia del lote no le alcanza, hasta la mitad sin retiro), CTCx compra el SACO fuera de lo declarado y su despacho queda
 // con plazo al cierre de la semana. Rechazar cierra la oferta con la nota del productor — y no crea nada.
+// V5.190 (owner, 2026-10-08): la validación y el insert viven en `aceptacion.ts` (un solo camino para firmar y para la ACEPTACIÓN
+// PROVISIONAL de CTCx en una sesión asistida); aquí quedan las tres acciones del productor y la RATIFICACIÓN.
 
 export type RespuestaOferta = { ok: true } | { ok: false; message: string };
+export type { DeclaracionDelProductor };
 
 /** V5.168 (owner): la firma del productor con el dedo — su nombre y el trazo en PNG (data URL). */
 /** V5.188: con el nombre llega el documento de quien firma (tipo y número), que el texto firmado dice y el contrato guarda. */
@@ -36,24 +43,53 @@ export type FirmaDeAceptacion = { nombre: string; documentoTipo: string; documen
 const FIRMA_PREFIJO = "data:image/png;base64,";
 const FIRMA_MAX_BYTES = 600_000;
 
-export type DeclaracionDelProductor = {
-  /** Lo que declara disponible para la ventana, kg de CPS. */
-  lockedKg: number;
-  /** Marcó la casilla de las condiciones (ventana, despachos, pago y calidad, retiro). */
-  aceptaTerminos: boolean;
-};
-
-async function requireProducer(): Promise<{ userId: string } | { error: string }> {
-  const session = await createSessionClient();
-  const {
-    data: { user },
-  } = await session.auth.getUser();
-  if (!user) return { error: "Inicie sesión de nuevo." };
-  const service = createServiceRoleClient();
-  const { data: profile } = await service.from("profiles").select("role").eq("id", user.id).maybeSingle();
-  if (profile?.role !== "producer") return { error: "Solo las cuentas de productor pueden responder ofertas." };
-  return { userId: user.id };
+/** La firma que llega de la pantalla, validada: el nombre, el documento (V5.188) y el PNG del trazo. */
+function validarFirma(firma: FirmaDeAceptacion | undefined):
+  | { ok: true; nombre: string; documento: { tipo: "CC" | "CE" | "PPT" | "PA" | "NIT"; numero: string }; bytes: Buffer }
+  | { ok: false; message: string } {
+  if (!firma) return { ok: false, message: "Para aceptar hay que firmar el contrato (su nombre y su firma con el dedo)." };
+  const nombre = String(firma.nombre ?? "").replace(/\s+/g, " ").trim();
+  if (nombre.length < 5) return { ok: false, message: "Escriba su nombre completo para firmar." };
+  const documento = validarDocumento(firma.documentoTipo, firma.documentoNumero);
+  if (!documento.ok) return { ok: false, message: documento.motivo };
+  if (typeof firma.imagenPng !== "string" || !firma.imagenPng.startsWith(FIRMA_PREFIJO)) return { ok: false, message: "La firma no llegó bien. Fírmela de nuevo." };
+  const bytes = Buffer.from(firma.imagenPng.slice(FIRMA_PREFIJO.length), "base64");
+  if (bytes.length < 200 || bytes.length > FIRMA_MAX_BYTES) return { ok: false, message: "La firma no llegó bien. Fírmela de nuevo." };
+  return { ok: true, nombre, documento: { tipo: documento.tipo, numero: documento.numero }, bytes };
 }
+
+/** Los datos del texto de una aceptación (los mismos que la pantalla le enseñó a quien acepta). */
+function datosDeAceptacion(a: Aceptable, quien: { nombre: string; documento: string | null } | null, provisional: DatosDelContrato["provisional"]): DatosDelContrato {
+  const { offer, cond } = a;
+  return {
+    tipo: a.esSelection ? "selection" : "cherry_picked",
+    ventana: cond ? { tipo: cond.ventana.tipo, desde: cond.ventana.desde, hasta: cond.ventana.hasta, ciclos: cond.ventana.ciclos, retiroLibrePct: cond.ventana.retiroLibrePct, precio: cond.ventana.precio } : null,
+    sinRetiro: a.sinRetiro,
+    sacoKg: cond ? cond.sacoKg : null,
+    esRenovacion: cond?.esRenovacion ?? false,
+    minimoKg: cond ? cond.minimoKg : null,
+    calidad: cond?.calidad ?? null,
+    flete: fleteDeLaFila(offer),
+    productorNombre: quien?.nombre ?? "—",
+    productorDocumento: quien?.documento ?? null,
+    loteNombre: a.lot?.name ?? "—",
+    loteReferencia: ctcLotReference(offer.lot_id),
+    grado: offer.grade_snapshot ?? "—",
+    copKg: a.copKgTrato,
+    declaradoKg: a.lockedKg ?? 0,
+    lugarEntrega: a.lugarEntrega,
+    termsVersion: offer.terms_version ?? null,
+    temporada: offer.season_label ?? null,
+    provisional,
+  };
+}
+
+const ventanaDe = (a: Aceptable) =>
+  a.cond
+    ? ` · ventana ${a.cond.ventana.desde} → ${a.cond.ventana.hasta} (${a.cond.ventana.tipo}, retiro libre ${a.sinRetiro ? 0 : a.cond.ventana.retiroLibrePct} %) · declaró ${a.lockedKg} kg${a.sinRetiro ? " sin retiro (existencia insuficiente)" : ""} · saco ${a.cond.sacoKg} kg · términos ${a.offer.terms_version}`
+    : a.esSelection
+      ? ` · compra CTCx Selection de ${a.lockedKg} kg`
+      : "";
 
 export async function respondToOffer(
   offerId: string,
@@ -65,34 +101,15 @@ export async function respondToOffer(
   const auth = await requireProducer();
   if ("error" in auth) return { ok: false, message: auth.error };
   const service = createServiceRoleClient();
-
-  const { data: offer } = await service
-    .from("lot_offers")
-    .select(
-      "id, lot_id, producer_id, status, kind, grade_snapshot, season_id, price_per_kg, quantity_kg, terms_version, min_kg, max_kg, compra_inicial_kg, reference_price_source, reference_price_snapshot, pvc_edition_id, modificador_pct, expira_at, lugar_entrega, season_label, temporada_hasta, temporada_desde, precio_tope_kg, price_next_kg, pvc_next_edition_id, saco_kg, es_renovacion, renovacion_de, flete_region, flete_carga, lots(name)"
-    )
-    .eq("id", offerId)
-    .maybeSingle();
-  if (!offer || offer.producer_id !== auth.userId) return { ok: false, message: "Oferta no encontrada." };
-  // V5.84 (fase 7, decisión 6): una cuenta congelada por ruptura no acepta ofertas (la congela y la reactiva el owner).
-  if (respuesta === "aceptar") {
-    const { data: perfil } = await service.from("producer_profiles").select("estado_cuenta").eq("profile_id", auth.userId).maybeSingle();
-    if (perfil?.estado_cuenta === "congelada") return { ok: false, message: "Su cuenta está congelada por ruptura contractual: no puede aceptar ofertas. Escríbale a CTCx para revisar su caso." };
-  }
-  // V5.169: una Selection en contraoferta (le toca a CTCx) se puede DESISTIR, no aceptar.
-  if (offer.status !== "emitida" && !(respuesta === "rechazar" && offer.status === "contraofertada")) {
-    return { ok: false, message: offer.status === "contraofertada" ? "Su contraoferta está en manos de CTCx: espere su respuesta." : "Esta oferta ya fue respondida o retirada." };
-  }
-
-  const lot = (Array.isArray(offer.lots) ? offer.lots[0] : offer.lots) as { name: string } | null;
-  const cleanNote = note?.trim() || null;
-  const now = new Date().toISOString();
+  const offer = await cargarOferta(service, auth.userId, offerId);
+  if (!offer) return { ok: false, message: "Oferta no encontrada." };
+  const lot = (Array.isArray(offer.lots) ? offer.lots[0] : offer.lots) ?? null;
 
   if (respuesta === "rechazar") {
-    await service
-      .from("lot_offers")
-      .update({ status: "rechazada", responded_at: now, response_note: cleanNote })
-      .eq("id", offerId);
+    // V5.169: una Selection en contraoferta (le toca a CTCx) se puede DESISTIR, no aceptar.
+    if (offer.status !== "emitida" && offer.status !== "contraofertada") return { ok: false, message: "Esta oferta ya fue respondida o retirada." };
+    const cleanNote = note?.trim() || null;
+    await service.from("lot_offers").update({ status: "rechazada", responded_at: new Date().toISOString(), response_note: cleanNote }).eq("id", offerId);
     if (offer.kind === "directa") {
       await service.from("lot_offer_rondas").insert({ offer_id: offerId, autor: "productor", accion: "desiste", nota: cleanNote, created_by: auth.userId });
     }
@@ -100,7 +117,7 @@ export async function respondToOffer(
       entity_type: "lot_offer",
       entity_id: offer.lot_id,
       action: "offer_rejected",
-      previous_status: "emitida",
+      previous_status: offer.status,
       new_status: "rechazada",
       performed_by: auth.userId,
       notes: cleanNote?.slice(0, 300) ?? null,
@@ -108,183 +125,261 @@ export async function respondToOffer(
     return { ok: true };
   }
 
-  // Una directa vence: pasada su ventana ya no se acepta (queda «expirada», con rastro).
-  if (offer.expira_at && new Date(offer.expira_at).getTime() < Date.now()) {
-    await service.from("lot_offers").update({ status: "expirada", responded_at: now }).eq("id", offerId);
-    await service.from("audit_log").insert({ entity_type: "lot_offer", entity_id: offer.lot_id, action: "offer_expired", previous_status: "emitida", new_status: "expirada", performed_by: auth.userId });
-    return { ok: false, message: `Esta oferta venció el ${fechaParaElProductor(offer.expira_at)}. CTCx puede emitir otra.` };
-  }
-
-  // V5.169 (owner): CTCx ofrece una de dos cosas. Una compra de CTCx SELECTION se acepta tal cual se negoció (precio y kilos de la
-  // última propuesta de CTCx): no lleva declaración. La PARTICIPACIÓN EN CHERRY PICKED se acepta con la declaración y la ventana
-  // que decide la fecha de firma (V5.175).
-  const esSelection = offer.kind === "directa";
-  const maxKg = offer.max_kg != null ? Number(offer.max_kg) : null;
-  let lockedKg: number | null = offer.quantity_kg != null ? Number(offer.quantity_kg) : null;
-  let cond: Extract<CondicionesDeFirma, { abierta: true }> | null = null;
-  let sinRetiro = false;
-  const hoy = hoyEnColombia();
-  if (esSelection) {
-    if (lockedKg == null || lockedKg <= 0) return { ok: false, message: "Esta propuesta no tiene la cantidad acordada: pídale a CTCx que la precise." };
-  } else if (offer.terms_version) {
-    if (!declaracion) return { ok: false, message: "Esta oferta se acepta con su declaración: cuánto deja disponible y las condiciones." };
-    if (!declaracion.aceptaTerminos) return { ok: false, message: "Para aceptar hay que marcar las condiciones de la ventana, los despachos, el pago y el retiro." };
-    const c = await condicionesDeFirma(service, offer as unknown as OfertaParaVentana, hoy);
-    if (!c.abierta) return { ok: false, message: c.motivo + (c.reabre ? ` Se puede firmar desde el ${c.reabre}.` : "") };
-    if (c.existenciaKg == null) return { ok: false, message: "Antes de aceptar, registre la existencia total del lote (Ficha · A2): con ella se calcula lo que puede declarar." };
-    const v = validarDeclaracion({ kg: Number(declaracion.lockedKg), minimo: c.minimoKg, disponibleKg: c.disponibleKg });
-    if (!v.ok) return { ok: false, message: v.motivo };
-    if (maxKg != null && Number(declaracion.lockedKg) > maxKg) return { ok: false, message: `Esta oferta admite hasta ${maxKg} kg.` };
-    lockedKg = Number(declaracion.lockedKg);
-    sinRetiro = !v.conRetiro;
-    cond = c;
-  }
+  const val = await validarAceptacion(service, auth.userId, offer, declaracion);
+  if (!val.ok) return { ok: false, message: val.message };
+  const a = val.a;
 
   // V5.168 · LA FIRMA DEL PRODUCTOR: aceptar es firmar. Se valida y se guarda ANTES de crear el contrato (si la imagen no se
   // puede guardar, no nace un contrato sin firma). El texto firmado es el que arma `textoDelContrato` con estos mismos datos —
   // la pantalla le enseñó exactamente ese— y se guarda su huella SHA-256.
-  if (!firma) return { ok: false, message: "Para aceptar hay que firmar el contrato (su nombre y su firma con el dedo)." };
-  const nombreFirma = String(firma.nombre ?? "").replace(/\s+/g, " ").trim();
-  if (nombreFirma.length < 5) return { ok: false, message: "Escriba su nombre completo para firmar." };
-  const documento = validarDocumento(firma.documentoTipo, firma.documentoNumero);
-  if (!documento.ok) return { ok: false, message: documento.motivo };
-  if (typeof firma.imagenPng !== "string" || !firma.imagenPng.startsWith(FIRMA_PREFIJO)) return { ok: false, message: "La firma no llegó bien. Fírmela de nuevo." };
-  const firmaBytes = Buffer.from(firma.imagenPng.slice(FIRMA_PREFIJO.length), "base64");
-  if (firmaBytes.length < 200 || firmaBytes.length > FIRMA_MAX_BYTES) return { ok: false, message: "La firma no llegó bien. Fírmela de nuevo." };
-  const lugarEntrega = (offer as { lugar_entrega?: string | null }).lugar_entrega?.trim() || LUGAR_DE_ENTREGA_POR_DEFECTO;
-  // V5.175: el precio del trato es el de la regla de su ventana (vigente · promedio · siguiente); Selection, el negociado.
-  const copKgTrato = cond ? cond.precioKg : Number(offer.price_per_kg);
-  const texto = textoDelContrato({
-    tipo: esSelection ? "selection" : "cherry_picked",
-    ventana: cond ? { tipo: cond.ventana.tipo, desde: cond.ventana.desde, hasta: cond.ventana.hasta, ciclos: cond.ventana.ciclos, retiroLibrePct: cond.ventana.retiroLibrePct, precio: cond.ventana.precio } : null,
-    sinRetiro,
-    sacoKg: cond ? cond.sacoKg : null,
-    esRenovacion: cond?.esRenovacion ?? false,
-    minimoKg: cond ? cond.minimoKg : null,
-    calidad: cond?.calidad ?? null,
-    flete: fleteDeLaFila(offer),
-    productorNombre: nombreFirma,
-    productorDocumento: documentoDelFirmante(documento.tipo, documento.numero),
-    loteNombre: lot?.name ?? "—",
-    loteReferencia: ctcLotReference(offer.lot_id),
-    grado: offer.grade_snapshot,
-    copKg: copKgTrato,
-    declaradoKg: lockedKg ?? 0,
-    lugarEntrega,
-    termsVersion: offer.terms_version ?? null,
-    temporada: (offer as { season_label?: string | null }).season_label ?? null,
-  });
+  const f = validarFirma(firma);
+  if (!f.ok) return { ok: false, message: f.message };
+  const documento = documentoDelFirmante(f.documento.tipo, f.documento.numero);
+  const texto = textoDelContrato(datosDeAceptacion(a, { nombre: f.nombre, documento }, null));
   const huella = createHash("sha256").update(texto, "utf8").digest("hex");
+  // V5.190: en una SESIÓN ASISTIDA la firma con la mano es del productor, presente; queda sellada con el operador de consola.
+  const operador = await operadorDeLaAsistida(auth.userId);
   const rutaFirma = `contratos/oferta-${offer.id}/firma-productor-${Date.now()}.png`;
-  const { error: errorFirma } = await service.storage.from("kaffetal-media").upload(rutaFirma, firmaBytes, { contentType: "image/png", upsert: false });
+  const { error: errorFirma } = await service.storage.from("kaffetal-media").upload(rutaFirma, f.bytes, { contentType: "image/png", upsert: false });
   if (errorFirma) return { ok: false, message: "No se pudo guardar su firma. Intente de nuevo." };
   const h = await headers();
   const metaFirma = {
     user_agent: h.get("user-agent")?.slice(0, 300) ?? null,
     ip: (h.get("x-forwarded-for") ?? "").split(",")[0].trim() || null,
-    firmado_en: now,
+    firmado_en: a.now,
+    ...(operador ? { sesion_asistida: { operador: operador.userId } } : {}),
   };
 
-  // Aceptar ⇒ el contrato nace aquí, LLENO y FIRMADO por el productor, pendiente de la firma de CTC.
-  const { data: contract, error } = await service
-    .from("purchase_contracts")
-    .insert({
-      lot_id: offer.lot_id,
-      status: "pending_signature",
-      grade_snapshot: offer.grade_snapshot,
-      season_id: offer.season_id,
-      offer_id: offer.id,
-      price_per_kg_locked: copKgTrato,
-      quantity_frozen_kg: lockedKg,
-      reference_price_source: offer.reference_price_source ?? null,
-      reference_price_snapshot: offer.reference_price_snapshot != null ? Number(offer.reference_price_snapshot) : null,
-      // V5.175 · la ventana (docs/PLAN_CICLOS.md): la decidió la fecha de firma. Las columnas del trato por meses quedan vacías.
-      freeze_months: null,
-      terms_version: offer.terms_version ?? null,
-      declaracion: null,
-      vigencia_desde: cond?.ventana.desde ?? hoy,
-      vigencia_hasta: cond?.ventana.hasta ?? null,
-      ventana_tipo: cond?.ventana.tipo ?? null,
-      ventana_ciclos: cond?.ventana.ciclos ?? null,
-      precio_regla: cond?.ventana.precio ?? null,
-      retiro_libre_pct: cond ? (sinRetiro ? 0 : cond.ventana.retiroLibrePct) : null,
-      sin_retiro: sinRetiro,
-      minimo_kg: cond?.minimoKg ?? null,
-      saco_kg: cond?.sacoKg ?? null,
-      existencia_al_firmar: cond?.existenciaKg ?? null,
-      calidad_snapshot: cond?.calidad ?? null,
-      // V5.177: el Flete a CTCx de la oferta, congelado en el contrato (el texto firmado lo cita).
-      flete_region: fleteDeLaFila(offer)?.region ?? null,
-      flete_carga: fleteDeLaFila(offer)?.carga ?? null,
-      renovacion_de: (offer as { renovacion_de?: string | null }).renovacion_de ?? null,
-      pvc_edition_id: cond?.edicionId ?? offer.pvc_edition_id ?? null,
-      modificador_pct: offer.modificador_pct != null ? Number(offer.modificador_pct) : null,
-      lugar_entrega: lugarEntrega,
-      producer_signed_at: now,
-      producer_signer_name: nombreFirma,
-      producer_signer_doc_tipo: documento.tipo,
-      producer_signer_doc_numero: documento.numero,
-      producer_signature_path: rutaFirma,
-      producer_signature_meta: metaFirma,
-      contract_text_version: CONTRATO_VERSION,
-      contract_text_sha256: huella,
-    })
-    .select("id")
-    .single();
-  if (error || !contract) return { ok: false, message: "No se pudo crear el contrato. Intente de nuevo." };
-
-  // V5.176: si el lote ya está publicado (una renovación), lo declarado entra a la vitrina de Cherry Picked.
-  if (cond) await sincronizarListado(service, offer.lot_id);
-  // V5.175: el SACO (primer contrato) o el ADELANTO (renovación) queda con su despacho: sale al cierre de la semana de firma.
-  if (cond && cond.sacoKg > 0) {
-    await service.from("contract_despachos").insert({
-      contract_id: contract.id,
-      tipo: cond.esRenovacion ? "adelanto" : "saco",
-      kg: cond.sacoKg,
-      cop_kg: copKgTrato,
-      total_cop: Math.round(cond.sacoKg * copKgTrato),
-      plazo: plazoDelSaco(hoy),
-    });
+  // Aceptar ⇒ el contrato nace aquí, LLENO y FIRMADO por el productor, pendiente de la firma de CTCx.
+  const r = await crearContratoDeOferta(service, a, {
+    firmante: { nombre: f.nombre, documentoTipo: f.documento.tipo, documentoNumero: f.documento.numero, rutaFirma, meta: metaFirma },
+    provisional: null,
+    textoVersion: CONTRATO_VERSION,
+    textoSha256: huella,
+    actor: auth.userId,
+    notaAuditoria: `Nace de la oferta ${offer.kind} aceptada y FIRMADA por el productor (${f.nombre}, texto ${CONTRATO_VERSION}, sha256 ${huella.slice(0, 12)}…)${operador ? ` · firmada en una sesión asistida (operador de consola ${operador.userId})` : ""} · ${formatCop(a.copKgTrato)}/kg${a.lockedKg ? ` · ${a.lockedKg} kg` : ""}${ventanaDe(a)}.`,
+  });
+  if (!r.ok) {
+    // Sin contrato, la imagen subida no es de nadie: se retira (es la de este intento).
+    await service.storage.from("kaffetal-media").remove([rutaFirma]);
+    return { ok: false, message: r.message };
   }
-
-  await service
-    .from("lot_offers")
-    .update({
-      status: "aceptada",
-      responded_at: now,
-      response_note: cleanNote,
-      contract_id: contract.id,
-      ...(cond ? { locked_kg: lockedKg, terms_accepted_at: now } : {}),
-    })
-    .eq("id", offerId);
-  const ventanaTxt = cond ? ` · ventana ${cond.ventana.desde} → ${cond.ventana.hasta} (${cond.ventana.tipo}, retiro libre ${sinRetiro ? 0 : cond.ventana.retiroLibrePct} %) · declaró ${lockedKg} kg${sinRetiro ? " sin retiro (existencia insuficiente)" : ""} · saco ${cond.sacoKg} kg · términos ${offer.terms_version}` : esSelection ? ` · compra CTCx Selection de ${lockedKg} kg` : "";
-  await service.from("audit_log").insert({
-    entity_type: "purchase_contract",
-    entity_id: contract.id,
-    action: "created",
-    new_status: "pending_signature",
-    performed_by: auth.userId,
-    notes: `Nace de la oferta ${offer.kind} aceptada y FIRMADA por el productor (${nombreFirma}, texto ${CONTRATO_VERSION}, sha256 ${huella.slice(0, 12)}…) · ${formatCop(copKgTrato)}/kg${lockedKg ? ` · ${lockedKg} kg` : ""}${ventanaTxt}.`,
-  });
-  await service.from("audit_log").insert({
-    entity_type: "lot_offer",
-    entity_id: offer.lot_id,
-    action: "offer_accepted",
-    previous_status: "emitida",
-    new_status: "aceptada",
-    performed_by: auth.userId,
-    notes: ventanaTxt.trim() || null,
-  });
   await service.from("producer_comm_log").insert({
     producer_id: auth.userId,
     context_label: lot ? `Lote ${lot.name}` : null,
     lot_id: offer.lot_id,
-    note: cond
-      ? `Usted aceptó la invitación de CTCx y declaró ${lockedKg} kg de CPS para la ventana del ${cond.ventana.desde} al ${cond.ventana.hasta}, a ${formatCop(copKgTrato)}/kg.${cond.sacoKg > 0 ? ` CTCx le compra ${cond.sacoKg} kg ${cond.esRenovacion ? "por adelantado" : "(el saco)"}: despáchelo a más tardar el ${plazoDelSaco(hoy)}.` : ""} El contrato queda vigente con la firma de CTCx; lo verá en «Contratos y Compras».`
+    note: a.cond
+      ? `Usted aceptó la invitación de CTCx y declaró ${a.lockedKg} kg de CPS para la ventana del ${a.cond.ventana.desde} al ${a.cond.ventana.hasta}, a ${formatCop(a.copKgTrato)}/kg.${a.cond.sacoKg > 0 ? ` CTCx le compra ${a.cond.sacoKg} kg ${a.cond.esRenovacion ? "por adelantado" : "(el saco)"}: despáchelo a más tardar el ${plazoDelSaco(a.hoy)}.` : ""} El contrato queda vigente con la firma de CTCx; lo verá en «Contratos y Compras».`
       : "Usted aceptó la oferta de CTCx. El contrato quedó creado con el precio de la oferta, pendiente de la firma de CTCx — lo verá avanzar en «Contratos y Compras» → Contratos de Temporada.",
     created_by: auth.userId,
   });
+  return { ok: true };
+}
 
+// ── V5.190 (owner, 2026-10-08) · la ACEPTACIÓN PROVISIONAL de CTCx en una sesión asistida ─────────────────────────────────────
+// «Necesitamos un mecanismo para hacer un contrato provisional que queda vigente y podrá ser revisado en cuanto a la cantidad
+// declarada (lo demás es fijo, siempre y cuando se usen los valores del PVC correspondiente al grado) […] si es seleccionado, no se
+// inserta firma, ni nombre ni documento del Productor, sino que pedirá un "Nombre de responsable CTCx".»
+// CTCx no firma por el productor: acepta en su favor («grupo de Pioneros»). Lo puede hacer SOLO un colaborador del OCP con nivel para
+// emitir, dentro de una sesión asistida de ESTE productor (`operadorDeLaAsistida`), y solo sobre una participación en Cherry Picked
+// anclada al PVC de su grado. El contrato nace VIGENTE (CTCx ya aceptó por su lado), sin firma del productor, y él lo ratifica.
+export async function aceptarProvisionalmente(offerId: string, declaracion: DeclaracionDelProductor, responsable: string): Promise<RespuestaOferta> {
+  const auth = await requireProducer();
+  if ("error" in auth) return { ok: false, message: auth.error };
+  const operador = await operadorDeLaAsistida(auth.userId);
+  if (!operador) return { ok: false, message: "La aceptación provisional es de CTCx: se hace desde una sesión asistida abierta en el OCP, con su sesión de consola." };
+  const nombre = String(responsable ?? "").replace(/\s+/g, " ").trim();
+  if (nombre.length < 5) return { ok: false, message: "Escriba el nombre del responsable de CTCx (nombre y apellido)." };
+  const service = createServiceRoleClient();
+  const offer = await cargarOferta(service, auth.userId, offerId);
+  if (!offer) return { ok: false, message: "Oferta no encontrada." };
+  if (offer.kind !== "temporada" || !offer.pvc_edition_id || !offer.terms_version) {
+    return { ok: false, message: "Solo una participación en Cherry Picked anclada al PVC de su grado se acepta provisionalmente (ni una excepción ni una compra de CTCx Selection)." };
+  }
+  const val = await validarAceptacion(service, auth.userId, offer, declaracion);
+  if (!val.ok) return { ok: false, message: val.message };
+  const a = val.a;
+  // La fecha del texto sale del MISMO instante que se guarda (`provisional_at` = a.now): la página del contrato la recalcula de ahí.
+  const provisional = { responsable: nombre, fecha: diaEnColombia(a.now), cuenta: supplierCode(auth.userId), ratificado: null };
+  const texto = textoDelContrato(datosDeAceptacion(a, null, provisional));
+  const huella = createHash("sha256").update(texto, "utf8").digest("hex");
+  const r = await crearContratoDeOferta(service, a, {
+    firmante: null,
+    provisional: { responsable: nombre, operador: operador.userId },
+    textoVersion: CONTRATO_VERSION,
+    textoSha256: huella,
+    actor: operador.userId,
+    notaAuditoria: `Aceptado PROVISIONALMENTE por CTCx en una sesión asistida, en favor del productor (grupo de Pioneros) · responsable: ${nombre} · operador de consola ${operador.userId} · vigente desde ya, sin firma del productor (la ratifica él) · texto ${CONTRATO_VERSION}, sha256 ${huella.slice(0, 12)}… · ${formatCop(a.copKgTrato)}/kg · ${a.lockedKg} kg${ventanaDe(a)}.`,
+  });
+  if (!r.ok) return { ok: false, message: r.message };
+
+  // El aviso al productor: en su feed y por correo (el remitente único filtra las etiquetas de los desacoplados).
+  const lot = a.lot;
+  const aviso =
+    `CTCx aceptó provisionalmente, en su favor y como parte del grupo de Pioneros, la invitación para su lote ${lot?.name ?? ""}: ${a.lockedKg} kg de CPS ` +
+    `para la ventana del ${a.cond ? fechaParaElProductor(a.cond.ventana.desde) : ""} al ${a.cond ? fechaParaElProductor(a.cond.ventana.hasta) : ""}, a ${formatCop(a.copKgTrato)}/kg ` +
+    `(responsable de CTCx: ${nombre}). El contrato ya está vigente. Revíselo y ratifíquelo con su firma en «Contratos y Compras»: al ratificar puede ajustar la cantidad declarada; ` +
+    "el precio, la ventana y las demás condiciones no cambian. Ningún cambio será unilateral.";
+  await service.from("producer_comm_log").insert({ producer_id: auth.userId, context_label: lot ? `Lote ${lot.name}` : null, lot_id: offer.lot_id, note: aviso, created_by: operador.userId });
+  const { data: perfil } = await service.from("profiles").select("email").eq("id", auth.userId).maybeSingle();
+  const correo = (perfil as { email: string | null } | null)?.email ?? null;
+  const envio = correo
+    ? await sendTransactionalEmail(correo, `Contrato provisional · lote ${lot?.name ?? ""}`, `${aviso}\n\n${origenDeSuperficie("/kaffetal-regal")}/kaffetal-regal`)
+    : { ok: false as const, error: "el productor no tiene correo" };
+  await service.from("audit_log").insert({
+    entity_type: "purchase_contract",
+    entity_id: r.contractId,
+    action: "provisional_notified",
+    performed_by: operador.userId,
+    notes: `aviso al productor: ${envio.ok ? "feed + correo" : `feed; correo no enviado: ${envio.error}`}`,
+  });
+  return { ok: true };
+}
+
+// ── V5.190 · la RATIFICACIÓN del productor ─────────────────────────────────────────────────────────────────────────────────
+// El contrato aceptado provisionalmente llega a «Contratos» con «Ratificar y firmar». El productor lo ratifica DESDE SU CUENTA (no en
+// una sesión asistida: es su firma), puede ajustar la cantidad declarada —dentro del mínimo, de lo que le queda al lote y de lo que ya
+// se vendió o retiró— y el texto pasa a nombrarlo con su nombre y su documento, con la fecha de la ratificación y la huella nueva.
+
+type FilaRatificable = FilaDelContrato & { lots: { name: string; producer_id: string } | { name: string; producer_id: string }[] | null };
+
+async function cargarRatificable(service: ReturnType<typeof createServiceRoleClient>, userId: string, contractId: string): Promise<{ ok: true; c: FilaRatificable; lote: { name: string; producer_id: string } } | { ok: false; message: string }> {
+  const { data } = await service.from("purchase_contracts").select(COLUMNAS_DEL_CONTRATO).eq("id", contractId).maybeSingle();
+  const c = data as FilaRatificable | null;
+  const lote = c ? ((Array.isArray(c.lots) ? c.lots[0] : c.lots) ?? null) : null;
+  if (!c || !lote || lote.producer_id !== userId) return { ok: false, message: "Contrato no encontrado." };
+  if (!c.provisional_at) return { ok: false, message: "Este contrato no es provisional: ya lleva su firma." };
+  if (c.ratificado_at) return { ok: false, message: "Usted ya ratificó este contrato." };
+  if (["cancelled", "ruptura", "completed", "renovado"].includes(c.status)) return { ok: false, message: "Este contrato ya no está vigente: no se ratifica." };
+  return { ok: true, c, lote };
+}
+
+/** Lo que el productor puede declarar al ratificar: el mínimo de la ventana, lo que le queda al lote (contando lo que ESTE contrato ya
+ *  movió: vendido, retirado y su saco) y lo que ya se vendió o retiró (no se declara por debajo). */
+async function limitesDeRatificacion(service: ReturnType<typeof createServiceRoleClient>, c: FilaRatificable) {
+  const [{ disponibleKg }, { data: ventas }, { data: retiros }, { data: sacos }, { data: oferta }] = await Promise.all([
+    disponibleDe(service, c.lot_id),
+    service.from("contract_ventas").select("kg").eq("contract_id", c.id).is("anulada_at", null),
+    service.from("contract_retiros").select("kg").eq("contract_id", c.id),
+    service.from("contract_despachos").select("kg").eq("contract_id", c.id).in("tipo", ["saco", "adelanto"]).neq("estado", "cancelado"),
+    c.offer_id ? service.from("lot_offers").select("max_kg").eq("id", c.offer_id).maybeSingle() : Promise.resolve({ data: null }),
+  ]);
+  const suma = (xs: { kg: number | string }[] | null) => (xs ?? []).reduce((s, x) => s + (Number(x.kg) || 0), 0);
+  const movido = suma(ventas) + suma(retiros);
+  const disponible = disponibleKg == null ? null : Math.round((disponibleKg + movido + suma(sacos)) * 10) / 10;
+  const maxOferta = (oferta as { max_kg: number | string | null } | null)?.max_kg;
+  return { minimo: Number(c.minimo_kg ?? 0), disponible, movido, maxKg: maxOferta != null ? Number(maxOferta) : null };
+}
+
+export type VistaDeRatificacion =
+  | { ok: true; datos: Omit<DatosDelContrato, "productorNombre" | "productorDocumento">; actualKg: number; minimoKg: number; disponibleKg: number | null; movidoKg: number; maxKg: number | null }
+  | { ok: false; message: string };
+
+export async function previsualizarRatificacion(contractId: string): Promise<VistaDeRatificacion> {
+  const auth = await requireProducer();
+  if ("error" in auth) return { ok: false, message: auth.error };
+  const service = createServiceRoleClient();
+  const r = await cargarRatificable(service, auth.userId, contractId);
+  if (!r.ok) return r;
+  const lim = await limitesDeRatificacion(service, r.c);
+  // El nombre y el documento los escribe el productor en la pantalla (los que trae la fila, «—» y null, se pisan allí).
+  const datos: Omit<DatosDelContrato, "productorNombre" | "productorDocumento"> = datosDeLaFila(r.c, {
+    loteNombre: r.lote.name,
+    loteReferencia: ctcLotReference(r.c.lot_id),
+    cuenta: supplierCode(auth.userId),
+    firmante: null,
+    ratificadoEl: hoyEnColombia(),
+  });
+  return { ok: true, datos, actualKg: Number(r.c.quantity_frozen_kg ?? 0), minimoKg: lim.minimo, disponibleKg: lim.disponible, movidoKg: lim.movido, maxKg: lim.maxKg };
+}
+
+export async function ratificarContrato(contractId: string, declaradoKg: number, firma: FirmaDeAceptacion): Promise<RespuestaOferta> {
+  const auth = await requireProducer();
+  if ("error" in auth) return { ok: false, message: auth.error };
+  // La ratificación es la firma del productor: no se hace en una sesión asistida.
+  if (await operadorDeLaAsistida(auth.userId)) {
+    return { ok: false, message: "La ratificación es del Productor, desde su propia cuenta: no se hace en una sesión asistida de CTCx." };
+  }
+  const service = createServiceRoleClient();
+  const r = await cargarRatificable(service, auth.userId, contractId);
+  if (!r.ok) return r;
+  const { c, lote } = r;
+  const kg = Number(declaradoKg);
+  const lim = await limitesDeRatificacion(service, c);
+  if (!Number.isFinite(kg) || kg <= 0) return { ok: false, message: "Escriba cuántos kilos de CPS deja declarados." };
+  if (kg + 1e-9 < lim.movido) return { ok: false, message: `Ya se vendió o se retiró ${lim.movido} kg de este contrato: no puede declarar menos.` };
+  if (lim.maxKg != null && kg > lim.maxKg) return { ok: false, message: `Esta invitación admite hasta ${lim.maxKg} kg.` };
+  const v = validarDeclaracion({ kg, minimo: lim.minimo, disponibleKg: lim.disponible });
+  if (!v.ok) return { ok: false, message: v.motivo };
+  const f = validarFirma(firma);
+  if (!f.ok) return { ok: false, message: f.message };
+  const documento = documentoDelFirmante(f.documento.tipo, f.documento.numero);
+  const sinRetiro = !v.conRetiro;
+  const retiroLibrePct = sinRetiro ? 0 : c.ventana_tipo === "ciclo" ? RETIRO_LIBRE_CICLO_PCT : RETIRO_LIBRE_EXTENDIDA_PCT;
+  // La fecha del texto sale del MISMO instante que se guarda en `ratificado_at` (la página del contrato la recalcula de ahí).
+  const now = new Date().toISOString();
+  const ratificadoEl = diaEnColombia(now);
+  const texto = textoDelContrato(
+    datosDeLaFila(c, {
+      loteNombre: lote.name,
+      loteReferencia: ctcLotReference(c.lot_id),
+      cuenta: supplierCode(auth.userId),
+      firmante: { nombre: f.nombre, documento },
+      ratificadoEl,
+      declaradoKg: kg,
+      sinRetiro,
+      retiroLibrePct,
+    }),
+  );
+  const huella = createHash("sha256").update(texto, "utf8").digest("hex");
+  const rutaFirma = `contratos/contrato-${c.id}/ratificacion-${Date.now()}.png`;
+  const { error: errorFirma } = await service.storage.from("kaffetal-media").upload(rutaFirma, f.bytes, { contentType: "image/png", upsert: false });
+  if (errorFirma) return { ok: false, message: "No se pudo guardar su firma. Intente de nuevo." };
+  const h = await headers();
+  const antesKg = Number(c.quantity_frozen_kg ?? 0);
+  const { data: hecho, error } = await service
+    .from("purchase_contracts")
+    .update({
+      producer_signed_at: now,
+      producer_signer_name: f.nombre,
+      producer_signer_doc_tipo: f.documento.tipo,
+      producer_signer_doc_numero: f.documento.numero,
+      producer_signature_path: rutaFirma,
+      producer_signature_meta: { user_agent: h.get("user-agent")?.slice(0, 300) ?? null, ip: (h.get("x-forwarded-for") ?? "").split(",")[0].trim() || null, firmado_en: now, ratificacion: true },
+      ratificado_at: now,
+      quantity_frozen_kg: kg,
+      sin_retiro: sinRetiro,
+      retiro_libre_pct: retiroLibrePct,
+      contract_text_version: CONTRATO_VERSION,
+      contract_text_sha256: huella,
+    })
+    .eq("id", c.id)
+    .is("ratificado_at", null)
+    .select("id")
+    .maybeSingle();
+  if (error || !hecho) {
+    await service.storage.from("kaffetal-media").remove([rutaFirma]);
+    if (error) console.error("ratificarContrato: el update falló", { contractId: c.id, code: error.code, message: error.message, details: error.details });
+    return { ok: false, message: error ? `No se pudo ratificar el contrato (código ${error.code}). Intente de nuevo.` : "Este contrato ya fue ratificado." };
+  }
+  if (kg !== antesKg) {
+    if (c.offer_id) await service.from("lot_offers").update({ locked_kg: kg }).eq("id", c.offer_id);
+    await sincronizarListado(service, c.lot_id);
+  }
+  await service.from("audit_log").insert({
+    entity_type: "purchase_contract",
+    entity_id: c.id,
+    action: "ratified",
+    performed_by: auth.userId,
+    notes: `El productor RATIFICÓ y firmó el contrato aceptado provisionalmente (${f.nombre}, ${documento}; texto ${CONTRATO_VERSION}, sha256 ${huella.slice(0, 12)}…)${kg !== antesKg ? ` · ajustó lo declarado de ${antesKg} kg a ${kg} kg` : " · sin cambio en lo declarado"}.`,
+  });
+  await service.from("producer_comm_log").insert({
+    producer_id: auth.userId,
+    context_label: `Lote ${lote.name}`,
+    lot_id: c.lot_id,
+    note: `Usted ratificó y firmó el contrato de su lote ${lote.name}${kg !== antesKg ? ` y ajustó lo declarado a ${kg} kg` : ""}. Su contrato con CTCx queda completo; lo encuentra en «Contratos y Compras».`,
+    created_by: auth.userId,
+  });
   return { ok: true };
 }
 

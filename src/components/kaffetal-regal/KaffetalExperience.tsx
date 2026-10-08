@@ -604,6 +604,9 @@ function Experience() {
         contract_despachos?: Record<string, unknown>[];
         signed_at: string | null;
         producer_signed_at?: string | null;
+        provisional_at?: string | null;
+        provisional_responsable?: string | null;
+        ratificado_at?: string | null;
         lugar_entrega?: string | null;
         freeze_months: number | null;
         contract_months: {
@@ -670,6 +673,9 @@ function Experience() {
           retiroLibrePct: c.retiro_libre_pct != null ? Number(c.retiro_libre_pct) : null,
           ...ventanaDelContrato(c),
           producerSignedAt: c.producer_signed_at ?? null,
+          provisionalAt: c.provisional_at ?? null,
+          provisionalResponsable: c.provisional_responsable ?? null,
+          ratificadoAt: c.ratificado_at ?? null,
           lugarEntrega: c.lugar_entrega ?? null,
           freezeMonths: c.freeze_months ?? null,
           months: meses.map((m) => {
@@ -2115,6 +2121,8 @@ function Experience() {
       {view === "app" && (
         <AppDashboard
           userName={userName}
+          asistida={asistida}
+          cuenta={userId ? supplierCode(userId) : ""}
           lots={lots}
           fincas={fincas}
           parcelas={parcelas}

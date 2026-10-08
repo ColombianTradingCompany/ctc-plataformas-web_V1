@@ -147,10 +147,10 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   const base = { tipo: "cherry_picked", ventana: { tipo: "ciclo", desde: "2027-02-15", hasta: "2027-04-04", ciclos: ["F1-2027 · ciclo 2"], retiroLibrePct: 25, precio: "vigente" }, sinRetiro: false, sacoKg: 0, esRenovacion: true, minimoKg: 675, calidad: null, flete: { region: "centro", carga: 50000 }, productorNombre: "Ana Pérez", productorDocumento: null, loteNombre: "L", loteReferencia: "CTC-L-X", grado: "red", copKg: 21000, declaradoKg: 700, lugarEntrega: "Bucaramanga.", termsVersion: "2026-10-07", temporada: null };
   const ren = clausulasDelContrato(base).map((x) => `${x.titulo} ${x.texto}`).join(" ");
   const red = clausulasDelContrato({ ...base, esRenovacion: false, sacoKg: 70, sinRetiro: true, declaradoKg: 400 }).map((x) => x.texto).join(" ");
-  check("contrato · renovación sin adelanto, Flete a CTCx citado en el precio y en la entrega, mínimo −10 % al cambiar de trimestre; declaración reducida sin retiro libre", CONTRATO_VERSION === "2026-10-08.2" && ren.includes("Compra adelantada") && ren.includes("no compra por adelantado") && ren.includes("e incluye el Flete a CTCx de la región Nacional Centro: $50.000 COP por carga equivalente ($400 COP por kg)") && ren.includes("código de envío corporativo de CTCx en Servientrega") && !/auxilio/i.test(ren) && ren.includes("baja 10 %") && red.includes("sin derecho a retiro libre") && red.includes("no hay retiro libre"));
+  check("contrato · renovación sin adelanto, Flete a CTCx citado en el precio y en la entrega, mínimo −10 % al cambiar de trimestre; declaración reducida sin retiro libre", CONTRATO_VERSION === "2026-10-08.3" && ren.includes("Compra adelantada") && ren.includes("no compra por adelantado") && ren.includes("e incluye el Flete a CTCx de la región Nacional Centro: $50.000 COP por carga equivalente ($400 COP por kg)") && ren.includes("código de envío corporativo de CTCx en Servientrega") && !/auxilio/i.test(ren) && ren.includes("baja 10 %") && red.includes("sin derecho a retiro libre") && red.includes("no hay retiro libre"));
 
   const vo = lee("src/lib/ofertas/ventanaDeOferta.ts");
-  const pa = lee("src/lib/ofertas/producerActions.ts");
+  const pa = lee("src/lib/ofertas/producerActions.ts") + "\n" + lee("src/lib/ofertas/aceptacion.ts"); // V5.190: la aceptación vive entre producerActions.ts y aceptacion.ts
   const ta = lee("src/lib/trato/producerActions.ts");
   check("firma · la ventana, el precio de su regla y lo disponible salen de UNA cuenta del servidor (vista previa = aceptación)", vo.includes("(esRenovacion ? ventanaDeRenovacion : ventanaDeFirma)({ firma: hoy,") && vo.includes("precioDeVentana(ventana.precio, vigenteKg, siguienteKg)") && vo.includes("disponibleDelLote(existenciaKg, suma(ventas), suma(retiros) + suma(despachos))") && pa.includes("export async function previsualizarOferta(") && pa.includes("await condicionesDeFirma(service, offer as unknown as OfertaParaVentana, hoyEnColombia())"));
   check("aceptar · exige la existencia del lote, crea el despacho del saco con plazo y congela calidad y flete en el contrato", pa.includes("if (c.existenciaKg == null) return") && pa.includes('tipo: cond.esRenovacion ? "adelanto" : "saco",') && pa.includes("plazo: plazoDelSaco(hoy),") && pa.includes("calidad_snapshot: cond?.calidad ?? null,") && pa.includes("flete_region: fleteDeLaFila(offer)?.region ?? null,") && pa.includes("flete_carga: fleteDeLaFila(offer)?.carga ?? null,") && pa.includes("export async function registrarExistencia("));
@@ -184,7 +184,7 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   check("OCP · el contrato por ventana trae sus acciones (venta, tiquete y 60 %, recibo, prórroga, faltante, renovación)", ["confirmarVentaSemanal.bind(null, id)", "confirmarDespacho.bind(null, did)", "recibirDespacho.bind(null, did)", "prorrogarLoVendido.bind(null, did)", "cobrarFaltante.bind(null, did)", "prepararRenovacion.bind(null, id)"].every((k) => pc.includes(k)));
   const vs = lee("src/lib/trato/ventanaServidor.ts");
   const cat = lee("src/app/ocp/(app)/catalogActions.ts");
-  check("vitrina · un lote por ventanas se vende con el café en la finca: total = declarado − retirado (suma de sus ventanas); el catálogo lleva lo vendido", vs.includes("export async function sincronizarListado(") && vs.includes("Math.max(0, Math.round((declarado - retirado) * 10) / 10)") && cat.includes("const porVentanas = await totalEnVentaPorVentanas(service, lotId);") && lee("src/lib/trato/producerActions.ts").includes("await sincronizarListado(service, c.lot_id);") && lee("src/lib/ofertas/producerActions.ts").includes("if (cond) await sincronizarListado(service, offer.lot_id);"));
+  check("vitrina · un lote por ventanas se vende con el café en la finca: total = declarado − retirado (suma de sus ventanas); el catálogo lleva lo vendido", vs.includes("export async function sincronizarListado(") && vs.includes("Math.max(0, Math.round((declarado - retirado) * 10) / 10)") && cat.includes("const porVentanas = await totalEnVentaPorVentanas(service, lotId);") && lee("src/lib/trato/producerActions.ts").includes("await sincronizarListado(service, c.lot_id);") && (lee("src/lib/ofertas/producerActions.ts") + "\n" + lee("src/lib/ofertas/aceptacion.ts")).includes("if (cond) await sincronizarListado(service, offer.lot_id);"));
   const rn = lee("src/lib/trato/renovaciones.ts");
   check("barrido · recuerda una vez la renovación que vence (7 días), expira las invitaciones vencidas y cierra las ventanas cumplidas", rn.includes("export async function correrRenovaciones(") && rn.includes("o.es_renovacion && !o.recordatorio_at") && rn.includes('update({ status: "expirada"') && rn.includes('update({ status: "completed" })') && lee("vercel.json").includes('"/api/cron/renovaciones"') && lee("src/app/api/cron/renovaciones/route.ts").includes("Bearer ${secret}"));
   check("V5.171 retirada · ni redeclaración ni su cron (las columnas quedan dormidas, documentadas)", !existsSync(new URL("../src/lib/trato/redeclaracion.ts", import.meta.url)) && !existsSync(new URL("../src/app/api/cron/redeclaraciones/route.ts", import.meta.url)) && !lee("vercel.json").includes("redeclaraciones") && lee("docs/migraciones/2026-10-07_ciclos_operacion_ocp.sql").includes("quedan DORMIDAS"));
@@ -214,7 +214,7 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   const sel = clausulasDelContrato({ tipo: "selection", ventana: null, sinRetiro: false, sacoKg: null, esRenovacion: false, minimoKg: null, calidad: null, flete: { region: "sur", carga: 70000 }, productorNombre: "Ana Pérez", productorDocumento: null, loteNombre: "L", loteReferencia: "CTC-L-X", grado: "red", copKg: 22000, declaradoKg: 500, lugarEntrega: "Bucaramanga.", termsVersion: null, temporada: null }).map((x) => x.texto).join(" ");
   check("contrato CTCx Selection · también cita el Flete a CTCx de su región y el despacho con el código corporativo", sel.includes("e incluye el Flete a CTCx de la región Nacional Sur: $70.000 COP por carga equivalente ($560 COP por kg)") && sel.includes("Servientrega"));
   const kr = ["src/components/kaffetal-regal/panel/CalculadoraDelTrato.tsx", "src/components/kaffetal-regal/panel/ContratosTab.tsx", "src/components/kaffetal-regal/panel/PropuestaSelection.tsx", "src/lib/pvc/precio.ts", "src/lib/pvc/servicio.ts", "src/components/panel/pvc/VariablesDeEdicion.tsx", "src/app/ocp/(app)/ofertas/page.tsx"].map(lee).join("\n");
-  check("sin «auxilio de transporte» · ni en el precio, ni en el Modelo Económico, ni en la oferta, ni en lo que lee el productor", !/auxilio/i.test(kr) && lee("src/app/kaffetal-regal/contrato/[id]/page.tsx").includes("flete: fleteDeLaFila(c),") && lee("src/components/kaffetal-regal/KaffetalExperience.tsx").includes("flete: fleteDeLaFila(o),"));
+  check("sin «auxilio de transporte» · ni en el precio, ni en el Modelo Económico, ni en la oferta, ni en lo que lee el productor", !/auxilio/i.test(kr) && lee("src/lib/trato/contratoDeFila.ts").includes("flete: fleteDeLaFila(c),") && lee("src/app/kaffetal-regal/contrato/[id]/page.tsx").includes("datosDeLaFila(c, {") && lee("src/components/kaffetal-regal/KaffetalExperience.tsx").includes("flete: fleteDeLaFila(o),"));
 }
 
 // ── 9. La vigilancia de la corrección (V5.178 · tanda 4): medir el ciclo, proponer una por ciclo y PVC, aprobar = publicar la
@@ -284,7 +284,7 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
 {
   const tab = lee("src/components/kaffetal-regal/panel/ContratosTab.tsx");
   const calc = lee("src/components/kaffetal-regal/panel/CalculadoraDelTrato.tsx");
-  check("KR · la calculadora no depende de la existencia; «Tomar la decisión» sí (y el servidor la exige al aceptar)", tab.includes("puedeDecidir={abierta.existenciaKg != null}") && !/abierta\.existenciaKg != null && \(\s*<CalculadoraDelTrato/.test(tab) && calc.includes("const cumple = decl.ok && acepta && puedeDecidir;") && lee("src/lib/ofertas/producerActions.ts").includes("if (c.existenciaKg == null) return"));
+  check("KR · la calculadora no depende de la existencia; «Tomar la decisión» sí (y el servidor la exige al aceptar)", tab.includes("puedeDecidir={abierta.existenciaKg != null}") && !/abierta\.existenciaKg != null && \(\s*<CalculadoraDelTrato/.test(tab) && calc.includes("const cumple = decl.ok && acepta && puedeDecidir;") && (lee("src/lib/ofertas/producerActions.ts") + "\n" + lee("src/lib/ofertas/aceptacion.ts")).includes("if (c.existenciaKg == null) return"));
 }
 
 // ── 12. V5.181 (owner, 2026-10-07): la existencia del lote es opcional en A2 y OBLIGATORIA al enviar la muestra (se pregunta de
@@ -295,7 +295,7 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   const nom = lee("src/app/ocp/(app)/nominadosActions.ts");
   const ocp = lee("src/app/ocp/(app)/actions.ts");
   const evs = lee("src/components/kaffetal-regal/panel/EvaluacionesTab.tsx");
-  check("existencia · un solo escritor (columna + Ficha A2 + auditoría); «5.000» se lee cinco mil", ex.includes("export async function guardarExistencia(") && ex.includes("existencia_cps_kg: String(kg)") && ex.includes('action: "existencia_registrada"') && ex.includes('.replace(/\\./g, "").replace(",", ".")') && lee("src/lib/ofertas/producerActions.ts").includes('guardarExistencia(service, { lotId, kg, porQuien: auth.userId, origen: "productor" })'));
+  check("existencia · un solo escritor (columna + Ficha A2 + auditoría); «5.000» se lee cinco mil", ex.includes("export async function guardarExistencia(") && ex.includes("existencia_cps_kg: String(kg)") && ex.includes('action: "existencia_registrada"') && ex.includes('.replace(/\\./g, "").replace(",", ".")') && (lee("src/lib/ofertas/producerActions.ts") + "\n" + lee("src/lib/ofertas/aceptacion.ts")).includes('guardarExistencia(service, { lotId, kg, porQuien: auth.userId, origen: "productor" })'));
   check("solicitud · el productor no solicita la evaluación sin existencia; la registrada vale y la escrita la corrige", arena.includes("if (existencia == null) return { ok: false, message: EXISTENCIA_REQUERIDA };") && arena.includes('origen: "solicitud"') && evs.includes("disabled={busy || !existenciaOk}") && evs.includes("Existencia total del lote (kg de café pergamino seco) *"));
   check("OCP · postular en nombre del productor también la exige; CTCx la registra o corrige en la vista del lote (emite, con aviso al productor)", nom.includes("if (existencia == null) return { ok: false, error: EXISTENCIA_REQUERIDA };") && ocp.includes("export async function registrarExistenciaOcp(") && ocp.includes('permisoDeEscritura("ocp", "emite")') && ocp.includes("CTCx registró la existencia total de su lote") && lee("src/app/ocp/(app)/kr/LoteSeccion.tsx").includes("<ExistenciaDelLote lotId={lot.id}"));
   check("A2 · la existencia sigue opcional en la Ficha y lo dice", lee("src/components/kaffetal-regal/ficha/panes/PaneA2.tsx").includes("(kg de CPS · opcional aquí)"));
@@ -374,7 +374,7 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   const tab = lee("src/components/kaffetal-regal/panel/ContratosTab.tsx");
   const firma = lee("src/components/kaffetal-regal/panel/FirmaDelContrato.tsx");
   const glos = lee("src/components/kaffetal-regal/panel/GlosarioDelTrato.tsx");
-  const acc = lee("src/lib/ofertas/producerActions.ts");
+  const acc = lee("src/lib/ofertas/producerActions.ts") + "\n" + lee("src/lib/ofertas/aceptacion.ts"); // V5.190: la aceptación vive entre producerActions.ts y aceptacion.ts
   const pag = lee("src/app/kaffetal-regal/contrato/[id]/page.tsx");
   const vdo = lee("src/lib/ofertas/ventanaDeOferta.ts");
 
@@ -399,9 +399,10 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   check("documento · el contrato dice «identificado(a) con CC …» y define Cherry Picked; la firma lo pide, el servidor lo valida, lo firma en la huella y lo guarda, y el OCP lo enseña",
     conDoc.includes("Ana Pérez, identificado(a) con CC 1.098.765.432") && conDoc.includes("Cherry Picked —la vitrina de CTCx donde su café se ofrece a compradores con su nombre y su finca—") &&
     firma.includes("TIPOS_DE_DOCUMENTO.map((t) =>") && firma.includes("doc.ok && leido") && firma.includes("documentoTipo: doc.tipo, documentoNumero: doc.numero") &&
-    acc.includes("const documento = validarDocumento(firma.documentoTipo, firma.documentoNumero);") && acc.includes("productorDocumento: documentoDelFirmante(documento.tipo, documento.numero),") &&
-    acc.includes("producer_signer_doc_tipo: documento.tipo,") && acc.includes("producer_signer_doc_numero: documento.numero,") &&
-    pag.includes("producer_signer_doc_tipo, producer_signer_doc_numero") && pag.includes("productorDocumento: documentoFirmante,") &&
+    acc.includes("const documento = validarDocumento(firma.documentoTipo, firma.documentoNumero);") && acc.includes("const documento = documentoDelFirmante(f.documento.tipo, f.documento.numero);") &&
+    acc.includes("productorDocumento: quien?.documento ?? null,") && acc.includes("documentoTipo: f.documento.tipo, documentoNumero: f.documento.numero") &&
+    acc.includes("producer_signer_doc_tipo: n.firmante?.documentoTipo ?? null,") && acc.includes("producer_signer_doc_numero: n.firmante?.documentoNumero ?? null,") &&
+    lee("src/lib/trato/contratoDeFila.ts").includes("producer_signer_doc_tipo, producer_signer_doc_numero") && pag.includes("COLUMNAS_DEL_CONTRATO") && pag.includes("documento: documentoFirmante }") &&
     lee("src/app/ocp/(app)/contratos/[id]/page.tsx").includes("producer_signer_name, producer_signer_doc_tipo, producer_signer_doc_numero") &&
     /purchase_contracts_signer_doc_pareja_check/.test(lee("docs/migraciones/2026-10-08_documento_del_firmante.sql")));
 
@@ -435,6 +436,67 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
     });
   }
   check(`marca · Kaffetal Regal dice CTCx, no CTC (quedan ${quedan.length}${quedan.length ? `: ${quedan.slice(0, 4).join(", ")}` : ""})`, quedan.length === 0);
+}
+
+// ── 18. V5.190 (owner, 2026-10-08): la firma de la sesión asistida «carga, pero no hace nada» — `freeze_months` era NOT NULL y el
+//     insert la mandaba en null (23502). Y el CONTRATO PROVISIONAL: en una sesión asistida CTCx acepta en favor del productor (sin su
+//     firma, su nombre ni su documento) con el nombre de un responsable; queda vigente y el productor lo RATIFICA desde su cuenta ──
+{
+  const { clausulasDelContrato: cl, textoDelContrato: tx, CONTRATO_VERSION: VERSION } = await import("../src/lib/trato/contrato.ts");
+  const acta = lee("docs/migraciones/2026-10-08_contrato_provisional.sql");
+  const acep = lee("src/lib/ofertas/aceptacion.ts");
+  const pa2 = lee("src/lib/ofertas/producerActions.ts");
+  const firma2 = lee("src/components/kaffetal-regal/panel/FirmaDelContrato.tsx");
+  const tab2 = lee("src/components/kaffetal-regal/panel/ContratosTab.tsx");
+  const rat = lee("src/components/kaffetal-regal/panel/RatificarContrato.tsx");
+  const pagKR = lee("src/app/kaffetal-regal/contrato/[id]/page.tsx");
+  const pagOCP = lee("src/app/ocp/(app)/contratos/[id]/page.tsx");
+  const listaOCP = lee("src/app/ocp/(app)/contratos/page.tsx");
+
+  check("arreglo · `freeze_months` admite null (el acta) y el insert de un trato por ventana la manda en null: ya no chocan (23502)",
+    /alter column freeze_months drop not null/.test(acta) && acep.includes("      freeze_months: null,") && (acep.match(/\.from\("purchase_contracts"\)\s*\.insert\(/g) ?? []).length === 1 &&
+    !/\.from\("purchase_contracts"\)\s*\.insert\(/.test(pa2));
+  check("arreglo · si el insert falla, el error sale con su código (y al registro del servidor), la firma subida se retira y la pantalla lo deja escrito junto al botón",
+    acep.includes('console.error("crearContratoDeOferta: el insert de purchase_contracts falló"') && acep.includes("(código ${error.code})") &&
+    pa2.includes('await service.storage.from("kaffetal-media").remove([rutaFirma]);') && firma2.includes('role="alert"') && tab2.includes("setErrorFirma(res.message);") && tab2.includes("error={errorFirma}"));
+  check("provisional · el acta: cinco columnas (cuándo, responsable, operador de consola, huella provisional, ratificación) y su check de coherencia",
+    ["provisional_at timestamptz", "provisional_responsable text", "provisional_por uuid", "provisional_sha256 text", "ratificado_at timestamptz"].every((c) => acta.includes(c)) && acta.includes("purchase_contracts_provisional_check"));
+
+  const base = { tipo: "cherry_picked", ventana: { tipo: "extendida", desde: "2026-10-08", hasta: "2027-01-03", ciclos: ["F4-2026 · ciclo 1", "F4-2026 · ciclo 2"], retiroLibrePct: 30, precio: "vigente" }, sinRetiro: false, sacoKg: 70, esRenovacion: false, minimoKg: 750, calidad: null, flete: { region: "santander", carga: 25000 }, productorNombre: "—", productorDocumento: null, loteNombre: "Castillo Lavado Ruizeñores 2026", loteReferencia: "CTC-L-016DF280", grado: "red", copKg: 26200, declaradoKg: 9000, lugarEntrega: "Bucaramanga.", termsVersion: "2026-10-07", temporada: "Principal 2026" };
+  const prov = cl({ ...base, provisional: { responsable: "Ana Gómez", fecha: "2026-10-08", cuenta: "CTC-P-ABCD1234", ratificado: null } });
+  const ratif = cl({ ...base, productorNombre: "Finca Los Ruizeñores", productorDocumento: "NIT 91.105.049", provisional: { responsable: "Ana Gómez", fecha: "2026-10-08", cuenta: "CTC-P-ABCD1234", ratificado: "2026-10-12" } });
+  const normal = cl({ ...base, productorNombre: "Finca Los Ruizeñores", productorDocumento: "NIT 91.105.049" });
+  const txt = (cs) => cs.map((c) => c.texto).join(" ");
+  check("provisional · el texto: el Productor por su CUENTA (ni nombre ni documento), vigente desde la aceptación, y la cláusula 13 con la nota de Pioneros y el responsable",
+    prov.length === 13 && prov[12].titulo === "13. Aceptación provisional" && prov[0].texto.includes("el titular de la cuenta CTC-P-ABCD1234 de Kaffetal Regal") && !txt(prov).includes("identificado(a) con") &&
+    prov[11].texto.includes("queda vigente desde esa aceptación") && prov[12].texto.includes("grupo de Pioneros") && prov[12].texto.includes("responsable de CTCx: Ana Gómez") &&
+    prov[12].texto.includes("ningún cambio será unilateral") && prov[12].texto.includes("puede ajustar la cantidad declarada") && VERSION === "2026-10-08.3");
+  check("provisional · ratificado, el texto lo nombra con su nombre y su documento y dice la fecha; sin aceptación provisional, el contrato de siempre (12 cláusulas)",
+    ratif.length === 13 && ratif[0].texto.includes("Finca Los Ruizeñores, identificado(a) con NIT 91.105.049") && ratif[11].texto.includes("ratificó y firmó este contrato el 12 de octubre de 2026") &&
+    normal.length === 12 && normal[11].texto.includes("El contrato queda vigente cuando CTCx lo firma") && tx({ ...base, productorNombre: "X" }) !== tx({ ...base, productorNombre: "X", provisional: { responsable: "Ana Gómez", fecha: "2026-10-08", cuenta: "CTC-P-ABCD1234", ratificado: null } }));
+  check("provisional · solo CTCx dentro de una sesión asistida de ESTE productor: la marca (rótulo) Y una sesión de consola del OCP con nivel para emitir",
+    acep.includes('if (!esSesionAsistida(h.get("cookie"), producerId)) return null;') && acep.includes('return requireConsoleWrite("ocp", "emite");') &&
+    pa2.includes("const operador = await operadorDeLaAsistida(auth.userId);\n  if (!operador) return { ok: false, message: \"La aceptación provisional es de CTCx"));
+  check("provisional · solo una participación en Cherry Picked anclada al PVC de su grado; con el nombre del responsable (≥ 5); nace VIGENTE y firmada por CTCx, sin firma del productor",
+    pa2.includes('if (offer.kind !== "temporada" || !offer.pvc_edition_id || !offer.terms_version) {') && pa2.includes("if (nombre.length < 5)") &&
+    acep.includes('status: n.provisional ? "active" : "pending_signature",') && acep.includes("signed_at: n.provisional ? now : null,") &&
+    pa2.includes("firmante: null,\n    provisional: { responsable: nombre, operador: operador.userId },") && acep.includes("provisional_sha256: n.provisional ? n.textoSha256 : null,"));
+  check("provisional · la fecha del texto sale del mismo instante que se guarda (la página la recalcula de ahí), y el aviso al productor va al feed y al correo, con rastro",
+    pa2.includes("fecha: diaEnColombia(a.now)") && pa2.includes("const ratificadoEl = diaEnColombia(now);") && pa2.includes('`Contrato provisional · lote ${lot?.name ?? ""}`') && pa2.includes('action: "provisional_notified"'));
+  check("ratificar · es del productor desde su cuenta (no en una sesión asistida), una sola vez, dentro del mínimo, de lo que le queda al lote y de lo ya vendido o retirado",
+    pa2.includes("if (await operadorDeLaAsistida(auth.userId)) {") && pa2.includes('.is("ratificado_at", null)') && pa2.includes("if (kg + 1e-9 < lim.movido)") &&
+    pa2.includes("const v = validarDeclaracion({ kg, minimo: lim.minimo, disponibleKg: lim.disponible });") && pa2.includes("ratificado_at: now,") && pa2.includes("contract_text_sha256: huella,"));
+  check("UI · en la sesión asistida, «Aceptar contrato provisionalmente» va resaltado justo DEBAJO de la casilla y pide el «Nombre de responsable CTCx»; apaga los campos del productor",
+    firma2.indexOf("Leí el contrato, acepto sus condiciones y firmo con mi firma manuscrita digital.") > 0 &&
+    firma2.indexOf("Leí el contrato, acepto sus condiciones y firmo con mi firma manuscrita digital.") < firma2.indexOf('"Aceptar contrato provisionalmente"') &&
+    firma2.includes("Nombre de responsable CTCx") && firma2.includes("Confirmar la aceptación provisional") && firma2.includes("aria-pressed={modoProvisional}") &&
+    firma2.includes('enProvisional ? { opacity: 0.4, pointerEvents: "none" } : {}') && tab2.includes('const puedeProvisional = asistida && offer.kind === "temporada" && Boolean(offer.referencePriceSource) && conVentana;'));
+  check("UI · «Contratos» enseña el contrato provisional con «Ratificar y firmar» (no en la sesión asistida), y la ratificación ajusta la cantidad y firma",
+    tab2.includes("<b>Contrato provisional.</b>") && tab2.includes("Ratificar y firmar") && tab2.includes("La ratificación la hace el Productor desde su propia cuenta") &&
+    rat.includes("ratificarContrato(contractId, n, f)") && rat.includes('textoBoton="Ratificar y firmar"') && rat.includes("Cantidad que deja declarada (kg de CPS)"));
+  check("páginas · el contrato del productor se ve provisional (texto y huella provisionales) y ratificado; el OCP lo marca y lo lista «Provisional · por ratificar»",
+    pagKR.includes("if (!c.producer_signed_at && !c.provisional_at) return gate(") && pagKR.includes("Pendiente de la ratificación del Productor") && pagKR.includes("ratificó y firmó el") &&
+    pagOCP.includes("<b>Contrato provisional</b>") && pagOCP.includes("firmada en una sesión asistida de CTCx") && listaOCP.includes("Provisional · por ratificar"));
 }
 
 if (fallos.length) {

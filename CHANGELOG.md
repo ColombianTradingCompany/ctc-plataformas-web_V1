@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.188] — 2026-10-08 (commit pendiente)
+## [V5.188] — 2026-10-08 (commit 260426a)
 
 - **Cambiado**: la revisión de una oferta en «Contratos y Compras» (feedback de revisión, seis puntos). **El escenario es un
   supuesto del productor, no un pronóstico de CTCx**: la sección se titula «Simule un escenario de ventas · es un supuesto suyo»,

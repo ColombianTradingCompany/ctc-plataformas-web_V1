@@ -698,4 +698,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-08] V5.193 · Los lotes Black galardonados entran a «Pendiente Oferta»: una sola tabla de grados por clase de oferta
 - ANN `src/lib/ofertas/gradosPorClase.ts (nuevo)`, `src/app/ocp/(app)/{ofertasActions.ts,ofertas/page.tsx}`, `scripts/{qa-ofertas-check,qa-compras-check}.mjs`, `src/lib/version.ts`, `docs/componentes/consolas.md`.
-(commit: pendiente)
+(commit: 64670cf)

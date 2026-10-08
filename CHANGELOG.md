@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.193] — 2026-10-08 (commit pendiente)
+## [V5.193] — 2026-10-08 (commit 64670cf)
 
 - **Corregido**: **los lotes Black galardonados no aparecían en «Lotes Evaluados → Pendiente Oferta»** (owner, tras galardonar la fila
   de «Lotes en Evaluación»). La acción que emite ya admitía Black en temporada, directa y excepción desde la V5.85 (al retirarse el CRM

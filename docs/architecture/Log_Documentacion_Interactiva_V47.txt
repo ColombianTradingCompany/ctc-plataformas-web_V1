@@ -690,4 +690,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-08] V5.191 · «Hacer revisión»: el adjunto y la planilla en formato CTCx lado a lado, prellenada por el lector de reportes
 - ANN `src/lib/kaffetal/{lectorDeReportes.ts (nuevo),textoDelPdf.ts (nuevo),referencias.ts}`, `src/lib/arena/labEvaluation.ts` (`BloqueDePlanilla`, `recortaABloques`), `src/components/bcp/LabEvalEditor.tsx` (`bloques`), `src/app/ocp/(app)/{referenciasActions.ts (nuevo),evaluationActions.ts,kr/LoteSeccion.tsx,kr/RevisionDeReferencia.tsx (nuevo),kr/revisionDeReferencia.module.css (nuevo)}`, `src/components/kaffetal-regal/ficha/panes/PaneReferencias.tsx`, `src/components/panel/ProgresoDeAccion.tsx`, `src/lib/ai/consumo.ts` (`kr:referencia-lector`), `scripts/{qa-kr-ficha-check,qa-rutas-consolas,qa-niveles-check,qa-encoding-check}.mjs` (los tres últimos ven lo nuevo sin versionar), `docs/migraciones/2026-10-08_referencia_planilla_ctcx.sql`, `package.json` (`unpdf`), `src/lib/version.ts`, `docs/componentes/{consolas,kaffetal-regal}.md`, `docs/ALINEACION.md`.
-(commit: pendiente)
+(commit: f90b2f1)

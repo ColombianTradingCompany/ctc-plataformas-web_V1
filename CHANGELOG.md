@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.191] — 2026-10-08 (commit pendiente)
+## [V5.191] — 2026-10-08 (commit f90b2f1)
 
 - **Cambiado**: **«Marcar revisada» → «Hacer revisión»** en las referencias que el productor agrega a su lote (OCP · vista del lote;
   owner, sobre CTC-L-323FEDE6). El botón abre un panel a pantalla completa con el ADJUNTO y la planilla de evaluación LADO A LADO —dos

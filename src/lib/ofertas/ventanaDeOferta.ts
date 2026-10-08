@@ -33,6 +33,7 @@ export type CondicionesDeFirma =
   | {
       abierta: true;
       ventana: Extract<Ventana, { abierta: true }>;
+      /** Las semanas de venta de la calculadora (S1…Sn, la última puede ser parcial). No es la duración: esa la dice `duracionDeVentana`. */
       semanas: number;
       precioKg: number;
       minimoKg: number;
@@ -97,7 +98,9 @@ export async function condicionesDeFirma(service: SupabaseClient, offer: OfertaP
   return {
     abierta: true,
     ventana,
-    semanas: Math.max(1, Math.round((diasEntre(ventana.desde, ventana.hasta) + 1) / 7)),
+    // V5.188: las semanas de venta de la calculadora cuentan la fracción (88 días = 13 semanas de venta, la última de 4 días); la
+    // pantalla dice la duración exacta con `duracionDeVentana` (fechas.ts), nunca este número.
+    semanas: Math.max(1, Math.ceil((diasEntre(ventana.desde, ventana.hasta) + 1) / 7)),
     precioKg,
     minimoKg: Number(offer.min_kg ?? 0),
     existenciaKg,

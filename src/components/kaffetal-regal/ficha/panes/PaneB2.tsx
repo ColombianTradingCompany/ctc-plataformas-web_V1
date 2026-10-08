@@ -81,9 +81,9 @@ export function PaneB2({
         <p className={bstyles.introSub}>
           Si alguna vez le han catado este café —la cooperativa, un laboratorio, un comprador— probablemente le
           entregaron una hoja como las de abajo. <b>No necesita saber catación</b>. Es <b>lo uno o lo otro</b>: si tiene esa hoja, marque{" "}
-          <b>«Tengo un reporte»</b>, escriba el puntaje y adjúntela con el nombre de quien la firmó — con eso mismo CTC
+          <b>«Tengo un reporte»</b>, escriba el puntaje y adjúntela con el nombre de quien la firmó — con eso mismo CTCx
           revisa y oficializa su puntaje. Si nunca se lo han catado, marque <b>«No lo sé»</b>: puede dejar su estimación
-          si la tiene, y el Q-Grader de CTC lo determinará con su muestra.
+          si la tiene, y el Q-Grader de CTCx lo determinará con su muestra.
         </p>
       </div>
 
@@ -150,7 +150,7 @@ export function PaneB2({
         <div className={styles.ff} style={{ marginTop: 14 }}>
           <label>
             Q-Grader / institución que emitió el reporte<small style={{ fontWeight: 400, color: "var(--red, #C4402F)" }}> · obligatorio</small>
-            <FieldInfo text="Quién firmó la hoja de catación: el nombre del Q-Grader, o el laboratorio o la cooperativa, y su certificación si la tiene. Con esto CTC verifica el reporte y oficializa su puntaje." />
+            <FieldInfo text="Quién firmó la hoja de catación: el nombre del Q-Grader, o el laboratorio o la cooperativa, y su certificación si la tiene. Con esto CTCx verifica el reporte y oficializa su puntaje." />
           </label>
           <input value={data.b2_reporte_ref} onChange={(e) => onChange({ b2_reporte_ref: e.target.value })} placeholder="Nombre del Q-Grader / laboratorio · certificación" />
         </div>

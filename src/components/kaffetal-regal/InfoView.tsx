@@ -27,7 +27,7 @@ export function InfoView({ onBack, ...editor }: { onBack: () => void } & InfoEdi
             <Image className={styles.krl} src="/images/shared/kaffetal-regal-logo.png" alt="Kaffetal Regal" width={1254} height={1254} />
             <span>
               <span className={styles.name}>Información general</span>
-              <span className={styles.by}>CTC · Pasaporte del Productor{editor.userId ? ` · ${supplierCode(editor.userId)}` : ""}</span>
+              <span className={styles.by}>CTCx · Pasaporte del Productor{editor.userId ? ` · ${supplierCode(editor.userId)}` : ""}</span>
             </span>
           </a>
           <button className="btn btn-sm" style={{ marginLeft: "auto" }} onClick={onBack}>

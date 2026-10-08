@@ -36,7 +36,7 @@ const T: Record<Lang, Dict> = {
     chainBody: (
       <>
         Cada evaluación guarda sus testigos físicos y un sello criptográfico verificable (asistido con blockchain).
-        La certificación CTC —para todo lote evaluado, galardonado o no— incluye puntaje, perfil sensorial y la
+        La certificación CTCx —para todo lote evaluado, galardonado o no— incluye puntaje, perfil sensorial y la
         retroalimentación de mejora del Q-Grader. Ese mismo registro, unido a la geolocalización de su finca, alimenta
         la trazabilidad que exige el <strong style={{ color: "#F7F2E2" }}>EUDR</strong> para entrar a Europa.
       </>
@@ -50,7 +50,7 @@ const T: Record<Lang, Dict> = {
     p: (
       <>
         Every lot in the network is evaluated blind by a{" "}
-        <strong style={{ color: "#F7F2E2" }}>certified Q-Grader</strong> — that is where its CTC Grade is born. The
+        <strong style={{ color: "#F7F2E2" }}>certified Q-Grader</strong> — that is where its CTCx Grade is born. The
         Arena is what comes after: our live, minimally scripted gala — and our primary content format for the
         specialty market — where the season&apos;s finest already-awarded coffees, the{" "}
         <strong style={{ color: "#F7F2E2" }}>Blue, Gold and Tyrian</strong> grades, already under contract, face
@@ -65,7 +65,7 @@ const T: Record<Lang, Dict> = {
     chainBody: (
       <>
         Every evaluation keeps its physical witnesses and a verifiable cryptographic seal (blockchain-assisted). The
-        CTC certification — for every evaluated lot, awarded or not — includes score, sensory profile and the
+        CTCx certification — for every evaluated lot, awarded or not — includes score, sensory profile and the
         Q-Grader&apos;s improvement feedback. That same record, joined to your farm&apos;s geolocation, feeds the traceability the{" "}
         <strong style={{ color: "#F7F2E2" }}>EUDR</strong> demands to enter Europe.
       </>

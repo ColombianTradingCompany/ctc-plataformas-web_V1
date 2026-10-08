@@ -65,13 +65,13 @@ export function PaneA5Eudr({ data, fincas }: PaneProps) {
       {status.code === "eudr_ready" ? (
         <p style={{ fontSize: 13, fontWeight: 600, color: "var(--green, #2E7D52)", background: "#EEF3EA", border: "1px solid var(--primary)", borderRadius: 10, padding: "10px 14px" }}>
           ✓ Pasaporte vigente en la(s) finca(s) de origen — la Visa EUDR de este lote queda lista. Al evaluarse el lote podrá
-          descargar su Visa desde «Certificación CTC».
+          descargar su Visa desde «Certificación CTCx».
         </p>
       ) : status.code === "sin_origen" ? null : (
         <p style={{ fontSize: 13, fontWeight: 600, color: "#8A6D1F", background: "#FBF2DD", border: "1px solid #E4CE8F", borderRadius: 10, padding: "10px 14px" }}>
           El Pasaporte de su finca está {status.code === "bloqueado" ? "denegado o sin otorgar" : "en trámite"}: complete la
           información EUDR de la finca desde <b>Mis fincas → Editar</b> (ubicación o polígono, no deforestación,
-          producción legal, tenencia y áreas legales). CTC lo revisará y, al otorgarle el Pasaporte, este lote quedará
+          producción legal, tenencia y áreas legales). CTCx lo revisará y, al otorgarle el Pasaporte, este lote quedará
           sellado automáticamente.
         </p>
       )}

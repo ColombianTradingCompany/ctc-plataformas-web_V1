@@ -33,7 +33,7 @@ const T: Record<Lang, Dict> = {
     h2em: "intermediar.",
     intro:
       "Si su lote gana un grado, la oferta de Cherry Picked se pone sobre la mesa con todas las cartas boca arriba. Usted conserva el control de su café en todo momento — estas son las reglas del juego.",
-    ctcH3: "Lo que hace CTC",
+    ctcH3: "Lo que hace CTCx",
     ctcPoints: [
       <><strong>Recibe y gestiona el material de muestras</strong> de principio a fin: registro, custodia y preparación para el panel</>,
       <><strong>Administra, cataloga y reporta</strong> los resultados de las cataciones profesionales — su historial queda documentado y consultable</>,
@@ -53,12 +53,12 @@ const T: Record<Lang, Dict> = {
       { label: "Fin mes 2", main: "100 kg", freed: "hasta 100 kg más" },
       { label: "Fin mes 3", main: "" },
     ],
-    stairFinal: "Corte de cuentas · pago total · despacho a CTC · renovable",
+    stairFinal: "Corte de cuentas · pago total · despacho a CTCx · renovable",
     humidH3: "El compromiso de humedad (innegociable, pero acompañado)",
     humidPoints: [
       <>Usted se compromete a <strong>comprar y usar bolsas de control de humedad</strong> para el stock congelado, y a <strong>confirmar el estado de humedad al final de cada mes</strong></>,
-      <>CTC le envía <strong>papeletas HIC gratis</strong> para la verificación</>,
-      <>¿No sabe dónde conseguir las bolsas o cómo usarlas? <strong>CTC le ayuda a conseguirlas y lo capacita</strong> — hay video paso a paso en su cuenta</>,
+      <>CTCx le envía <strong>papeletas HIC gratis</strong> para la verificación</>,
+      <>¿No sabe dónde conseguir las bolsas o cómo usarlas? <strong>CTCx le ayuda a conseguirlas y lo capacita</strong> — hay video paso a paso en su cuenta</>,
       <>La meta es una sola: que el café que consagró el panel sea exactamente el café que llega a Europa</>,
     ],
     hicSummary: "ⓘ ¿Qué es una papeleta HIC y cómo funciona?",
@@ -69,7 +69,7 @@ const T: Record<Lang, Dict> = {
         dentro del empaque sellado. Se coloca dentro de la bolsa de control junto al café; al revisarla, el último
         círculo que viró de color le dice en qué rango está la humedad, sin abrir instrumentos ni adivinar. Si el
         indicador marca por encima del rango objetivo (equilibrio de un pergamino bien seco, ~10–11,5% de humedad
-        en grano), es señal de reacondicionar el secado y avisar a CTC antes de que la calidad sufra. Es la forma
+        en grano), es señal de reacondicionar el secado y avisar a CTCx antes de que la calidad sufra. Es la forma
         más simple y barata de custodiar, mes a mes, la taza que ganó su galardón.
       </>
     ),
@@ -86,7 +86,7 @@ const T: Record<Lang, Dict> = {
     h2em: "brokering.",
     intro:
       "If your lot wins a grade, Cherry Picked's offer goes on the table with every card face up. You keep control of your coffee at all times — these are the rules of the game.",
-    ctcH3: "What CTC does",
+    ctcH3: "What CTCx does",
     ctcPoints: [
       <><strong>Receives and manages the sample material</strong> end to end: registration, custody and preparation for the panel</>,
       <><strong>Administers, catalogues and reports</strong> the results of the professional cuppings — your track record stays documented and consultable</>,
@@ -106,12 +106,12 @@ const T: Record<Lang, Dict> = {
       { label: "End of month 2", main: "100 kg", freed: "up to 100 kg more" },
       { label: "End of month 3", main: "" },
     ],
-    stairFinal: "Settlement · full payment · dispatch to CTC · renewable",
+    stairFinal: "Settlement · full payment · dispatch to CTCx · renewable",
     humidH3: "The moisture commitment (non-negotiable, but accompanied)",
     humidPoints: [
       <>You commit to <strong>buying and using moisture-control bags</strong> for the frozen stock, and to <strong>confirming the moisture status at the end of each month</strong></>,
-      <>CTC sends you <strong>free HIC cards</strong> for verification</>,
-      <>Don&apos;t know where to get the bags or how to use them? <strong>CTC helps you source them and trains you</strong> — there&apos;s a step-by-step video in your account</>,
+      <>CTCx sends you <strong>free HIC cards</strong> for verification</>,
+      <>Don&apos;t know where to get the bags or how to use them? <strong>CTCx helps you source them and trains you</strong> — there&apos;s a step-by-step video in your account</>,
       <>The goal is one and only: that the coffee the panel consecrated is exactly the coffee that arrives in Europe</>,
     ],
     hicSummary: "ⓘ What is an HIC card and how does it work?",
@@ -122,7 +122,7 @@ const T: Record<Lang, Dict> = {
         inside the control bag next to the coffee; when you check it, the last circle that changed color tells you
         the humidity range — no instruments to open, no guessing. If the indicator reads above the target range
         (the equilibrium of well-dried parchment, ~10–11.5% bean moisture), it&apos;s the signal to recondition the
-        drying and alert CTC before quality suffers. It&apos;s the simplest, cheapest way to guard, month by month,
+        drying and alert CTCx before quality suffers. It&apos;s the simplest, cheapest way to guard, month by month,
         the cup that earned its award.
       </>
     ),
@@ -139,7 +139,7 @@ const T: Record<Lang, Dict> = {
     h2em: "vermitteln.",
     intro:
       "Gewinnt Ihr Lot einen Grad, kommt das Angebot von Cherry Picked mit allen Karten offen auf den Tisch. Sie behalten jederzeit die Kontrolle über Ihren Kaffee — das sind die Spielregeln.",
-    ctcH3: "Was CTC macht",
+    ctcH3: "Was CTCx macht",
     ctcPoints: [
       <><strong>Empfängt und verwaltet das Mustermaterial</strong> von Anfang bis Ende: Registrierung, Verwahrung und Vorbereitung für das Panel</>,
       <><strong>Verwaltet, katalogisiert und berichtet</strong> die Ergebnisse der professionellen Verkostungen — Ihre Historie bleibt dokumentiert und einsehbar</>,
@@ -159,12 +159,12 @@ const T: Record<Lang, Dict> = {
       { label: "Ende Monat 2", main: "100 kg", freed: "bis zu 100 kg mehr" },
       { label: "Ende Monat 3", main: "" },
     ],
-    stairFinal: "Abrechnung · volle Zahlung · Versand an CTC · verlängerbar",
+    stairFinal: "Abrechnung · volle Zahlung · Versand an CTCx · verlängerbar",
     humidH3: "Die Feuchte-Verpflichtung (nicht verhandelbar, aber begleitet)",
     humidPoints: [
       <>Sie verpflichten sich, <strong>Feuchtekontroll-Beutel zu kaufen und zu verwenden</strong> für den eingefrorenen Bestand, und <strong>den Feuchtezustand am Ende jedes Monats zu bestätigen</strong></>,
-      <>CTC schickt Ihnen <strong>kostenlose HIC-Karten</strong> zur Überprüfung</>,
-      <>Sie wissen nicht, wo Sie die Beutel bekommen oder wie man sie benutzt? <strong>CTC hilft bei der Beschaffung und schult Sie</strong> — ein Schritt-für-Schritt-Video liegt in Ihrem Konto</>,
+      <>CTCx schickt Ihnen <strong>kostenlose HIC-Karten</strong> zur Überprüfung</>,
+      <>Sie wissen nicht, wo Sie die Beutel bekommen oder wie man sie benutzt? <strong>CTCx hilft bei der Beschaffung und schult Sie</strong> — ein Schritt-für-Schritt-Video liegt in Ihrem Konto</>,
       <>Das Ziel ist ein einziges: dass der Kaffee, den das Panel gekrönt hat, genau der Kaffee ist, der in Europa ankommt</>,
     ],
     hicSummary: "ⓘ Was ist eine HIC-Karte und wie funktioniert sie?",
@@ -175,7 +175,7 @@ const T: Record<Lang, Dict> = {
         <strong>die Farbe wechseln</strong>. Sie liegt im Kontrollbeutel neben dem Kaffee; beim Prüfen sagt Ihnen
         der letzte verfärbte Kreis, in welchem Bereich die Feuchte liegt — ohne Instrumente, ohne Raten. Zeigt der
         Indikator über dem Zielbereich (Gleichgewicht eines gut getrockneten Pergaminos, ~10–11,5 % Kornfeuchte),
-        ist das das Signal, die Trocknung nachzubessern und CTC zu informieren, bevor die Qualität leidet. Es ist
+        ist das das Signal, die Trocknung nachzubessern und CTCx zu informieren, bevor die Qualität leidet. Es ist
         die einfachste und günstigste Art, Monat für Monat die Tasse zu hüten, die ihre Prämierung verdient hat.
       </>
     ),

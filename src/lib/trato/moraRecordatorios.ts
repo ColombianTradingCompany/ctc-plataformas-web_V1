@@ -1,3 +1,4 @@
+import { fechaParaElProductor } from "./fechas";
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendTransactionalEmail } from "@/lib/email/leadEmails";
@@ -26,7 +27,7 @@ type FilaMes = {
 type ContratoDelMes = { id: string; status: string; lot_id: string; lots: { name: string; producer_id: string } | { name: string; producer_id: string }[] | null };
 
 const uno = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? v[0] ?? null : v ?? null);
-const fecha = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("es-CO") : "—");
+const fecha = (iso: string | null) => fechaParaElProductor(iso) ?? "—";
 const enlaceKr = () => `${origenDeSuperficie("/kaffetal-regal")}/kaffetal-regal`;
 
 async function recordarMora(service: SupabaseClient, f: FilaMes, ahora: Date): Promise<{ ok: true } | { ok: false; error: string }> {
@@ -45,9 +46,9 @@ async function recordarMora(service: SupabaseClient, f: FilaMes, ahora: Date): P
     `Recordatorio ${n} de ${MAX_RECORDATORIOS_MORA}: el pedido del mes ${f.mes} de su trato por el lote ${lote.name}` +
     `${f.pedido_kg != null ? ` (${Number(f.pedido_kg)} kg de CPS, pedido el ${fecha(f.pedido_at)})` : ""} lleva ${mora.semanas} semanas sin envío` +
     (mora.estado === "ruptura_potencial"
-      ? " — pasadas las cuatro semanas, CTC puede declarar la ruptura contractual."
+      ? " — pasadas las cuatro semanas, CTCx puede declarar la ruptura contractual."
       : ` — corre el recargo del ${MORA.recargoPct} %.`) +
-    " Si hay una causa legítima, escríbale a CTC antes. Envíe el pedido y CTC registra el recibo en su trato.";
+    " Si hay una causa legítima, escríbale a CTCx antes. Envíe el pedido y CTCx registra el recibo en su trato.";
   await service.from("audit_log").insert({
     entity_type: "purchase_contract",
     entity_id: contrato.id,

@@ -137,9 +137,9 @@ export function LotKanbanStepper({
   const contActive = estado === "oferta_emitida";
   const contTitle =
     estado === "en_mora"
-      ? "Trato vigente EN MORA: CTC pidió el mes y el envío no ha llegado — revise Contratos"
+      ? "Trato vigente EN MORA: CTCx pidió el mes y el envío no ha llegado — revise Contratos"
       : estado === "ruptura"
-        ? "Ruptura contractual declarada por CTC"
+        ? "Ruptura contractual declarada por CTCx"
         : estado === "ctcx_selection"
           ? "Comprado en firme por CTCx: su café se ofrece como CTCx Selection"
         : "Oferta de contrato de temporada · CaaS · CTCx Selection";

@@ -146,9 +146,9 @@ export function PerfilTab({
           <button className="btn btn-sm" onClick={() => onOpenFincaModal(i)}>{f.status === "approved" ? "Revisar" : "Editar"}</button>
           {/* Deletable while CTC hasn't accepted the finca and no lot of it has
               entered the paid pipeline (fincaSelfDeletable mirrors the RLS
-              policy). Otherwise CTC is relying on it, so the producer can only
+              policy). Otherwise CTCx is relying on it, so the producer can only
               request a data revision -- a full deletion affecting committed
-              lots is handled by CTC over that thread. */}
+              lots is handled by CTCx over that thread. */}
           {fincaSelfDeletable(f, lots) ? (
             <button className={styles.deletebtn} onClick={() => onDeleteFinca(f.id)}>Borrar</button>
           ) : (
@@ -156,7 +156,7 @@ export function PerfilTab({
           )}
         </div>
         {/* El PASAPORTE EUDR de la finca (vocabulario asentado por el owner el
-            2026-09-20: Pasaporte = finca, Visa = lote). Descargable cuando CTC
+            2026-09-20: Pasaporte = finca, Visa = lote). Descargable cuando CTCx
             lo otorgó y lo compartió; si no, se explica en qué va el trámite. */}
         <div className={styles.certRow}>
           {f.status === "approved" && f.certShared ? (
@@ -166,10 +166,10 @@ export function PerfilTab({
           ) : fincaStatusOf(f).code === "pendiente" ? (
             <span className={styles.certPending}>
               Pasaporte EUDR: en trámite — información incompleta
-              <FieldInfo text="Complete la información EUDR de esta finca (ubicación/polígono, no deforestación, tenencia de la tierra y el cuestionario de riesgo) desde 'Editar'. Cuando esté completa, CTC la revisará y, si le otorga el Pasaporte EUDR, habilitará su descarga. Con el Pasaporte vigente, todos los lotes de esta finca reciben su Visa EUDR automáticamente — es el primer entregable de CTCx, y es gratis." />
+              <FieldInfo text="Complete la información EUDR de esta finca (ubicación/polígono, no deforestación, tenencia de la tierra y el cuestionario de riesgo) desde 'Editar'. Cuando esté completa, CTCx la revisará y, si le otorga el Pasaporte EUDR, habilitará su descarga. Con el Pasaporte vigente, todos los lotes de esta finca reciben su Visa EUDR automáticamente — es el primer entregable de CTCx, y es gratis." />
             </span>
           ) : (
-            <span className={styles.certPending}>Pasaporte EUDR: en trámite (a la espera de la revisión de CTC)</span>
+            <span className={styles.certPending}>Pasaporte EUDR: en trámite (a la espera de la revisión de CTCx)</span>
           )}
         </div>
       </div>
@@ -205,7 +205,7 @@ export function PerfilTab({
     ) : null;
   const botonQueSigue = (l: Lot) =>
     fichaCompleta(l) ? (
-      <button className="btn btn-sm" onClick={() => setAvisoLote(l)} title="Lo que ya está y lo que sigue si quiere que CTC evalúe este café">
+      <button className="btn btn-sm" onClick={() => setAvisoLote(l)} title="Lo que ya está y lo que sigue si quiere que CTCx evalúe este café">
         ¿Qué sigue?
       </button>
     ) : null;
@@ -221,7 +221,7 @@ export function PerfilTab({
         ) : (
           <span className={styles.certPending}>
             Visa EUDR otorgada · el documento se habilita cuando el Pasaporte EUDR de la finca esté vigente
-            <FieldInfo text="CTC ya declaró apto este lote (su Visa). El documento descargable de la Visa se hereda del Pasaporte EUDR de la finca de origen: en cuanto CTC lo otorgue y lo comparta, aquí aparecerá el botón de descarga." />
+            <FieldInfo text="CTCx ya declaró apto este lote (su Visa). El documento descargable de la Visa se hereda del Pasaporte EUDR de la finca de origen: en cuanto CTCx lo otorgue y lo comparta, aquí aparecerá el botón de descarga." />
           </span>
         )}
       </div>

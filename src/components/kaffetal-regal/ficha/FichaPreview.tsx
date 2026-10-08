@@ -54,7 +54,7 @@ export function FichaPreview({
   }
 
   function downloadHtml() {
-    const doc = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>CTC · ${data.product_name || "Ficha Técnica"}</title><style>${FICHA_PREVIEW_CSS} body{background:#fff;padding:20px}</style></head><body><div style="position:relative">${inner}${marcaHtml(marca)}</div></body></html>`;
+    const doc = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>CTCx · ${data.product_name || "Ficha Técnica"}</title><style>${FICHA_PREVIEW_CSS} body{background:#fff;padding:20px}</style></head><body><div style="position:relative">${inner}${marcaHtml(marca)}</div></body></html>`;
     const name = (data.product_name || "Ficha_Tecnica").replace(/[^\w\-\sáéíóúÁÉÍÓÚ]/g, "").trim().replace(/\s+/g, "_").slice(0, 55);
     const codigo = referencia ? ctcLotReference(referencia) : null;
     const blob = new Blob([doc], { type: "text/html;charset=utf-8" });

@@ -55,7 +55,7 @@ export function Hero({ onLogin, onGo }: { onLogin: () => void; onGo: (id: string
     <>
       {/* ── La franja de entrada ───────────────────────────────────────────────
           Antes era una foto de paisaje a la derecha y el texto a la izquierda,
-          sobre papel. Ahora la portada es el zoom infinito del logo de CTC
+          sobre papel. Ahora la portada es el zoom infinito del logo de CTCx
           corriendo de fondo, atenuado, y encima solo tres cosas: la frase, los
           dos botones y el logo completo de Kaffetal Regal.
 

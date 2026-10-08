@@ -30,9 +30,9 @@ export function OfficialScoreBanner({ lot, selfEstimate, kind, conReporte }: { l
       </div>
       <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>
         {lot.hasPendingOfficializationClaim
-          ? "Solicitud de oficialización pendiente de revisión por CTC."
+          ? "Solicitud de oficialización pendiente de revisión por CTCx."
           : conReporte
-            ? "Con «Tengo un reporte» marcado, la solicitud de oficialización sale sola al enviar la FT2: CTC revisa sus soportes y acepta o rechaza el puntaje."
+            ? "Con «Tengo un reporte» marcado, la solicitud de oficialización sale sola al enviar la FT2: CTCx revisa sus soportes y acepta o rechaza el puntaje."
             : "Para oficializar un puntaje, marque «Tengo un reporte» y adjunte sus soportes con el nombre de quien los emitió."}
       </p>
     </div>

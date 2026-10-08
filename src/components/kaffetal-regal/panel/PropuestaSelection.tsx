@@ -112,7 +112,6 @@ export function PropuestaSelection({ offer, onRefreshData }: { offer: ProducerOf
             minimoKg: null,
             calidad: null,
             flete: offer.flete,
-            productorDocumento: null,
             loteNombre: offer.lotName,
             loteReferencia: ctcLotReference(offer.lotId),
             grado: offer.grade ?? "—",

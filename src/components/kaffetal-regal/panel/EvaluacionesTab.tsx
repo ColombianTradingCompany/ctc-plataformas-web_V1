@@ -92,7 +92,7 @@ export function EvaluacionesTab({
         <ComoFunciona />
         {solicitudes.length === 0 ? (
           <div className={styles.alist} style={{ marginTop: 10 }}>
-            Aún no tiene lotes aptos por solicitar. Complete la ficha de un lote y CTC lo evaluará — al ser declarado
+            Aún no tiene lotes aptos por solicitar. Complete la ficha de un lote y CTCx lo evaluará — al ser declarado
             Apto, podrá solicitar su evaluación desde aquí.
           </div>
         ) : (
@@ -130,7 +130,7 @@ export function EvaluacionesTab({
         <div className={styles.secSub}>Muestras enviadas y evaluación paga, en espera de evaluación y resultados</div>
         {enFila.length === 0 ? (
           <div className={styles.alist} style={{ marginTop: 10 }}>
-            Nada en fila por ahora. Cuando CTC confirme el recibo de su muestra y el pago, su lote esperará aquí su
+            Nada en fila por ahora. Cuando CTCx confirme el recibo de su muestra y el pago, su lote esperará aquí su
             bache de evaluación con el Q-Grader.
           </div>
         ) : (
@@ -379,7 +379,7 @@ function SolicitudCard({
                 onClick={() => {
                   const ok = window.confirm(
                     `¿Confirma que ya despachó la muestra de 2 kg de pergamino del lote ${lot.name}?\n\n` +
-                      "Recuerde: el paquete va contra entrega (el flete lo paga CTC al recibirlo) y debe ir marcado ÚNICAMENTE con el código del lote (sin su nombre ni el de su finca — la cata es a ciegas).",
+                      "Recuerde: el paquete va contra entrega (el flete lo paga CTCx al recibirlo) y debe ir marcado ÚNICAMENTE con el código del lote (sin su nombre ni el de su finca — la cata es a ciegas).",
                   );
                   if (ok) onConfirmSampleShipped(lot.id);
                 }}
@@ -389,7 +389,7 @@ function SolicitudCard({
             </div>
           ) : (
             <div style={{ fontSize: 12.5, color: "var(--muted)" }}>
-              Muestra enviada — al confirmarse el recibo físico y el pago, su lote pasa a <b>Lotes a Evaluar</b> y CTC lo sube a un Bache de Evaluación.
+              Muestra enviada — al confirmarse el recibo físico y el pago, su lote pasa a <b>Lotes a Evaluar</b> y CTCx lo sube a un Bache de Evaluación.
             </div>
           )}
         </div>
@@ -407,7 +407,7 @@ function FilaCard({ lot }: { lot: Lot }) {
       <CardHead lot={lot} />
       {phase === "fila" && (
         <div style={{ fontSize: 13, color: "var(--muted)" }}>
-          ✓ Pago y muestra confirmados — <b>a evaluar</b>: CTC sube su lote al próximo <b>Bache de Evaluación</b>.
+          ✓ Pago y muestra confirmados — <b>a evaluar</b>: CTCx sube su lote al próximo <b>Bache de Evaluación</b>.
         </div>
       )}
       {phase === "sondeo" && (
@@ -420,7 +420,7 @@ function FilaCard({ lot }: { lot: Lot }) {
           escribe, pero un dato vivo no puede quedar invisible. */}
       {(phase === "arena" || phase === "sesion") && (
         <div style={{ fontSize: 13, color: "var(--muted)" }}>
-          En proceso con CTC{ins?.sondeoScore != null ? ` (puntaje preliminar ${ins.sondeoScore})` : ""} — le contaremos
+          En proceso con CTCx{ins?.sondeoScore != null ? ` (puntaje preliminar ${ins.sondeoScore})` : ""} — le contaremos
           el siguiente paso por Mensajes y Notificaciones.
         </div>
       )}
@@ -520,10 +520,10 @@ function GalardonCard({ lot, fincas }: { lot: Lot; fincas: Finca[] }) {
             )}
           </div>
           {/* La vitrina de la Arena (V5.19): la gala post-galardón de
-              Blue/Gold/Tyrian con contrato — display, la gestión es de CTC. */}
+              Blue/Gold/Tyrian con contrato — display, la gestión es de CTCx. */}
           {ins?.phase === "arena" && (
             <div style={{ fontSize: 12.5, color: "var(--green)", fontWeight: 700, marginTop: 8 }}>
-              ★ Invitado a la vitrina de la Arena — la gala en vivo de los mejores de la temporada. CTC le confirmará la fecha.
+              ★ Invitado a la vitrina de la Arena — la gala en vivo de los mejores de la temporada. CTCx le confirmará la fecha.
             </div>
           )}
           {ins?.phase === "sesion" && (

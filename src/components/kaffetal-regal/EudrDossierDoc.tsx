@@ -1,3 +1,4 @@
+import { fechaParaElProductor } from "@/lib/trato/fechas";
 import { fincaCode, LOCAL_INFRA } from "./data";
 import { countryRiskFor, deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, PRODUCT_RISK_QUESTIONS } from "@/lib/eudr";
 import { PrintButton } from "./PrintButton";
@@ -207,7 +208,7 @@ export function EudrDossierDoc({
           <div>
             <p style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "#3C0A86", margin: 0 }}>Colombian Trading Company · CTCx</p>
             <h1 style={{ fontSize: 26, margin: "4px 0 2px" }}>Pasaporte EUDR de la Finca · Debida Diligencia</h1>
-            <p style={{ color: "#555", margin: "0 0 4px" }}>Reglamento (UE) 2023/1115 · Documento generado el {new Date().toLocaleDateString("es-CO")}</p>
+            <p style={{ color: "#555", margin: "0 0 4px" }}>Reglamento (UE) 2023/1115 · Documento generado el {fechaParaElProductor(new Date().toISOString())}</p>
             <p style={{ margin: 0, fontWeight: 700 }}>
               {finca.name} · {fincaCode(finca.id)}
               {finca.status === "approved" ? " · APROBADA" : ` · ${finca.status}`}
@@ -361,7 +362,7 @@ export function EudrDossierDoc({
                     </td>
                     <td style={{ padding: "4px 12px 4px 0" }}>{c.certNumber || "—"}</td>
                     <td style={{ padding: "4px 12px 4px 0" }}>{c.validFrom && c.validTo ? `${c.validFrom} → ${c.validTo}` : "sin registrar"}</td>
-                    <td style={{ padding: "4px 0" }}>{c.status === "corroborada" || c.verifiedByCtc ? "Corroborado por CTC" : c.status === "evidencia_pedida" ? "Declarado · respaldo pendiente" : "Declarado"}</td>
+                    <td style={{ padding: "4px 0" }}>{c.status === "corroborada" || c.verifiedByCtc ? "Corroborado por CTCx" : c.status === "evidencia_pedida" ? "Declarado · respaldo pendiente" : "Declarado"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -380,7 +381,7 @@ export function EudrDossierDoc({
           <ul style={{ fontSize: 12.5, paddingLeft: 18 }}>
             {comms.map((c) => (
               <li key={c.id} style={{ marginBottom: 4 }}>
-                <b>{c.author_role === "producer" ? "Productor" : "CTC"}</b> · {new Date(c.created_at).toLocaleDateString("es-CO")} — {c.note}
+                <b>{c.author_role === "producer" ? "Productor" : "CTCx"}</b> · {fechaParaElProductor(c.created_at)} — {c.note}
               </li>
             ))}
           </ul>

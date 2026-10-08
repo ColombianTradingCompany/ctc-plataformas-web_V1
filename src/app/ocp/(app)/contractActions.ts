@@ -143,7 +143,7 @@ export async function pedirDelMes(contractId: string, mes: number, formData: For
     producer_id: lot.producer_id,
     context_label: `Lote ${lot.name}`,
     lot_id: contract.lot_id,
-    note: `CTC le pide ${kg} kg de CPS de su trato (mes ${mes}). Envíelos y CTC le paga en la primera semana del mes siguiente. Recuerde: dos semanas sin cargo; después corre el recargo del 5 %.`,
+    note: `CTCx le pide ${kg} kg de CPS de su trato (mes ${mes}). Envíelos y CTCx le paga en la primera semana del mes siguiente. Recuerde: dos semanas sin cargo; después corre el recargo del 5 %.`,
     created_by: adminId,
   });
   revalidatePath(`/ocp/contratos/${contractId}`);
@@ -234,7 +234,7 @@ export async function registrarPagoDelMes(contractId: string, mes: number, formD
     producer_id: lot.producer_id,
     context_label: `Lote ${lot.name}`,
     lot_id: contract.lot_id,
-    note: `CTC pagó el mes ${mes} de su trato: $${cop.toLocaleString("es-CO")}${ref ? ` (ref. ${ref})` : ""}.`,
+    note: `CTCx pagó el mes ${mes} de su trato: $${cop.toLocaleString("es-CO")}${ref ? ` (ref. ${ref})` : ""}.`,
     created_by: adminId,
   });
   await cerrarSiCumplido(service, contractId, adminId);
@@ -303,7 +303,7 @@ export async function declararRuptura(contractId: string, formData: FormData): P
     producer_id: lot.producer_id,
     context_label: `Lote ${lot.name}`,
     lot_id: contract.lot_id,
-    note: `CTC declaró la ruptura contractual de su trato: ${motivo} Su cuenta queda congelada mientras se resuelve. Si hubo una causa legítima, escríbanos por este hilo.`,
+    note: `CTCx declaró la ruptura contractual de su trato: ${motivo} Su cuenta queda congelada mientras se resuelve. Si hubo una causa legítima, escríbanos por este hilo.`,
     created_by: adminId,
   });
   revalidatePath(`/ocp/contratos/${contractId}`);
@@ -324,7 +324,7 @@ export async function descongelarCuenta(producerId: string, formData: FormData):
   const { error } = await service.from("producer_profiles").update({ estado_cuenta: "activa", estado_cuenta_at: new Date().toISOString(), estado_cuenta_motivo: motivo }).eq("profile_id", producerId);
   if (error) return { ok: false, error: "No se pudo descongelar: " + error.message };
   await service.from("audit_log").insert({ entity_type: "producer_profile", entity_id: producerId, action: "cuenta_descongelada", performed_by: adminId, notes: motivo.slice(0, 300) });
-  await service.from("producer_comm_log").insert({ producer_id: producerId, note: `CTC reactivó su cuenta: ${motivo}`, created_by: adminId });
+  await service.from("producer_comm_log").insert({ producer_id: producerId, note: `CTCx reactivó su cuenta: ${motivo}`, created_by: adminId });
   revalidatePath("/ocp/contratos");
   revalidatePath("/ocp/kr");
   return { ok: true };

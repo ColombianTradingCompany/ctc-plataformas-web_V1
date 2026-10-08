@@ -1,3 +1,5 @@
+import { CTC_EMAIL, CTC_RAZON } from "@/lib/legal";
+import { fechaParaElProductor } from "@/lib/trato/fechas";
 import { INTL_CERTS, MESH, ORIGIN_CERTS, SCA_ATTRS, num, type FichaFormData } from "./fichaData";
 
 type Factor = { start: number; remainder: number; yieldLoss: number; healthy: number; yieldFactor: number | null };
@@ -29,10 +31,10 @@ export type ScaScoringExport = {
 function scoringLabel(s: ScaScoringExport): { text: string; cls: string } {
   // V5.17: la evaluación oficial del camino base es la del Q-Grader en bache,
   // y su etiqueta dice exactamente eso — no se disfraza de sesión de Arena.
-  if (s.source === "q_grader_batch") return { text: "Evaluación CTC · Q-Grader en bache", cls: "ok" };
-  if (s.source === "bcp_arena") return { text: "Contrastado por CTC · Arena", cls: "ok" };
-  if (s.status === "accepted") return { text: "Aportado por el productor · contrastado por CTC", cls: "ok" };
-  if (s.status === "rejected") return { text: "Aportado por el productor · NO validado por CTC", cls: "bad" };
+  if (s.source === "q_grader_batch") return { text: "Evaluación CTCx · Q-Grader en bache", cls: "ok" };
+  if (s.source === "bcp_arena") return { text: "Contrastado por CTCx · Arena", cls: "ok" };
+  if (s.status === "accepted") return { text: "Aportado por el productor · contrastado por CTCx", cls: "ok" };
+  if (s.status === "rejected") return { text: "Aportado por el productor · NO validado por CTCx", cls: "bad" };
   return { text: "Aportado por el productor · pendiente de contrastar", cls: "pend" };
 }
 
@@ -90,9 +92,9 @@ export function renderFichaHtml(
         return `<td>${typeof v === "number" && v > 0 ? v.toFixed(2) : "—"}</td>`;
       }).join("");
       return `<tr><td class="src">${esc(
-        s.source === "bcp_arena" ? "Evaluación CTC" : "Solicitud de oficialización"
+        s.source === "bcp_arena" ? "Evaluación CTCx" : "Solicitud de oficialización"
       )}<span class="tag ${l.cls}">${esc(l.text)}</span>${s.qGraderRef ? `<div class="ref">Ref. Q-Grader: ${esc(s.qGraderRef)}</div>` : ""}${
-        s.date ? `<div class="ref">${esc(new Date(s.date).toLocaleDateString("es-CO"))}</div>` : ""
+        s.date ? `<div class="ref">${esc(fechaParaElProductor(s.date))}</div>` : ""
       }</td>${cells}<td class="tot">${s.total != null ? Number(s.total).toFixed(2) : "—"}</td></tr>`;
     })
     .join("");
@@ -105,7 +107,7 @@ export function renderFichaHtml(
         <thead><tr><th>Origen del puntaje</th>${SCA_ATTRS.map(([, label]) => `<th>${esc(label.split("/")[0])}</th>`).join("")}<th>Total</th></tr></thead>
         <tbody>${selfRow}${evalRows}</tbody>
       </table></div>
-      <p class="scafoot">El puntaje <b>oficial</b> de CTC es el promedio de las evaluaciones contrastadas. Lo declarado por el
+      <p class="scafoot">El puntaje <b>oficial</b> de CTCx es el promedio de las evaluaciones contrastadas. Lo declarado por el
       productor se publica como tal y nunca se presenta como verificado.</p>
     </div>`
       : "";
@@ -129,7 +131,7 @@ export function renderFichaHtml(
       <div class="tags">${tags.map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>
     </div>
     <div class="ctc-mark">
-      <div class="logo-sm">CTC</div>
+      <div class="logo-sm">CTCx</div>
       <div>CTC UID: ${esc(data.ctc_uid || "—")}</div>
       <div>${esc(data.revision_date || dateStr)}</div>
       <div class="confidential">CONFIDENCIAL</div>
@@ -218,7 +220,7 @@ export function renderFichaHtml(
         : data.b2_score || data.cupping_profile || scaTable || data.b2_files_pdf.length + data.b2_files_foto.length > 0
           ? `<div class="ficha-section"><h3>Perfil Sensorial</h3>${
               data.b2_score
-                ? `<div class="scoreband"><span class="big">${esc(data.b2_score)}</span><div><div class="scoreclass">Reportado por Productor${data.b2_scale ? ` · escala ${esc(data.b2_scale.toUpperCase())}` : ""}${data.b2_tiene_reporte && data.b2_reporte_ref ? ` · reporte de ${esc(data.b2_reporte_ref)}` : ""}</div><div class="prose">Puntaje declarado por el productor — sin contrastar por CTC.</div></div></div>`
+                ? `<div class="scoreband"><span class="big">${esc(data.b2_score)}</span><div><div class="scoreclass">Reportado por Productor${data.b2_scale ? ` · escala ${esc(data.b2_scale.toUpperCase())}` : ""}${data.b2_tiene_reporte && data.b2_reporte_ref ? ` · reporte de ${esc(data.b2_reporte_ref)}` : ""}</div><div class="prose">Puntaje declarado por el productor — sin contrastar por CTCx.</div></div></div>`
                 : ""
             }${data.cupping_profile ? `<p class="prose">${esc(data.cupping_profile)}</p>` : ""}${
               data.b2_files_pdf.length + data.b2_files_foto.length > 0
@@ -267,8 +269,8 @@ export function renderFichaHtml(
 
     <div class="pi-note">
       <strong>AVISO DE PROPIEDAD INTELECTUAL & CONFIDENCIALIDAD</strong><br>
-      Este documento es propiedad de <strong>Colombian Trading Company (CTC)</strong> y contiene información técnica y comercial confidencial. Queda prohibida su reproducción, distribución o divulgación sin previa autorización escrita. Consultas: <strong>info@colombiantradingcompany.com</strong><br>
-      <span class="copyright">© ${now.getFullYear()} Colombian Trading Company · Green Coffee Datasheet System v2.0 · Generado: ${dateStr}</span>
+      Este documento es propiedad de <strong>${CTC_RAZON} (CTCx)</strong> y contiene información técnica y comercial confidencial. Queda prohibida su reproducción, distribución o divulgación sin previa autorización escrita. Consultas: <strong>${CTC_EMAIL}</strong><br>
+      <span class="copyright">© ${now.getFullYear()} ${CTC_RAZON} · Green Coffee Datasheet System v2.0 · Generado: ${dateStr}</span>
     </div>
   </div>
   <div class="ficha-foot">

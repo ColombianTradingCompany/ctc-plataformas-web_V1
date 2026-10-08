@@ -147,7 +147,7 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   const base = { tipo: "cherry_picked", ventana: { tipo: "ciclo", desde: "2027-02-15", hasta: "2027-04-04", ciclos: ["F1-2027 · ciclo 2"], retiroLibrePct: 25, precio: "vigente" }, sinRetiro: false, sacoKg: 0, esRenovacion: true, minimoKg: 675, calidad: null, flete: { region: "centro", carga: 50000 }, productorNombre: "Ana Pérez", productorDocumento: null, loteNombre: "L", loteReferencia: "CTC-L-X", grado: "red", copKg: 21000, declaradoKg: 700, lugarEntrega: "Bucaramanga.", termsVersion: "2026-10-07", temporada: null };
   const ren = clausulasDelContrato(base).map((x) => `${x.titulo} ${x.texto}`).join(" ");
   const red = clausulasDelContrato({ ...base, esRenovacion: false, sacoKg: 70, sinRetiro: true, declaradoKg: 400 }).map((x) => x.texto).join(" ");
-  check("contrato · renovación sin adelanto, Flete a CTCx citado en el precio y en la entrega, mínimo −10 % al cambiar de trimestre; declaración reducida sin retiro libre", CONTRATO_VERSION === "2026-10-08.1" && ren.includes("Compra adelantada") && ren.includes("no compra por adelantado") && ren.includes("e incluye el Flete a CTCx de la región Nacional Centro: $50.000 COP por carga equivalente ($400 COP por kg)") && ren.includes("código de envío corporativo de CTCx en Servientrega") && !/auxilio/i.test(ren) && ren.includes("baja 10 %") && red.includes("sin derecho a retiro libre") && red.includes("no hay retiro libre"));
+  check("contrato · renovación sin adelanto, Flete a CTCx citado en el precio y en la entrega, mínimo −10 % al cambiar de trimestre; declaración reducida sin retiro libre", CONTRATO_VERSION === "2026-10-08.2" && ren.includes("Compra adelantada") && ren.includes("no compra por adelantado") && ren.includes("e incluye el Flete a CTCx de la región Nacional Centro: $50.000 COP por carga equivalente ($400 COP por kg)") && ren.includes("código de envío corporativo de CTCx en Servientrega") && !/auxilio/i.test(ren) && ren.includes("baja 10 %") && red.includes("sin derecho a retiro libre") && red.includes("no hay retiro libre"));
 
   const vo = lee("src/lib/ofertas/ventanaDeOferta.ts");
   const pa = lee("src/lib/ofertas/producerActions.ts");
@@ -359,6 +359,82 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   const tab = lee("src/components/kaffetal-regal/panel/ContratosTab.tsx");
   check("KR · el bache abierto (vendido y pendiente) con lo que lleva, su plazo (o la prórroga), los días que faltan y el 60 % al despachar", tab.includes('const esBacheAbierto = (d: DespachoDelTrato) => d.tipo === "vendido" && d.estado === "pendiente";') && tab.includes("<BacheAbierto contract={c}") && tab.includes("a más tardar el {fecha(plazo)}") && tab.includes("v.despachoId === d.id") && lee("src/components/kaffetal-regal/KaffetalExperience.tsx").includes("despachoId: v.despacho_id ?? null"));
   check("OCP · «Pendiente de Oferta» da la FNC del día junto al precio por carga, con el % de la oferta sobre ella", lee("src/app/ocp/(app)/ofertas/page.tsx").includes("const mercado = await lecturaDeMercado(10);") && lee("src/app/ocp/(app)/ofertas/OfertaDesplegable.tsx").includes("FNC del día (") && lee("src/app/ocp/(app)/ofertas/OfertasClient.tsx").includes("fnc: { carga: number; fecha: string } | null;"));
+}
+
+// ── 17. V5.188 (feedback de revisión de «Contratos y Compras»): el escenario es un supuesto y lo único seguro es el saco; la ventaja
+//     frente a la FNC dice qué kilos cuenta; las palabras del trato definidas; CTCx (no CTC); fechas sin ambigüedad y la duración
+//     exacta de la ventana; el documento (CC) de quien firma en el contrato ──
+{
+  const f = await import("../src/lib/trato/fechas.ts");
+  const doc = await import("../src/lib/trato/documento.ts");
+  const { clausulasDelContrato } = await import("../src/lib/trato/contrato.ts");
+  const { simularVentasDeVentana } = await import("../src/lib/trato/simulador.ts");
+  const { PARAMS_V211 } = await import("../src/lib/pvc/motor.ts");
+  const calc = lee("src/components/kaffetal-regal/panel/CalculadoraDelTrato.tsx");
+  const tab = lee("src/components/kaffetal-regal/panel/ContratosTab.tsx");
+  const firma = lee("src/components/kaffetal-regal/panel/FirmaDelContrato.tsx");
+  const glos = lee("src/components/kaffetal-regal/panel/GlosarioDelTrato.tsx");
+  const acc = lee("src/lib/ofertas/producerActions.ts");
+  const pag = lee("src/app/kaffetal-regal/contrato/[id]/page.tsx");
+  const vdo = lee("src/lib/ofertas/ventanaDeOferta.ts");
+
+  check("fechas · un instante se lee en la hora de Colombia y con el mes en letras («4/1/2027» era el 3 de enero a las 23:59 de Bogotá)",
+    f.fechaParaElProductor("2027-01-04T04:59:59.000Z") === "3 de enero de 2027" && f.fechaParaElProductor("2027-01-03") === "3 de enero de 2027" && f.fechaParaElProductor(null) === null);
+  check("fechas · la ventana dice su duración exacta: 8 oct → 3 ene = 88 días · 12 semanas y 4 días; un trimestre ISO = 91 días · 13 semanas",
+    f.duracionDeVentana("2026-10-08", "2027-01-03").texto === "88 días · 12 semanas y 4 días" && f.duracionDeVentana("2027-01-04", "2027-04-04").texto === "91 días · 13 semanas" &&
+    calc.includes("${duracion.texto} · ${c.ventana.ciclos.join(\" y \")}") && !calc.includes("${c.semanas} semanas"));
+  check("fechas · las semanas de venta cuentan la fracción (Math.ceil) y ninguna fecha de Kaffetal Regal va en números",
+    vdo.includes("Math.ceil((diasEntre(ventana.desde, ventana.hasta) + 1) / 7)") && tab.includes("vence el <b>{fechaParaElProductor(offer.expiraAt)}</b> (al terminar el día, hora de Colombia)") &&
+    ["src/components/kaffetal-regal/panel/ContratosTab.tsx", "src/components/kaffetal-regal/KaffetalExperience.tsx", "src/components/kaffetal-regal/RetroalimentacionPanel.tsx",
+     "src/components/kaffetal-regal/EudrDossierDoc.tsx", "src/components/kaffetal-regal/LotEudrCertDoc.tsx", "src/lib/ofertas/producerActions.ts", "src/lib/trato/moraRecordatorios.ts"]
+      .every((p) => !lee(p).includes('toLocaleDateString("es-CO")')));
+
+  const cc = doc.validarDocumento("CC", "1.098.765.432");
+  const nit = doc.validarDocumento("NIT", "900.123.456-7");
+  check("documento · la CC se normaliza y se escribe con puntos («CC 1.098.765.432»); el NIT con su dígito; los inválidos se rechazan",
+    cc.ok && cc.numero === "1098765432" && doc.documentoDelFirmante(cc.tipo, cc.numero) === "CC 1.098.765.432" &&
+    nit.ok && doc.documentoDelFirmante(nit.tipo, nit.numero) === "NIT 900.123.456-7" &&
+    !doc.validarDocumento("CC", "12").ok && !doc.validarDocumento("XX", "123456").ok && !doc.validarDocumento("CC", "").ok);
+  const conDoc = clausulasDelContrato({ tipo: "cherry_picked", ventana: { tipo: "ciclo", desde: "2027-02-15", hasta: "2027-04-04", ciclos: ["F1-2027 · ciclo 2"], retiroLibrePct: 25, precio: "vigente" }, sinRetiro: false, sacoKg: 70, esRenovacion: false, minimoKg: 750, calidad: null, flete: null, productorNombre: "Ana Pérez", productorDocumento: "CC 1.098.765.432", loteNombre: "L", loteReferencia: "CTC-L-X", grado: "red", copKg: 21000, declaradoKg: 750, lugarEntrega: "Bucaramanga.", termsVersion: "2026-10-07", temporada: null }).map((x) => x.texto).join(" ");
+  check("documento · el contrato dice «identificado(a) con CC …» y define Cherry Picked; la firma lo pide, el servidor lo valida, lo firma en la huella y lo guarda, y el OCP lo enseña",
+    conDoc.includes("Ana Pérez, identificado(a) con CC 1.098.765.432") && conDoc.includes("Cherry Picked —la vitrina de CTCx donde su café se ofrece a compradores con su nombre y su finca—") &&
+    firma.includes("TIPOS_DE_DOCUMENTO.map((t) =>") && firma.includes("doc.ok && leido") && firma.includes("documentoTipo: doc.tipo, documentoNumero: doc.numero") &&
+    acc.includes("const documento = validarDocumento(firma.documentoTipo, firma.documentoNumero);") && acc.includes("productorDocumento: documentoDelFirmante(documento.tipo, documento.numero),") &&
+    acc.includes("producer_signer_doc_tipo: documento.tipo,") && acc.includes("producer_signer_doc_numero: documento.numero,") &&
+    pag.includes("producer_signer_doc_tipo, producer_signer_doc_numero") && pag.includes("productorDocumento: documentoFirmante,") &&
+    lee("src/app/ocp/(app)/contratos/[id]/page.tsx").includes("producer_signer_name, producer_signer_doc_tipo, producer_signer_doc_numero") &&
+    /purchase_contracts_signer_doc_pareja_check/.test(lee("docs/migraciones/2026-10-08_documento_del_firmante.sql")));
+
+  const sv = simularVentasDeVentana({ declaradoKg: 1250, copKg: 26000, semanas: 13, sacoKg: 70, ventaPct: 60, patron: "parejo", fncCargaRef: 2250000 });
+  check("escenario · es un supuesto del productor; lo único seguro (el saco) va aparte; «Más que vendiéndolo a la FNC» cuenta lo vendido MÁS el saco y lo dice",
+    calc.includes("es un supuesto suyo, no un pronóstico de CTCx") && calc.includes("Lo único seguro con la firma:") && calc.includes("Supongamos que CTCx vende el") &&
+    calc.includes("Si se vendiera el") && calc.includes("Recibiría en total") && calc.includes("kg vendidos en el escenario + ${nombreSaco} de") &&
+    !calc.includes("por lo vendido a CTCx") && !calc.includes("CTCx termina vendiendo el <b>") &&
+    sv.diferenciaFncCop === Math.round(sv.ingresoCop - Math.round((sv.vendidoKg + 70) * (2250000 / 125))));
+
+  const m = glos.match(/MULTIPLICADOR_DEL_GRADO = \{ Black: ([\d.]+), Red: ([\d.]+), Blue: ([\d.]+), Gold: ([\d.]+) \}/);
+  check("palabras · el glosario de cada oferta define PVC, CPS, carga, grado, Cherry Picked, CTCx Selection, ventana, saco, retiro libre, bache y flete; sus multiplicadores son los del modelo",
+    ["\"PVC\"", "\"CPS\"", "\"Carga\"", "\"Grado\"", "\"Cherry Picked\"", "\"CTCx Selection\"", "\"Ventana\"", "\"Saco\"", "\"Retiro libre\"", "\"Bache\"", "\"Flete a CTCx\""].every((w) => glos.includes(w)) &&
+    !!m && Number(m[1]) === PARAMS_V211.mult.Black && Number(m[2]) === PARAMS_V211.mult.Red && Number(m[3]) === PARAMS_V211.mult.Blue && Number(m[4]) === PARAMS_V211.mult.Gold &&
+    tab.includes("<GlosarioDelTrato grado={offer.grade} />") && tab.includes("<b>Cherry Picked</b> es la vitrina de CTCx"));
+
+  // CTCx, no CTC: en lo que ve el productor no queda un «CTC» suelto (fuera de comentarios). Quedan a propósito «CTC Tech» (pilar),
+  // «CTC UID» y los códigos CTC-L/F/P (identificadores), los nombres de un estándar y de un sello («Estándar CTC…», «…Voluntario CTC»),
+  // y los `includes("CTC")` que reconocen los mensajes de los guardas de la base.
+  const { readdirSync, statSync } = await import("node:fs");
+  const recorrer = (dir) => readdirSync(new URL(`../${dir}`, import.meta.url)).flatMap((n) => {
+    const rel = `${dir}/${n}`;
+    return statSync(new URL(`../${rel}`, import.meta.url)).isDirectory() ? recorrer(rel) : /\.(ts|tsx)$/.test(n) ? [rel] : [];
+  });
+  const suelto = /(?<![A-Za-z0-9_\-])(?<!Estándar )(?<!Voluntario )CTC(?![A-Za-z0-9_\-])(?! Tech)(?! UID)(?! Parchment)/;
+  const quedan = [];
+  for (const rel of [...recorrer("src/components/kaffetal-regal"), ...recorrer("src/app/kaffetal-regal"), ...recorrer("src/lib/kaffetal")]) {
+    lee(rel).split("\n").forEach((l, i) => {
+      if (/^\s*(\/\/|\*|\/\*|\{\/\*)/.test(l) || l.includes('includes("CTC")')) return;
+      if (suelto.test(l)) quedan.push(`${rel}:${i + 1}`);
+    });
+  }
+  check(`marca · Kaffetal Regal dice CTCx, no CTC (quedan ${quedan.length}${quedan.length ? `: ${quedan.slice(0, 4).join(", ")}` : ""})`, quedan.length === 0);
 }
 
 if (fallos.length) {

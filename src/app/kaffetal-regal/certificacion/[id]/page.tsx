@@ -56,7 +56,7 @@ export default async function ProducerCertPage({ params }: { params: Promise<{ i
 
   if (!finca || finca.producer_id !== user.id) return gate("No encontramos esta finca en su cuenta.");
   if (finca.status !== "approved" || !finca.eudr_cert_shared) {
-    return gate("La certificación EUDR de esta finca todavía no está disponible. CTC la compartirá cuando esté lista.");
+    return gate("La certificación EUDR de esta finca todavía no está disponible. CTCx la compartirá cuando esté lista.");
   }
 
   const evidenceFiles = finca.eudr_evidence_files ?? {};

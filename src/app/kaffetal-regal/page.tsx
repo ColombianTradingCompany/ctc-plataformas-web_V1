@@ -10,8 +10,8 @@ export const generateMetadata = superficieConOverrides({
   // servía para la pestaña del navegador, pero es lo que se lee DEBAJO del
   // título en WhatsApp: ahí tiene que decirle al productor qué gana entrando.
   description:
-    "El portal del caficultor colombiano: registre su finca y su lote, levante la Ficha Técnica una sola vez, compita en la Jornada de Arena por su Grado de Calidad CTC y véndalo en Europa con contrato y precio pactado por escrito.",
-  siteName: "Kaffetal Regal · CTC",
+    "El portal del caficultor colombiano: registre su finca y su lote, levante la Ficha Técnica una sola vez, compita en la Jornada de Arena por su Grado de Calidad CTCx y véndalo en Europa con contrato y precio pactado por escrito.",
+  siteName: "Kaffetal Regal · CTCx",
   image: "kaffetal-regal.jpg",
   imageAlt: "Logotipo de Kaffetal Regal sobre fondo verde",
 });

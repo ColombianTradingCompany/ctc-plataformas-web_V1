@@ -56,7 +56,7 @@ export function Header({ onLogin }: { onLogin: () => void }) {
           <span>
             <span className={styles.name}>Kaffetal Regal</span>
             <span className={styles.by}>
-              by CTC <Image src="/images/shared/ctc-logo-parrot.jpg" alt="Colombian Trading Company" width={1484} height={1662} />
+              by CTCx <Image src="/images/shared/ctc-logo-parrot.jpg" alt="Colombian Trading Company" width={1484} height={1662} />
             </span>
           </span>
         </a>

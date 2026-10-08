@@ -34,35 +34,35 @@ export function ShipmentInstructionsModal({
     <Modal open={open} onClose={onClose} ariaLabel="Ficha completa">
       <h3>🎉 ¡Ficha completa!</h3>
       <p>
-        Su lote <span className="mono">{lotCode}</span> quedó registrado en CTC con toda su información: identidad, origen,
+        Su lote <span className="mono">{lotCode}</span> quedó registrado en CTCx con toda su información: identidad, origen,
         certificados, debida diligencia EUDR y fotos. Esto ya no cuesta nada y no lo compromete a nada más.
       </p>
 
       <p style={{ fontWeight: 700, marginBottom: 6 }}>Lo que ya está</p>
       <ul style={{ margin: "0 0 14px", paddingLeft: 18, fontSize: 13.5, color: "var(--muted)", lineHeight: 1.5 }}>
         <li>
-          <b style={{ color: "var(--ink)" }}>Ficha Técnica enviada.</b> CTC la revisa (la Visa documental); mientras tanto usted puede seguir
+          <b style={{ color: "var(--ink)" }}>Ficha Técnica enviada.</b> CTCx la revisa (la Visa documental); mientras tanto usted puede seguir
           viéndola, ya bloqueada.
         </li>
         <li>
           {visa === "lista" ? (
             <>
-              <b style={{ color: "var(--ink)" }}>Visa EUDR lista.</b> El Pasaporte EUDR de su finca está vigente y este lote lo hereda: cuando CTC
+              <b style={{ color: "var(--ink)" }}>Visa EUDR lista.</b> El Pasaporte EUDR de su finca está vigente y este lote lo hereda: cuando CTCx
               declare apta la Ficha, el documento de la Visa se descarga desde la tarjeta del lote en «Mi Perfil».
             </>
           ) : (
             <>
               <b style={{ color: "var(--ink)" }}>Visa EUDR pendiente del Pasaporte de su finca.</b> La Visa del lote se hereda del Pasaporte EUDR de
-              la finca de origen; en cuanto CTC lo otorgue, el lote la recibe solo y el documento aparece en su tarjeta.
+              la finca de origen; en cuanto CTCx lo otorgue, el lote la recibe solo y el documento aparece en su tarjeta.
             </>
           )}
         </li>
       </ul>
 
-      <p style={{ fontWeight: 700, marginBottom: 6 }}>Lo que sigue, solo si quiere que CTC evalúe este café</p>
+      <p style={{ fontWeight: 700, marginBottom: 6 }}>Lo que sigue, solo si quiere que CTCx evalúe este café</p>
       <ol style={{ margin: "0 0 14px", paddingLeft: 18, fontSize: 13.5, color: "var(--muted)", lineHeight: 1.5 }}>
         <li>
-          Pida la evaluación en la pestaña <b>«Evaluar mi Café»</b> («Solicitar evaluación»). CTC le emite una factura.
+          Pida la evaluación en la pestaña <b>«Evaluar mi Café»</b> («Solicitar evaluación»). CTCx le emite una factura.
         </li>
         <li>
           La evaluación vale <b>{formatCop(ARENA_FEE_COP)}</b> por lote y cosecha; toda solicitud desde su panel nace con una coinversión de CTCx del{" "}
@@ -70,10 +70,10 @@ export function ShipmentInstructionsModal({
           {formatCop(conMaxima)}). Cubre la catación de un Q-Grader certificado, el factor de rendimiento y el feedback, salga o no galardonado.
         </li>
         <li>
-          Envíe <b>2 kg de café pergamino seco</b> marcados con <span className="mono">{shortRef}</span>, <b>contra entrega</b>: el flete lo paga CTC al
+          Envíe <b>2 kg de café pergamino seco</b> marcados con <span className="mono">{shortRef}</span>, <b>contra entrega</b>: el flete lo paga CTCx al
           recibir. Las instrucciones imprimibles traen el empaque, la dirección y la guía.
         </li>
-        <li>Con la factura pagada y la muestra recibida, su lote entra en fila: el Q-Grader lo cata, CTC confirma el grado y, si aplica, le hace una oferta.</li>
+        <li>Con la factura pagada y la muestra recibida, su lote entra en fila: el Q-Grader lo cata, CTCx confirma el grado y, si aplica, le hace una oferta.</li>
       </ol>
 
       <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>

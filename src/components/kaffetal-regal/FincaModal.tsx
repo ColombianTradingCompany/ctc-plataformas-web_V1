@@ -85,9 +85,9 @@ const EUDR_INFO = {
   custodia:
     "Marque cada etapa física por la que pasa el café de esta finca entre el predio y la exportación. Entre más procesadores e intermediarios haya en el camino, mayor es el riesgo de mezcla con café de origen desconocido — una cadena corta y bien separada facilita demostrar riesgo insignificante (Guía CE, Art. 10(2)(i)).",
   separacion:
-    "El EUDR no acepta mezcla de café de origen conocido con desconocido, ni contabilidad de balance de masas: el café físico debe poder conectarse con esta finca. Describa cómo se mantiene separado e identificado, o use el estándar de CTC.",
+    "El EUDR no acepta mezcla de café de origen conocido con desconocido, ni contabilidad de balance de masas: el café físico debe poder conectarse con esta finca. Describa cómo se mantiene separado e identificado, o use el estándar de CTCx.",
   ctcStandard:
-    "Estándar CTC de Almacenamiento de Pergamino (CTC Parchment Storage Standard): el pergamino se almacena en sacos de yute/fique con bolsa interior hermética (liner tipo GrainPro) que protege el grano de humedad y olores. Cada saco lleva una tarjeta indicadora de humedad (HIC) y un código QR único vinculado al código CTC del lote, que conecta el saco físico con su finca de origen y su expediente EUDR — la separación física y documental queda cubierta de una vez.",
+    "Estándar CTC de Almacenamiento de Pergamino (CTC Parchment Storage Standard): el pergamino se almacena en sacos de yute/fique con bolsa interior hermética (liner tipo GrainPro) que protege el grano de humedad y olores. Cada saco lleva una tarjeta indicadora de humedad (HIC) y un código QR único vinculado al código CTCx del lote, que conecta el saco físico con su finca de origen y su expediente EUDR — la separación física y documental queda cubierta de una vez.",
   complejidad:
     "Cuántos actores tocan el café entre la finca y el operador que lo coloca en la UE: acopiadores, cooperativas, trilladoras, comercializadores. Una cadena con pocos eslabones y actores conocidos es de complejidad baja.",
   riesgoProducto:
@@ -101,7 +101,7 @@ const EUDR_INFO = {
   nivelRiesgo:
     "Conclusión de la evaluación: si tras revisar todos los criterios no hay motivo de preocupación de incumplir el reglamento, el riesgo es insignificante y el café de esta finca puede colocarse. Si CUALQUIER criterio revela riesgo no insignificante, debe mitigarse antes de continuar (Art. 2(26); Art. 10).",
   mitigacion:
-    "Describa las medidas concretas para llevar el riesgo a insignificante: recolectar geolocalización faltante, auditoría independiente, verificación en campo, cambio de proveedor. CTC evaluará si la mitigación reduce el riesgo a insignificante (Art. 11).",
+    "Describa las medidas concretas para llevar el riesgo a insignificante: recolectar geolocalización faltante, auditoría independiente, verificación en campo, cambio de proveedor. CTCx evaluará si la mitigación reduce el riesgo a insignificante (Art. 11).",
 };
 
 // Read-out coloreado para un nivel de riesgo derivado. Bajo = verde, Medio /
@@ -698,7 +698,7 @@ export function FincaEditorBody({
       </div>
       {ctcAdjustments.length > 0 && (
         <div style={{ background: "#FEF3C7", border: "1px solid #FCD34D", borderRadius: 8, padding: "9px 12px", margin: "8px 0", fontSize: 12.5, color: "#92400E" }}>
-          <b>CTC ajustó su evaluación de estos campos:</b> {ctcAdjustments.join(" · ")}. Su respuesta original se conserva; los
+          <b>CTCx ajustó su evaluación de estos campos:</b> {ctcAdjustments.join(" · ")}. Su respuesta original se conserva; los
           valores que muestra este formulario son los suyos y puede actualizarlos.
         </div>
       )}
@@ -728,7 +728,7 @@ export function FincaEditorBody({
       {soloLectura && (
         <p style={{ background: "#EEF3EA", border: "1px dashed var(--primary)", borderRadius: 8, padding: "9px 12px", margin: "8px 0", fontSize: 12.5, color: "var(--ink)" }}>
           🔒 Esta finca ya tiene su Pasaporte: aquí puede <b>revisar</b> sus datos, pero no editarlos. Para corregir algo, vuelva al panel y use{" "}
-          <b>«Solicitar revisión de datos»</b> — CTC aplica el cambio.
+          <b>«Solicitar revisión de datos»</b> — CTCx aplica el cambio.
         </p>
       )}
       <fieldset disabled={soloLectura} style={{ border: "none", padding: 0, margin: 0, minWidth: 0 }}>
@@ -1106,7 +1106,7 @@ export function FincaEditorBody({
             </div>
             {eudr.eudrCustodyMethod === "ctc_standard" && (
               <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>
-                ✓ Sacos de yute con liner hermético, tarjeta indicadora de humedad (HIC) y código QR vinculado al código CTC — la separación física y documental queda cubierta por el estándar.
+                ✓ Sacos de yute con liner hermético, tarjeta indicadora de humedad (HIC) y código QR vinculado al código CTCx — la separación física y documental queda cubierta por el estándar.
               </p>
             )}
             {eudr.eudrCustodyMethod === "custom" && (
@@ -1229,7 +1229,7 @@ export function FincaEditorBody({
                 placeholder="Geolocalización adicional, auditoría independiente, cambio de proveedor, verificación en campo…"
               />
               <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>
-                Describa lo que hizo para mitigar el riesgo. CTC evaluará si la mitigación lo reduce a insignificante y registrará al responsable de esa determinación.
+                Describa lo que hizo para mitigar el riesgo. CTCx evaluará si la mitigación lo reduce a insignificante y registrará al responsable de esa determinación.
               </p>
             </div>
           )}
@@ -1350,19 +1350,19 @@ export function FincaEditorBody({
               value={helpText}
               onChange={(e) => setHelpText(e.target.value)}
               rows={3}
-              placeholder="Describa su duda o problema. CTC lo verá y le responderá en 'Retroalimentación y ayuda'."
+              placeholder="Describa su duda o problema. CTCx lo verá y le responderá en 'Retroalimentación y ayuda'."
               autoFocus
             />
             <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
               <button className="btn btn-sm btn-solid" onClick={sendHelp} disabled={!helpText.trim() || helpSending}>
-                {helpSending ? "Enviando…" : "Enviar a CTC"}
+                {helpSending ? "Enviando…" : "Enviar a CTCx"}
               </button>
               <button className="btn btn-sm" onClick={() => setHelpOpen(false)}>Cancelar</button>
             </div>
           </div>
         )}
         {finca && (
-          <button className={styles.fabHelp} onClick={() => setHelpOpen((v) => !v)} aria-label="Pedir ayuda a CTC">
+          <button className={styles.fabHelp} onClick={() => setHelpOpen((v) => !v)} aria-label="Pedir ayuda a CTCx">
             <span className={styles.fabIcon} aria-hidden>💬</span>
             <span className={styles.fabLabel}>Ayuda</span>
           </button>
@@ -1947,13 +1947,13 @@ function CertCard({
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <b style={{ fontSize: 13 }}>{label}</b>
         {cert.status === "retirada" ? (
-          <span style={{ fontSize: 11.5, color: "var(--red, #B3261E)", fontWeight: 700 }}>retirada del Pasaporte por CTC</span>
+          <span style={{ fontSize: 11.5, color: "var(--red, #B3261E)", fontWeight: 700 }}>retirada del Pasaporte por CTCx</span>
         ) : cert.status === "evidencia_pedida" ? (
           <span style={{ fontSize: 11.5, color: "#B45309", fontWeight: 700 }}>
-            CTC pidió el respaldo{cert.recordatorios > 0 ? ` · recordatorio ${cert.recordatorios} de ${MAX_RECORDATORIOS}` : ""}
+            CTCx pidió el respaldo{cert.recordatorios > 0 ? ` · recordatorio ${cert.recordatorios} de ${MAX_RECORDATORIOS}` : ""}
           </span>
         ) : cert.verifiedByCtc || cert.status === "corroborada" ? (
-          <span style={{ fontSize: 11.5, color: "#2E7D52" }}>✓ corroborado por CTC</span>
+          <span style={{ fontSize: 11.5, color: "#2E7D52" }}>✓ corroborado por CTCx</span>
         ) : hasValidity ? (
           <span style={{ fontSize: 11.5, color: "var(--muted)" }}>
             declarado · vigencia {cert.validFrom} → {cert.validTo}
@@ -1977,7 +1977,7 @@ function CertCard({
         </button>
       </div>
       {cert.notaCtc && cert.status !== "corroborada" && (
-        <p style={{ fontSize: 12, color: "#B45309", margin: "6px 0 0" }}>Nota de CTC: {cert.notaCtc}</p>
+        <p style={{ fontSize: 12, color: "#B45309", margin: "6px 0 0" }}>Nota de CTCx: {cert.notaCtc}</p>
       )}
       {cert.certNumber !== "" && !editing && (
         <p style={{ fontSize: 12, color: "var(--muted)", margin: "4px 0 0" }}>N.º {cert.certNumber}</p>
@@ -2021,7 +2021,7 @@ function CertCard({
       </FileDrop>
       {reg && (
         <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "6px 0 0" }}>
-          CTC lo contrasta contra:{" "}
+          CTCx lo contrasta contra:{" "}
           <a href={reg.url} target="_blank" rel="noopener noreferrer">
             {reg.registry}
           </a>

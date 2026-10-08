@@ -19,6 +19,38 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.188] — 2026-10-08 (commit pendiente)
+
+- **Cambiado**: la revisión de una oferta en «Contratos y Compras» (feedback de revisión, seis puntos). **El escenario es un
+  supuesto del productor, no un pronóstico de CTCx**: la sección se titula «Simule un escenario de ventas · es un supuesto suyo»,
+  la barra dice «Supongamos que CTCx vende el X % (usted elige el supuesto)», las cifras van en condicional («Si se vendiera…»,
+  «Se vendería», «Recibiría en total» = el saco + lo vendido) y la gráfica separa la firma (seguro) de las semanas (supuesto). Un
+  recuadro verde dice **lo único seguro con la firma: el saco de 70 kg** y su valor, con el pago 60/40.
+- **Corregido**: «Más que vendiéndolo a la FNC» contaba el saco pero decía «por lo vendido a CTCx»; ahora dice qué kilos cuenta
+  («por 520 kg: 450 kg vendidos en el escenario + el saco de 70 kg»), y «Precio frente a la FNC» dice que es por kilo.
+- **Añadido**: **«Las palabras de este trato»** (`GlosarioDelTrato.tsx`), en cada oferta de Cherry Picked o de CTCx Selection: PVC,
+  CPS, carga, grado (los multiplicadores del modelo y la línea del grado del lote), Cherry Picked, CTCx Selection, ventana, saco,
+  retiro libre, bache, Flete a CTCx y 60/40. La oferta dice «CPS (café pergamino seco)», «carga (125 kg)» y «del PVC (el precio de
+  referencia de CTCx)», y el contrato define Cherry Picked (la vitrina de CTCx) y CTCx Selection (las compras directas de CTCx).
+- **Añadido**: **el documento de quien firma**. Al firmar se escribe el tipo (CC por defecto; CE, PPT, pasaporte o NIT) y el número;
+  el contrato dice «identificado(a) con CC 1.098.765.432» y el documento entra al texto firmado y a su huella. El servidor lo valida
+  (`documento.ts`) y lo guarda en `purchase_contracts.producer_signer_doc_tipo` · `producer_signer_doc_numero` (con checks de forma y
+  de pareja); la página del contrato y su vista en el OCP lo muestran junto a la firma. Texto del contrato `2026-10-08.2` (no hay contratos firmados).
+- **Corregido**: **las fechas**. «Vence el 4/1/2027» se podía leer como 4 de enero o 1 de abril, y además era el día en UTC: la oferta
+  vence el 3 de enero al terminar el día en Colombia. `fechas.ts` (`fechaParaElProductor`, en la hora de Bogotá y con el mes en letras)
+  reemplaza las fechas numéricas de Kaffetal Regal: la oferta, el contrato, los chequeos, los documentos EUDR, la Ficha, la
+  retroalimentación, el aviso de oferta vencida y los recordatorios de la mora. La ventana dice su duración exacta («88 días · 12
+  semanas y 4 días»), y las semanas de venta de la calculadora cuentan la semana parcial (`Math.ceil`).
+- **Corregido**: **CTCx, no CTC**, en lo que ve el productor: 223 reemplazos en 61 archivos de Kaffetal Regal y en los avisos del OCP
+  al productor. Quedan a propósito la razón social, «CTC Tech», «CTC UID», los códigos CTC-L/F/P, los nombres de un estándar y de un
+  sello, y los `includes("CTC")` que reconocen los mensajes de los guardas de la base. La Ficha toma su razón social y su correo de
+  `legal.ts` (decía info@colombiantradingcompany.com; el de la casa es info@ctcexport.com).
+- **Datos**: migración `documento_del_firmante` (dos columnas nulas y tres checks en `purchase_contracts`; 0 filas tocadas).
+- **Seguridad**: `qa-ciclos` 17.ª sección (fechas, duración, documento, contrato, escenario, glosario y la marca en todo Kaffetal Regal);
+  `qa-trato` con la versión nueva del texto y la firma que pide el documento; `qa-evaluaciones`, `qa-registro` y
+  `qa-solicitud-evaluacion` leen los textos con CTCx.
+- **Docs**: charters `kaffetal-regal`, `consolas`; ALINEACION §3.
+
 ## [V5.187] — 2026-10-08 (commit 7aa3d8f)
 
 - **Corregido**: la sigla del PVC. El contrato decía «Precio de Valor de Compra (PVC)»; ahora dice **«Ponderación de Valor de

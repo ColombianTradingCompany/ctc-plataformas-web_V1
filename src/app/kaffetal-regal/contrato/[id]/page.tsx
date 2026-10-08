@@ -6,6 +6,7 @@ import { CONTRATO_VERSION, clausulasDelContrato, textoDelContrato, type DatosDel
 import type { RangosDeCalidad } from "@/lib/trato/despachos";
 import { LUGAR_DE_ENTREGA_POR_DEFECTO } from "@/lib/trato/terminos";
 import { AVISO_SIN_CONTRATO, contratoFirmado, textoDeMarca } from "@/lib/kaffetal/blindaje";
+import { documentoDelFirmante, esTipoDeDocumento } from "@/lib/trato/documento";
 import { ctcLotReference } from "@/components/kaffetal-regal/data";
 import { CONTRACT_STATUS_LABEL } from "@/components/kaffetal-regal/data";
 import { MarcaDeAgua } from "@/components/kaffetal-regal/blindaje/MarcaDeAgua";
@@ -37,7 +38,9 @@ function gate(message: string) {
   );
 }
 
-const fecha = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleString("es-CO", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : null);
+// V5.188: la hora de la firma, en la de Colombia (el servidor corre en UTC).
+const fecha = (iso: string | null | undefined) =>
+  iso ? `${new Date(iso).toLocaleString("es-CO", { timeZone: "America/Bogota", day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })} (hora de Colombia)` : null;
 
 export default async function ContratoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -51,7 +54,7 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
   const { data: raw } = await service
     .from("purchase_contracts")
     .select(
-      "id, lot_id, status, grade_snapshot, price_per_kg_locked, quantity_frozen_kg, terms_version, lugar_entrega, signed_at, producer_signed_at, producer_signer_name, producer_signature_path, contract_text_version, contract_text_sha256, offer_id, vigencia_desde, vigencia_hasta, retiro_libre_pct, ventana_tipo, ventana_ciclos, precio_regla, sin_retiro, saco_kg, minimo_kg, renovacion_de, calidad_snapshot, flete_region, flete_carga, lots(name, producer_id), lot_offers!purchase_contracts_offer_id_fkey(season_label, kind)"
+      "id, lot_id, status, grade_snapshot, price_per_kg_locked, quantity_frozen_kg, terms_version, lugar_entrega, signed_at, producer_signed_at, producer_signer_name, producer_signer_doc_tipo, producer_signer_doc_numero, producer_signature_path, contract_text_version, contract_text_sha256, offer_id, vigencia_desde, vigencia_hasta, retiro_libre_pct, ventana_tipo, ventana_ciclos, precio_regla, sin_retiro, saco_kg, minimo_kg, renovacion_de, calidad_snapshot, flete_region, flete_carga, lots(name, producer_id), lot_offers!purchase_contracts_offer_id_fkey(season_label, kind)"
     )
     .eq("id", id)
     .maybeSingle();
@@ -80,6 +83,8 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
     signed_at: string | null;
     producer_signed_at: string | null;
     producer_signer_name: string | null;
+    producer_signer_doc_tipo: string | null;
+    producer_signer_doc_numero: string | null;
     producer_signature_path: string | null;
     contract_text_version: string | null;
     contract_text_sha256: string | null;
@@ -90,6 +95,8 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
   const lote = c ? ((Array.isArray(c.lots) ? c.lots[0] : c.lots) ?? null) : null;
   if (!c || !lote || lote.producer_id !== user.id) return gate("No encontramos este contrato en su cuenta.");
   if (!c.producer_signed_at) return gate("Este contrato es anterior a la firma digital: lo encuentra en «Contratos y Compras».");
+  const documentoFirmante =
+    c.producer_signer_doc_numero && esTipoDeDocumento(c.producer_signer_doc_tipo) ? documentoDelFirmante(c.producer_signer_doc_tipo, c.producer_signer_doc_numero) : null;
 
   const oferta = (Array.isArray(c.lot_offers) ? c.lot_offers[0] : c.lot_offers) ?? null;
   // V5.175: la ventana, el saco, el mínimo, la calidad y (V5.177) el Flete a CTCx, tal como quedaron guardados al firmar (la huella los cita).
@@ -108,7 +115,8 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
     calidad: c.calidad_snapshot ?? null,
     flete: fleteDeLaFila(c),
     productorNombre: c.producer_signer_name ?? "—",
-    productorDocumento: null,
+    // V5.188: el documento de quien firmó entra al texto (y a su huella) igual que al firmar.
+    productorDocumento: documentoFirmante,
     loteNombre: lote.name,
     loteReferencia: ctcLotReference(c.lot_id),
     grado: c.grade_snapshot ?? "—",
@@ -157,6 +165,7 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
             <img src={firmaUrl.signedUrl} alt={`Firma de ${c.producer_signer_name}`} style={{ height: 70, width: "auto", display: "block", marginTop: -78, background: "transparent" }} />
           )}
           <b>{c.producer_signer_name}</b>
+          {documentoFirmante && <div style={{ fontSize: 12.5 }}>{documentoFirmante}</div>}
           <div style={{ fontSize: 12, color: "#5B5568" }}>El Productor · firmó el {fecha(c.producer_signed_at)}</div>
         </div>
         <div style={{ borderTop: "1px solid #17121F", paddingTop: 8 }}>

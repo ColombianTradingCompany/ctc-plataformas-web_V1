@@ -15,7 +15,7 @@ import type { ReglaDePrecio } from "./ventanas";
 import type { RangosDeCalidad } from "./despachos";
 import { fletePorKg, REGION_DE_FLETE_LABEL, type FleteDelTrato } from "./flete";
 
-export const CONTRATO_VERSION = "2026-10-08.1"; // V5.187: la sigla dice Ponderación de Valor de Cosecha; «con base en» el PVC
+export const CONTRATO_VERSION = "2026-10-08.2"; // V5.188: Cherry Picked y CTCx Selection definidos; el documento de quien firma (V5.187: la sigla del PVC)
 
 export type VentanaDelContrato = { tipo: "ciclo" | "extendida"; desde: string; hasta: string; ciclos: string[]; retiroLibrePct: number; precio: ReglaDePrecio };
 
@@ -95,7 +95,7 @@ export function clausulasDelContrato(d: DatosDelContrato): ClausulaDelContrato[]
     return numerar(
       [
         partes,
-        { titulo: "", texto: `CTCx compra al Productor ${kg(d.declaradoKg)} de café pergamino seco (CPS) del lote «${d.loteNombre}» (${d.loteReferencia}), Grado CTCx ${grado}, con la calidad con que fue evaluado. Es una compra en firme de CTCx Selection.` },
+        { titulo: "", texto: `CTCx compra al Productor ${kg(d.declaradoKg)} de café pergamino seco (CPS) del lote «${d.loteNombre}» (${d.loteReferencia}), Grado CTCx ${grado}, con la calidad con que fue evaluado. Es una compra en firme de CTCx Selection, las compras directas de CTCx.` },
         { titulo: "", texto: `El precio acordado es ${cop(d.copKg)} por kg de CPS (${cop(d.copKg * CARGA_KG)} por carga), un precio de compra directa que no es la Ponderación de Valor de Cosecha (PVC): es hasta el PVC vigente menos el 8 %, fijado en la negociación${fleteEnElPrecio(d.flete)}. El total es ${cop(d.copKg * d.declaradoKg)}.` },
         { titulo: "", texto: `${d.lugarEntrega}${d.flete ? ` ${despachoConFlete(d.flete)}` : ""} CTCx registra el recibo, el peso y la humedad de cada entrega en la plataforma.` },
         { titulo: "", texto: "CTCx paga cada compra recibida en la primera semana del mes siguiente, por el medio de pago registrado por el Productor." },
@@ -131,7 +131,7 @@ export function clausulasDelContrato(d: DatosDelContrato): ClausulaDelContrato[]
   return numerar(
     [
       partes,
-      { titulo: "", texto: `El Productor participa en Cherry Picked con café pergamino seco (CPS) del lote «${d.loteNombre}» (${d.loteReferencia}), Grado CTCx ${grado}${d.temporada ? `, temporada ${d.temporada}` : ""}, con la calidad con que fue evaluado y galardonado.` },
+      { titulo: "", texto: `El Productor participa en Cherry Picked —la vitrina de CTCx donde su café se ofrece a compradores con su nombre y su finca— con café pergamino seco (CPS) del lote «${d.loteNombre}» (${d.loteReferencia}), Grado CTCx ${grado}${d.temporada ? `, temporada ${d.temporada}` : ""}, con la calidad con que fue evaluado y galardonado.` },
       { titulo: "", texto: cantidad },
       { titulo: "", texto: compra },
       { titulo: "", texto: ventas },

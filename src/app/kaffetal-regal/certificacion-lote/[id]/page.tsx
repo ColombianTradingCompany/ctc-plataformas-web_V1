@@ -114,7 +114,7 @@ export default async function LotEudrCertPage({ params }: { params: Promise<{ id
     contribJoins.length ? contribJoins : lot.fincas ? [{ f: lot.fincas, kg: null }] : [];
   const sourceFincas = originJoins.map((x) => toFincaEudrFields(x.f));
   if (lotEudrStatus(lot, sourceFincas).code !== "eudr_ready") {
-    return gate("Este lote todavía no completa su debida diligencia EUDR. La certificación estará disponible cuando la(s) finca(s) estén Aptas y CTC determine el nivel de riesgo.");
+    return gate("Este lote todavía no completa su debida diligencia EUDR. La certificación estará disponible cuando la(s) finca(s) estén Aptas y CTCx determine el nivel de riesgo.");
   }
 
   const [producers, { data: commsData }] = await Promise.all([

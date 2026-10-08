@@ -434,7 +434,7 @@ export async function markLotApto(lotId: string): Promise<{ ok: true } | { ok: f
     producer_id: lot.producer_id,
     context_label: `Lote ${lot.name}`,
     lot_id: lotId,
-    note: "¡Su lote fue declarado APTO tras la evaluación documental! Ya puede solicitar su evaluación CTC desde «Evaluar mi Café» en su panel.",
+    note: "¡Su lote fue declarado APTO tras la evaluación documental! Ya puede solicitar su evaluación CTCx desde «Evaluar mi Café» en su panel.",
     created_by: adminId,
   });
 
@@ -538,7 +538,7 @@ export async function markLotNoApto(lotId: string, reason: string): Promise<{ ok
     producer_id: lot.producer_id,
     context_label: `Lote ${lot.name}`,
     lot_id: lotId,
-    note: `Su lote fue declarado No Apto en la evaluación documental. Motivo: ${cleanReason}. Puede escribirnos por este medio — si se corrige lo señalado, CTC puede reabrir la evaluación.`,
+    note: `Su lote fue declarado No Apto en la evaluación documental. Motivo: ${cleanReason}. Puede escribirnos por este medio — si se corrige lo señalado, CTCx puede reabrir la evaluación.`,
     created_by: adminId,
   });
 
@@ -573,7 +573,7 @@ export async function revertNoApto(lotId: string): Promise<{ ok: true } | { ok: 
     producer_id: lot.producer_id,
     context_label: `Lote ${lot.name}`,
     lot_id: lotId,
-    note: "CTC reabrió la evaluación documental de su lote — está nuevamente en revisión.",
+    note: "CTCx reabrió la evaluación documental de su lote — está nuevamente en revisión.",
     created_by: adminId,
   });
 
@@ -879,7 +879,7 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
       producer_id: before.producer_id,
       context_label: `Finca ${before.name}`,
       finca_id: fincaId,
-      note: `CTC actualizó la información EUDR: ${summary}.`,
+      note: `CTCx actualizó la información EUDR: ${summary}.`,
       created_by: adminId,
     });
   }
@@ -1012,7 +1012,7 @@ export async function deleteAbandonedLot(lotId: string): Promise<{ ok: true } | 
   await service.from("producer_comm_log").insert({
     producer_id: lot.producer_id,
     context_label: `Lote ${lot.name}`,
-    note: `CTC retiró el borrador de lote "${lot.name}" por inactividad (más de ${ABANDONED_DAYS} días sin avances). Puede registrarlo de nuevo cuando quiera retomarlo.`,
+    note: `CTCx retiró el borrador de lote "${lot.name}" por inactividad (más de ${ABANDONED_DAYS} días sin avances). Puede registrarlo de nuevo cuando quiera retomarlo.`,
     created_by: adminId,
   });
 
@@ -1072,7 +1072,7 @@ export async function deleteAbandonedFinca(fincaId: string): Promise<{ ok: true 
   await service.from("producer_comm_log").insert({
     producer_id: finca.producer_id,
     context_label: `Finca ${finca.name}`,
-    note: `CTC retiró el registro de la finca "${finca.name}" por inactividad (más de ${ABANDONED_DAYS} días sin avances). Puede registrarla de nuevo cuando quiera retomarla.`,
+    note: `CTCx retiró el registro de la finca "${finca.name}" por inactividad (más de ${ABANDONED_DAYS} días sin avances). Puede registrarla de nuevo cuando quiera retomarla.`,
     created_by: adminId,
   });
 

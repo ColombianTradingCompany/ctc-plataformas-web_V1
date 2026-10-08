@@ -128,7 +128,7 @@ const HOY = new Date("2026-10-01T12:00:00Z");
   check("y la tabla del OCP rotula los pasos igual", etapas.includes('export const PASOS_DE_LA_FICHA = ["FT", "FT2", "FOTO", "EUDR"] as const;'));
   // El productor VE el estado de cada certificación; el Pasaporte impreso no lista las retiradas.
   const modal = lee("src/components/kaffetal-regal/FincaModal.tsx");
-  check("el productor ve «retirada del Pasaporte» y «CTC pidió el respaldo»", modal.includes("retirada del Pasaporte por CTC") && modal.includes("CTC pidió el respaldo"));
+  check("el productor ve «retirada del Pasaporte» y «CTCx pidió el respaldo»", modal.includes("retirada del Pasaporte por CTCx") && modal.includes("CTCx pidió el respaldo"));
   check("con el conteo de recordatorios de la fuente", modal.includes("MAX_RECORDATORIOS") && modal.includes('from "@/lib/registro/reglas"'));
   const dossier = lee("src/components/kaffetal-regal/EudrDossierDoc.tsx");
   check("el Pasaporte impreso deja fuera las certificaciones retiradas", dossier.includes('c.status !== "retirada"'));

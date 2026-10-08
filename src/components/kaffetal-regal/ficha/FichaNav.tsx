@@ -50,7 +50,7 @@ export function FichaNav({
               className={`${styles.item} ${active === p.id ? styles.active : ""} ${locked ? styles.locked : ""} ${!reachable ? styles.disabled : ""}`}
               onClick={() => reachable && onSelect(p.id)}
               disabled={!reachable}
-              title={!reachable ? (p.id === "refs" ? "Disponible cuando su Ficha esté enviada a CTC" : "Complete la sección anterior primero") : locked ? "Ya enviado a CTC" : undefined}
+              title={!reachable ? (p.id === "refs" ? "Disponible cuando su Ficha esté enviada a CTCx" : "Complete la sección anterior primero") : locked ? "Ya enviado a CTCx" : undefined}
             >
               <span className={styles.idx}>{p.idx}</span>
               <span className={styles.label}>{p.label}</span>

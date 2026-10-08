@@ -32,7 +32,7 @@ const T: Record<Lang, Dict> = {
         body: (
           <>
             <p>
-              Registrar su finca y armar la ficha no cuesta nada. La evaluación CTC de un lote vale <b>$200.000</b>, y toda solicitud hecha
+              Registrar su finca y armar la ficha no cuesta nada. La evaluación CTCx de un lote vale <b>$200.000</b>, y toda solicitud hecha
               desde su panel nace con una <b>coinversión de CTCx del 30 %</b> (paga $140.000; lo habitual es del 60 %, y llega al 70 %) — y lo que recibe de vuelta{" "}
               <b>queda suyo</b>: puntaje, perfil sensorial y el feedback técnico de
               un Q-Grader profesional, salga o no salga galardonado. Es el diagnóstico que otros pagan en dólares y que ninguna
@@ -47,7 +47,7 @@ const T: Record<Lang, Dict> = {
       },
       {
         k: "02",
-        title: "Su prima no la decide CTC. La decide la red.",
+        title: "Su prima no la decide CTCx. La decide la red.",
         lead: "Por qué la comunidad",
         body: (
           <>
@@ -87,7 +87,7 @@ const T: Record<Lang, Dict> = {
       <>
         <b>Por qué la evaluación cuesta $200.000 y no es gratis:</b> porque la catación de un Q-Grader certificado, el
         factor de rendimiento y la certificación cuestan de verdad — y porque a la mesa se sienta quien se la
-        juega. Aun así, es la palanca de CTC, no una barrera: <b>coinvertimos en la evaluación</b> — el 30 % a todo el
+        juega. Aun así, es la palanca de CTCx, no una barrera: <b>coinvertimos en la evaluación</b> — el 30 % a todo el
         que solicita por su panel, y por lo general el 60 % o el 70 % — y la muestra viaja contra entrega. Solo paga la
         tarifa completa quien quiere la evaluación y nada más.
       </>
@@ -106,7 +106,7 @@ const T: Record<Lang, Dict> = {
         body: (
           <>
             <p>
-              Registering your farm and building the datasheet costs nothing. A lot&apos;s CTC evaluation is worth{" "}
+              Registering your farm and building the datasheet costs nothing. A lot&apos;s CTCx evaluation is worth{" "}
               <b>$200,000 COP</b>, and every request made from your panel starts with a <b>30 % co-investment from CTCx</b> (you pay $140,000; 60 % is the
               usual, up to 70 %) — and what you get back <b>stays yours</b>: score, sensory profile and technical
               feedback from a professional Q-Grader, awarded or not. It&apos;s the diagnosis others pay for in dollars
@@ -121,7 +121,7 @@ const T: Record<Lang, Dict> = {
       },
       {
         k: "02",
-        title: "Your premium isn't set by CTC. It's set by the network.",
+        title: "Your premium isn't set by CTCx. It's set by the network.",
         lead: "Why the community",
         body: (
           <>
@@ -162,7 +162,7 @@ const T: Record<Lang, Dict> = {
       <>
         <b>Why the evaluation costs $200,000 COP and isn&apos;t free:</b> because a certified Q-Grader&apos;s cupping, the
         yield factor and the certification cost real money — and because the table is for those with skin in the
-        game. Even so, it&apos;s CTC&apos;s lever, not a barrier: <b>we co-invest in the evaluation</b> — 30 % for everyone who
+        game. Even so, it&apos;s CTCx&apos;s lever, not a barrier: <b>we co-invest in the evaluation</b> — 30 % for everyone who
         requests it from their panel, and usually 60 % or 70 % — and the sample ships freight collect. Only those who want
         the evaluation and nothing else pay the full fee.
       </>
@@ -197,7 +197,7 @@ const T: Record<Lang, Dict> = {
       },
       {
         k: "02",
-        title: "Ihre Prämie bestimmt nicht CTC. Sie bestimmt das Netzwerk.",
+        title: "Ihre Prämie bestimmt nicht CTCx. Sie bestimmt das Netzwerk.",
         lead: "Warum die Gemeinschaft",
         body: (
           <>

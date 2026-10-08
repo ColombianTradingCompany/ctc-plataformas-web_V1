@@ -8,11 +8,13 @@ import { cancelarPorDespacho, pasarALaVentanaSiguiente, pedirProrroga, previsual
 import { formatCop } from "@/lib/arena/inscriptions";
 import { BACHES_DE_DESPACHO, CARGA_KG, LUGAR_DE_ENTREGA_POR_DEFECTO, MORA, PENALIDAD_RETIRO_PCT, PAGO_AL_DESPACHO_PCT } from "@/lib/trato/terminos";
 import { fechaLarga } from "@/lib/trato/modalidades";
+import { fechaParaElProductor } from "@/lib/trato/fechas";
 import { fletePorKg, REGION_DE_FLETE_LABEL } from "@/lib/trato/flete";
 import { MORA_LABEL, mesesDelTrato } from "@/lib/trato/mesAMes";
 import { CalculadoraDelTrato, type DecisionDelTrato } from "./CalculadoraDelTrato";
 import { FirmaDelContrato, type FirmaDelProductor } from "./FirmaDelContrato";
 import { PropuestaSelection } from "./PropuestaSelection";
+import { GlosarioDelTrato } from "./GlosarioDelTrato";
 import { useToast } from "@/components/Toast";
 import { CtcRef } from "./CtcRef";
 import styles from "../AppDashboard.module.css";
@@ -74,6 +76,7 @@ export function ContratosTab({
         </div>
         <div className={styles.secSub}>CTCx le invita a vender su café en Cherry Picked, por ventanas de ciclos</div>
         <div className={styles.alist} style={{ marginTop: 8 }}>
+          <b>Cherry Picked</b> es la vitrina de CTCx donde su café se ofrece a compradores con su nombre y su finca, mientras sigue en su finca.{" "}
           La fecha en que firma decide su <b>ventana</b>: si firma en la semana 1 de un ciclo, vende ese ciclo; si firma después, la ventana se extiende
           al ciclo siguiente (para que sus muestras viajen en el flete). Usted decide <b>cuánto deja disponible</b> y juega con el escenario de
           ventas: <b>CTCx no se compromete a comprar cantidades fijas</b>. Con la firma, CTCx le compra un saco fuera de lo declarado. Aceptar es
@@ -159,7 +162,9 @@ export function ContratosTab({
   );
 }
 
-const fecha = (iso: string | null) => (iso ? new Date(iso.length > 10 ? iso : `${iso}T12:00:00Z`).toLocaleDateString("es-CO", { timeZone: "UTC" }) : null);
+// V5.188 (feedback de revisión: «"4/1/2027" se lee 4 de enero o 1 de abril»): toda fecha con su mes en letras, y los instantes en la
+// hora de Colombia («3 de enero de 2027»).
+const fecha = (iso: string | null) => fechaParaElProductor(iso);
 const kgTxt = (n: number) => `${n.toLocaleString("es-CO", { maximumFractionDigits: 1 })} kg`;
 const td: React.CSSProperties = { textAlign: "right", padding: "3px 4px", whiteSpace: "nowrap" };
 const caja: React.CSSProperties = { marginTop: 8, border: "1px dashed var(--line)", borderRadius: 8, padding: "10px 12px", background: "var(--card)" };
@@ -603,7 +608,7 @@ function OfferList({ offers, historial, vacio, onRefreshData }: { offers: Produc
           {historial.map((o) => (
             <span key={o.id}>
               {o.lotName} · oferta {o.status === "rechazada" ? "rechazada por usted" : o.status === "retirada" ? "retirada por CTCx" : "expirada"}
-              {o.respondedAt && ` (${new Date(o.respondedAt).toLocaleDateString("es-CO")})`}
+              {o.respondedAt && ` (${fechaParaElProductor(o.respondedAt)})`}
               <br />
             </span>
           ))}
@@ -719,9 +724,9 @@ function OfferCard({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshDa
           </div>
           {offer.loteDeTemporadaPasada && <div className={styles.sub} style={{ color: "var(--accent)", fontWeight: 700, marginTop: 4 }}>Lote de la temporada pasada — su valor está enmarcado como tal.</div>}
           <div style={{ fontSize: 15, marginTop: 8 }}>
-            Oferta de CTCx: <b>{formatCop(offer.pricePerKg)}/kg</b> de CPS
+            Oferta de CTCx: <b>{formatCop(offer.pricePerKg)}/kg</b> de CPS <span style={{ fontSize: 12.5, color: "var(--muted)" }}>(café pergamino seco)</span>
             {/* V5.185 (owner): justo después, el equivalente por carga y, entre paréntesis, el Flete a CTCx que ya incluye. */}
-            {" "}· <b>{formatCop(offer.pricePerKg * CARGA_KG)}</b> por carga
+            {" "}· <b>{formatCop(offer.pricePerKg * CARGA_KG)}</b> por carga <span style={{ fontSize: 12.5, color: "var(--muted)" }}>({CARGA_KG} kg)</span>
             {offer.flete && <span style={{ fontSize: 13, color: "var(--muted)" }}> (incluye {formatCop(offer.flete.carga)} de Flete a CTCx)</span>}
             {!conDeclaracion && offer.quantityKg != null && <> · <b>{offer.quantityKg} kg</b></>}
           </div>
@@ -734,16 +739,28 @@ function OfferCard({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshDa
           )}
           {conDeclaracion && (
             <div className={styles.sub} style={{ marginTop: 4 }}>
-              {offer.referencePriceSource && <>Anclada a <b>{offer.referencePriceSource}</b>{offer.modificadorPct ? ` (${offer.modificadorPct > 0 ? "+" : ""}${offer.modificadorPct} %)` : ""} · </>}
+              {offer.referencePriceSource && (
+                <>
+                  {/* V5.188: «PVC PVC-F4-2026» decía la sigla dos veces y no decía qué es; ahora nombra la edición y la explica. */}
+                  Anclada a la edición <b>{offer.referencePriceSource.replace(/^PVC\s+/, "")}</b> del PVC (el precio de referencia de CTCx)
+                  {offer.modificadorPct ? ` (${offer.modificadorPct > 0 ? "+" : ""}${offer.modificadorPct} %)` : ""} ·{" "}
+                </>
+              )}
               {offer.minKg != null && <>mínimo <b>{offer.minKg} kg</b> por ventana · </>}
               {offer.maxKg != null && <>hasta <b>{offer.maxKg} kg</b> · </>}
               {offer.sacoKg != null && offer.sacoKg > 0 && <>{offer.esRenovacion ? "compra adelantada" : "saco con la firma"} <b>{offer.sacoKg} kg</b> · </>}
-              {offer.expiraAt && <>vence el <b>{new Date(offer.expiraAt).toLocaleDateString("es-CO")}</b> · </>}
+              {offer.expiraAt && (
+                <>
+                  vence el <b>{fechaParaElProductor(offer.expiraAt)}</b> (al terminar el día, hora de Colombia) ·{" "}
+                </>
+              )}
               términos {offer.termsVersion}
             </div>
           )}
           {offer.notes && <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 4 }}>{offer.notes}</div>}
           {lugarEntrega && <div style={{ fontSize: 12.5, marginTop: 4 }}>Entrega: {lugarEntrega}</div>}
+          {/* V5.188 (feedback de revisión: «PVC, CPS, "Grado Red" y Cherry Picked no están definidos»): las palabras del trato. */}
+          {(conDeclaracion || esSelection) && <GlosarioDelTrato grado={offer.grade} />}
 
           {esSelection && <PropuestaSelection offer={offer} onRefreshData={onRefreshData} />}
 
@@ -803,7 +820,6 @@ function OfferCard({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshDa
                 minimoKg: abierta ? abierta.minimoKg : null,
                 calidad: abierta?.calidad ?? null,
                 flete: offer.flete,
-                productorDocumento: null,
                 loteNombre: offer.lotName,
                 loteReferencia: ctcLotReference(offer.lotId),
                 grado: offer.grade ?? "—",

@@ -5,6 +5,7 @@ import { escenarioAleatorio, pagosPorBaches, simularVentasDeVentana, PATRON_LABE
 import { BACHES_DE_DESPACHO, CARGA_KG, PAGO_AL_DESPACHO_PCT, PENALIDAD_RETIRO_PCT } from "@/lib/trato/terminos";
 import { validarDeclaracion, PISO_EXISTENCIA_INSUFICIENTE } from "@/lib/trato/minimos";
 import { fechaLarga } from "@/lib/trato/modalidades";
+import { duracionDeVentana } from "@/lib/trato/fechas";
 import type { CondicionesDeFirma } from "@/lib/ofertas/ventanaDeOferta";
 import { formatCop } from "@/lib/arena/inscriptions";
 import { fletePorKg, REGION_DE_FLETE_LABEL } from "@/lib/trato/flete";
@@ -53,6 +54,11 @@ export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDec
     setSemilla(Math.floor(Math.random() * 1_000_000_000) + 1);
     setPatron("aleatorio");
   }
+  // V5.188 (feedback de revisión): la ventana dice su duración exacta («88 días · 12 semanas y 4 días»), no «13 semanas».
+  const duracion = duracionDeVentana(c.ventana.desde, c.ventana.hasta);
+  const vendidoCop = v.ingresoCop - v.saco.cop;
+  const kgFrenteAFnc = v.vendidoKg + v.saco.kg;
+  const nombreSaco = c.esRenovacion ? "la compra adelantada" : "el saco";
   const conVenta = v.porSemana.filter((s) => s.kg > 0);
   const masFuerte = conVenta.reduce<{ semana: number; kg: number } | null>((m, s) => (!m || s.kg > m.kg ? s : m), null);
   const pasos = [{ etiqueta: "Firma", kg: v.saco.kg }, ...v.porSemana.map((s) => ({ etiqueta: `S${s.semana}`, kg: s.kg }))];
@@ -85,10 +91,10 @@ export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDec
       <div>
         <b style={{ fontSize: 14 }}>Si firma hoy, su ventana es</b>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 8, marginTop: 6 }}>
-          {kpi("Ventana", `${fechaLarga(c.ventana.desde)} → ${fechaLarga(c.ventana.hasta)}`, `${c.semanas} semanas · ${c.ventana.ciclos.join(" y ")}`)}
+          {kpi("Ventana", `${fechaLarga(c.ventana.desde)} → ${fechaLarga(c.ventana.hasta)}`, `${duracion.texto} · ${c.ventana.ciclos.join(" y ")}`)}
           {kpi("Precio", `${formatCop(c.precioKg)}/kg`, `${formatCop(c.precioKg * CARGA_KG)} por carga · ${REGLA[c.ventana.precio]}${c.flete ? ` · incluye el Flete a CTCx (${REGION_DE_FLETE_LABEL[c.flete.region]}): ${formatCop(c.flete.carga)}/carga` : ""}`)}
           {kpi("Retiro libre", sinRetiro ? "Sin retiro" : `${c.ventana.retiroLibrePct} %`, sinRetiro ? "declaración reducida" : "de lo declarado, solo de lo no vendido")}
-          {c.sacoKg > 0 && kpi(c.esRenovacion ? "Compra adelantada" : "Saco que CTCx le compra", `${c.sacoKg} kg`, `${formatCop(c.sacoKg * c.precioKg)} · fuera de lo declarado · sale esta semana`)}
+          {c.sacoKg > 0 && kpi(c.esRenovacion ? "Compra adelantada" : "Saco que CTCx le compra", `${c.sacoKg} kg`, `${formatCop(c.sacoKg * c.precioKg)} · seguro con la firma · fuera de lo declarado · sale esta semana`, "var(--green)")}
         </div>
         {c.ventana.tipo === "extendida" && (
           <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>
@@ -135,15 +141,24 @@ export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDec
         </div>
       </div>
 
-      {/* 2 · El escenario de ventas, por semanas */}
+      {/* 2 · El escenario de ventas, por semanas. V5.188 (feedback de revisión: «el 60 % parece un pronóstico»): es un SUPUESTO que
+          fija el productor, no lo que CTCx espera vender. Lo único seguro con la firma —el saco— va aparte y primero. */}
       <div>
-        <div style={{ fontSize: 12.5, fontWeight: 700 }}>2. Juegue con el escenario: ¿cuánto vende CTCx y cuándo?</div>
+        <div style={{ fontSize: 12.5, fontWeight: 700 }}>2. Simule un escenario de ventas · es un supuesto suyo, no un pronóstico de CTCx</div>
         <div style={{ fontSize: 11.5, color: "var(--muted)", margin: "2px 0 6px" }}>
-          CTCx no se compromete a comprar cantidades fijas: puede no vender en una semana, o venderse todo el primer día. Cada semana le confirma lo vendido, y
-          usted lo despacha por baches cuando le convenga (vea «¿Cuándo me pagan?»). Lo que no se vende sigue siendo suyo.
+          CTCx no se compromete a comprar cantidades fijas: puede no vender en una semana, o venderse todo el primer día. Mueva la barra para ver qué pasaría
+          si se vendiera más o menos. Cada semana CTCx le confirma lo vendido, y usted lo despacha por baches cuando le convenga (vea «¿Cuándo me pagan?»). Lo
+          que no se vende sigue siendo suyo.
         </div>
+        {c.sacoKg > 0 && (
+          <div style={{ fontSize: 12.5, margin: "0 0 8px", padding: "6px 10px", border: "1.5px solid var(--green)", borderRadius: 8, background: "var(--paper)" }}>
+            <b style={{ color: "var(--green)" }}>Lo único seguro con la firma:</b> {nombreSaco} de <b>{v.saco.kg.toLocaleString("es-CO")} kg</b> ={" "}
+            <b>{formatCop(v.saco.cop)}</b> ({PAGO_AL_DESPACHO_PCT} % al despacharlo esta semana y {100 - PAGO_AL_DESPACHO_PCT} % al recibirlo). Todo lo demás
+            de esta sección depende de lo que se venda.
+          </div>
+        )}
         <label htmlFor="venta-pct" style={{ fontSize: 12.5 }}>
-          CTCx termina vendiendo el <b>{ventaPct} %</b> de lo declarado
+          Supongamos que CTCx vende el <b>{ventaPct} %</b> de lo declarado <span style={{ color: "var(--muted)" }}>(usted elige el supuesto)</span>
         </label>
         <input id="venta-pct" type="range" min={0} max={100} step={5} value={ventaPct} onChange={(e) => setVentaPct(Number(e.target.value))} style={{ width: "100%", accentColor: "var(--accent)", minHeight: 32 }} />
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "4px 0 8px" }}>
@@ -172,9 +187,21 @@ export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDec
             </div>
           ))}
         </div>
+        <div style={{ display: "flex", gap: 14, flexWrap: "wrap", fontSize: 11, color: "var(--muted)", marginTop: 4 }}>
+          {c.sacoKg > 0 && (
+            <span>
+              <i style={{ display: "inline-block", width: 9, height: 9, borderRadius: 2, background: "var(--green)", marginRight: 4 }} aria-hidden />
+              Firma: {nombreSaco} (seguro)
+            </span>
+          )}
+          <span>
+            <i style={{ display: "inline-block", width: 9, height: 9, borderRadius: 2, background: "var(--accent)", marginRight: 4 }} aria-hidden />
+            S1–S{v.porSemana.length}: las semanas de la ventana (supuesto)
+          </span>
+        </div>
         {aleatorio && (
           <div style={{ fontSize: 12.5, marginTop: 6, padding: "6px 10px", border: "1px dashed var(--accent)", borderRadius: 8 }}>
-            🎲 <b>Escenario aleatorio:</b> CTCx termina vendiendo el <b>{v.vendidoPct.toLocaleString("es-CO")} %</b> ({v.vendidoKg.toLocaleString("es-CO", { maximumFractionDigits: 0 })} kg); compra en{" "}
+            🎲 <b>Escenario aleatorio:</b> se vende el <b>{v.vendidoPct.toLocaleString("es-CO")} %</b> ({v.vendidoKg.toLocaleString("es-CO", { maximumFractionDigits: 0 })} kg); hay compras en{" "}
             <b>{conVenta.length}</b> de {v.porSemana.length} semanas y en <b>{v.porSemana.length - conVenta.length}</b> no compra nada
             {masFuerte ? (
               <>
@@ -184,12 +211,29 @@ export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDec
             . Usted recibiría <b>{formatCop(v.ingresoCop)}</b> en <b>{pagos.envios}</b> {pagos.envios === 1 ? "envío" : "envíos"} (despachando cada {cadencia} {cadencia === 1 ? "semana" : "semanas"}). Cada clic en «Escenario aleatorio» reparte las ventas de otra forma; el % vendido lo fija usted arriba.
           </div>
         )}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8, marginTop: 10 }}>
-          {kpi("Vendido a CTCx", `${v.vendidoPct.toLocaleString("es-CO")} %`, `${v.vendidoKg.toLocaleString("es-CO", { maximumFractionDigits: 1 })} kg de lo declarado`)}
-          {kpi("Usted recibe", formatCop(v.ingresoCop), c.sacoKg > 0 ? `incluye el ${c.esRenovacion ? "adelanto" : "saco"} · 60 % al despachar, 40 % al recibir` : "60 % al despachar, 40 % al recibir")}
-          {v.primaFncPct != null && kpi("Precio frente a la FNC", `${v.primaFncPct >= 0 ? "+" : ""}${v.primaFncPct.toLocaleString("es-CO")} %`, `FNC del día de la oferta: ${formatCop(fncCargaRef ?? 0)}/carga`, v.primaFncPct >= 0 ? "var(--green)" : "var(--red)")}
-          {v.diferenciaFncCop != null && kpi("Más que vendiendo a la FNC", formatCop(v.diferenciaFncCop), "por lo vendido a CTCx", v.diferenciaFncCop >= 0 ? "var(--green)" : "var(--red)")}
-          {kpi("Le queda sin vender", `${v.sinVenderKg.toLocaleString("es-CO", { maximumFractionDigits: 1 })} kg`, "sigue siendo suyo")}
+        {/* V5.188: los números del escenario van en condicional y bajo su supuesto; «Más que vendiéndolo a la FNC» dice qué kilos cuenta
+            (lo vendido en el escenario MÁS el saco), porque los dos entran en la cuenta. */}
+        <div style={{ fontSize: 12, fontWeight: 700, marginTop: 10 }}>Si se vendiera el {v.vendidoPct.toLocaleString("es-CO")} % (su supuesto):</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8, marginTop: 6 }}>
+          {kpi("Se vendería", `${v.vendidoPct.toLocaleString("es-CO")} %`, `${v.vendidoKg.toLocaleString("es-CO", { maximumFractionDigits: 1 })} kg de lo declarado`)}
+          {kpi(
+            "Recibiría en total",
+            formatCop(v.ingresoCop),
+            c.sacoKg > 0
+              ? `${nombreSaco} ${formatCop(v.saco.cop)} + lo vendido ${formatCop(vendidoCop)} · ${PAGO_AL_DESPACHO_PCT} % al despachar, ${100 - PAGO_AL_DESPACHO_PCT} % al recibir`
+              : `${PAGO_AL_DESPACHO_PCT} % al despachar, ${100 - PAGO_AL_DESPACHO_PCT} % al recibir`
+          )}
+          {v.primaFncPct != null && kpi("Precio frente a la FNC", `${v.primaFncPct >= 0 ? "+" : ""}${v.primaFncPct.toLocaleString("es-CO")} %`, `por kilo · FNC del día de la oferta: ${formatCop(fncCargaRef ?? 0)}/carga`, v.primaFncPct >= 0 ? "var(--green)" : "var(--red)")}
+          {v.diferenciaFncCop != null &&
+            kpi(
+              "Más que vendiéndolo a la FNC",
+              formatCop(v.diferenciaFncCop),
+              c.sacoKg > 0
+                ? `por ${kgFrenteAFnc.toLocaleString("es-CO", { maximumFractionDigits: 1 })} kg: ${v.vendidoKg.toLocaleString("es-CO", { maximumFractionDigits: 1 })} kg vendidos en el escenario + ${nombreSaco} de ${v.saco.kg.toLocaleString("es-CO")} kg`
+                : `por los ${v.vendidoKg.toLocaleString("es-CO", { maximumFractionDigits: 1 })} kg vendidos en el escenario`,
+              v.diferenciaFncCop >= 0 ? "var(--green)" : "var(--red)"
+            )}
+          {kpi("Le quedaría sin vender", `${v.sinVenderKg.toLocaleString("es-CO", { maximumFractionDigits: 1 })} kg`, "sigue siendo suyo")}
         </div>
         <div style={{ marginTop: 10 }}>
           <button type="button" className="btn btn-sm" aria-expanded={verPagos} onClick={() => setVerPagos((x) => !x)} style={verPagos ? { background: "var(--green)", borderColor: "var(--green)", color: "#fff" } : undefined}>
@@ -310,12 +354,12 @@ export function CalculadoraDelTrato({ c, maxKg, lugarEntrega, fncCargaRef, onDec
             <div style={{ fontSize: 12.5, border: "1px solid var(--line)", borderRadius: 8, padding: "6px 10px", background: "var(--paper)" }}>
               {penalidad <= 0 ? (
                 <>
-                  Este retiro no le cuesta nada: conserva toda su ventaja frente a la FNC, <b style={{ color: "var(--green)" }}>{formatCop(ventajaFnc)}</b>.
+                  Este retiro no le cuesta nada: conserva toda su ventaja frente a la FNC en este escenario, <b style={{ color: "var(--green)" }}>{formatCop(ventajaFnc)}</b>.
                 </>
               ) : penalidadSobreVentajaPct != null ? (
                 <>
-                  La penalidad equivale al <b>{penalidadSobreVentajaPct.toLocaleString("es-CO", { maximumFractionDigits: 1 })} %</b> de lo que gana de más vendiendo a CTCx en
-                  vez de a la FNC ({formatCop(ventajaFnc)}).{" "}
+                  La penalidad equivale al <b>{penalidadSobreVentajaPct.toLocaleString("es-CO", { maximumFractionDigits: 1 })} %</b> de lo que, en este escenario, ganaría de
+                  más vendiéndole a CTCx en vez de a la FNC ({formatCop(ventajaFnc)}).{" "}
                   {penalidad < ventajaFnc ? (
                     <>
                       Aun pagándola, le quedan <b style={{ color: "var(--green)" }}>{formatCop(ventajaFnc - penalidad)}</b> de ventaja.

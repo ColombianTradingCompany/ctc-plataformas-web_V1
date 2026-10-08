@@ -46,7 +46,7 @@ export async function postularLote(lotId: string, campaignCode?: string, notaSol
     .maybeSingle();
   if (!lot || lot.producer_id !== auth.userId) return { ok: false, message: "Lote no encontrado." };
   if (lot.stage !== "apto") {
-    return { ok: false, message: "Solo un lote declarado Apto por CTC puede solicitar evaluación." };
+    return { ok: false, message: "Solo un lote declarado Apto por CTCx puede solicitar evaluación." };
   }
   const existencia = existenciaKg != null ? existenciaValida(existenciaKg) : lot.existencia_cps_kg != null ? Number(lot.existencia_cps_kg) : null;
   if (existencia == null) return { ok: false, message: EXISTENCIA_REQUERIDA };

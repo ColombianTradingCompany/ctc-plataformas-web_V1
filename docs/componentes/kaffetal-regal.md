@@ -152,6 +152,14 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.188 · «Contratos y Compras» tras la revisión** (feedback de seis puntos): el escenario de la calculadora es **un supuesto
+  del productor** y lo único seguro es el saco (recuadro verde); «Más que vendiéndolo a la FNC» dice qué kilos cuenta (lo vendido +
+  el saco); **«Las palabras de este trato»** (`GlosarioDelTrato`) define PVC, CPS, carga, grado, Cherry Picked y el resto; las fechas
+  van en letras y en la hora de Colombia (`fechas.ts`), con la duración exacta de la ventana; el contrato lleva **el documento de
+  quien firma** (CC, CE, PPT, pasaporte o NIT, `documento.ts`; texto `2026-10-08.2`); y Kaffetal Regal dice **CTCx**, no CTC.
+  **Queda**: «El trato» de la portada (`TratoSection`) y el FAQ (ES · EN · DE) todavía cuentan el trato viejo —15 kg de entrada,
+  opción de compra a 3 meses, liberación mensual— y contradicen el contrato (saco de 70–200 kg, ventanas por ciclo, retiro libre,
+  baches): rehacerlos con el modelo de `PLAN_CICLOS.md` (dueño: Kaffetal Regal).
 - **V5.187 · la evaluación se coinvierte** (§14.2 n.º 11-bis, owner 2026-09-18): «Evaluar mi Café», «Su cuenta», las instrucciones de
   envío, «Por qué inscribirse» y el FAQ (ES · EN · DE) dicen **coinversión de CTCx**, nunca «descuento» ni «subvención del X %»; el código
   sigue siendo «de subvención». El contrato que se firma aquí dice **Ponderación de Valor de Cosecha (PVC)** (texto `2026-10-08.1`).

@@ -489,7 +489,7 @@ export function FichaView({
       const unknownWhy = B1_OPTIONAL_FIELDS.filter((f) => (data.b1_unknown ?? []).includes(f.key)).map((f) => `• ${f.why}`);
       if (unknownWhy.length > 0) {
         const msg =
-          'Marcó algunos datos físicos como "No lo sé aún". No hay problema: CTC los determinará con objetividad y método durante la evaluación de su muestra.\n\n' +
+          'Marcó algunos datos físicos como "No lo sé aún". No hay problema: CTCx los determinará con objetividad y método durante la evaluación de su muestra.\n\n' +
           unknownWhy.join("\n") +
           "\n\n¿Desea enviar la FT y continuar?";
         if (!window.confirm(msg)) return;
@@ -500,7 +500,7 @@ export function FichaView({
       if (!ok) return;
       setCelebrate({
         emoji: "🎉",
-        title: "¡FT enviada a CTC!",
+        title: "¡FT enviada a CTCx!",
         body: "Primera etapa completa. Ahora viene FT2: certificados, perfil de taza y análisis físico — cuéntenos qué hace especial a este café.",
       });
       setActive("a3");
@@ -530,7 +530,7 @@ export function FichaView({
       }
       setCelebrate({
         emoji: "🏅",
-        title: "¡FT2 enviada a CTC!",
+        title: "¡FT2 enviada a CTCx!",
         body: "Su café ya tiene perfil y análisis. Siguen las fotos del café — son opcionales, pero con las del teléfono basta y ayudan mucho.",
       });
       setActive("b4");
@@ -638,7 +638,7 @@ export function FichaView({
             <Image className={styles.krl} src="/images/shared/kaffetal-regal-logo.png" alt="Kaffetal Regal" width={1254} height={1254} />
             <span>
               <span className={styles.name}>Ficha Técnica</span>
-              <span className={styles.by}>CTC · Green Coffee Datasheet · V5</span>
+              <span className={styles.by}>CTCx · Green Coffee Datasheet · V5</span>
             </span>
           </a>
           <button className="btn btn-sm" style={{ marginLeft: "auto" }} onClick={onBack}>← Volver al panel</button>
@@ -658,7 +658,7 @@ export function FichaView({
           <div className={styles.content}>
             {viewingLocked && (
               <p style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "var(--muted)", marginBottom: 14 }}>
-                🔒 Esta sección ya fue enviada a CTC y quedó registrada para revisión.
+                🔒 Esta sección ya fue enviada a CTCx y quedó registrada para revisión.
               </p>
             )}
             {!viewingLocked && FT2_NA_FIELD[active] && (
@@ -754,7 +754,7 @@ export function FichaView({
               // "en revisión" only while the lot is actually sitting with CTC
               // (ficha_completa) -- past that (arena queue, evaluado,
               // galardonado) the state chip on the dashboard tells the story.
-              <span className={styles.chip}>{lot.stage <= 1 ? "✓ Ficha enviada a CTC · en revisión" : "✓ Ficha registrada en CTC"}</span>
+              <span className={styles.chip}>{lot.stage <= 1 ? "✓ Ficha enviada a CTCx · en revisión" : "✓ Ficha registrada en CTCx"}</span>
             ) : (
               <>
                 {onDelete && (
@@ -796,18 +796,18 @@ export function FichaView({
                   value={helpText}
                   onChange={(e) => setHelpText(e.target.value)}
                   rows={3}
-                  placeholder="Describa su duda o problema. CTC lo verá y le responderá en 'Retroalimentación y ayuda'."
+                  placeholder="Describa su duda o problema. CTCx lo verá y le responderá en 'Retroalimentación y ayuda'."
                   autoFocus
                 />
                 <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                   <button className="btn btn-sm btn-solid" onClick={sendHelp} disabled={!helpText.trim() || helpSending}>
-                    {helpSending ? "Enviando…" : "Enviar a CTC"}
+                    {helpSending ? "Enviando…" : "Enviar a CTCx"}
                   </button>
                   <button className="btn btn-sm" onClick={() => setHelpOpen(false)}>Cancelar</button>
                 </div>
               </div>
             )}
-            <button className={styles.fabHelp} onClick={() => setHelpOpen((v) => !v)} aria-label="Pedir ayuda a CTC">
+            <button className={styles.fabHelp} onClick={() => setHelpOpen((v) => !v)} aria-label="Pedir ayuda a CTCx">
               <span className={styles.fabIcon} aria-hidden>💬</span>
               <span className={styles.fabLabel}>Ayuda</span>
             </button>

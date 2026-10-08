@@ -1,5 +1,6 @@
 "use client";
 
+import { fechaParaElProductor } from "@/lib/trato/fechas";
 import { useState } from "react";
 import { useToast } from "@/components/Toast";
 import { checkFileSizeMb } from "@/lib/fileSize";
@@ -116,7 +117,7 @@ export function ChequeosCtcx({ finca, onSolicitar }: { finca: Finca | null; onSo
                   ) : previa ? (
                     <p style={{ margin: "4px 0 0 24px", fontSize: 11.5 }}>
                       <span style={{ background: AMBAR_FONDO, color: AMBAR, fontWeight: 700, borderRadius: 6, padding: "1px 6px" }}>
-                        Chequeo solicitado{previa.at ? ` · ${new Date(previa.at).toLocaleDateString("es-CO")}` : ""}
+                        Chequeo solicitado{previa.at ? ` · ${fechaParaElProductor(previa.at)}` : ""}
                       </span>
                     </p>
                   ) : null}

@@ -147,9 +147,9 @@ export function PaneB1({ data, onChange }: PaneProps) {
       )}
 
       {/* Optional physical measurements -- the producer may not know these yet;
-          "No lo sé aún" marks them for CTC to determine on evaluation. */}
+          "No lo sé aún" marks them for CTCx to determine on evaluation. */}
       <p className={styles.fexample} style={{ marginTop: 16 }}>
-        Datos físicos (opcionales). Si aún no los conoce, marque &quot;No lo sé aún&quot; — CTC los determinará durante la evaluación.
+        Datos físicos (opcionales). Si aún no los conoce, marque &quot;No lo sé aún&quot; — CTCx los determinará durante la evaluación.
       </p>
       <div className={styles.fgrid} style={{ marginTop: 8 }}>
         <div className={styles.ff}>

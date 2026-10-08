@@ -98,7 +98,7 @@ export async function postularOnBehalf(lotId: string, existenciaKg?: number): Pr
     producer_id: lot.producer_id,
     context_label: `Lote ${lot.name}`,
     lot_id: lotId,
-    note: `CTC registró la solicitud de evaluación de su lote. Código: ${codeRow.code} · tarifa plena: ${formatCop(ARENA_FEE_COP)} (CTCx decide su coinversión al corroborar). CTC corroborará la solicitud y le emitirá la factura de cobro.`,
+    note: `CTCx registró la solicitud de evaluación de su lote. Código: ${codeRow.code} · tarifa plena: ${formatCop(ARENA_FEE_COP)} (CTCx decide su coinversión al corroborar). CTCx corroborará la solicitud y le emitirá la factura de cobro.`,
     created_by: adminId,
   });
   revalidateAll();
@@ -461,7 +461,7 @@ export async function enviarAlCentro(batchId: string, formData: FormData): Promi
       producer_id: l.producer_id,
       context_label: lot ? `Lote ${lot.name}` : null,
       lot_id: l.lot_id,
-      note: `Su lote entró al Bache de Evaluación «${batch.label}» y está en manos del Q-Grader en el Centro de Calidad. El resultado —puntaje, Grado CTC y feedback— le llegará aquí.`,
+      note: `Su lote entró al Bache de Evaluación «${batch.label}» y está en manos del Q-Grader en el Centro de Calidad. El resultado —puntaje, Grado CTCx y feedback— le llegará aquí.`,
       created_by: adminId,
     });
   }
@@ -796,7 +796,7 @@ export async function recordEvaluationVerdict(
         producer_id: ins.producer_id,
         context_label: lot ? `Lote ${lot.name}` : null,
         lot_id: lotId,
-        note: `Su lote subió de grado en la re-evaluación: CTC le reembolsará el ${REEVALUACION.reembolsoPctSiSubeGrado} % de la tarifa (${formatCop(reembolso)}).`,
+        note: `Su lote subió de grado en la re-evaluación: CTCx le reembolsará el ${REEVALUACION.reembolsoPctSiSubeGrado} % de la tarifa (${formatCop(reembolso)}).`,
         created_by: adminId,
       });
     }
@@ -813,7 +813,7 @@ export async function recordEvaluationVerdict(
       producer_id: ins.producer_id,
       context_label: lot ? `Lote ${lot.name}` : null,
       lot_id: lotId,
-      note: `¡Su lote fue GALARDONADO! ${puntoEfectivo.origen === "nativo" ? `Puntaje SCA ${puntaje}` : `Punto homologado desde CVA: ${puntaje} (hasta ${puntoEfectivo.alto} con una recata SCA)`} — Grado CTC ${grado.nombre}. Encontrará los documentos y el resultado completo en «Evaluar mi Café» → Lotes Galardonados.`,
+      note: `¡Su lote fue GALARDONADO! ${puntoEfectivo.origen === "nativo" ? `Puntaje SCA ${puntaje}` : `Punto homologado desde CVA: ${puntaje} (hasta ${puntoEfectivo.alto} con una recata SCA)`} — Grado CTCx ${grado.nombre}. Encontrará los documentos y el resultado completo en «Evaluar mi Café» → Lotes Galardonados.`,
       created_by: adminId,
     });
 
@@ -853,7 +853,7 @@ export async function recordEvaluationVerdict(
       producer_id: ins.producer_id,
       context_label: lot ? `Lote ${lot.name}` : null,
       lot_id: lotId,
-      note: `Su café no superó la evaluación esta vez. Resultado: ${cleanNotes} En su panel encontrará las Recomendaciones de Mejora, sin costo. Si CTC ve que la mejora aseguraría una oferta, le propondrá una re-evaluación a tarifa plena (${formatCop(TARIFA_EVALUACION_COP)}) con el ${REEVALUACION.reembolsoPctSiSubeGrado} % de reembolso si sube de grado.`,
+      note: `Su café no superó la evaluación esta vez. Resultado: ${cleanNotes} En su panel encontrará las Recomendaciones de Mejora, sin costo. Si CTCx ve que la mejora aseguraría una oferta, le propondrá una re-evaluación a tarifa plena (${formatCop(TARIFA_EVALUACION_COP)}) con el ${REEVALUACION.reembolsoPctSiSubeGrado} % de reembolso si sube de grado.`,
       created_by: adminId,
     });
     // Best-effort — un fallo de la IA jamás bloquea el registro del resultado.
@@ -951,7 +951,7 @@ export async function reevaluar(lotId: string, formData: FormData): Promise<Resu
     producer_id: ins.producer_id,
     context_label: `Lote ${lot.name}`,
     lot_id: lotId,
-    note: `CTC acordó re-evaluar su lote a tarifa plena (${formatCop(TARIFA_EVALUACION_COP)}): ${acuerdo} Si sube de grado, le reembolsa el ${REEVALUACION.reembolsoPctSiSubeGrado} %. Recibirá la factura de cobro y deberá enviar una muestra nueva de 2 kg contra entrega.`,
+    note: `CTCx acordó re-evaluar su lote a tarifa plena (${formatCop(TARIFA_EVALUACION_COP)}): ${acuerdo} Si sube de grado, le reembolsa el ${REEVALUACION.reembolsoPctSiSubeGrado} %. Recibirá la factura de cobro y deberá enviar una muestra nueva de 2 kg contra entrega.`,
     created_by: adminId,
   });
   revalidateAll();
@@ -985,7 +985,7 @@ export async function markCashbackPaid(lotId: string, ref: string): Promise<Resu
     producer_id: ins.producer_id,
     lot_id: lotId,
     context_label: null,
-    note: `CTC envió el reembolso del 80% de su inscripción (${formatCop(ins.cashback_cop ?? 0)}).`,
+    note: `CTCx envió el reembolso del 80% de su inscripción (${formatCop(ins.cashback_cop ?? 0)}).`,
     created_by: adminId,
   });
   revalidateAll();

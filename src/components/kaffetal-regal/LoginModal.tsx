@@ -82,7 +82,7 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
     <Modal open={open} onClose={onClose} ariaLabel="Bienvenido a Kaffetal Regal">
       <Image className={styles.mlogo} src="/images/shared/kaffetal-regal-logo.png" alt="" width={1254} height={1254} />
       <h3>Bienvenido a Kaffetal Regal</h3>
-      <p>Cuenta gratuita. Registre sus fincas y sus lotes, siga su fila para la Arena y administre sus tratos con CTC.</p>
+      <p>Cuenta gratuita. Registre sus fincas y sus lotes, siga su fila para la Arena y administre sus tratos con CTCx.</p>
 
       <div className={styles.tabs}>
         <button type="button" className={`${styles.tab} ${mode === "signin" ? styles.tabActive : ""}`} onClick={() => switchMode("signin")}>

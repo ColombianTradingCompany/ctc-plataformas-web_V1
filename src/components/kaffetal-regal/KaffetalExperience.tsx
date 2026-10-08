@@ -1,5 +1,6 @@
 "use client";
 
+import { fechaParaElProductor } from "@/lib/trato/fechas";
 import { fleteDeLaFila } from "@/lib/trato/flete";
 import { contratoFirmado } from "@/lib/kaffetal/blindaje";
 import { cuentaDeVentana } from "@/lib/trato/cuenta";
@@ -63,9 +64,9 @@ type View = "landing" | "app" | "ficha" | "finca" | "info";
 // Indexed by STAGE_DB position (9 entries since the EVA stages landed).
 const STAGE_EXTRA = [
   "Complete la ficha técnica para avanzar.",
-  "En evaluación documental por CTC.",
+  "En evaluación documental por CTCx.",
   "¡Apto! Ya puede solicitar su evaluación.",
-  "Revise la retroalimentación de CTC.",
+  "Revise la retroalimentación de CTCx.",
   "Etapa histórica.",
   "Etapa histórica.",
   "Su muestra espera al Q-Grader.",
@@ -293,8 +294,8 @@ function dbLotToLot(
     ? row.status_note
     : stageIdx === 1
     ? row.sample_shipped_at
-      ? `Muestra enviada el ${new Date(row.sample_shipped_at).toLocaleDateString("es-CO")} · en revisión por CTC`
-      : "Ficha en revisión por CTC · confirme el envío de la muestra de 2 kg"
+      ? `Muestra enviada el ${fechaParaElProductor(row.sample_shipped_at)} · en revisión por CTCx`
+      : "Ficha en revisión por CTCx · confirme el envío de la muestra de 2 kg"
     : STAGE_EXTRA[stageIdx];
   return {
     id: row.id,
@@ -950,7 +951,7 @@ function Experience() {
     // V5.17) — excluding bcp_manual_entry lots, those exist because BCP
     // already has the physical sample in hand.
     if (!lot || isLotCommitted(lot) || lot.source === "bcp_manual_entry") {
-      showToast("Este lote ya entró en revisión de CTC y no puede eliminarse.");
+      showToast("Este lote ya entró en revisión de CTCx y no puede eliminarse.");
       return;
     }
     // V5.102 (owner): la confirmación es ESCRIBIR «Borrar Lote» en el pop-up; el borrado lo corre ejecutarBorrado().
@@ -967,11 +968,11 @@ function Experience() {
     setLots((ls) =>
       ls.map((l) =>
         l.id === id
-          ? { ...l, sampleShippedAt: shippedAt, extra: `Muestra enviada el ${new Date(shippedAt).toLocaleDateString("es-CO")} · en revisión por CTC` }
+          ? { ...l, sampleShippedAt: shippedAt, extra: `Muestra enviada el ${fechaParaElProductor(shippedAt)} · en revisión por CTCx` }
           : l
       )
     );
-    showToast("Envío de muestra confirmado ✓ · CTC revisará su recibo");
+    showToast("Envío de muestra confirmado ✓ · CTCx revisará su recibo");
   }
 
   // F2 (2026-07-29): espejo de datasheet.contributions → lot_contributions.
@@ -1225,7 +1226,7 @@ function Experience() {
     // while CTC hasn't accepted the finca and none of its lots have entered the
     // Arena pipeline. Anything else routes through requestFincaRevision instead.
     if (!fincaSelfDeletable(finca, lots)) {
-      showToast("Esta finca ya está en el proceso de CTC. Solicite una revisión de datos para modificarla.");
+      showToast("Esta finca ya está en el proceso de CTCx. Solicite una revisión de datos para modificarla.");
       return;
     }
     const cascading = pendingLotsOfFinca(finca, lots);
@@ -1324,7 +1325,7 @@ function Experience() {
       },
       ...prev,
     ]);
-    if (!extras?.silencioso) showToast("Solicitud de ayuda enviada a CTC ✓");
+    if (!extras?.silencioso) showToast("Solicitud de ayuda enviada a CTCx ✓");
     return true;
   }
 
@@ -1397,7 +1398,7 @@ function Experience() {
       },
       ...prev,
     ]);
-    showToast("Solicitud de ayuda enviada a CTC ✓");
+    showToast("Solicitud de ayuda enviada a CTCx ✓");
     return true;
   }
 
@@ -1522,7 +1523,7 @@ function Experience() {
       },
       ...prev,
     ]);
-    showToast("Respuesta enviada a CTC ✓");
+    showToast("Respuesta enviada a CTCx ✓");
   }
 
   // "Nuevo hilo" (2026-07-24): el productor arranca una conversación con un
@@ -1863,7 +1864,7 @@ function Experience() {
       : supabase.from("finca_parcelas").insert(payload).select("*").single();
     const { data, error } = await q;
     if (error || !data) {
-      showToast(`La finca se guardó, pero su Cafetal 1 no: ${error?.message ?? "sin respuesta de la base"}. Vuelva a guardar; si persiste, pida ayuda a CTC.`);
+      showToast(`La finca se guardó, pero su Cafetal 1 no: ${error?.message ?? "sin respuesta de la base"}. Vuelva a guardar; si persiste, pida ayuda a CTCx.`);
       return;
     }
     const mapped = dbParcelaToParcela(data as ParcelaRow);
@@ -2036,7 +2037,7 @@ function Experience() {
       return;
     }
     setLots((prev) => prev.map((l) => (l.id === lotId ? { ...l, hasPendingOfficializationClaim: true } : l)));
-    showToast("Solicitud de oficialización enviada ✓ · CTC la revisará");
+    showToast("Solicitud de oficialización enviada ✓ · CTCx la revisará");
   }
 
   const curLot = lots.find((l) => l.id === curLotId) ?? null;

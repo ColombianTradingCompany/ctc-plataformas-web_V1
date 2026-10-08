@@ -31,7 +31,7 @@ export function FincaView({ finca, onBack, ...editor }: { finca: Finca | null; o
             <Image className={styles.krl} src="/images/shared/kaffetal-regal-logo.png" alt="Kaffetal Regal" width={1254} height={1254} />
             <span>
               <span className={styles.name}>{finca ? "Mi Finca" : "Finca nueva"}</span>
-              <span className={styles.by}>CTC · Pasaporte EUDR del predio{finca ? ` · ${fincaCode(finca.id)}` : ""}</span>
+              <span className={styles.by}>CTCx · Pasaporte EUDR del predio{finca ? ` · ${fincaCode(finca.id)}` : ""}</span>
             </span>
           </a>
           <button className="btn btn-sm" style={{ marginLeft: "auto" }} onClick={onBack}>

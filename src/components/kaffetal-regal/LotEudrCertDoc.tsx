@@ -1,3 +1,4 @@
+import { fechaParaElProductor } from "@/lib/trato/fechas";
 import { ctcLotReference, ctcLotReferenceShort, fincaCode } from "./data";
 import { PRODUCT_RISK_QUESTIONS } from "@/lib/eudr";
 import { PrintButton } from "./PrintButton";
@@ -113,7 +114,7 @@ export function LotEudrCertDoc({
           <div>
             <p style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "#3C0A86", margin: 0 }}>Colombian Trading Company · CTCx</p>
             <h1 style={{ fontSize: 26, margin: "4px 0 2px" }}>Visa EUDR del Lote</h1>
-            <p style={{ color: "#555", margin: "0 0 4px" }}>Reglamento (UE) 2023/1115 · Documento generado el {new Date().toLocaleDateString("es-CO")}</p>
+            <p style={{ color: "#555", margin: "0 0 4px" }}>Reglamento (UE) 2023/1115 · Documento generado el {fechaParaElProductor(new Date().toISOString())}</p>
             <p style={{ margin: 0, fontWeight: 700 }}>
               {lot.name} · <span style={{ fontFamily: "monospace" }}>{ctcLotReferenceShort(lot.id)}</span>
             </p>
@@ -169,7 +170,7 @@ export function LotEudrCertDoc({
           {lot.eudr_custody_method === "ctc_standard" ? (
             <>
               <b>Estándar CTC de Almacenamiento de Pergamino · CTC Parchment Storage Standard:</b> sacos de yute con liner hermético, tarjeta indicadora de humedad (HIC)
-              y código QR vinculado al código CTC del lote — separación física y documental cubiertas por el estándar.
+              y código QR vinculado al código CTCx del lote — separación física y documental cubiertas por el estándar.
             </>
           ) : lot.eudr_custody_method === "custom" ? (
             <>
@@ -204,7 +205,7 @@ export function LotEudrCertDoc({
                 {row(
                   "Sellos de certificación (derivados)",
                   derivedClaims.length
-                    ? derivedClaims.map((c) => `${c.label}${c.verified ? " · verificado por CTC" : " · declarado"}`).join(" · ")
+                    ? derivedClaims.map((c) => `${c.label}${c.verified ? " · verificado por CTCx" : " · declarado"}`).join(" · ")
                     : "ninguno con cobertura total del lote"
                 )}
                 {lot.eudr_cert_scheme ? row("Esquemas declarados (histórico)", lot.eudr_cert_scheme) : null}
@@ -212,7 +213,7 @@ export function LotEudrCertDoc({
                   row(
                     "Declaración de Diligencia Debida (DDS)",
                     `Referencia ${dds.reference}${dds.verificationCode ? ` · verificación ${dds.verificationCode}` : ""}${
-                      dds.filedAt ? ` · registrada ${new Date(dds.filedAt).toLocaleDateString("es-CO")}` : ""
+                      dds.filedAt ? ` · registrada ${fechaParaElProductor(dds.filedAt)}` : ""
                     }`
                   )}
                 {row("Indicios de ilegalidad o deforestación", yesNo(lot.eudr_illegality_indicators))}
@@ -248,7 +249,7 @@ export function LotEudrCertDoc({
           <ul style={{ fontSize: 12.5, paddingLeft: 18 }}>
             {comms.map((c) => (
               <li key={c.id} style={{ marginBottom: 4 }}>
-                <b>{c.author_role === "producer" ? "Productor" : "CTC"}</b> · {new Date(c.created_at).toLocaleDateString("es-CO")} — {c.note}
+                <b>{c.author_role === "producer" ? "Productor" : "CTCx"}</b> · {fechaParaElProductor(c.created_at)} — {c.note}
               </li>
             ))}
           </ul>

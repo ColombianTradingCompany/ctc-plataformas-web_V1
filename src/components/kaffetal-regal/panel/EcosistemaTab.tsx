@@ -71,7 +71,7 @@ export function EcosistemaTab({
       });
       if (result.ok) {
         setServiceSent((s) => ({ ...s, [pillar]: true }));
-        showToast("Solicitud enviada a CTC ✓ · la conversación sigue en Mensajes y Notificaciones");
+        showToast("Solicitud enviada a CTCx ✓ · la conversación sigue en Mensajes y Notificaciones");
         // The mirror note just landed in producer_comm_log server-side --
         // refresh so Mensajes shows the new thread without a reload.
         onRefreshData();
@@ -179,7 +179,7 @@ export function EcosistemaTab({
           </div>
           {serviceSent.tech ? (
             <div className={styles.alist} style={{ marginTop: 10 }}>
-              ✓ Solicitud enviada. CTC le responderá por correo y en &quot;Mensajes y Notificaciones&quot;.
+              ✓ Solicitud enviada. CTCx le responderá por correo y en &quot;Mensajes y Notificaciones&quot;.
             </div>
           ) : (
             <form
@@ -228,7 +228,7 @@ export function EcosistemaTab({
           </div>
           {serviceSent.varietales ? (
             <div className={styles.alist} style={{ marginTop: 10 }}>
-              ✓ Solicitud enviada. CTC le responderá por correo y en &quot;Mensajes y Notificaciones&quot;.
+              ✓ Solicitud enviada. CTCx le responderá por correo y en &quot;Mensajes y Notificaciones&quot;.
             </div>
           ) : (
             <form

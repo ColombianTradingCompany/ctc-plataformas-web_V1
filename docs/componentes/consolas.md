@@ -177,6 +177,9 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.188 · OCP**: los avisos al productor (ofertas, contratos, compras, nominados, solicitudes) dicen **CTCx**; el contrato
+  guarda el documento de quien firma (`purchase_contracts.producer_signer_doc_tipo` · `producer_signer_doc_numero`) y la vista del
+  contrato en el OCP lo enseña junto al nombre del firmante, para la contrafirma.
 - **V5.187 · OCP**: los avisos al productor de «Solicitudes de Evaluación» y del registro a nombre del productor hablan de la
   **coinversión de CTCx**, no de subvención; **ECP**: el agente del PVC redacta con la sigla **Ponderación de Valor de Cosecha**.
 - **V5.186 · «Pendiente de Oferta»** da la FNC del día (`lecturaDeMercado`) bajo el precio por carga, con el % de la oferta sobre ella.

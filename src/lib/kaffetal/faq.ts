@@ -58,7 +58,7 @@ export const FAQ: Record<Lang, FaqDict> = {
               "2 · Registre sus fincas. Un proveedor puede tener varias, cada una con su ubicación completa, geolocalización (requisito EUDR), altura, historia y características.",
               "3 · Llene la ficha técnica del lote. Cada café se asocia a una de sus fincas y hereda su origen; usted completa variedades, proceso, perfil y caracterización física.",
               "4 · Adjunte sus videos. De 1 a 2 minutos cada uno: usted y su equipo, cada finca, cada café con su cosecha y beneficio. Con el celular y buena luz queda perfecto.",
-              "5 · Solicite la evaluación y envíe la muestra: 2 kg de pergamino seco, contra entrega (el flete lo paga CTC al recibir). Con la factura pagada y la muestra recibida, su lote entra en fila para el Q-Grader.",
+              "5 · Solicite la evaluación y envíe la muestra: 2 kg de pergamino seco, contra entrega (el flete lo paga CTCx al recibir). Con la factura pagada y la muestra recibida, su lote entra en fila para el Q-Grader.",
             ],
           },
           {
@@ -66,8 +66,8 @@ export const FAQ: Record<Lang, FaqDict> = {
             lead:
               "Registrar su finca y armar la ficha no cuesta nada. Solo se paga el lote que decide medir: la evaluación vale $200.000 por lote y por cosecha, y toda solicitud hecha desde su panel nace con una coinversión de CTCx del 30 % (paga $140.000).",
             bullets: [
-              "Esos $200.000 cubren la catación de un Q-Grader certificado, el factor de rendimiento, la certificación CTC y el feedback — salga o no salga galardonado.",
-              "La muestra de 2 kg de pergamino viaja contra entrega: el flete lo paga CTC al recibirla.",
+              "Esos $200.000 cubren la catación de un Q-Grader certificado, el factor de rendimiento, la certificación CTCx y el feedback — salga o no salga galardonado.",
+              "La muestra de 2 kg de pergamino viaja contra entrega: el flete lo paga CTCx al recibirla.",
               "Pida más coinversión en la nota de su solicitud: lo habitual es que CTCx coinvierta el 60 % (paga $80.000), y llega al 70 % ($60.000). Solo paga la tarifa completa quien quiere la evaluación y nada más.",
             ],
           },
@@ -79,7 +79,7 @@ export const FAQ: Record<Lang, FaqDict> = {
           {
             q: "¿Cómo se pacta el precio?",
             lead:
-              "CTC no compra el café para revender: nuestro cometido es blindar su contrato comercial. Lo que firma un galardonado es un contrato de opción de compra a 3 meses.",
+              "CTCx no compra el café para revender: nuestro cometido es blindar su contrato comercial. Lo que firma un galardonado es un contrato de opción de compra a 3 meses.",
             bullets: [
               "El precio se pacta el día de la firma con relación al precio de referencia internacional y al precio de referencia de Fedecafé de ese día.",
               "Desde ese momento queda independiente de sus fluctuaciones durante todo el periodo de la temporada.",
@@ -88,14 +88,14 @@ export const FAQ: Record<Lang, FaqDict> = {
             ],
           },
           {
-            q: "¿CTC me compra el café?",
+            q: "¿CTCx me compra el café?",
             lead:
               "De entrada solo las muestras. El resto se congela a un precio pactado y se paga al corte, cuando el café sale.",
             bullets: [
-              "Si su lote es galardonado, CTC le compra de entrada 15 kg de pergamino para muestras.",
+              "Si su lote es galardonado, CTCx le compra de entrada 15 kg de pergamino para muestras.",
               "Su café —con su nombre, su finca y sus videos— queda frente a tostadores de toda Europa en Cherry Picked.",
               "Usted congela una cantidad pactada de su stock por 3 meses bajo las condiciones de venta, y al final de cada mes puede liberar parte si el mercado local le toca la puerta.",
-              "Al final del mes 3: corte de cuentas, pago total, despacho a CTC — y renovable.",
+              "Al final del mes 3: corte de cuentas, pago total, despacho a CTCx — y renovable.",
             ],
           },
           {
@@ -113,7 +113,7 @@ export const FAQ: Record<Lang, FaqDict> = {
         label: "La red",
         items: [
           {
-            q: "¿Qué hace CTC exactamente?",
+            q: "¿Qué hace CTCx exactamente?",
             lead: "De la muestra al contenedor, seis cosas concretas — y ninguna de ellas es comprarle barato.",
             bullets: [
               "Recibe y gestiona el material de muestras: registro, custodia y preparación para el panel.",
@@ -127,7 +127,7 @@ export const FAQ: Record<Lang, FaqDict> = {
           {
             q: "¿Qué es Cherry Picked?",
             lead:
-              "La vitrina de CTC en Europa: la plataforma donde tostadores de todo el continente compran fracciones de los microlotes galardonados en la Arena.",
+              "La vitrina de CTCx en Europa: la plataforma donde tostadores de todo el continente compran fracciones de los microlotes galardonados en la Arena.",
             bullets: [
               "El nombre del productor, su finca, sus videos y su grado quedan a la vista en cada compra.",
               "Cada tostador que entra mejora la prima que podemos ofrecerle — sin que usted cambie una sola cosa de su café.",
@@ -140,7 +140,7 @@ export const FAQ: Record<Lang, FaqDict> = {
             bullets: [
               "1 · Kaffetal Regal: registra su finca y arma la ficha de su lote.",
               "2 · Cupping Arena: la taza habla, a ciegas, ante Q-Graders invitados.",
-              "3 · Certificación CTC: para todos los inscritos, con la retroalimentación del panel.",
+              "3 · Certificación CTCx: para todos los inscritos, con la retroalimentación del panel.",
               "4 · Cherry Picked: su nombre, en Europa.",
             ],
           },
@@ -165,7 +165,7 @@ export const FAQ: Record<Lang, FaqDict> = {
             q: "¿Y si no gano?",
             lead: "Se lleva el diagnóstico. Es lo que otros pagan en dólares y ninguna cooperativa le entrega.",
             bullets: [
-              "La certificación CTC es gratuita para todos los inscritos, galardonados o no, e incluye puntaje, perfil sensorial y la retroalimentación de mejora del panel.",
+              "La certificación CTCx es gratuita para todos los inscritos, galardonados o no, e incluye puntaje, perfil sensorial y la retroalimentación de mejora del panel.",
               "Lo que recibe de vuelta queda suyo: es su historial, no el nuestro.",
               "Cada lote que completa suma a un historial que solo usted tiene: qué varietal a qué altura, qué fermentación repite puntaje. Ese acervo se construye cosecha a cosecha y no se compra con dinero.",
             ],
@@ -214,7 +214,7 @@ export const FAQ: Record<Lang, FaqDict> = {
               "2 · Register your farms. A supplier can have several, each with full location, geolocation (an EUDR requirement), altitude, history and characteristics.",
               "3 · Fill in the lot datasheet. Each coffee is linked to one of your farms and inherits its origin; you complete varieties, process, profile and physical characterisation.",
               "4 · Attach your videos. One to two minutes each: you and your team, each farm, each coffee with its harvest and milling. A phone and good light is enough.",
-              "5 · Request the evaluation and send the sample: 2 kg of dry parchment, freight collect (CTC pays the shipping on receipt). With the invoice paid and the sample received, your lot joins the Q-Grader's queue.",
+              "5 · Request the evaluation and send the sample: 2 kg of dry parchment, freight collect (CTCx pays the shipping on receipt). With the invoice paid and the sample received, your lot joins the Q-Grader's queue.",
             ],
           },
           {
@@ -222,8 +222,8 @@ export const FAQ: Record<Lang, FaqDict> = {
             lead:
               "Registering your farm and building the datasheet costs nothing. You only pay for the lot you decide to measure: the evaluation is worth $200,000 COP per lot, per harvest, and every request made from your panel starts with a 30 % co-investment from CTCx (you pay $140,000).",
             bullets: [
-              "Those $200,000 cover a certified Q-Grader's cupping, the yield factor, the CTC certification and the feedback — awarded or not.",
-              "The 2 kg parchment sample ships freight collect: CTC pays the shipping on receipt.",
+              "Those $200,000 cover a certified Q-Grader's cupping, the yield factor, the CTCx certification and the feedback — awarded or not.",
+              "The 2 kg parchment sample ships freight collect: CTCx pays the shipping on receipt.",
               "Ask for a larger co-investment in your request note: CTCx usually co-invests 60 % (you pay $80,000), up to 70 % ($60,000). Only those who want the evaluation and nothing else pay the full fee.",
             ],
           },
@@ -235,7 +235,7 @@ export const FAQ: Record<Lang, FaqDict> = {
           {
             q: "How is the price agreed?",
             lead:
-              "CTC doesn't buy your coffee to resell it: our job is to armor your commercial contract. What an awarded producer signs is a 3-month purchase-option contract.",
+              "CTCx doesn't buy your coffee to resell it: our job is to armor your commercial contract. What an awarded producer signs is a 3-month purchase-option contract.",
             bullets: [
               "The price is agreed on signing day against that day's international reference and Fedecafé reference.",
               "From that moment it stays independent of their fluctuations for the whole season.",
@@ -244,14 +244,14 @@ export const FAQ: Record<Lang, FaqDict> = {
             ],
           },
           {
-            q: "Does CTC buy my coffee?",
+            q: "Does CTCx buy my coffee?",
             lead:
               "Upfront, only the samples. The rest is frozen at an agreed price and paid at settlement, when the coffee ships.",
             bullets: [
-              "If your lot is awarded, CTC buys 15 kg of parchment upfront for samples.",
+              "If your lot is awarded, CTCx buys 15 kg of parchment upfront for samples.",
               "Your coffee — with your name, your farm and your videos — stands before roasters across Europe on Cherry Picked.",
               "You freeze an agreed quantity of your stock for 3 months under the sale conditions, and at the end of each month you can release part of it if the local market knocks.",
-              "At the end of month 3: settlement, full payment, dispatch to CTC — and renewable.",
+              "At the end of month 3: settlement, full payment, dispatch to CTCx — and renewable.",
             ],
           },
           {
@@ -269,7 +269,7 @@ export const FAQ: Record<Lang, FaqDict> = {
         label: "The network",
         items: [
           {
-            q: "What exactly does CTC do?",
+            q: "What exactly does CTCx do?",
             lead: "From the sample to the container, six concrete things — and none of them is buying from you cheaply.",
             bullets: [
               "Receives and manages the sample material: registration, custody and preparation for the panel.",
@@ -283,7 +283,7 @@ export const FAQ: Record<Lang, FaqDict> = {
           {
             q: "What is Cherry Picked?",
             lead:
-              "CTC's storefront in Europe: the platform where roasters across the continent buy fractions of the microlots awarded in the Arena.",
+              "CTCx's storefront in Europe: the platform where roasters across the continent buy fractions of the microlots awarded in the Arena.",
             bullets: [
               "The producer's name, farm, videos and grade are in plain sight on every purchase.",
               "Every roaster who joins improves the premium we can offer you — without you changing a single thing about your coffee.",
@@ -296,7 +296,7 @@ export const FAQ: Record<Lang, FaqDict> = {
             bullets: [
               "1 · Kaffetal Regal: register your farm and build your lot's datasheet.",
               "2 · Cupping Arena: the cup speaks, blind, before invited Q-Graders.",
-              "3 · CTC Certification: for every entrant, with the panel's feedback.",
+              "3 · CTCx Certification: for every entrant, with the panel's feedback.",
               "4 · Cherry Picked: your name, in Europe.",
             ],
           },
@@ -321,7 +321,7 @@ export const FAQ: Record<Lang, FaqDict> = {
             q: "And if I don't win?",
             lead: "You keep the diagnosis. It's what others pay for in dollars and no cooperative hands you.",
             bullets: [
-              "The CTC certification is free for every entrant, awarded or not, and includes score, sensory profile and the panel's improvement feedback.",
+              "The CTCx certification is free for every entrant, awarded or not, and includes score, sensory profile and the panel's improvement feedback.",
               "What you get back is yours: it's your record, not ours.",
               "Every lot you complete adds to a history only you have: which variety at which altitude, which fermentation repeats a score. That body of knowledge is built harvest by harvest and can't be bought.",
             ],
@@ -370,7 +370,7 @@ export const FAQ: Record<Lang, FaqDict> = {
               "2 · Registrieren Sie Ihre Fincas. Ein Lieferant kann mehrere haben, jede mit vollständiger Lage, Geolokalisierung (EUDR-Pflicht), Höhe, Geschichte und Merkmalen.",
               "3 · Füllen Sie das Datenblatt des Lots aus. Jeder Kaffee gehört zu einer Ihrer Fincas und erbt deren Ursprung; Sie ergänzen Varietäten, Aufbereitung, Profil und physische Charakterisierung.",
               "4 · Laden Sie Ihre Videos hoch. Je ein bis zwei Minuten: Sie und Ihr Team, jede Finca, jeder Kaffee mit Ernte und Aufbereitung. Handy und gutes Licht genügen.",
-              "5 · Beantragen Sie die Bewertung und senden Sie das Muster: 2 kg trockener Pergamino, per Nachnahme (CTC zahlt den Versand bei Erhalt). Mit bezahlter Rechnung und eingegangenem Muster steht Ihr Lot in der Reihe beim Q-Grader.",
+              "5 · Beantragen Sie die Bewertung und senden Sie das Muster: 2 kg trockener Pergamino, per Nachnahme (CTCx zahlt den Versand bei Erhalt). Mit bezahlter Rechnung und eingegangenem Muster steht Ihr Lot in der Reihe beim Q-Grader.",
             ],
           },
           {
@@ -379,7 +379,7 @@ export const FAQ: Record<Lang, FaqDict> = {
               "Die Finca zu registrieren und das Datenblatt zu erstellen kostet nichts. Bezahlt wird nur das Lot, das Sie messen wollen: die Bewertung ist 200.000 COP pro Lot und Ernte wert, und jede Anfrage aus Ihrem Panel beginnt mit einer Ko-Investition von CTCx in Höhe von 30 % (Sie zahlen 140.000 COP).",
             bullets: [
               "Diese 200.000 COP decken die Verkostung eines zertifizierten Q-Graders, den Ausbeutefaktor, die CTC-Zertifizierung und das Feedback — prämiert oder nicht.",
-              "Das 2-kg-Muster reist per Nachnahme: CTC zahlt den Versand bei Erhalt.",
+              "Das 2-kg-Muster reist per Nachnahme: CTCx zahlt den Versand bei Erhalt.",
               "Bitten Sie in der Notiz Ihrer Anfrage um eine höhere Ko-Investition: üblich sind 60 % von CTCx (Sie zahlen 80.000 COP), bis zu 70 % (60.000 COP). Den vollen Preis zahlt nur, wer die Bewertung und sonst nichts will.",
             ],
           },
@@ -391,7 +391,7 @@ export const FAQ: Record<Lang, FaqDict> = {
           {
             q: "Wie wird der Preis vereinbart?",
             lead:
-              "CTC kauft Ihren Kaffee nicht zum Weiterverkauf: Unsere Aufgabe ist es, Ihren Handelsvertrag abzusichern. Was ein Prämierter unterschreibt, ist ein Kaufoptionsvertrag über 3 Monate.",
+              "CTCx kauft Ihren Kaffee nicht zum Weiterverkauf: Unsere Aufgabe ist es, Ihren Handelsvertrag abzusichern. Was ein Prämierter unterschreibt, ist ein Kaufoptionsvertrag über 3 Monate.",
             bullets: [
               "Der Preis wird am Tag der Unterschrift gegen den internationalen Referenzpreis und den Fedecafé-Referenzpreis dieses Tages vereinbart.",
               "Ab diesem Moment bleibt er unabhängig von deren Schwankungen für die gesamte Saison.",
@@ -400,14 +400,14 @@ export const FAQ: Record<Lang, FaqDict> = {
             ],
           },
           {
-            q: "Kauft CTC meinen Kaffee?",
+            q: "Kauft CTCx meinen Kaffee?",
             lead:
               "Sofort nur die Muster. Der Rest wird zum vereinbarten Preis eingefroren und bei der Abrechnung bezahlt, wenn der Kaffee hinausgeht.",
             bullets: [
-              "Wird Ihr Lot prämiert, kauft CTC sofort 15 kg Pergamino für Muster.",
+              "Wird Ihr Lot prämiert, kauft CTCx sofort 15 kg Pergamino für Muster.",
               "Ihr Kaffee — mit Ihrem Namen, Ihrer Finca und Ihren Videos — steht auf Cherry Picked vor Röstern aus ganz Europa.",
               "Sie frieren eine vereinbarte Menge Ihres Bestands für 3 Monate zu den Verkaufsbedingungen ein und können am Ende jedes Monats einen Teil freigeben, wenn der lokale Markt anklopft.",
-              "Am Ende von Monat 3: Abrechnung, volle Zahlung, Versand an CTC — und verlängerbar.",
+              "Am Ende von Monat 3: Abrechnung, volle Zahlung, Versand an CTCx — und verlängerbar.",
             ],
           },
           {
@@ -425,7 +425,7 @@ export const FAQ: Record<Lang, FaqDict> = {
         label: "Das Netzwerk",
         items: [
           {
-            q: "Was macht CTC genau?",
+            q: "Was macht CTCx genau?",
             lead: "Vom Muster bis zum Container sechs konkrete Dinge — und keines davon ist, Ihnen billig abzukaufen.",
             bullets: [
               "Empfängt und verwaltet das Mustermaterial: Registrierung, Verwahrung und Vorbereitung für das Panel.",
@@ -439,7 +439,7 @@ export const FAQ: Record<Lang, FaqDict> = {
           {
             q: "Was ist Cherry Picked?",
             lead:
-              "Das Schaufenster von CTC in Europa: die Plattform, auf der Röster des ganzen Kontinents Fraktionen der in der Arena prämierten Microlots kaufen.",
+              "Das Schaufenster von CTCx in Europa: die Plattform, auf der Röster des ganzen Kontinents Fraktionen der in der Arena prämierten Microlots kaufen.",
             bullets: [
               "Name des Produzenten, Finca, Videos und Grad sind bei jedem Kauf sichtbar.",
               "Jeder Röster, der dazukommt, verbessert die Prämie, die wir Ihnen bieten können — ohne dass Sie an Ihrem Kaffee irgendetwas ändern.",

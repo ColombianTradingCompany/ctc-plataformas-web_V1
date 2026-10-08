@@ -89,7 +89,7 @@ export function PaneB3({
         <p className={bstyles.introSub}>
           Es <b>lo uno o lo otro</b>. Si su cooperativa o un laboratorio ya le hizo el análisis, marque{" "}
           <b>«Tengo un reporte»</b>, escriba el factor <i>o</i> la almendra total y <b>adjunte esa hoja</b> (PDF o fotos) con el
-          nombre de quien la emitió: con eso mismo CTC verifica y oficializa. Si no tiene análisis, marque{" "}
+          nombre de quien la emitió: con eso mismo CTCx verifica y oficializa. Si no tiene análisis, marque{" "}
           <b>«No lo sé»</b> — y si conoce alguno de los dos números, repórtelo, que con uno basta.
         </p>
         <p className={styles.fexample} style={{ marginTop: 8 }}>
@@ -171,7 +171,7 @@ export function PaneB3({
         <div className={styles.ff} style={{ marginTop: 14 }}>
           <label>
             Laboratorio / institución que emitió el reporte<small style={{ fontWeight: 400, color: "var(--red, #C4402F)" }}> · obligatorio</small>
-            <FieldInfo text="Quién hizo el análisis físico: el laboratorio, la cooperativa o el comprador que le entregó la hoja. Con esto CTC verifica el reporte." />
+            <FieldInfo text="Quién hizo el análisis físico: el laboratorio, la cooperativa o el comprador que le entregó la hoja. Con esto CTCx verifica el reporte." />
           </label>
           <input value={data.b3_reporte_ref} onChange={(e) => onChange({ b3_reporte_ref: e.target.value })} placeholder="Nombre del laboratorio / cooperativa" />
         </div>

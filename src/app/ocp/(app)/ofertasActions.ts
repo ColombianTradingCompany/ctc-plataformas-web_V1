@@ -287,7 +287,7 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
     producer_id: lot.producer_id,
     context_label: `Lote ${lot.name}`,
     lot_id: lotId,
-    note: `CTC le envió una oferta por su lote galardonado (${lot.grade}).${detalle} Entrega: ${lugarEntrega} Revísela en «Contratos y Compras» → ${donde} — usted decide si la acepta o la rechaza.`,
+    note: `CTCx le envió una oferta por su lote galardonado (${lot.grade}).${detalle} Entrega: ${lugarEntrega} Revísela en «Contratos y Compras» → ${donde} — usted decide si la acepta o la rechaza.`,
     created_by: adminId,
   });
 
@@ -350,7 +350,7 @@ export async function decidirNoOfertar(lotId: string, formData: FormData): Promi
     producer_id: lot.producer_id,
     context_label: `Lote ${lot.name}`,
     lot_id: lotId,
-    note: "CTC decidió no emitir una oferta por su lote en esta temporada. Su galardón y su Ficha siguen vigentes; si las condiciones cambian, CTC le escribirá.",
+    note: "CTCx decidió no emitir una oferta por su lote en esta temporada. Su galardón y su Ficha siguen vigentes; si las condiciones cambian, CTCx le escribirá.",
     created_by: adminId,
   });
   revalidateAll();

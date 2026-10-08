@@ -25,6 +25,7 @@ import { MODALIDAD_LABEL, fechaLarga, type Modalidad } from "@/lib/trato/modalid
 import { cuentaDeVentana } from "@/lib/trato/cuenta";
 import { cobrarFaltante, confirmarDespacho, confirmarVentaSemanal, prepararRenovacion, prorrogarLoVendido, recibirDespacho } from "../../ventanaActions";
 import { hoyEnColombia } from "@/lib/pvc/servicio";
+import { documentoDelFirmante, esTipoDeDocumento } from "@/lib/trato/documento";
 
 // ── El contrato, mes a mes (V5.84 · fase 7 del PLAN_CIRCUITO_DEL_LOTE) ──────────────────────
 // Folio 8, pasos 16–18. Nació lleno de la aceptación con declaración (fase 6); CTCx lo FIRMA y desde ahí lo lleva
@@ -66,7 +67,7 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
   const { data: contract } = await service
     .from("purchase_contracts")
     .select(
-      "id, status, grade_snapshot, signed_at, reference_price_source, reference_price_snapshot, price_per_kg_locked, quantity_frozen_kg, terms_version, declaracion, compra_inicial_kg, modificador_pct, freeze_months, ruptura_at, ruptura_motivo, renovado_at, lugar_entrega, producer_signed_at, producer_signer_name, producer_signature_path, producer_signature_meta, contract_text_version, contract_text_sha256, vigencia_hasta, redeclarar_min_kg, redeclarar_at, redeclarado_at, redeclarado_kg, redeclaracion_origen, redeclarar_aviso_at, lots(name, producer_id, fincas(name)), ventana_tipo, ventana_ciclos, precio_regla, saco_kg, minimo_kg, sin_retiro, vigencia_desde, retiro_libre_pct"
+      "id, status, grade_snapshot, signed_at, reference_price_source, reference_price_snapshot, price_per_kg_locked, quantity_frozen_kg, terms_version, declaracion, compra_inicial_kg, modificador_pct, freeze_months, ruptura_at, ruptura_motivo, renovado_at, lugar_entrega, producer_signed_at, producer_signer_name, producer_signer_doc_tipo, producer_signer_doc_numero, producer_signature_path, producer_signature_meta, contract_text_version, contract_text_sha256, vigencia_hasta, redeclarar_min_kg, redeclarar_at, redeclarado_at, redeclarado_kg, redeclaracion_origen, redeclarar_aviso_at, lots(name, producer_id, fincas(name)), ventana_tipo, ventana_ciclos, precio_regla, saco_kg, minimo_kg, sin_retiro, vigencia_desde, retiro_libre_pct"
     )
     .eq("id", id)
     .single();
@@ -149,7 +150,12 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
             <img src={firmaProductorUrl} alt={`Firma de ${contract.producer_signer_name ?? "el productor"}`} style={{ height: 64, width: "auto", background: "#fff", border: "1px solid var(--line)", borderRadius: 6 }} />
           )}
           <p className={styles.meta} style={{ margin: 0 }}>
-            Firmado por el productor: <b>{contract.producer_signer_name}</b> · {fecha(contract.producer_signed_at)}
+            Firmado por el productor: <b>{contract.producer_signer_name}</b>
+            {/* V5.188: el documento con que se identificó al firmar (va en el texto firmado y en su huella). */}
+            {contract.producer_signer_doc_numero && esTipoDeDocumento(contract.producer_signer_doc_tipo) && (
+              <> · {documentoDelFirmante(contract.producer_signer_doc_tipo, contract.producer_signer_doc_numero)}</>
+            )}{" "}
+            · {fecha(contract.producer_signed_at)}
             {contract.lugar_entrega && <> · entrega: {contract.lugar_entrega}</>}
             <br />
             Texto {contract.contract_text_version ?? "—"} · SHA-256 <span className="mono">{String(contract.contract_text_sha256 ?? "").slice(0, 16)}…</span>

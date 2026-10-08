@@ -1,11 +1,13 @@
 "use server";
 
+import { fechaParaElProductor } from "@/lib/trato/fechas";
 import { createHash } from "node:crypto";
 import { headers } from "next/headers";
 import { createSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { LUGAR_DE_ENTREGA_POR_DEFECTO } from "@/lib/trato/terminos";
 import { formatCop } from "@/lib/arena/inscriptions";
 import { CONTRATO_VERSION, textoDelContrato } from "@/lib/trato/contrato";
+import { documentoDelFirmante, validarDocumento } from "@/lib/trato/documento";
 import { validarDeclaracion } from "@/lib/trato/minimos";
 import { plazoDelSaco } from "@/lib/trato/despachos";
 import { hoyEnColombia } from "@/lib/pvc/servicio";
@@ -28,7 +30,8 @@ import { ctcLotReference } from "@/components/kaffetal-regal/data";
 export type RespuestaOferta = { ok: true } | { ok: false; message: string };
 
 /** V5.168 (owner): la firma del productor con el dedo — su nombre y el trazo en PNG (data URL). */
-export type FirmaDeAceptacion = { nombre: string; imagenPng: string };
+/** V5.188: con el nombre llega el documento de quien firma (tipo y número), que el texto firmado dice y el contrato guarda. */
+export type FirmaDeAceptacion = { nombre: string; documentoTipo: string; documentoNumero: string; imagenPng: string };
 
 const FIRMA_PREFIJO = "data:image/png;base64,";
 const FIRMA_MAX_BYTES = 600_000;
@@ -74,7 +77,7 @@ export async function respondToOffer(
   // V5.84 (fase 7, decisión 6): una cuenta congelada por ruptura no acepta ofertas (la congela y la reactiva el owner).
   if (respuesta === "aceptar") {
     const { data: perfil } = await service.from("producer_profiles").select("estado_cuenta").eq("profile_id", auth.userId).maybeSingle();
-    if (perfil?.estado_cuenta === "congelada") return { ok: false, message: "Su cuenta está congelada por ruptura contractual: no puede aceptar ofertas. Escríbale a CTC para revisar su caso." };
+    if (perfil?.estado_cuenta === "congelada") return { ok: false, message: "Su cuenta está congelada por ruptura contractual: no puede aceptar ofertas. Escríbale a CTCx para revisar su caso." };
   }
   // V5.169: una Selection en contraoferta (le toca a CTCx) se puede DESISTIR, no aceptar.
   if (offer.status !== "emitida" && !(respuesta === "rechazar" && offer.status === "contraofertada")) {
@@ -109,7 +112,7 @@ export async function respondToOffer(
   if (offer.expira_at && new Date(offer.expira_at).getTime() < Date.now()) {
     await service.from("lot_offers").update({ status: "expirada", responded_at: now }).eq("id", offerId);
     await service.from("audit_log").insert({ entity_type: "lot_offer", entity_id: offer.lot_id, action: "offer_expired", previous_status: "emitida", new_status: "expirada", performed_by: auth.userId });
-    return { ok: false, message: `Esta oferta venció el ${new Date(offer.expira_at).toLocaleDateString("es-CO")}. CTC puede emitir otra.` };
+    return { ok: false, message: `Esta oferta venció el ${fechaParaElProductor(offer.expira_at)}. CTCx puede emitir otra.` };
   }
 
   // V5.169 (owner): CTCx ofrece una de dos cosas. Una compra de CTCx SELECTION se acepta tal cual se negoció (precio y kilos de la
@@ -143,6 +146,8 @@ export async function respondToOffer(
   if (!firma) return { ok: false, message: "Para aceptar hay que firmar el contrato (su nombre y su firma con el dedo)." };
   const nombreFirma = String(firma.nombre ?? "").replace(/\s+/g, " ").trim();
   if (nombreFirma.length < 5) return { ok: false, message: "Escriba su nombre completo para firmar." };
+  const documento = validarDocumento(firma.documentoTipo, firma.documentoNumero);
+  if (!documento.ok) return { ok: false, message: documento.motivo };
   if (typeof firma.imagenPng !== "string" || !firma.imagenPng.startsWith(FIRMA_PREFIJO)) return { ok: false, message: "La firma no llegó bien. Fírmela de nuevo." };
   const firmaBytes = Buffer.from(firma.imagenPng.slice(FIRMA_PREFIJO.length), "base64");
   if (firmaBytes.length < 200 || firmaBytes.length > FIRMA_MAX_BYTES) return { ok: false, message: "La firma no llegó bien. Fírmela de nuevo." };
@@ -159,7 +164,7 @@ export async function respondToOffer(
     calidad: cond?.calidad ?? null,
     flete: fleteDeLaFila(offer),
     productorNombre: nombreFirma,
-    productorDocumento: null,
+    productorDocumento: documentoDelFirmante(documento.tipo, documento.numero),
     loteNombre: lot?.name ?? "—",
     loteReferencia: ctcLotReference(offer.lot_id),
     grado: offer.grade_snapshot,
@@ -217,6 +222,8 @@ export async function respondToOffer(
       lugar_entrega: lugarEntrega,
       producer_signed_at: now,
       producer_signer_name: nombreFirma,
+      producer_signer_doc_tipo: documento.tipo,
+      producer_signer_doc_numero: documento.numero,
       producer_signature_path: rutaFirma,
       producer_signature_meta: metaFirma,
       contract_text_version: CONTRATO_VERSION,
@@ -274,7 +281,7 @@ export async function respondToOffer(
     lot_id: offer.lot_id,
     note: cond
       ? `Usted aceptó la invitación de CTCx y declaró ${lockedKg} kg de CPS para la ventana del ${cond.ventana.desde} al ${cond.ventana.hasta}, a ${formatCop(copKgTrato)}/kg.${cond.sacoKg > 0 ? ` CTCx le compra ${cond.sacoKg} kg ${cond.esRenovacion ? "por adelantado" : "(el saco)"}: despáchelo a más tardar el ${plazoDelSaco(hoy)}.` : ""} El contrato queda vigente con la firma de CTCx; lo verá en «Contratos y Compras».`
-      : "Usted aceptó la oferta de CTC. El contrato quedó creado con el precio de la oferta, pendiente de la firma de CTC — lo verá avanzar en «Contratos y Compras» → Contratos de Temporada.",
+      : "Usted aceptó la oferta de CTCx. El contrato quedó creado con el precio de la oferta, pendiente de la firma de CTCx — lo verá avanzar en «Contratos y Compras» → Contratos de Temporada.",
     created_by: auth.userId,
   });
 

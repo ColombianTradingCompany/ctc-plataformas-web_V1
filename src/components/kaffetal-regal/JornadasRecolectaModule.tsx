@@ -30,7 +30,7 @@ import type { Finca } from "./data";
 
 const COLUMNAS: { key: string; label: string }[] = [
   { key: "abierta", label: "Abiertas" },
-  { key: "en_gestion", label: "En gestión CTC" },
+  { key: "en_gestion", label: "En gestión CTCx" },
   { key: "cerrada", label: "Cerradas" },
 ];
 

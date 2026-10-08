@@ -95,7 +95,7 @@ export function SolicitudRevisionModal({
             {finca.mun !== "—" && ` · ${finca.mun}, ${finca.pais || finca.depto}`}
           </p>
           <p style={{ marginBottom: 14 }}>
-            Esta finca ya tiene su Pasaporte, así que sus datos no se editan: los cambios los aplica CTC. Elija a cuál de los cuatro
+            Esta finca ya tiene su Pasaporte, así que sus datos no se editan: los cambios los aplica CTCx. Elija a cuál de los cuatro
             puntos de la finca se refiere, cuéntenos qué hay que corregir y, si lo tiene, adjunte el soporte. Le responderemos por{" "}
             <b>Retroalimentación y ayuda</b>.
           </p>
@@ -153,7 +153,7 @@ export function SolicitudRevisionModal({
           {/* Acciones abajo a la derecha, apiladas — regla de la casa. */}
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8, marginTop: 16 }}>
             <button className="btn btn-solid" onClick={enviar} disabled={!seccion || !texto.trim() || enviando}>
-              {enviando ? "Enviando…" : "Enviar solicitud a CTC"}
+              {enviando ? "Enviando…" : "Enviar solicitud a CTCx"}
             </button>
             <button
               className="btn btn-sm"

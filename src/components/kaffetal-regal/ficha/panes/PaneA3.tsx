@@ -64,7 +64,7 @@ export function PaneA3({ data, onChange, onUploadCertFile, onGoToPane }: PanePro
               <b>¿Lo que adjuntó es una hoja de catación con su puntaje?</b>
               <p style={{ margin: "4px 0 8px" }}>
                 Entonces no hace falta que teclee los atributos uno por uno. Vaya a <b>B2 · Perfil de Taza</b> y use
-                <b> «Solicitar oficialización»</b>: adjunte ahí la hoja con la referencia de su Q-Grader o laboratorio y CTC
+                <b> «Solicitar oficialización»</b>: adjunte ahí la hoja con la referencia de su Q-Grader o laboratorio y CTCx
                 registra el puntaje por usted.
               </p>
               <button type="button" className="btn btn-sm" onClick={() => onGoToPane("b2")}>

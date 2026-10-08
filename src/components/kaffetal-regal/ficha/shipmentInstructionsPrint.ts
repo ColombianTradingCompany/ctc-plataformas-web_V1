@@ -7,7 +7,7 @@
 // una etiqueta RECORTABLE (~1/4 de página, borde punteado + tijeras) para
 // pegar con cinta sobre la bolsa interior.
 
-const ADDRESS = "CTC · Cra. 4 #8N-30, vía Guatiguará, casa 205, conjunto campestre Santillana · Piedecuesta, Santander, Colombia";
+const ADDRESS = "CTCx · Cra. 4 #8N-30, vía Guatiguará, casa 205, conjunto campestre Santillana · Piedecuesta, Santander, Colombia";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -40,7 +40,7 @@ function layersDiagram(short: string): string {
     <path d="M400 118 h44" stroke="#A87B2F" stroke-width="2.5" fill="none" marker-end="url(#arr)"/>
     <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#A87B2F"/></marker></defs>
     <text x="452" y="96" font-family="Georgia,serif" font-size="11" fill="#14201A">
-      <tspan x="452" dy="0">Al llegar, CTC registra su</tspan>
+      <tspan x="452" dy="0">Al llegar, CTCx registra su</tspan>
       <tspan x="452" dy="14">envío, <tspan font-weight="bold">destruye la capa</tspan></tspan>
       <tspan x="452" dy="14"><tspan font-weight="bold">exterior</tspan> con sus datos y</tspan>
       <tspan x="452" dy="14">pasa al panel solo la bolsa</tspan>
@@ -121,7 +121,7 @@ export function shipmentInstructionsHtml(lotCode: string, shortRef: string): str
   ${layersDiagram(short)}
 
   <div class="address"><b>Enviar a:</b> ${esc(ADDRESS)} &nbsp;·&nbsp; Al despachar, confirme el envío en su panel (módulo <i>Evaluar mi Café</i>).</div>
-  <div class="address"><b>Contra entrega:</b> despache el paquete <b>con pago del flete al recibir</b> — el envío lo paga CTC cuando llega; a usted no le cuesta nada.</div>
+  <div class="address"><b>Contra entrega:</b> despache el paquete <b>con pago del flete al recibir</b> — el envío lo paga CTCx cuando llega; a usted no le cuesta nada.</div>
 
   <div class="cutWrap">
     <p class="cutHint">Recorte esta etiqueta por la línea punteada y péguela con cinta transparente sobre la bolsa interior (Capa 1):</p>

@@ -78,7 +78,7 @@ function Bloque({
       }
       const guardado = await onAdd({ tipo, assetId: subida.assetId, fileName: file.name, emisor, puntaje, escala, factor, nota, pedirRevision });
       if (!guardado) {
-        setError("El archivo subió, pero no se pudo registrar. Inténtelo otra vez; si persiste, pida ayuda a CTC.");
+        setError("El archivo subió, pero no se pudo registrar. Inténtelo otra vez; si persiste, pida ayuda a CTCx.");
         return false;
       }
       setHecho(`✓ ${file.name} agregado${reporte && pedirRevision ? " — CTCx recibió su solicitud de revisión" : ""}.`);
@@ -183,7 +183,7 @@ export function PaneReferencias({
     <div className={styles.fsec}>
       <h3><span className={styles.fn}>＋</span> Agregar Referencias, Fotos y Videos</h3>
       <p className={styles.fexample} style={{ marginTop: 8 }}>
-        Su Ficha ya está registrada en CTC y <b>no cambia</b>. Aquí puede sumar material nuevo de este lote cuando lo tenga
+        Su Ficha ya está registrada en CTCx y <b>no cambia</b>. Aquí puede sumar material nuevo de este lote cuando lo tenga
         —otro reporte de taza, otro análisis físico, más fotos o videos— <b>sin pedir una revisión de la Ficha</b>. Lo que
         agregue queda en el expediente del lote y <b>no se puede retirar</b>; tampoco reemplaza lo que ya envió.
       </p>

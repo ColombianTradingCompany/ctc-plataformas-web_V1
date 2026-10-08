@@ -52,7 +52,7 @@ export function ComoFunciona() {
         ))}
       </ol>
       <div style={{ fontSize: 12, color: "var(--muted)" }}>
-        La tarifa cubre el análisis físico, la catación por un <b>Q-Grader certificado</b>, el factor de rendimiento, la certificación CTC y
+        La tarifa cubre el análisis físico, la catación por un <b>Q-Grader certificado</b>, el factor de rendimiento, la certificación CTCx y
         el feedback — <b>salga o no salga galardonado</b>.
       </div>
     </div>

@@ -86,7 +86,7 @@ export async function registrarCompraManual(formData: FormData): Promise<ActionR
     producer_id: lot.producer_id,
     context_label: `Lote ${lot.name}`,
     lot_id: lotId,
-    note: `CTC registró la compra en firme de ${kg} kg de CPS de su lote a ${formatCop(copKg)}/kg${pagadaAt ? ` (pagada el ${pagadaAt})` : ""}. Ese café pasa a ofrecerse como CTCx Selection.`,
+    note: `CTCx registró la compra en firme de ${kg} kg de CPS de su lote a ${formatCop(copKg)}/kg${pagadaAt ? ` (pagada el ${pagadaAt})` : ""}. Ese café pasa a ofrecerse como CTCx Selection.`,
     created_by: adminId,
   });
   revalida();

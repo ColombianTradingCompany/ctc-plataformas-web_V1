@@ -19,7 +19,7 @@ export function PaneA1({ data, onChange, lot }: PaneProps) {
     <div className={styles.fsec}>
       <h3><span className={styles.fn}>A1</span> Identidad & Comercio</h3>
       <p className={styles.fexample} style={{ marginTop: 8 }}>
-        Información comercial y de trazabilidad del lote. Proveedor, NIT/RUT, Productor y el código CTC vienen de su
+        Información comercial y de trazabilidad del lote. Proveedor, NIT/RUT, Productor y el código CTCx vienen de su
         perfil y del lote — edítelos desde &quot;Editar información&quot; en el panel si algo cambió.
       </p>
       <div className={styles.fgrid}>

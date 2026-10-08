@@ -116,7 +116,7 @@ export function AppDashboard({
             <Image className={styles.krl} src="/images/shared/kaffetal-regal-logo.png" alt="Kaffetal Regal" width={1254} height={1254} />
             <span>
               <span className={styles.name}>Kaffetal Regal</span>
-              <span className={styles.by}>Panel del productor · by CTC</span>
+              <span className={styles.by}>Panel del productor · by CTCx</span>
             </span>
           </a>
           {/* «Mi red» salió del panel (owner, 2026-08-21): el salto entre

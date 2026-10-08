@@ -1,5 +1,6 @@
 "use client";
 
+import { fechaParaElProductor } from "@/lib/trato/fechas";
 import { useState } from "react";
 import { ctcLotReferenceShort, type Finca, type FeedbackNote, type Lot, type ProducerContract } from "./data";
 import appStyles from "./AppDashboard.module.css";
@@ -113,7 +114,7 @@ export function RetroalimentacionPanel({
       <div className={styles.wrap}>
         <div className={`${styles.list} ${listOpen ? "" : styles.listClosed}`}>
           <div className={styles.listHead}>
-            <span>{tituloLista ?? "Retroalimentación y ayuda · notas de CTC"}</span>
+            <span>{tituloLista ?? "Retroalimentación y ayuda · notas de CTCx"}</span>
           </div>
           <div className={styles.listBody}>
             {threads.length === 0 ? (
@@ -176,8 +177,8 @@ export function RetroalimentacionPanel({
               <div className={styles.convoBody}>
                 {active.notes.map((n) => (
                   <div key={n.id} className={n.authorRole === "producer" ? styles.bubbleMine : styles.bubbleCtc}>
-                    <b>{n.authorRole === "producer" ? yo : "CTC"}</b>{" "}
-                    <span className={styles.bubbleDate}>{new Date(n.createdAt).toLocaleDateString("es-CO")}</span>
+                    <b>{n.authorRole === "producer" ? yo : "CTCx"}</b>{" "}
+                    <span className={styles.bubbleDate}>{fechaParaElProductor(n.createdAt)}</span>
                     <p>{n.note}</p>
                     {n.authorRole === "bcp" && (
                       <label className={styles.ackRow}>
@@ -192,7 +193,7 @@ export function RetroalimentacionPanel({
                 <textarea
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Escriba su respuesta a CTC…"
+                  placeholder="Escriba su respuesta a CTCx…"
                   rows={2}
                 />
                 <button className="btn btn-sm btn-solid" onClick={submitReply} disabled={!replyText.trim()}>
@@ -308,7 +309,7 @@ function ComposeThreadModal({
         )}
 
         <label htmlFor="nh-msg">Mensaje</label>
-        <textarea id="nh-msg" value={message} onChange={(e) => setMessage(e.target.value)} rows={3} placeholder="Escriba su mensaje para CTC…" />
+        <textarea id="nh-msg" value={message} onChange={(e) => setMessage(e.target.value)} rows={3} placeholder="Escriba su mensaje para CTCx…" />
 
         <div className={styles.modalActions}>
           <button className="btn btn-sm btn-solid" onClick={submit} disabled={busy || !title.trim() || !message.trim()}>

@@ -60,7 +60,7 @@ check("sin Q-Grader definido no se galardona", nominados.includes("Defina el Q-G
 check("el tipo del cliente conoce la procedencia", data.includes('"bcp_arena" | "q_grader_batch" | "producer_claim"'));
 check(
   "la Ficha la etiqueta con sus palabras",
-  lee("src/components/kaffetal-regal/ficha/fichaPreviewHtml.ts").includes("Evaluación CTC · Q-Grader en bache")
+  lee("src/components/kaffetal-regal/ficha/fichaPreviewHtml.ts").includes("Evaluación CTCx · Q-Grader en bache")
 );
 
 // ── 3. V5.77: el Kaffetal Club como membresía se RETIRÓ (PLAN_CIRCUITO_DEL_LOTE §3) ──

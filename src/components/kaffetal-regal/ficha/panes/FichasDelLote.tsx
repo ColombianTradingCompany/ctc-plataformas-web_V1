@@ -1,3 +1,4 @@
+import { fechaParaElProductor } from "@/lib/trato/fechas";
 import { useState } from "react";
 import { FICHA_SOURCE_LABEL, type LotFicha } from "@/lib/fichas/tipos";
 import { FichaDatos } from "@/components/fichas/FichaDatos";
@@ -21,7 +22,7 @@ export function FichasDelLote({ fichas, mostrar }: { fichas: LotFicha[]; mostrar
         Fichas Técnicas del lote <span className={styles.count}>({fichas.length})</span>
       </p>
       <p className={styles.sub}>
-        Los documentos que CTC compiló de sus soportes y su reporte. La marcada con ★ es <b>la ficha oficial</b> del
+        Los documentos que CTCx compiló de sus soportes y su reporte. La marcada con ★ es <b>la ficha oficial</b> del
         lote.
       </p>
       <div className={styles.list}>
@@ -35,7 +36,7 @@ export function FichasDelLote({ fichas, mostrar }: { fichas: LotFicha[]; mostrar
                   {f.title}
                 </span>
                 <span className={styles.meta}>
-                  {FICHA_SOURCE_LABEL[f.source]} · {new Date(f.createdAt).toLocaleDateString("es-CO")} {open ? "▴" : "▾"}
+                  {FICHA_SOURCE_LABEL[f.source]} · {fechaParaElProductor(f.createdAt)} {open ? "▴" : "▾"}
                 </span>
               </button>
               {open && (

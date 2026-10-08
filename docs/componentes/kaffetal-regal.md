@@ -152,6 +152,9 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.187 · la evaluación se coinvierte** (§14.2 n.º 11-bis, owner 2026-09-18): «Evaluar mi Café», «Su cuenta», las instrucciones de
+  envío, «Por qué inscribirse» y el FAQ (ES · EN · DE) dicen **coinversión de CTCx**, nunca «descuento» ni «subvención del X %»; el código
+  sigue siendo «de subvención». El contrato que se firma aquí dice **Ponderación de Valor de Cosecha (PVC)** (texto `2026-10-08.1`).
 - **V5.186 · «Mi trato» enseña el bache abierto** (`BacheAbierto`): lo que lleva, su plazo y los días que faltan, y el pago 60/40; «Pedir prórroga» solo si no la tuvo.
 - **V5.185 · el retiro** dice «Penalidad total a pagar» y la compara con «Más que vendiendo a la FNC» (cuánto de la ventaja se come); la invitación enseña el precio por carga con el Flete a CTCx entre paréntesis.
 - **V5.183 · la calculadora** suma «🎲 Escenario aleatorio» (otro en cada clic) y «💵 ¿Cuándo me pagan?» (60/40 por envío, cadencia de baches 1–5 semanas, ★ 2 y 3). Lo vendido sale por baches que decide el productor (contrato `2026-10-07.3`). Pendiente: en «Mi trato», enseñar el bache abierto con su plazo de forma más visible.

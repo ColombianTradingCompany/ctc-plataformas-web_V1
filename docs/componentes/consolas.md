@@ -177,6 +177,8 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.187 · OCP**: los avisos al productor de «Solicitudes de Evaluación» y del registro a nombre del productor hablan de la
+  **coinversión de CTCx**, no de subvención; **ECP**: el agente del PVC redacta con la sigla **Ponderación de Valor de Cosecha**.
 - **V5.186 · «Pendiente de Oferta»** da la FNC del día (`lecturaDeMercado`) bajo el precio por carga, con el % de la oferta sobre ella.
 - **V5.183 · confirmar la venta semanal** agrega lo vendido al bache abierto del contrato o abre uno (plazo: cierre de la 5.ª semana desde su primera venta, `despachoDeLoVendido` / `plazoDelBache`); antes, el despacho de la semana 1 del ciclo siguiente.
 - **V5.182 · el Historial de la existencia** en la vista del lote (`HistorialDeExistencia.tsx`, calificado por `controlDeExistencia.ts`) y la existencia con su alerta en «Pendiente de Oferta».

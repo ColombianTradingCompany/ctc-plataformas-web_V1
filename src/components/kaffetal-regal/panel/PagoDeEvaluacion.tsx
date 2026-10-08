@@ -18,7 +18,7 @@ const AMBAR = "#92400E";
 const AMBAR_FONDO = "#FEF3C7";
 
 const PASOS: [string, string][] = [
-  ["Solicite", "Con «Solicitar evaluación» en su lote Apto. Puede escribir un código de subvención o pedir un descuento."],
+  ["Solicite", "Con «Solicitar evaluación» en su lote Apto. Puede escribir un código de subvención o pedirle a CTCx más coinversión en la nota."],
   ["Reciba su factura", "CTCx corrobora la solicitud y le emite la factura de cobro con el total. No pague antes de tenerla."],
   ["Pague", "Al medio de pago que aparece en su factura, con la referencia de su lote en el mensaje."],
   ["Envíe la muestra", `${MUESTRA_EVALUACION_KG} kg de pergamino seco, contra entrega: el flete lo paga CTCx al recibirla.`],
@@ -36,8 +36,8 @@ export function ComoFunciona() {
     <div style={{ marginTop: 8, display: "grid", gap: 10 }}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 8 }}>
         {cifra("Tarifa por lote", formatCop(EVALUATION_FEE_COP), "Registrar la finca y armar la ficha no cuesta.")}
-        {cifra(`Solicitando desde aquí · ${SUBVENCION_KR_PCT} %`, formatCop(dueFor(SUBVENCION_KR_PCT)), "La subvención con la que nace toda solicitud.")}
-        {cifra(`Con código o descuento · hasta ${SUBVENCION_MAX_PCT} %`, `desde ${formatCop(dueFor(SUBVENCION_MAX_PCT))}`, "CTCx decide la subvención al corroborar.")}
+        {cifra(`Solicitando desde aquí · ${SUBVENCION_KR_PCT} %`, formatCop(dueFor(SUBVENCION_KR_PCT)), "La coinversión de CTCx con la que nace toda solicitud.")}
+        {cifra(`Con código o a pedido · hasta ${SUBVENCION_MAX_PCT} %`, `desde ${formatCop(dueFor(SUBVENCION_MAX_PCT))}`, "CTCx decide su coinversión al corroborar.")}
       </div>
       <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 8 }}>
         {PASOS.map(([titulo, detalle], k) => (
@@ -120,7 +120,7 @@ export function CuentaDeLaSolicitud({
       <div style={{ padding: "10px 14px", display: "grid", gap: 4 }}>
         <span className={styles.k}>Su cuenta</span>
         {fila("Tarifa de evaluación", formatCop(tarifaCop))}
-        {discountPct > 0 && fila(`Subvención ${discountPct} %`, `− ${formatCop(tarifaCop - totalCop)}`)}
+        {discountPct > 0 && fila(`Coinversión de CTCx ${discountPct} %`, `− ${formatCop(tarifaCop - totalCop)}`)}
         <div style={{ borderTop: "1.5px solid var(--line)", margin: "2px 0" }} />
         {exento ? fila("Total a pagar", `${formatCop(0)} · la asume CTCx`, true) : fila(pagado ? "Total pagado" : "Total a pagar", formatCop(totalCop), true)}
       </div>
@@ -153,7 +153,7 @@ export function CuentaDeLaSolicitud({
         ) : (
           <div style={{ fontSize: 13, background: AMBAR_FONDO, color: AMBAR, borderRadius: 8, padding: "6px 10px" }}>
             <b>Todavía no pague.</b> CTCx corrobora su solicitud y le emite la factura de cobro; cuando esté lista la verá aquí mismo, con el
-            número y dónde pagar. El total de arriba puede bajar si CTCx le sube la subvención.
+            número y dónde pagar. El total de arriba puede bajar si CTCx sube su coinversión.
           </div>
         )}
       </div>

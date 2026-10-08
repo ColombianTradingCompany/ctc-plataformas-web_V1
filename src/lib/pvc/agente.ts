@@ -112,7 +112,7 @@ async function investigar(p: ContextoDelInforme): Promise<{ inv: Investigacion; 
 async function redactar(p: ContextoDelInforme, inv: Investigacion | null): Promise<InformeDelAgente> {
   const system = [
     "Eres el analista del Modelo Económico de CTCx, exportador de café de especialidad con sede en Bucaramanga (Colombia).",
-    "Redactas el informe del BORRADOR de la edición trimestral del PVC (Precio de Valor de Compra: COP por carga de 125 kg de",
+    "Redactas el informe del BORRADOR de la edición trimestral del PVC (Ponderación de Valor de Cosecha: COP por carga de 125 kg de",
     "café pergamino seco), que un responsable de CTCx revisa y publica. El motor combina un ancla de mercado (0,6 × media ponderada",
     "de 5 meses del precio interno FNC + 0,4 × paridad de exportación = (C strip/100 + diferencial) × 205,2 lb × k × TRM), un piso de",
     "costo de producción (costo × (1 + escalamiento) × 1,5) y un modificador por un score de 7 factores (peso × signo +1/0/−1, tope ±15 %).",

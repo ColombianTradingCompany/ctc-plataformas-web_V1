@@ -19,6 +19,22 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.187] — 2026-10-08 (commit pendiente)
+
+- **Corregido**: la sigla del PVC. El contrato decía «Precio de Valor de Compra (PVC)»; ahora dice **«Ponderación de Valor de
+  Cosecha (PVC)»**, el nombre del motor y de Ediciones del ECP, en las dos clases (Cherry Picked, con sus tres reglas de precio, y
+  CTCx Selection), y el precio queda fijo «**con base en**» el PVC (antes la aposición lo leía como si el precio fuera el PVC). Texto del
+  contrato `2026-10-08.1` (no hay contratos firmados). El prompt del agente del PVC usa la misma sigla.
+- **Corregido**: la evaluación **no se rebaja, se coinvierte** (PVC_BCP_PLAN §14.2 n.º 11-bis, owner 2026-09-18). Lo que Kaffetal
+  Regal le dice al productor ya no habla de «descuento» ni de «subvención del X %»: «Evaluar mi Café» (la tarifa, la nota para pedir
+  más, el código y el aviso al aplicarlo, «Su cuenta»), las instrucciones de envío, «Por qué inscribirse» y el FAQ en ES · EN · DE
+  dicen **coinversión de CTCx** (co-investment · Ko-Investition), y también los avisos del feed que mandan KR y el OCP. El código
+  sigue llamándose «de subvención» y el campo, `discount_pct`.
+- **Seguridad**: `qa-trato` (131 → 133), `qa-solicitud-evaluacion` (95 → 96, y dos comprobaciones al día); `qa-ciclos` con la versión
+  nueva del texto.
+- **Docs**: charters `kaffetal-regal`, `consolas`; ALINEACION §3. Fuera del repo, las narrativas v4 de CTCx y Kaffetal Regal
+  (`reference/narrativa-2026-10-08-en/`) señalaron las dos cosas.
+
 ## [V5.186] — 2026-10-07 (commit 45ea226)
 
 - **Añadido**: en «Mi trato», **el bache abierto con su plazo** (owner): qué lleva (las ventas de cada semana), cuánto vale, a más

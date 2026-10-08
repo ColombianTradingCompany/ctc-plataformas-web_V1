@@ -49,7 +49,22 @@ const plan = lee("docs/PLAN_CIRCUITO_DEL_LOTE.md");
   check("la tarifa vieja de `inscriptions.ts` ES la de terminos (un solo número)", inscripciones.includes("export const ARENA_FEE_COP = TARIFA_EVALUACION_COP") && !/80000/.test(inscripciones));
   const subvencion = lee("src/lib/arena/subvencion.ts");
   check("por defecto, quien solicita por KR nace con el 30 % (owner, 2026-09-30) y CTCx la sube o la quita en Solicitudes", subvencion.includes("SUBVENCION_KR_PCT = 30") && lee("src/lib/arena/producerActions.ts").includes("campanaPorDefecto(service)") && lee("src/lib/arena/producerActions.ts").includes("subvencion_id: subvencionId") && !lee("src/lib/arena/producerActions.ts").includes('prefix: "KRA"') && lee("src/app/ocp/(app)/nominadosActions.ts").includes("dueFor(pct, ins.amount_cop)"));
-  check("la cara pública de KR dice $200.000 con el 30 % por defecto, en tres idiomas, y ya no $80.000 (alimenta el JSON-LD)", !/80\.000|80,000/.test(lee("src/components/kaffetal-regal/PorQueSection.tsx")) && (lee("src/lib/kaffetal/faq.ts").match(/subvención del 30 %|30 % subsidy|Subvention von 30 %/g) ?? []).length === 3 && !/\$80\.000 por lote|\$80,000 COP per lot|80\.000 COP pro Lot/.test(lee("src/lib/kaffetal/faq.ts")));
+  check("la cara pública de KR dice $200.000 con el 30 % por defecto, en tres idiomas, y ya no $80.000 (alimenta el JSON-LD)", !/80\.000|80,000/.test(lee("src/components/kaffetal-regal/PorQueSection.tsx")) && (lee("src/lib/kaffetal/faq.ts").match(/coinversión de CTCx del 30 %|30 % co-investment from CTCx|Ko-Investition von CTCx in Höhe von 30 %/g) ?? []).length === 3 && !/\$80\.000 por lote|\$80,000 COP per lot|80\.000 COP pro Lot/.test(lee("src/lib/kaffetal/faq.ts")));
+  {
+    // V5.187 (PVC_BCP_PLAN §14.2 n.º 11-bis, owner 2026-09-18): «la evaluación no se rebaja: se COINVIERTE». Lo que se le dice al
+    // productor —el panel, el FAQ en tres idiomas, «Por qué inscribirse», las instrucciones de envío y los avisos del feed— habla
+    // de coinversión de CTCx; el código sigue llamándose «de subvención» y el campo, `discount_pct` (la máquina no cambia).
+    const faqTxt = lee("src/lib/kaffetal/faq.ts");
+    const porQue = lee("src/components/kaffetal-regal/PorQueSection.tsx");
+    const tabKr = lee("src/components/kaffetal-regal/panel/EvaluacionesTab.tsx");
+    const pagoKr = lee("src/components/kaffetal-regal/panel/PagoDeEvaluacion.tsx");
+    const avisos = [lee("src/lib/arena/producerActions.ts"), lee("src/app/ocp/(app)/nominadosActions.ts"), lee("src/app/ocp/(app)/solicitudesActions.ts")].join("\n");
+    check("la evaluación no se rebaja, se coinvierte: ni «descuento» ni «subvención del X %» en lo que KR le dice al productor (V5.187)",
+      !/descuento|discount|Rabatt/i.test(faqTxt) && !/subvención del|subsidy|Subvention von|subvencionamos|subsidise|subventionieren/i.test(faqTxt + porQue) &&
+      !tabKr.includes("% de descuento") && !tabKr.includes("¿Pide un descuento?") && tabKr.includes("Código aplicado ✓ · CTCx coinvierte el ${res.discountPct} %") && !tabKr.includes("el descuento se muestra") && tabKr.includes("CTCx coinvierte el ${res.discountPct} %") &&
+      !/descuento/i.test(pagoKr) && pagoKr.includes("La coinversión de CTCx con la que nace toda solicitud.") &&
+      !/si pidió un descuento|\(subvención \$\{codeRow|\(CTC decide la subvención al corroborar\)|\(con subvención del/.test(avisos) && avisos.includes("(coinversión de CTCx ${codeRow.discount_pct} %)"));
+  }
   check("la subvención sigue en 30–70 % (respuesta 2)", subvencion.includes("SUBVENCION_MIN_PCT = 30") && subvencion.includes("SUBVENCION_MAX_PCT = 70"));
 }
 
@@ -121,7 +136,7 @@ const plan = lee("docs/PLAN_CIRCUITO_DEL_LOTE.md");
   const acciones = lee("src/lib/arena/producerActions.ts");
   check("postularLote acepta la nota del descuento (paso 7)", acciones.includes("notaSolicitud?: string") && acciones.includes("nota_solicitud:"));
   const evalTab = lee("src/components/kaffetal-regal/panel/EvaluacionesTab.tsx");
-  check("el productor tiene dónde pedir el descuento", /<textarea[\s\S]{0,300}descuento/.test(evalTab) && evalTab.includes("nota.trim() || undefined"));
+  check("el productor tiene dónde pedir más coinversión (la nota; V5.187: ya no «descuento»)", /<textarea[\s\S]{0,300}coinversión/.test(evalTab) && evalTab.includes("nota.trim() || undefined"));
   check("y ve su factura con el total", evalTab.includes("facturaRef={ins.facturaRef}") && evalTab.includes("totalCop={ins.amountDueCop}") && lee("src/components/kaffetal-regal/panel/PagoDeEvaluacion.tsx").includes("FACTURA EMITIDA")); // V5.129: la cuenta vive en PagoDeEvaluacion.tsx
   check("el envío dice contra entrega", evalTab.includes("contra entrega"));
   check("«Evaluaciones en Fila» ya no habla de laboratorio", !/laboratorio/.test(evalTab));
@@ -201,7 +216,7 @@ const plan = lee("docs/PLAN_CIRCUITO_DEL_LOTE.md");
   check("el carril de pago es un dato (platform_settings), no una constante vacía en el código", pago.includes('CLAVE_CARRIL_DE_PAGO = "carril_de_pago_evaluacion"') && !pago.includes("export const NEQUI") && !/numero: "\d/.test(pago));
   check("CTCx lo escribe en Solicitudes de Evaluación (acción de clase emite)", acciones.includes("export async function guardarCarrilDePago") && /guardarCarrilDePago[\s\S]{0,160}permisoDeEscritura\("ocp", "emite"\)/.test(acciones) && cliente.includes("export function CarrilDePagoForm") && vistaOcp.includes("<CarrilDePagoForm carril={carril} />"));
   check("el productor lo recibe por una acción con sesión de productor", /carrilDePagoAction[\s\S]{0,200}requireProducer\(\)/.test(lee("src/lib/arena/producerActions.ts")) && tab.includes("carrilDePagoAction()"));
-  check("la tarjeta trae LA CUENTA: tarifa − subvención = total", piezas.includes("Tarifa de evaluación") && piezas.includes("Subvención ${discountPct} %") && piezas.includes('"Total a pagar"') && tab.includes("<CuentaDeLaSolicitud"));
+  check("la tarjeta trae LA CUENTA: tarifa − subvención = total", piezas.includes("Tarifa de evaluación") && piezas.includes("Coinversión de CTCx ${discountPct} %") && piezas.includes('"Total a pagar"') && tab.includes("<CuentaDeLaSolicitud"));
   check("sin factura dice «todavía no pague»; con factura, FACTURA EMITIDA con su número, «Ver factura» y dónde pagar", piezas.includes("Todavía no pague.") && piezas.includes("FACTURA EMITIDA") && piezas.includes("Ver factura ↗") && piezas.includes("<DondePagar carril={carril} referencia={referencia} />"));
   check("sin carril configurado nunca hay un número a medias: manda a escribir a CTCx", /if \(!carrilConfigurado\(carril\)\)[\s\S]{0,260}escríbanos a/.test(piezas));
   check("los pasos y las cifras reemplazan el párrafo largo; hay «Actualizar»", tab.includes("<ComoFunciona />") && !tab.includes("Registrar su finca y armar la ficha no cuesta nada. Cuando CTC declara") && tab.includes("↻ Actualizar"));

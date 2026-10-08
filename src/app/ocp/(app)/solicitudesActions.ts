@@ -159,7 +159,7 @@ export async function emitirFactura(lotId: string): Promise<Result> {
     producer_id: ins.producer_id,
     context_label: `Lote ${nombreDelLote(ins)}`,
     lot_id: lotId,
-    note: `CTC corroboró su solicitud de evaluación y emitió la factura ${ref} por ${formatCop(total)}${ins.discount_pct > 0 ? ` (con subvención del ${ins.discount_pct}%)` : ""}. Puede verla e imprimirla en «Evaluar mi Café». Envíe la muestra de 2 kg contra entrega: el flete lo paga CTC al recibirla.`,
+    note: `CTC corroboró su solicitud de evaluación y emitió la factura ${ref} por ${formatCop(total)}${ins.discount_pct > 0 ? ` (con la coinversión de CTCx del ${ins.discount_pct} %)` : ""}. Puede verla e imprimirla en «Evaluar mi Café». Envíe la muestra de 2 kg contra entrega: el flete lo paga CTC al recibirla.`,
     created_by: adminId,
   });
   revalidar();

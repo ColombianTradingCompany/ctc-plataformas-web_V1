@@ -65,7 +65,7 @@ export function ShipmentInstructionsModal({
           Pida la evaluación en la pestaña <b>«Evaluar mi Café»</b> («Solicitar evaluación»). CTC le emite una factura.
         </li>
         <li>
-          La evaluación vale <b>{formatCop(ARENA_FEE_COP)}</b> por lote y cosecha; toda solicitud desde su panel nace con una subvención del{" "}
+          La evaluación vale <b>{formatCop(ARENA_FEE_COP)}</b> por lote y cosecha; toda solicitud desde su panel nace con una coinversión de CTCx del{" "}
           {SUBVENCION_KR_PCT} % (<b>{formatCop(conSubvencion)}</b>), y puede pedir más en la nota de la solicitud, hasta el {SUBVENCION_MAX_PCT} % (
           {formatCop(conMaxima)}). Cubre la catación de un Q-Grader certificado, el factor de rendimiento y el feedback, salga o no galardonado.
         </li>

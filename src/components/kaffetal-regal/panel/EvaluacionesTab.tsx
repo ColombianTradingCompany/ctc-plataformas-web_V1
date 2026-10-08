@@ -224,7 +224,7 @@ function SolicitudCard({
     const res = await peekCampaignCodeAction(code);
     setPeek(
       res.ok
-        ? `Código${res.campaignName ? ` «${res.campaignName}»` : ""} válido — ${res.discountPct}% de descuento · pagaría ${formatCop(res.dueCop)}.`
+        ? `Código${res.campaignName ? ` «${res.campaignName}»` : ""} válido — CTCx coinvierte el ${res.discountPct} % · pagaría ${formatCop(res.dueCop)}.`
         : res.message
     );
   }
@@ -262,7 +262,7 @@ function SolicitudCard({
     const res = await aplicarCodigoCampana(lot.id, code);
     setBusy(false);
     if (res.ok) {
-      showToast(`Código aplicado ✓ · ${res.discountPct}% de descuento`);
+      showToast(`Código aplicado ✓ · CTCx coinvierte el ${res.discountPct} %`);
       setCode("");
       setPeek(null);
       onRefreshData();
@@ -311,14 +311,14 @@ function SolicitudCard({
           <textarea
             rows={2}
             maxLength={600}
-            placeholder="¿Pide un descuento? Cuéntele a CTC por qué (opcional)"
+            placeholder="¿Pide más coinversión de CTCx? Cuéntele por qué (opcional)"
             value={nota}
             onChange={(e) => setNota(e.target.value)}
             style={{ marginTop: 8, width: "100%", fontSize: 13 }}
           />
           <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>
-            Tarifa: {formatCop(EVALUATION_FEE_COP)}, con {SUBVENCION_KR_PCT} % de subvención por solicitar desde aquí ({formatCop(dueFor(SUBVENCION_KR_PCT))}) — con un código de
-            subvención el descuento se muestra al escribirlo; sin código, CTC puede subir la subvención al corroborar y la factura llega con el total.
+            Tarifa: {formatCop(EVALUATION_FEE_COP)}, con {SUBVENCION_KR_PCT} % de coinversión de CTCx por solicitar desde aquí ({formatCop(dueFor(SUBVENCION_KR_PCT))}) — con un código de
+            subvención, la coinversión se muestra al escribirlo; sin código, CTCx puede subirla al corroborar y la factura llega con el total.
           </div>
         </div>
       ) : (

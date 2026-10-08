@@ -64,11 +64,11 @@ export const FAQ: Record<Lang, FaqDict> = {
           {
             q: "¿Cuánto cuesta?",
             lead:
-              "Registrar su finca y armar la ficha no cuesta nada. Solo se paga el lote que decide medir: la evaluación vale $200.000 por lote y por cosecha, y toda solicitud hecha desde su panel nace con una subvención del 30 % (paga $140.000).",
+              "Registrar su finca y armar la ficha no cuesta nada. Solo se paga el lote que decide medir: la evaluación vale $200.000 por lote y por cosecha, y toda solicitud hecha desde su panel nace con una coinversión de CTCx del 30 % (paga $140.000).",
             bullets: [
               "Esos $200.000 cubren la catación de un Q-Grader certificado, el factor de rendimiento, la certificación CTC y el feedback — salga o no salga galardonado.",
               "La muestra de 2 kg de pergamino viaja contra entrega: el flete lo paga CTC al recibirla.",
-              "Pida un descuento en la nota de su solicitud: lo habitual es una subvención del 60 % ($80.000), y llega al 70 % ($60.000). Solo paga la tarifa completa quien quiere la evaluación y nada más.",
+              "Pida más coinversión en la nota de su solicitud: lo habitual es que CTCx coinvierta el 60 % (paga $80.000), y llega al 70 % ($60.000). Solo paga la tarifa completa quien quiere la evaluación y nada más.",
             ],
           },
         ],
@@ -220,11 +220,11 @@ export const FAQ: Record<Lang, FaqDict> = {
           {
             q: "How much does it cost?",
             lead:
-              "Registering your farm and building the datasheet costs nothing. You only pay for the lot you decide to measure: the evaluation is worth $200,000 COP per lot, per harvest, and every request made from your panel starts with a 30 % subsidy (you pay $140,000).",
+              "Registering your farm and building the datasheet costs nothing. You only pay for the lot you decide to measure: the evaluation is worth $200,000 COP per lot, per harvest, and every request made from your panel starts with a 30 % co-investment from CTCx (you pay $140,000).",
             bullets: [
               "Those $200,000 cover a certified Q-Grader's cupping, the yield factor, the CTC certification and the feedback — awarded or not.",
               "The 2 kg parchment sample ships freight collect: CTC pays the shipping on receipt.",
-              "Ask for a discount in your request note: a 60 % subsidy ($80,000) is the usual, up to 70 % ($60,000). Only those who want the evaluation and nothing else pay the full fee.",
+              "Ask for a larger co-investment in your request note: CTCx usually co-invests 60 % (you pay $80,000), up to 70 % ($60,000). Only those who want the evaluation and nothing else pay the full fee.",
             ],
           },
         ],
@@ -376,11 +376,11 @@ export const FAQ: Record<Lang, FaqDict> = {
           {
             q: "Was kostet das?",
             lead:
-              "Die Finca zu registrieren und das Datenblatt zu erstellen kostet nichts. Bezahlt wird nur das Lot, das Sie messen wollen: die Bewertung ist 200.000 COP pro Lot und Ernte wert, und jede Anfrage aus Ihrem Panel beginnt mit einer Subvention von 30 % (Sie zahlen 140.000 COP).",
+              "Die Finca zu registrieren und das Datenblatt zu erstellen kostet nichts. Bezahlt wird nur das Lot, das Sie messen wollen: die Bewertung ist 200.000 COP pro Lot und Ernte wert, und jede Anfrage aus Ihrem Panel beginnt mit einer Ko-Investition von CTCx in Höhe von 30 % (Sie zahlen 140.000 COP).",
             bullets: [
               "Diese 200.000 COP decken die Verkostung eines zertifizierten Q-Graders, den Ausbeutefaktor, die CTC-Zertifizierung und das Feedback — prämiert oder nicht.",
               "Das 2-kg-Muster reist per Nachnahme: CTC zahlt den Versand bei Erhalt.",
-              "Bitten Sie in der Notiz Ihrer Anfrage um einen Rabatt: üblich ist eine Subvention von 60 % (80.000 COP), bis zu 70 % (60.000 COP). Den vollen Preis zahlt nur, wer die Bewertung und sonst nichts will.",
+              "Bitten Sie in der Notiz Ihrer Anfrage um eine höhere Ko-Investition: üblich sind 60 % von CTCx (Sie zahlen 80.000 COP), bis zu 70 % (60.000 COP). Den vollen Preis zahlt nur, wer die Bewertung und sonst nichts will.",
             ],
           },
         ],

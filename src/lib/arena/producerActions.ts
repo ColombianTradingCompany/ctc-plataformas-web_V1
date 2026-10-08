@@ -118,7 +118,7 @@ export async function postularLote(lotId: string, campaignCode?: string, notaSol
     producer_id: auth.userId,
     context_label: `Lote ${lot.name}`,
     lot_id: lotId,
-    note: `Su solicitud de evaluación quedó registrada. Código: ${codeRow.code}${codeRow.discount_pct > 0 ? ` (subvención ${codeRow.discount_pct}%)` : ""} · tarifa: ${formatCop(due)}. CTC la corroborará (puede subir la subvención si pidió un descuento) y le emitirá la factura de cobro; con ella paga y envía la muestra de 2 kg contra entrega.`,
+    note: `Su solicitud de evaluación quedó registrada. Código: ${codeRow.code}${codeRow.discount_pct > 0 ? ` (coinversión de CTCx ${codeRow.discount_pct} %)` : ""} · tarifa: ${formatCop(due)}. CTCx la corroborará (puede subir su coinversión si usted la pidió en la nota) y le emitirá la factura de cobro; con ella paga y envía la muestra de 2 kg contra entrega.`,
   });
 
   return { ok: true, entryCode: codeRow.code, discountPct: codeRow.discount_pct, dueCop: due };

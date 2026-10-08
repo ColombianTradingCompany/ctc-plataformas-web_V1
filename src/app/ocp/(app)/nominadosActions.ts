@@ -98,7 +98,7 @@ export async function postularOnBehalf(lotId: string, existenciaKg?: number): Pr
     producer_id: lot.producer_id,
     context_label: `Lote ${lot.name}`,
     lot_id: lotId,
-    note: `CTC registró la solicitud de evaluación de su lote. Código: ${codeRow.code} · tarifa plena: ${formatCop(ARENA_FEE_COP)} (CTC decide la subvención al corroborar). CTC corroborará la solicitud y le emitirá la factura de cobro.`,
+    note: `CTC registró la solicitud de evaluación de su lote. Código: ${codeRow.code} · tarifa plena: ${formatCop(ARENA_FEE_COP)} (CTCx decide su coinversión al corroborar). CTC corroborará la solicitud y le emitirá la factura de cobro.`,
     created_by: adminId,
   });
   revalidateAll();

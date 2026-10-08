@@ -257,7 +257,16 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   const cl = clausulasDelContrato(datos);
   const todo = cl.map((c) => c.texto).join(" ");
   check("contrato Cherry Picked (V5.175) · doce cláusulas: la ventana, el saco fuera de lo declarado, ventas semanales, despachos, pago 60/40 con calidad, retiro, renovación", cl.length === 12 && todo.includes("$26.000 COP por kg") && todo.includes("$3.250.000 COP por carga") && todo.includes("750 kg de CPS (6 cargas") && todo.includes("Bucaramanga") && todo.includes("del 7 de octubre de 2026 al 3 de enero de 2027") && todo.includes("FUERA de lo declarado") && cl[4].titulo.includes("Ventas y confirmaciones") && todo.includes("Grado CTCx Red") && todo.includes("el 60 % de cada envío con el tiquete de despacho") && todo.includes("hasta el 30 % de lo declarado sin penalidad"));
-  check("contrato · el texto es el mismo con «red» o «Red» (la pantalla y el servidor firman la misma huella)", textoDelContrato(datos) === textoDelContrato({ ...datos, grado: "Red" }) && CONTRATO_VERSION === "2026-10-07.3");
+  check("contrato · el texto es el mismo con «red» o «Red» (la pantalla y el servidor firman la misma huella)", textoDelContrato(datos) === textoDelContrato({ ...datos, grado: "Red" }) && CONTRATO_VERSION === "2026-10-08.1");
+  {
+    // V5.187: la sigla. El contrato (las dos clases y las tres reglas de precio) y el prompt del agente dicen «Ponderación de Valor
+    // de Cosecha (PVC)», como el motor y Ediciones del ECP; nunca «Precio de Valor de Compra». El precio va «con base en» el PVC.
+    const reglas = ["vigente", "promedio", "siguiente"].map((p) => textoDelContrato({ ...datos, ventana: { ...datos.ventana, precio: p } }));
+    const selTxt = textoDelContrato({ ...datos, tipo: "selection", declaradoKg: 500, copKg: 22000 });
+    const agenteTxt = lee("src/lib/pvc/agente.ts");
+    check("contrato · la sigla es «Ponderación de Valor de Cosecha (PVC)» en Cherry Picked (las tres reglas) y en CTCx Selection, y el precio va «con base en» ella (V5.187)", [...reglas, selTxt].every((t) => t.includes("Ponderación de Valor de Cosecha (PVC)") && !/Precio de Valor de Compra/i.test(t)) && reglas[0].includes("por carga), con base en la Ponderación de Valor de Cosecha (PVC) de la temporada vigente"));
+    check("el prompt del agente del PVC usa la misma sigla (V5.187)", agenteTxt.includes("PVC (Ponderación de Valor de Cosecha:") && !/Precio de Valor de Compra/i.test(agenteTxt));
+  }
   const sel = clausulasDelContrato({ ...datos, tipo: "selection", condiciones: null, declaradoKg: 500, copKg: 22000 });
   check("contrato CTCx Selection · compra en firme de los kilos acordados, «hasta el PVC vigente menos el 8 %», sin modalidad", sel.length === 8 && sel.map((c) => c.texto).join(" ").includes("hasta el PVC vigente menos el 8 %") && sel.map((c) => c.texto).join(" ").includes("$11.000.000 COP"));
   const resp = lee("src/lib/ofertas/producerActions.ts");

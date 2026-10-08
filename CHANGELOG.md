@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.189] — 2026-10-08 (commit pendiente)
+## [V5.189] — 2026-10-08 (commit bdec167)
 
 - **Hito**: **la escala de valor de los Grados CTCx cambia de protocolo** (owner): «CVA y SCA 2004 deben tener un valor EQUIVALENTE
   para transformarse, cambiando el valor de los criterios de manera proporcional y teniendo en cuenta el efecto de las tazas no

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.192] — 2026-10-08 (commit pendiente)
+## [V5.192] — 2026-10-08 (commit 7ca21be)
 
 - **Cambiado**: **«Agregar Referencias, Fotos y Videos»** (Kaffetal Regal; owner): «Lo que ya agregó a este lote» va ARRIBA y solo
   cuando hay al menos una; y un REPORTE ya no se agrega al elegir el archivo —así se iba sin lo que se escribía después: el factor de

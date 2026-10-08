@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.187] — 2026-10-08 (commit pendiente)
+## [V5.187] — 2026-10-08 (commit 7aa3d8f)
 
 - **Corregido**: la sigla del PVC. El contrato decía «Precio de Valor de Compra (PVC)»; ahora dice **«Ponderación de Valor de
   Cosecha (PVC)»**, el nombre del motor y de Ediciones del ECP, en las dos clases (Cherry Picked, con sus tres reglas de precio, y

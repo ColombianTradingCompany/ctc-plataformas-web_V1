@@ -674,4 +674,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-08] V5.187 · La sigla del PVC en el contrato (Ponderación de Valor de Cosecha) y la evaluación que se coinvierte: ni «descuento» ni «subvención» en lo que KR le dice al productor
 - ANN `src/lib/trato/contrato.ts` (`CONTRATO_VERSION` 2026-10-08.1), `src/lib/pvc/agente.ts`, `src/components/kaffetal-regal/{panel/EvaluacionesTab.tsx,panel/PagoDeEvaluacion.tsx,ficha/ShipmentInstructionsModal.tsx,PorQueSection.tsx}`, `src/lib/kaffetal/faq.ts`, `src/lib/arena/producerActions.ts`, `app/ocp/(app)/{nominadosActions.ts,solicitudesActions.ts}`, `scripts/{qa-trato-check,qa-ciclos-check,qa-solicitud-evaluacion-check}.mjs`, `src/lib/version.ts`, `docs/componentes/{kaffetal-regal,consolas}.md`, `docs/ALINEACION.md`.
-(commit: pendiente)
+(commit: 7aa3d8f)

@@ -2,7 +2,7 @@
 // «Haz que la planilla tenga un toggle para hacerlo en inglés o español.» El Q-Grader del Centro de Calidad puede no leer
 // español; la planilla (B2 · Perfil de Taza, la rueda, B3 · Caracterización Física) se pinta en el idioma que elija.
 // SOLO cambian los rótulos: los datos (`LabEvaluation`) son los mismos, y la rueda ya guardaba ids con dos etiquetas
-// (`src/lib/catacion/rueda.ts`). No importa nada: la leen `labEvaluation.ts`, `homologacion.ts` y las pantallas.
+// (`src/lib/catacion/rueda.ts`). No importa nada: la leen `labEvaluation.ts`, `punto.ts` y las pantallas.
 
 export type IdiomaDePlanilla = "es" | "en";
 export const IDIOMAS_DE_PLANILLA: readonly IdiomaDePlanilla[] = ["es", "en"];
@@ -37,8 +37,8 @@ export const CVA_DEFECTO_LABEL: Record<IdiomaDePlanilla, Record<string, string>>
 };
 
 export const VISTA_LABEL_I18N: Record<IdiomaDePlanilla, Record<string, string>> = {
-  es: { sca: "SCA 2004", cva: "CVA (SCA-104)", ambas: "Ambas · banco comparativo" },
-  en: { sca: "SCA 2004", cva: "CVA (SCA-104)", ambas: "Both · comparative bank" },
+  es: { cva: "CVA (SCA-104) · principal", sca: "SCA 2004 · equivalente", ambas: "Ambas · banco comparativo" },
+  en: { cva: "CVA (SCA-104) · primary", sca: "SCA 2004 · equivalent", ambas: "Both · comparative bank" },
 };
 
 /** Las mallas (las claves de `MESH`). */
@@ -81,7 +81,7 @@ const ES = {
   idioma: "Idioma",
   b2: "B2 · Perfil de Taza",
   hintVista:
-    "El SCA 2004 nativo es el protocolo primario: rige el Punto y calibra la escala de grados. Un CVA solo se homologa con un intervalo (por lo general baja) y rige su piso; nunca da Tyrian. Con «Ambas», el SCA rige y el CVA queda registrado para el banco comparativo.",
+    "El CVA es el protocolo principal: su puntaje es el Punto. Un SCA 2004 vale lo mismo —la equivalencia transforma sus criterios en proporción y conserva el total— y su total también es el Punto. Con «Ambas», el CVA rige y el total del 2004 queda al lado para el banco comparativo.",
   scaTitulo: "SCA 2004 · Perfil de taza",
   scaHint: (min: string, max: string, paso: number, porTaza: number, taint: number, fault: number) =>
     `Diez atributos, todos en pasos de ${paso}: los escalados de ${min} a ${max}; Uniformidad, Taza limpia y Dulzor de 0 a 10 (${porTaza} puntos por taza). Defectos, taza a taza: taint (−${taint}) o fault (−${fault}). Sin los diez, no hay Punto.`,
@@ -130,9 +130,7 @@ const ES = {
   tipo: "tipo…",
   puntajeCva: "Puntaje CVA",
   puntoQueRige: "Punto que rige",
-  gradoFirme: "grado firme",
-  hastaConRecata: (g: string) => `(hasta ${g} con recata SCA)`,
-  pendienteRecata: "el intervalo cruza los 80: pendiente de recata SCA nativa",
+  gradoFirme: "grado",
   sinGrado: "por debajo de 80: sin grado",
   sinPunto: "Sin Punto todavía",
   radar: "Radar de taza",
@@ -192,18 +190,25 @@ const ES = {
   errScaIncompleto: (faltan: number, de: number, lista: string) => `SCA 2004 incompleto: faltan ${faltan} de ${de} atributos (${lista}).`,
   completeSca: (n: number) => `Complete los ${n} atributos del SCA 2004.`,
   completeCva: (n: number) => `Complete las ${n} secciones del CVA.`,
-  errAmbas: "Con «Ambas», el SCA 2004 (rige) y el CVA (banco comparativo) tienen que estar completos.",
-  // ── el rótulo del Punto (`homologacion.ts`) ──
-  puntoNativo: (valor: string) => `SCA 2004 nativo ${valor}`,
-  puntoCvaRegistrado: (cva: string) => ` · CVA ${cva} registrado (banco comparativo)`,
-  puntoHomologado: (cva: string, bajo: string, alto: string, modelo: string) => `Punto homologado desde CVA ${cva}: ${bajo}–${alto} (rige el piso ${bajo}; ${modelo}, sin calibrar; no catado en SCA)`,
+  errAmbas: "Con «Ambas», el CVA (rige) y el SCA 2004 (banco comparativo) tienen que estar completos.",
+  // ── el rótulo del Punto (`punto.ts`, V5.189) ──
+  puntoCva: (valor: string) => `CVA ${valor}`,
+  puntoSca2004: (valor: string) => `SCA 2004 ${valor} · vale lo mismo en CVA`,
+  puntoComparativo: (protocolo: string, total: string) => ` · ${protocolo} catado al lado: ${total} (banco comparativo)`,
+  // ── la planilla equivalente (`equivalencia.ts`) ──
+  equivTituloSca: "Su equivalente en SCA 2004 (mismo valor)",
+  equivTituloCva: "Su equivalente en CVA (mismo valor)",
+  equivHint: "La equivalencia transforma cada criterio en proporción y lleva las tazas con su mismo efecto: el total es idéntico. Son valores calculados (dos decimales), no una catación.",
+  equivFuera: "Este total no cabe en el formulario del otro protocolo: no tiene equivalente.",
+  equivTazas: (u: number, d: number) => `tazas no uniformes ${u} · defectuosas ${d}`,
+  equivTaint: (n: number) => `tazas con taint ${n}`,
 };
 
 const EN: typeof ES = {
   idioma: "Language",
   b2: "B2 · Cup Profile",
   hintVista:
-    "The native SCA 2004 form is the primary protocol: it sets the Point and calibrates the grade scale. A CVA is only homologated, with an interval (it usually comes out lower), and its floor governs; it never awards Tyrian. With “Both”, the SCA governs and the CVA is recorded for the comparative bank.",
+    "The CVA is the primary protocol: its score is the Point. An SCA 2004 form is worth the same —the equivalence turns its criteria proportionally and keeps the total— and its total is the Point too. With “Both”, the CVA governs and the 2004 total is recorded next to it for the comparative bank.",
   scaTitulo: "SCA 2004 · Cup profile",
   scaHint: (min, max, paso, porTaza, taint, fault) =>
     `Ten attributes, all in steps of ${paso}: the scaled ones from ${min} to ${max}; Uniformity, Clean Cup and Sweetness from 0 to 10 (${porTaza} points per cup). Defects, cup by cup: taint (−${taint}) or fault (−${fault}). Without all ten there is no Point.`,
@@ -252,9 +257,7 @@ const EN: typeof ES = {
   tipo: "type…",
   puntajeCva: "CVA score",
   puntoQueRige: "Governing Point",
-  gradoFirme: "firm grade",
-  hastaConRecata: (g) => `(up to ${g} with an SCA re-cupping)`,
-  pendienteRecata: "the interval crosses 80: pending a native SCA re-cupping",
+  gradoFirme: "grade",
   sinGrado: "below 80: no grade",
   sinPunto: "No Point yet",
   radar: "Cup radar",
@@ -313,10 +316,16 @@ const EN: typeof ES = {
   errScaIncompleto: (faltan, de, lista) => `SCA 2004 incomplete: ${faltan} of ${de} attributes missing (${lista}).`,
   completeSca: (n) => `Fill in the ${n} attributes of the SCA 2004 form.`,
   completeCva: (n) => `Fill in the ${n} sections of the CVA.`,
-  errAmbas: "With “Both”, the SCA 2004 (governs) and the CVA (comparative bank) must both be complete.",
-  puntoNativo: (valor) => `Native SCA 2004 ${valor}`,
-  puntoCvaRegistrado: (cva) => ` · CVA ${cva} recorded (comparative bank)`,
-  puntoHomologado: (cva, bajo, alto, modelo) => `Point homologated from CVA ${cva}: ${bajo}–${alto} (the floor ${bajo} governs; ${modelo}, uncalibrated; not cupped in SCA)`,
+  errAmbas: "With “Both”, the CVA (governs) and the SCA 2004 (comparative bank) must both be complete.",
+  puntoCva: (valor) => `CVA ${valor}`,
+  puntoSca2004: (valor) => `SCA 2004 ${valor} · worth the same in CVA`,
+  puntoComparativo: (protocolo, total) => ` · ${protocolo} cupped alongside: ${total} (comparative bank)`,
+  equivTituloSca: "Its SCA 2004 equivalent (same value)",
+  equivTituloCva: "Its CVA equivalent (same value)",
+  equivHint: "The equivalence turns each criterion proportionally and carries the cups with the same effect: the total is identical. These are computed values (two decimals), not a cupping.",
+  equivFuera: "This total does not fit the other protocol's form: it has no equivalent.",
+  equivTazas: (u, d) => `non-uniform cups ${u} · defective ${d}`,
+  equivTaint: (n) => `cups with a taint ${n}`,
 };
 
 /** Los textos de la planilla, por idioma. `PL.es` es el original; `PL.en` tiene las MISMAS claves (lo exige el tipo). */

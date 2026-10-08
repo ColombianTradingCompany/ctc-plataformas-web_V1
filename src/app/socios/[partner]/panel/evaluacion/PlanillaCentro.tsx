@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { LabEvalEditor } from "@/components/bcp/LabEvalEditor";
 import { EMPTY_LAB_EVALUATION, labEvaluationHasData, puntoDeLaPlanilla, toLabEvaluation, type LabEvaluation } from "@/lib/arena/labEvaluation";
-import { rotuloDelPunto } from "@/lib/arena/homologacion";
+import { rotuloDelPunto } from "@/lib/arena/punto";
 import type { IdiomaDePlanilla } from "@/lib/arena/planillaI18n";
 import { anularRegistro, confirmarReporteQGrader, guardarBorrador, prepararReporteQGrader, registrarEvaluacion } from "../evaluacionActions";
 import { AdjuntoReporteQGrader } from "@/components/bcp/AdjuntoReporteQGrader";
@@ -22,7 +22,7 @@ const TXT: Record<IdiomaDePlanilla, { muestra: string; ciegas: string; notas: st
     notas: "Notas para CTC (opcional)",
     notasPh: "Observaciones del Q-Grader…",
     falta: "Complete la planilla de la vista elegida para poder dar de alta.",
-    deriva: "CTC deriva el grado al confirmar.",
+    deriva: "CTCx deriva el grado al confirmar.",
     dando: "Dando de alta…",
     dar: "Dar de alta el lote",
     cancelar: "Cancelar",
@@ -41,7 +41,7 @@ const TXT: Record<IdiomaDePlanilla, { muestra: string; ciegas: string; notas: st
     notas: "Notes for CTC (optional)",
     notasPh: "Q-Grader remarks…",
     falta: "Fill in the sheet for the chosen view to be able to submit it.",
-    deriva: "CTC derives the grade when it confirms.",
+    deriva: "CTCx derives the grade when it confirms.",
     dando: "Submitting…",
     dar: "Submit the lot",
     cancelar: "Cancel",
@@ -93,7 +93,7 @@ export function DarDeAltaButton({ lotId, uid, borrador, devoluciones = [] }: { l
   const [lang, setLang] = useState<IdiomaDePlanilla>("es");
   const tx = TXT[lang];
   const punto = labEvaluationHasData(ev) ? puntoDeLaPlanilla(ev) : null;
-  const puntaje = punto?.bajo ?? null;
+  const puntaje = punto?.valor ?? null;
 
   return (
     <div>

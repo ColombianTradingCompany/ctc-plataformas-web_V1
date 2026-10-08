@@ -8,7 +8,7 @@ import { cargarCarrilDePago } from "@/lib/arena/carrilServidor";
 import type { FacturaData } from "@/lib/arena/factura";
 import { TIPO_LABEL, type TipoDeMuestra } from "@/lib/muestras/particion";
 import { marcaLabel, normalizaDetalle, normalizaRueda } from "@/lib/catacion/rueda";
-import { puntoDeFila, rotuloDelPunto } from "@/lib/arena/homologacion";
+import { puntoDeFila, rotuloDelPunto } from "@/lib/arena/punto";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import type { FichaFormData } from "@/components/kaffetal-regal/ficha/fichaData";
 import { estadoDeFinca, fichaHecha, PASOS_DE_LA_FICHA } from "@/lib/ocp/etapas";
@@ -85,7 +85,7 @@ import { separaNotasDevueltas } from "@/lib/evaluaciones/devolucion";
 import { urlsDeReportes } from "@/lib/evaluaciones/reporte";
 
 type AltaRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; escala: string; rueda: unknown; rueda_detalle: unknown; q_grader_reference: string | null; notes: string | null; created_at: string; reviewed_at: string | null; codigo_interno: string | null; reference_asset_id: string | null; reference_file_name: string | null; physical_data: { planilla?: unknown } | null };
-// V5.92: el alta se enseña con su Punto y su procedencia (nunca un homologado como un SCA catado).
+// V5.92: el alta se enseña con su Punto y su procedencia. V5.189: el protocolo con que se cató (CVA, o un SCA 2004 que vale lo mismo).
 const rotuloDeAlta = (a: AltaRow) => {
   const p = puntoDeFila(a);
   return p ? rotuloDelPunto(p) : "—";
@@ -525,7 +525,8 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
                           alta={{
                             id: pendiente.id,
                             escala: pendiente.escala,
-                            puntaje: pendiente.sca_total != null ? Number(pendiente.sca_total) : null,
+                            // V5.189: el puntaje es el valor del Punto (una fila vieja «homologada» vale su CVA, no su piso).
+                            puntaje: puntoDeFila(pendiente)?.valor ?? null,
                             punto: puntoDeFila(pendiente),
                             qGrader: pendiente.q_grader_reference,
                             fecha: fecha(pendiente.created_at),

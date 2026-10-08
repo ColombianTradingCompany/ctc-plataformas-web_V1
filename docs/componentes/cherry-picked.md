@@ -79,6 +79,9 @@ con cuenta QA — **hoy no corre**: las cuentas de prueba se eliminaron en la V5
 
 ## Pendientes
 
+- **V5.189 · `official_score` es el Punto de cualquiera de los dos protocolos** (ejecutado desde `consolas`, plan §10.6): el CVA es el
+  protocolo principal y un SCA 2004 vale lo mismo; ya no existe el piso de un CVA homologado. **Sigue con dueño aquí**: decir con qué
+  protocolo se cató (`rotuloDelPunto`, `src/lib/arena/punto.ts`) en la tienda, la ficha pública y el portal.
 - **V5.176 · el stock de un lote por VENTANAS** (docs/PLAN_CICLOS.md): `lot_listings.total_kg` = lo declarado menos lo retirado, sumado sobre sus ventanas (`sincronizarListado`, `totalEnVentaPorVentanas` en `src/lib/trato/ventanaServidor.ts`); el café se vende mientras sigue en la finca y `sold_kg` lo lleva el checkout como siempre. Los tratos viejos no cambian (`contract_releases`). Pendiente: si un productor no despacha lo vendido, CTCx resuelve al comprador fuera de la plataforma.
 - **V5.160 · el JSON-LD de los grados y los lotes mock del Sneak Peek cambian con el contrato nuevo** (ejecutado desde
   `consolas`). Los siete mock se reclasificaron con su tríada (dos Gold → Blue, dos Blue → Red; BK-6A08 sube a 82,50) y sus
@@ -101,7 +104,7 @@ con cuenta QA — **hoy no corre**: las cuentas de prueba se eliminaron en la V5
   (UI/UX de Etapa 3; el folio 10 está transcrito en `PLAN_CIRCUITO_DEL_LOTE` §9), **leer los tres kits de
   `src/lib/compras/sampleKits.ts` (`KITS`)** —lotes, pesos, para quién, precio de referencia—, nunca copiarlos; **(c)** reconciliar
   el «pack» que vende hoy `MuestrasSection` (`PACK_PRICE = 300`, `data.ts`) con el Sample Kit (CP) ≈ US$65. Fila en `ALINEACION` §3b.
-- **El Punto homologado (V5.92, `consolas`; sin código de este componente tocado)**: `public_lot_catalog.official_score` sigue
+- **El Punto homologado (V5.92, `consolas`; sin código de este componente tocado; la homologación se anuló en la V5.189 — arriba)**: `public_lot_catalog.official_score` sigue
   leyendo `lot_evaluations.sca_total`, que desde la V5.92 **ES el Punto** — el piso del intervalo si la evaluación fue CVA
   homologada, nunca Tyrian. **Queda con dueño aquí**: decir la procedencia (`rotuloDelPunto`, `src/lib/arena/homologacion.ts`) en
   la tienda (`CherryPickedExperience` pinta `official_score` con un decimal y sin origen), la ficha pública y el portal. Y el

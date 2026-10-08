@@ -16,6 +16,10 @@
 // ocho secciones CVA (Fragancia y Aroma aparte), la Impresión general cuenta UNA vez, redondeo al 0,25, tazas con tipo de
 // defecto (una defectuosa es también no uniforme), una planilla incompleta NO da puntaje, y el formulario 2004 con sus dominios
 // (atributos 6,00–10,00 en pasos de 0,25; uniformidad · taza limpia · dulzor 2 puntos por taza; defectos = tazas × 2 o × 4).
+// V5.189 (owner, 2026-10-08): el CVA es el protocolo PRINCIPAL y el SCA 2004 vale LO MISMO por la equivalencia
+// (`equivalencia.ts`): la planilla abre en CVA; el Punto es el CVA completo (con «Ambas», el CVA rige y el 2004 queda al lado) o,
+// si solo hay 2004, su total. La homologación con intervalo de la V5.92 se anuló. `equivalenteDeLaPlanilla` da la planilla del
+// otro protocolo que vale lo mismo, para enseñarla junto al Punto.
 
 import { SCA_ATTRS } from "@/components/kaffetal-regal/ficha/fichaData";
 import {
@@ -28,17 +32,18 @@ import {
   type ScaFields,
 } from "@/components/kaffetal-regal/ficha/fichaCalculations";
 import { normalizaDetalle, normalizaRueda, type DetalleDeLaRueda } from "@/lib/catacion/rueda";
-import { alGrid, puntoHomologado, puntoNativo, type PuntoSca } from "./homologacion";
+import { alGrid, puntoCva, puntoSca2004, type PuntoSca } from "./punto";
+import { cvaDesdeSca, scaDesdeCva, type HojaCva, type HojaSca2004 } from "./equivalencia";
 import { CVA_SECCION_LABEL, PL, SCA_ATTR_LABEL, type IdiomaDePlanilla } from "./planillaI18n";
 import { esAcidez, esColor, normalizaDefectos, normalizaTexturas } from "@/lib/catacion/fisico";
 
 /** El protocolo que RIGE el Punto (derivado de la planilla; ver `protocoloDelPunto`). */
 export type EscalaSensorial = "sca" | "cva";
-export const ESCALA_LABEL: Record<EscalaSensorial, string> = { sca: "SCA 2004 · Perfil de taza (nativo)", cva: "CVA · Evaluación afectiva (SCA-104) → Punto homologado" };
+export const ESCALA_LABEL: Record<EscalaSensorial, string> = { cva: "CVA · Evaluación afectiva (SCA-104) · protocolo principal", sca: "SCA 2004 · Perfil de taza · vale lo mismo (equivalencia)" };
 
 /** Qué bloques llena el catador. «Ambas» = el banco comparativo que pidió el owner (2026-09-25). */
 export type VistaDePlanilla = "sca" | "cva" | "ambas";
-export const VISTA_LABEL: Record<VistaDePlanilla, string> = { sca: "SCA 2004", cva: "CVA (SCA-104)", ambas: "Ambas · banco comparativo" };
+export const VISTA_LABEL: Record<VistaDePlanilla, string> = { cva: "CVA (SCA-104) · principal", sca: "SCA 2004 · equivalente", ambas: "Ambas · banco comparativo" };
 
 /** Las OCHO secciones de la evaluación afectiva del CVA (SCA-104), en el orden del formulario. Fragancia y Aroma van aparte. */
 export const CVA_SECCIONES: readonly [key: string, label: string][] = [
@@ -178,9 +183,10 @@ export type LabEvaluation = ScaFields &
     analysis_notes: string;
   };
 
+// V5.189: una planilla nueva abre en CVA (el protocolo principal). Una guardada conserva su vista (`toLabEvaluation`).
 export const EMPTY_LAB_EVALUATION: LabEvaluation = {
-  escala: "sca",
-  vista: "sca",
+  escala: "cva",
+  vista: "cva",
   sca_fragrance: "", sca_flavor: "", sca_aftertaste: "", sca_acidity: "", sca_body: "",
   sca_balance: "", sca_uniformity: "", sca_clean_cup: "", sca_sweetness: "", sca_cuppers: "",
   sca_taint_cups: "", sca_fault_cups: "",
@@ -399,40 +405,61 @@ export function computeSca2004(ev: ScaFields & Sca2004Extra, lang: IdiomaDePlani
 const cuentaSca = (ev: LabEvaluation) => ev.vista !== "cva";
 const cuentaCva = (ev: LabEvaluation) => ev.vista !== "sca";
 
-/** EL PUNTO de la planilla, con su procedencia: nativo si el SCA 2004 está completo (con el CVA registrado si también lo está);
- *  homologado si solo hay CVA completo; null si no hay Punto. Con vista «ambas», las dos tienen que estar completas. */
+/** EL PUNTO de la planilla, con su procedencia (V5.189): el CVA si está completo (con el total del 2004 al lado si también lo
+ *  está); si solo hay SCA 2004 completo, su total, que vale lo mismo; null si no hay Punto. Con «Ambas», las dos completas. */
 export function puntoDeLaPlanilla(ev: LabEvaluation): PuntoSca | null {
-  const sca = cuentaSca(ev) ? computeSca2004(ev) : null;
   const cva = cuentaCva(ev) ? computeCva(ev) : null;
+  const sca = cuentaSca(ev) ? computeSca2004(ev) : null;
   if (ev.vista === "ambas" && !(sca?.total != null && cva?.total != null)) return null;
-  if (sca?.total != null) return puntoNativo(sca.total, cva?.total ?? null);
-  if (cva?.total != null) return puntoHomologado(cva.total);
+  if (cva?.total != null) return puntoCva(cva.total, sca?.total ?? null);
+  if (sca?.total != null) return puntoSca2004(sca.total);
   return null;
+}
+
+/** V5.189: la planilla del OTRO protocolo que vale lo mismo (`equivalencia.ts`), para enseñarla junto al Punto. null si no hay
+ *  Punto; `hoja` null si el total no cabe en el formulario del otro protocolo. */
+export type EquivalenteDeLaPlanilla = { protocolo: "sca2004"; hoja: HojaSca2004 | null } | { protocolo: "cva"; hoja: HojaCva | null };
+export function equivalenteDeLaPlanilla(ev: LabEvaluation): EquivalenteDeLaPlanilla | null {
+  const punto = puntoDeLaPlanilla(ev);
+  if (!punto) return null;
+  if (punto.protocoloFuente === "cva") {
+    const cva = computeCva(ev);
+    if (cva.total == null) return null;
+    const secciones = Object.fromEntries(CVA_SECCIONES.map(([k]) => [k, numOr(ev[`cva_${k}` as keyof CvaFields] as string) ?? 0])) as HojaCva["secciones"];
+    return { protocolo: "sca2004", hoja: scaDesdeCva({ secciones, tazas: tazasCvaUsadas(ev.cva_num_tazas), u: cva.u, d: cva.d, total: cva.total }) };
+  }
+  const sca = computeSca2004(ev);
+  if (sca.total == null) return null;
+  const atributos = Object.fromEntries(SCA_ATTRS.map(([k]) => [k, numOr(ev[`sca_${k}` as keyof ScaFields]) ?? 0])) as HojaSca2004["atributos"];
+  return { protocolo: "cva", hoja: cvaDesdeSca({ atributos, tazas: tazasUsadas(ev.sca_num_tazas), taint: sca.taint, fault: sca.fault, total: sca.total }) };
 }
 
 /** Por qué la planilla todavía no tiene Punto (para la pantalla y para el rechazo de la acción). */
 export function erroresDePlanilla(ev: LabEvaluation, lang: IdiomaDePlanilla = "es"): string[] {
   const out: string[] = [];
-  if (cuentaSca(ev)) {
-    const sca = computeSca2004(ev, lang);
-    if (sca.total == null) out.push(...(sca.errores.length ? sca.errores : [PL[lang].completeSca(SCA_ATTRS.length)]));
-  }
+  // V5.189: primero el CVA (el protocolo principal).
   if (cuentaCva(ev)) {
     const cva = computeCva(ev, lang);
     if (cva.total == null) out.push(...(cva.errores.length ? cva.errores : [PL[lang].completeCva(CVA_SECCIONES.length)]));
+  }
+  if (cuentaSca(ev)) {
+    const sca = computeSca2004(ev, lang);
+    if (sca.total == null) out.push(...(sca.errores.length ? sca.errores : [PL[lang].completeSca(SCA_ATTRS.length)]));
   }
   if (ev.vista === "ambas" && out.length) out.unshift(PL[lang].errAmbas);
   return out;
 }
 
-/** El protocolo que RIGE el Punto de esta planilla (lo que va a `lot_evaluations.escala`). */
+/** El protocolo que RIGE el Punto de esta planilla (lo que va a `lot_evaluations.escala`): el de su Punto; sin Punto, el de la vista. */
 export function protocoloDelPunto(ev: LabEvaluation): EscalaSensorial {
-  return puntoDeLaPlanilla(ev)?.protocoloFuente === "cva" ? "cva" : "sca";
+  const p = puntoDeLaPlanilla(ev);
+  if (p) return p.protocoloFuente === "cva" ? "cva" : "sca";
+  return ev.vista === "sca" ? "sca" : "cva";
 }
 
-/** El puntaje que RIGE (el piso del Punto), o null si la planilla no tiene Punto. */
+/** El puntaje que RIGE (el Punto), o null si la planilla no tiene Punto. */
 export function labEvaluationScore(ev: LabEvaluation): number | null {
-  return puntoDeLaPlanilla(ev)?.bajo ?? null;
+  return puntoDeLaPlanilla(ev)?.valor ?? null;
 }
 
 /** V5.153: el factor de rendimiento que VALE — el derivado de los pesos (`computeFactor`) manda; si no hay pesos, el que el

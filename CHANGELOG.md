@@ -19,6 +19,38 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.189] — 2026-10-08 (commit pendiente)
+
+- **Hito**: **la escala de valor de los Grados CTCx cambia de protocolo** (owner): «CVA y SCA 2004 deben tener un valor EQUIVALENTE
+  para transformarse, cambiando el valor de los criterios de manera proporcional y teniendo en cuenta el efecto de las tazas no
+  uniforme/defectuosas (vamos a anular la otra equivalencia y a rehacer su lógica). Además, hagamos que CVA sea la principal.»
+  **El CVA es el protocolo principal** y **un SCA 2004 vale lo mismo**: el Punto es uno solo, sin intervalo.
+- **Retirado**: la homologación de la V5.92 (`homologacion.ts`): la banda k 1–2, el intervalo [bajo, valor, alto], el grado sobre el
+  piso, «hasta X con recata SCA», el estado «pendiente de recata» y el tope en Gold de un CVA. El plan la marca ANULADA (§10.3).
+- **Añadido**: **la equivalencia** (`src/lib/arena/equivalencia.ts`, modelo `equivalencia-2026-10-08`, plan §10.6): las tazas con el
+  mismo efecto (CVA −2 por no uniforme y −4 por defectuosa ↔ 2004 Uniformidad −2, Taza limpia −2 y un taint −2); los criterios en
+  proporción con una recta fija, atributo 2004 = 3,25 + 0,75 × sección CVA (9 ↔ 10 · 6 ↔ 7,75 · 5 ↔ 7), de modo que ocho secciones
+  iguales y un 2004 con las tazas llenas suman lo mismo; Fragancia/Aroma = promedio de las dos, Cuerpo = Sensación en boca, Balance =
+  promedio de las ocho, Dulzor del 2004 = 10; lo que no cuadra uno a uno se ajusta en proporción (sobre el piso de cada escala) hasta
+  que el total sea idéntico, sin salir del dominio. Y al revés (2004 → CVA). Los criterios transformados llevan dos decimales.
+- **Cambiado**: **el Punto** (`src/lib/arena/punto.ts`, antes `homologacion.ts`): `puntoCva` · `puntoSca2004`; con «Ambas» rige el CVA
+  y el total del 2004 queda al lado (banco comparativo); el grado se lee del Punto con la tríada, igual en los dos protocolos (Tyrian
+  incluido). `puntoDeFila` lee las filas viejas: un «homologado» vale su CVA y un «nativo» de la V5.92 era un 2004 catado.
+- **Cambiado**: **la planilla abre en CVA** (vista «CVA · principal», «SCA 2004 · equivalente», «Ambas»), y junto al Punto enseña **su
+  equivalente en el otro protocolo** (calculado, mismo total). Los textos de la planilla y sus ayudas «i» (ES · EN) ya no dicen que un
+  84 del 2004 y un 84 del CVA «no son comparables»: las dos ayudas («SCA 2004 y CVA no son lo mismo» y «El puntaje afectivo CVA»)
+  se cambiaron en su fuente, la CTCx Coffee Datasheet Tool (ES · EN · DE), que sigue sin mezclar los métodos en una planilla y dice
+  que en CTCx valen lo mismo; `planillaInfo.ts` se regeneró. El veredicto del OCP, la Arena, el Centro de Calidad, «Lotes Galardonados» y el
+  dossier dicen con qué protocolo se cató; ninguna pantalla habla ya de homologación, piso ni recata.
+- **Datos**: el único Punto homologado de la base (alta del Centro de «Castillo Lavado Ruizeñores 2026», pendiente de confirmar) pasa
+  de su piso 81,50 a su CVA 84,25, con su fila en `audit_log` (`docs/migraciones/2026-10-08_punto_equivalente.sql`). Las tres
+  evaluaciones del Gesha (SCA 2004, 85) no cambian.
+- **Seguridad**: `qa-centro-calidad` 287 → 302: lee la recta y los vectores del §10.6 (CVA → 2004 y 2004 → CVA, con Ruizeñores y el
+  Gesha), prueba ida y vuelta sobre 300 planillas, las filas viejas, el grado igual en los dos protocolos, y que ninguna pantalla
+  hable de homologación; `qa-coffee-datasheet` (1410) y `qa-evaluaciones` leen los textos nuevos.
+- **Docs**: `PLAN_CIRCUITO_DEL_LOTE.md` §10.6; ALINEACION (contrato de grados, §3b y §3); charters `consolas`, `socios`,
+  `kaffetal-regal`, `herramientas-internas`, `cherry-picked`, `herramientas-cafe`.
+
 ## [V5.188] — 2026-10-08 (commit 260426a)
 
 - **Cambiado**: la revisión de una oferta en «Contratos y Compras» (feedback de revisión, seis puntos). **El escenario es un

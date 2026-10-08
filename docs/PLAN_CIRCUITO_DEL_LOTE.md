@@ -298,6 +298,9 @@ tándem con el PVC. Vive aquí hasta que la Etapa 3 tenga su plan.
 
 ## 10 · El Q-Grader corrobora la fórmula CVA y pide una homologación (2026-09-25) — EJECUTADO en la V5.92
 
+> **V5.189 (owner, 2026-10-08): la homologación de §10.3 quedó ANULADA y el CVA es el protocolo principal — ver §10.6.**
+> §10.1 y §10.2 (la fórmula CVA y sus vectores) siguen vigentes; §10.3 y las decisiones 1, 2, 3 y 6 de §10.4 son historia.
+
 **La fuente.** El informe «CTCx · Homologación SCA 2004 ↔ CVA · Consultant report · 25 Sept 2026» (9 páginas, en inglés; copia en
 `reference/homologacion-sca-cva-2026-09-25/`, fuera del repo), escrito sobre el one-pager de la V5.81 (`docs/CVA_one-pager_para_el_Q-Grader.pdf`) y
 sobre «El Punto y la Tríada» (`PVC_BCP_PLAN` §9.1). El autor advierte que no pudo descargar el PDF oficial del SCA-104 y que el Q-Grader
@@ -351,7 +354,7 @@ Con todas las secciones iguales los dos métodos coinciden; el sesgo de la V5.81
 bastaba para cambiar de grado («Todo 6 e Impresión general 8»: Gold en la V5.81, Blue en el oficial). No había evaluaciones CVA en la
 base (las dos que existen son SCA), así que no hubo nada que recalcular.
 
-### 10.3 El Punto homologado (la propuesta del informe, adoptada)
+### 10.3 El Punto homologado (la propuesta del informe, adoptada) — ANULADO en la V5.189 (§10.6)
 
 Un CVA no es un SCA 2004: con todas las secciones en 7 el CVA da 89,5 y el formulario 2004 da 79; el SCA no espera una correlación
 lineal y no hay conversión publicada. Como El Punto está anclado en el SCA 2004 y el programa Q Grader, la FNC y la BSCA ya se pasaron
@@ -400,3 +403,66 @@ al CVA, hace falta una homologación que proteja el significado del grado. Regla
   intervalo de predicción del 80 %; versionar el modelo, p. ej. `calib-v1-2027A`) y el monitoreo (1 de cada 10 lotes duales para siempre);
   (c) la decisión 6; (d) la ficha pública y el dossier dicen el protocolo de la ficha, no aún el origen del Punto — con dueño en
   `cherry-picked` y `kaffetal-regal`.
+
+### 10.6 La equivalencia CVA ↔ SCA 2004 — V5.189 (owner, 2026-10-08), ANULA §10.3
+
+**Lo que pidió el owner.** «Vamos a tener que hacer un cambio FUNDAMENTAL a la escala de valor de Grados CTCx: CVA y SCA 2004 deben
+tener un valor EQUIVALENTE para transformarse, cambiando el valor de los criterios de manera proporcional y teniendo en cuenta el efecto
+de las tazas no uniforme/defectuosas (vamos a anular la otra equivalencia y a rehacer su lógica). Además, hagamos que CVA sea la
+principal.»
+
+**Lo que cambia.**
+- **El CVA es el protocolo principal** (la decisión 6 de §10.4, contestada: El Punto se reancla en el CVA). La planilla abre en CVA; con
+  «Ambas» rige el CVA y el total del 2004 catado queda al lado (banco comparativo).
+- **Se anulan** la banda k 1–2, el intervalo [bajo, valor, alto], el grado sobre el piso (R3, R4, R7), la recata (R5) y el tope en Gold
+  de un homologado (R6). Un SCA 2004 **vale lo mismo** que su equivalente CVA: su total ES el Punto, sin intervalo.
+- El grado se lee del Punto con la tríada, **igual para los dos protocolos** (Tyrian incluido). Los umbrales de la escala no se tocan:
+  como los dos totales valen lo mismo, «un café común entra desde 82» se lee igual en CVA y en 2004.
+
+**La equivalencia** (`src/lib/arena/equivalencia.ts`, modelo `equivalencia-2026-10-08`):
+1. **Valor equivalente.** Una planilla y su transformada tienen el mismo total: CVA 84,25 ≡ SCA 2004 84,25.
+2. **Las tazas, con el mismo efecto.** CVA: −2 por taza no uniforme y −4 por defectuosa (toda defectuosa es también no uniforme: −6).
+   SCA 2004: Uniformidad −2 por taza, Taza limpia −2 por taza y el defecto como taint (−2): también −6.
+3. **Los criterios, en proporción**, con una recta fija — atributo 2004 = 3,25 + 0,75 × sección CVA:
+
+| Sección CVA | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+|---|---|---|---|---|---|---|---|---|---|
+| Atributo SCA 2004 | 4,00 | 4,75 | 5,50 | 6,25 | 7,00 | 7,75 | 8,50 | 9,25 | 10,00 |
+
+   Con ella, ocho secciones iguales y un 2004 con Uniformidad, Taza limpia y Dulzor en 10 dan el mismo total (5,25 × sección + 52,75):
+   los siete atributos escalados del 2004 llevan el valor de las ocho secciones del CVA. Fragancia/Aroma = el promedio de Fragancia y
+   Aroma; Cuerpo = Sensación en boca; el Balance (que el CVA no califica) = el promedio de las ocho; el Dulzor del 2004 es de tazas: 10.
+4. **Lo que no cuadra uno a uno se ajusta en proporción**: la distancia de cada criterio al piso de su escala (2004: 6; CVA: 1) se
+   multiplica por el mismo factor hasta que el total es idéntico, sin salir del dominio (2004: 6–10; CVA: 1–9). Si el total no cabe,
+   no hay equivalente (un CVA por debajo de unos 72 no cabe en el formulario 2004).
+5. **Al revés (2004 → CVA)**, lo mismo: sección = (atributo − 3,25) / 0,75; Fragancia y Aroma ← Fragancia/Aroma; Sensación en boca ←
+   Cuerpo; el Dulzor (que el 2004 da por tazas) = el promedio de las otras siete; las tazas con taint o fault son defectuosas (con su
+   tipo) y las no uniformes salen de la Uniformidad. El Balance, el Dulzor por tazas y la diferencia de efecto de las tazas entre los dos
+   protocolos (un fault resta 4 en el 2004; un taint sin Taza limpia rebajada resta solo 2) entran por el ajuste proporcional.
+6. Los criterios transformados llevan **dos decimales** (son un cálculo, no una catación); el total es exacto.
+
+**Los vectores** (los lee `qa-centro-calidad-check`; secciones CVA en el orden F · A · Sabor · Residual · Acidez · Dulzor · Boca ·
+General; atributos 2004 escalados en el orden FA · Sabor · Residual · Acidez · Cuerpo · Balance · General):
+
+| Caso (CVA → SCA 2004) | Secciones CVA | u · d | Punto | Atributos 2004 escalados | Unif. · T. limpia · Dulzor · taint |
+|---|---|---|---|---|---|
+| Todo 5 | 5 5 5 5 5 5 5 5 | 0 · 0 | 79 | 7 7 7 7 7 7 7 | 10 · 10 · 10 · 0 |
+| Todo 6 | 6 6 6 6 6 6 6 6 | 0 · 0 | 84.25 | 7.75 7.75 7.75 7.75 7.75 7.75 7.75 | 10 · 10 · 10 · 0 |
+| Todo 7 | 7 7 7 7 7 7 7 7 | 0 · 0 | 89.5 | 8.5 8.5 8.5 8.5 8.5 8.5 8.5 | 10 · 10 · 10 · 0 |
+| Todo 7, una taza defectuosa | 7 7 7 7 7 7 7 7 | 1 · 1 | 83.5 | 8.5 8.5 8.5 8.5 8.5 8.5 8.5 | 8 · 8 · 10 · 1 |
+| Siete 7 e Impresión general 8 | 7 7 7 7 7 7 7 8 | 0 · 0 | 90.25 | 8.49 8.49 8.49 8.49 8.48 8.58 9.23 | 10 · 10 · 10 · 0 |
+| Todo 7 y Sabor residual 2 | 7 7 7 2 7 7 7 7 | 0 · 0 | 86.25 | 8.45 8.45 6 8.45 8.45 8 8.45 | 10 · 10 · 10 · 0 |
+| Castillo Lavado Ruizeñores (Centro, 2026-10-08) | 5 5 7 7 6 6 6 6 | 0 · 0 | 84.25 | 6.94 8.36 8.35 7.65 7.65 7.65 7.65 | 10 · 10 · 10 · 0 |
+
+| Caso (SCA 2004 → CVA) | Diez atributos 2004 (orden de la Ficha) | taint · fault · tazas | Punto | Secciones CVA | u · d |
+|---|---|---|---|---|---|
+| Todo 7 | 7 7 7 7 7 7 10 10 10 7 | 0 · 0 · 5 | 79 | 5 5 5 5 5 5 5 5 | 0 · 0 |
+| Gesha RagonvaliaW (Centro, 2026-10-06) | 9 7 8 9 8 9 10 10 9 8 | 1 · 0 · 3 | 85 | 8.33 8.33 5.4 6.87 8.33 7.29 6.87 6.87 | 1 · 1 |
+
+Un CVA de ocho 3 (68,5) no tiene equivalente 2004 (no cabe en siete atributos de 6 a 10). La recta y el ajuste viven en UN sitio
+(`EQUIVALENCIA`); si el owner o el Q-Grader los corrigen, se cambia el modelo (`equivalencia-AAAA-MM-DD`) y estos vectores.
+
+**Los datos.** El único Punto homologado de la base («Castillo Lavado Ruizeñores 2026», alta del Centro del 2026-10-08, pendiente de
+confirmar) pasó de su piso 81,50 a su CVA 84,25 (acta `docs/migraciones/2026-10-08_punto_equivalente.sql`, con su fila de auditoría).
+Las filas que guardan el `punto` con la forma de la V5.92 se leen con `puntoDeFila`: un «homologado» vale su CVA y un «nativo» de
+entonces era un SCA 2004 catado, que vale su total (las tres del Gesha, 85, no cambian).

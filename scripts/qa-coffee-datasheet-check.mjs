@@ -169,7 +169,8 @@ check("método: sin método elegido no hay formulario (primero se elige)", js.in
 check("método: la cinta fija dice cuál", js.includes('class=\\"sello\\"') && /\.cinta\{position:sticky/.test(html));
 check("método: la ficha impresa y el HTML exportado lo llevan", js.includes('class=\\"f-met\\"') && js.includes('t(sca?"fiMetSca":"fiMetCva")') && js.includes('data-m=\\""+S.metodo'));
 check("método: el archivo exportado lo lleva en el nombre", js.includes('(S.metodo==="sca"?"SCA2004":"CVA")'));
-check("método: los dos avisos de «no son intercambiables»", M.TX.eligeAviso.every((x) => x.includes("84")) && M.INFO.dif.es[1].includes("no son comparables"));
+// V5.189 (owner, 2026-10-08): una planilla sigue sin mezclar los métodos, pero en CTCx el CVA (principal) y el 2004 valen lo mismo.
+check("método: los avisos de que una planilla nunca mezcla los dos métodos — y de que en CTCx valen lo mismo", M.TX.eligeAviso.every((x) => x.includes("84")) && M.INFO.dif.es[1].includes("nunca mezcla") && M.INFO.dif.es[1].includes("En CTCx valen lo mismo") && M.INFO.dif.en[1].includes("At CTCx they are worth the same") && M.INFO.dif.de[1].includes("Bei CTCx sind beide gleich viel wert"));
 check("método: el puntaje SCA sale solo de campos sca_* y el CVA solo de cva_*", !/cva_/.test(corte("function calcSca2004", "function claseSca")) && !/sca_/.test(corte("function calcCva", "/** SCA 2004")));
 check("CVA: descriptiva y afectiva en columnas separadas, con su estándar", js.includes('class=\\"col-d\\"') && js.includes('class=\\"col-a\\"') && js.includes("SCA 103") && js.includes("SCA 104"));
 check("CVA: la intensidad no entra en la fórmula", !/cva_int/.test(corte("function calcCva", "/** SCA 2004")));

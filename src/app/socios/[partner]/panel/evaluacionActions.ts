@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { getPartnerIdentity } from "@/lib/partners/requirePartner";
 import { erroresDePlanilla, factorDeLaPlanilla, labEvaluationHasData, labEvaluationScaData, protocoloDelPunto, puntoDeLaPlanilla, toLabEvaluation, type LabEvaluation } from "@/lib/arena/labEvaluation";
-import { rotuloDelPunto } from "@/lib/arena/homologacion";
+import { cvaDelPunto, rotuloDelPunto } from "@/lib/arena/punto";
 import { normalizaDetalle, normalizaRueda } from "@/lib/catacion/rueda";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { columnasDeReporte, prepararSubidaDeReporte, registrarReporteSubido, type MetaDeReporte } from "@/lib/evaluaciones/reporte";
@@ -85,10 +85,11 @@ export async function registrarEvaluacion(lotId: string, raw: LabEvaluation, not
 
   const ev = toLabEvaluation(raw);
   if (!labEvaluationHasData(ev)) return { ok: false, error: "La planilla está vacía — califique al menos una sección." };
-  // V5.92: el PUNTO con su procedencia — nativo SCA 2004 si la planilla lo trae completo; homologado desde CVA si solo hay CVA.
+  // V5.189: el PUNTO con su procedencia — el CVA (el protocolo principal) si la planilla lo trae completo; si solo hay SCA 2004,
+  // su total, que vale lo mismo por la equivalencia.
   const punto = puntoDeLaPlanilla(ev);
   if (!punto) return { ok: false, error: "La planilla no está completa: " + erroresDePlanilla(ev).join(" ") };
-  const puntaje = punto.bajo;
+  const puntaje = punto.valor;
 
   // Solo un lote de un bache EN el Centro y asignado a ESTA credencial. Nada más se lee del lote.
   const bache = await bacheEnMisManos(service, lotId, identity.userId);
@@ -136,7 +137,7 @@ export async function registrarEvaluacion(lotId: string, raw: LabEvaluation, not
     batch_id: batch.id,
     escala: protocoloDelPunto(ev),
     punto,
-    cva_total: punto.cvaTotal,
+    cva_total: cvaDelPunto(punto),
     rueda: normalizaRueda(ev.rueda),
     rueda_detalle: normalizaDetalle(ev.rueda_detalle, normalizaRueda(ev.rueda)), // V5.133: etapa e intensidad por marca
     uid_anonimo: ctcLotReferenceShort(lotId),

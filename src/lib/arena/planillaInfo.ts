@@ -86,7 +86,7 @@ export const INFO_PLANILLA: Record<IdiomaDePlanilla, Record<ClaveDeInfo, InfoDeP
   "es": {
     "dif": {
       "titulo": "SCA 2004 y CVA no son lo mismo",
-      "texto": "Las dos vienen de la Specialty Coffee Association, y por eso se confunden.\nSCA 2004 es el protocolo de catación clásico: diez atributos que se suman en un solo puntaje de 0 a 100. En ese número van mezcladas dos cosas: cómo es el café y qué tanto le gusta al catador.\nCVA (Coffee Value Assessment, estándares SCA 102 a 105, publicados en 2024 y 2025) reemplaza al protocolo de 2004 y separa cuatro evaluaciones: física (el grano verde), descriptiva (qué hay y cuánto, sin opinar), afectiva (qué tan alta es la impresión de calidad; es la única que produce puntaje) y extrínseca (lo que se sabe del café: origen, proceso, comercio, certificaciones).\nUn 84 del formulario 2004 y un 84 del CVA no son comparables: salen de escalas y fórmulas distintas. Por eso esta herramienta te hace elegir un método y lo deja escrito en cada pantalla y en la ficha.",
+      "texto": "Las dos vienen de la Specialty Coffee Association, y por eso se confunden.\nSCA 2004 es el protocolo de catación clásico: diez atributos que se suman en un solo puntaje de 0 a 100. En ese número van mezcladas dos cosas: cómo es el café y qué tanto le gusta al catador.\nCVA (Coffee Value Assessment, estándares SCA 102 a 105, publicados en 2024 y 2025) reemplaza al protocolo de 2004 y separa cuatro evaluaciones: física (el grano verde), descriptiva (qué hay y cuánto, sin opinar), afectiva (qué tan alta es la impresión de calidad; es la única que produce puntaje) y extrínseca (lo que se sabe del café: origen, proceso, comercio, certificaciones).\nUn 84 del formulario 2004 y un 84 del CVA salen de escalas y fórmulas distintas, y una planilla nunca mezcla los dos métodos: por eso esta herramienta te hace elegir uno y lo deja escrito en cada pantalla y en la ficha. En CTCx valen lo mismo: el CVA es el protocolo principal y un SCA 2004 se transforma con una equivalencia que cambia el valor de cada criterio en proporción y lleva las tazas no uniformes y defectuosas con su mismo efecto, de modo que el total es idéntico.",
       "std": "SCA 102–105 · SCA 2004"
     },
     "prep": {
@@ -241,7 +241,7 @@ export const INFO_PLANILLA: Record<IdiomaDePlanilla, Record<ClaveDeInfo, InfoDeP
     },
     "cva_punt": {
       "titulo": "El puntaje afectivo CVA",
-      "texto": "S = 0,65625 × (suma de las ocho secciones) + 52,75 − 2 × (tazas no uniformes) − 4 × (tazas defectuosas), redondeado al 0,25 más cercano.\nPuntos de referencia: ocho 5 (neutral) = 79; ocho 9 = 100; ocho 1 = 58.\nLas intensidades y las casillas CATA nunca entran en la fórmula: describen, no califican. Y este número no se compara con el del formulario 2004.",
+      "texto": "S = 0,65625 × (suma de las ocho secciones) + 52,75 − 2 × (tazas no uniformes) − 4 × (tazas defectuosas), redondeado al 0,25 más cercano.\nPuntos de referencia: ocho 5 (neutral) = 79; ocho 9 = 100; ocho 1 = 58.\nLas intensidades y las casillas CATA nunca entran en la fórmula: describen, no califican. En CTCx este número es el Punto (el CVA es el protocolo principal) y vale lo mismo que su equivalente en el formulario 2004.",
       "std": "SCA 104-2024 · 5.5"
     },
     "sec_fragrance": {
@@ -458,7 +458,7 @@ export const INFO_PLANILLA: Record<IdiomaDePlanilla, Record<ClaveDeInfo, InfoDeP
   "en": {
     "dif": {
       "titulo": "SCA 2004 and CVA are not the same",
-      "texto": "Both come from the Specialty Coffee Association, which is why they get confused.\nSCA 2004 is the classic cupping protocol: ten attributes added into a single score from 0 to 100. That number blends two things: what the coffee is like and how much the cupper likes it.\nCVA (Coffee Value Assessment, SCA Standards 102 to 105, published in 2024 and 2025) supersedes the 2004 protocol and separates four assessments: physical (the green bean), descriptive (what is there and how much, with no judgement), affective (how high the impression of quality is; the only one that yields a score) and extrinsic (what is known about the coffee: origin, process, trade, certifications).\nAn 84 on the 2004 form and an 84 on the CVA are not comparable: they come from different scales and formulas. That is why this tool makes you pick a method and states it on every screen and on the datasheet.",
+      "texto": "Both come from the Specialty Coffee Association, which is why they get confused.\nSCA 2004 is the classic cupping protocol: ten attributes added into a single score from 0 to 100. That number blends two things: what the coffee is like and how much the cupper likes it.\nCVA (Coffee Value Assessment, SCA Standards 102 to 105, published in 2024 and 2025) supersedes the 2004 protocol and separates four assessments: physical (the green bean), descriptive (what is there and how much, with no judgement), affective (how high the impression of quality is; the only one that yields a score) and extrinsic (what is known about the coffee: origin, process, trade, certifications).\nAn 84 on the 2004 form and an 84 on the CVA come from different scales and formulas, and a sheet never mixes the two methods: that is why this tool makes you pick one and states it on every screen and on the datasheet. At CTCx they are worth the same: the CVA is the primary protocol and an SCA 2004 form is turned into it by an equivalence that changes each criterion's value proportionally and carries non-uniform and defective cups with the same effect, so the total is identical.",
       "std": "SCA 102–105 · SCA 2004"
     },
     "prep": {
@@ -613,7 +613,7 @@ export const INFO_PLANILLA: Record<IdiomaDePlanilla, Record<ClaveDeInfo, InfoDeP
     },
     "cva_punt": {
       "titulo": "The CVA affective score",
-      "texto": "S = 0.65625 × (sum of the eight sections) + 52.75 − 2 × (non-uniform cups) − 4 × (defective cups), rounded to the nearest 0.25.\nReference points: eight 5s (neutral) = 79; eight 9s = 100; eight 1s = 58.\nIntensities and CATA boxes never enter the formula: they describe, they do not judge. And this number is not to be compared with the 2004 form's.",
+      "texto": "S = 0.65625 × (sum of the eight sections) + 52.75 − 2 × (non-uniform cups) − 4 × (defective cups), rounded to the nearest 0.25.\nReference points: eight 5s (neutral) = 79; eight 9s = 100; eight 1s = 58.\nIntensities and CATA boxes never enter the formula: they describe, they do not judge. At CTCx this number is the Point (the CVA is the primary protocol), and it is worth the same as its equivalent on the 2004 form.",
       "std": "SCA 104-2024 · 5.5"
     },
     "sec_fragrance": {

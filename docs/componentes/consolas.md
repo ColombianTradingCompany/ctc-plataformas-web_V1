@@ -177,6 +177,11 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.189 · la escala de valor de los Grados CTCx: CVA principal y SCA 2004 equivalente** (owner; plan `PLAN_CIRCUITO_DEL_LOTE`
+  §10.6): `src/lib/arena/equivalencia.ts` (la recta 3,25 + 0,75 × sección, el ajuste proporcional, las tazas con su efecto, ida y
+  vuelta) y `src/lib/arena/punto.ts` (antes `homologacion.ts`: un solo valor, `decidirPorPunto` sin recata). La planilla abre en CVA y
+  enseña su equivalente; el veredicto del OCP y la Arena deciden igual con los dos protocolos. **Queda**: que el owner o el Q-Grader
+  validen la recta y el ajuste (viven en `EQUIVALENCIA`; cambiarlos es cambiar el modelo y los vectores del §10.6).
 - **V5.188 · OCP**: los avisos al productor (ofertas, contratos, compras, nominados, solicitudes) dicen **CTCx**; el contrato
   guarda el documento de quien firma (`purchase_contracts.producer_signer_doc_tipo` · `producer_signer_doc_numero`) y la vista del
   contrato en el OCP lo enseña junto al nombre del firmante, para la contrafirma.

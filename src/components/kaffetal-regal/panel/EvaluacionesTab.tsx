@@ -488,13 +488,8 @@ function GalardonCard({ lot, fincas }: { lot: Lot; fincas: Finca[] }) {
             </span>
             {puntaje != null && (
               <span className="mono" style={{ fontSize: 11.5, border: "1px solid var(--line)", borderRadius: 999, padding: "2px 10px" }}>
-                {lot.officialPunto?.origen === "homologado" ? "Punto homologado (piso)" : "Puntaje SCA"}: {puntaje}
-              </span>
-            )}
-            {/* V5.92: un Punto homologado desde CVA se dice como tal — nunca como un SCA catado; el techo, con recata. */}
-            {lot.officialPunto?.origen === "homologado" && (
-              <span style={{ fontSize: 11.5, color: "var(--muted)" }}>
-                Homologado desde CVA {lot.officialPunto.cvaTotal ?? ""} · no catado en SCA · hasta {lot.officialPunto.alto} con una recata SCA
+                {/* V5.189: el Punto dice con qué protocolo se cató — CVA (el principal) o SCA 2004, que vale lo mismo. */}
+                Punto{lot.officialPunto ? ` (${lot.officialPunto.protocoloFuente === "cva" ? "CVA" : "SCA 2004"})` : ""}: {lot.officialPunto?.valor ?? puntaje}
               </span>
             )}
           </div>

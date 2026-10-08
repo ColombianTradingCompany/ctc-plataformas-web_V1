@@ -152,6 +152,9 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.189 · el Punto dice con qué protocolo se cató** (ejecutado desde `consolas`, plan §10.6): «Lotes Galardonados» enseña «Punto
+  (CVA)» o «Punto (SCA 2004)» —valen lo mismo— y el dossier «Punto CVA (SCA-104)» o «Punto SCA 2004 (vale lo mismo en CVA)»; ya no hay
+  «Punto homologado (piso)» ni «recata». La Ficha B2 del productor sigue siendo SCA 2004 (su total vale lo mismo en CVA).
 - **V5.188 · «Contratos y Compras» tras la revisión** (feedback de seis puntos): el escenario de la calculadora es **un supuesto
   del productor** y lo único seguro es el saco (recuadro verde); «Más que vendiéndolo a la FNC» dice qué kilos cuenta (lo vendido +
   el saco); **«Las palabras de este trato»** (`GlosarioDelTrato`) define PVC, CPS, carga, grado, Cherry Picked y el resto; las fechas
@@ -327,7 +330,7 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   nodo final, wrap V47, 2026-09-25): `Lot.officialPunto` (opcional, `data.ts`; lo llena `KaffetalExperience` desde
   `lot_evaluations.punto`) y el rótulo de «Lotes Galardonados» (`EvaluacionesTab`): «Punto homologado (piso)» y «Homologado desde
   CVA … · no catado en SCA · hasta X con una recata SCA» cuando la evaluación que rige fue CVA; las notas al productor dicen el
-  origen. `sca_total` ES el Punto (el piso si es homologado; nunca Tyrian homologado). **Pendiente KR**: el **dossier ES/EN**
+  origen. `sca_total` ES el Punto (el piso si es homologado; nunca Tyrian homologado — **anulado en la V5.189**: el Punto es el CVA o un 2004 que vale lo mismo). **Pendiente KR**: el **dossier ES/EN**
   (`LotDossierDoc`) todavía no dice el origen del Punto (fila en `ALINEACION` §3b, con la ficha pública de `cherry-picked`).
 - **La Arena y el Club cambiaron (V5.77, fase 1 del `PLAN_CIRCUITO_DEL_LOTE`) — copy de KR con dueño `kaffetal-regal`**: el
   Club como membresía **ya no existe** (firmar y publicar no lo exigen; el galardón no lo reparte). ~~`ContratosTab`

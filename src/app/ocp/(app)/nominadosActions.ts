@@ -10,7 +10,7 @@ import { ARENA_FEE_COP, MAX_BATCH_LOTS, avanzarAFilaSiCompleta, dueFor, formatCo
 import { claimCampaignCode, insertEntryCode } from "@/lib/arena/entryCodes";
 import { generateMejorasDoc } from "@/lib/arena/mejoras";
 import { factorDeLaPlanilla, labEvaluationHasData, labEvaluationScaData, protocoloDelPunto, puntoDeLaPlanilla, toLabEvaluationList, type LabEvaluation } from "@/lib/arena/labEvaluation";
-import { decidirPorPunto, puntoDeFila, puntoNativo, rotuloDelPunto, type PuntoSca } from "@/lib/arena/homologacion";
+import { cvaDelPunto, decidirPorPunto, puntoDeFila, puntoSca2004, rotuloDelPunto, type PuntoSca } from "@/lib/arena/punto";
 import { triadaDeLaFicha } from "@/lib/pvc/triadaDelLote";
 import { notasAlDevolver } from "@/lib/evaluaciones/devolucion";
 import { AJUSTE_CTCX_JUSTIFICACION_MIN, ajusteCtcxValido, letras } from "@/lib/pvc/escala";
@@ -676,10 +676,10 @@ export async function recordEvaluationVerdict(
     ...(newEval ? [{ ...newEval, registered_at: new Date().toISOString() }] : []),
   ];
   const lastEval = centroRow ? null : list.length ? list[list.length - 1] : null;
-  // V5.92: el PUNTO con su procedencia (nativo SCA 2004, u homologado desde CVA con intervalo); lo que se guarda como puntaje es su
-  // piso (R4 del informe del Q-Grader). Un puntaje tecleado a mano es un SCA 2004 nativo.
-  const puntoEfectivo: PuntoSca | null = centroRow ? puntoDeFila(centroRow) : score != null ? puntoNativo(score) : lastEval ? puntoDeLaPlanilla(lastEval) : null;
-  const effectiveScore = puntoEfectivo?.bajo ?? null;
+  // V5.189: el PUNTO con su procedencia (CVA, el protocolo principal, o un SCA 2004 que vale lo mismo por la equivalencia); lo que
+  // se guarda como puntaje es su valor, sin intervalo. Un puntaje tecleado a mano es un SCA 2004 (vale lo mismo).
+  const puntoEfectivo: PuntoSca | null = centroRow ? puntoDeFila(centroRow) : score != null ? puntoSca2004(score) : lastEval ? puntoDeLaPlanilla(lastEval) : null;
+  const effectiveScore = puntoEfectivo?.valor ?? null;
   const resultCols = {
     sondeo_result_notes: cleanNotes,
     sondeo_score: effectiveScore,
@@ -693,7 +693,7 @@ export async function recordEvaluationVerdict(
     // El puntaje manda: el grado se deriva, jamás se digita. Sin puntaje no
     // hay galardón; con puntaje bajo el camino honesto es «rechazado».
     if (effectiveScore == null || !puntoEfectivo) {
-      return { ok: false, error: "Registre una planilla con Punto (SCA 2004 completo, o CVA completo) o digite el puntaje SCA antes de galardonar." };
+      return { ok: false, error: "Registre una planilla con Punto (CVA completo, o SCA 2004 completo) o digite el puntaje antes de galardonar." };
     }
     const puntaje = redondeaPuntaje(effectiveScore);
     // V5.162 (owner): el ajuste CTCx — hasta 100 puntos con un argumento obligatorio que justifique el incremento.
@@ -702,11 +702,8 @@ export async function recordEvaluationVerdict(
     if (ajuste > 0 && justificacion.length < AJUSTE_CTCX_JUSTIFICACION_MIN) {
       return { ok: false, error: `Para sumar ${ajuste} puntos escriba el argumento que lo justifica (al menos ${AJUSTE_CTCX_JUSTIFICACION_MIN} caracteres): qué factor extraordinario va más allá de lo registrado.` };
     }
-    // El puntaje manda: el grado FIRME se lee del piso del Punto; un homologado nunca da Tyrian; si el intervalo cruza los 80, recata.
+    // El puntaje manda: el grado se lee del Punto con la tríada (V5.189: igual si se cató en CVA o en SCA 2004; sin piso ni recata).
     const decision = decidirPorPunto(puntoEfectivo, triada, ajuste);
-    if (decision.tipo === "pendiente_recata") {
-      return { ok: false, error: `El Punto homologado ${puntoEfectivo.bajo}–${puntoEfectivo.alto} cruza los 80: ni galardón ni «No supera» hasta una recata SCA 2004 nativa (acuerde una re-evaluación).` };
-    }
     if (decision.tipo !== "galardon") {
       return { ok: false, error: `Con Punto ${puntaje} y tríada ${letras(triada)} los puntos no llegan a Black (un café común entra desde 82; por debajo de 80 no hay especialidad). Registre el veredicto como «rechazado».` };
     }
@@ -751,7 +748,7 @@ export async function recordEvaluationVerdict(
         batch_id: ins.sondeo_batch_id,
         escala: protocoloDelPunto(lastEval),
         punto: puntoEfectivo,
-        cva_total: puntoEfectivo.cvaTotal,
+        cva_total: cvaDelPunto(puntoEfectivo),
         rueda: normalizaRueda(lastEval.rueda),
         rueda_detalle: normalizaDetalle(lastEval.rueda_detalle, normalizaRueda(lastEval.rueda)), // V5.133
         uid_anonimo: ctcLotReferenceShort(lotId),
@@ -807,13 +804,13 @@ export async function recordEvaluationVerdict(
       previous_status: lot?.stage,
       new_status: "galardonado",
       performed_by: adminId,
-      notes: `Evaluación CTC por Q-Grader en bache. ${rotuloDelPunto(puntoEfectivo)} ⇒ Grado ${grado.nombre} (derivado${decision.techo ? `; hasta ${decision.techo.nombre} con recata SCA` : ""}). ${cleanNotes.slice(0, 220)}`,
+      notes: `Evaluación CTC por Q-Grader en bache. ${rotuloDelPunto(puntoEfectivo)} ⇒ Grado ${grado.nombre} (derivado). ${cleanNotes.slice(0, 220)}`,
     });
     await service.from("producer_comm_log").insert({
       producer_id: ins.producer_id,
       context_label: lot ? `Lote ${lot.name}` : null,
       lot_id: lotId,
-      note: `¡Su lote fue GALARDONADO! ${puntoEfectivo.origen === "nativo" ? `Puntaje SCA ${puntaje}` : `Punto homologado desde CVA: ${puntaje} (hasta ${puntoEfectivo.alto} con una recata SCA)`} — Grado CTCx ${grado.nombre}. Encontrará los documentos y el resultado completo en «Evaluar mi Café» → Lotes Galardonados.`,
+      note: `¡Su lote fue GALARDONADO! Punto ${puntaje} (${puntoEfectivo.protocoloFuente === "cva" ? "CVA" : "SCA 2004"}) — Grado CTCx ${grado.nombre}. Encontrará los documentos y el resultado completo en «Evaluar mi Café» → Lotes Galardonados.`,
       created_by: adminId,
     });
 
@@ -825,10 +822,6 @@ export async function recordEvaluationVerdict(
     // acepta y AHÍ nace el contrato — respondToOffer); Tyrian aparece en la cola de Subastas de la misma pantalla.
     // V5.85 (fase 8): el CRM de `black_negotiations` se retiró — la compra en firme de un Black es una oferta directa.
   } else {
-    // V5.92 (R5): un Punto homologado cuyo intervalo cruza los 80 no se rechaza: pendiente de recata SCA nativa.
-    if (puntoEfectivo && decidirPorPunto(puntoEfectivo, triada).tipo === "pendiente_recata") {
-      return { ok: false, error: `El Punto homologado ${puntoEfectivo.bajo}–${puntoEfectivo.alto} cruza los 80: no se registra «No supera» sin una recata SCA 2004 nativa.` };
-    }
     if (!cleanNotes) {
       cleanNotes = `No superó la evaluación esta vez${puntoEfectivo ? ` · ${rotuloDelPunto(puntoEfectivo)}` : ""}.`;
       resultCols.sondeo_result_notes = cleanNotes;

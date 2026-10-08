@@ -98,6 +98,9 @@ fórmula del CVA y la rueda única). Lo tocan también `qa-recuperacion-check.mj
 
 ## Pendientes
 
+- **V5.189 · la planilla del Centro abre en CVA, el protocolo principal** (ejecutado desde `consolas`, plan §10.6): un SCA 2004 vale lo
+  mismo por la equivalencia y la planilla enseña, junto al Punto, su equivalente en el otro protocolo (calculado, mismo total). Las
+  ayudas «i» ya no dicen que los dos «no son comparables». Pedirles a los Q-Graders del Centro que catén en CVA por defecto.
 - **V5.162 · el log de devoluciones al final de la planilla del Centro** (ejecutado desde `consolas`). Cada devolución del lote
   con fecha y motivo (`separaNotasDevueltas`), la más reciente primero, en ES/EN.
 - **V5.161 · un alta devuelta se reabre con todo lo registrado** (owner, 2026-10-06). La página siembra la planilla desde la

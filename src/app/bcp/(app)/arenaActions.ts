@@ -6,7 +6,7 @@ import type { ActionResult } from "@/components/panel/ActionForm";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { factorDeLaPlanilla, labEvaluationHasData, protocoloDelPunto, puntoDeLaPlanilla, type LabEvaluation } from "@/lib/arena/labEvaluation";
-import { decidirPorPunto, puntoDeFila } from "@/lib/arena/homologacion";
+import { cvaDelPunto, decidirPorPunto, puntoDeFila } from "@/lib/arena/punto";
 import { triadaDeLaFicha } from "@/lib/pvc/triadaDelLote";
 import { ATRIBUTOS_SCA } from "@/lib/fichas/tipos";
 
@@ -160,7 +160,7 @@ export async function registrarApreciacion(sessionId: string, lotId: string, eva
   if (!labEvaluationHasData(evaluation)) return { ok: false, error: "La planilla está vacía — digite al menos un dato." };
 
   const punto = puntoDeLaPlanilla(evaluation);
-  const puntaje = punto?.bajo ?? null;
+  const puntaje = punto?.valor ?? null;
   const scaData: Record<string, number> = {};
   for (const key of ATRIBUTOS_SCA) scaData[key] = Number(evaluation[`sca_${key}` as keyof LabEvaluation]) || 0;
   const fisico: Record<string, unknown> = { tipo: "apreciacion_arena", session_id: sessionId, session_name: sess.name };
@@ -174,7 +174,7 @@ export async function registrarApreciacion(sessionId: string, lotId: string, eva
       status: "accepted",
       sca_total: puntaje,
       punto,
-      cva_total: punto?.cvaTotal ?? null,
+      cva_total: punto ? cvaDelPunto(punto) : null,
       escala: protocoloDelPunto(evaluation),
       sca_data: scaData,
       factor_rendimiento: factorDeLaPlanilla(evaluation), // V5.153
@@ -224,12 +224,12 @@ export async function elegirEvaluacionQueRige(lotId: string, evaluationId: strin
   if (!ev || ev.lot_id !== lotId) return { ok: false, error: "Esa evaluación no es de este lote." };
   if (ev.status !== "accepted" || ev.sca_total == null) return { ok: false, error: "Solo rige una evaluación aceptada con puntaje." };
   if (!lot || lot.stage !== "galardonado") return { ok: false, error: "Solo se elige la evaluación que rige de un lote galardonado." };
-  // V5.92: el grado firme lo decide el Punto (piso; un homologado nunca da Tyrian; si cruza los 80, pendiente de recata).
+  // V5.189: el grado lo decide el Punto (CVA, o un SCA 2004 que vale lo mismo) con la tríada; sin piso ni recata.
   const punto = puntoDeFila(ev);
   // V5.160: El Punto y la Tríada — la tríada se deriva de la Ficha del lote.
   // V5.162: el ajuste CTCx de esa evaluación (si lo tiene) entra en el grado.
   const decision = punto ? decidirPorPunto(punto, triadaDeLaFicha(lot.datasheet as Parameters<typeof triadaDeLaFicha>[0]).triada, Number(ev.ajuste_ctcx_puntos ?? 0)) : null;
-  if (!decision || decision.tipo !== "galardon") return { ok: false, error: `Con Punto ${ev.sca_total} el lote quedaría por debajo de Black (o pendiente de recata SCA): esa evaluación no puede regir.` };
+  if (!decision || decision.tipo !== "galardon") return { ok: false, error: `Con Punto ${ev.sca_total} el lote quedaría por debajo de Black: esa evaluación no puede regir.` };
   const grado = decision.grado;
 
   await service.from("lot_evaluations").update({ rige_grado: false }).eq("lot_id", lotId).eq("rige_grado", true);

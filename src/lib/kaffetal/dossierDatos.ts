@@ -18,7 +18,7 @@ import { ctcLotReference, fincaCode } from "@/components/kaffetal-regal/data";
 import { GRADO_POR_ID, esGradoValido, gradoDelLote, type Grado } from "@/lib/grados/definicion";
 import { evaluacionQueRige } from "@/lib/evaluations";
 import { rowToLotFicha, type FichaTecnicaData } from "@/lib/fichas/tipos";
-import { puntoDeFila, type PuntoSca } from "@/lib/arena/homologacion";
+import { puntoDeFila, type PuntoSca } from "@/lib/arena/punto";
 import { triadaDeLaFicha, type TriadaDelLote } from "@/lib/pvc/triadaDelLote";
 import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { caracterizacionDelDossier, planillaDeEvaluacion, type DossierCaracterizacion, type Lang } from "@/lib/kaffetal/dossierEvaluacion";

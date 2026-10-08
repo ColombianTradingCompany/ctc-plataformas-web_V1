@@ -8,6 +8,8 @@
 // V5.92 (owner, 2026-09-25): la planilla es DUAL con un conmutador de VISTA —SCA 2004 · CVA · Ambas—. El SCA 2004
 // nativo es el protocolo primario (rige y calibra la escala de grados); un CVA solo se homologa con un intervalo y rige
 // el piso; «Ambas» alimenta el banco comparativo. El Punto y su procedencia se enseñan siempre (`rotuloDelPunto`).
+// V5.189 (owner, 2026-10-08): el CVA es el protocolo PRINCIPAL (la vista abre en CVA) y el SCA 2004 vale LO MISMO por la
+// equivalencia (`equivalencia.ts`): sin intervalo, piso ni recata. Junto al Punto va la planilla del otro protocolo que vale lo mismo.
 // Defectos del Café y el Coffee Varieties Map se ENLAZAN desde aquí (no se embeben; folio 11).
 //
 // V5.130 (owner, 2026-10-01): «hay un montón de espacio negativo, pero mucho peor aún, no estamos usando la herramienta de
@@ -35,6 +37,7 @@ import {
   SCA2004,
   SCA2004_POR_TAZAS,
   VISTA_LABEL,
+  equivalenteDeLaPlanilla,
   erroresDePlanilla,
   puntoDeLaPlanilla,
   contarScaTazas,
@@ -44,7 +47,8 @@ import {
   type ScaTaza,
   type VistaDePlanilla, NOTA_DESCRIPTIVA_MAX, TAZAS_SCA, TAZAS_CVA, factorDeLaPlanilla, normalizaScaTazas, normalizaTazas, tazasCvaUsadas, tazasUsadas } from "@/lib/arena/labEvaluation";
 import { INFO_PLANILLA, type ClaveDeInfo } from "@/lib/arena/planillaInfo";
-import { CVA_PROPOSITO, decidirPorPunto, rotuloDelPunto } from "@/lib/arena/homologacion";
+import { CVA_PROPOSITO, decidirPorPunto, rotuloDelPunto } from "@/lib/arena/punto";
+import { CLAVES_CVA, CLAVES_SCA_ESCALADAS } from "@/lib/arena/equivalencia";
 import type { Triada } from "@/lib/pvc/escala";
 import { ETAPAS_DE_LA_RUEDA, ETAPA_LABEL, INTENSIDAD, NOTA_MAX, ZONA_LABEL, ajustaIntensidad, alternaEtapa, detalleDe, etapasLabel, familiaDe, fmtIntensidad, normalizaRueda, rutaDe, zonaDeIntensidad, type DetalleDeMarca } from "@/lib/catacion/rueda";
 import { scaClassFor } from "@/components/kaffetal-regal/ficha/fichaCalculations";
@@ -260,7 +264,9 @@ export function LabEvalEditor({
     ? SCA_ATTRS.map(([key]) => ({ label: SCA_ATTR_LABEL[lang][key], valor: numOrNull(value[`sca_${key}` as keyof LabEvaluation] as string) }))
     : CVA_SECCIONES.map(([key]) => ({ label: CVA_SECCION_LABEL[lang][key], valor: numOrNull(value[`cva_${key}` as keyof LabEvaluation] as string) }));
   const totalGrande = radarSca ? sca.total : cva.total;
-  const clase = punto ? scaClassFor(punto.bajo) : "Sin puntaje";
+  const clase = punto ? scaClassFor(punto.valor) : "Sin puntaje";
+  // V5.189: la planilla del otro protocolo que vale lo mismo (la equivalencia), junto al Punto.
+  const equivalente = equivalenteDeLaPlanilla(value);
 
   return (
     <div>
@@ -314,14 +320,12 @@ export function LabEvalEditor({
           <div style={{ marginTop: 8, fontSize: 13 }}>
             {punto ? (
               <span>
-                {t.puntoQueRige}: <b style={{ fontSize: 17 }}>{punto.bajo.toFixed(2)}</b> · {rotuloDelPunto(punto, lang)}
+                {t.puntoQueRige}: <b style={{ fontSize: 17 }}>{punto.valor.toFixed(2)}</b> · {rotuloDelPunto(punto, lang)}
                 {!ocultaGrado && decision?.tipo === "galardon" && (
                   <>
                     {" "}· {t.gradoFirme} <b>{decision.grado.nombre}</b>
-                    {decision.techo && <> {t.hastaConRecata(decision.techo.nombre)}</>}
                   </>
                 )}
-                {decision?.tipo === "pendiente_recata" && <> · {t.pendienteRecata}</>}
                 {!ocultaGrado && decision?.tipo === "sin_grado" && <> · {t.sinGrado}</>}
               </span>
             ) : (
@@ -333,6 +337,43 @@ export function LabEvalEditor({
           </div>
         </div>
       </div>
+
+      {/* V5.189 · la equivalencia: la planilla del otro protocolo que vale lo mismo (calculada, dos decimales; el total, idéntico). */}
+      {equivalente && (
+        <div style={{ ...S.bloque, marginBottom: 12, background: "var(--surface-2, #F8F7F4)" }}>
+          <h6 style={S.h6}>{equivalente.protocolo === "sca2004" ? t.equivTituloSca : t.equivTituloCva}</h6>
+          <p style={S.hint}>{t.equivHint}</p>
+          {!equivalente.hoja ? (
+            <p style={{ ...S.hint, margin: 0 }}>{t.equivFuera}</p>
+          ) : equivalente.protocolo === "sca2004" ? (
+            <div style={S.pares}>
+              {[...CLAVES_SCA_ESCALADAS, "uniformity" as const, "clean_cup" as const, "sweetness" as const].map((k) => (
+                <div key={k} style={S.par}>
+                  <span>{SCA_ATTR_LABEL[lang][k]}</span>
+                  <b className="mono">{equivalente.hoja!.atributos[k].toFixed(2)}</b>
+                </div>
+              ))}
+              <div style={S.par}>
+                <span>{t.equivTaint(equivalente.hoja.taint)}</span>
+                <b className="mono">{equivalente.hoja.total.toFixed(2)}</b>
+              </div>
+            </div>
+          ) : (
+            <div style={S.pares}>
+              {CLAVES_CVA.map((k) => (
+                <div key={k} style={S.par}>
+                  <span>{CVA_SECCION_LABEL[lang][k]}</span>
+                  <b className="mono">{equivalente.hoja!.secciones[k].toFixed(2)}</b>
+                </div>
+              ))}
+              <div style={S.par}>
+                <span>{t.equivTazas(equivalente.hoja.u, equivalente.hoja.d)}</span>
+                <b className="mono">{equivalente.hoja.total.toFixed(2)}</b>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Los protocolos, a lo ancho; lado a lado solo cuando se llenan los dos («Ambas») ── */}
       <div>

@@ -7,7 +7,7 @@ import { PARTNERS } from "@/lib/partners/partners";
 import { requirePartner } from "@/lib/partners/requirePartner";
 import { marcaLabel, normalizaDetalle, normalizaRueda } from "@/lib/catacion/rueda";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
-import { puntoDeFila, rotuloDelPunto } from "@/lib/arena/homologacion";
+import { puntoDeFila, rotuloDelPunto } from "@/lib/arena/punto";
 import { BUILD_SHA, VERSION_LABEL } from "@/lib/version";
 import { AnularAltaButton, DarDeAltaButton } from "./PlanillaCentro";
 import { PestanasDeBaches } from "./PestanasDeBaches";
@@ -31,7 +31,7 @@ import { urlsDeReportes } from "@/lib/evaluaciones/reporte";
 type BatchRow = { id: string; label: string; shipped_at: string | null; q_grader_name: string | null; status: string; cerrado_at: string | null };
 type InsRow = { lot_id: string; sondeo_batch_id: string | null; phase: string };
 type EvalRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; cva_total: number | string | null; escala: string; rueda: unknown; rueda_detalle: unknown; created_at: string; reviewed_at: string | null; notes: string | null; submitted_by: string | null; codigo_interno: string | null; reference_asset_id: string | null; reference_file_name: string | null; physical_data: { planilla?: unknown } | null };
-// V5.92: nunca un homologado se lee como un SCA catado.
+// V5.92: el Punto con su procedencia. V5.189: CVA (el protocolo principal) o un SCA 2004 que vale lo mismo.
 const rotulo = (e: EvalRow) => {
   const p = puntoDeFila(e);
   return p ? rotuloDelPunto(p) : "—";

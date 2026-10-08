@@ -111,6 +111,10 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
 
 ## Pendientes
 
+- **V5.189 · el Punto que lee la escala cambió de protocolo** (owner, ejecutado desde `consolas`, plan §10.6): el CVA es el protocolo
+  principal y un SCA 2004 vale lo mismo; ya no hay piso, techo ni recata, ni tope en Gold. `escala.ts` y `definicion.ts` no cambian
+  (los umbrales se leen igual en los dos protocolos); la «fase 2» lee `PuntoSca` de `src/lib/arena/punto.ts` y suma el surplus sobre
+  el Punto (no hay piso).
 - **V5.179 · el agente de la edición siguiente** (`src/lib/pvc/{agente,insumos}.ts`, cron `/api/cron/agente-pvc` 11:40 UTC, tarjeta «Edición siguiente», Tablero con `?borrador=`). Hay un borrador vivo: **PVC-F1-2027 = $2.500.000** (pedido por el owner el 2026-10-07; el cron no lo rehace, solo recuerda el plazo). Pendiente del owner: revisar lo ARRASTRADO (el informe sugiere C strip 303,2 US¢/lb y advierte que el costo de feb-2026 subestima el piso) y publicarlo desde el Tablero a más tardar el **29-nov-2026**; puede regenerarlo el 16-nov con datos frescos. Pendiente técnico: el libro de IA no anota el costo de las búsquedas web (solo tokens) ni las llamadas abortadas por tiempo.
 - **V5.178 · la vigilancia de la corrección** (`src/lib/pvc/vigilancia.ts`, cron `/api/cron/vigilancia-pvc` 11:25 UTC, tabla `pvc_correcciones`, tarjeta en Ediciones): 15 de 20 lecturas FNC, alza/baja ±10 %, una por ciclo y por PVC; el owner aprueba (publica la edición corregida con `publicarEdicionCorregida` → `calcularConPvc`) o rechaza; vence al terminar el ciclo. Pendiente: tanda 4 (b), el agente que propone la edición siguiente en la semana 1 del ciclo 2.
 - **V5.177 · Flete a CTCx** (owner, 2026-10-07): el «auxilio de transporte» de la V5.174 se descarta (no existe: las cooperativas descuentan el flete de la base FNC). `pvc_editions.flete_por_region` = tres niveles por carga (Regional Santander $25.000 · Nacional Centro $50.000 · Nacional Sur $70.000), editables en Ediciones → «Variables de la edición» (owner, auditoría; no entran en la huella). `pvcParaGrado(…, { fleteRegion })` los suma al precio final (`src/lib/trato/flete.ts`). Pendiente (tanda 4): que el agente copie el flete de la edición anterior al proponer la siguiente.
@@ -179,7 +183,8 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
   `pvc_model_versions.params`. **Y consume el Punto (V5.92, `consolas`, sin código de este componente; lo anota el nodo
   final, wrap V47)**: `PVC_BCP_PLAN` §9.1 ganó el recuadro «El Punto homologado» — la escala de puntos (`escala.ts`) leerá
   `PuntoSca` de `src/lib/arena/homologacion.ts` y sumará el surplus (variedad · proceso · reconocimiento) **sobre el piso** del
-  Punto (R7), nunca sobre un CVA crudo; un Punto homologado no llega a Tyrian. Es la «fase 2 del informe» del Q-Grader
+  Punto (R7), nunca sobre un CVA crudo; un Punto homologado no llega a Tyrian. *(V5.189: anulado — el módulo es `punto.ts`, el Punto
+  es un solo valor, CVA o un 2004 que vale lo mismo, y el surplus va sobre él.)* Es la «fase 2 del informe» del Q-Grader
   (`PLAN_CIRCUITO_DEL_LOTE` §10), junto con la calibración (≥ 30 lotes duales). **Auditoría del módulo (§10, verificada contra la base 2026-09-16)**: trece hallazgos —
   ~~**A1 primero y urgente**: `edicionVigente()` y `public_pvc_current` ignoran `valid_from/valid_to`~~ **A1 corregido en la
   V5.43** («vigente» = la edición cuya ventana contiene hoy; guardián `qa-pvc-vigencia`); siguen A2 (`pvc_anterior` lo teclea el usuario), A3

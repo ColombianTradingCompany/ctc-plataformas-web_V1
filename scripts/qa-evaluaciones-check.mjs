@@ -41,7 +41,7 @@ check("el veredicto existe (recordEvaluationVerdict)", nominados.includes("expor
   const firma = nominados.match(/export async function recordEvaluationVerdict\(([\s\S]*?)\): Promise/)?.[1] ?? "";
   check("la firma del veredicto NO acepta un grado", !/\bgrade\b|\bgrado\b\s*:/.test(firma));
 }
-check("el grado sale del Punto y la Tríada (V5.160: decidirPorPunto(punto, triada) — el grado firme se lee del piso; nadie lo digita)", nominados.includes("decidirPorPunto(puntoEfectivo, triada)") && nominados.includes("triadaDeLaFicha("));
+check("el grado sale del Punto y la Tríada (V5.160: decidirPorPunto; V5.189: el Punto es el CVA o un SCA 2004 que vale lo mismo, sin piso; nadie lo digita)", nominados.includes("decidirPorPunto(puntoEfectivo, triada, ajuste)") && nominados.includes("triadaDeLaFicha("));
 check("el puntaje pasa por redondeaPuntaje", nominados.includes("redondeaPuntaje(effectiveScore)"));
 check("sin Punto no hay galardón (V5.92: planilla completa, SCA 2004 o CVA)", nominados.includes("Registre una planilla con Punto"));
 check("sin puntos para Black el camino honesto es «rechazado»", nominados.includes("los puntos no llegan a Black"));

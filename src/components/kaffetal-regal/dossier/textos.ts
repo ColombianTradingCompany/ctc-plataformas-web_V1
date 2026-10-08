@@ -88,8 +88,9 @@ const ES = {
   // Grado
   gradoTitulo: "El Punto y la Tríada",
   gradoLead: "El grado CTCx combina la calidad en taza (el Punto SCA del Q-Grader) con tres atributos del lote: variedad, proceso y reconocimiento. Cada atributo sube el multiplicador según su nivel C, B o A.",
-  puntoNativo: "Punto nativo SCA 2004",
-  puntoHomologado: (b: string, a: string) => `Punto homologado desde CVA (${b} a ${a})`,
+  // V5.189: el CVA es el protocolo principal; un SCA 2004 vale lo mismo por la equivalencia.
+  puntoCva: "Punto CVA (SCA-104)",
+  puntoSca2004: "Punto SCA 2004 (vale lo mismo en CVA)",
   multiplicador: "Multiplicador",
   total: "Puntos CTCx",
   triada: { variedad: "Variedad", proceso: "Proceso", reconocimiento: "Reconocimiento" },
@@ -273,8 +274,8 @@ const EN: Textos = {
   masVertices: (n: number) => `and ${n} more vertices in the farm's dossier`,
   gradoTitulo: "The Point and the Triad",
   gradoLead: "The CTCx grade combines cup quality (the Q-Grader's SCA Point) with three attributes of the lot: variety, process and recognition. Each attribute raises the multiplier according to its level C, B or A.",
-  puntoNativo: "Native SCA 2004 Point",
-  puntoHomologado: (b: string, a: string) => `Point homologated from CVA (${b} to ${a})`,
+  puntoCva: "CVA Point (SCA-104)",
+  puntoSca2004: "SCA 2004 Point (worth the same in CVA)",
   multiplicador: "Multiplier",
   total: "CTCx points",
   triada: { variedad: "Variety", proceso: "Process", reconocimiento: "Recognition" },

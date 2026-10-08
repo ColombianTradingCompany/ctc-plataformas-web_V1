@@ -1,7 +1,7 @@
 import type { CuentaDeVentana } from "@/lib/trato/cuenta";
 import type { FleteDelTrato } from "@/lib/trato/flete";
 import type { FichaFormData } from "./ficha/fichaData";
-import type { PuntoSca } from "@/lib/arena/homologacion";
+import type { PuntoSca } from "@/lib/arena/punto";
 import type { EstadoDeMora } from "@/lib/trato/mesAMes";
 import type { ChequeosSolicitados } from "@/lib/eudrAtributos";
 
@@ -261,7 +261,7 @@ export type Lot = {
   // self-report (ficha_puntaje_estimado / this.score) is never official on
   // its own. See src/lib/evaluations.ts.
   officialScaAverage: number | null;
-  /** V5.92: el Punto que rige con su procedencia (nativo SCA 2004 u homologado desde CVA); opcional para no romper a quien arma un Lot a mano. */
+  /** V5.92: el Punto que rige con su procedencia (V5.189: CVA, el protocolo principal, o un SCA 2004 que vale lo mismo); opcional para no romper a quien arma un Lot a mano. */
   officialPunto?: PuntoSca | null;
   /** V5.165: la rueda de la evaluación que rige — de ella salen las anotaciones de mejora de la Rueda del Sabor. */
   officialRueda?: unknown;

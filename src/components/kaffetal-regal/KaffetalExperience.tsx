@@ -19,7 +19,7 @@ import { filaDeReferencia, resumenDeReferencia, rowToReferencia, type LotReferen
 // into these upload handlers, so the byte-level % shows next to the input.
 type ProgressFn = (fraction: number) => void;
 import { evaluacionQueRige, officialAverages, type EvaluationRow } from "@/lib/evaluations";
-import { puntoDeFila, type PuntoSca } from "@/lib/arena/homologacion";
+import { puntoDeFila, type PuntoSca } from "@/lib/arena/punto";
 import { moraDelMes, resumenDelTrato } from "@/lib/trato/mesAMes";
 import { Landing } from "./Landing";
 import { FranjaAsistida } from "./FranjaAsistida";
@@ -547,7 +547,7 @@ function Experience() {
         lotRowList.map((r) => {
           const rows = evalsByLotId.get(r.id) ?? [];
           const avg = officialAverages(rows);
-          // V5.92: el Punto que rige, con su procedencia (nativo SCA 2004 u homologado desde CVA).
+          // V5.92: el Punto que rige, con su procedencia (V5.189: CVA, o un SCA 2004 que vale lo mismo).
           const rige = evaluacionQueRige(rows);
           const punto = rige ? puntoDeFila(rige as { sca_total: number | string | null; punto?: unknown }) : null;
           // V5.165: las anotaciones de mejora salen de la rueda de la evaluación que rige.

@@ -138,6 +138,11 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 
 ## Pendientes
 
+- **V5.189 · dos ayudas de la Coffee Datasheet Tool dicen la regla de CTCx** (owner, ejecutado desde `consolas`; plan
+  `PLAN_CIRCUITO_DEL_LOTE` §10.6): «SCA 2004 y CVA no son lo mismo» (`INFO.dif`) y «El puntaje afectivo CVA» (`INFO.cva_punt`), en
+  ES · EN · DE, ya no dicen que un 84 del 2004 y uno del CVA «no son comparables»: siguen diciendo que salen de escalas distintas y que
+  una planilla nunca mezcla los métodos, y añaden que **en CTCx valen lo mismo** (el CVA es el principal; la equivalencia conserva el
+  total). La herramienta no calcula la equivalencia: esa vive en `src/lib/arena/equivalencia.ts`. `planillaInfo.ts` regenerado.
 - **V5.167 · el Mapa de Variedades alimenta a la plataforma** (owner, 2026-10-06; ejecutado desde WRAP-COMMIT-PUSH):
   `scripts/build-variedades-datos.mjs` lee los bloques de datos de `public/tools/mapa-variedades/mapa-variedades.html`
   (`GROUPS`, `add`, `ES`, `ES_NOTES`, `ES_PROF`, `pf`, `TYPED`) en un contexto aislado y genera `src/lib/catacion/variedadesDatos.ts`;

@@ -34,7 +34,7 @@ import { FichaCompletaLectura } from "@/components/bcp/FichaCompletaLectura";
 import { TriadaDelLote } from "@/components/bcp/TriadaDelLote";
 import type { FichaFormData } from "@/components/kaffetal-regal/ficha/fichaData";
 import type { ReporteAdjunto } from "@/lib/evaluaciones/reporteReglas";
-import { decidirPorPunto, rotuloDelPunto, type PuntoSca } from "@/lib/arena/homologacion";
+import { decidirPorPunto, rotuloDelPunto, type PuntoSca } from "@/lib/arena/punto";
 import { EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, computeSca, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import { GRADOS, gradoDelLote, redondeaPuntaje } from "@/lib/grados/definicion";
 import { AJUSTE_CTCX_JUSTIFICACION_MIN, AJUSTE_CTCX_MAX, ajusteCtcxValido } from "@/lib/pvc/escala";
@@ -530,9 +530,8 @@ export type B1DelLote = {
 };
 
 /** V5.163: lo que bloquea un veredicto, en palabras. null si nada lo bloquea. */
-function bloqueoDelVeredicto(o: { resultado: "aprobado" | "rechazado"; resumen: string; hayGrado: boolean; recata: boolean; faltaArgumento?: boolean; sinQGrader?: boolean; sinPunto?: boolean }): string | null {
+function bloqueoDelVeredicto(o: { resultado: "aprobado" | "rechazado"; resumen: string; hayGrado: boolean; faltaArgumento?: boolean; sinQGrader?: boolean; sinPunto?: boolean }): string | null {
   const falta: string[] = [];
-  if (o.recata) return "El Punto homologado cruza los 80: no se galardona ni se registra «No supera» sin una recata SCA 2004 nativa.";
   if (o.resultado === "aprobado") {
     if (o.sinPunto) falta.push("registrar una planilla con Punto");
     else if (!o.hayGrado) falta.push("que los puntos lleguen a Black — con este Punto y esta tríada no hay galardón: registre «No supera» o use el ajuste CTCx si aplica");
@@ -573,17 +572,16 @@ export function ConfirmarCentroControls({
   // planilla, deshabilitada; la decisión va debajo.
   const [verInforme, setVerInforme] = useState(false);
   const puntaje = alta.puntaje != null ? redondeaPuntaje(alta.puntaje) : null;
-  // V5.92: el grado FIRME sale del Punto (piso; un homologado nunca da Tyrian); si el intervalo cruza los 80, recata.
+  // V5.189: el grado sale del Punto (CVA, o un SCA 2004 que vale lo mismo), sin intervalo ni piso.
   // V5.160 (owner): el grado es El Punto y la Tríada; la tríada sale de la Ficha del lote (como en la acción).
   const triada = triadaDeLaFicha(ficha).triada;
   const ajuste = ajusteCtcxValido(ajusteTxt);
   const faltaArgumento = ajuste > 0 && justificacion.trim().length < AJUSTE_CTCX_JUSTIFICACION_MIN;
   const decision = alta.punto ? decidirPorPunto(alta.punto, triada, ajuste) : null;
-  const sinAjuste = alta.punto ? gradoDelLote(alta.punto.bajo, triada).puntaje : null;
+  const sinAjuste = alta.punto ? gradoDelLote(alta.punto.valor, triada).puntaje : null;
   const siguiente = sinAjuste?.banda ? GRADOS[GRADOS.findIndex((g) => g.id === sinAjuste.banda!.id) + 1] ?? null : GRADOS[0];
   const faltan = sinAjuste && siguiente ? siguiente.puntosMin - sinAjuste.puntos : null;
   const grado = decision?.tipo === "galardon" ? decision.grado : null;
-  const pendienteRecata = decision?.tipo === "pendiente_recata";
   return (
     <div style={{ marginTop: 6 }}>
       <button className="btn btn-sm btn-solid" onClick={() => setOpen(true)}>
@@ -659,7 +657,7 @@ export function ConfirmarCentroControls({
               <p className={styles.meta} style={{ margin: "0 0 8px" }}>
                 La misma taza vale distinto según la variedad, el proceso y los reconocimientos: un café común (CCC) necesita más puntaje para la misma banda que uno con surplus.
               </p>
-              <TriadaDelLote ficha={ficha} sca={alta.punto?.bajo ?? null} ajuste={ajuste} />
+              <TriadaDelLote ficha={ficha} sca={alta.punto?.valor ?? null} ajuste={ajuste} />
             </div>
             {/* V5.162 (owner): «CTCx puede agregar hasta 100 puntos al puntaje final que moverían el grado hacia arriba; de agregarse,
                 se obliga a insertar un argumento que justifique el incremento» — sobre todo para un lote a poco del siguiente grado
@@ -687,10 +685,8 @@ export function ConfirmarCentroControls({
             <p className={styles.meta} style={{ margin: "8px 0 6px" }}>
               {puntaje == null
                 ? "El alta no trae puntaje — devuélvala al Centro."
-                : pendienteRecata
-                  ? <>El Punto homologado cruza los 80 ({alta.punto?.bajo}–{alta.punto?.alto}): ni galardón ni «No supera» — acuerde una recata SCA 2004 nativa.</>
-                  : grado
-                    ? <>Punto <b>{puntaje}</b> × tríada <span className="mono">{`${triada.variedad}${triada.proceso}${triada.reconocimiento}`}</span>{ajuste > 0 && <> + {ajuste} ajuste CTCx</>} → Grado firme <b style={{ color: grado.hex }}>{grado.nombre}</b> (derivado — los puntos mandan{decision?.tipo === "galardon" && decision.techo ? <>; hasta {decision.techo.nombre} con recata SCA</> : null}).</>
+                : grado
+                    ? <>Punto <b>{puntaje}</b> × tríada <span className="mono">{`${triada.variedad}${triada.proceso}${triada.reconocimiento}`}</span>{ajuste > 0 && <> + {ajuste} ajuste CTCx</>} → Grado <b style={{ color: grado.hex }}>{grado.nombre}</b> (derivado — los puntos mandan).</>
                     : <>Punto <b>{puntaje}</b> con tríada <span className="mono">{`${triada.variedad}${triada.proceso}${triada.reconocimiento}`}</span>: los puntos no llegan a Black (un café común entra desde 82) — registre «No supera».</>}
             </p>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
@@ -711,7 +707,7 @@ export function ConfirmarCentroControls({
                 className="btn btn-sm btn-solid"
                 disabled={pending}
                 onClick={() => {
-                  const bloqueo = bloqueoDelVeredicto({ resultado: "aprobado", resumen: notes, hayGrado: !!grado, recata: pendienteRecata, faltaArgumento, sinPunto: puntaje == null });
+                  const bloqueo = bloqueoDelVeredicto({ resultado: "aprobado", resumen: notes, hayGrado: !!grado, faltaArgumento, sinPunto: puntaje == null });
                   if (bloqueo) {
                     avisa(bloqueo);
                     return;
@@ -725,7 +721,7 @@ export function ConfirmarCentroControls({
                 className="btn btn-sm"
                 disabled={pending}
                 onClick={() => {
-                  const bloqueo = bloqueoDelVeredicto({ resultado: "rechazado", resumen: notes, hayGrado: !!grado, recata: pendienteRecata });
+                  const bloqueo = bloqueoDelVeredicto({ resultado: "rechazado", resumen: notes, hayGrado: !!grado });
                   if (bloqueo) {
                     avisa(bloqueo);
                     return;
@@ -953,7 +949,7 @@ export function SondeoRegistroControls({
                       className="btn btn-sm btn-solid"
                       disabled={pending || uploading}
                       onClick={() => {
-                        const bloqueo = bloqueoDelVeredicto({ resultado: "aprobado", resumen: notes, hayGrado: !!grado, recata: false, sinQGrader, sinPunto: puntaje == null });
+                        const bloqueo = bloqueoDelVeredicto({ resultado: "aprobado", resumen: notes, hayGrado: !!grado, sinQGrader, sinPunto: puntaje == null });
                         if (bloqueo) return avisa(bloqueo);
                         verdict("aprobado");
                       }}
@@ -964,7 +960,7 @@ export function SondeoRegistroControls({
                       className="btn btn-sm"
                       disabled={pending || uploading}
                       onClick={() => {
-                        const bloqueo = bloqueoDelVeredicto({ resultado: "rechazado", resumen: notes, hayGrado: !!grado, recata: false });
+                        const bloqueo = bloqueoDelVeredicto({ resultado: "rechazado", resumen: notes, hayGrado: !!grado });
                         if (bloqueo) return avisa(bloqueo);
                         verdict("rechazado");
                       }}

@@ -572,7 +572,7 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
               <div>
                 <div className={s.k}>{t.punto}</div>
                 <div className={s.ecuacionNum}>{num(g.punto.valor)}</div>
-                <div className={s.nota}>{g.punto.origen === "nativo" ? t.puntoNativo : t.puntoHomologado(num(g.punto.bajo) ?? "", num(g.punto.alto) ?? "")}</div>
+                <div className={s.nota}>{g.punto.protocoloFuente === "cva" ? t.puntoCva : t.puntoSca2004}</div>
               </div>
               <div className={s.ecuacionOp}>×</div>
               <div>

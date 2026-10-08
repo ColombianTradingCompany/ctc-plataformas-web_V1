@@ -92,7 +92,7 @@ export function ApreciacionForm({ sessionId, lotId, lotName }: { sessionId: stri
   const [open, setOpen] = useState(false);
   const [ev, setEv] = useState<LabEvaluation>(EMPTY_LAB_EVALUATION);
   const punto = puntoDeLaPlanilla(ev);
-  const puntaje = punto?.bajo ?? null;
+  const puntaje = punto?.valor ?? null;
   // V5.160: el grado es El Punto y la Tríada; la tríada vive en la Ficha del lote, que este pop-up no carga. Se enseña el
   // Punto; el grado lo calcula la acción al elegir la evaluación que rige.
 

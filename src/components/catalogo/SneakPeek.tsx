@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
 import { GRADO_POR_ID } from "@/lib/grados/definicion";
 import { origenDeSuperficie } from "@/lib/red/subdominios";
-import { RUTA_PORTAL } from "@/lib/catalogo/codigoPublico";
+import { PREFIJO_REFERENCIA, RUTA_PORTAL, cuerpoDeReferencia, normalizaReferencia } from "@/lib/catalogo/codigoPublico";
 import type { SneakPeekLang, SneakPeekLot, SneakPeekPayload } from "@/lib/catalogo/sneakPeek";
 import { CatalogoPopup } from "./CatalogoPopup";
 import { descriptorLabel, familiaDe } from "@/lib/catacion/rueda";
@@ -65,8 +65,10 @@ const T: Record<
     head: string;
     tail: string;
     cta: string;
-    portal: string;
     portalAria: string;
+    fmlEtiqueta: string;
+    fmlBuscar: string;
+    fmlError: string;
     aria: string;
     dossier: string;
     proximamente: string;
@@ -83,8 +85,10 @@ const T: Record<
     head: "Un vistazo a lo que hay ahora mismo",
     tail: "El catálogo completo se ve dentro de Cherry Picked.",
     cta: "Ver el catálogo completo",
-    portal: "Buscar mi lote por su código",
-    portalAria: "Find my Lot — buscar un lote por su código en el catálogo público de CTCx",
+    portalAria: "Find my Lot: el catálogo público de CTCx, donde cada lote se busca por su referencia",
+    fmlEtiqueta: "Referencia del lote: los ocho caracteres después de CTC-L-",
+    fmlBuscar: "Buscar el lote",
+    fmlError: "Son ocho caracteres (cifras y letras de la A a la F) después de «CTC-L-».",
     aria: "Vistazo al Catálogo Activo de CTC",
     dossier: "Ver el Dossier del lote",
     proximamente: "Próximamente",
@@ -100,8 +104,10 @@ const T: Record<
     head: "A sneak peek at what is on the table",
     tail: "The full catalogue lives inside Cherry Picked.",
     cta: "See the full catalogue",
-    portal: "Find my lot by its code",
-    portalAria: "Find my Lot — look up a lot by its code in the CTCx public catalogue",
+    portalAria: "Find my Lot: the CTCx public catalogue, where each lot is found by its reference",
+    fmlEtiqueta: "Lot reference: the eight characters after CTC-L-",
+    fmlBuscar: "Find the lot",
+    fmlError: "It is eight characters (digits and letters A to F) after «CTC-L-».",
     aria: "A peek at the CTC Active Catalogue",
     dossier: "See the lot dossier",
     proximamente: "Coming soon",
@@ -117,8 +123,10 @@ const T: Record<
     head: "Ein Blick auf das, was gerade da ist",
     tail: "Der vollständige Katalog liegt in Cherry Picked.",
     cta: "Den ganzen Katalog ansehen",
-    portal: "Mein Los per Code finden",
-    portalAria: "Find my Lot — ein Los per Code im öffentlichen CTCx-Katalog suchen",
+    portalAria: "Find my Lot: der öffentliche CTCx-Katalog, in dem jedes Los über seine Referenz gefunden wird",
+    fmlEtiqueta: "Losreferenz: die acht Zeichen nach CTC-L-",
+    fmlBuscar: "Los suchen",
+    fmlError: "Es sind acht Zeichen (Ziffern und Buchstaben A bis F) nach «CTC-L-».",
     aria: "Ein Blick in den aktiven Katalog von CTC",
     dossier: "Los-Dossier ansehen",
     proximamente: "Demnächst",
@@ -304,6 +312,72 @@ function Tarjeta({
   );
 }
 
+/**
+ * «Find my Lot» en el pie de la cinta (V5.199, owner 2026-10-10: «En la página de CTCx, KR y CP debe haber mención de "Find my
+ * Lot" para ir a esta herramienta, con la cual debo escribir solo los 8 dígitos después de "CTC-L-"»). El acceso al portal y,
+ * al lado, el campo con el prefijo FIJO: quien busca escribe los ocho caracteres y llega al Dossier público del lote. La navegación
+ * es ABSOLUTA contra la casa matriz (`PORTAL_HREF`): el portal solo responde en `www` y esta cinta vive en siete hosts.
+ */
+function FindMyLot({ lang }: { lang: SneakPeekLang }) {
+  const t = T[lang];
+  const [valor, setValor] = useState("");
+  const [malo, setMalo] = useState(false);
+  const idError = useId();
+  return (
+    <form
+      className={styles.fml}
+      noValidate
+      onSubmit={(e) => {
+        e.preventDefault();
+        const referencia = normalizaReferencia(valor);
+        if (!referencia) {
+          setMalo(true);
+          return;
+        }
+        // Navegación COMPLETA y no `router.push`: en producción el portal está en otro host (`www`) que el de esta superficie. La
+        // dirección se resuelve ABSOLUTA (en desarrollo `PORTAL_HREF` es relativa): así no es una página «interna» de este host.
+        const destino = new URL(`${PORTAL_HREF}/${referencia}${lang === "es" ? "" : "?lang=en"}`, window.location.href);
+        window.location.assign(destino.href);
+      }}
+    >
+      {/* «Find my Lot» es el NOMBRE de la función y no se traduce (como «Cherry Picked»): ver `CatalogoPublicoLanding.tsx`. */}
+      <a className={styles.portal} href={PORTAL_HREF} aria-label={t.portalAria}>
+        <span aria-hidden>⌕</span> Find my Lot
+      </a>
+      <span className={styles.fmlCampo} data-invalido={malo || undefined}>
+        <span className={styles.fmlPrefijo} aria-hidden>
+          {PREFIJO_REFERENCIA}
+        </span>
+        <input
+          className={styles.fmlEntrada}
+          type="text"
+          inputMode="text"
+          autoComplete="off"
+          autoCapitalize="characters"
+          spellCheck={false}
+          placeholder="XXXXXXXX"
+          aria-label={t.fmlEtiqueta}
+          aria-invalid={malo}
+          aria-describedby={malo ? idError : undefined}
+          value={valor}
+          onChange={(e) => {
+            setValor(cuerpoDeReferencia(e.target.value));
+            if (malo) setMalo(false);
+          }}
+        />
+        <button type="submit" className={styles.fmlBoton} aria-label={t.fmlBuscar}>
+          <span aria-hidden>→</span>
+        </button>
+      </span>
+      {malo && (
+        <span id={idError} className={styles.fmlError} role="alert">
+          {t.fmlError}
+        </span>
+      )}
+    </form>
+  );
+}
+
 export function SneakPeek({
   lang,
   variant = "home",
@@ -456,10 +530,19 @@ export function SneakPeek({
     return () => window.removeEventListener("keydown", alPulsar);
   }, [volteada]);
 
-  if (failed) return null;
-  // Cargado y vacío: mejor no dibujar una cinta hueca que ocupa sitio y no dice
-  // nada. Pasa el día que no haya lotes vivos y se hayan retirado los mock.
-  if (data && data.lots.length === 0) return null;
+  // Sin cinta —la petición falló, o todavía no hay lotes en el Triage— no se dibuja una cinta hueca que ocupa sitio y no dice
+  // nada; pero «Find my Lot» se queda (V5.199): la mención del portal tiene que estar en CTC, KR y CP aunque no haya tarjetas.
+  if (failed || (data && data.lots.length === 0)) {
+    return (
+      <section id={id} className={variant === "cp" ? `${styles.wrapSection} ${styles.soloFml} ${styles.cp}` : `${styles.wrapSection} ${styles.soloFml}`} aria-label={t.aria}>
+        <div className="wrap">
+          <div className={styles.pie}>
+            <FindMyLot lang={lang} />
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   const tira = (duplicada: boolean) =>
     data && (
@@ -546,11 +629,9 @@ export function SneakPeek({
           >
             {t.cta} <span aria-hidden>→</span>
           </a>
-          {/* Éste NO abre ventana: es una navegación de verdad, y a un sitio que
-              no pide nada. Absoluto a la casa matriz — ver `PORTAL_HREF`. */}
-          <a className={styles.portal} href={PORTAL_HREF} aria-label={t.portalAria}>
-            <span aria-hidden>⌕</span> {t.portal}
-          </a>
+          {/* Éste NO abre ventana: es una navegación de verdad, y a un sitio que no pide nada. Absoluto a la casa matriz — ver
+              `PORTAL_HREF`. V5.199: con el campo de la referencia al lado (`FindMyLot`). */}
+          <FindMyLot lang={lang} />
         </div>
       </div>
       <CatalogoPopup

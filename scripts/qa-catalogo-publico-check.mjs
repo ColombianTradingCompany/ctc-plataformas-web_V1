@@ -32,6 +32,7 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import {
   ALFABETO,
   LARGO_CUERPO,
+  cuerpoDeReferencia,
   normalizaCodigo,
   normalizaReferencia,
   esCanonico,
@@ -161,6 +162,8 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
   }
   check("rechaza lo que no sea texto", normalizaReferencia(undefined) === null && normalizaReferencia(12345678) === null);
   check("la ruta del lote la arma el módulo", rutaDelLote(ref) === `${RUTA}/${ref}`);
+  // V5.199: el campo deja solo los ocho (el prefijo va fijo delante): pegar la referencia entera, o con guiones, se queda en el cuerpo.
+  check("el campo se queda con los ocho caracteres aunque peguen la referencia entera", cuerpoDeReferencia("ctc-l-7e360302") === "7E360302" && cuerpoDeReferencia("CTCL 7E36-0302") === "7E360302" && cuerpoDeReferencia("7e360302ff") === "7E360302" && cuerpoDeReferencia("7e36") === "7E36");
   const ficha = lee("src/components/kaffetal-regal/data.ts");
   check("es la MISMA referencia que el lote lleva en el paquete de muestra y el Dossier (`ctcLotReference`)", /return "CTC-L-" \+ id\.replace\(\/-\/g, ""\)\.slice\(0, 8\)\.toUpperCase\(\);/.test(ficha));
 }
@@ -277,6 +280,7 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
   for (const archivo of [
     "src/components/catalogo/CatalogoPublicoLanding.tsx",
     "src/components/catalogo/BuscadorDeLote.tsx",
+    "src/components/catalogo/LoteNoEncontrado.tsx",
     "src/components/catalogo/PuertasDelPortal.tsx",
     "src/components/catalogo/ProcedenciaCTCx.tsx",
     // La cinta del Catálogo Activo entra aquí desde la V5.49, cuando estrenó la
@@ -385,6 +389,12 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
 {
   const cinta = lee("src/components/catalogo/SneakPeek.tsx");
   check("la cinta enlaza el portal", cinta.includes("PORTAL_HREF"));
+  // V5.199 (owner): «En la página de CTCx, KR y CP debe haber mención de "Find my Lot" […] con la cual debo escribir solo los 8
+  // dígitos después de "CTC-L-"». La cinta está en las tres familias: su pie lleva el campo, y sin tarjetas se queda solo él.
+  check("«Find my Lot» en el pie de la cinta: el prefijo fijo, los ocho caracteres y la navegación ABSOLUTA al Dossier público", cinta.includes("function FindMyLot({ lang }: { lang: SneakPeekLang })") && cinta.includes("{PREFIJO_REFERENCIA}") && cinta.includes("setValor(cuerpoDeReferencia(e.target.value));") && cinta.includes("const referencia = normalizaReferencia(valor);") && cinta.includes("const destino = new URL(`${PORTAL_HREF}/${referencia}${lang === \"es\" ? \"\" : \"?lang=en\"}`, window.location.href);") && cinta.includes("window.location.assign(destino.href);") && (cinta.match(/<FindMyLot lang=\{lang\} \/>/g) ?? []).length === 2);
+  for (const [n, f] of [["CTC Home", "src/components/ctc-home/SneakPeekHome.tsx"], ["Kaffetal Regal", "src/components/kaffetal-regal/Landing.tsx"], ["Cherry Picked (tienda)", "src/components/cherry-picked/CherryPickedExperience.tsx"], ["Cherry Picked (hub)", "src/components/cherry-picked-hub/HubLanding.tsx"]]) {
+    check(`${n} monta la cinta (y con ella «Find my Lot»)`, lee(f).includes("<SneakPeek"));
+  }
   check(
     "y lo hace ABSOLUTO contra la casa matriz en producción",
     /origenDeSuperficie\(RUTA_PORTAL\)\}\$\{RUTA_PORTAL\}/.test(cinta)
@@ -393,6 +403,19 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
   check("es una navegación de verdad, no el pop-up del catálogo", /href=\{PORTAL_HREF\}/.test(cinta));
   const css = lee("src/components/catalogo/SneakPeek.module.css");
   check("el botón respeta el mínimo táctil de 44 px", /\.portal\{[^}]*min-height:44px/s.test(css));
+}
+
+// ── 12. «Find my Lot» por la referencia (V5.199) ──────────────────────────
+{
+  const buscador = lee("src/components/catalogo/BuscadorDeLote.tsx");
+  check("el buscador del portal lleva «CTC-L-» fijo y pide solo los ocho caracteres", buscador.includes("{PREFIJO_REFERENCIA}") && buscador.includes("setValor(cuerpoDeReferencia(e.target.value));") && buscador.includes("const referencia = normalizaReferencia(valor);") && buscador.includes("router.push(`${rutaDelLote(referencia)}"));
+  check("y ya no pide el código viejo `CTCX-…`", !/normalizaCodigo|rutaDelCodigo|CTCX-XXXX/.test(buscador));
+  const landing = lee("src/components/catalogo/CatalogoPublicoLanding.tsx");
+  check("la landing dice que aparecen los lotes del Catálogo Activo, no solo los publicados (los tres idiomas)", !landing.includes("Solo aparecen los lotes publicados") && !landing.includes("Only published lots appear") && !landing.includes("Es erscheinen nur veröffentlichte Lose") && landing.includes("llegaron al Catálogo Activo") && landing.includes("reached the Active Catalogue") && landing.includes("den aktiven Katalog erreicht haben"));
+  check("y su descripción para buscadores también", !lee("src/app/ctcx-public-catalogue/page.tsx").includes("Solo lotes publicados."));
+  const noEncontrado = lee("src/app/ctcx-public-catalogue/[codigo]/not-found.tsx");
+  const vista = lee("src/components/catalogo/LoteNoEncontrado.tsx");
+  check("una referencia que no lleva a un lote pinta «no encontramos ese lote», con el buscador y las puertas del portal (y responde 404)", noEncontrado.includes("<LoteNoEncontrado />") && vista.includes("<BuscadorDeLote />") && vista.includes("<PuertasDelPortal />") && vista.includes('titulo: "No encontramos ese lote"'));
 }
 
 if (fallos.length) {

@@ -19,6 +19,19 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.199] — 2026-10-10 (commit pendiente)
+
+- **Añadido**: **«Find my Lot» en las páginas de CTC, Kaffetal Regal y Cherry Picked** (owner, 2026-10-10): el pie del bloque del
+  Catálogo Activo lleva el acceso al portal y, al lado, el campo con **«CTC-L-» fijo** donde se escriben solo los ocho caracteres;
+  la flecha lleva al Dossier público del lote. Si todavía no hay tarjetas que enseñar, el bloque se queda solo con «Find my Lot».
+- **Cambiado**: el buscador del **CTCx Public Catalogue** pide la referencia del lote con el prefijo fijo (pegar la referencia
+  entera, con minúsculas o guiones, también vale) y **encuentra los lotes que llegaron al Triage**, estén o no declarados todavía; la
+  portada del portal lo dice así en los tres idiomas.
+- **Añadido**: una referencia que no lleva a un lote pinta **«No encontramos ese lote»** con el buscador y las puertas del portal (la
+  página genérica del framework, en inglés y sin salida, ya no se ve); sigue respondiendo 404.
+- **Seguridad**: `qa-catalogo-publico` (147: el campo que se queda con los ocho caracteres, «Find my Lot» en el pie de la cinta en
+  las tres familias, el buscador sin el código viejo, la portada y la página de «no encontrado») y `qa-sneak-peek` (116) al día.
+
 ## [V5.198] — 2026-10-10 (commit 00b518d)
 
 - **Cambiado**: el **bloque del Catálogo Activo** de CTC, Kaffetal Regal y la familia Cherry Picked enseña los **lotes reales** que

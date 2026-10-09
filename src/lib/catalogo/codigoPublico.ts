@@ -97,9 +97,12 @@ export function normalizaCodigo(entrada: string): string | null {
   return `${PREFIJO}-${cuerpo.slice(0, 4)}-${cuerpo.slice(4)}`;
 }
 
-/** `true` si la cadena YA está en la forma canónica exacta. Lo usa la ruta para
+/** `true` si la cadena YA está en la forma canónica exacta. Lo usaba la ruta para
  *  decidir si redirige: comparar contra `normalizaCodigo()` y no contra una
- *  expresión regular aparte evita que las dos reglas se separen. */
+ *  expresión regular aparte evita que las dos reglas se separen.
+ *  V5.199: desde que la dirección pública es la REFERENCIA (abajo) ninguna pantalla
+ *  la llama; se conserva —con `rutaDelCodigo`— porque `qa-catalogo-publico` fija con
+ *  ellas el contrato CONGELADO de las direcciones viejas `CTCX-…` (nota 2). */
 export function esCanonico(entrada: string): boolean {
   return normalizaCodigo(entrada) === entrada;
 }
@@ -116,7 +119,7 @@ export function esCanonico(entrada: string): boolean {
  *  comprueba que digan lo mismo. */
 export const RUTA_PORTAL = "/ctcx-public-catalogue";
 
-/** La URL pública de un lote, relativa. Se absolutiza igual que `RUTA_PORTAL`. */
+/** La URL VIEJA de un lote por su código `CTCX-…` (la ruta la redirige a la referencia desde la V5.198). Ver `esCanonico`. */
 export function rutaDelCodigo(codigo: string): string {
   return `${RUTA_PORTAL}/${codigo}`;
 }
@@ -147,6 +150,16 @@ export function normalizaReferencia(entrada: string): string | null {
   if (limpio.length !== LARGO_CUERPO) return null;
   const cuerpo = [...limpio].map((c) => AMBIGUOS_HEX[c] ?? c).join("");
   return /^[0-9A-F]{8}$/.test(cuerpo) ? `${PREFIJO_REFERENCIA}${cuerpo}` : null;
+}
+
+/** V5.199: lo que queda en el campo de «Find my Lot» mientras se escribe: en mayúsculas, sin el prefijo si lo pegaron entero,
+ *  sin guiones ni espacios y nunca más de ocho caracteres (el prefijo va FIJO delante del campo). */
+export function cuerpoDeReferencia(entrada: string): string {
+  return entrada
+    .toUpperCase()
+    .replace(/^\s*CTC[\s-]*L[\s-]*/, "")
+    .replace(/[^0-9A-Z]/g, "")
+    .slice(0, LARGO_CUERPO);
 }
 
 /** La URL pública de un lote por su referencia (el Dossier público), relativa. Se absolutiza igual que `RUTA_PORTAL`. */

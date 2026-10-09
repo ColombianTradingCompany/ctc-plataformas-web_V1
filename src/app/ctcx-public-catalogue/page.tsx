@@ -27,7 +27,7 @@ export const generateMetadata = superficieConOverrides({
   route: "/ctcx-public-catalogue",
   title: "CTCx Public Catalogue · Find my Lot",
   description:
-    "Escriba el código de su lote y vea el expediente público que CTCx tiene de él: finca y origen, variedad, proceso, altura, notas de cata y el análisis SCA. Solo lotes publicados.",
+    "Escriba la referencia de su lote (los ocho caracteres después de CTC-L-) y vea su Dossier público: finca y región, variedad, proceso, altura, la taza en CVA y el grado CTCx. Los lotes que llegaron al Catálogo Activo.",
   siteName: "Colombian Trading Company",
   image: "ctcx-public-catalogue.jpg",
   imageAlt:

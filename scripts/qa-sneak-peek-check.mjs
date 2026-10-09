@@ -85,8 +85,8 @@ check("la foto pasa por la compuerta (la vista) y sale recortada en WebP, nunca 
 check("la tarjeta pide la foto a esa ruta (cuelga de /api, que el proxy excluye)", LIB.includes("fila.tiene_foto ? `/api/catalogo/foto/${fila.referencia}` : undefined"));
 
 // ── 4. El componente no se cae solo y respeta el movimiento reducido ─────────
-check("si la petición falla, la cinta no se dibuja", COMPONENTE.includes("if (failed) return null"));
-check("una cinta vacía tampoco se dibuja", COMPONENTE.includes("data.lots.length === 0") && COMPONENTE.includes("return null"));
+// V5.199: sin cinta (falló la petición o aún no hay lotes en el Triage) no se dibuja una cinta hueca, pero «Find my Lot» se queda.
+check("si la petición falla o no hay lotes, no se dibuja la cinta: solo «Find my Lot»", COMPONENTE.includes("if (failed || (data && data.lots.length === 0)) {") && /if \(failed \|\| \(data && data\.lots\.length === 0\)\) \{\s*return \(\s*<section[\s\S]{0,400}<FindMyLot lang=\{lang\} \/>/.test(COMPONENTE));
 check("respeta prefers-reduced-motion", CSS.includes("prefers-reduced-motion"));
 check("la cinta no vuelve a depender de una animación CSS", !CSS.includes("@keyframes sp-slide"));
 check("la mueve un bucle de rAF sobre translate3d", COMPONENTE.includes("requestAnimationFrame") && COMPONENTE.includes("translate3d"));

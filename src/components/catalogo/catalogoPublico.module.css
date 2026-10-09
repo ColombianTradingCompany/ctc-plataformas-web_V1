@@ -146,6 +146,47 @@
   padding: 0 26px;
 }
 
+/* V5.199 · el prefijo «CTC-L-» va FIJO dentro del campo: quien busca escribe solo los ocho caracteres. El borde y el foco pasan
+   del campo a su envoltorio, para que prefijo y caracteres se lean como una sola referencia. */
+.entradaConPrefijo {
+  flex: 1 1 250px;
+  min-width: 0;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  background: var(--card, #fff);
+  border: 1px solid var(--line, #dde1e7);
+  border-radius: var(--radius, 14px);
+  box-shadow: 0 1px 2px rgba(14, 44, 72, 0.05);
+}
+.entradaConPrefijo:focus-within {
+  outline: 2px solid var(--primary, #16436b);
+  outline-offset: 1px;
+}
+.entradaConPrefijo[data-invalido] {
+  border-color: var(--red, #c4402f);
+}
+.prefijo {
+  padding: 0 0 0 16px;
+  font-family: var(--font-spline-mono), monospace;
+  font-size: 17px;
+  letter-spacing: 0.1em;
+  color: var(--muted, #5a6472);
+  user-select: none;
+}
+.entradaConPrefijo .entrada {
+  flex: 1 1 auto;
+  height: 100%;
+  padding: 0 16px 0 1px;
+  border: 0;
+  border-radius: 0 var(--radius, 14px) var(--radius, 14px) 0;
+  box-shadow: none;
+  background: transparent;
+}
+.entradaConPrefijo .entrada:focus-visible {
+  outline: none;
+}
+
 .ayuda {
   margin: 12px 0 0;
   font-size: 13.5px;

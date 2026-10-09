@@ -235,6 +235,27 @@
 .portal:hover{background:var(--primary);border-color:var(--primary);color:#fff}
 .portal:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 
+/* V5.199 · «Find my Lot»: el acceso al portal y, al lado, el campo con «CTC-L-» fijo y la flecha que busca. Mismo alto táctil
+   (44 px) que el botón del portal, para que se lean como una sola pieza. */
+.fml{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.fmlCampo{display:inline-flex;align-items:center;height:44px;padding:0 4px 0 15px;border:1px solid var(--line);border-radius:999px;background:var(--card)}
+.fmlCampo:focus-within{outline:2px solid var(--primary);outline-offset:2px}
+.fmlCampo[data-invalido]{border-color:var(--red,#c4402f)}
+.fmlPrefijo{font-family:var(--font-spline-mono),monospace;font-size:13px;letter-spacing:.08em;color:var(--muted);user-select:none}
+.fmlEntrada{width:11ch;height:100%;padding:0 6px 0 1px;border:0;background:transparent;font-family:var(--font-spline-mono),monospace;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+.fmlEntrada:focus-visible{outline:none}
+.fmlEntrada::placeholder{color:var(--muted);opacity:.5;letter-spacing:.08em}
+.fmlBoton{display:grid;place-items:center;width:36px;height:36px;padding:0;border:0;border-radius:50%;background:var(--primary);color:#fff;font-size:16px;cursor:pointer}
+.fmlBoton:hover{filter:brightness(1.12)}
+.fmlBoton:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.fmlError{flex-basis:100%;font-size:12px;line-height:1.45;color:var(--red,#c4402f)}
+/* En pantalla ancha el bloque va a la derecha del pie y el aviso se alinea con él (el campo no salta al aparecer); en el móvil,
+   apilado, va a la izquierda como el resto del pie. */
+@media(min-width:720px){.fml{justify-content:flex-end}.fmlError{text-align:right}}
+/* Sin tarjetas, la sección es solo «Find my Lot»: sin el aire que se reservaba para el pop de la tarjeta abierta. */
+.soloFml{padding:clamp(22px,3vw,30px) 0}
+.soloFml .pie{margin-top:0}
+
 @media(max-width:640px){
   .card{width:284px;height:494px}
   .loading{height:560px}

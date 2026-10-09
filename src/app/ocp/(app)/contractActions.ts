@@ -8,6 +8,8 @@ import { emitOffer } from "./ofertasActions";
 import { mesesDelTrato, renovacionDebida } from "@/lib/trato/mesAMes";
 import { RENOVACION_DIAS } from "@/lib/trato/terminos";
 import { esCompraEnFirme } from "@/lib/compras/reglas";
+import { STOCK_PATH } from "@/lib/stock/linaje";
+import { crearRaizDeStock } from "@/lib/stock/servidor";
 import { formatCop } from "@/lib/arena/inscriptions";
 import { sendTransactionalEmail } from "@/lib/email/leadEmails";
 import { origenDeSuperficie } from "@/lib/red/subdominios";
@@ -226,7 +228,14 @@ export async function registrarPagoDelMes(contractId: string, mes: number, formD
     const { data: guardada } = previa
       ? await service.from("compras").update(compra).eq("id", previa.id).select("id").single()
       : await service.from("compras").insert(compra).select("id").single();
-    if (guardada) await service.from("audit_log").insert({ entity_type: "compra", entity_id: guardada.id, action: "compra_registrada", performed_by: adminId, notes: `${lot.name} · mes ${mes} · ${kgComprados} kg · contrato` });
+    if (guardada) {
+      await service.from("audit_log").insert({ entity_type: "compra", entity_id: guardada.id, action: "compra_registrada", performed_by: adminId, notes: `${lot.name} · mes ${mes} · ${kgComprados} kg · contrato` });
+      // V5.195: lo pagado (y ya enviado) entra al Stock CTCx en pergamino; si el pago se vuelve a registrar, la raíz se corrige
+      // mientras no se haya movido (`stock_raiz` es idempotente por compra).
+      const raiz = await crearRaizDeStock(service, { lotId: contract.lot_id, estado: "pergamino", kg: kgComprados, costoCopKg: compra.cop_kg, origen: "compra", compraId: guardada.id, nota: `mes ${mes} · lote ${lot.name}`, por: adminId });
+      if (raiz.ok) await service.from("audit_log").insert({ entity_type: "stock_partida", entity_id: raiz.id, action: "stock_raiz_compra", performed_by: adminId, notes: `${raiz.codigo ?? ""} · mes ${mes} · ${kgComprados} kg de pergamino` });
+      revalidatePath(STOCK_PATH);
+    }
     revalidatePath("/ocp/compras");
     revalidatePath("/ocp/ctc-selection");
   }

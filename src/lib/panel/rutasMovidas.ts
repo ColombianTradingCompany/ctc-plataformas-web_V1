@@ -176,6 +176,12 @@ export const RUTAS_MOVIDAS: RutaMovida[] = [
   // El owner: «no es necesario tener este UI de esta manera, lo puedo ver en Productores, Fincas y Lotes». El set de
   // fichas de cada lote se trabaja en la vista completa (`?lote=`) desde la V5.78; el índice sobraba.
   { de: "/ocp/fichas", a: "/ocp/kr", desde: "V5.97" },
+
+  // ── V5.195 (2026-10-09) · el Stock CTCx absorbe el Stock de Sample Kits ───────────────────────
+  // El owner: «el Stock CTCx (que absorberá Stock de Sample kits) = el café que físicamente llega a CTCx». Los kits se arman con
+  // partidas del stock y viven como su segunda pestaña (`docs/PLAN_TRIAGE_CATALOGO.md` §2.1). Las sub-rutas (`/<id>` de un kit)
+  // viajan pegadas al destino.
+  { de: "/ocp/sample-kits", a: "/ocp/stock/sample-kits", desde: "V5.195" },
 ];
 
 /**

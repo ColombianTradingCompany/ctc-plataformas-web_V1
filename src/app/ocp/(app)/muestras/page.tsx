@@ -260,8 +260,8 @@ export default async function GestionDeMuestrasPage({ searchParams }: { searchPa
       {vista === "pedidos" && (
         <div style={{ display: "grid", gap: 12 }}>
           <p className={styles.meta}>
-            Lo que los compradores pidieron desde la tienda (`sample_pack_orders`). Los Sample Kits se surten desde{" "}
-            <Link href="/ocp/compras">Adquisición de Stock</Link>; aquí solo se documenta con qué muestra de la casa se armó cada pedido y cuándo salió, con su guía.
+            Lo que los compradores pidieron desde la tienda (`sample_pack_orders`). Los Sample Kits se arman con partidas del{" "}
+            <Link href="/ocp/stock/sample-kits">Stock CTCx</Link>; aquí solo se documenta con qué muestra de la casa se armó cada pedido y cuándo salió, con su guía.
           </p>
           {pedidos.length === 0 && <p className={styles.empty}>Ningún pedido.</p>}
           {pedidos.map((p) => {

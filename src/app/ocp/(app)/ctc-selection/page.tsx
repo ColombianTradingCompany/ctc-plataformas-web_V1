@@ -49,7 +49,7 @@ export default async function OfertaDesdeCtcxSelectionPage() {
     service
       .from("compras")
       .select("id, lot_id, contract_id, mes, grado, kg, cop_kg, total_cop, precio_fuente, recibida_at, pagada_at, origen, lots(id, name, producer_id, public_code, fincas(name))")
-      // V5.90: solo lo comprado CON DESTINO CTCx Selection (lo de Sample Kits vive en /ocp/sample-kits).
+      // V5.90: solo lo comprado como CTCx Selection (lo que es solo de stock —un saco, café para kits— vive en el Stock CTCx).
       .eq("destino", "selection")
       .order("pagada_at", { ascending: false, nullsFirst: false }),
     service.from("platform_settings").select("value").eq("key", CLAVE_PERFIL_CTCX).maybeSingle(),

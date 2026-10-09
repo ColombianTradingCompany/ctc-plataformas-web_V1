@@ -14,6 +14,8 @@ import { sumaDias, trimestreDe, ubicar } from "@/lib/trato/calendario";
 import { minimoDeContinuidad, minimoDelGrado } from "@/lib/trato/minimos";
 import { ADELANTO_RENOVACION_KG } from "@/lib/trato/terminos";
 import { despachoDeLoVendido, sincronizarListado } from "@/lib/trato/ventanaServidor";
+import { STOCK_PATH } from "@/lib/stock/linaje";
+import { crearRaizDeStock } from "@/lib/stock/servidor";
 import { emitOffer } from "./ofertasActions";
 
 // ── La operación del trato por VENTANAS en el OCP (V5.176 · docs/PLAN_CICLOS.md §3–§5, tanda 3) ────────────────────────────────
@@ -22,7 +24,8 @@ import { emitOffer } from "./ofertasActions";
 //     siguiente.
 //   · CONFIRMAR EL DESPACHO y pagar el 60 % con el tiquete (guía, peso, foto) — también puede registrarlo CTCx por el productor.
 //   · RECIBIR — peso, humedad y actividad de agua: en rango, el 40 % (sobre lo recibido); fuera de rango, devolución o compra con
-//     0–15 % adicional. El saco y el adelanto quedan en Compras con destino Sample Kits.
+//     0–15 % adicional. El saco y el adelanto quedan en Compras (solo stock, sin la marca Selection) y TODO lo recibido —también
+//     lo vendido, comprometido— entra al Stock CTCx en pergamino (V5.195).
 //   · COBRAR EL FALTANTE — lo vendido que no salió pasada su prórroga: la venta se ANULA (no se borra) y el faltante entra como
 //     retiro penalizado (4 % por carga); la ruptura la declara el owner, como siempre.
 //   · PREPARAR LA RENOVACIÓN — desde la semana 4 del último ciclo de la ventana: la invitación de la ventana siguiente queda
@@ -189,15 +192,28 @@ export async function recibirDespacho(despachoId: string, formData: FormData): P
     .update({ estado: "recibido", peso_kg: peso, humedad_pct: humedad, aw, recibido_at: now, resultado, ajuste_pct: ajuste, pago_recepcion_cop: pagoRecepcion, pago_recepcion_at: resultado === "devolucion" ? null : now, ...(ref ? { pago_ref: ref } : {}), updated_at: now })
     .eq("id", d.id);
   if (error) return { ok: false, error: "No se pudo registrar el recibo: " + error.message };
-  // El saco y el adelanto son de CTCx: quedan en Compras (destino Sample Kits). Lo vendido se vende a nombre del productor.
+  // El saco y el adelanto son de CTCx: quedan en Compras (solo stock: no hacen del lote un CTCx Selection). Lo vendido se vende a
+  // nombre del productor.
+  let compraId: string | null = null;
   if (d.tipo !== "vendido" && resultado !== "devolucion" && c.grade_snapshot && c.grade_snapshot !== "tyrian") {
     const { data: compra } = await service
       .from("compras")
-      .insert({ lot_id: c.lot_id, contract_id: c.id, grado: c.grade_snapshot, kg: kgRecibido, cop_kg: Number(d.cop_kg), total_cop: pagado60 + pagoRecepcion, pvc_edition_id: c.pvc_edition_id, precio_fuente: `trato por ventana · ${d.tipo}`, acordada_at: c.vigencia_desde, recibida_at: now, pagada_at: now, pago_ref: ref, origen: "contrato", destino: "sample_kits", registrada_por: p.userId, nota: resultado === "compra_ajustada" ? `fuera de rango: ${calidad.motivo} · ajuste ${ajuste} %` : null })
+      .insert({ lot_id: c.lot_id, contract_id: c.id, grado: c.grade_snapshot, kg: kgRecibido, cop_kg: Number(d.cop_kg), total_cop: pagado60 + pagoRecepcion, pvc_edition_id: c.pvc_edition_id, precio_fuente: `trato por ventana · ${d.tipo}`, acordada_at: c.vigencia_desde, recibida_at: now, pagada_at: now, pago_ref: ref, origen: "contrato", destino: "stock", registrada_por: p.userId, nota: resultado === "compra_ajustada" ? `fuera de rango: ${calidad.motivo} · ajuste ${ajuste} %` : null })
       .select("id")
       .single();
-    if (compra) await service.from("audit_log").insert({ entity_type: "compra", entity_id: compra.id, action: "compra_registrada", performed_by: p.userId, notes: `${lot.name} · ${d.tipo} · ${kgRecibido} kg · Sample Kits` });
+    if (compra) {
+      compraId = compra.id;
+      await service.from("audit_log").insert({ entity_type: "compra", entity_id: compra.id, action: "compra_registrada", performed_by: p.userId, notes: `${lot.name} · ${d.tipo} · ${kgRecibido} kg · Stock CTCx` });
+    }
     revalidatePath("/ocp/compras");
+  }
+  // V5.195: lo recibido entra al Stock CTCx en pergamino, a lo que se pagó por kg. Lo vendido entra COMPROMETIDO (está en la bodega
+  // pero ya tiene comprador: no surte kits ni se declara al catálogo). Una devolución no entra.
+  if (resultado !== "devolucion") {
+    const pagado = pagado60 + pagoRecepcion;
+    const raiz = await crearRaizDeStock(service, { lotId: c.lot_id, estado: "pergamino", kg: kgRecibido, costoCopKg: pagado > 0 && kgRecibido > 0 ? pagado / kgRecibido : Number(d.cop_kg), origen: "despacho", despachoId: d.id, compraId, comprometido: d.tipo === "vendido", nota: `${d.tipo} · lote ${lot.name}`, por: p.userId });
+    if (raiz.ok) await service.from("audit_log").insert({ entity_type: "stock_partida", entity_id: raiz.id, action: "stock_raiz_despacho", performed_by: p.userId, notes: `${raiz.codigo ?? ""} · ${d.tipo} · ${kgRecibido} kg de pergamino${d.tipo === "vendido" ? " · comprometido" : ""}` });
+    revalidatePath(STOCK_PATH);
   }
   await service.from("audit_log").insert({ entity_type: "purchase_contract", entity_id: c.id, action: "despacho_recibido", performed_by: p.userId, notes: `${d.tipo} · ${peso} kg · humedad ${humedad} % · aw ${aw} · ${resultado}${ajuste != null ? ` (${ajuste} %)` : ""} · pago al recibir ${formatCop(pagoRecepcion)}` });
   const texto =

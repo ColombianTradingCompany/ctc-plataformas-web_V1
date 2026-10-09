@@ -153,6 +153,18 @@ máquina) y la página de las configuraciones guardadas. La herramienta pública
 | **B · Stock CTCx** | V5.195 | Partidas, transformaciones y salidas; raíces desde recepciones y compras; el linaje interactivo con su cuadre; los Sample Kits sobre partidas; «Stock CTCx» en Manejo de Stock Físico (talón de `/ocp/sample-kits`); `ctc_selection` corregido | `qa-stock-ctcx` |
 | **C · Triage de Catálogo Activo** | V5.196 | El módulo renombrado con sus dos entradas, el FOB mínimo, las declaraciones, el Catálogo Activo sobre ellas, el O&P en la base | `qa-triage-catalogo` |
 
+**Hechas:** A (V5.194) · B (V5.195). Lo que la tanda B decidió al ejecutarse, además de lo de §2.1:
+
+- Los Sample Kits viven en `/ocp/stock/sample-kits` (pestaña del Stock CTCx); la URL vieja va con un 308 (`RUTAS_MOVIDAS`).
+- `compras.destino` pasó a `selection` · `stock` (el valor `sample_kits` no tenía filas): una compra es de CTCx Selection —la que hace
+  del lote un Selection en la vitrina— o solo de stock (un saco, café para kits). La entrada del rail quedó «Adquisición de Stock Café».
+- Una compra registrada antes de llegar entra al stock con «Entrar al stock» (Adquisición); la que ya llegó, sola.
+- Mientras las mezclas sigan sobre `compras` (§6.12), lo asignado a una mezcla se descuenta del disponible de la raíz de su compra.
+- Los kilos de un kit van en el estado de su partida (verde para CP y Plus, pergamino para Max); al enviarse, la base los saca del
+  stock, y al anular un kit enviado los devuelve.
+- Las propuestas de reparto del formulario (trilla ≈ 80 % de verde y 20 % de residuos; tostión ≈ 85 % y 15 % de merma) son un punto
+  de partida que se corrige con lo pesado; no gobiernan nada.
+
 ## 6. Supuestos (el owner los corrige)
 
 1. El triage vive en `/ocp/contratos` (las páginas de cada contrato siguen ahí, con sus operaciones de ventana y despacho).

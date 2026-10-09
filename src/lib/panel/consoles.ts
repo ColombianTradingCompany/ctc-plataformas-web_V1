@@ -249,8 +249,7 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           { href: "/ocp/contratos", label: "Ofertas CP Aceptadas" },
           // Decisión 7 (V5.85): la disponibilidad de lo comprado en firme (`compras`) — el staging del Catálogo Activo del lado Compras.
           { href: "/ocp/ctc-selection", label: "Oferta desde CTCx Selection" },
-          // V5.90 (owner, 2026-09-25): el café adquirido que NO va a CTCx Selection — el stock con que se arman los Sample Kits.
-          { href: "/ocp/sample-kits", label: "Stock de Sample Kits" },
+          // «Stock de Sample Kits» (V5.90) salió de aquí en la V5.195: el Stock CTCx lo absorbió (Manejo de Stock Físico, abajo).
           // Nota 5: lo publicado. Las subastas Tyrian son su pestaña (Tyrian no se oferta: se subasta).
           { href: "/ocp/catalogo", label: "Catálogo Activo" },
         ],
@@ -264,8 +263,12 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // V5.77 (owner): las campañas de descuento salen del Kaffetal Club y son «Campañas de Subvención»:
           // códigos con el 30–70 % de la tarifa de evaluación, que CTCx emite y decide en Gestión de Muestras.
           { href: "/ocp/subvenciones", label: "Campañas de Subvención" },
-          // V5.90 (owner): el nombre dice para qué compra la casa — stock de CTCx Selection y stock de Sample Kits (`compras.destino`).
-          { href: "/ocp/compras", label: "Adquisición de Stock Café (Selection/Sample Kits)" },
+          // V5.90 (owner): lo que compra la casa. Hasta la V5.194 decía «(Selection/Sample Kits)»: desde la V5.195 una compra es de
+          // CTCx Selection o solo de stock (`compras.destino`), y los kits se arman en el Stock CTCx.
+          { href: "/ocp/compras", label: "Adquisición de Stock Café" },
+          // V5.195 (owner, 2026-10-09): el café que está físicamente en CTCx, en partidas de pergamino · verde · tostado · empacado,
+          // con su linaje y su cuadre; absorbe el Stock de Sample Kits (su segunda pestaña). `docs/PLAN_TRIAGE_CATALOGO.md` §2.1.
+          { href: "/ocp/stock", label: "Stock CTCx" },
         ],
       },
       // El grupo «OCP · Cherry Picked» (los cuatro CRM CP) se fue a «LCP · CRM» en la V5.59.

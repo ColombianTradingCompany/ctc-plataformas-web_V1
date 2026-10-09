@@ -19,6 +19,47 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.195] — 2026-10-09 (commit pendiente)
+
+- **Añadido**: **el Stock CTCx** (OCP · Manejo de Stock Físico, `/ocp/stock`; owner, 2026-10-09; tanda B de
+  `docs/PLAN_TRIAGE_CATALOGO.md`): el café que está físicamente en CTCx en **partidas** de pergamino, verde, tostado o empacado
+  (`SX-AAAA-NNNN`), cada una con su lote, sus kg, su costo por kg, su ubicación y a cuántos kg de su estado de origen **equivale**.
+  Se **transforma** —trilla (pergamino → verde), tostión (verde → tostado), empaque (pergamino, verde o tostado → empacado)— partiendo
+  una madre en una o varias hijas, y cada transformación (`TR-AAAA-NNNN`) **cuadra**: lo que entra = las hijas + la merma de humedad +
+  los residuos + las pérdidas (± 0,01 kg). Las hijas absorben el costo de lo que entró más el de la operación; su equivalencia carga
+  la humedad y los residuos (las pérdidas quedan aparte). Las salidas —venta, consumo interno, ajuste— llevan motivo; nada se borra,
+  todo se anula con motivo.
+- **Añadido**: **el linaje interactivo**, como lo dibujó el owner: cada familia (el café tal como entró y todo lo que salió de él) en
+  cuatro columnas de colores con curvas de la madre a las hijas; pasar el cursor por una caja enciende su camino (de dónde viene, a
+  dónde fue) y un clic abre la partida para trillarla, tostarla, empacarla, darle salida o ubicarla, con el cuadre en vivo, la
+  propuesta de reparto y el costo y la equivalencia que tendrán las hijas. Debajo de cada familia, **el cuadre**: cada kilo de la
+  raíz en una cubeta (lo que sigue por estado, lo que salió, la humedad, los residuos, las pérdidas), en masa y en equivalente.
+- **Cambiado**: el café **entra solo** al Stock CTCx: al **recibir** un despacho de un trato (saco, adelanto y también lo vendido, que
+  entra **comprometido**: no surte kits ni se declarará al catálogo; una devolución no entra), al **pagar** el mes de una compra en
+  firme y al registrar una **compra a mano** que ya llegó; la que se registró antes de llegar entra con «Entrar al stock» desde
+  Adquisición. Y a mano, con nota, desde el propio Stock CTCx.
+- **Cambiado**: **los Sample Kits se arman con partidas** del Stock CTCx —verde (o empacado de verde) para CP y Plus, pergamino para
+  Max— y viven como su segunda pestaña (`/ocp/stock/sample-kits`; la URL vieja va con un 308). Lo que un kit armado tiene queda
+  reservado en su partida; al **enviarse**, sale del stock (lo escribe la base); al anular un kit enviado, vuelve.
+- **Cambiado**: una compra es **de CTCx Selection o solo de stock** (`compras.destino` = `selection` · `stock`; hasta aquí
+  `sample_kits`); la entrada del rail pasa a llamarse «Adquisición de Stock Café» y le sigue «Stock CTCx»; «Stock de Sample Kits» sale
+  del grupo Catálogo.
+- **Corregido**: `public_lot_catalog.ctc_selection` contaba **cualquier** compra: un saco recibido por un trato por ventanas convertía
+  el lote en CTCx Selection y le ocultaba la finca en la vitrina. Ahora solo cuentan las compras de Selection.
+- **Corregido**: un mismo kilo podía ir a una mezcla y a un kit: una mezcla mira ahora el disponible de la raíz de su compra en el
+  stock, y el stock descuenta lo asignado a mezclas.
+- **Corregido**: la ubicación del alta a mano de una compra se escribía en el formulario y la acción no la guardaba.
+- **Datos**: tablas nuevas `stock_partidas`, `stock_transformaciones`, `stock_salidas` (service-role-only; compuertas que congelan lo
+  registrado y rechazan el DELETE); funciones atómicas `stock_raiz` (idempotente por compra y por despacho), `stock_transformar`,
+  `stock_anular_transformacion`, `stock_disponible`; `sample_kit_items` gana `partida_id` y `kg`; la compuerta del stock de los kits se
+  reescribió sobre partidas y `stock_kit_estado` saca del stock lo enviado. El borrado nuclear suma su sexto bloqueo (el lote con café
+  en el stock). Probado en la base de producción dentro de una transacción revertida (cuadre de 100 kg, costos, equivalencias,
+  compuertas); ninguna fila quedó y las secuencias volvieron a su inicio. Ninguna fila existente cambió.
+- **Seguridad**: guardián nuevo `qa-stock-ctcx` (50: el mismo escenario que la base, las reglas, el acomodo, el acta, las raíces, las
+  acciones, la pantalla y el rail; siete mutaciones, todas muerden). Puestos al día: `qa-compras` 101 → 109 (y ve lo nuevo sin
+  versionar), `qa-ciclos` 145 → 146, `qa-solicitud-evaluacion` 96, `qa-borrado-nuclear` 33 → 34, `qa-rutas-consolas` 538 (58 rutas
+  mudadas). La batería pasa a 71 guardianes.
+
 ## [V5.194] — 2026-10-09 (commit 50d4c4a)
 
 - **Hito**: arranca el **Triage de Catálogo Activo** (owner, 2026-10-09): «Ofertas CP Aceptadas» se rebautiza y pasa a ser el punto

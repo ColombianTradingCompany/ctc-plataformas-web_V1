@@ -59,7 +59,8 @@ con cuenta QA — **hoy no corre**: las cuentas de prueba se eliminaron en la V5
   añade a propósito y el guardián obliga a justificarlo. Tyrian nunca aparece en la cinta (es de subasta).
 - **La ficha pública es lista BLANCA** (`fichaPublica.ts`): una clave nueva del formulario nace privada.
 - **Dos caras del lote comprado en firme**: la vitrina muestra el **perfil único de CTCx Selection** (`ctc_selection`, que desde la
-  V5.85 sale de `compras`; el rótulo es `rotuloCtcx(perfil)`, que cae a `CTC_RAZON`), la ficha muestra la finca real como dato.
+  V5.85 sale de `compras` y desde la V5.195 solo de las compras de CTCx Selection —un saco recibido por un trato por ventanas ya no
+  oculta la finca—; el rótulo es `rotuloCtcx(perfil)`, que cae a `CTC_RAZON`), la ficha muestra la finca real como dato.
   Se anula en la vista, no en el componente.
 - **Subasta**: EUR/kg; el comprador jamás toca `lot_auctions`/`auction_bids` con su sesión; adjudicar es del
   OCP y **no emite oferta** (la oferta al productor es COP/kg).

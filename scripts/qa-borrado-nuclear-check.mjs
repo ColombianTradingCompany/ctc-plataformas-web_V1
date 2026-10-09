@@ -75,6 +75,10 @@ const rail = lee("src/lib/panel/consoles.ts");
 {
   const bloqueos = ["order_items", "lot_reservations", "auction_bids", "mezcla_componentes", "sample_kit_items"];
   check("cinco bloqueos: pedidos, reservas y pujas de compradores; mezclas y Sample Kits", bloqueos.every((t) => new RegExp(`select count\\(\\*\\) into n from ${t} where[^;]+;\\s*if n > 0 then bloqueos := bloqueos \\|\\|`).test(acta)), bloqueos.filter((t) => !new RegExp(`select count\\(\\*\\) into n from ${t} where`).test(acta)).join(", "));
+  // V5.195: el sexto — el café que ya está en el Stock CTCx (stock físico: no se borra desde aquí). La función se rehízo entera en
+  // esa migración con UNA línea nueva; las cinco de arriba siguen iguales.
+  const actaStock = lee("docs/migraciones/2026-10-09_stock_ctcx.sql");
+  check("V5.195 · sexto bloqueo: un lote con partidas en el Stock CTCx no se borra", /select count\(\*\) into n from stock_partidas where lot_id = any\(v_lotes\);\s*if n > 0 then bloqueos := bloqueos \|\|/.test(actaStock) && bloqueos.every((t) => new RegExp(`select count\\(\\*\\) into n from ${t} where[^;]+;\\s*if n > 0 then bloqueos := bloqueos \\|\\|`).test(actaStock)));
   check("una finca que aporta a un lote de OTRA finca no se borra: primero ese lote", acta.includes("where c.finca_id = p_id and l.finca_id is distinct from p_id") && acta.includes("borre primero esos lotes"));
   check("el mensaje del bloqueo llega a la pantalla en palabras", servidor.includes('.replace(/^BLOQUEADO: /, "No se puede borrar todavía. ")'));
 }

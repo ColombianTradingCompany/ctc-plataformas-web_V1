@@ -10,7 +10,9 @@ import { formatCop } from "@/lib/arena/inscriptions";
 import { TIPO_MEZCLA_LABEL, esGradoDeMezcla, resumenDeMezcla, tipoDeMezcla, validarCierre, validarComponente, type GradoDeMezcla } from "@/lib/compras/mezclas";
 import { SELECT_LOTE_PARA_MEZCLA, cargarMezcla, composicionDelLote } from "@/lib/compras/mezclasServidor";
 import { KITS, validarEnvioDeKit, validarItemDeKit, type TipoDeKit } from "@/lib/compras/sampleKits";
-import { cargarKit, asignadoAKitsPorCompra } from "@/lib/compras/sampleKitsServidor";
+import { cargarKit } from "@/lib/compras/sampleKitsServidor";
+import { STOCK_PATH, fmtKg } from "@/lib/stock/linaje";
+import { COLUMNAS_PARTIDA, aPartida, crearRaizDeStock, mensajeDeLaBase } from "@/lib/stock/servidor";
 
 // ── CTCx Selection · Compras (fase 8 del PLAN_CIRCUITO_DEL_LOTE, V5.85) ──────────────────────
 // Folio 8, paso 19, y la decisión 7 del owner. Una compra en firme nace normalmente del PAGO de un mes de un contrato
@@ -41,8 +43,9 @@ export async function registrarCompraManual(formData: FormData): Promise<ActionR
   const recibidaAt = texto(formData.get("recibida_at"));
   const pagoRef = texto(formData.get("pago_ref"));
   const nota = texto(formData.get("nota"));
+  const ubicacion = texto(formData.get("ubicacion"));
   const destino = texto(formData.get("destino")) ?? "selection";
-  if (destino !== "selection" && destino !== "sample_kits") return { ok: false, error: "El destino es CTCx Selection o Sample Kits." };
+  if (destino !== "selection" && destino !== "stock") return { ok: false, error: "La compra es de CTCx Selection o solo de stock." };
   if (!lotId) return { ok: false, error: "Elija el lote." };
   if (!Number.isFinite(kg) || kg <= 0) return { ok: false, error: "Escriba los kilos de CPS comprados." };
   if (!Number.isFinite(copKg) || copKg <= 0) return { ok: false, error: "Escriba el precio pagado por kg (COP)." };
@@ -75,6 +78,7 @@ export async function registrarCompraManual(formData: FormData): Promise<ActionR
       origen: "manual",
       destino,
       nota,
+      ubicacion,
       registrada_por: adminId,
     })
     .select("id")
@@ -82,6 +86,12 @@ export async function registrarCompraManual(formData: FormData): Promise<ActionR
   if (error || !fila) return { ok: false, error: "No se pudo registrar la compra: " + (error?.message ?? "sin fila") };
 
   await service.from("audit_log").insert({ entity_type: "compra", entity_id: fila.id, action: "compra_registrada", performed_by: adminId, notes: `${lot.name} · ${kg} kg · ${formatCop(copKg)}/kg · manual · ${nota.slice(0, 200)}` });
+  // V5.195: si ya llegó (tiene fecha de recibo), entra al Stock CTCx en pergamino; si no, entra con «Entrar al stock» cuando llegue.
+  if (recibidaAt) {
+    const raiz = await crearRaizDeStock(service, { lotId, estado: "pergamino", kg, costoCopKg: copKg, origen: "compra", compraId: fila.id, ubicacion, nota: `compra a mano · lote ${lot.name}`, por: adminId });
+    if (raiz.ok) await service.from("audit_log").insert({ entity_type: "stock_partida", entity_id: raiz.id, action: "stock_raiz_compra", performed_by: adminId, notes: `${raiz.codigo ?? ""} · compra a mano · ${kg} kg de pergamino` });
+    revalidatePath(STOCK_PATH);
+  }
   await service.from("producer_comm_log").insert({
     producer_id: lot.producer_id,
     context_label: `Lote ${lot.name}`,
@@ -251,10 +261,14 @@ export async function agregarComponente(mezclaId: string, formData: FormData): P
   if (mezcla.status !== "borrador") return { ok: false, error: "Los componentes solo cambian mientras la mezcla es un borrador." };
   const { data: compra } = await service.from("compras").select(`id, kg, grado, destino, ${SELECT_LOTE_PARA_MEZCLA}`).eq("id", compraId).maybeSingle();
   if (!compra) return { ok: false, error: "Compra no encontrada." };
-  if (compra.destino !== "selection") return { ok: false, error: "Esa compra está destinada a Sample Kits: las mezclas de CTCx Selection se arman con compras destinadas a Selection." };
+  if (compra.destino !== "selection") return { ok: false, error: "Esa compra es solo de stock: las mezclas de CTCx Selection se arman con compras de Selection." };
   const comp = composicionDelLote(compra.lots as Parameters<typeof composicionDelLote>[0]);
   const { data: asignadoRaw } = await service.from("mezcla_componentes").select("kg, mezclas!inner(status)").eq("compra_id", compraId).neq("mezclas.status", "anulada");
   const asignado = ((asignadoRaw as { kg: number | string }[] | null) ?? []).reduce((a, r) => a + Number(r.kg), 0);
+  // V5.195: si la compra ya está en el Stock CTCx, lo libre lo dice su raíz (lo trillado, lo que salió o está en un kit ya no
+  // está libre; `stock_disponible` ya descuenta lo asignado a mezclas). Así un mismo kilo no va a una mezcla y a un kit.
+  const { data: raiz } = await service.from("stock_partidas").select("id").eq("compra_id", compraId).is("anulada_at", null).maybeSingle();
+  const libreEnStock = raiz ? Number((await service.rpc("stock_disponible", { p_partida: (raiz as { id: string }).id })).data ?? 0) : Number.POSITIVE_INFINITY;
   const nuevo = {
     compraId,
     kg,
@@ -268,7 +282,7 @@ export async function agregarComponente(mezclaId: string, formData: FormData): P
     variedades: comp.variedades,
     procesos: comp.procesos,
     grado: compra.grado,
-    disponibleKg: Math.max(0, Math.round((Number(compra.kg) - asignado) * 10) / 10),
+    disponibleKg: Math.max(0, Math.round(Math.min(Number(compra.kg) - asignado, libreEnStock) * 10) / 10),
   };
   const errores = validarComponente(mezcla.grado as GradoDeMezcla, mezcla.componentes, nuevo);
   if (errores.length) return { ok: false, error: errores.join(" ") };
@@ -359,32 +373,30 @@ export async function anularMezcla(mezclaId: string, formData: FormData): Promis
   return { ok: true };
 }
 
-// ── V5.90 (owner, 2026-09-25): «Adquisición de Stock Café (Selection/Sample Kits)» ─────────────
-// Cada compra dice a qué stock va (`compras.destino`); el stock de Sample Kits se arma en kits (CP · Plus · Max) que salen a
-// un Master Roaster, un comprador o una región. La regla vive en `src/lib/compras/sampleKits.ts` (puro) y los guards de la
-// base repiten lo esencial (componentes solo con el kit armado; lo asignado nunca supera lo comprado).
+// ── V5.90 (owner, 2026-09-25): «Adquisición de Stock Café» y los Sample Kits — sobre el Stock CTCx desde la V5.195 ─────────
+// Cada compra dice si es de CTCx Selection o solo de stock (`compras.destino`); los kits (CP · Plus · Max) que salen a un Master
+// Roaster, un comprador o una región se arman con PARTIDAS del Stock CTCx (owner, 2026-10-09: «el Stock CTCx absorberá Stock de
+// Sample Kits»). La regla vive en `src/lib/compras/sampleKits.ts` (puro) y los guards de la base repiten lo esencial
+// (componentes solo con el kit armado; lo asignado nunca supera el disponible de la partida; al enviarse, sale del stock).
 
 const revalidaKits = (id?: string) => {
   revalida();
-  revalidatePath("/ocp/sample-kits");
-  if (id) revalidatePath(`/ocp/sample-kits/${id}`);
+  revalidatePath(STOCK_PATH);
+  revalidatePath(`${STOCK_PATH}/sample-kits`);
+  if (id) revalidatePath(`${STOCK_PATH}/sample-kits/${id}`);
 };
 
-/** A qué stock va una compra: CTCx Selection (la oferta) o Sample Kits. Mueve kilos dentro o fuera de la oferta que lee el comprador: `emite`. */
+/** Si una compra es de CTCx Selection (la vitrina enseña el perfil de CTCx, no la finca) o solo de stock. Cambia lo que lee el comprador: `emite`. */
 export async function destinarCompra(compraId: string, formData: FormData): Promise<ActionResult> {
   const permiso = await permisoDeEscritura("ocp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const destino = texto(formData.get("destino"));
-  if (destino !== "selection" && destino !== "sample_kits") return { ok: false, error: "El destino es CTCx Selection o Sample Kits." };
+  if (destino !== "selection" && destino !== "stock") return { ok: false, error: "La compra es de CTCx Selection o solo de stock." };
   const { data: compra } = await service.from("compras").select("id, destino").eq("id", compraId).maybeSingle();
   if (!compra) return { ok: false, error: "Compra no encontrada." };
   if (compra.destino === destino) return { ok: true };
-  if (compra.destino === "sample_kits") {
-    const asignado = await asignadoAKitsPorCompra(service, [compraId]);
-    if ((asignado.get(compraId) ?? 0) > 0) return { ok: false, error: "Esa compra ya tiene kilos en Sample Kits: anule esos kits antes de cambiarle el destino." };
-  }
   const { error } = await service.from("compras").update({ destino }).eq("id", compraId);
   if (error) return { ok: false, error: "No se pudo cambiar el destino: " + error.message };
   await service.from("audit_log").insert({ entity_type: "compra", entity_id: compraId, action: "compra_destinada", performed_by: adminId, previous_status: compra.destino, new_status: destino });
@@ -418,23 +430,24 @@ export async function agregarLoteAlKit(kitId: string, formData: FormData): Promi
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
-  const compraId = texto(formData.get("compra_id"));
-  const kgCps = kgDe(formData.get("kg_cps"));
-  if (!compraId) return { ok: false, error: "Elija la compra." };
-  if (!Number.isFinite(kgCps) || kgCps <= 0) return { ok: false, error: "Escriba los kilos de CPS que salen de la compra." };
+  const partidaId = texto(formData.get("partida_id"));
+  const kg = kgDe(formData.get("kg"));
+  if (!partidaId) return { ok: false, error: "Elija la partida del Stock CTCx." };
+  if (!Number.isFinite(kg) || kg <= 0) return { ok: false, error: "Escriba los kilos que salen de la partida." };
   const kit = await cargarKit(service, kitId);
   if (!kit) return { ok: false, error: "Kit no encontrado." };
   if (kit.status !== "armado") return { ok: false, error: "Los lotes de un kit solo cambian mientras está armado." };
-  const { data: compra } = await service.from("compras").select("id, kg, destino, lot_id").eq("id", compraId).maybeSingle();
-  if (!compra) return { ok: false, error: "Compra no encontrada." };
-  if (compra.destino !== "sample_kits") return { ok: false, error: "Esa compra no está destinada a Sample Kits (cámbiele el destino en Adquisición)." };
-  const asignado = await asignadoAKitsPorCompra(service, [compraId]);
-  const nuevo = { compraId, lotId: compra.lot_id, kgCps, disponibleKg: Math.max(0, Math.round((Number(compra.kg) - (asignado.get(compraId) ?? 0)) * 1000) / 1000) };
+  const { data: fila } = await service.from("stock_partidas").select(COLUMNAS_PARTIDA).eq("id", partidaId).maybeSingle();
+  if (!fila) return { ok: false, error: "Partida no encontrada." };
+  const partida = aPartida(fila as Parameters<typeof aPartida>[0]);
+  if (partida.anulada || !partida.lotId) return { ok: false, error: "Esa partida está anulada o no tiene lote." };
+  const { data: disp } = await service.rpc("stock_disponible", { p_partida: partida.id });
+  const nuevo = { partidaId: partida.id, lotId: partida.lotId, kg, disponibleKg: Math.round(Number(disp ?? 0) * 1000) / 1000, contenido: partida.contenido, comprometido: partida.comprometido };
   const errores = validarItemDeKit(kit.tipo, kit.items, nuevo);
   if (errores.length) return { ok: false, error: errores.join(" ") };
-  const { error } = await service.from("sample_kit_items").insert({ kit_id: kitId, compra_id: compraId, kg_cps: kgCps });
-  if (error) return { ok: false, error: "No se pudo añadir el lote al kit: " + error.message };
-  await service.from("audit_log").insert({ entity_type: "sample_kit", entity_id: kitId, action: "kit_lote_anadido", performed_by: adminId, notes: `compra ${compraId.slice(0, 8)} · ${kgCps} kg CPS` });
+  const { error } = await service.from("sample_kit_items").insert({ kit_id: kitId, partida_id: partida.id, kg });
+  if (error) return { ok: false, error: "No se pudo añadir el lote al kit: " + mensajeDeLaBase(error.message) };
+  await service.from("audit_log").insert({ entity_type: "sample_kit", entity_id: kitId, action: "kit_lote_anadido", performed_by: adminId, notes: `${partida.codigo} · ${fmtKg(kg)} kg de ${partida.estado}` });
   revalidaKits(kitId);
   return { ok: true };
 }
@@ -454,7 +467,8 @@ export async function quitarItemDelKit(kitId: string, itemId: string): Promise<A
   return { ok: true };
 }
 
-/** El kit sale de la casa (a un MR, un comprador o una región): completo, con guía. Si viene de un pedido de la tienda, el pedido queda enviado. `emite`. */
+/** El kit sale de la casa (a un MR, un comprador o una región): completo, con guía. Si viene de un pedido de la tienda, el pedido queda
+ *  enviado. Sus kilos SALEN del Stock CTCx solos (`stock_kit_estado`, en la base). `emite`. */
 export async function marcarKitEnviado(kitId: string, formData: FormData): Promise<ActionResult> {
   const permiso = await permisoDeEscritura("ocp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };

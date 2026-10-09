@@ -6,7 +6,9 @@ import { formatCop } from "@/lib/arena/inscriptions";
 import { GRADO_POR_ID } from "@/lib/grados/definicion";
 import { resumenDeCompras } from "@/lib/compras/reglas";
 import { DESTINO_LABEL } from "@/lib/compras/sampleKits";
+import { STOCK_PATH } from "@/lib/stock/linaje";
 import { destinarCompra, registrarCompraManual, ubicarCompra } from "../comprasActions";
+import { entrarCompraAlStock } from "../stockActions";
 import styles from "@/components/panel/shared.module.css";
 
 // ── OCP · Manejo de Stock Físico · CTCx Selection · Compras (V5.85 · 2.ª tanda V5.87) ──────────
@@ -16,6 +18,8 @@ import styles from "@/components/panel/shared.module.css";
 // (`registrarPagoDelMes`) o a mano, aquí, con su nota. Cómo se combina vive en Mezclas (V5.87); lo DISPONIBLE no se guarda:
 // se deriva en «Oferta desde CTCx Selection» (comprado − en mezclas − vendido). La pantalla habla en kg de CPS: la
 // conversión a verde la da el Modelo de Producción (su brief), aquí no se inventa un factor (decisión 5).
+// V5.195: lo que llega entra al Stock CTCx (`/ocp/stock`) como una partida de pergamino; la columna «Stock CTCx» la enseña, y lo
+// que se registró antes de llegar entra con «Entrar al stock».
 
 export const dynamic = "force-dynamic";
 
@@ -38,10 +42,11 @@ type CompraRow = {
   origen: string;
   nota: string | null;
   ubicacion: string | null;
-  destino: "selection" | "sample_kits";
+  destino: "selection" | "stock";
   lots: { id: string; name: string; producer_id: string; fincas: { name: string } | null } | null;
   pvc_editions: { code: string } | null;
   mezcla_componentes: { kg: number | string; mezclas: MezclaEmb | MezclaEmb[] | null }[];
+  stock_partidas: { id: string; codigo: string; anulada_at: string | null }[];
 };
 type LoteRow = { id: string; name: string; grade: string | null; fincas: { name: string } | null };
 
@@ -55,7 +60,7 @@ export default async function ComprasPage() {
     service
       .from("compras")
       .select(
-        "id, lot_id, contract_id, mes, grado, kg, cop_kg, total_cop, precio_fuente, modificador_pct, acordada_at, recibida_at, pagada_at, pago_ref, origen, nota, ubicacion, destino, lots(id, name, producer_id, fincas(name)), pvc_editions(code), mezcla_componentes(kg, mezclas(codigo, status))"
+        "id, lot_id, contract_id, mes, grado, kg, cop_kg, total_cop, precio_fuente, modificador_pct, acordada_at, recibida_at, pagada_at, pago_ref, origen, nota, ubicacion, destino, lots(id, name, producer_id, fincas(name)), pvc_editions(code), mezcla_componentes(kg, mezclas(codigo, status)), stock_partidas(id, codigo, anulada_at)"
       )
       .order("created_at", { ascending: false }),
     service.from("lots").select("id, name, grade, fincas(name)").eq("stage", "galardonado").neq("grade", "tyrian").order("name"),
@@ -72,7 +77,7 @@ export default async function ComprasPage() {
     { k: "Compras en firme", v: String(resumen.compras), sub: `${resumen.lotes} lote${resumen.lotes === 1 ? "" : "s"}` },
     { k: "Kg comprados (CPS)", v: String(resumen.kgComprados), sub: `${resumen.kgRecibidos} kg recibidos` },
     { k: "En mezclas", v: `${kgEnMezclas} kg`, sub: "asignado a mezclas no anuladas" },
-    { k: "Para Sample Kits", v: `${Math.round(compras.filter((c) => c.destino === "sample_kits").reduce((a, c) => a + Number(c.kg), 0) * 10) / 10} kg`, sub: "compras con destino Sample Kits" },
+    { k: "Solo stock", v: `${Math.round(compras.filter((c) => c.destino === "stock").reduce((a, c) => a + Number(c.kg), 0) * 10) / 10} kg`, sub: "sin la marca CTCx Selection (sacos, café para kits)" },
     { k: "Pagado", v: formatCop(resumen.copPagado), sub: "compras con pago registrado" },
     ...Object.entries(resumen.porGrado).map(([g, v]) => ({ k: `${GRADO_POR_ID[g as keyof typeof GRADO_POR_ID]?.nombre ?? g}`, v: `${v.kg} kg`, sub: `${v.compras} compra${v.compras === 1 ? "" : "s"}` })),
   ];
@@ -80,21 +85,22 @@ export default async function ComprasPage() {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
-        <h1 className={styles.title}>Adquisición de Stock Café (Selection/Sample Kits)</h1>
+        <h1 className={styles.title}>Adquisición de Stock Café</h1>
         <span style={{ display: "flex", gap: 14 }}>
           <Link href="/ocp/compras/mezclas" className={styles.backLink}>
             Mezclas →
           </Link>
-          <Link href="/ocp/sample-kits" className={styles.backLink}>
-            Stock de Sample Kits →
+          <Link href={STOCK_PATH} className={styles.backLink}>
+            Stock CTCx →
           </Link>
         </span>
       </div>
       <p className={styles.subtitle}>
         El registro de cada compra <b>en firme</b> de CTCx: qué café, a quién, cuántos kilos, a qué precio (con su edición del PVC),
-        cuándo se pagó, cuándo llegó, dónde está y <b>a qué stock va</b> (owner, 2026-09-25): <b>CTCx Selection</b> —lo que se ofrece en{" "}
-        <Link href="/ocp/ctc-selection">Oferta desde CTCx Selection</Link>— o <b>Sample Kits</b> —el stock con que se arman los kits para
-        compradores y Master Roasters en <Link href="/ocp/sample-kits">Stock de Sample Kits</Link>—. Cómo se combina lo de Selection vive en{" "}
+        cuándo se pagó, cuándo llegó, dónde está y <b>si es de CTCx Selection</b> —lo que se ofrece en{" "}
+        <Link href="/ocp/ctc-selection">Oferta desde CTCx Selection</Link>, con el perfil de CTCx en vez de la finca— o <b>solo de stock</b>
+        (un saco de un trato por ventanas, café para kits). Lo que llega entra al <Link href={STOCK_PATH}>Stock CTCx</Link> en pergamino: allí se
+        trilla, se tuesta, se empaca y se arman los Sample Kits. Cómo se combina lo de Selection vive en{" "}
         <Link href="/ocp/compras/mezclas">Mezclas</Link>.
       </p>
       <p className={styles.meta} style={{ marginBottom: 18 }}>
@@ -135,9 +141,10 @@ export default async function ComprasPage() {
                   <th style={{ ...td, textAlign: "right" }}>Total</th>
                   <th style={td}>Precio</th>
                   <th style={td}>Recibida</th>
-                  <th style={td}>Destino</th>
+                  <th style={td}>Es de</th>
                   <th style={td}>En mezcla</th>
                   <th style={td}>Ubicación</th>
+                  <th style={td}>Stock CTCx</th>
                   <th style={td}>Origen</th>
                 </tr>
               </thead>
@@ -194,6 +201,18 @@ export default async function ComprasPage() {
                         </ActionForm>
                       </td>
                       <td style={td}>
+                        {(() => {
+                          const raiz = c.stock_partidas.find((p) => !p.anulada_at);
+                          return raiz ? (
+                            <Link href={`${STOCK_PATH}?partida=${raiz.id}`}>
+                              <code>{raiz.codigo}</code>
+                            </Link>
+                          ) : (
+                            <ActionForm action={entrarCompraAlStock.bind(null, c.id)} submitLabel="Entrar al stock" pendingLabel="…" buttonClassName="btn btn-sm" />
+                          );
+                        })()}
+                      </td>
+                      <td style={td}>
                         {c.origen === "contrato" ? (
                           <>
                             contrato{c.mes ? ` · mes ${c.mes}` : ""}
@@ -226,7 +245,8 @@ export default async function ComprasPage() {
         <ActionForm action={registrarCompraManual} submitLabel="Registrar la compra" pendingLabel="Registrando…" buttonClassName="btn btn-solid" className={styles.card} style={{ display: "block" }}>
           <p className={styles.meta} style={{ marginBottom: 10 }}>
             Para lo comprado fuera de la plataforma. El precio queda referido a la edición del PVC vigente el día del pago; la nota es obligatoria
-            (de dónde sale la compra). Solo lotes galardonados, nunca Tyrian.
+            (de dónde sale la compra). Solo lotes galardonados, nunca Tyrian. Si ya llegó (con fecha de recibo), entra solo al Stock CTCx; si no,
+            entra con «Entrar al stock» cuando llegue.
           </p>
           <div className={styles.formGrid}>
             <div className={styles.field} style={{ gridColumn: "1 / -1" }}>
@@ -267,7 +287,7 @@ export default async function ComprasPage() {
               <input id="compra-ubicacion" name="ubicacion" placeholder="finca · Centro de Calidad · bodega" />
             </div>
             <div className={styles.field}>
-              <label htmlFor="compra-destino">A qué stock va</label>
+              <label htmlFor="compra-destino">Es de</label>
               <select id="compra-destino" name="destino" defaultValue="selection">
                 {(Object.keys(DESTINO_LABEL) as (keyof typeof DESTINO_LABEL)[]).map((d) => (
                   <option key={d} value={d}>{DESTINO_LABEL[d]}</option>

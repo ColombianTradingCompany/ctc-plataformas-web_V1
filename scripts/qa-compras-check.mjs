@@ -15,6 +15,9 @@
 //   (10) las mezclas por COMPOSICIÓN (V5.87, reescritas en la V5.91: Single Origin · Regional Blend, MOQ de compra — leído del §14.8 del plan del PVC); (11) V5.90 — «Adquisición de Stock Café (Selection/Sample Kits)»: cada compra dice a qué stock va, los
 //   tres Sample Kits (CP · Plus · Max) con los NÚMEROS DEL OWNER leídos de la fila 8 del §5 del plan, lo disponible para kits
 //   derivado, los guards de la base, el kit sale completo y nada se borra, y el rail dice el nombre nuevo.
+//   (12) V5.195 — el Stock CTCx absorbe el Stock de Sample Kits: los kits se arman con PARTIDAS (verde para CP y Plus, pergamino
+//   para Max), una compra es de CTCx Selection o solo de stock (`destino` = selection · stock), `ctc_selection` cuenta solo las de
+//   Selection (un saco ya no oculta la finca), y lo recibido o pagado entra al stock. El stock mismo lo vigila `qa-stock-ctcx`.
 
 import { readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
@@ -24,7 +27,7 @@ import { CTC_RAZON } from "../src/lib/legal.ts";
 import { estadoDelCircuito } from "../src/lib/ocp/circuito.ts";
 import { MIN_COMPONENTES, MOQ_KG_MEZCLA, TIPO_MEZCLA_LABEL, resumenDeMezcla, tipoDeMezcla, validarCierre, validarComponente } from "../src/lib/compras/mezclas.ts";
 import { MOQ_CARGAS_BLACK_RED, TIPOS_DE_MEZCLA } from "../src/lib/pvc/lectura.ts";
-import { DESTINO_LABEL, KITS, VERDE_POR_CPS, disponibleParaKits, kgCpsDelKit, kgCpsPorLote, validarEnvioDeKit, validarItemDeKit } from "../src/lib/compras/sampleKits.ts";
+import { DESTINO_LABEL, KITS, VERDE_POR_CPS, contenidoDelKit, kgCpsDelKit, kgCpsPorLote, validarEnvioDeKit, validarItemDeKit } from "../src/lib/compras/sampleKits.ts";
 
 let ok = 0;
 const fallos = [];
@@ -57,6 +60,10 @@ const paso = (n) => plan.match(new RegExp(`^\\| ${n} \\| (.+?) \\|`, "m"))?.[1] 
   check("compras y ctcx_selection_lotes: RLS y cero políticas (solo service role)", acta.includes("alter table public.compras enable row level security") && acta.includes("alter table public.ctcx_selection_lotes enable row level security") && !/create policy [^\n]* on public\.(compras|ctcx_selection_lotes)/.test(acta));
   check("el bucket de imágenes es público solo para LEER", /insert into storage\.buckets[^\n]*'ctcx-selection'[^\n]*true/.test(acta) && /for select to anon, authenticated using \(bucket_id = 'ctcx-selection'\)/.test(acta) && !/on storage\.objects for (insert|update|delete)/.test(acta));
   check("el perfil sale por una vista estrecha legible por anon", acta.includes("create or replace view public.public_ctcx_selection_perfil") && acta.includes("grant select on public.public_ctcx_selection_perfil to anon, authenticated") && /where key = 'ctcx_selection_perfil'/.test(acta));
+  // V5.195: la vista se rehízo con UNA línea distinta — solo las compras de CTCx Selection hacen del lote un Selection.
+  const actaStock = lee("docs/migraciones/2026-10-09_stock_ctcx.sql");
+  check("V5.195 · ctc_selection cuenta solo las compras de Selection (un saco recibido por un trato ya no oculta la finca)", /FROM compras c\s+WHERE c\.destino = 'selection'::text\) comprado ON comprado\.lot_id = l\.id/.test(actaStock) && /comprado\.lot_id IS NOT NULL AS ctc_selection/.test(actaStock) && /WHEN comprado\.lot_id IS NULL THEN f\.name/.test(actaStock));
+  check("V5.195 · destino = selection · stock (sample_kits pasó a stock)", /check \(destino in \('selection', 'stock'\)\)/.test(actaStock) && /update public\.compras set destino = 'stock' where destino = 'sample_kits'/.test(actaStock));
 }
 
 // ── 3 y 4. La compra: nace del pago de una oferta de compra en firme y cita el PVC ──
@@ -71,13 +78,17 @@ const compras = lee("src/app/ocp/(app)/comprasActions.ts");
   check("la compra del contrato cita la edición del PVC y el % del contrato", pago.includes("pvc_edition_id: contract.pvc_edition_id") && pago.includes("modificador_pct: contract.modificador_pct"));
   check("la compra a mano cita la edición vigente el día del pago", compras.includes("edicionVigente(pagadaAt") && compras.includes("pvc_edition_id: edicion?.id"));
   check("y exige nota y lote galardonado, nunca Tyrian", compras.includes("if (!nota) return") && compras.includes('lot.stage !== "galardonado"') && compras.includes('lot.grade === "tyrian"') && compras.includes('origen: "manual"'));
-  const src = execSync("git ls-files src", { encoding: "utf8" }).split(/\r?\n/).filter((f) => /\.tsx?$/.test(f));
+  // V5.195: `--others --exclude-standard` ve también lo nuevo sin versionar (la compuerta corre antes del commit).
+  const src = execSync("git ls-files --cached --others --exclude-standard src", { encoding: "utf8" }).split(/\r?\n/).filter((f) => /\.tsx?$/.test(f));
   const escritores = src.filter((f) => /from\("compras"\)\s*\.\s*(insert|update|upsert|delete)/.test(readFileSync(f, "utf8").replace(/\r?\n\s*/g, " ")));
-  // V5.176 (docs/PLAN_CICLOS.md §5): el trato por ventanas registra el saco y el adelanto RECIBIDOS como compra de CTCx (destino
-  // Sample Kits) al recibir el despacho; lo vendido no (se vende a nombre del productor). Es el tercer escritor, y solo ese.
-  check("compras la escriben SOLO contractActions (el pago), comprasActions (a mano) y ventanaActions (el saco y el adelanto recibidos)", escritores.length === 3 && escritores.includes("src/app/ocp/(app)/contractActions.ts") && escritores.includes("src/app/ocp/(app)/comprasActions.ts") && escritores.includes("src/app/ocp/(app)/ventanaActions.ts"), escritores.join(", "));
+  // V5.176 (docs/PLAN_CICLOS.md §5): el trato por ventanas registra el saco y el adelanto RECIBIDOS como compra de CTCx (solo stock
+  // desde la V5.195) al recibir el despacho; lo vendido no (se vende a nombre del productor). V5.195: el cuarto escritor es
+  // `stockActions` (la fecha de recibo, al entrar una compra al Stock CTCx), y solo ese.
+  check("compras la escriben SOLO contractActions (el pago), comprasActions (a mano), ventanaActions (el saco y el adelanto recibidos) y stockActions (la fecha de recibo al entrar al stock)", escritores.length === 4 && escritores.includes("src/app/ocp/(app)/contractActions.ts") && escritores.includes("src/app/ocp/(app)/comprasActions.ts") && escritores.includes("src/app/ocp/(app)/ventanaActions.ts") && escritores.includes("src/app/ocp/(app)/stockActions.ts"), escritores.join(", "));
   const ventana = readFileSync("src/app/ocp/(app)/ventanaActions.ts", "utf8");
-  check("y la del trato por ventanas va a Sample Kits, cita su edición, nunca Tyrian ni lo vendido ni una devolución", ventana.includes('d.tipo !== "vendido" && resultado !== "devolucion" && c.grade_snapshot && c.grade_snapshot !== "tyrian"') && ventana.includes('origen: "contrato", destino: "sample_kits"') && ventana.includes("pvc_edition_id: c.pvc_edition_id"));
+  check("y la del trato por ventanas es solo de stock, cita su edición, nunca Tyrian ni lo vendido ni una devolución", ventana.includes('d.tipo !== "vendido" && resultado !== "devolucion" && c.grade_snapshot && c.grade_snapshot !== "tyrian"') && ventana.includes('origen: "contrato", destino: "stock"') && ventana.includes("pvc_edition_id: c.pvc_edition_id"));
+  check("V5.195 · lo recibido (también lo vendido, comprometido) entra al Stock CTCx en pergamino; una devolución no", /if \(resultado !== "devolucion"\) \{[\s\S]{0,200}crearRaizDeStock\(service, \{ lotId: c\.lot_id, estado: "pergamino"/.test(ventana) && ventana.includes('origen: "despacho", despachoId: d.id, compraId, comprometido: d.tipo === "vendido"'));
+  check("V5.195 · lo pagado de una compra en firme y la compra a mano que ya llegó entran al stock (idempotente por compra)", /crearRaizDeStock\(service, \{ lotId: contract\.lot_id, estado: "pergamino", kg: kgComprados, costoCopKg: compra\.cop_kg, origen: "compra", compraId: guardada\.id/.test(acciones) && /if \(recibidaAt\) \{\s*const raiz = await crearRaizDeStock\(service, \{ lotId, estado: "pergamino", kg, costoCopKg: copKg, origen: "compra", compraId: fila\.id/.test(compras));
   // 5. El CRM se retiró
   const conCrm = src.filter((f) => /from\("black_negotiations"\)/.test(readFileSync(f, "utf8")));
   check("black_negotiations no tiene escritor ni lector en src (tabla dormida)", conCrm.length === 0, conCrm.join(", "));
@@ -207,31 +218,36 @@ const compras = lee("src/app/ocp/(app)/comprasActions.ts");
   check("el precio de referencia del CP es el del owner (≈ 65 € · US$65) y solo donde hay un MR o partner CaaS", /65 €/.test(KITS.cp.precioRef) && /US\$65/.test(KITS.cp.precioRef) && /Master Roaster/.test(KITS.cp.para) && /CaaS/.test(KITS.cp.para));
   const kitsSrc = lee("src/lib/compras/sampleKits.ts").replace(/\/\*[\s\S]*?\*\/|^\s*\/\/.*$/gm, "");
   check("sampleKits.ts es puro (sin red, sin servidor)", !/supabase|server-only|fetch\(/.test(kitsSrc));
-  const it = (i, extra = {}) => ({ compraId: "c" + i, lotId: "l" + i, kgCps: kgCpsPorLote("cp"), disponibleKg: 10, ...extra });
+  const it = (i, extra = {}) => ({ partidaId: "p" + i, lotId: "l" + i, kg: KITS.cp.kgPorLote, disponibleKg: 10, contenido: "verde", comprometido: false, ...extra });
   const ocho = Array.from({ length: 8 }, (_, i) => it(i + 1));
-  check("al añadir: un noveno lote al CP, la misma compra, el mismo lote, cero kilos o más de lo disponible se rechazan; uno válido pasa", validarItemDeKit("cp", ocho, it(9)).length > 0 && validarItemDeKit("cp", [it(1)], it(2, { compraId: "c1" })).length > 0 && validarItemDeKit("cp", [it(1)], it(2, { lotId: "l1" })).length > 0 && validarItemDeKit("cp", [], it(1, { kgCps: 0 })).length > 0 && validarItemDeKit("cp", [], it(1, { kgCps: 11 })).length > 0 && validarItemDeKit("cp", [it(1)], it(2)).length === 0);
+  check("al añadir: un noveno lote al CP, la misma partida, el mismo lote, cero kilos o más de lo disponible se rechazan; uno válido pasa", validarItemDeKit("cp", ocho, it(9)).length > 0 && validarItemDeKit("cp", [it(1)], it(2, { partidaId: "p1" })).length > 0 && validarItemDeKit("cp", [it(1)], it(2, { lotId: "l1" })).length > 0 && validarItemDeKit("cp", [], it(1, { kg: 0 })).length > 0 && validarItemDeKit("cp", [], it(1, { kg: 11 })).length > 0 && validarItemDeKit("cp", [it(1)], it(2)).length === 0);
+  check("V5.195 · el café del kit: CP y Plus llevan verde, Max pergamino; lo comprometido no surte", contenidoDelKit("cp") === "verde" && contenidoDelKit("plus") === "verde" && contenidoDelKit("max") === "pergamino" && validarItemDeKit("max", [], it(1, { kg: 6, contenido: "verde" })).length > 0 && validarItemDeKit("max", [], it(1, { kg: 6, contenido: "pergamino" })).length === 0 && validarItemDeKit("cp", [], it(1, { contenido: "tostado" })).length > 0 && validarItemDeKit("cp", [], it(1, { comprometido: true })).length > 0);
   check("el kit sale ENVIADO solo completo (8 · 5 · 4 lotes)", validarEnvioDeKit("cp", ocho).length === 0 && validarEnvioDeKit("cp", ocho.slice(0, 7)).length > 0 && validarEnvioDeKit("plus", ocho.slice(0, 5)).length === 0 && validarEnvioDeKit("max", ocho.slice(0, 4)).length === 0 && validarEnvioDeKit("max", ocho.slice(0, 3)).length > 0);
-  check("lo disponible para kits = comprado − asignado, derivado y nunca negativo", disponibleParaKits({ compradoKg: 12.5, asignadoKg: 2.5 }) === 10 && disponibleParaKits({ compradoKg: 1, asignadoKg: 3 }) === 0);
-  check("dos destinos y solo dos: CTCx Selection · Sample Kits", Object.keys(DESTINO_LABEL).sort().join(",") === "sample_kits,selection");
+  check("dos destinos y solo dos: CTCx Selection · solo Stock CTCx", Object.keys(DESTINO_LABEL).sort().join(",") === "selection,stock");
   const acta = lee("docs/migraciones/2026-09-25_adquisicion_stock_sample_kits.sql").replace(/^--.*$/gm, "");
   check("la base: compras.destino con los dos valores, kits SK-AAAA-NNN armado → enviado · anulado, componentes con kg > 0", /add column destino text not null default 'selection' check \(destino in \('selection', 'sample_kits'\)\)/.test(acta) && /'SK-' \|\| to_char\(now\(\), 'YYYY'\)/.test(acta) && /status text not null default 'armado' check \(status in \('armado', 'enviado', 'anulado'\)\)/.test(acta) && /kg_cps numeric not null check \(kg_cps > 0\)/.test(acta) && /unique \(kit_id, compra_id\)/.test(acta));
-  check("los guards: componentes solo con el kit armado; lo asignado a kits no anulados nunca supera lo comprado con destino sample_kits", acta.includes("create trigger guard_sample_kit_item") && /v_status is distinct from 'armado'/.test(acta) && acta.includes("create trigger guard_sample_kit_stock") && /v_destino is distinct from 'sample_kits'/.test(acta) && /k\.status <> 'anulado'/.test(acta) && /if v_asignado \+ new\.kg_cps > v_kg/.test(acta));
+  check("los guards de la V5.90: componentes solo con el kit armado (sigue igual)", acta.includes("create trigger guard_sample_kit_item") && /v_status is distinct from 'armado'/.test(acta) && acta.includes("create trigger guard_sample_kit_stock"));
+  const actaStock = lee("docs/migraciones/2026-10-09_stock_ctcx.sql");
+  check("V5.195 · la compuerta del stock de los kits se reescribió sobre partidas: lote, contenido del kit, sin comprometer, dentro del disponible", /create or replace function public\.guard_sample_kit_stock\(\)/.test(actaStock) && actaStock.includes("Desde la V5.195 un Sample Kit se arma con partidas del Stock CTCx.") && /v_requerido := case when v_tipo = 'max' then 'pergamino' else 'verde' end;/.test(actaStock) && /if p\.comprometido then/.test(actaStock) && /if new\.kg > v_disp \+ 0\.0005 then/.test(actaStock));
+  check("V5.195 · al enviarse el kit sus ítems salen del stock; al anular uno enviado, vuelven", /if old\.status = 'armado' and new\.status = 'enviado' then\s*insert into public\.stock_salidas/.test(actaStock) && /elsif old\.status = 'enviado' and new\.status = 'anulado' then\s*update public\.stock_salidas/.test(actaStock) && /after update of status on public\.sample_kits/.test(actaStock));
   check("RLS y cero políticas en sample_kits y sample_kit_items", acta.includes("alter table public.sample_kits enable row level security") && acta.includes("alter table public.sample_kit_items enable row level security") && !/create policy [^\n]* on public\.sample_kit/.test(acta));
   check("las acciones pasan por la regla pura antes que por la base; un kit no se borra, se anula", compras.includes("validarItemDeKit(kit.tipo, kit.items, nuevo)") && compras.includes("validarEnvioDeKit(kit.tipo, kit.items)") && !/from\("sample_kits"\)\s*\.\s*delete/.test(compras) && compras.includes('update({ status: "anulado", anulado_motivo: motivo'));
-  check("una compra con kilos en kits no cambia de destino; una compra nueva elige su destino", /asignadoAKitsPorCompra\(service, \[compraId\]\)[\s\S]{0,200}anule esos kits antes de cambiarle el destino/.test(compras) && /const destino = texto\(formData\.get\("destino"\)\) \?\? "selection"/.test(compras));
+  check("V5.195 · cambiar el destino ya no mira los kits (se arman con partidas); una compra nueva elige si es de Selection", !compras.includes("asignadoAKitsPorCompra") && /const destino = texto\(formData\.get\("destino"\)\) \?\? "selection"/.test(compras) && compras.includes('if (destino !== "selection" && destino !== "stock")'));
+  check("V5.195 · al añadir un lote al kit, la acción lee la partida y su disponible de la base", /const \{ data: disp \} = await service\.rpc\("stock_disponible", \{ p_partida: partida\.id \}\)/.test(compras) && compras.includes('.from("sample_kit_items").insert({ kit_id: kitId, partida_id: partida.id, kg })'));
+  check("V5.195 · una mezcla mira el disponible de la raíz de su compra en el stock (un kilo no va a una mezcla y a un kit)", /\.from\("stock_partidas"\)\.select\("id"\)\.eq\("compra_id", compraId\)/.test(compras) && /Math\.min\(Number\(compra\.kg\) - asignado, libreEnStock\)/.test(compras));
   const fnClase = (fn) => compras.match(new RegExp(`export async function ${fn}\\([^)]*\\)[^{]*\\{\\s*const permiso = await permisoDeEscritura\\("ocp", "(\\w+)"\\)`))?.[1];
   check("las clases: destinar una compra y enviar el kit EMITEN (mueven la oferta · lo ve quien lo recibe); armar, añadir, quitar y anular son BORRADOR", fnClase("destinarCompra") === "emite" && fnClase("marcarKitEnviado") === "emite" && ["crearKit", "agregarLoteAlKit", "quitarItemDelKit", "anularKit"].every((f) => fnClase(f) === "borrador"));
   check("el kit que nace de un pedido de la tienda lo deja enviado al salir (con la guía)", /if \(kit\.pedidoId\) \{\s*await service\.from\("sample_pack_orders"\)\.update\(\{ status: "enviado", enviado_at: now, enviado_por: adminId, guia, notas_ctc: notas \}\)/.test(compras));
   const sinComentarios = (src) => src.replace(/\/\*[\s\S]*?\*\/|^\s*\/\/.*$/gm, "");
   const rail = sinComentarios(lee("src/lib/panel/consoles.ts"));
-  check("el rail: «Adquisición de Stock Café (Selection/Sample Kits)» en /ocp/compras y «Stock de Sample Kits» en OCP · Catálogo; el nombre viejo no queda", /href: "\/ocp\/compras", label: "Adquisición de Stock Café \(Selection\/Sample Kits\)"/.test(rail) && /href: "\/ocp\/sample-kits", label: "Stock de Sample Kits"/.test(rail) && rail.indexOf('"/ocp/sample-kits"') < rail.indexOf('"/ocp/compras"') && !rail.includes("CTCx Selection · Compras") && !sinComentarios(lee("src/app/ocp/(app)/compras/page.tsx")).includes("CTCx Selection · Compras"));
+  check("el rail (V5.195): «Adquisición de Stock Café» y, tras ella, «Stock CTCx»; el Stock de Sample Kits ya no es una entrada; el nombre viejo no queda", /href: "\/ocp\/compras", label: "Adquisición de Stock Café" \}/.test(rail) && /href: "\/ocp\/stock", label: "Stock CTCx" \}/.test(rail) && rail.indexOf('"/ocp/stock"') > rail.indexOf('"/ocp/compras"') && !/\/ocp\/sample-kits/.test(rail) && !rail.includes("Stock de Sample Kits") && !rail.includes("CTCx Selection · Compras") && !sinComentarios(lee("src/app/ocp/(app)/compras/page.tsx")).includes("CTCx Selection · Compras"));
   const ctcSel = lee("src/app/ocp/(app)/ctc-selection/page.tsx");
   check("«Oferta desde CTCx Selection» solo cuenta lo comprado con destino selection", ctcSel.includes('.eq("destino", "selection")'));
   const pagCompras = lee("src/app/ocp/(app)/compras/page.tsx");
-  check("Adquisición: el destino por compra (columna + cambio) y en el alta a mano", pagCompras.includes("destinarCompra.bind(null, c.id)") && /<select id="compra-destino" name="destino"/.test(pagCompras) && pagCompras.includes("DESTINO_LABEL"));
-  const pagKits = lee("src/app/ocp/(app)/sample-kits/page.tsx");
-  const pagKit = lee("src/app/ocp/(app)/sample-kits/[id]/page.tsx");
-  check("las dos pantallas de Sample Kits: stock por lote (derivado) + armar; y el kit con añadir · enviar · anular", pagKits.includes("stockDeSampleKits") && pagKits.includes("crearKit") && pagKit.includes("agregarLoteAlKit") && pagKit.includes("marcarKitEnviado") && pagKit.includes("anularKit") && pagKit.includes("validarEnvioDeKit"));
+  check("Adquisición: el destino por compra (columna + cambio) y en el alta a mano; y la raíz en el Stock CTCx o «Entrar al stock»", pagCompras.includes("destinarCompra.bind(null, c.id)") && /<select id="compra-destino" name="destino"/.test(pagCompras) && pagCompras.includes("DESTINO_LABEL") && pagCompras.includes("entrarCompraAlStock.bind(null, c.id)") && pagCompras.includes("stock_partidas(id, codigo, anulada_at)"));
+  const pagKits = lee("src/app/ocp/(app)/stock/sample-kits/page.tsx");
+  const pagKit = lee("src/app/ocp/(app)/stock/sample-kits/[id]/page.tsx");
+  check("las dos pantallas de Sample Kits (pestaña del Stock CTCx): las partidas que surten + armar; y el kit con añadir · enviar · anular", pagKits.includes("partidasParaKits") && pagKits.includes("crearKit") && pagKits.includes('<StockTabs activa="kits" />') && pagKit.includes("agregarLoteAlKit") && pagKit.includes("marcarKitEnviado") && pagKit.includes("anularKit") && pagKit.includes("validarEnvioDeKit") && pagKit.includes('name="partida_id"'));
   check("los 2 kg de muestra del circuito NO surten kits (uso exclusivo de CTCx): el plan y la pantalla lo dicen", /Los 2 kg de muestra del circuito NO surten kits/.test(fila8) && /uso exclusivo de CTCx/.test(pagKits) && !/muestra_movimientos|from\("muestras"\)/.test(lee("src/lib/compras/sampleKitsServidor.ts")));
 }
 

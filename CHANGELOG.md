@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.196] — 2026-10-09 (commit pendiente)
+## [V5.196] — 2026-10-09 (commit c9ae72d)
 
 - **Hito**: **«Ofertas CP Aceptadas» es el Triage de Catálogo Activo** (owner, 2026-10-09; tanda C de `docs/PLAN_TRIAGE_CATALOGO.md`):
   el punto de control entre lo que los productores aceptaron, lo que está físicamente en CTCx y lo que se ofrece. Recibe las dos

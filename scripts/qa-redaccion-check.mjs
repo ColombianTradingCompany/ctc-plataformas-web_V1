@@ -7,7 +7,7 @@
 // (las costuras que un refactor desharía sin que fallara ningún tipo).
 
 import { readFileSync } from "node:fs";
-import { parseFeed, pasaFiltroCafe, normalizaParaFiltro } from "../src/lib/coffeed/feeds.ts";
+import { esTitularDelCafe, parseFeed, pasaFiltroCafe, normalizaParaFiltro } from "../src/lib/coffeed/feeds.ts";
 
 let ok = 0;
 const fallos = [];
@@ -23,6 +23,32 @@ check("la reforma pensional NO pasa", !pasaFiltroCafe("Reforma pensional: lo que
 check("las tildes no esconden nada", pasaFiltroCafe("CAFÉ: exportaciones récord", kw));
 check("sin keywords pasa todo (medios 100% cafeteros)", pasaFiltroCafe("cualquier cosa", null));
 check("normaliza: minúsculas y sin tildes", normalizaParaFiltro("CAFÉ Caficultón") === "cafe caficulton");
+
+// ── 1b. El ticker de CTC: solo titulares del café (V5.200, owner 2026-10-10) ─
+// El ticker de la portada publica sin mirada humana: a un medio generalista se le exige, además del filtro de la Redacción, una
+// palabra que SOLO hable de café, entera. Casos reales del tipo que se colaba («enfocando las fuentes», pidió el owner).
+check("ticker · pasan los titulares del café (café, caficultores, FNC, cafeteras, arábica, Federación)", [
+  "Precio interno del café sube 3 % en la semana",
+  "Caficultores del Huila reciben apoyo para renovar",
+  "La FNC anuncia ajustes en la garantía de compra",
+  "Exportaciones cafeteras crecen en septiembre",
+  "El arábica cierra al alza en Nueva York",
+  "Federación Nacional de Cafeteros presenta su informe",
+].every(esTitularDelCafe));
+check("ticker · NO pasan los que la Redacción dejaría pasar por subcadena (robusta, cosecha, Cafesalud, cafetería) ni los ajenos", [
+  "La economía colombiana se mantiene robusta",
+  "Récord en la cosecha de arroz del Tolima",
+  "Supersalud ordena la liquidación de Cafesalud",
+  "Abren una cafetería en el centro comercial",
+  "El dólar cierra a la baja",
+  "Reforma pensional: lo que viene en el Congreso",
+].every((x) => !esTitularDelCafe(x)));
+{
+  const ticker = lee("src/lib/market/ticker.ts").replace(/\r\n/g, "\n");
+  check("ticker · lee las palabras clave de cada medio", ticker.includes('.select("name, feed_url, keywords")'));
+  check("ticker · a un medio generalista le aplica los DOS filtros, antes de cortar en tres", ticker.includes("const generalista = Array.isArray(s.keywords) && s.keywords.length > 0;") && /\.filter\(\(i\) => !generalista \|\| \(pasaFiltroCafe\(i\.title, s\.keywords\) && esTitularDelCafe\(i\.title\)\)\)\n\s*\.slice\(0, 3\)/.test(ticker));
+  check("ticker · solo medios (no YouTube) aprobados y activos de la lista blanca", ticker.includes('.eq("list", "white")') && ticker.includes('.eq("status", "approved")') && ticker.includes('.eq("active", true)') && ticker.includes('.eq("kind", "outlet")'));
+}
 
 // ── 2. parseFeed sigue entendiendo RSS con fecha (fixture mínima real) ──────
 const rss = `<?xml version="1.0"?><rss><channel>

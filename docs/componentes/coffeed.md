@@ -77,6 +77,12 @@ formato toca el trigger, la action y el cliente a la vez — y las tres superfic
 
 ## Pendientes
 
+- **V5.200 · el ticker de la portada de CTC solo con noticias del café** (owner, 2026-10-10; ejecutado desde WRAP-COMMIT-PUSH). El
+  ticker (`src/lib/market/ticker.ts`, componente ctc-home) lee los medios de la lista blanca de Coffeed; desde aquí a un medio
+  generalista (el que tiene palabras clave) le aplica el filtro de la Redacción y además `esTitularDelCafe` (este módulo,
+  `lib/coffeed/feeds.ts`). Abierto, con dueño aquí: la bandeja de la Redacción sigue con el filtro por subcadena, que deja pasar
+  «robusta» y «cosecha» con otro sentido; como allí hay mirada humana no urge, pero quitar esas dos palabras de las fuentes
+  generalistas (en el ECP) o usar el filtro estricto también allí es una decisión del owner.
 - **V5.179 · `claude.ts` acepta `webSearchDirecto`** (opt-in, lo usa el agente del PVC): la búsqueda web con `allowed_callers: ["direct"]`. Los usos de Coffeed/Datawave/RT-Scriptor no cambian; valdría probarlo en ellos (el modo por defecto, «programmatic tool calling», fue lo que hizo lento al agente y Haiku 4.5 no lo soporta).
 - **La primera generación real de Redacción** (falló por credenciales en V5.10 — `CLAVES_IA_Y_COSTE.md`)
   y **el escenario de Make** colgado de `coffeed.redaccion.post_creado` (owner).

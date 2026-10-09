@@ -19,6 +19,20 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.200] — 2026-10-10 (commit pendiente)
+
+- **Corregido**: el **ticker de noticias de la portada de CTC** mostraba temas que no son del café (owner, 2026-10-10). La causa: tomaba
+  los tres últimos titulares de cada medio aprobado SIN el filtro de café que sí usa la Redacción de Coffeed, y desde el 2026-08-20 la
+  lista blanca incluye medios generalistas (El Espectador, El Tiempo · Economía, La República · Globoeconomía, Agronegocios): su
+  portada entraba entera. Ahora un medio generalista solo da sus titulares del café; los medios 100 % cafeteros (Daily Coffee News,
+  Global Coffee Report, Perfect Daily Grind, SCA News) siguen enteros. Probado con los titulares reales del día: de los cuatro
+  generalistas solo pasaron las dos noticias cafeteras de Agronegocios.
+- **Añadido**: `esTitularDelCafe` (`lib/coffeed/feeds.ts`): para un titular que se publica sin mirada humana, además del filtro de la
+  Redacción, una palabra que SOLO hable de café y entera («una economía robusta», «la cosecha de arroz», «Cafesalud» o «cafetería» no
+  pasan).
+- **Seguridad**: `qa-redaccion` (+5): titulares reales que deben pasar y que no, y que el ticker lea las palabras clave y aplique los
+  dos filtros antes de cortar.
+
 ## [V5.199] — 2026-10-10 (commit 57d8d46)
 
 - **Añadido**: **«Find my Lot» en las páginas de CTC, Kaffetal Regal y Cherry Picked** (owner, 2026-10-10): el pie del bloque del

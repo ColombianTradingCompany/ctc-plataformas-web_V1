@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { parseFeed } from "@/lib/coffeed/feeds";
+import { esTitularDelCafe, parseFeed, pasaFiltroCafe } from "@/lib/coffeed/feeds";
 
 // ── La cinta de mercado de ctcexport.com ─────────────────────────────────────
 // Lo que corre bajo el hero: las referencias que cualquiera del oficio mira por
@@ -16,7 +16,9 @@ import { parseFeed } from "@/lib/coffeed/feeds";
 //     Federación desde aquí: la lectura del día ya está en casa.
 //   · Titulares → los medios aprobados de Coffeed que tienen feed resuelto. Se
 //     reusa el `parseFeed` del barrido; el owner los administra en el ECP y la
-//     cinta se entera sola.
+//     cinta se entera sola. V5.200: de un medio GENERALISTA (el que trae palabras
+//     clave) solo salen los titulares del café: los que pasan el filtro de la
+//     Redacción Y el estricto del ticker (`esTitularDelCafe`, `coffeed/feeds.ts`).
 //
 // El coste se paga UNA vez cada cuarto de hora, no una vez por visita: las
 // llamadas de red van por la caché de datos de Next (`next.revalidate`).
@@ -182,14 +184,14 @@ async function coffeeNews(limit: number): Promise<TickerNews[]> {
     const service = createServiceRoleClient();
     const { data } = await service
       .from("coffeed_sources")
-      .select("name, feed_url")
+      .select("name, feed_url, keywords")
       .eq("list", "white")
       .eq("status", "approved")
       .eq("active", true)
       .eq("kind", "outlet")
       .not("feed_url", "is", null)
       .limit(8);
-    const sources = (data ?? []) as { name: string; feed_url: string }[];
+    const sources = (data ?? []) as { name: string; feed_url: string; keywords: string[] | null }[];
     if (!sources.length) return [];
 
     const perSource = await Promise.all(
@@ -203,9 +205,14 @@ async function coffeeNews(limit: number): Promise<TickerNews[]> {
             next: { revalidate: TTL_NEWS },
           });
           if (!res.ok) return [];
+          // V5.200: un medio generalista solo da sus titulares DEL CAFÉ (los dos
+          // filtros); uno 100 % cafetero, todos. Se filtra ANTES de cortar, para que
+          // el filtro tenga de dónde escoger en la portada entera del diario.
+          const generalista = Array.isArray(s.keywords) && s.keywords.length > 0;
           // Tres por medio como mucho: sin este tope, un medio que publica diez
           // veces al día se queda con la cinta entera.
           return parseFeed(await res.text())
+            .filter((i) => !generalista || (pasaFiltroCafe(i.title, s.keywords) && esTitularDelCafe(i.title)))
             .slice(0, 3)
             .map((i) => ({
               id: `${s.name}:${i.url}`,

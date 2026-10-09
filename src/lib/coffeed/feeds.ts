@@ -159,3 +159,24 @@ export function pasaFiltroCafe(titulo: string, keywords: readonly string[] | nul
   const t = normalizaParaFiltro(titulo);
   return keywords.some((k) => t.includes(normalizaParaFiltro(k)));
 }
+
+// ── V5.200 (owner, 2026-10-10) · el filtro ESTRICTO del ticker de CTC ───────
+// «Corrección de banner de tickers en CTCx: por alguna razón las noticias
+// empezaron a mostrar temas que no están relacionados a la industria del café
+// […]. Arregla esto enfocando las fuentes.» El ticker de la portada tomaba los
+// tres últimos titulares de cada medio aprobado SIN el filtro de arriba, y desde
+// el 2026-08-20 la lista blanca incluye medios generalistas (El Espectador, El
+// Tiempo, La República, Agronegocios): su portada entraba entera. Y el filtro por
+// SUBCADENA de la Redacción —pensado para una bandeja que alguien revisa— deja
+// pasar palabras con otro sentido en un diario: «una economía robusta», «la
+// cosecha de arroz», «Cafesalud». Un titular del ticker se publica SIN mirada
+// humana, así que a un medio generalista se le exige además una palabra que solo
+// hable de café, ENTERA. Los medios 100 % cafeteros (sin palabras clave) no pasan
+// por aquí.
+const PALABRAS_DEL_CAFE =
+  /\b(?:cafe|cafes|cafetal|cafetales|cafeter[oa]s?|cafeticultor\w*|caficult\w*|coffee|kaffee|arabica|arabicas|espresso|baristas?|federacion nacional de cafeteros|fnc)\b/;
+
+/** ¿Habla el titular del café, con una palabra entera que no tiene otro sentido? (Minúsculas y sin tildes, como el filtro de arriba.) */
+export function esTitularDelCafe(titulo: string): boolean {
+  return PALABRAS_DEL_CAFE.test(normalizaParaFiltro(titulo));
+}

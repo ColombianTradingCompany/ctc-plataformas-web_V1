@@ -38,7 +38,7 @@ export const dynamic = "force-dynamic";
 //
 // `force-dynamic` como en `/docs/ficha/[lotId]`: hoy hay cero lotes publicados,
 // no hay nada que cachear, y la palanca correcta el día que la haya es
-// `unstable_cache` + `revalidateTag` disparado desde `publishLot`, no
+// `unstable_cache` + `revalidateTag` disparado al declarar en el Triage (`declararEnCatalogo`, V5.196), no
 // `revalidate` (que aquí no cachearía nada: supabase-js no pasa por el `fetch`
 // de Next). Sin `generateStaticParams` — hornear la lista en el build la deja
 // vieja en cuanto se publica un lote.

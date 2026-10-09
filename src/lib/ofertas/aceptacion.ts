@@ -16,7 +16,6 @@ import { validarDeclaracion } from "@/lib/trato/minimos";
 import { plazoDelSaco } from "@/lib/trato/despachos";
 import { hoyEnColombia } from "@/lib/pvc/servicio";
 import { fechaParaElProductor } from "@/lib/trato/fechas";
-import { sincronizarListado } from "@/lib/trato/ventanaServidor";
 import { fleteDeLaFila } from "@/lib/trato/flete";
 import { condicionesDeFirma, type CondicionesDeFirma, type OfertaParaVentana } from "./ventanaDeOferta";
 
@@ -233,8 +232,8 @@ export async function crearContratoDeOferta(service: Servicio, a: Aceptable, n: 
     return { ok: false, message: `No se pudo crear el contrato${error?.code ? ` (código ${error.code})` : ""}. Intente de nuevo; si se repite, escríbale a CTCx con ese código.` };
   }
 
-  // V5.176: si el lote ya está publicado (una renovación), lo declarado entra a la vitrina de Cherry Picked.
-  if (cond) await sincronizarListado(service, offer.lot_id);
+  // V5.176–V5.195 lo declarado entraba solo a la vitrina (`sincronizarListado`). Desde la V5.196 entra cuando CTCx lo declara en el
+  // Triage de Catálogo Activo (`/ocp/contratos`), con su FOB mínimo: el contrato nuevo aparece allí como entrada por declarar.
   // V5.175: el SACO (primer contrato) o el ADELANTO (renovación) queda con su despacho: sale al cierre de la semana de firma.
   if (cond && cond.sacoKg > 0) {
     await service.from("contract_despachos").insert({

@@ -49,8 +49,8 @@ export async function signContract(
     .eq("id", contractId);
 
   // V5.84 (fase 7): la escalera 50/75/100 de `contract_releases` se retiró. El trato se lleva MES A MES en
-  // `contract_months` (pedir · enviar · pagar · retirar); `contract_releases` queda como espejo de cada envío para que
-  // `lot_listings.total_kg` (trigger `contract_releases_sync_listing_total`) y `publishLot` sigan leyendo lo mismo.
+  // `contract_months` (pedir · enviar · pagar · retirar); `contract_releases` queda como espejo de cada envío (la historia del
+  // trato mes a mes; desde la V5.196 el listado ya no lo lee: lo gobierna el Triage de Catálogo Activo y el trigger se retiró).
 
   // V5.97 (owner, 2026-09-30): la firma AVISA al productor — nota en su feed y correo por el remitente único (que filtra las
   // etiquetas de los desacoplados). El resultado del envío no se traga: queda en el rastro de la firma.
@@ -171,7 +171,7 @@ export async function registrarEnvioDelMes(contractId: string, mes: number, form
     ? await service.from("contract_months").update({ enviado_kg: kg, enviado_at: fecha }).eq("id", fila.id)
     : await service.from("contract_months").insert({ contract_id: contractId, mes, enviado_kg: kg, enviado_at: fecha });
   if (error) return { ok: false, error: "No se pudo registrar el envío: " + error.message };
-  // El espejo que lee el catálogo público (`lot_listings.total_kg` por trigger) y la precondición de `publishLot`.
+  // El espejo de cada envío (historia). Hasta la V5.195 también movía `lot_listings.total_kg` por trigger; desde la V5.196 no.
   await service
     .from("contract_releases")
     .upsert({ contract_id: contractId, month_number: mes, max_release_pct: 100, released_kg: kg, released_at: fecha, shipped_at: fecha }, { onConflict: "contract_id,month_number" });

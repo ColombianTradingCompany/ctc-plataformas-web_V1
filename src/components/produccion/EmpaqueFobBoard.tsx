@@ -40,7 +40,8 @@ type Formulario = { modo: ModoId; destino: DestinoId; paletizar: boolean; v: Rec
 
 function aFormulario(p: ParametrosEmpaqueFob): Formulario {
   const v = {} as Record<CampoNumerico, string>;
-  for (const k of CAMPOS_NUMERICOS) v[k] = String(p[k]);
+  // Con COMA decimal: «597.444» se leería como 597 444 (el punto es de miles en `num`).
+  for (const k of CAMPOS_NUMERICOS) v[k] = String(p[k]).replace(".", ",");
   return { modo: p.modo, destino: p.destino, paletizar: p.paletizar, v };
 }
 
@@ -128,13 +129,13 @@ export function EmpaqueFobBoard({ trmVigente, edicionCodigo, referencias }: { tr
     setF((x) => {
       const d = parametrosDelModo(m);
       const v = { ...x.v };
-      for (const k of CLAVES_DEL_MODO) v[k] = String(d[k]);
+      for (const k of CLAVES_DEL_MODO) v[k] = String(d[k]).replace(".", ",");
       return { ...x, modo: m, v };
     });
   const cambiarDestino = (id: DestinoId) =>
     setF((x) => {
       const d = parametrosDelDestino(id);
-      return { ...x, destino: id, v: { ...x.v, costoViaje: String(d.costoViaje), kgPorViaje: String(d.kgPorViaje), terminalOrigen: String(d.terminalOrigen) } };
+      return { ...x, destino: id, v: { ...x.v, costoViaje: String(d.costoViaje).replace(".", ","), kgPorViaje: String(d.kgPorViaje).replace(".", ","), terminalOrigen: String(d.terminalOrigen).replace(".", ",") } };
     });
 
   function cargar(ref: ReferenciaEmpaque) {
@@ -257,7 +258,7 @@ export function EmpaqueFobBoard({ trmVigente, edicionCodigo, referencias }: { tr
             <small>
               COP por US$ · {trmVigente ? `la de la edición vigente del PVC${edicionCodigo ? ` (${edicionCodigo})` : ""}: ${n2(trmVigente)}` : `sin edición vigente del PVC: ${n2(TRM_DE_RESPALDO)} de respaldo`}
               {trmDistinta && trmVigente ? (
-                <> · <button type="button" className={e.enlace} onClick={() => setV("trm", String(trmVigente))}>usarla</button></>
+                <> · <button type="button" className={e.enlace} onClick={() => setV("trm", String(trmVigente).replace(".", ","))}>usarla</button></>
               ) : null}
             </small>
           </div>

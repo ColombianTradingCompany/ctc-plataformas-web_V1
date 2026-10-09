@@ -1,207 +1,144 @@
+import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { publishLot, unpublishListing } from "../catalogActions";
 import { ActionForm } from "@/components/panel/ActionForm";
+import { cargarTriage } from "@/lib/triage/servidor";
+import { TRIAGE_PATH } from "@/lib/triage/fobMinimo";
+import { archivarListado, editarListado } from "../catalogActions";
 import { CatalogoTabs } from "./CatalogoTabs";
 import styles from "@/components/panel/shared.module.css";
 
+// ── OCP · Catálogo · Catálogo Activo (V5.196) ──────────────────────────────────────────────────────────────────────────────────
+// Lo publicado. Desde la V5.196 un lote entra SOLO desde el Triage de Catálogo Activo (`/ocp/contratos`): su listado suma los kg de
+// VERDE declarados, su ANCLA es el mayor FOB mínimo de sus entradas y el precio de venta no baja de ella (lo cuida la base). Aquí se
+// edita lo comercial y se archiva lo que ya no tiene entradas. Un lote comprado en firme sale como CTCx Selection (la vitrina enseña
+// el perfil, no la finca). (Hasta la V5.195 esta página publicaba a mano: kg de CPS 1:1 y precio tecleado.)
+
+export const dynamic = "force-dynamic";
+
 const GRADE_LABEL: Record<string, string> = { black: "Black", red: "Red", blue: "Blue", gold: "Gold", tyrian: "Tyrian" };
 const STATUS_LABEL: Record<string, string> = { draft: "Borrador", published: "Publicado", sold_out: "Agotado", archived: "Archivado" };
+const usd = (v: number, d = 2) => `US$ ${new Intl.NumberFormat("es-CO", { minimumFractionDigits: d, maximumFractionDigits: d }).format(v)}`;
+const kg = (v: number) => new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 }).format(v);
 
-type GradedLot = { id: string; name: string; grade: string | null; fincas: { name: string } | null };
-type ContractInfo = { id: string; lot_id: string; status: string; quantity_frozen_kg: number; price_per_kg_locked: number | null; reference_price_snapshot: number | null };
-type ReleaseRow = { contract_id: string; released_kg: number | null; released_at: string | null };
-
-export default async function BcpCatalogoPage() {
+export default async function CatalogoActivoPage() {
   const service = createServiceRoleClient();
-
-  const [{ data: gradedLots }, { data: listedRows }, { data: listings }, { data: comprasRows }] = await Promise.all([
-    service.from("lots").select("id, name, grade, fincas(name)").eq("stage", "galardonado").neq("grade", "tyrian"),
-    service.from("lot_listings").select("lot_id"),
-    service
-      .from("lot_listings")
-      .select(
-        "id, lot_id, status, commercial_mode, unit_kg, moq_kg, total_kg, sold_kg, price_per_kg, arrival_date, lots(name, grade, public_code)"
-      )
-      .order("created_at", { ascending: false }),
-    // V5.85 (fase 8): los lotes comprados en firme se publican como CTCx Selection (la vitrina enseña el perfil, no la finca).
-    service.from("compras").select("lot_id"),
+  const [triage, { data: comprasRows }] = await Promise.all([
+    cargarTriage(service),
+    // V5.85 · V5.195: los lotes comprados en firme como CTCx Selection (no los sacos de un trato, que son solo stock).
+    service.from("compras").select("lot_id").eq("destino", "selection"),
   ]);
-  const compradoEnFirme = new Set(((comprasRows ?? []) as { lot_id: string }[]).map((c) => c.lot_id));
-
-  const listedSet = new Set((listedRows ?? []).map((r) => r.lot_id));
-  const unpublishedLots = ((gradedLots ?? []) as unknown as GradedLot[]).filter((l) => !listedSet.has(l.id));
-  const unpublishedIds = unpublishedLots.map((l) => l.id);
-
-  const [{ data: contracts }, { data: releases }] = await Promise.all([
-    unpublishedIds.length
-      ? service
-          .from("purchase_contracts")
-          .select("id, lot_id, status, quantity_frozen_kg, price_per_kg_locked, reference_price_snapshot")
-          .in("lot_id", unpublishedIds)
-      : Promise.resolve({ data: [] as ContractInfo[] }),
-    unpublishedIds.length
-      ? service.from("contract_releases").select("contract_id, released_kg, released_at")
-      : Promise.resolve({ data: [] as ReleaseRow[] }),
-  ]);
-
-  const contractByLotId = new Map(((contracts ?? []) as ContractInfo[]).map((c) => [c.lot_id, c]));
-  const releasedByContractId = new Map<string, number>();
-  for (const r of (releases ?? []) as ReleaseRow[]) {
-    if (!r.released_at) continue;
-    releasedByContractId.set(r.contract_id, (releasedByContractId.get(r.contract_id) ?? 0) + Number(r.released_kg ?? 0));
-  }
-
-  const readyToPublish: { lot: GradedLot; contract: ContractInfo; releasedSoFar: number }[] = [];
-  const awaitingContractOrRelease: { lot: GradedLot; contract: ContractInfo | undefined; releasedSoFar: number }[] = [];
-
-  for (const lot of unpublishedLots) {
-    const contract = contractByLotId.get(lot.id);
-    const releasedSoFar = contract ? releasedByContractId.get(contract.id) ?? 0 : 0;
-    // V5.85: un contrato CUMPLIDO también se publica (la compra en firme de 30 días queda completed al pagar su mes).
-    if (contract && (contract.status === "active" || contract.status === "completed") && releasedSoFar > 0) {
-      readyToPublish.push({ lot, contract, releasedSoFar });
-    } else {
-      awaitingContractOrRelease.push({ lot, contract, releasedSoFar });
-    }
-  }
+  const selection = new Set(((comprasRows ?? []) as { lot_id: string }[]).map((c) => c.lot_id));
+  const vivas = triage.declaraciones.filter((d) => d.viva);
+  const activos = triage.listados.filter((l) => l.status !== "archived");
+  const archivados = triage.listados.filter((l) => l.status === "archived");
 
   return (
     <div>
       <CatalogoTabs />
       <h1 className={styles.title}>Catálogo Activo</h1>
+      <p className={styles.subtitle}>
+        Lo que se ofrece en Cherry Picked, en kg de <b>verde</b>. Un lote entra desde el <Link href={TRIAGE_PATH}>Triage de Catálogo Activo</Link> con su
+        FOB mínimo: el mayor de sus entradas es el <b>ancla</b> y el precio de venta no baja de ella. Aquí se edita lo comercial; las entradas se
+        declaran, corrigen y retiran en el Triage.
+      </p>
 
-      <h3 style={{ marginTop: 8 }}>Listos para publicar</h3>
-      <p className={styles.meta}>Contrato firmado (activo o cumplido) con al menos un envío registrado. Un lote comprado en firme sale como CTCx Selection.</p>
-      {!readyToPublish.length && <p className={styles.empty}>Ningún lote listo todavía.</p>}
-      <div className={styles.list}>
-        {readyToPublish.map(({ lot, contract, releasedSoFar }) => (
-          <details className={styles.card} key={lot.id}>
-            <summary style={{ cursor: "pointer" }}>
-              <b>{lot.name}</b>{" "}
-              <span className={styles.meta}>
-                {lot.fincas?.name ?? "—"} ·{" "}
-                <span className={styles.badge}>{GRADE_LABEL[lot.grade ?? ""] ?? lot.grade}</span>
-                {compradoEnFirme.has(lot.id) && <> <span className={styles.badgeGood}>CTCx Selection</span></>}
-              </span>
-            </summary>
-            <p className={styles.meta} style={{ marginTop: 10 }}>
-              Congelado: <b>{contract.quantity_frozen_kg} kg</b> · Liberado hasta ahora: <b>{releasedSoFar} kg</b> — esto será el total
-              publicado · Precio pactado con el productor: <b>${contract.price_per_kg_locked ?? "—"}/kg</b>
-              {contract.reference_price_snapshot != null && <> (referencia del día: ${contract.reference_price_snapshot}/kg)</>}
-            </p>
-            <ActionForm
-              action={publishLot}
-              submitLabel="Publicar en Cherry Picked"
-              pendingLabel="Publicando…"
-              buttonClassName="btn btn-solid"
-              style={{ marginTop: 12 }}
-            >
-              <input type="hidden" name="lot_id" value={lot.id} />
-              <div className={styles.formGrid}>
-                <div className={styles.field}>
-                  <label htmlFor={`mode-${lot.id}`}>Modalidad</label>
-                  <select id={`mode-${lot.id}`} name="commercial_mode" required defaultValue={lot.grade === "black" ? "spot" : "pre"}>
-                    <option value="spot">Spot (inventario disponible)</option>
-                    <option value="pre">Pre-venta (mitaca)</option>
-                  </select>
-                </div>
-                <div className={styles.field}>
-                  <label htmlFor={`unit-${lot.id}`}>Unidad de compra (kg)</label>
-                  <input id={`unit-${lot.id}`} name="unit_kg" type="number" step="0.1" required />
-                </div>
-                <div className={styles.field}>
-                  <label htmlFor={`moq-${lot.id}`}>MOQ (kg)</label>
-                  <input id={`moq-${lot.id}`} name="moq_kg" type="number" step="0.1" required />
-                </div>
-                <div className={styles.field}>
-                  <label htmlFor={`price-${lot.id}`}>Precio de venta (US$/kg)</label>
-                  <input id={`price-${lot.id}`} name="price_per_kg" type="number" step="0.01" required />
-                </div>
-                <div className={styles.field}>
-                  <label htmlFor={`deposit-${lot.id}`}>Depósito pre-venta (%)</label>
-                  <input id={`deposit-${lot.id}`} name="deposit_pct" type="number" defaultValue={30} />
-                </div>
-                <div className={styles.field}>
-                  <label htmlFor={`arrival-${lot.id}`}>Fecha de llegada</label>
-                  <input id={`arrival-${lot.id}`} name="arrival_date" type="date" />
-                </div>
-              </div>
-              <label className={styles.field} style={{ display: "flex", alignItems: "center", gap: 8, flexDirection: "row" }}>
-                <input type="checkbox" name="transparency_credit_enabled" value="true" />
-                Activar Transparency Credit (muestra el precio pactado con el productor frente al de referencia, en la página pública del lote)
-              </label>
-            </ActionForm>
-          </details>
-        ))}
-      </div>
+      {activos.length === 0 ? (
+        <p className={styles.empty}>
+          Nada publicado todavía. Se publica declarando café en el <Link href={TRIAGE_PATH}>Triage</Link>.
+        </p>
+      ) : (
+        <div className={styles.list}>
+          {activos.map((l) => {
+            const entradas = vivas.filter((d) => d.listingId === l.id);
+            return (
+              <details className={styles.card} key={l.id} style={{ display: "block" }}>
+                <summary style={{ cursor: "pointer" }}>
+                  <b>{l.lotName}</b>{" "}
+                  <span className={styles.meta}>
+                    <span className={styles.badge}>{GRADE_LABEL[l.grade ?? ""] ?? l.grade}</span>{" "}
+                    {selection.has(l.lotId) && <><span className={styles.badgeGood}>CTCx Selection</span> </>}
+                    <span className={styles.badge}>{STATUS_LABEL[l.status] ?? l.status}</span> · {l.modo} · {kg(l.vendidoKg)}/{kg(l.totalKg)} kg vendidos · {usd(l.precioUsdKg)}/kg
+                    {l.anclaUsdKg != null && <> · ancla {usd(l.anclaUsdKg, 3)}/kg</>}
+                    {l.publicCode && <> · <code>{l.publicCode}</code></>}
+                  </span>
+                </summary>
 
-      <h3 style={{ marginTop: 32 }}>Esperando liberación</h3>
-      <p className={styles.meta}>Lotes galardonados sin contrato firmado, o con contrato firmado pero sin ningún envío registrado todavía.</p>
-      {!awaitingContractOrRelease.length && <p className={styles.empty}>Nada pendiente aquí.</p>}
-      <div className={styles.list}>
-        {awaitingContractOrRelease.map(({ lot, contract }) => (
-          <div className={styles.card} key={lot.id}>
-            <div>
-              <h3>{lot.name}</h3>
-              <p className={styles.meta}>
-                {lot.fincas?.name ?? "—"} ·{" "}
-                <span className={styles.badge}>{GRADE_LABEL[lot.grade ?? ""] ?? lot.grade}</span> ·{" "}
-                {!contract
-                  ? "sin contrato firmado"
-                  : contract.status === "pending_signature"
-                    ? "contrato por firmar"
-                    : contract.status !== "active" && contract.status !== "completed"
-                      ? `contrato ${contract.status}`
-                      : "contrato firmado, sin envío registrado"}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <h3 style={{ marginTop: 32 }}>Publicaciones</h3>
-      {!listings?.length && <p className={styles.empty}>Nada publicado todavía.</p>}
-      <div className={styles.list}>
-        {listings?.map((l) => {
-          const lot = l.lots as unknown as { name: string; grade: string; public_code: string | null } | null;
-          return (
-            <div className={styles.card} key={l.id}>
-              <div>
-                <h3>{lot?.name ?? "—"}</h3>
-                <p className={styles.meta}>
-                  <span className={styles.badge}>{GRADE_LABEL[lot?.grade ?? ""] ?? lot?.grade}</span>{" "}
-                  {compradoEnFirme.has(l.lot_id) && <><span className={styles.badgeGood}>CTCx Selection</span> </>}·{" "}
-                  <span className={styles.badge}>{STATUS_LABEL[l.status]}</span> · {l.commercial_mode} · {l.sold_kg}/{l.total_kg} kg
-                  vendidos · US${l.price_per_kg}/kg
-                  {/* El código público del lote (V5.48): lo que el comprador
-                      teclea en «Find my Lot» y lo que va impreso en la bolsa.
-                      Se acuña al publicar, así que aquí nunca falta; en <code>
-                      y no en un `badge` porque ese pill es para ESTADOS. */}
-                  {lot?.public_code && (
-                    <>
-                      {" · "}
-                      <code>{lot.public_code}</code>
-                    </>
+                <div className={styles.meta} style={{ marginTop: 10 }}>
+                  {entradas.length === 0 ? (
+                    "Sin entradas vivas."
+                  ) : (
+                    <ul style={{ margin: "4px 0 0", paddingLeft: 18 }}>
+                      {entradas.map((d) => (
+                        <li key={d.id}>
+                          {d.codigo} · {d.tipo === "contrato" ? "contrato" : `stock ${d.partidaCodigo ?? ""}`} · {kg(d.kgVerde)} kg de verde · FOB mínimo {usd(d.fobUsdKg, 3)}/kg
+                        </li>
+                      ))}
+                    </ul>
                   )}
-                </p>
+                </div>
+
+                <ActionForm action={editarListado.bind(null, l.id)} submitLabel="Guardar lo comercial" pendingLabel="Guardando…" buttonClassName="btn btn-sm btn-solid" style={{ marginTop: 12 }}>
+                  <div className={styles.formGrid}>
+                    <div className={styles.field}>
+                      <label htmlFor={`price-${l.id}`}>Precio de venta (US$/kg de verde)</label>
+                      <input id={`price-${l.id}`} name="price_per_kg" type="number" step="0.01" min={l.anclaUsdKg ?? 0} defaultValue={l.precioUsdKg} required />
+                    </div>
+                    <div className={styles.field}>
+                      <label htmlFor={`mode-${l.id}`}>Modalidad</label>
+                      <select id={`mode-${l.id}`} name="commercial_mode" defaultValue={l.modo}>
+                        <option value="spot">Spot (inventario disponible)</option>
+                        <option value="pre">Pre-venta</option>
+                      </select>
+                    </div>
+                    <div className={styles.field}>
+                      <label htmlFor={`unit-${l.id}`}>Unidad de compra (kg)</label>
+                      <input id={`unit-${l.id}`} name="unit_kg" type="number" step="0.1" defaultValue={l.unidadKg} required />
+                    </div>
+                    <div className={styles.field}>
+                      <label htmlFor={`moq-${l.id}`}>MOQ (kg)</label>
+                      <input id={`moq-${l.id}`} name="moq_kg" type="number" step="0.1" defaultValue={l.moqKg} required />
+                    </div>
+                    <div className={styles.field}>
+                      <label htmlFor={`deposit-${l.id}`}>Depósito pre-venta (%)</label>
+                      <input id={`deposit-${l.id}`} name="deposit_pct" type="number" defaultValue={l.depositoPct} />
+                    </div>
+                    <div className={styles.field}>
+                      <label htmlFor={`arrival-${l.id}`}>Fecha de llegada</label>
+                      <input id={`arrival-${l.id}`} name="arrival_date" type="date" defaultValue={l.llegada ?? ""} />
+                    </div>
+                  </div>
+                  <label className={styles.field} style={{ display: "flex", alignItems: "center", gap: 8, flexDirection: "row" }}>
+                    <input type="checkbox" name="transparency_credit_enabled" value="true" defaultChecked={l.creditoTransparencia} />
+                    Activar Transparency Credit (muestra el precio pactado con el productor frente al de referencia, en la página pública del lote)
+                  </label>
+                </ActionForm>
+                {entradas.length === 0 && (
+                  <ActionForm action={archivarListado.bind(null, l.id)} submitLabel="Archivar" pendingLabel="Archivando…" buttonClassName="btn btn-sm" style={{ marginTop: 8 }} />
+                )}
+              </details>
+            );
+          })}
+        </div>
+      )}
+
+      {archivados.length > 0 && (
+        <>
+          <h3 style={{ marginTop: 32 }}>Archivados ({archivados.length})</h3>
+          <div className={styles.list}>
+            {archivados.map((l) => (
+              <div className={styles.card} key={l.id}>
+                <div>
+                  <h3>{l.lotName}</h3>
+                  <p className={styles.meta}>
+                    <span className={styles.badge}>{GRADE_LABEL[l.grade ?? ""] ?? l.grade}</span> · {kg(l.vendidoKg)} kg vendidos · {usd(l.precioUsdKg)}/kg
+                    {l.publicCode && <> · <code>{l.publicCode}</code></>} · vuelve a publicarse declarando en el Triage
+                  </p>
+                </div>
               </div>
-              {l.status !== "archived" && (
-                <form
-                  action={async () => {
-                    "use server";
-                    await unpublishListing(l.id);
-                  }}
-                  className={styles.actions}
-                >
-                  <button className="btn btn-sm" type="submit">
-                    Archivar
-                  </button>
-                </form>
-              )}
-            </div>
-          );
-        })}
-      </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

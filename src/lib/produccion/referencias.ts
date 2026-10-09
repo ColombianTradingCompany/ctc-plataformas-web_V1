@@ -24,6 +24,8 @@ export type ReferenciaEmpaque = {
   estado: "vigente" | "retirada";
   parametros: ParametrosEmpaqueFob;
   avisos: string[];
+  /** COP y US$ por kg de cada sección (empaque · paletizado · transporte · tramites), tal como se guardó. */
+  secciones: { clave: string; copKg: number; usdKg: number }[];
   creadaEl: string;
   retiradaEl: string | null;
   motivoRetiro: string | null;
@@ -51,7 +53,10 @@ export type FilaReferencia = {
 
 export function filaAReferencia(r: FilaReferencia): ReferenciaEmpaque {
   const destino = destinoDe(r.destino);
-  const resultado = (r.resultado && typeof r.resultado === "object" ? r.resultado : {}) as { avisos?: unknown };
+  const resultado = (r.resultado && typeof r.resultado === "object" ? r.resultado : {}) as { avisos?: unknown; secciones?: unknown };
+  const secciones = Array.isArray(resultado.secciones)
+    ? (resultado.secciones as { clave?: unknown; copKg?: unknown; usdKg?: unknown }[]).map((x) => ({ clave: String(x.clave ?? ""), copKg: Number(x.copKg) || 0, usdKg: Number(x.usdKg) || 0 }))
+    : [];
   return {
     id: r.id,
     codigo: r.codigo,
@@ -68,6 +73,7 @@ export function filaAReferencia(r: FilaReferencia): ReferenciaEmpaque {
     estado: r.estado === "retirada" ? "retirada" : "vigente",
     parametros: normalizaParametros(r.parametros),
     avisos: Array.isArray(resultado.avisos) ? resultado.avisos.filter((a): a is string => typeof a === "string") : [],
+    secciones,
     creadaEl: r.created_at,
     retiradaEl: r.retirada_at,
     motivoRetiro: r.retirada_motivo,

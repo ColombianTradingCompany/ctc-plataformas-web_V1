@@ -19,6 +19,38 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.196] — 2026-10-09 (commit pendiente)
+
+- **Hito**: **«Ofertas CP Aceptadas» es el Triage de Catálogo Activo** (owner, 2026-10-09; tanda C de `docs/PLAN_TRIAGE_CATALOGO.md`):
+  el punto de control entre lo que los productores aceptaron, lo que está físicamente en CTCx y lo que se ofrece. Recibe las dos
+  entradas —los tratos por ventana vigentes (lo declarado menos lo retirado, en kg de CPS) y las partidas libres del Stock CTCx—, y
+  cada una se corrige o se acepta y se declara en el Catálogo Activo con su **FOB mínimo** = (café + Empacado hasta FOB) × (1 + O&P de
+  CTCx), en COP y en US$ por kg de verde, desglosado en vivo. Al lado, exhibido y sin gobernar, el N2 de su banda en el PVC vigente.
+- **Añadido**: el **ancla** de cada lote: el mayor FOB mínimo de sus declaraciones. El precio de venta **no puede bajar de ella** (lo
+  cuida la base) y, si una declaración nueva lo deja por debajo, sube solo al ancla redondeada a US$ 0,05. Declarar el primer café de
+  un lote crea su listado y lo publica (con su código público), con la bolsa del modelo (6 kg) y el MOQ de su banda.
+- **Añadido**: los **ajustes del triage** —el O&P de CTCx y la trilla por defecto—, que escribe un colaborador con nivel para emitir y
+  que viven SOLO en la base (`platform_settings`); cada declaración guarda los suyos.
+- **Cambiado**: el **listado lo gobiernan las declaraciones**: `total_kg` son kg de **verde** declarados (hasta aquí eran kg de CPS
+  copiados 1:1). Un retiro del productor o un contrato cancelado ya no tocan el listado: el Triage marca en rojo lo «declarado de más» o
+  el «contrato no vigente», y CTCx lo corrige (corregir = retirar y declarar en una sola operación). Sin declaraciones vivas, el listado
+  se archiva.
+- **Cambiado**: el **Catálogo Activo** ya no publica a mano: enseña cada listado con sus entradas y su ancla, edita lo comercial
+  (precio ≥ ancla, unidad, MOQ, depósito, llegada, modalidad, crédito de transparencia) y archiva lo que no tiene entradas. «Oferta desde
+  CTCx Selection» y el detalle de un contrato mandan a declarar en el Triage; la lista de contratos por estado vive en
+  `/ocp/contratos/lista` (un enlace viejo con `?status=` llega allí).
+- **Retirado**: `publishLot` (kg de CPS 1:1 y precio tecleado sin costo ni FOB), `sincronizarListado`, `totalEnVentaPorVentanas` y el
+  trigger `contract_releases_sync_listing_total` con su función.
+- **Corregido**: un valor por defecto con tres decimales en una casilla («597.444») se leía como miles (597 444) en el Stock CTCx, el
+  Empacado hasta FOB y el Triage: los valores por defecto se escriben ahora con coma decimal.
+- **Datos**: tabla nueva `catalogo_fuentes` (CF-AAAA-NNNN: cada declaración con su cuenta congelada; una viva por contrato y por
+  partida; se retira, no se edita); funciones `triage_declarar`, `triage_retirar`, `triage_recalcular_listado`, `triage_ancla_usd`,
+  `contrato_base_kg`; la compuerta `guard_listing_ancla`. El FOB mínimo NO es una columna de `lot_listings` (esa tabla la lee
+  cualquiera). El Stock CTCx descuenta lo declarado; el borrado nuclear suma su séptimo bloqueo. Probado en la base de producción con
+  uno de los contratos reales dentro de transacciones revertidas; ninguna fila quedó.
+- **Seguridad**: guardián nuevo `qa-triage-catalogo` (46: la cuenta con un O&P ficticio, la base, la confidencialidad del O&P, las
+  acciones, las pantallas; siete mutaciones, todas muerden). Puestos al día: `qa-compras` 109, `qa-ciclos` 146. La batería pasa a 72.
+
 ## [V5.195] — 2026-10-09 (commit f520178)
 
 - **Añadido**: **el Stock CTCx** (OCP · Manejo de Stock Físico, `/ocp/stock`; owner, 2026-10-09; tanda B de

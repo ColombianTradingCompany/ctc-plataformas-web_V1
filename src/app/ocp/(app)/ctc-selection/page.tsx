@@ -82,9 +82,11 @@ export default async function OfertaDesdeCtcxSelectionPage() {
     const compradoKg = n1(filas.reduce((a, c) => a + Number(c.kg), 0));
     const copPagado = Math.round(filas.filter((c) => c.pagada_at).reduce((a, c) => a + Number(c.total_cop), 0));
     const listing = listingByLot.get(id);
+    // V5.196: el listado va en kg de VERDE (lo declara el Triage) y la compra en kg de CPS: lo vendido ya no se resta de lo comprado.
+    // Lo libre de esta compra es lo que no está en mezclas; lo que queda físicamente, partida a partida, lo dice el Stock CTCx.
     const vendidoKg = n1(listing?.sold_kg);
     const asignadoKg = n1(filas.reduce((a, c) => a + (asignadoByCompra.get(c.id) ?? 0), 0));
-    return { id, lot, grado: filas[0].grado, filas, compradoKg, copPagado, listing, vendidoKg, asignadoKg, disponibleKg: disponibleKg({ compradoKg, vendidoKg, asignadoKg }), imagen: imagenByLot.get(id) };
+    return { id, lot, grado: filas[0].grado, filas, compradoKg, copPagado, listing, vendidoKg, asignadoKg, disponibleKg: disponibleKg({ compradoKg, vendidoKg: 0, asignadoKg }), imagen: imagenByLot.get(id) };
   });
   const kgDisponibles = n1(porLote.reduce((a, l) => a + l.disponibleKg, 0));
   const kgVendidos = n1(porLote.reduce((a, l) => a + l.vendidoKg, 0));
@@ -93,8 +95,8 @@ export default async function OfertaDesdeCtcxSelectionPage() {
   const kpis = [
     { k: "Lotes comprados en firme", v: String(resumen.lotes), sub: `${resumen.compras} compra${resumen.compras === 1 ? "" : "s"}` },
     { k: "Kg comprados (CPS)", v: String(resumen.kgComprados), sub: `${resumen.kgRecibidos} kg recibidos` },
-    { k: "Disponible para ofrecer", v: `${kgDisponibles} kg`, sub: "comprado − en mezclas − vendido (derivado)" },
-    { k: "En el Catálogo Activo", v: String(publicados), sub: `${kgVendidos} kg vendidos en Cherry Picked` },
+    { k: "Sin asignar a mezclas", v: `${kgDisponibles} kg`, sub: "kg de CPS comprados − en mezclas (lo físico: Stock CTCx)" },
+    { k: "En el Catálogo Activo", v: String(publicados), sub: `${kgVendidos} kg de verde vendidos en Cherry Picked` },
     { k: "Pagado a productores", v: formatCop(resumen.copPagado), sub: "compras pagadas" },
   ];
 
@@ -102,8 +104,9 @@ export default async function OfertaDesdeCtcxSelectionPage() {
     <div>
       <h1 className={styles.title}>Oferta desde CTCx Selection</h1>
       <p className={styles.subtitle}>
-        Lo que CTCx <b>compró en firme con destino CTCx Selection</b> —documentado en <Link href="/ocp/compras">Adquisición de Stock</Link>— y cuánto de eso pasa al{" "}
-        <b>Catálogo Activo</b> como disponibilidad, en los mismos términos que cualquier productor. La vitrina enseña el perfil de CTCx
+        Lo que CTCx <b>compró en firme como CTCx Selection</b> —documentado en <Link href="/ocp/compras">Adquisición de Stock</Link>— y cuánto de eso está en el{" "}
+        <b>Catálogo Activo</b>: lo comprado entra al <Link href="/ocp/stock">Stock CTCx</Link> y desde allí se declara en el{" "}
+        <Link href="/ocp/contratos">Triage de Catálogo Activo</Link>, con su FOB mínimo, en los mismos términos que cualquier productor. La vitrina enseña el perfil de CTCx
         Selection en vez de la finca; el registro (pasaporte, ficha, rastro EUDR) conserva la finca real.
       </p>
       <p className={styles.meta} style={{ marginBottom: 18 }}>
@@ -187,15 +190,15 @@ export default async function OfertaDesdeCtcxSelectionPage() {
                   Catálogo Activo:{" "}
                   {l.listing ? (
                     <>
-                      <span className={l.listing.status === "published" ? styles.badgeGood : styles.badge}>{l.listing.status}</span> · {l.vendidoKg} / {n1(l.listing.total_kg)} kg
+                      <span className={l.listing.status === "published" ? styles.badgeGood : styles.badge}>{l.listing.status}</span> · {l.vendidoKg} / {n1(l.listing.total_kg)} kg de verde
                       vendidos{l.listing.price_per_kg != null && <> · US${Number(l.listing.price_per_kg)}/kg</>} · <Link href="/ocp/catalogo">ver en Catálogo</Link>
                     </>
                   ) : (
                     <>
-                      sin publicar — <Link href="/ocp/catalogo">Pasar al Catálogo Activo →</Link>
+                      sin publicar — <Link href="/ocp/contratos">Declarar en el Triage →</Link>
                     </>
                   )}{" "}
-                  {l.asignadoKg > 0 && <> · en mezclas {l.asignadoKg} kg</>} · <b>disponible {l.disponibleKg} kg</b>
+                  {l.asignadoKg > 0 && <> · en mezclas {l.asignadoKg} kg</>} · <b>sin asignar a mezclas {l.disponibleKg} kg de CPS</b>
                 </p>
                 <div style={{ marginTop: 10 }}>
                   <ImagenCtcxUploader destino={{ tipo: "lote", lotId: l.id }} imagenUrl={urlDeImagenCtcx(l.imagen?.imagen_path)} alt={l.imagen?.imagen_alt} etiqueta="Imagen de este lote en la vitrina (opcional)" />

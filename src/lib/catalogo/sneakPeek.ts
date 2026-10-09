@@ -34,8 +34,8 @@ import { aPerfilCtcx, rotuloCtcx, urlDeImagenCtcx, PERFIL_CTCX_SELECT, VISTA_PER
  *  ninguno de los dos. */
 export type SneakPeekLang = "es" | "en" | "de";
 
-/** Tyrian queda fuera por definición: es solo de subasta y `publishLot` lo
- *  rechaza en el catálogo, así que no puede aparecer en un teaser del catálogo. */
+/** Tyrian queda fuera por definición: es solo de subasta y el Triage de Catálogo Activo
+ *  lo rechaza (`triage_declarar`, V5.196), así que no puede aparecer en un teaser del catálogo. */
 export type SneakPeekGrade = Exclude<GradoId, "tyrian">;
 
 // Los diez atributos viven en `atributosSca.ts`, SIN `server-only`, para que un

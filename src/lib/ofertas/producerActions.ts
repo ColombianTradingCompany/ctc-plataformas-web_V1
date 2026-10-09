@@ -13,7 +13,6 @@ import { plazoDelSaco } from "@/lib/trato/despachos";
 import { hoyEnColombia } from "@/lib/pvc/servicio";
 import { RETIRO_LIBRE_CICLO_PCT, RETIRO_LIBRE_EXTENDIDA_PCT } from "@/lib/trato/ventanas";
 import { condicionesDeFirma, disponibleDe, type CondicionesDeFirma, type OfertaParaVentana } from "./ventanaDeOferta";
-import { sincronizarListado } from "@/lib/trato/ventanaServidor";
 import { fleteDeLaFila } from "@/lib/trato/flete";
 import { guardarExistencia } from "@/lib/kaffetal/existencia";
 import { sendTransactionalEmail } from "@/lib/email/leadEmails";
@@ -364,7 +363,7 @@ export async function ratificarContrato(contractId: string, declaradoKg: number,
   }
   if (kg !== antesKg) {
     if (c.offer_id) await service.from("lot_offers").update({ locked_kg: kg }).eq("id", c.offer_id);
-    await sincronizarListado(service, c.lot_id);
+    // V5.196: lo declarado al Catálogo Activo lo gobierna el Triage (si queda de más, lo marca para corregir).
   }
   await service.from("audit_log").insert({
     entity_type: "purchase_contract",

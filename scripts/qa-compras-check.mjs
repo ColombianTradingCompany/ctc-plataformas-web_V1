@@ -147,10 +147,12 @@ const compras = lee("src/app/ocp/(app)/comprasActions.ts");
 // ── 9. Decisión 7: «Oferta desde CTCx Selection» es la disponibilidad; se publica desde un contrato cumplido ──
 {
   const pantalla = lee("src/app/ocp/(app)/ctc-selection/page.tsx");
-  check("«Oferta desde CTCx Selection» lee compras y deriva lo disponible con disponibleKg", pantalla.includes('from("compras")') && pantalla.includes("disponibleKg({") && pantalla.includes("Pasar al Catálogo Activo"));
+  check("«Oferta desde CTCx Selection» lee compras y deriva lo libre con disponibleKg; se publica declarando en el Triage (V5.196)", pantalla.includes('from("compras")') && pantalla.includes("disponibleKg({") && pantalla.includes("Declarar en el Triage") && pantalla.includes("disponibleKg({ compradoKg, vendidoKg: 0, asignadoKg })"));
   check("y edita el perfil único y la imagen por lote", pantalla.includes("guardarPerfilCtcx") && pantalla.includes('destino={{ tipo: "perfil" }}') && pantalla.includes('destino={{ tipo: "lote", lotId: l.id }}'));
-  check("publishLot admite un contrato cumplido (la compra de 30 días queda completed al pagar)", lee("src/app/ocp/(app)/catalogActions.ts").includes('.in("status", ["active", "completed"])'));
-  check("el Catálogo enseña «CTCx Selection» y acepta el contrato cumplido", lee("src/app/ocp/(app)/catalogo/page.tsx").includes('(contract.status === "active" || contract.status === "completed")') && lee("src/app/ocp/(app)/catalogo/page.tsx").includes("compradoEnFirme.has("));
+  // V5.196: publicar dejó de ser del Catálogo Activo — se declara en el Triage (`triage_declarar`); el Catálogo edita lo comercial.
+  const catAcc = lee("src/app/ocp/(app)/catalogActions.ts");
+  check("V5.196 · el Catálogo Activo ya no publica a mano (sin publishLot); edita lo comercial y archiva lo que no tiene entradas", !/export async function publishLot\(/.test(catAcc) && catAcc.includes("export async function editarListado(") && catAcc.includes("export async function archivarListado("));
+  check("el Catálogo enseña «CTCx Selection» (solo las compras de Selection) y edita cada listado con su ancla", lee("src/app/ocp/(app)/catalogo/page.tsx").includes('.eq("destino", "selection")') && lee("src/app/ocp/(app)/catalogo/page.tsx").includes("selection.has(l.lotId)") && lee("src/app/ocp/(app)/catalogo/page.tsx").includes("editarListado.bind(null, l.id)"));
   // (la ruta vieja no se escribe aquí: `qa-rutas-consolas` (c) barre también los scripts)
   check("la pestaña «Selección» dejó su talón (308)", /de: "\/ocp\/ctc-selection\/selecci[oó]n", a: "\/ocp\/ctc-selection", desde: "V5\.85"/.test(lee("src/lib/panel/rutasMovidas.ts")));
   const p19 = paso(19);

@@ -117,6 +117,9 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
 
 ## Pendientes
 
+- **V5.196 · las referencias de Empacado hasta FOB ya anclan precios**: el Triage de Catálogo Activo (`consolas`) suma una referencia
+  vigente al café de cada declaración para su FOB mínimo (lo que el plan llamó «el ancla»); la declaración guarda su referencia y la
+  cifra. Retirar una referencia no cambia las declaraciones ya hechas.
 - **V5.194 · Empacado hasta FOB** (owner, 2026-10-09; ejecutado desde el nodo final, plan `docs/PLAN_TRIAGE_CATALOGO.md` §2.2):
   reemplazó al costo de empaque de la máquina de sellado (la amortización y el Cuadro de evaluación salieron por pedido del owner).
   **Pendiente del owner**: guardar la primera referencia con una **tarifa real de flete** al puerto que use — sin una referencia

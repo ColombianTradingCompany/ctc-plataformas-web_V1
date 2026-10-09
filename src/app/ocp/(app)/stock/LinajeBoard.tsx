@@ -37,7 +37,8 @@ function num(v: string): number {
   const x = Number(t);
   return Number.isFinite(x) ? x : NaN;
 }
-const str = (n: number) => (Number.isFinite(n) ? String(Math.round(n * 1000) / 1000) : "");
+/** Un número para una casilla, con COMA decimal: «98.765» se leería como 98 765 (el punto es de miles en `num`). */
+const str = (n: number) => (Number.isFinite(n) ? String(Math.round(n * 1000) / 1000).replace(".", ",") : "");
 
 export function LinajeBoard({ stock, lotes, partidaInicial }: { stock: StockCargado; lotes: LoteOpcion[]; partidaInicial: string | null }) {
   const router = useRouter();

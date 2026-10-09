@@ -9,7 +9,7 @@ import styles from "@/components/panel/shared.module.css";
 // se puede atrapar en el cliente: React lo manda al error boundary y REVIENTA
 // la página entera. Ya nos pasó una vez con "Confirmar recibido" (V12) y se
 // arregló SOLO para esa acción; la auditoría encontró el mismo patrón vivo en
-// publishLot, signContract, approveFinca y setFincaCertShared — todas con
+// publishLot (hoy `declararEnCatalogo`, V5.196), signContract, approveFinca y setFincaCertShared — todas con
 // rechazos de negocio ALCANZABLES (no es miembro del Club, falta contrato,
 // falta polígono EUDR…), es decir, clics normales que tumbaban el tablero.
 //

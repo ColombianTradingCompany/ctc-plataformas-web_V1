@@ -80,6 +80,12 @@ con cuenta QA — **hoy no corre**: las cuentas de prueba se eliminaron en la V5
 
 ## Pendientes
 
+- **V5.196 · el Catálogo Activo lo gobierna el Triage** (ejecutado desde `consolas`; sin código de la tienda tocado salvo dos
+  comentarios de `src/lib/catalogo/sneakPeek{,Mock}.ts` que nombraban `publishLot`): `lot_listings.total_kg` son ahora kg de **verde**
+  declarados (antes kg de CPS 1:1) y `price_per_kg` no puede bajar del FOB mínimo del lote (la base lo rechaza). La tienda no cambia: ya
+  vendía «kg» y ya leía `total_kg − sold_kg`. **Sigue con dueño aquí**: (1) el comprador ve «kg» sin decir «de verde» en la tarjeta —
+  conviene decirlo—; (2) cuando una venta de la tienda deba bajar el stock físico o la cuenta del contrato (la conversión verde → CPS),
+  es la tanda que el plan dejó fuera (§7, `consolas` · `cherry-picked`).
 - **V5.189 · `official_score` es el Punto de cualquiera de los dos protocolos** (ejecutado desde `consolas`, plan §10.6): el CVA es el
   protocolo principal y un SCA 2004 vale lo mismo; ya no existe el piso de un CVA homologado. **Sigue con dueño aquí**: decir con qué
   protocolo se cató (`rotuloDelPunto`, `src/lib/arena/punto.ts`) en la tienda, la ficha pública y el portal.

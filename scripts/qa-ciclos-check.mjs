@@ -185,7 +185,11 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   check("OCP · el contrato por ventana trae sus acciones (venta, tiquete y 60 %, recibo, prórroga, faltante, renovación)", ["confirmarVentaSemanal.bind(null, id)", "confirmarDespacho.bind(null, did)", "recibirDespacho.bind(null, did)", "prorrogarLoVendido.bind(null, did)", "cobrarFaltante.bind(null, did)", "prepararRenovacion.bind(null, id)"].every((k) => pc.includes(k)));
   const vs = lee("src/lib/trato/ventanaServidor.ts");
   const cat = lee("src/app/ocp/(app)/catalogActions.ts");
-  check("vitrina · un lote por ventanas se vende con el café en la finca: total = declarado − retirado (suma de sus ventanas); el catálogo lleva lo vendido", vs.includes("export async function sincronizarListado(") && vs.includes("Math.max(0, Math.round((declarado - retirado) * 10) / 10)") && cat.includes("const porVentanas = await totalEnVentaPorVentanas(service, lotId);") && lee("src/lib/trato/producerActions.ts").includes("await sincronizarListado(service, c.lot_id);") && (lee("src/lib/ofertas/producerActions.ts") + "\n" + lee("src/lib/ofertas/aceptacion.ts")).includes("if (cond) await sincronizarListado(service, offer.lot_id);"));
+  // V5.196 (owner, 2026-10-09 · docs/PLAN_TRIAGE_CATALOGO.md §2.3): lo de un trato por ventanas se sigue vendiendo con el café en la
+  // finca, pero entra al catálogo cuando CTCx lo DECLARA en el Triage (kg de verde, con su FOB mínimo). Lo que el contrato puede ofrecer
+  // es declarado − retirado; un retiro o una cancelación ya no tocan el listado: el Triage lo marca para corregir.
+  const fob = lee("src/lib/triage/fobMinimo.ts");
+  check("vitrina · un lote por ventanas se ofrece con el café en la finca DECLARADO en el Triage: base = declarado − retirado; nadie más escribe el listado", !/export async function sincronizarListado\(/.test(vs) && !/totalEnVentaPorVentanas\(/.test(cat) && !/export async function publishLot\(/.test(cat) && fob.includes("export const baseDelContrato = (c: { declaradoKg: number; retiradoKg: number }) => Math.max(0, Math.round((c.declaradoKg - c.retiradoKg) * 10) / 10);") && lee("src/lib/trato/producerActions.ts").includes("el Triage la marca en rojo y CTCx la corrige") && lee("docs/migraciones/2026-10-09_triage_catalogo.sql").includes("drop trigger if exists contract_releases_sync_listing_total on public.contract_releases;"));
   const rn = lee("src/lib/trato/renovaciones.ts");
   check("barrido · recuerda una vez la renovación que vence (7 días), expira las invitaciones vencidas y cierra las ventanas cumplidas", rn.includes("export async function correrRenovaciones(") && rn.includes("o.es_renovacion && !o.recordatorio_at") && rn.includes('update({ status: "expirada"') && rn.includes('update({ status: "completed" })') && lee("vercel.json").includes('"/api/cron/renovaciones"') && lee("src/app/api/cron/renovaciones/route.ts").includes("Bearer ${secret}"));
   check("V5.171 retirada · ni redeclaración ni su cron (las columnas quedan dormidas, documentadas)", !existsSync(new URL("../src/lib/trato/redeclaracion.ts", import.meta.url)) && !existsSync(new URL("../src/app/api/cron/redeclaraciones/route.ts", import.meta.url)) && !lee("vercel.json").includes("redeclaraciones") && lee("docs/migraciones/2026-10-07_ciclos_operacion_ocp.sql").includes("quedan DORMIDAS"));
@@ -452,7 +456,7 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   const rat = lee("src/components/kaffetal-regal/panel/RatificarContrato.tsx");
   const pagKR = lee("src/app/kaffetal-regal/contrato/[id]/page.tsx");
   const pagOCP = lee("src/app/ocp/(app)/contratos/[id]/page.tsx");
-  const listaOCP = lee("src/app/ocp/(app)/contratos/page.tsx");
+  const listaOCP = lee("src/app/ocp/(app)/contratos/lista/page.tsx"); // V5.196: la lista de contratos es una pestaña del Triage
 
   check("arreglo · `freeze_months` admite null (el acta) y el insert de un trato por ventana la manda en null: ya no chocan (23502)",
     /alter column freeze_months drop not null/.test(acta) && acep.includes("      freeze_months: null,") && (acep.match(/\.from\("purchase_contracts"\)\s*\.insert\(/g) ?? []).length === 1 &&

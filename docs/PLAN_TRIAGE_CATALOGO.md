@@ -153,7 +153,19 @@ máquina) y la página de las configuraciones guardadas. La herramienta pública
 | **B · Stock CTCx** | V5.195 | Partidas, transformaciones y salidas; raíces desde recepciones y compras; el linaje interactivo con su cuadre; los Sample Kits sobre partidas; «Stock CTCx» en Manejo de Stock Físico (talón de `/ocp/sample-kits`); `ctc_selection` corregido | `qa-stock-ctcx` |
 | **C · Triage de Catálogo Activo** | V5.196 | El módulo renombrado con sus dos entradas, el FOB mínimo, las declaraciones, el Catálogo Activo sobre ellas, el O&P en la base | `qa-triage-catalogo` |
 
-**Hechas:** A (V5.194) · B (V5.195). Lo que la tanda B decidió al ejecutarse, además de lo de §2.1:
+**Hechas:** A (V5.194) · B (V5.195) · C (V5.196). Lo que la tanda C decidió al ejecutarse, además de lo de §2.3:
+
+- El ancla NO es una columna de `lot_listings`: esa tabla la lee cualquiera (política pública de lectura) y el FOB mínimo es interno.
+  Vive en las declaraciones (`catalogo_fuentes`) y la compuerta del precio la lee de allí.
+- Una declaración viva por contrato y por partida; para cambiar sus kilos se CORRIGE (se retira y se declara otra en la misma
+  transacción). Lo que un contrato puede ofrecer es declarado − retirado: lo vendido sale de lo ya declarado y no se resta dos veces.
+- Lo tostado (y lo empacado de tostado) se ve en el triage pero no se declara mientras la tienda solo venda verde (ajusta §6.10).
+- El O&P no tiene valor por defecto en ningún lado del repositorio: hasta que un colaborador lo escriba en los ajustes, el triage lo
+  pide en cada declaración.
+- Un listado nace en «pre-venta» si viene de un contrato (el café sigue en la finca) y «spot» si viene del stock, con la bolsa del
+  modelo (6 kg) y el MOQ de su banda; todo se corrige en Catálogo Activo.
+
+Lo que la tanda B decidió al ejecutarse, además de lo de §2.1:
 
 - Los Sample Kits viven en `/ocp/stock/sample-kits` (pestaña del Stock CTCx); la URL vieja va con un 308 (`RUTAS_MOVIDAS`).
 - `compras.destino` pasó a `selection` · `stock` (el valor `sample_kits` no tenía filas): una compra es de CTCx Selection —la que hace

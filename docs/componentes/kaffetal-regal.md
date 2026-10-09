@@ -152,6 +152,12 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.196 · lo retirado ya no sale solo de la vitrina** (ejecutado desde `consolas`): hasta la V5.195 un retiro del productor bajaba
+  el `total_kg` del listado al instante (`sincronizarListado`). Desde la V5.196 el café de un trato entra al Catálogo Activo cuando
+  CTCx lo declara en el Triage; si el productor retira café ya declarado, el Triage lo marca en rojo y CTCx corrige la declaración. **Con
+  dueño aquí**: «Mi trato» (`panel/ContratosTab.tsx`) y el aviso del retiro (`src/lib/trato/producerActions.ts`) llaman «en la vitrina»
+  a la cuenta del contrato (declarado − vendido − retirado); desde la V5.196 ese café está en la vitrina cuando CTCx lo declara. Decidir
+  si el texto pasa a «disponible para la venta».
 - **V5.192 · «Agregar Referencias»: la lista arriba, el reporte con su botón, el formulario en blanco** (código tocado desde el nodo
   final): «Lo que ya agregó a este lote» va arriba y solo con al menos una; un reporte se elige, se completan sus datos y se envía con
   «Agregar este reporte» (ya no al elegir el archivo, que se llevaba la fila sin lo escrito después); enviado, todo queda en blanco.

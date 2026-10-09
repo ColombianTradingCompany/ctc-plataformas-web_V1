@@ -1,0 +1,60 @@
+/* OCP · Triage de Catálogo Activo (V5.196). Dos entradas —los tratos por ventana y el Stock CTCx— en tarjetas con el color de su
+   grado; cada una se declara con su FOB mínimo desglosado en vivo. Colores con respaldo para cuando el tema no los define. */
+
+.ajustes { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; border: 1px solid var(--line, #e5e2ee); border-radius: var(--radius, 12px); background: var(--card, #fff); margin-bottom: 14px; }
+.ajustes dl { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 0; font-size: 13px; }
+.ajustes dt { color: var(--muted, #6b7280); font-size: 11.5px; }
+.ajustes dd { margin: 0; font-weight: 700; color: var(--ink, #1f1a2e); }
+.aviso { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: #fffbeb; color: #92400e; font-size: 13px; border: 1px solid #fde68a; }
+.aviso a { color: inherit; font-weight: 700; }
+.alerta { margin: 8px 0 0; padding: 8px 12px; border-radius: 8px; background: #fef2f2; color: #991b1b; font-size: 12.5px; font-weight: 600; }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.kpi { border: 1px solid var(--line, #e5e2ee); border-radius: 10px; padding: 10px 12px; background: var(--card, #fff); }
+.kpi span { display: block; font-size: 11.5px; color: var(--muted, #6b7280); }
+.kpi b { display: block; font-size: 19px; color: var(--ink, #1f1a2e); margin-top: 2px; }
+
+.seccion { margin-bottom: 26px; }
+.seccion > h2 { font-size: 15.5px; margin: 0 0 4px; color: var(--ink, #1f1a2e); }
+.seccion > p { font-size: 12.5px; color: var(--muted, #6b7280); margin: 0 0 10px; }
+.lista { display: grid; gap: 10px; }
+.vacio { color: var(--muted, #6b7280); font-size: 13px; padding: 14px; border: 1px dashed var(--line, #e5e2ee); border-radius: 10px; }
+
+.entrada { border: 1px solid var(--line, #e5e2ee); border-left: 5px solid var(--g, var(--line, #e5e2ee)); border-radius: 10px; background: var(--card, #fff); padding: 12px 14px; }
+.entradaHead { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.entradaHead h3 { margin: 0; font-size: 14.5px; color: var(--ink, #1f1a2e); }
+.entradaHead h3 a { color: inherit; }
+.entradaHead small { color: var(--muted, #6b7280); font-size: 12px; }
+.grado { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; color: #fff; background: var(--g, #6b7280); margin-left: 6px; vertical-align: middle; }
+.cifras { display: flex; flex-wrap: wrap; gap: 4px 20px; margin: 8px 0 0; font-size: 12.5px; color: var(--muted, #6b7280); }
+.cifras b { color: var(--ink, #1f1a2e); }
+.estadoCatalogo { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #166534; }
+.botones { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 10px; align-items: center; }
+.enlace { background: none; border: 0; padding: 0; color: var(--primary, #3c0a86); text-decoration: underline; font: inherit; cursor: pointer; }
+
+/* El formulario de declarar, con el FOB mínimo en vivo. */
+.declarar { margin-top: 12px; border-top: 1px dashed var(--line, #e5e2ee); padding-top: 12px; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+.campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px 12px; }
+.campo label { display: block; font-size: 11.5px; font-weight: 600; margin-bottom: 3px; color: var(--ink, #1f1a2e); }
+.campo input, .campo select { width: 100%; padding: 7px 9px; border: 1.5px solid var(--line, #e5e2ee); border-radius: 7px; font-size: 13px; background: var(--paper, #faf9fd); color: var(--ink, #1f1a2e); font-family: inherit; }
+.campo small { display: block; font-size: 10.5px; color: var(--muted, #6b7280); margin-top: 2px; line-height: 1.35; }
+.desglose { border: 1px solid var(--line, #e5e2ee); border-radius: 10px; padding: 10px 12px; background: var(--paper, #faf9fd); font-size: 12.5px; }
+.desglose table { width: 100%; border-collapse: collapse; }
+.desglose td { padding: 3px 0; color: var(--ink, #1f1a2e); }
+.desglose td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.desglose tr.total td { font-weight: 800; border-top: 1px solid var(--line, #e5e2ee); padding-top: 6px; }
+.desglose small { display: block; color: var(--muted, #6b7280); font-size: 11px; margin-top: 6px; line-height: 1.4; }
+.fob { font-size: 22px; font-weight: 800; color: var(--ink, #1f1a2e); margin: 4px 0 2px; }
+.ok { margin: 8px 0 0; padding: 8px 11px; border-radius: 8px; background: #ecfdf3; color: #166534; font-size: 12.5px; }
+.error { margin: 8px 0 0; padding: 8px 11px; border-radius: 8px; background: #fef2f2; color: #991b1b; font-size: 12.5px; }
+
+.declaracion { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 14px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line, #e5e2ee); font-size: 12.5px; }
+.declaracion:first-of-type { border-top: 0; }
+.declaracion small { display: block; color: var(--muted, #6b7280); }
+.retirar { display: flex; gap: 6px; align-items: center; }
+.retirar input { padding: 6px 8px; border: 1.5px solid var(--line, #e5e2ee); border-radius: 7px; font-size: 12.5px; min-width: 160px; font-family: inherit; }
+
+@media (max-width: 860px) {
+  .declarar { grid-template-columns: minmax(0, 1fr); }
+  .declaracion { grid-template-columns: minmax(0, 1fr); }
+}

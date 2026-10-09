@@ -6,7 +6,7 @@
 // cada una su entrada del rail, así que repetirlas aquí era tener dos menús para lo mismo. Quedan las que NO
 // están en el rail, y solo en la página a la que pertenecen:
 //   · «Catálogo Activo»      → Catálogo · Subastas Tyrian (Tyrian no se oferta: se subasta — D4)
-//   · «Ofertas CP Aceptadas» → Contratos · Humedad (la lectura mensual del café bajo contrato — D4)
+//   · «Triage de Catálogo Activo» (V5.196; antes «Ofertas CP Aceptadas») → Triage · Contratos · Humedad
 //   · «Pendiente Oferta»     → ninguna.
 
 import Link from "next/link";
@@ -18,7 +18,8 @@ const GRUPOS: { href: string; label: string }[][] = [
     { href: "/ocp/subastas", label: "Subastas Tyrian" },
   ],
   [
-    { href: "/ocp/contratos", label: "Contratos" },
+    { href: "/ocp/contratos", label: "Triage" },
+    { href: "/ocp/contratos/lista", label: "Contratos" },
     { href: "/ocp/contratos/humedad", label: "Humedad" },
   ],
 ];

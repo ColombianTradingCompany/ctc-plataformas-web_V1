@@ -37,8 +37,8 @@
 // owner la arregle en el origen (Notion debe MIRAR a este repo, no al revés).
 //
 // FUERA A PROPÓSITO: la ficha «Borbón Rosado - Natural [La Pradera]» puntúa
-// 88.5 → **Tyrian**, que es solo de subasta (`publishLot` lo rechaza en el
-// catálogo). Un teaser del catálogo no puede enseñar lo que el catálogo no
+// 88.5 → **Tyrian**, que es solo de subasta (el Triage, `triage_declarar`, lo rechaza
+// en el catálogo). Un teaser del catálogo no puede enseñar lo que el catálogo no
 // admite. Por eso la séptima tarjeta se construye sobre la ficha «Cenicafe 1»,
 // y la escalera queda 2 Gold · 2 Blue · 2 Red · 1 Black.
 //

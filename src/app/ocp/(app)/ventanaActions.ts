@@ -13,7 +13,7 @@ import { calidadAlRecibir, finDeSemana, pagoAdicionalFueraDeRango, pagosDeDespac
 import { sumaDias, trimestreDe, ubicar } from "@/lib/trato/calendario";
 import { minimoDeContinuidad, minimoDelGrado } from "@/lib/trato/minimos";
 import { ADELANTO_RENOVACION_KG } from "@/lib/trato/terminos";
-import { despachoDeLoVendido, sincronizarListado } from "@/lib/trato/ventanaServidor";
+import { despachoDeLoVendido } from "@/lib/trato/ventanaServidor";
 import { STOCK_PATH } from "@/lib/stock/linaje";
 import { crearRaizDeStock } from "@/lib/stock/servidor";
 import { emitOffer } from "./ofertasActions";
@@ -246,7 +246,8 @@ export async function cobrarFaltante(despachoId: string): Promise<ActionResult> 
   await service.from("contract_ventas").update({ anulada_at: now, anulada_motivo: "no se despachó pasada la prórroga" }).eq("despacho_id", d.id).is("anulada_at", null);
   await service.from("contract_retiros").insert({ contract_id: c.id, kg, libre_kg: 0, penalizado_kg: kg, penalidad_cop: penalidad, nota: "faltante de lo vendido (no se despachó)", created_by: p.userId });
   await service.from("contract_despachos").update({ estado: "cancelado", advertencias: Number(d.advertencias ?? 0) + 1, nota: `faltante cobrado como retiro penalizado: ${kg} kg · ${formatCop(penalidad)}`, updated_at: now }).eq("id", d.id);
-  await sincronizarListado(service, c.lot_id);
+  // V5.196: el listado ya no se recalcula solo — si lo retirado deja la declaración del Triage de más, el Triage la marca.
+  revalidatePath("/ocp/contratos");
   await service.from("audit_log").insert({ entity_type: "purchase_contract", entity_id: c.id, action: "faltante_cobrado", performed_by: p.userId, notes: `${kg} kg vendidos sin despachar (plazo ${vence}) · penalidad ${formatCop(penalidad)}. La ruptura, si cabe, la declara el owner.` });
   await avisar(service, lot, c.lot_id, `Lo vendido de su lote ${lot.name} (${kg} kg) no se despachó a tiempo, ni con la prórroga: la venta se anula y se cobra como retiro penalizado (${formatCop(penalidad)}). CTCx puede declarar la ruptura contractual.`, `Faltante de lo vendido · lote ${lot.name}`, p.userId);
   revalidar(c.id);

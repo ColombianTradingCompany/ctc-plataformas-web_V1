@@ -104,7 +104,7 @@ export default async function ComprasPage() {
         <Link href="/ocp/compras/mezclas">Mezclas</Link>.
       </p>
       <p className={styles.meta} style={{ marginBottom: 18 }}>
-        Una compra nace sola al <b>pagar el mes</b> de un contrato directa o Black (<Link href="/ocp/contratos">Ofertas CP Aceptadas</Link>). A mano,
+        Una compra nace sola al <b>pagar el mes</b> de un contrato directa o Black (<Link href="/ocp/contratos/lista">Contratos</Link>). A mano,
         abajo, se documenta lo que se compró fuera de la plataforma (la ruta Desacoplada, un acuerdo directo): siempre con su nota.
         Tyrian no se compra: va a subasta. Todo en kg de CPS (pergamino seco); la conversión a verde es del Modelo de Producción.
       </p>

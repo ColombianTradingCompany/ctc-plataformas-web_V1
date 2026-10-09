@@ -207,7 +207,8 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
       // (el set de fichas vive en la vista completa de cada lote; el índice se retiró en la V5.97, 308 a `/ocp/kr`).
       //
       // ⚠️ LAS ETIQUETAS SON LAS DEL CUADRO; LAS RUTAS, LAS QUE YA EXISTÍAN. «Pendiente Oferta» es el módulo
-      // de ofertas, «Ofertas CP Aceptadas» el de contratos (con la humedad dentro) y «Catálogo Activo» el
+      // de ofertas, «Triage de Catálogo Activo» (hasta la V5.195 «Ofertas CP Aceptadas») el de contratos —con la lista y la humedad
+      // dentro— y «Catálogo Activo» el
       // catálogo (con las subastas Tyrian como pestaña). Renombrar la ruta habría costado un 308 por módulo
       // sin ganar nada — la misma decisión que dejó al Modelo Económico en `/…/pvc`.
       {
@@ -245,8 +246,10 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           { href: "/ocp/en-evaluacion", label: "Lotes en Evaluación" },
           // Nota 4: el Q-Grader ya dijo; falta que CTCx confirme el grado y empuje la oferta.
           { href: "/ocp/ofertas", label: "Lotes Evaluados → Pendiente Oferta" },
-          // Las ofertas que el productor aceptó: el contrato, sus liberaciones y la humedad mes a mes (staging KR).
-          { href: "/ocp/contratos", label: "Ofertas CP Aceptadas" },
+          // V5.196 (owner, 2026-10-09): lo que fue «Ofertas CP Aceptadas» es el TRIAGE DE CATÁLOGO ACTIVO — recibe las ofertas aceptadas
+          // y el Stock CTCx y las declara al Catálogo Activo con su FOB mínimo (`docs/PLAN_TRIAGE_CATALOGO.md` §2.3). La ruta se conservó:
+          // los contratos, sus despachos y la humedad son sus pestañas.
+          { href: "/ocp/contratos", label: "Triage de Catálogo Activo" },
           // Decisión 7 (V5.85): la disponibilidad de lo comprado en firme (`compras`) — el staging del Catálogo Activo del lado Compras.
           { href: "/ocp/ctc-selection", label: "Oferta desde CTCx Selection" },
           // «Stock de Sample Kits» (V5.90) salió de aquí en la V5.195: el Stock CTCx lo absorbió (Manejo de Stock Físico, abajo).

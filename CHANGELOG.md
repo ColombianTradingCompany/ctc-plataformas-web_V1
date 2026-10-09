@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.194] — 2026-10-09 (commit pendiente)
+## [V5.194] — 2026-10-09 (commit 50d4c4a)
 
 - **Hito**: arranca el **Triage de Catálogo Activo** (owner, 2026-10-09): «Ofertas CP Aceptadas» se rebautiza y pasa a ser el punto
   de control entre lo que el productor aceptó, el Stock CTCx y el Catálogo Activo, con el **precio FOB mínimo** como ancla de cada

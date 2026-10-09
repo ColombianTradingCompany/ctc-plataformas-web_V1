@@ -702,4 +702,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-09] V5.194 · Empacado hasta FOB: el costo de un embarque de verde hasta FOB en cinco modos de empaque, con referencias congeladas; la máquina de sellado sale del ECP (tanda A del Triage de Catálogo Activo)
 - ANN `src/lib/produccion/{empaqueFob.ts,referencias.ts,actions.ts}` (nuevos), `src/components/produccion/{EmpaqueFobBoard.tsx,empaqueFob.module.css}` (nuevos), `src/app/ecp/(app)/cotizador-empaque/{page.tsx,[...resto]/page.tsx (nuevo)}` (fuera `[id]/` y `evaluacion/`), `src/lib/cotizador/{types.ts,actions.ts}`, `src/components/cotizador/{AppFrame.tsx,QuotesBoard.tsx}`, `src/lib/panel/consoles.ts`, `scripts/{qa-empaque-fob-check.mjs (nuevo),qa-rutas-consolas.mjs}`, `docs/migraciones/2026-10-09_empaque_fob_referencias.sql`, `docs/PLAN_TRIAGE_CATALOGO.md` (nuevo), `src/lib/version.ts`, `AGENTS.md` (70 guardianes), `docs/componentes/{herramientas-internas,consolas,herramientas-cafe}.md`, `docs/componentes/herramientas-cafe/{README.md,costo-empaque/README.md}`, `docs/ALINEACION.md`.
-(commit: pendiente)
+(commit: 50d4c4a)

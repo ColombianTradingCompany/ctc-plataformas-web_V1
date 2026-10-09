@@ -797,6 +797,57 @@ const gate = lee("src/lib/partners/requirePartner.ts");
     paginaCentro.includes("notas={separaNotasDevueltas(vista.notes).notasQGrader || null}"));
 }
 
+// ── V5.197 (owner, 2026-10-10) · «En el Dossier de Lote haz que en el Perfil de taza se visualice mejor la información consignada de
+//    la intensidad por la Evaluación Descriptiva, con íconos apropiados para cada una de las Notas y también para Acidez e intensidad.
+//    Por otro lado, las barras de la Evaluación afectiva reemplazarlas por la gráfica de telaraña de 8 esquinas de CVA.» ──
+{
+  const { DESCRIPTORES } = await import("../src/lib/catacion/rueda.ts");
+  const { TIPOS_DE_ACIDEZ, TEXTURAS_EN_BOCA } = await import("../src/lib/catacion/fisico.ts");
+  const { caracterizacionDelDossier, planillaDeEvaluacion } = await import("../src/lib/kaffetal/dossierEvaluacion.ts");
+  const iconos = lee("src/components/catacion/IconosDeSabor.tsx").replace(/\r\n/g, "\n");
+  const tabla = iconos.slice(iconos.indexOf("export const ICONO_DE_LA_RUEDA"), iconos.indexOf("export const ICONO_DE_RESERVA"));
+  const claves = new Set([...tabla.matchAll(/^\s+(?:"([^"]+)"|([a-z]+)):\s/gm)].map((m) => m[1] ?? m[2]));
+  const ids = DESCRIPTORES.map((x) => x.id);
+  const sinIcono = ids.filter((id) => !claves.has(id));
+  const sobran = [...claves].filter((k) => !ids.includes(k));
+  check(`íconos · los ${ids.length} puntos de la rueda (9 familias, 22 subcategorías, 85 notas) tienen su ícono EXPLÍCITO, sin claves sueltas${sinIcono.length ? ` — faltan: ${sinIcono.join(", ")}` : ""}${sobran.length ? ` — sobran: ${sobran.join(", ")}` : ""}`, ids.length === 116 && sinIcono.length === 0 && sobran.length === 0);
+  const acid = iconos.slice(iconos.indexOf("export const ICONO_DE_ACIDEZ"), iconos.indexOf("export const ICONO_DE_TEXTURA"));
+  const text = iconos.slice(iconos.indexOf("export const ICONO_DE_TEXTURA"));
+  check("íconos · uno por tipo de acidez y por textura en boca del formato descriptivo (y el de «sin marcar»)", TIPOS_DE_ACIDEZ.every((o) => acid.includes(`${o.key}: `)) && acid.includes('"": ') && TEXTURAS_EN_BOCA.every((o) => text.includes(`${o.key}: `)) && text.includes('"": '));
+  check("íconos · mismo trazo que lucide (rejilla 24, trazo redondo, sin relleno) y se LLAMAN, no se montan durante el render", iconos.includes('viewBox="0 0 24 24"') && iconos.includes('strokeLinecap="round"') && iconos.includes('strokeLinejoin="round"') && iconos.includes('fill="none"') && iconos.includes("return iconoDeLaRueda(id)(p);") && !iconos.includes('"use client"'));
+
+  const planilla = {
+    vista: "cva", escala: "cva", cva_fragrance: "6.5", cva_aroma: "7", cva_flavor: "6.75", cva_aftertaste: "6.25", cva_acidity: "7", cva_sweetness: "7.5", cva_mouthfeel: "6.5", cva_overall: "7", cva_num_tazas: "5",
+    rueda: ["floral-floral", "frutal-otras|durazno", "dulce-morena|miel"],
+    rueda_detalle: { "floral-floral": { etapas: ["aroma"], intensidad: 9, nota: "Flor de azahar" }, "frutal-otras|durazno": { etapas: ["aroma", "sabor"], intensidad: 10.5, nota: "Albaricoque" }, "dulce-morena|miel": { etapas: ["sabor"], intensidad: 12, nota: "" } },
+    acidez_tipo: "dulce", acidez_intensidad: "9.5", acidez_nota: "a mandarina", boca_texturas: ["smooth"], boca_intensidad: "11",
+  };
+  const cif = caracterizacionDelDossier({}, planillaDeEvaluacion({ physical_data: { planilla }, sca_data: {}, rueda: planilla.rueda }), "es").cifras;
+  const durazno = cif?.rueda.find((x) => x.id === "frutal-otras|durazno");
+  check("dossier · las cifras traen el CVA con su rótulo corto, sus tazas, y de cada nota de dónde cuelga y lo que escribió el Q-Grader",
+    cif?.cva.length === 8 && cif.cva.map((x) => x.corto).join("|") === "Fragancia|Aroma|Sabor|Sabor residual|Acidez|Dulzor|Sensación en boca|Impresión general" && cif.cvaTotal === 88.5 &&
+    cif.cvaTazas?.n === 5 && cif.cvaTazas.u === 0 && cif.cvaTazas.d === 0 && durazno?.contexto === "Frutal › Otras frutas" && durazno.comentario === "Albaricoque" && durazno.intensidad === 10.5 &&
+    // «Floral › Floral» no dice nada dos veces (`rutaDe`): la subcategoría que se llama como su familia no repite contexto.
+    cif.rueda.find((x) => x.id === "floral-floral")?.contexto === "" && cif.rueda.find((x) => x.id === "dulce-morena|miel")?.contexto === "Dulce › Azúcar morena");
+  check("dossier · lo descriptivo que no es nota: tipo de acidez e intensidad, texturas en boca e intensidad (en número)",
+    cif?.descriptivo.acidez?.tipo === "dulce" && cif.descriptivo.acidez.intensidad === 9.5 && cif.descriptivo.acidez.nota === "a mandarina" &&
+    cif.descriptivo.boca?.texturas[0]?.key === "smooth" && cif.descriptivo.boca.intensidad === 11 &&
+    caracterizacionDelDossier({}, planillaDeEvaluacion({ physical_data: { planilla: { ...planilla, acidez_tipo: "", acidez_intensidad: "", acidez_nota: "", boca_texturas: [], boca_intensidad: "" } }, sca_data: {}, rueda: [] }), "es").cifras?.descriptivo.acidez === null);
+
+  const doc = lee("src/components/kaffetal-regal/dossier/DossierCtcx.tsx").replace(/\r\n/g, "\n");
+  const fig = lee("src/components/kaffetal-regal/dossier/figuras.tsx").replace(/\r\n/g, "\n");
+  const hoja = doc.slice(doc.indexOf("// ── 5 · Perfil de taza"), doc.indexOf("// ── 6 · Análisis físico"));
+  check("perfil de taza · la afectiva del CVA es la telaraña de 8 esquinas (las barras del CVA salieron); un 2004 conserva su radar de 6 a 10",
+    hoja.includes("const cva8 = cif && cif.cva.length === 8 ? cif.cva : null;") && hoja.includes("<RadarCva items={cva8.map((x) => ({ label: x.corto, v: x.v }))}") && !hoja.includes("(x.v / 9) * 100") && !hoja.includes("cif.cva.map((x) => (") && hoja.includes("<Radar items={radarSca} />"));
+  check("perfil de taza · la telaraña: octógono de cara plana, escala de 1 (centro) a 9, el 5 punteado, el valor en cada esquina",
+    fig.includes("export function RadarCva(") && fig.includes("const ang = (i: number) => (Math.PI * 2 * i) / n - Math.PI / 2 + Math.PI / n;") && fig.includes("const MIN = 1;") && fig.includes("const MAX = 9;") && fig.includes('strokeDasharray={v === 5 ? "3 2.6" : undefined}') && fig.includes("{valor(it.v)}"));
+  check("perfil de taza · la descriptiva: ícono por nota (en el tinte de su familia), comentario del Q-Grader, intensidad en 15 casillas por zona; acidez y boca con su ícono",
+    hoja.includes("<IconoDeNota id={x.id} size={24} strokeWidth={1.75} />") && hoja.includes("background: `${x.color}1F`, color: oscurece(x.color, 0.2)") && hoja.includes("«{x.comentario}»") &&
+    hoja.includes("<BarraDeIntensidad valor={x.intensidad} color={x.color}") && hoja.includes("ICONO_DE_ACIDEZ[desc.acidez.tipo ?? \"\"]") && hoja.includes("ICONO_DE_TEXTURA[") &&
+    fig.includes("export function BarraDeIntensidad(") && fig.includes("const N = 15;") && fig.includes('(k < 5 ? "#EFECF4" : k < 10 ? "#E6E1EE" : "#DCD6E6")') && !fig.includes("export function Intensidad("));
+  check("perfil de taza · hasta siete notas van junto a la rueda; con más, la lista va a dos columnas", hoja.includes("const conFigura = notasRueda.length > 0 && notasRueda.length <= 7;") && hoja.includes("cx(s.notasDesc, !conFigura && s.notasDosColumnas)"));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-centro-calidad: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("  - " + f);

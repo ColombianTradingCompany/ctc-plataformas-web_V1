@@ -57,6 +57,136 @@ export function Radar({ items, min = 6, max = 10, size = 300 }: { items: { label
   );
 }
 
+// ── V5.197 (owner, 2026-10-10): «las barras de la Evaluación afectiva reemplazarlas por la gráfica de telaraña de 8 esquinas
+//    de CVA» y la intensidad de la descriptiva mejor visualizada ──────────────────────────────────────────────────────
+
+const f2 = (n: number) => n.toFixed(2);
+
+/**
+ * La telaraña de 8 esquinas del CVA (la evaluación afectiva, escala de 1 a 9). Octógono de cara plana arriba y abajo, un
+ * anillo por punto de la escala —el 5, «ni alta ni baja», punteado; el 9, el borde—, y en cada esquina el atributo con su
+ * valor. El 1 está en el centro: un atributo bajo se ve hundido, no escondido.
+ */
+export function RadarCva({ items, etiqueta, loc = "es-CO" }: { items: { label: string; v: number }[]; etiqueta: string; loc?: string }) {
+  const n = items.length;
+  if (n < 3) return null;
+  const R = 104;
+  const MIN = 1;
+  const MAX = 9;
+  const ang = (i: number) => (Math.PI * 2 * i) / n - Math.PI / 2 + Math.PI / n;
+  const pt = (i: number, v: number) => {
+    const r = (R * (Math.min(MAX, Math.max(MIN, v)) - MIN)) / (MAX - MIN);
+    return [r * Math.cos(ang(i)), r * Math.sin(ang(i))] as const;
+  };
+  const anillo = (v: number) => items.map((_, i) => pt(i, v).map(f2).join(",")).join(" ");
+  const valor = (v: number) => v.toLocaleString(loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // Un rótulo largo («Sensación en boca», «Impresión general») va en dos renglones: así la telaraña ocupa el ancho y no los rótulos.
+  const renglones = (s: string): string[] => {
+    if (s.length <= 11 || !s.includes(" ")) return [s];
+    const medio = s.length / 2;
+    const cortes = [...s.matchAll(/ /g)].map((m) => m.index ?? 0);
+    const corte = cortes.reduce((a, b) => (Math.abs(b - medio) < Math.abs(a - medio) ? b : a), cortes[0]);
+    return [s.slice(0, corte), s.slice(corte + 1)];
+  };
+  return (
+    <svg viewBox="-182 -146 364 292" width="100%" role="img" aria-label={etiqueta} style={{ display: "block" }}>
+      <polygon points={anillo(MAX)} fill="#FAF8FD" stroke="none" />
+      {[2, 3, 4, 5, 6, 7, 8, 9].map((v) => (
+        <polygon
+          key={v}
+          points={anillo(v)}
+          fill="none"
+          stroke={v === 5 ? TINTA_SUAVE : LINEA}
+          strokeOpacity={v === 5 ? 0.6 : 1}
+          strokeWidth={v === MAX ? 1.3 : 0.7}
+          strokeDasharray={v === 5 ? "3 2.6" : undefined}
+        />
+      ))}
+      {items.map((_, i) => {
+        const [x, y] = pt(i, MAX);
+        return <line key={i} x1={0} y1={0} x2={f2(x)} y2={f2(y)} stroke={LINEA} strokeWidth={0.7} />;
+      })}
+      {[3, 5, 7, 9].map((v) => (
+        <text
+          key={v}
+          x={0}
+          y={f2(-((R * (v - MIN)) / (MAX - MIN)) * Math.cos(Math.PI / n) + 2.4)}
+          fontSize={6.6}
+          fill={TINTA_SUAVE}
+          textAnchor="middle"
+          stroke="#FAF8FD"
+          strokeWidth={2.6}
+          paintOrder="stroke"
+        >
+          {v}
+        </text>
+      ))}
+      <polygon points={items.map((it, i) => pt(i, it.v).map(f2).join(",")).join(" ")} fill={MORADO} fillOpacity={0.16} stroke={MORADO} strokeWidth={2} strokeLinejoin="round" />
+      {items.map((it, i) => {
+        const [x, y] = pt(i, it.v);
+        return <circle key={i} cx={f2(x)} cy={f2(y)} r={3.1} fill="#fff" stroke={MORADO} strokeWidth={1.8} />;
+      })}
+      {items.map((it, i) => {
+        const a = ang(i);
+        const lx = (R + 10) * Math.cos(a);
+        const ly = (R + 10) * Math.sin(a);
+        const anchor = Math.cos(a) > 0.1 ? "start" : Math.cos(a) < -0.1 ? "end" : "middle";
+        const lineas = renglones(it.label);
+        // El bloque (nombre en uno o dos renglones + valor) se apoya en la esquina: por encima en las de arriba, por debajo en
+        // las de abajo, centrado en las de los lados.
+        const alto = lineas.length * 10.5 + 12;
+        const y0 = Math.sin(a) < -0.5 ? ly - alto + 8 : Math.sin(a) > 0.5 ? ly + 9 : ly - alto / 2 + 8;
+        return (
+          <g key={it.label}>
+            {lineas.map((l, k) => (
+              <text key={l} x={f2(lx)} y={f2(y0 + k * 10.5)} fontSize={9.2} fontWeight={600} fill={TINTA} textAnchor={anchor}>
+                {l}
+              </text>
+            ))}
+            <text x={f2(lx)} y={f2(y0 + lineas.length * 10.5 + 2)} fontSize={11} fontWeight={700} fill={MORADO} textAnchor={anchor} style={{ fontFamily: "var(--font-spline-mono), monospace" }}>
+              {valor(it.v)}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/** El color de una familia, más oscuro (para el trazo de su ícono, que sobre su tinte claro tiene que leerse). */
+export function oscurece(hex: string, k = 0.25): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  const c = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((x) => Math.round(x * (1 - k)));
+  return `#${c.map((x) => x.toString(16).padStart(2, "0")).join("")}`;
+}
+
+/**
+ * La intensidad de la descriptiva (0 a 15 en pasos de 0,5) en 15 casillas, con las tres zonas de la escala separadas:
+ * baja (0–4), media (5–9) y alta (10–15). Lo vacío se tiñe un poco más en cada zona; lo lleno, del color de la nota.
+ */
+export function BarraDeIntensidad({ valor, color, etiqueta }: { valor: number; color: string; etiqueta?: string }) {
+  const N = 15;
+  const G = 1.1;
+  const ZONA = 1.4;
+  const W = 96;
+  const w = (W - G * (N - 1) - ZONA * 2) / N;
+  const v = Math.min(N, Math.max(0, valor));
+  const x = (k: number) => k * (w + G) + (k >= 5 ? ZONA : 0) + (k >= 10 ? ZONA : 0);
+  const vacio = (k: number) => (k < 5 ? "#EFECF4" : k < 10 ? "#E6E1EE" : "#DCD6E6");
+  return (
+    <svg viewBox={`0 0 ${W} 7`} width="100%" role={etiqueta ? "img" : undefined} aria-label={etiqueta} aria-hidden={etiqueta ? undefined : true} style={{ display: "block" }}>
+      {Array.from({ length: N }, (_, k) => (
+        <g key={k}>
+          <rect x={f2(x(k))} y={0} width={f2(w)} height={7} fill={vacio(k)} />
+          {v > k && <rect x={f2(x(k))} y={0} width={f2(w * Math.min(1, v - k))} height={7} fill={color} />}
+        </g>
+      ))}
+    </svg>
+  );
+}
+
 /** La escala CTC de 1.000 a 2.500 puntos, con las cinco bandas y el lote marcado. */
 export function EscalaCtc({ puntos, etiqueta, loc = "es-CO" }: { puntos: number | null; etiqueta: string; loc?: string }) {
   const W = 600;
@@ -202,16 +332,6 @@ export function Medidor({ valor, min, max, rango, decimales = 1, unidad = "", lo
       <text x={W} y={20} fontSize={7.5} fill={TINTA_SUAVE} textAnchor="end">
         {max.toLocaleString(loc, { maximumFractionDigits: decimales })}
       </text>
-    </svg>
-  );
-}
-
-/** Una barra de intensidad de 0 a 15 (la escala de la rueda). */
-export function Intensidad({ valor, color }: { valor: number; color: string }) {
-  return (
-    <svg viewBox="0 0 60 6" width={60} height={6} aria-hidden style={{ display: "block" }}>
-      <rect x={0} y={0} width={60} height={6} fill={LINEA} />
-      <rect x={0} y={0} width={(Math.min(15, Math.max(0, valor)) / 15) * 60} height={6} fill={color} />
     </svg>
   );
 }

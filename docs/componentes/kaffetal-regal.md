@@ -152,6 +152,12 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.197 · el Perfil de taza del dossier: la telaraña CVA de 8 esquinas y la descriptiva con íconos** (owner, 2026-10-10;
+  ejecutado desde WRAP-COMMIT-PUSH). La telaraña es `RadarCva` y la intensidad `BarraDeIntensidad` (`dossier/figuras.tsx`); los íconos
+  de la rueda viven en `src/components/catacion/IconosDeSabor.tsx` con una tabla EXPLÍCITA por id (un punto nuevo de la rueda necesita
+  su ícono: `qa-centro-calidad` lo exige). Las cifras nuevas (`cvaTazas`, `descriptivo`, y el `contexto` y el `comentario` de cada
+  nota) salen de `dossierEvaluacion.ts`. Abierto: el panel del productor (pestaña Evaluaciones) y el OCP siguen mostrando la planilla a
+  su manera; llevar allí los mismos íconos es una tanda aparte si el owner la pide.
 - **V5.196 · lo retirado ya no sale solo de la vitrina** (ejecutado desde `consolas`): hasta la V5.195 un retiro del productor bajaba
   el `total_kg` del listado al instante (`sincronizarListado`). Desde la V5.196 el café de un trato entra al Catálogo Activo cuando
   CTCx lo declara en el Triage; si el productor retira café ya declarado, el Triage lo marca en rojo y CTCx corrige la declaración. **Con

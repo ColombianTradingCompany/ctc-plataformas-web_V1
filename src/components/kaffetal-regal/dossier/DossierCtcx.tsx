@@ -14,13 +14,14 @@ import type { DossierCtcxData, EstadoCriterio } from "@/lib/kaffetal/dossierDato
 import { CTC_LEGAL_LINE } from "@/lib/legal";
 import { NIVELES, ORDEN_TRIADA, letras } from "@/lib/pvc/escala";
 import type { IconoConjetura } from "@/lib/kaffetal/conjeturas";
-import { RUEDA } from "@/lib/catacion/rueda";
+import { RUEDA, ZONA_LABEL, zonaDeIntensidad } from "@/lib/catacion/rueda";
+import { ICONO_DE_ACIDEZ, ICONO_DE_TEXTURA, IconoDeNota } from "@/components/catacion/IconosDeSabor";
 import { TEXTOS, type Textos } from "./textos";
 import { BotonImprimir } from "./BotonImprimir";
 import { MarcaDeAgua } from "../blindaje/MarcaDeAgua";
 import { Blindaje } from "../blindaje/Blindaje";
 import { AVISO_SIN_CONTRATO } from "@/lib/kaffetal/blindaje";
-import { AltitudEnLaMontana, EscalaCtc, IlustracionGranos, IlustracionTaza, Intensidad, Mallas, MatrizDeRespaldo, Medidor, Radar, Rendimiento, RuedaFamilias } from "./figuras";
+import { AltitudEnLaMontana, BarraDeIntensidad, EscalaCtc, IlustracionGranos, IlustracionTaza, MORADO, Mallas, MatrizDeRespaldo, Medidor, Radar, RadarCva, Rendimiento, RuedaFamilias, oscurece } from "./figuras";
 import s from "./dossier.module.css";
 
 const display = Big_Shoulders({ subsets: ["latin"], weight: ["700", "800"], variable: "--font-dossier-display" });
@@ -55,6 +56,28 @@ const ICONO_CONJETURA: Record<IconoConjetura, typeof Coffee> = {
 /** V5.167 (owner): el perfil de taza va segundo. El orden de las hojas, en un solo sitio. */
 const ORDEN_DE_HOJAS = ["portada", "origen", "taza", "visa", "grado", "fisico", "mejora", "respaldo"];
 
+/** V5.197: una fila de la descriptiva que no es nota (la acidez, la sensación en boca): su ícono, qué se marcó, la intensidad
+ *  en casillas y lo que escribió el Q-Grader. */
+function Descriptiva({ icono, titulo, linea, sub, intensidad, texto, nota }: { icono: React.ReactNode; titulo: string; linea: string; sub: string | null; intensidad: number | null; texto: string; nota: string | null }) {
+  return (
+    <div className={s.descriptivaCaja}>
+      <span className={s.descriptivaIcono}>{icono}</span>
+      <div>
+        <div className={s.descriptivaTitulo}>
+          <span className={s.k}>{titulo}</span>
+          <span className={s.descriptivaValor}>{texto}</span>
+        </div>
+        <div className={s.descriptivaLinea}>
+          {linea}
+          {sub ? <span className={s.notaSub}> · {sub}</span> : null}
+        </div>
+        {intensidad != null && <BarraDeIntensidad valor={intensidad} color={MORADO} etiqueta={`${titulo}: ${texto}`} />}
+        {nota && <div className={s.notaComentario}>«{nota}»</div>}
+      </div>
+    </div>
+  );
+}
+
 function IconoCriterio({ estado }: { estado: EstadoCriterio }) {
   const I = estado === "ok" ? Check : estado === "stop" ? X : Clock;
   return (
@@ -69,6 +92,8 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
   const loc = d.lang === "en" ? "en-GB" : "es-CO";
   const fecha = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString(loc, { day: "2-digit", month: "short", year: "numeric" }) : null);
   const num = (v: number | null | undefined, dec = 2) => (v == null ? null : v.toLocaleString(loc, { minimumFractionDigits: dec, maximumFractionDigits: dec }));
+  /** La intensidad de la descriptiva como la escribe la planilla (pasos de 0,5), con la coma o el punto del idioma. */
+  const fmtI = (v: number) => v.toLocaleString(loc, { maximumFractionDigits: 1 });
   const finca = d.fincas[0] ?? null;
   const c = d.caracterizacion;
   const cif = c.cifras ?? null;
@@ -672,10 +697,20 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
   });
 
   // ── 5 · Perfil de taza ──────────────────────────────────────────────────
+  // V5.197 (owner, 2026-10-10): la afectiva del CVA en la telaraña de 8 esquinas (las barras salieron) y la descriptiva con
+  // un ícono por nota, por tipo de acidez y por textura en boca, cada una con su intensidad de 0 a 15 en casillas por zona.
+  // Un 2004 sin CVA conserva su radar de diez atributos (6 a 10); sin planilla, los atributos de la Ficha.
   if (hayTaza) {
-    const radar = cif && cif.sca.length >= 3 ? cif.sca.map((x) => ({ label: x.label, v: x.v })) : cif && cif.cva.length >= 3 ? null : null;
-    const fichaAttrs = !radar && d.ficha?.atributos ? Object.entries(d.ficha.atributos).filter(([, v]) => v != null).map(([k, v]) => ({ label: k, v: Number(v) })) : null;
+    const cva8 = cif && cif.cva.length === 8 ? cif.cva : null;
+    const radarSca = !cva8 && cif && cif.sca.length >= 3 ? cif.sca.map((x) => ({ label: x.label, v: x.v })) : null;
+    const fichaAttrs = !cva8 && !radarSca && d.ficha?.atributos ? Object.entries(d.ficha.atributos).filter(([, v]) => v != null).map(([k, v]) => ({ label: k, v: Number(v) })) : null;
     const notasRueda = (cif?.rueda ?? []).slice(0, 14);
+    // Hasta siete notas caben junto a la rueda; con más, la lista va a dos columnas y la rueda (que ya no se leería) sale.
+    const conFigura = notasRueda.length > 0 && notasRueda.length <= 7;
+    const desc = cif?.descriptivo ?? null;
+    const totalTaza = cva8 ? (cif?.cvaTotal ?? null) : radarSca ? (cif?.scaTotal ?? null) : null;
+    const punto = g.punto;
+    const intensidad = (v: number | null) => (v == null ? t.sinIntensidad : `${fmtI(v)}/15 · ${ZONA_LABEL[d.lang][zonaDeIntensidad(v)]}`);
     hojas.push({
       id: "taza",
       render: (n, total) =>
@@ -691,111 +726,118 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
               </div>
               <IlustracionTaza />
             </div>
-            <div className={s.mitades} style={{ alignItems: "center" }}>
-              <div>{radar ? <Radar items={radar} /> : fichaAttrs ? <Radar items={fichaAttrs} /> : null}</div>
+            <div className={s.afectiva}>
               <div>
-                {cif && cif.sca.length > 0 && (
+                <div className={s.seccionK}>{t.afectiva}</div>
+                <div className={s.h3}>{cva8 ? t.afectivaCva : radarSca ? t.afectivaSca : fichaAttrs ? t.afectivaFicha : t.tazaTitulo}</div>
+                {cva8 ? (
                   <>
-                    <ul className={s.atributos}>
-                      {cif.sca.map((x) => (
-                        <li key={x.k}>
-                          <span>{x.label}</span>
-                          <span className={s.barrita}>
-                            <span style={{ width: `${((x.v - 6) / 4) * 100}%` }} />
-                          </span>
-                          <span className={s.valor}>{num(x.v)}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <div className={s.totalCaja}>
-                      <span className={s.k}>
-                        {t.totalSca}
-                        {c.b2?.sca?.tazas ? ` · ${t.tazas} ${c.b2.sca.tazas}` : ""}
-                      </span>
-                      <span className={s.ecuacionNum}>{num(cif.scaTotal)}</span>
-                    </div>
+                    <RadarCva items={cva8.map((x) => ({ label: x.corto, v: x.v }))} etiqueta={t.radarCva} loc={loc} />
+                    <p className={s.nota} style={{ marginTop: "1mm" }}>
+                      {t.escalaCva}
+                    </p>
                   </>
+                ) : radarSca ? (
+                  <Radar items={radarSca} />
+                ) : fichaAttrs ? (
+                  <Radar items={fichaAttrs} />
+                ) : (
+                  <div className={s.vacio}>{t.sinEvaluacion}</div>
                 )}
-                {cif && cif.cva.length > 0 && (
-                  <div style={{ marginTop: "4mm" }}>
-                    <div className={s.h3}>
-                      {t.cvaTitulo}
-                      {cif.cvaTotal != null ? ` · ${num(cif.cvaTotal)}` : ""}
-                    </div>
-                    <ul className={s.atributos}>
-                      {cif.cva.map((x) => (
-                        <li key={x.k}>
-                          <span>{x.label}</span>
-                          <span className={s.barrita}>
-                            <span style={{ width: `${Math.min(100, (x.v / 9) * 100)}%` }} />
-                          </span>
-                          <span className={s.valor}>{num(x.v)}</span>
-                        </li>
-                      ))}
-                    </ul>
+              </div>
+              <div className={s.columnaTaza}>
+                {totalTaza != null && (
+                  <div className={s.puntajeCaja}>
+                    <div className={s.k}>{cva8 ? t.cvaTitulo : t.totalSca}</div>
+                    <div className={s.puntajeNum}>{num(totalTaza)}</div>
+                    {punto && <div className={s.puntajeSub}>{Math.abs(punto.valor - totalTaza) < 0.005 ? t.esElPunto : `${t.puntoRige}: ${num(punto.valor)}`}</div>}
+                    {cva8 && cif?.cvaTazas && cif.cvaTazas.n > 0 ? <div className={s.puntajeSub}>{t.tazasCva(cif.cvaTazas.n, cif.cvaTazas.u, cif.cvaTazas.d)}</div> : null}
+                    {!cva8 && c.b2?.sca?.tazas ? (
+                      <div className={s.puntajeSub}>
+                        {t.tazas} {c.b2.sca.tazas}
+                      </div>
+                    ) : null}
+                    {punto?.comparativo ? <div className={s.puntajeSub}>{t.comparativo(punto.comparativo.protocolo === "cva" ? "CVA" : "SCA 2004", num(punto.comparativo.total) ?? "")}</div> : null}
+                  </div>
+                )}
+                {desc && (desc.acidez || desc.boca) && (
+                  <div>
+                    <div className={s.seccionK}>{t.descriptiva}</div>
+                    <p className={s.nota} style={{ margin: "0 0 1mm" }}>
+                      {t.descriptivaLead}
+                    </p>
+                    {desc.acidez && (
+                      <Descriptiva
+                        icono={ICONO_DE_ACIDEZ[desc.acidez.tipo ?? ""]({ size: 24, strokeWidth: 1.7 })}
+                        titulo={t.acidez}
+                        linea={desc.acidez.tipo ? t.acidezTipo[desc.acidez.tipo][0] : t.sinTipoAcidez}
+                        sub={desc.acidez.tipo ? t.acidezTipo[desc.acidez.tipo][1] : null}
+                        intensidad={desc.acidez.intensidad}
+                        texto={intensidad(desc.acidez.intensidad)}
+                        nota={desc.acidez.nota}
+                      />
+                    )}
+                    {desc.boca && (
+                      <Descriptiva
+                        icono={ICONO_DE_TEXTURA[(desc.boca.texturas[0]?.key ?? "") as keyof typeof ICONO_DE_TEXTURA]({ size: 24, strokeWidth: 1.7 })}
+                        titulo={t.boca}
+                        linea={desc.boca.texturas.length ? desc.boca.texturas.map((x) => x.label).join(" · ") : t.sinTextura}
+                        sub={null}
+                        intensidad={desc.boca.intensidad}
+                        texto={intensidad(desc.boca.intensidad)}
+                        nota={desc.boca.nota}
+                      />
+                    )}
                   </div>
                 )}
               </div>
             </div>
             {notasRueda.length > 0 && (
-              <div className={s.mitades} style={{ alignItems: "start" }}>
-                <figure style={{ margin: 0 }}>
-                  <div className={s.h3}>{t.ruedaFigura}</div>
-                  <div style={{ maxWidth: "78mm", margin: "0 auto" }}>
-                  <RuedaFamilias
-                    familias={RUEDA.map((f) => ({ id: f.id, nombre: d.lang === "en" ? f.en : f.es, color: f.color }))}
-                    marcas={notasRueda.map((x) => ({ familiaId: x.familiaId, nota: x.nota, intensidad: x.intensidad, defecto: x.defecto }))}
-                  />
-                  </div>
-                  <figcaption className={s.nota}>{t.ruedaFiguraNota}</figcaption>
-                </figure>
               <div>
-                <div className={s.h3}>{t.rueda}</div>
-                <ul className={s.notas} style={{ gridTemplateColumns: "1fr" }}>
-                  {notasRueda.map((x) => (
-                    <li key={x.id}>
-                      <span className={s.punto} style={{ background: x.color }} />
-                      <span>
-                        <b>{x.nota}</b>
-                        {x.defecto && <span className={s.marcaDefecto}>{t.defectoNota}</span>}
-                        <div className={s.notaSub}>
-                          {x.familia} · {x.etapas}
-                        </div>
-                      </span>
-                      <span style={{ display: "grid", justifyItems: "end", gap: "0.8mm" }}>
-                        <Intensidad valor={x.intensidad} color={x.color} />
-                        <span className={s.notaSub}>
-                          {x.intensidad}/15
+                <div className={s.seccionK}>{t.descriptiva}</div>
+                <div className={s.h3}>{t.notasTitulo}</div>
+                <div className={conFigura ? s.notasYRueda : undefined}>
+                  <ul className={cx(s.notasDesc, !conFigura && s.notasDosColumnas)}>
+                    {notasRueda.map((x) => (
+                      <li key={x.id}>
+                        <span className={s.notaIcono} style={{ background: `${x.color}1F`, color: oscurece(x.color, 0.2) }}>
+                          <IconoDeNota id={x.id} size={24} strokeWidth={1.75} />
                         </span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                        <span className={s.notaCuerpo}>
+                          <span className={s.notaNombre}>
+                            {x.nota}
+                            {x.comentario ? <span className={s.notaComentario}> «{x.comentario}»</span> : null}
+                            {x.defecto && <span className={s.marcaDefecto}>{t.defectoNota}</span>}
+                          </span>
+                          <span className={s.notaSub}>{[x.contexto, x.etapas].filter(Boolean).join(" · ")}</span>
+                        </span>
+                        <span className={s.notaIntensidad}>
+                          <BarraDeIntensidad valor={x.intensidad} color={x.color} etiqueta={`${x.nota}: ${intensidad(x.intensidad)}`} />
+                          <span className={s.notaSub}>
+                            <b>{fmtI(x.intensidad)}</b>/15 · {ZONA_LABEL[d.lang][zonaDeIntensidad(x.intensidad)]}
+                          </span>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  {conFigura && (
+                    <figure style={{ margin: 0 }}>
+                      <RuedaFamilias
+                        familias={RUEDA.map((f) => ({ id: f.id, nombre: d.lang === "en" ? f.en : f.es, color: f.color }))}
+                        marcas={notasRueda.map((x) => ({ familiaId: x.familiaId, nota: x.nota, intensidad: x.intensidad, defecto: x.defecto }))}
+                      />
+                      <figcaption className={s.nota}>{t.ruedaFiguraNota}</figcaption>
+                    </figure>
+                  )}
+                </div>
               </div>
             )}
-            {c.b2 && (c.b2.descriptivo.length > 0 || c.b2.perfil) && (
-              <div className={s.mitades}>
-                {c.b2.descriptivo.length > 0 && (
-                  <div>
-                    <div className={s.h3}>{t.descriptivo}</div>
-                    {c.b2.descriptivo.map((p) => (
-                      <p key={p.k} style={{ margin: "0 0 1.5mm" }}>
-                        <span className={s.k}>{p.k}</span>
-                        <br />
-                        {p.v}
-                      </p>
-                    ))}
-                  </div>
-                )}
-                {c.b2.perfil && (
-                  <div>
-                    <div className={s.h3}>{t.perfil}</div>
-                    <p className={s.cita} style={{ WebkitLineClamp: 6 }}>
-                      {c.b2.perfil}
-                    </p>
-                  </div>
-                )}
+            {c.b2?.perfil && (
+              <div>
+                <div className={s.h3}>{t.perfil}</div>
+                <p className={s.cita} style={{ WebkitLineClamp: 4 }}>
+                  {c.b2.perfil}
+                </p>
               </div>
             )}
             {d.evaluacion && (

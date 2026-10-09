@@ -33,10 +33,19 @@ export type DossierB3 = { pares: Par[]; defectos: { defecto: string; granos: str
 export type DossierCifras = {
   sca: { k: string; label: string; v: number }[];
   scaTotal: number | null;
-  cva: { k: string; label: string; v: number }[];
+  /** V5.197: `corto` = el rótulo de la esquina en la telaraña de 8 esquinas («Fragancia», no «Fragancia (café molido, en seco)»). */
+  cva: { k: string; label: string; corto: string; v: number }[];
   cvaTotal: number | null;
-  /** Las notas de la rueda con el color de su familia y su intensidad (0–15). */
-  rueda: { id: string; nota: string; familiaId: string; familia: string; color: string; intensidad: number; etapas: string; defecto: boolean }[];
+  /** V5.197: las tazas del CVA (las que se usaron, las no uniformes y las defectuosas, que restan 2 y 4 puntos). */
+  cvaTazas: { n: number; u: number; d: number } | null;
+  /** Las notas de la rueda con el color de su familia y su intensidad (0–15). V5.197: `contexto` = de dónde cuelga en la
+   *  rueda («Frutal › Otras frutas») y `comentario` = lo que el Q-Grader escribió de esa nota («Albaricoque», «Panela»). */
+  rueda: { id: string; nota: string; familiaId: string; familia: string; contexto: string; color: string; intensidad: number; etapas: string; comentario: string; defecto: boolean }[];
+  /** V5.197: lo descriptivo que no es una nota: el tipo de acidez y las texturas en boca, cada uno con su intensidad (0–15). */
+  descriptivo: {
+    acidez: { tipo: "dulce" | "seca" | null; intensidad: number | null; nota: string | null } | null;
+    boca: { texturas: { key: string; label: string }[]; intensidad: number | null; nota: string | null } | null;
+  };
   /** Los pesos del análisis físico, en gramos (null si no se pesó). */
   pesos: { pergamino: number; verde: number; merma: number; primario: number; secundario: number; sano: number } | null;
   humedadPergamino: number | null;
@@ -61,6 +70,12 @@ const n = (v: unknown, d = 2): string | null => {
 };
 const par = (k: string, v: string | null | undefined): Par | null => (v != null && String(v).trim() !== "" ? { k, v: String(v) } : null);
 const pares = (...xs: (Par | null)[]): Par[] => xs.filter((x): x is Par => x !== null);
+
+/** V5.197: el rótulo corto de cada atributo del CVA, para las esquinas de la telaraña. */
+const CVA_CORTO: Record<Lang, Record<string, string>> = {
+  es: { fragrance: "Fragancia", aroma: "Aroma", flavor: "Sabor", aftertaste: "Sabor residual", acidity: "Acidez", sweetness: "Dulzor", mouthfeel: "Sensación en boca", overall: "Impresión general" },
+  en: { fragrance: "Fragrance", aroma: "Aroma", flavor: "Flavor", aftertaste: "Aftertaste", acidity: "Acidity", sweetness: "Sweetness", mouthfeel: "Mouthfeel", overall: "Overall" },
+};
 
 const L = {
   es: { especie: "Especie", humedad: "Humedad del verde", densidad: "Densidad", aw: "Actividad de agua (aw)", factor: "Factor de rendimiento", noLoSabe: "No lo sabe (declarado por el productor)", proceso: "Proceso", tazas: "Tazas", taint: "taint", fault: "fault", acidez: "Acidez", boca: "Sensación en boca", intensidad: "intensidad", pergamino: "Muestra de pergamino", trillado: "Trillado verde restante", humPerg: "Humedad del pergamino", humVerde: "Humedad del verde", defPrim: "Defecto primario", defSec: "Defecto secundario", merma: "Merma de trilla", sano: "Grano sano", defectuosa: "Almendra defectuosa", color: "Color del grano verde", factorRep: "Factor reportado por el laboratorio" },
@@ -169,14 +184,37 @@ export function caracterizacionDelDossier(ds: Record<string, unknown> | null | u
     scaTotal: sca.total ?? null,
     cva: CVA_SECCIONES.flatMap(([k]) => {
       const v = num(ev[`cva_${k}` as keyof LabEvaluation]);
-      return v == null ? [] : [{ k, label: CVA_SECCION_LABEL[lang][k], v }];
+      return v == null ? [] : [{ k, label: CVA_SECCION_LABEL[lang][k], corto: CVA_CORTO[lang][k] ?? CVA_SECCION_LABEL[lang][k], v }];
     }),
     cvaTotal: cva.total ?? null,
+    cvaTazas: cva.total != null ? { n: num(ev.cva_num_tazas) ?? 0, u: cva.u, d: cva.d } : null,
     rueda: ids.map((id) => {
       const d = detalleDe(detalle, id);
       const f = familiaDe(id);
-      return { id, nota: descriptorLabel(id, lang), familiaId: f?.id ?? "", familia: f ? (lang === "en" ? f.en : f.es) : "", color: f?.color ?? "#8A8F98", intensidad: d.intensidad, etapas: etapasLabel(d.etapas, lang), defecto: anot.has(id) };
+      const ruta = rutaDe(id, lang).split(" › ");
+      return {
+        id,
+        nota: descriptorLabel(id, lang),
+        familiaId: f?.id ?? "",
+        familia: f ? (lang === "en" ? f.en : f.es) : "",
+        contexto: ruta.length > 1 ? ruta.slice(0, -1).join(" › ") : "",
+        color: f?.color ?? "#8A8F98",
+        intensidad: d.intensidad,
+        etapas: etapasLabel(d.etapas, lang),
+        comentario: d.nota,
+        defecto: anot.has(id),
+      };
     }),
+    descriptivo: {
+      acidez:
+        ev.acidez_tipo || ev.acidez_intensidad || ev.acidez_nota
+          ? { tipo: ev.acidez_tipo === "dulce" || ev.acidez_tipo === "seca" ? ev.acidez_tipo : null, intensidad: num(ev.acidez_intensidad), nota: ev.acidez_nota?.trim() || null }
+          : null,
+      boca:
+        ev.boca_texturas.length || ev.boca_intensidad || ev.boca_nota
+          ? { texturas: ev.boca_texturas.map((k) => ({ key: k, label: opcionLabel(TEXTURAS_EN_BOCA, k, lang) })), intensidad: num(ev.boca_intensidad), nota: ev.boca_nota?.trim() || null }
+          : null,
+    },
     pesos: factor.start > 0 && factor.remainder > 0 ? { pergamino: factor.start, verde: factor.remainder, merma: factor.yieldLoss, primario: num(ev.fa_primary_defect) ?? 0, secundario: num(ev.fa_secondary_defect) ?? 0, sano: factor.healthy } : null,
     humedadPergamino: num(ev.fa_parch_hum),
     humedadVerde: num(ev.b3_humedad_verde),

@@ -19,6 +19,24 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.197] — 2026-10-10 (commit pendiente)
+
+- **Cambiado**: el **Perfil de taza del Dossier del lote** (owner, 2026-10-10): la evaluación afectiva del CVA es ahora una
+  **telaraña de 8 esquinas** (octógono de cara plana, de 1 en el centro a 9 en el borde, el 5 «ni alta ni baja» punteado y el valor
+  junto a cada atributo); las barras salieron. Al lado, el total del CVA con sus tazas y si es el Punto que rige el grado. Un lote
+  evaluado en SCA 2004 conserva su radar de diez atributos.
+- **Añadido**: la **evaluación descriptiva con íconos**. Cada nota de la rueda lleva su ícono en el tinte de su familia, lo que el
+  Q-Grader escribió de ella («Albaricoque», «Panela»), de dónde cuelga en la rueda y en qué etapa se percibió, y su intensidad de 0 a
+  15 en quince casillas que separan las zonas baja, media y alta. La acidez (dulce o seca) y la sensación en boca (por textura) tienen
+  su ícono, su intensidad y la nota del catador. Hasta siete notas van junto a la rueda; con más, la lista pasa a dos columnas.
+- **Añadido**: `src/components/catacion/IconosDeSabor.tsx`, un ícono por cada punto de la rueda del sabor (9 familias, 22
+  subcategorías, 85 notas) y por cada opción del formato descriptivo, en el trazo de lucide (los de lucide cuando existen; el resto
+  dibujado aquí: fresa, mora, arándano, durazno, chocolate, miel, canela, anís…). Puro: lo pinta igual el servidor que el cliente.
+- **Corregido**: la hoja decía «los diez atributos del formulario SCA 2004» aunque desde la V5.189 rige el CVA, y el comentario del
+  Q-Grader en cada nota de la rueda no salía en el dossier.
+- **Seguridad**: `qa-centro-calidad` (+8, 313): cada punto de la rueda con su ícono explícito y sin claves sueltas, las cifras nuevas,
+  la telaraña y la descriptiva. Dos mutaciones (un ícono que falta, la escala del CVA): las dos muerden.
+
 ## [V5.196] — 2026-10-09 (commit c9ae72d)
 
 - **Hito**: **«Ofertas CP Aceptadas» es el Triage de Catálogo Activo** (owner, 2026-10-09; tanda C de `docs/PLAN_TRIAGE_CATALOGO.md`):

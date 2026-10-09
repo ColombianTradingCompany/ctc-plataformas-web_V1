@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.200] — 2026-10-10 (commit pendiente)
+## [V5.200] — 2026-10-10 (commit 3795a92)
 
 - **Corregido**: el **ticker de noticias de la portada de CTC** mostraba temas que no son del café (owner, 2026-10-10). La causa: tomaba
   los tres últimos titulares de cada medio aprobado SIN el filtro de café que sí usa la Redacción de Coffeed, y desde el 2026-08-20 la

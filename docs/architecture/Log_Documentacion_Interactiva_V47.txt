@@ -726,4 +726,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-10] V5.200 · El ticker de la portada solo con noticias del café: los medios generalistas pasan por el filtro de café
 - ANN `src/lib/market/ticker.ts`, `src/lib/coffeed/feeds.ts` (`esTitularDelCafe`), `scripts/qa-redaccion-check.mjs`, `src/lib/version.ts`, `docs/componentes/coffeed.md`, `docs/ALINEACION.md`.
-(commit: pendiente)
+(commit: 3795a92)

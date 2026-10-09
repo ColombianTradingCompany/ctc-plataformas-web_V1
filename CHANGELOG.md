@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.198] — 2026-10-10 (commit pendiente)
+## [V5.198] — 2026-10-10 (commit 00b518d)
 
 - **Cambiado**: el **bloque del Catálogo Activo** de CTC, Kaffetal Regal y la familia Cherry Picked enseña los **lotes reales** que
   llegaron al Triage de Catálogo Activo (un trato por ventana vigente, una declaración viva o una partida libre del Stock CTCx), los

@@ -722,4 +722,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-10] V5.199 · Find my Lot por la referencia: «CTC-L-» fijo y ocho caracteres, en las páginas de CTC, KR y CP; encuentra los lotes del Triage
 - ANN `src/components/catalogo/{BuscadorDeLote.tsx,LoteNoEncontrado.tsx (nuevo),CatalogoPublicoLanding.tsx,catalogoPublico.module.css,SneakPeek.tsx,SneakPeek.module.css}`, `src/app/ctcx-public-catalogue/{page.tsx,[codigo]/not-found.tsx (nuevo)}`, `src/lib/catalogo/codigoPublico.ts`, `scripts/{qa-catalogo-publico-check,qa-sneak-peek-check}.mjs`, `src/lib/version.ts`, `docs/componentes/cherry-picked.md`, `docs/ALINEACION.md`.
-(commit: pendiente)
+(commit: 57d8d46)

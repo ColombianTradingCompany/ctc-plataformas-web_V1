@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.199] — 2026-10-10 (commit pendiente)
+## [V5.199] — 2026-10-10 (commit 57d8d46)
 
 - **Añadido**: **«Find my Lot» en las páginas de CTC, Kaffetal Regal y Cherry Picked** (owner, 2026-10-10): el pie del bloque del
   Catálogo Activo lleva el acceso al portal y, al lado, el campo con **«CTC-L-» fijo** donde se escriben solo los ocho caracteres;

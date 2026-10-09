@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.195] — 2026-10-09 (commit pendiente)
+## [V5.195] — 2026-10-09 (commit f520178)
 
 - **Añadido**: **el Stock CTCx** (OCP · Manejo de Stock Físico, `/ocp/stock`; owner, 2026-10-09; tanda B de
   `docs/PLAN_TRIAGE_CATALOGO.md`): el café que está físicamente en CTCx en **partidas** de pergamino, verde, tostado o empacado

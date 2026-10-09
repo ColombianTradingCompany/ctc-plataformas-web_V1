@@ -714,4 +714,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-10] V5.197 · El Perfil de taza del Dossier: la telaraña CVA de 8 esquinas y la evaluación descriptiva con íconos e intensidad
 - ANN `src/components/catacion/IconosDeSabor.tsx` (nuevo), `src/components/kaffetal-regal/dossier/{DossierCtcx.tsx,figuras.tsx,textos.ts,dossier.module.css}`, `src/lib/kaffetal/dossierEvaluacion.ts`, `scripts/qa-centro-calidad-check.mjs`, `src/lib/version.ts`, `docs/componentes/kaffetal-regal.md`, `docs/ALINEACION.md`.
-(commit: pendiente)
+(commit: d80e49d)

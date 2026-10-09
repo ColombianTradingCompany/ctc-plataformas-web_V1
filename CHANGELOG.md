@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.197] — 2026-10-10 (commit pendiente)
+## [V5.197] — 2026-10-10 (commit d80e49d)
 
 - **Cambiado**: el **Perfil de taza del Dossier del lote** (owner, 2026-10-10): la evaluación afectiva del CVA es ahora una
   **telaraña de 8 esquinas** (octógono de cara plana, de 1 en el centro a 9 en el borde, el 5 «ni alta ni baja» punteado y el valor

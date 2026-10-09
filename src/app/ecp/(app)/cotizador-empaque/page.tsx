@@ -1,37 +1,25 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { QuotesBoard } from "@/components/cotizador/QuotesBoard";
-import styles from "@/components/panel/shared.module.css";
-import { QUOTE_BASE_PATH } from "@/lib/cotizador/types";
+import { EmpaqueFobBoard } from "@/components/produccion/EmpaqueFobBoard";
+import { quoteServiceClient } from "@/lib/panel/requireConsoleWrite";
+import { edicionVigente } from "@/lib/pvc/servicio";
+import { cargarReferenciasEmpaque } from "@/lib/produccion/referencias";
 
-export const metadata: Metadata = { title: "Costo de empaque · ECP", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Empacado hasta FOB · ECP", robots: { index: false, follow: false } };
+export const dynamic = "force-dynamic";
 
-// Cotizador de Costo de Empaque (2026-08-06). La herramienta es la misma que el
-// banco público (`public/tools/costo-empaque/costo-empaque.html`) — aquí gana memoria: cada
-// configuración se guarda como una cotización más, con su destinatario y su
-// historial, y se puede comparar contra las otras en el Cuadro de evaluación.
-export default function CotizadorEmpaquePage() {
+// ECP · Modelo de Producción · Empacado hasta FOB (V5.194, owner 2026-10-09; `docs/PLAN_TRIAGE_CATALOGO.md` §2.2). Reemplaza al
+// «Costo de empaque» de la máquina de sellado al vacío (amortización, cuadro de evaluación), retirado por pedido del owner: lo que
+// importa ahora es el costo de un embarque hasta FOB por kg de verde, en varios modos de empaque. La ruta se conservó (los talones y
+// los enlaces viejos siguen sirviendo). El layout del ECP ya pasó la compuerta de la consola; la TRM por defecto es la de la edición
+// vigente del PVC.
+export default async function EmpacadoHastaFobPage() {
+  const [edicion, referencias] = await Promise.all([edicionVigente(), cargarReferenciasEmpaque(quoteServiceClient())]);
+  const trm = edicion?.inputs?.trm;
   return (
-    <>
-      <div className={styles.card} style={{ marginBottom: 16 }}>
-        <div className={styles.sectionHead}>
-          <strong>Cuadro de evaluación</strong>
-          <Link className="btn btn-sm" href={`${QUOTE_BASE_PATH.empaque}/evaluacion`}>
-            Comparar configuraciones →
-          </Link>
-        </div>
-        <p className={styles.meta}>
-          Superpone todas las configuraciones guardadas para leerlas por lentes: costo por kilo, de qué se compone ese
-          costo, capacidad diaria e inversión. Se elige cuáles entran.
-        </p>
-      </div>
-
-      <QuotesBoard
-        kind="empaque"
-        basePath={QUOTE_BASE_PATH.empaque}
-        title="Costo de empaque por kilo"
-        subtitle="Cuánto cuesta empacar un kilo al vacío: bolsa, mano de obra y amortización de la máquina. Cada análisis se guarda con su bolsa y su máquina elegidas, y queda para consultar, comparar y volver a abrir."
-      />
-    </>
+    <EmpaqueFobBoard
+      trmVigente={typeof trm === "number" && trm > 0 ? trm : null}
+      edicionCodigo={edicion?.code ?? null}
+      referencias={referencias}
+    />
   );
 }

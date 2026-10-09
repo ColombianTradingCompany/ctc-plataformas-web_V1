@@ -60,7 +60,7 @@ va a usar. **Tres ya se reutilizan hoy, y dos de ellas como COPIA** — que es j
 | **Rueda del Café** (`catacion`) | Sneak Peek del catálogo (cherry-picked) | Extracto SVG generado con la **V10**, mientras la publicada es la V23 | **Centro de Calidad** (EVA: perfil sensorial del Q-Grader sobre la rueda) · ficha del lote · CTCx Public Catalogue |
 | **Rueda del Café** (`catacion`) y Ficha de KR (`fichaData.ts`) | **`coffee-datasheet`** (V5.132) | **Generado, no copiado**: `scripts/build-coffee-datasheet.mjs` escribe la rueda, los municipios y las variedades dentro del HTML; `qa-coffee-datasheet` falla si se despegan | — |
 | `coffee-datasheet` | — (sus fórmulas se comparan con las de la planilla del Centro de Calidad) | Paridad por guardián contra `labEvaluation.ts` | **Transcribir FT2** / llevar un lote a `lot_evaluations` (`CTC.emitir`; el estado ya usa los nombres de `LabEvaluation`) |
-| `costo-empaque` | Cotizador de empaque (herramientas-internas) | Embebida **tal cual** por mismo origen; lee y escribe sus `<input>` | Master Roaster / Papagayo Beans® |
+| `costo-empaque` | — (el cotizador de empaque del ECP la embebía tal cual hasta la V5.194; lo reemplazó «Empacado hasta FOB», que no la usa) | — | Master Roaster / Papagayo Beans® |
 | `mermas-ctc` | Cotizador de lotes (herramientas-internas) | **Copia** en `public/ocp-apps/cotizador-lotes.html` (Mermas V15) | Ficha de KR (factor × almendra), Modelo de Procesamiento |
 | `cogs-verde` | Cotizador logístico (herramientas-internas) | **Copia** en `public/ocp-apps/cotizador-logistico.html` (CoGS **V19**; la pública es V18) | Modelo Económico (PVC) |
 | `cool-pdf` | Cover Flow del taller, Coffeed Redacción | Su mecánica `RENDER.flow` copiada en dos sitios | Visor de dossiers |
@@ -74,7 +74,7 @@ va a usar. **Tres ya se reutilizan hoy, y dos de ellas como COPIA** — que es j
 
 **La regla para estas conversaciones**: cuando una pieza se vuelve interfaz, se EXTRAE a una fuente única
 —datos puros en `src/lib/tools/<id>/` que leen la herramienta y las superficies, o la herramienta embebida
-tal cual como hace el cotizador de empaque— y nunca se copia. Tocar el componente que la consume (Centro de
+tal cual como lo hizo el cotizador de empaque hasta la V5.194— y nunca se copia. Tocar el componente que la consume (Centro de
 Calidad = `socios`/`consolas`, cotizadores = `herramientas-internas`, catálogo = `cherry-picked`) exige
 línea en `docs/ALINEACION.md` §3.
 

@@ -2,15 +2,18 @@
 // Los dos cotizadores (lotes de café y logística) comparten TODO menos la
 // matemática: código, destinatario, estado, vigencia, historial. Lo que cambia
 // vive en `inputs`/`results` y lo interpreta cada módulo.
+//
+// El tercero, «Costo de empaque» (`kind = 'empaque'`, la máquina de sellado al vacío y su amortización), salió en la V5.194 por
+// pedido del owner: lo reemplazó «Empacado hasta FOB» (`src/lib/produccion/`), que no es una cotización con destinatario sino una
+// referencia de costo. Su única fila sigue en `quotes` como historia y ninguna pantalla la lee.
 
-export type QuoteKind = "lote" | "logistico" | "empaque";
+export type QuoteKind = "lote" | "logistico";
 export type QuoteStatus = "borrador" | "emitida" | "aceptada" | "rechazada" | "vencida";
 export type CounterpartyKind = "productor" | "comprador" | "lead" | "externo";
 
 export const QUOTE_KIND_LABEL: Record<QuoteKind, string> = {
   lote: "Lotes de café",
   logistico: "Logístico",
-  empaque: "Costo de empaque",
 };
 
 /** Dónde vive el tablero de cada módulo. Antes esto era un ternario repetido en
@@ -19,7 +22,6 @@ export const QUOTE_KIND_LABEL: Record<QuoteKind, string> = {
 export const QUOTE_BASE_PATH: Record<QuoteKind, string> = {
   lote: "/ecp/cotizador-lotes",
   logistico: "/ecp/cotizador-logistico",
-  empaque: "/ecp/cotizador-empaque",
 };
 
 export const QUOTE_STATUS_LABEL: Record<QuoteStatus, string> = {

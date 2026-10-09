@@ -22,7 +22,7 @@ en el orden en que se apoyan uno en otro. Dos todavía no tienen módulo propio 
 | 1 | **Definición de Contexto** | qué dice la casa y con qué cifras: la ficha viva de realineación de GTM y comunicación (CTCx · KR · CP), con redacción asistida | `/ecp/direccionamiento` (pestaña 1) · `DefinicionDeContexto.tsx`, `DireccionamientoClient.tsx` · `src/lib/direccionamiento/{definicion,memoria}.ts` · tabla `direccionamiento_context` | vivo (V4.32) |
 | 2 | **Misión y Visión** | el porqué y el hacia dónde | `/ecp/direccionamiento/mision-vision` | **pestaña vacía a propósito** (lo dice en voz alta) |
 | 3 | **Modelo Económico** — *PVC & Grados de Calidad* | cuánto vale una carga, qué grado lleva un café y qué paga cada grado | `/ecp/pvc` · `pvc/{lectura,grados,tablero,parametros,dossier}` · `pvc/tablero/embed[/publicar]` · `GET /api/pvc/current` · **la definición oficial de grados**: `/ecp/direccionamiento/grados` + `src/lib/grados/definicion.ts` · **Mercado Global** (`/ecp/direccionamiento/mercado-global`, vacía: será el «Marco de mercado» del plan §11) · **Anclas de mercado** (`/ecp/anclas-mercado`) · **Cotizador de lotes** (`/ecp/cotizador-lotes`) | vivo; fase 2 decidida y sin construir |
-| 4 | **Modelo de Procesamiento** | qué le pasa al café desde la finca: de CPS a verde, empacado y embalado — rendimientos, mermas, empaque, costo por etapa | **sin módulo propio.** Piezas: `src/lib/pvc/lectura.ts` (`CARGA_KG_CPS`, `EMPAQUES`, `embudoDeCarga`, los MOQ de compra y los tipos de mezcla —Single Origin · Regional Blend, owner 2026-09-25—) · **Cotizador de empaque** (`/ecp/cotizador-empaque`) · la Base física de `escala.ts` | **en scoping**: brief escrito el 2026-09-19 (`briefs/herramientas-internas-modelo-de-produccion.md`), espera al owner |
+| 4 | **Modelo de Procesamiento** | qué le pasa al café desde la finca: de CPS a verde, empacado y embalado — rendimientos, mermas, empaque, costo por etapa | **sin módulo propio.** Piezas: `src/lib/pvc/lectura.ts` (`CARGA_KG_CPS`, `EMPAQUES`, `embudoDeCarga`, los MOQ de compra y los tipos de mezcla —Single Origin · Regional Blend, owner 2026-09-25—) · **Empacado hasta FOB** (`/ecp/cotizador-empaque`, V5.194: cinco modos de empaque, paletizado, flete a puerto y trámites FOB por kg de verde; sus referencias congeladas anclarán el FOB mínimo del Triage de Catálogo Activo) · la Base física de `escala.ts` | **Empacado hasta FOB vivo (V5.194)**; lo demás del modelo (trilla, mermas, procesamiento), en scoping: brief del 2026-09-19 (`briefs/herramientas-internas-modelo-de-produccion.md`) |
 | 5 | **Modelo de Logística** | qué cuesta después del FOB: estimaciones y cotizaciones según **volumen y región** | **sin módulo propio.** Piezas: **Cotizador logístico** (`/ecp/cotizador-logistico` + `public/ocp-apps/cotizador-logistico.html`) · `src/lib/pvc/canales.ts` (programas × tramos de incoterm) · los escalones de flete del motor (`n3`, aéreo) | **en scoping**: brief escrito el 2026-09-19 (`briefs/herramientas-internas-modelo-logistico.md`), espera al owner; el plan §12.10 ya lista lo que falta |
 | 5·a | **Cotizador Courier (FedEx)** — modalidad courier del Modelo de Logística | cuánto le cobra FedEx a CTCx por un envío de café (verde o tostado, < 100 kg): tarifa de lista de la guía vigente − descuentos del acuerdo firmado el 2026-09-22 + combustible de la semana | `/ecp/cotizador-courier` · `src/lib/courier/{calculo,actions,types}.ts` · `CourierBoard.tsx` · tablas `courier_*` (service-role-only) · insumos FUERA del repo en `apps-internas/courier-fedex/` (guía pública + acuerdo transcrito) · `scripts/seed-courier.mjs`. ⚠️ El acuerdo es **confidencial** (cláusula 6) y el repo es público: **ninguna cifra ni número de cuenta entra al repo**, solo a la base | **vivo — ciclo 1 CERRADO (V5.68 → V5.73, 2026-09-23)**: exportación de paquetes y carga, combustible automático (cron EIA), cotizaciones que se guardan, reabren, editan (nota) y borran, y **enlace con LCP · CRM CP CaaS** (una cotización → un item CaaS; un item → varias). Brief: `briefs/herramientas-internas-cotizador-courier.md` |
 
@@ -37,7 +37,8 @@ en el orden en que se apoyan uno en otro. Dos todavía no tienen módulo propio 
 
 `/ecp/direccionamiento` · `/ecp/direccionamiento/{grados,mision-vision,mercado-global}` · `/ecp/pvc` ·
 `/ecp/pvc/{lectura,grados,tablero,parametros,dossier}` · `/ecp/pvc/tablero/embed[/publicar]` · `/api/pvc/current` ·
-`/ecp/cotizador-{lotes,logistico,empaque}[/id]` · `/ecp/cotizador-courier` · `/ecp/cotizador-empaque/evaluacion` · `/ecp/anclas-mercado`.
+`/ecp/cotizador-{lotes,logistico}[/id]` · `/ecp/cotizador-empaque` (Empacado hasta FOB; desde la V5.194 sus sub-rutas viejas
+—el detalle `[id]` y `evaluacion`— van con un 308 a la herramienta) · `/ecp/cotizador-courier` · `/ecp/anclas-mercado`.
 
 Hay **dos pantallas de grados**, y desde la V5.56 no se llaman igual: `/ecp/direccionamiento/grados` es «Grados de Calidad ·
 definición vigente» (LA que leen todas las superficies) y `/ecp/pvc/grados` es «Escala de puntos · en validación» (la que
@@ -60,15 +61,20 @@ viene). Se funden con la fase 2. La pestaña vacía «Modelo Económico» de Dir
   (`GRADOS`, `gradoPorPuntaje`, `redondeaPuntaje`) y `GradosBoard.tsx` — **contrato transversal de `ALINEACION` §1**: se
   cambia aquí y solo aquí, avisando a todos los que lo leen. **Anclas**: `src/lib/anclas/{actions,fnc,parseFnc,types}.ts`,
   `src/lib/market/ticker.ts` (lector FNC/ICE para Home y anclas). Plan: `docs/PVC_BCP_PLAN.md`.
-- **Procesamiento y Logística**: `src/lib/cotizador/{actions,types}.ts` (13 compuertas, más 4 en `anclas/actions.ts`: cada módulo declara su consola UNA
-  vez —`const CONSOLA = "bcp"`— y `qa-rutas-consolas` (f-bis) la contrasta con el rail; las rutas salen de `QUOTE_BASE_PATH`
-  y `ANCLAS_PATH`), `src/components/cotizador/` (con `QuoteDetail.tsx`, que antes vivía en la carpeta de rutas).
+- **Procesamiento y Logística**: `src/lib/cotizador/{actions,types}.ts` (12 compuertas desde la V5.194, más 4 en `anclas/actions.ts`: cada módulo declara su consola UNA
+  vez —`const CONSOLA = "ecp"`— y `qa-rutas-consolas` (f-bis) la contrasta con el rail; las rutas salen de `QUOTE_BASE_PATH`
+  y `ANCLAS_PATH`), `src/components/cotizador/` (con `QuoteDetail.tsx`, que antes vivía en la carpeta de rutas). Dos cotizadores:
+  lotes y logístico (el de empaque salió en la V5.194).
+- **Producción · Empacado hasta FOB** (V5.194): `src/lib/produccion/empaqueFob.ts` (PURO: modos, salidas, valores por defecto con
+  su fuente, `calcularEmpaqueFob`, `ESTIMADOS_DEL_PVC`), `referencias.ts` (`cargarReferenciasEmpaque`, sin compuerta: la reusará el
+  Triage), `actions.ts` (`guardarReferenciaEmpaque` · `retirarReferenciaEmpaque`, nivel emite, `CONSOLA = "ecp"`),
+  `src/components/produccion/EmpaqueFobBoard.tsx`. Plan: `docs/PLAN_TRIAGE_CATALOGO.md` §2.2.
 
 ## Tablas que posee
 
 `direccionamiento_context` · `pvc_model_versions` · `pvc_editions` (guard: publicada = inmutable) · `pvc_cycles` ·
 `pvc_sources` · `pvc_trigger_watch` · `pvc_forecast_scores` · vistas `public_pvc_current` y `public_pvc_next` ·
-`quotes` · `market_anchors` · las nueve `courier_*` (V5.68: acuerdos, descuentos, descuento adquirido, bonificaciones, tarifas base, zonas, recargos, cotizaciones; V5.69: `courier_combustible_escalas`).
+`quotes` · `market_anchors` · `empaque_fob_referencias` (V5.194: congelada por compuerta, solo se retira) · las nueve `courier_*` (V5.68: acuerdos, descuentos, descuento adquirido, bonificaciones, tarifas base, zonas, recargos, cotizaciones; V5.69: `courier_combustible_escalas`).
 Solo lee: `lots`, `lot_offers`, `purchase_contracts`, `lot_listings` (para saber quién lee ya la edición), `audit_log`
 (escribe rastro). Pasaron a `consolas`: `transcripts`, `transcript_workers`.
 
@@ -78,7 +84,7 @@ Solo lee: `lots`, `lot_offers`, `purchase_contracts`, `lot_listings` (para saber
 `qa-pvc-vigencia.mjs` (28) · `qa-pvc-lectura.mjs` (60 — el MOQ de compra y los tipos de mezcla, en el código Y en el plan §14.8) ·
 `qa-pvc-escala.mjs` (68 — incluye la Base física) · `qa-pvc-canales.mjs` (57) · `qa-pvc-compromiso.mjs` (31) ·
 `qa-grados-check.mjs` (48 — el contrato de grados) · `qa-definicion-check.mjs` · `qa-direccionamiento-check.mjs` ·
-`qa-anclas-check.mjs` · `qa-courier-check.mjs` (51 — el cálculo contra un acuerdo FICTICIO, la fuga cero por hash, el combustible derivado contra el historial de FedEx, el combustible provisional y el límite de paquete por medidas). Y de la casa, porque el grupo vive en el rail del ECP: `qa-rutas-consolas.mjs`.
+`qa-anclas-check.mjs` · `qa-courier-check.mjs` (51 — el cálculo contra un acuerdo FICTICIO, la fuga cero por hash, el combustible derivado contra el historial de FedEx, el combustible provisional y el límite de paquete por medidas). `qa-empaque-fob-check.mjs` (47 — Empacado hasta FOB: el cálculo contra cuatro casos hechos a mano, que la máquina no vuelva, que el servidor recalcule y emita, la compuerta de la tabla). Y de la casa, porque el grupo vive en el rail del ECP: `qa-rutas-consolas.mjs`.
 
 ## Reglas propias
 
@@ -111,6 +117,13 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
 
 ## Pendientes
 
+- **V5.194 · Empacado hasta FOB** (owner, 2026-10-09; ejecutado desde el nodo final, plan `docs/PLAN_TRIAGE_CATALOGO.md` §2.2):
+  reemplazó al costo de empaque de la máquina de sellado (la amortización y el Cuadro de evaluación salieron por pedido del owner).
+  **Pendiente del owner**: guardar la primera referencia con una **tarifa real de flete** al puerto que use — sin una referencia
+  vigente el Triage (tanda C) no podrá anclar el FOB mínimo —, y revisar los valores por defecto (del cotizador logístico de
+  2026-08: bolsa $5.000, caja de 12 kg $7.000 y de 24 kg $10.000, saco $12.000 + GrainPro $10.000, estiba $55.000, agencia,
+  certificados, re-pesaje, inspección y terminal) y la productividad (125 kg por jornal al vacío, 500 en sacos). El saco de 35 kg
+  lleva los precios del de 70 hasta que haya cotización. Lo demás del Modelo de Producción (trilla, mermas) sigue en su brief.
 - **V5.189 · el Punto que lee la escala cambió de protocolo** (owner, ejecutado desde `consolas`, plan §10.6): el CVA es el protocolo
   principal y un SCA 2004 vale lo mismo; ya no hay piso, techo ni recata, ni tope en Gold. `escala.ts` y `definicion.ts` no cambian
   (los umbrales se leen igual en los dos protocolos); la «fase 2» lee `PuntoSca` de `src/lib/arena/punto.ts` y suma el surplus sobre
@@ -148,7 +161,7 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
   cuadro nombra (Procesamiento · Empacado; los tres costos) y propone una primera tanda de SOLO LECTURA que junta lo disperso
   y enseña el hueco, sin cambiar un precio. Lo que destaparon: el modelo de producción vive en CINCO sitios que no se hablan
   (el embudo en `lectura.ts`, las mermas dentro de `cotizador-lotes.html`, los costos de trilla dentro del HTML LOGÍSTICO, el
-  vacío en el cotizador de empaque, y GrainPro sin estimador); las tarifas logísticas están todas escritas a mano en un HTML de
+  vacío en el cotizador de empaque, y GrainPro sin estimador — los dos los estima desde la V5.194 «Empacado hasta FOB»); las tarifas logísticas están todas escritas a mano en un HTML de
   366 KB, sin fuente ni fecha; los tres cotizadores no tienen guardián; y la página `/ecp/cotizador-logistico` le dice al
   operador que «falta el motor de cálculo» cuando el motor lleva semanas funcionando (se corrige en su primera tanda).
   ⚠️ Riesgo común: partir `params.proc` o añadir la columna marítima toca `paridad.json`, el contrato entre cuatro motores.
@@ -205,7 +218,7 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
   (`pvc_marco_mercado`: la clasificación A/B/C **es dato**, semestral, y el D10 es su impresión) y **MOQ y mermas**;
   el Tablero gana el rol de configurador que un agente usa para proponer la versión siguiente del modelo (nunca
   publica); `pvc_cycles.kind` gana `month_wrap` (cinco por periodo, el quinto cierra la franja y alimenta la afinación);
-  el componente de empaque del KPI de verde viene del **Cotizador de Empaque** del ECP.
+  el componente de empaque del KPI de verde viene del **Empacado hasta FOB** del ECP (V5.194; antes, el Cotizador de Empaque).
 - **Misión y Visión** y **Mercado Global**: pestañas vacías a propósito. Falta el contenido (owner) y, para Mercado Global,
   la tabla `pvc_marco_mercado` del plan §11 (la clasificación A/B/C de la Tríada es dato versionado semestralmente).
 

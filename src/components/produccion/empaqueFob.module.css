@@ -1,0 +1,70 @@
+/* ECP · Empacado hasta FOB (V5.194). Cajas normales en rejilla (como el Cotizador Courier: `shared.module.css .card` es una fila
+   flex de una línea y repartiría el formulario a las esquinas). A la derecha, el resultado se queda a la vista mientras se ajusta. */
+
+.panel { background: var(--card, #fff); border: 1px solid var(--line, #e5e2ee); border-radius: var(--radius, 12px); padding: 18px 20px; margin-bottom: 16px; }
+.head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.head h2 { display: flex; align-items: center; gap: 8px; font-size: 15.5px; font-weight: 700; color: var(--ink, #1f1a2e); margin: 0; }
+.head small { color: var(--muted, #6b7280); font-size: 12.5px; }
+
+.rotuloGrupo { font-family: var(--font-spline-mono), ui-monospace, monospace; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted, #6b7280); margin: 4px 0 8px; }
+
+/* Los modos y los destinos: botones-tarjeta (role=radio). */
+.modos { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.destinos { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.modo, .destino { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; padding: 10px 12px; border: 1.5px solid var(--line, #e5e2ee); border-radius: 10px; background: var(--paper, #faf9fd); color: var(--ink, #1f1a2e); font: inherit; cursor: pointer; }
+.modo strong, .destino strong { font-size: 13.5px; }
+.modo:hover, .destino:hover { border-color: var(--primary, #3c0a86); }
+.modoActivo { border-color: var(--primary, #3c0a86); background: color-mix(in srgb, var(--primary, #3c0a86) 9%, var(--card, #fff)); box-shadow: 0 0 0 1px var(--primary, #3c0a86) inset; }
+.modoTipo { font-family: var(--font-spline-mono), ui-monospace, monospace; font-size: 9.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted, #6b7280); }
+.modoDetalle { font-size: 11.5px; color: var(--muted, #6b7280); }
+
+.campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px 16px; }
+.campo label { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 5px; color: var(--ink, #1f1a2e); }
+.campo input { width: 100%; padding: 8px 10px; border: 1.5px solid var(--line, #e5e2ee); border-radius: 8px; font-size: 14px; background: var(--paper, #faf9fd); font-family: inherit; color: var(--ink, #1f1a2e); text-align: right; }
+.campo small { display: block; margin-top: 4px; font-size: 11.5px; color: var(--muted, #6b7280); line-height: 1.4; }
+.check { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 12px; color: var(--ink, #1f1a2e); }
+
+.nota { font-size: 12.5px; color: var(--muted, #6b7280); margin: 10px 0 0; line-height: 1.5; }
+.enlace { background: none; border: 0; padding: 0; color: var(--primary, #3c0a86); text-decoration: underline; font: inherit; cursor: pointer; }
+.punto { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: middle; flex: none; }
+
+/* Formulario a la izquierda, resultado pegado a la derecha. */
+.rejilla { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+.resultado { position: sticky; top: 16px; background: var(--card, #fff); border: 1px solid var(--line, #e5e2ee); border-radius: var(--radius, 12px); padding: 18px 20px; margin-bottom: 16px; }
+.cifra { display: flex; flex-direction: column; gap: 2px; }
+.cifraK { font-family: var(--font-spline-mono), ui-monospace, monospace; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted, #6b7280); }
+.cifraV { font-size: 32px; font-weight: 800; color: var(--ink, #1f1a2e); letter-spacing: -.01em; }
+.cifraSub { font-size: 12.5px; color: var(--muted, #6b7280); }
+.cantidades { font-size: 12.5px; color: var(--muted, #6b7280); margin: 12px 0; line-height: 1.6; }
+.cantidades strong { color: var(--ink, #1f1a2e); }
+
+.barra { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--line, #e5e2ee); gap: 2px; }
+.barra span { flex-basis: 0; min-width: 3px; transition: flex-grow .25s ease; }
+.leyenda { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 6px; }
+.leyenda li { display: grid; grid-template-columns: auto 1fr auto 40px; align-items: center; gap: 4px; font-size: 12.5px; color: var(--ink, #1f1a2e); }
+.leyenda small { text-align: right; color: var(--muted, #6b7280); }
+.total { font-size: 13px; color: var(--muted, #6b7280); margin: 12px 0 0; padding-top: 10px; border-top: 1px solid var(--line, #e5e2ee); }
+.total strong { color: var(--ink, #1f1a2e); }
+
+.guardar { display: grid; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line, #e5e2ee); }
+.guardar label { font-size: 12.5px; font-weight: 600; color: var(--ink, #1f1a2e); }
+.guardar input { width: 100%; padding: 8px 10px; border: 1.5px solid var(--line, #e5e2ee); border-radius: 8px; font-size: 13.5px; background: var(--paper, #faf9fd); font-family: inherit; color: var(--ink, #1f1a2e); }
+.guardar small { font-size: 11.5px; color: var(--muted, #6b7280); }
+
+.ok { margin: 8px 0 0; padding: 9px 12px; border-radius: 8px; background: #ecfdf3; color: #166534; font-size: 13px; }
+.error { margin: 8px 0 0; padding: 9px 12px; border-radius: 8px; background: #fef2f2; color: #991b1b; font-size: 13px; }
+.aviso { margin: 8px 0 0; padding: 8px 12px; border-radius: 8px; background: #fffbeb; color: #92400e; font-size: 12.5px; }
+.cargada { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 14px; margin-bottom: 14px; border-radius: 10px; background: #eef2ff; color: #3730a3; font-size: 13px; }
+
+.filaSeccion td { font-weight: 700; background: var(--paper, #faf9fd); }
+.filaTotal td { font-weight: 800; border-top: 2px solid var(--line, #e5e2ee); }
+.sangria { padding-left: 30px !important; }
+.retirada td { opacity: .6; }
+.acciones { display: inline-flex; gap: 6px; }
+.retiro { display: flex; gap: 6px; margin-top: 8px; min-width: 260px; }
+.retiro input { flex: 1; padding: 6px 9px; border: 1.5px solid var(--line, #e5e2ee); border-radius: 7px; font-size: 13px; font-family: inherit; }
+
+@media (max-width: 980px) {
+  .rejilla { grid-template-columns: minmax(0, 1fr); }
+  .resultado { position: static; order: -1; }
+}

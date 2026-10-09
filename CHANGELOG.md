@@ -19,6 +19,36 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.194] — 2026-10-09 (commit pendiente)
+
+- **Hito**: arranca el **Triage de Catálogo Activo** (owner, 2026-10-09): «Ofertas CP Aceptadas» se rebautiza y pasa a ser el punto
+  de control entre lo que el productor aceptó, el Stock CTCx y el Catálogo Activo, con el **precio FOB mínimo** como ancla de cada
+  lote. El plan, en tres tandas, es `docs/PLAN_TRIAGE_CATALOGO.md`: A · Empacado hasta FOB (esta) · B · Stock CTCx (partidas en
+  pergamino, verde, tostado y empacado, con su linaje y su cuadre de masa) · C · el Triage.
+- **Añadido**: **«Empacado hasta FOB»** (ECP · Modelo de Producción, `/ecp/cotizador-empaque`): lo que cuesta llevar un embarque de
+  café verde de la bodega de CTCx a FOB — **cinco modos de empaque** (al vacío en bolsas de 3, 6 o 12 kg dentro de cajas; GrainPro +
+  yute en sacos de 35 o 70 kg), la **paletización** (estibas ISPM-15), el **flete al puerto** (Cartagena · Santa Marta · Buenaventura;
+  El Dorado por aire, FCA) y los **trámites FOB** (agencia de aduanas, certificados, re-pesaje DIAN, inspección, terminal, contribución
+  cafetera), por kg de verde en COP y en US$ a la TRM de la edición vigente del PVC. Cálculo en vivo y línea por línea, los cinco modos
+  lado a lado y la comparación con los estimados del Modelo Económico. Cada valor por defecto tiene fuente (el cotizador logístico de
+  CTCx); un puerto marítimo no trae tarifa de flete: hay que escribir la del transportador.
+- **Añadido**: las **referencias** de Empacado hasta FOB (código `EF-AAAA-NNN`): un cálculo con nombre que queda CONGELADO (no se
+  edita ni se borra: se retira, con motivo). Al guardar, el servidor vuelve a calcular con los parámetros (del navegador no viaja
+  ninguna cifra), exige la tarifa del flete y deja auditoría. Son las que el Triage sumará al café para anclar el FOB mínimo.
+- **Datos**: tabla nueva `empaque_fob_referencias` (service-role-only; la compuerta `trg_guard_empaque_fob_referencia` rechaza
+  editarla, borrarla o devolver una retirada a vigente). Ninguna fila existente cambió.
+- **Retirado**: el **«Costo de empaque»** de la máquina de sellado al vacío dentro del ECP, por pedido del owner — la amortización de
+  la máquina, el Cuadro de evaluación y el detalle de cada cotización: el `kind` «empaque» de los cotizadores, `listQuoteMetrics` y
+  el puente `CTC_TOOL` del marco. Las URLs viejas (`/ecp/cotizador-empaque/<id>`, `/evaluacion`) van con un 308 a la herramienta
+  nueva; la única fila de `quotes` con ese `kind` se queda como historia. **La herramienta pública** `costo-empaque` del banco de
+  herramientas **no cambió**.
+- **Cambiado**: el rail del ECP dice «Empacado hasta FOB».
+- **Seguridad**: guardián nuevo `qa-empaque-fob` (47): el cálculo contra cuatro casos hechos a mano, que la máquina no vuelva, que el
+  servidor recalcule y emita, la compuerta de la tabla y el rail (siete mutaciones, todas muerden); `qa-rutas-consolas` declara
+  `src/lib/produccion/actions.ts` (533). La batería pasa a 70 guardianes.
+- **Docs**: `docs/PLAN_TRIAGE_CATALOGO.md` (nuevo); las fichas de `costo-empaque` en `herramientas-cafe` dicen que ya no tiene
+  consumidor interno.
+
 ## [V5.193] — 2026-10-08 (commit 64670cf)
 
 - **Corregido**: **los lotes Black galardonados no aparecían en «Lotes Evaluados → Pendiente Oferta»** (owner, tras galardonar la fila

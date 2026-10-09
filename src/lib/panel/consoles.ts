@@ -169,9 +169,11 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         ],
       },
       {
-        // De CPS a verde empacado y embalado. Hoy su única pieza es el costo de empaque.
+        // De CPS a verde empacado y embalado. Hoy su única pieza es «Empacado hasta FOB» (V5.194): el costo de empacar,
+        // paletizar, llevar al puerto y despachar un embarque, por kg de verde; sus referencias anclan el precio FOB mínimo
+        // en el Triage de Catálogo Activo. Reemplazó al costo de empaque de la máquina (su ruta se conservó).
         label: "ECP · Modelo de Producción",
-        links: [{ href: "/ecp/cotizador-empaque", label: "Empacado · costo de empaque" }],
+        links: [{ href: "/ecp/cotizador-empaque", label: "Empacado hasta FOB" }],
       },
       {
         // Lo que cuesta después del FOB, por volumen y región. Hoy, el cotizador logístico entero; los

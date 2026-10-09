@@ -177,6 +177,12 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V5.194 · arranca el Triage de Catálogo Activo** (owner, 2026-10-09; plan `docs/PLAN_TRIAGE_CATALOGO.md`): «Ofertas CP
+  Aceptadas» se rebautiza «Triage de Catálogo Activo» y recibe las ofertas aceptadas y el Stock CTCx (que absorbe el Stock de
+  Sample Kits); les suma una referencia de Empacado hasta FOB y el O&P de CTCx y declara el lote en el Catálogo Activo con su FOB
+  mínimo. **Tanda A hecha** (V5.194, código de `herramientas-internas`; aquí solo cambió el rótulo del rail del ECP). **Siguen,
+  aquí**: B · Stock CTCx (partidas pergamino · verde · tostado · empacado, transformaciones con cuadre de masa, linaje interactivo)
+  y C · el Triage. El owner puede corregir las 12 suposiciones del plan (§6) antes de cada tanda.
 - **V5.193 · OCP · los Black en «Pendiente Oferta»** (owner): la cola de la página dejaba fuera a Black con una lista propia de la
   V5.18; la acción y la cola leen ahora una sola tabla (`src/lib/ofertas/gradosPorClase.ts`). **Queda**: nada.
 - **V5.192 · OCP · la evaluación que rige y el Dossier, en la vista del lote** (owner): «FT2 · Análisis Físico (B2/B3)» —marcada

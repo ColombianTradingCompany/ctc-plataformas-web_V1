@@ -5,9 +5,8 @@
 // propio módulo (`./lote/model`, y el logístico cuando llegue el HTML); aquí
 // solo se guarda, se numera, se emite y se busca a quién va dirigida.
 //
-// Gate: `requireConsoleWrite(CONSOLA)`, y CONSOLA es el BCP desde la V5.56 (el módulo nació en el OCP,
-// pasó al ECP en la V4.26 y a «BCP · Herramientas Internas» en la V5.56) — un colaborador sin grant
-// de BCP no emite cotizaciones ni llamando la action a mano.
+// Gate: `requireConsoleWrite(CONSOLA)`, y CONSOLA es el ECP (el módulo nació en el OCP, pasó al ECP en la V4.26, al BCP en la
+// V5.56 y volvió al ECP en la V5.60) — un colaborador sin grant del ECP no emite cotizaciones ni llamando la action a mano.
 //
 // ⚠️ En un módulo "use server" TODO export tiene que ser una función async
 // (lección del 2026-07-30) — los tipos se importan desde ./types.
@@ -83,40 +82,6 @@ export async function listQuotes(kind: QuoteKind): Promise<QuoteSummary[] | null
   const service = quoteServiceClient();
   const { data } = await service.from("quotes").select(LIST_COLS).eq("kind", kind).order("created_at", { ascending: false }).limit(200);
   return ((data ?? []) as unknown as Row[]).map(toSummary);
-}
-
-/** Las cifras guardadas de cada cotización de un módulo, en UNA consulta.
- *  Para el Cuadro de evaluación: `listQuotes` deja fuera los jsonb pesados a
- *  propósito, y pedir `getQuote` de cada fila serían N viajes para pintar una
- *  comparación. Aquí solo viaja `results`, que son las cifras del titular. */
-export async function listQuoteMetrics(
-  kind: QuoteKind,
-): Promise<{ id: string; code: string; title: string; status: QuoteStatus; total: number | null; createdAt: string; results: Record<string, unknown> }[] | null> {
-  const who = await requireConsoleWrite(CONSOLA, "lectura");
-  if (!who) return null;
-  const service = quoteServiceClient();
-  const { data } = await service
-    .from("quotes")
-    .select("id, code, title, status, total, valid_until, created_at, results")
-    .eq("kind", kind)
-    .order("created_at", { ascending: false })
-    .limit(200);
-  return ((data ?? []) as unknown as (Row & { results: Record<string, unknown> | null })[]).map((r) => ({
-    id: r.id,
-    code: r.code,
-    title: r.title,
-    status: effectiveStatusOf(r.status, r.valid_until),
-    total: r.total === null ? null : Number(r.total),
-    createdAt: r.created_at,
-    results: r.results ?? {},
-  }));
-}
-
-/** La misma regla que `effectiveStatus` del cliente, aplicada al leer. */
-function effectiveStatusOf(status: QuoteStatus, validUntil: string | null): QuoteStatus {
-  if (status !== "emitida" || !validUntil) return status;
-  const d = new Date(`${validUntil}T23:59:59`);
-  return Number.isFinite(d.getTime()) && d < new Date() ? "vencida" : status;
 }
 
 export async function getQuote(id: string): Promise<Quote | null> {

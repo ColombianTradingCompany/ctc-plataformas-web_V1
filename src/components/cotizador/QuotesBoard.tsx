@@ -32,12 +32,11 @@ export const money = (v: number | null, currency = "COP") =>
 const fmtDate = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "2-digit" }) : "—";
 
-/** El ejemplo que se muestra al crear. Un mapa y no un ternario: con tres
- *  módulos, el `else` le ponía a empaque el ejemplo del logístico. */
+/** El ejemplo que se muestra al crear. Un mapa y no un ternario: cuando hubo un tercer módulo (el de empaque, hasta la V5.194),
+ *  el `else` le ponía el ejemplo del logístico. */
 const NEW_PLACEHOLDER: Record<QuoteKind, string> = {
   lote: "Ej: Lote El Roble · 500 kg pergamino",
   logistico: "Ej: Contenedor Buenaventura → Ámsterdam",
-  empaque: "Ej: Selladora de mesa · bolsa fuelle 27×60",
 };
 
 const badgeFor = (s: QuoteStatus) =>

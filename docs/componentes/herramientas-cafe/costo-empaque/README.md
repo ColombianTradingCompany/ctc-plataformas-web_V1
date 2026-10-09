@@ -1,7 +1,7 @@
 # `costo-empaque` · Costo de empaque por kilo
 
 > Ficha de la herramienta dentro del componente `herramientas-cafe`. Se lee DESPUÉS del charter
-> (`docs/componentes/herramientas-cafe.md`) y del recuento (`../README.md`). Estado al 2026-09-21 (V5.66).
+> (`docs/componentes/herramientas-cafe.md`) y del recuento (`../README.md`). Estado al 2026-09-21 (V5.66); V5.194: sin consumidor interno.
 > Esta carpeta es el sitio para los briefs y notas de la conversación de esta herramienta.
 
 | | |
@@ -23,8 +23,10 @@
 
 ## Como interfaz en otras partes de la plataforma
 
-**Hoy:**
-- **Embebida TAL CUAL** (sin copia) en el cotizador de empaque (`AppFrame.tsx`, `herramientas-internas` · Modelo de Procesamiento): el cotizador lee y escribe sus `<input>` por mismo origen. Un cambio de ids de campos en la herramienta rompe el cotizador.
+**Hoy:** ninguna. Hasta la V5.194 la embebía TAL CUAL el cotizador de empaque del ECP (`AppFrame.tsx`, `herramientas-internas`),
+que leía y escribía sus `<input>` y su puente `CTC_TOOL`. El owner retiró ese cotizador el 2026-10-09 (la amortización de la máquina y
+su análisis) y lo reemplazó «Empacado hasta FOB» (`/ecp/cotizador-empaque`, código propio en `src/lib/produccion/`). Cambiar los ids
+de esta herramienta ya no rompe nada fuera del banco.
 
 **Previsto / candidato:**
 - Master Roaster / Papagayo Beans® (empaque por formato).
@@ -35,12 +37,12 @@
 
 ## Abierto
 
-- Es la referencia del puente (`HERRAMIENTAS_TALLER.md`): cualquier cambio se prueba con `qa-tools-puente-conformance` Y con el cotizador de empaque.
+- Es la referencia del puente (`HERRAMIENTAS_TALLER.md`): cualquier cambio se prueba con `qa-tools-puente-conformance` (desde la V5.194 ya no hay cotizador que la embeba).
 
 ## Kick-off de su conversación
 
 El del charter (`docs/componentes/herramientas-cafe.md` § Kick-off) con `<id>` = `costo-empaque` y:
 
 ```
-Hoy: Blindar Costo de empaque como interfaz compartida con el cotizador de empaque.
+Hoy: Costo de empaque ya no tiene consumidor interno (V5.194): decidir si sigue en el banco tal cual o se acerca a «Empacado hasta FOB».
 ```

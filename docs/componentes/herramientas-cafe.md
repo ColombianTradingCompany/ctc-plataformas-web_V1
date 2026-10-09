@@ -127,7 +127,7 @@ completos, sin CDN) ·
 - Una herramienta nueva: `.html` a **`public/tools/<id>/`** + su línea en `carpetas.ts` + su ficha en `herramientas-cafe/<id>/` → `vendor-tool-assets.mjs` → alta en `tools` (el BCP crea la fila, pero una versión de origen `repo` solo entra por SQL, y **después** de desplegar el archivo: ver Pendientes)
   → línea del puente si guarda trabajo → captura con `build-tool-shots.mjs` → `qa-tools-carpetas` y `qa-tools-seo-*` verdes.
 - **Una pieza que otra parte reutiliza se EXTRAE a una fuente única** (datos puros en `src/lib/tools/<id>/`, o la
-  herramienta embebida tal cual, como el cotizador de empaque); nunca una copia. Mapa en `herramientas-cafe/README.md`.
+  herramienta embebida tal cual, como lo hizo el cotizador de empaque del ECP hasta la V5.194); nunca una copia. Mapa en `herramientas-cafe/README.md`.
 
 ## Lo que las consolas gobiernan de este componente
 

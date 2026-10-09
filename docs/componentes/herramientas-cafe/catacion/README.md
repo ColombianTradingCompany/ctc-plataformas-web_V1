@@ -17,7 +17,7 @@
 
 **Servida** (`public/tools/catacion/`, URL `/tools/catacion/<archivo>`; la URL plana vieja es un 308):
 - rueda-del-cafe-v23.html — **publicada** (tool_versions #2, V23 del owner)
-- rueda-catacion.html — V10 (#1), sin publicar pero **en uso**: `scripts/build-ruedas-mock.mjs` dibuja con ella el extracto de rueda del Sneak Peek
+- rueda-catacion.html — V10 (#1), sin publicar. Hasta la V5.197 la usaba `scripts/build-ruedas-mock.mjs` para el extracto de rueda de los lotes mock del Sneak Peek; la V5.198 retiró los mock y ese script, y hoy no la usa ningún script (se conserva como versión de la herramienta)
 
 **Fuentes del owner** (`C:\dev\ctc-platforms\reference\html_tools\`, fuera de git):
 - catacion/rueda_del_cafe_V23.html

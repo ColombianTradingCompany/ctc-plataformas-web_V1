@@ -26,6 +26,7 @@ import { conjeturasDelLote, lecturaDeLaRueda, type Conjetura, type LecturaDeLaRu
 import { fichaDeVariedad, rangoDeAltitud, GRANO_LABEL } from "@/lib/catacion/variedades";
 import { IMAGEN_DE_ORIGEN_POR_DEFECTO } from "@/lib/imagenDeOrigen";
 import { ESTADOS_DE_CONTRATO_FIRMADO, textoDeMarca } from "@/lib/kaffetal/blindaje";
+import { rutaDelLote } from "@/lib/catalogo/codigoPublico";
 
 export type { Lang };
 
@@ -120,6 +121,9 @@ export type DossierCtcxData = {
   generatedOn: string;
   /** V5.168 · el blindaje: la marca de agua (siempre) y si se puede imprimir (solo con contrato firmado de este lote). */
   blindaje: { puedeImprimir: boolean; marca: string };
+  /** V5.198 · el Dossier PÚBLICO (CTCx Public Catalogue): su dirección y la de vuelta a «Find my Lot». Lo pone SOLO
+   *  `dossierPublico()` (`lib/kaffetal/dossierPublico.ts`); con él, el documento omite la Visa, la mejora y lo privado. */
+  publico?: { url: string; volver: string } | null;
 };
 
 type FincaRow = {
@@ -247,7 +251,11 @@ export function criteriosDeLaFinca(f: Pick<FincaRow, "eudr_deforestation_free" |
   ];
 }
 
-export async function cargarDossier(service: SupabaseClient, lotId: string, lang: Lang): Promise<(DossierCtcxData & { producerId: string }) | null> {
+/** V5.198: `publico` = para el Dossier público (`lib/catalogo/vitrina.ts`): no lee al productor ni su galería, no arma el mapa de
+ *  los cafetales y pone el pin del mapa regional a un decimal (~11 km). El documento que sale de aquí pasa además por
+ *  `dossierPublico()`, la lista blanca: esto ahorra trabajo, aquello es la garantía. */
+export async function cargarDossier(service: SupabaseClient, lotId: string, lang: Lang, opciones: { publico?: boolean } = {}): Promise<(DossierCtcxData & { producerId: string }) | null> {
+  const publico = opciones.publico === true;
   const { data: lotRaw } = await service
     .from("lots")
     .select(
@@ -288,9 +296,9 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
   const camposDe = (f: FincaRow): FincaEudrFields => fincaEudrFieldsDe(f as unknown as Parameters<typeof fincaEudrFieldsDe>[0]);
   const fincaIds = origen.map((x) => x.f.id);
 
-  const [producers, { data: perfilRaw }, { data: certRaw }, { data: fichaRaw }, { data: evalRaw }, { data: parcelasRaw }, { data: firmadosRaw }] = await Promise.all([
-    fetchProducerContacts(service, [lot.producer_id]),
-    service.from("producer_profiles").select("company_name, avatar_asset_id, gallery_asset_ids").eq("profile_id", lot.producer_id).maybeSingle(),
+  const [producers, { data: perfilRaw }, { data: certRaw }, { data: fichaRaw }, { data: evalRaw }, { data: parcelasRaw }, { data: firmadosRaw }, { data: vitrinaRaw }] = await Promise.all([
+    publico ? Promise.resolve(new Map() as Awaited<ReturnType<typeof fetchProducerContacts>>) : fetchProducerContacts(service, [lot.producer_id]),
+    publico ? Promise.resolve({ data: null }) : service.from("producer_profiles").select("company_name, avatar_asset_id, gallery_asset_ids").eq("profile_id", lot.producer_id).maybeSingle(),
     fincaIds.length
       ? service.from("finca_certificates").select("finca_id, scheme, cert_number, valid_from, valid_to, status, verified_by_ctc").in("finca_id", fincaIds)
       : Promise.resolve({ data: [] }),
@@ -301,6 +309,8 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
       .eq("lot_id", lotId),
     fincaIds.length ? service.from("finca_parcelas").select("finca_id, name, area_ha, lat, lng, polygon_geojson, position").in("finca_id", fincaIds).order("position") : Promise.resolve({ data: [] }),
     service.from("purchase_contracts").select("id").eq("lot_id", lotId).in("status", [...ESTADOS_DE_CONTRATO_FIRMADO]).limit(1),
+    // V5.198: si el lote está en la vitrina (llegó al Triage), su Dossier público existe y el QR lleva a él.
+    service.from("public_lot_vitrina").select("referencia").eq("lot_id", lotId).maybeSingle(),
   ]);
 
   const perfil = perfilRaw as { company_name: string | null; avatar_asset_id: string | null; gallery_asset_ids: string[] | null } | null;
@@ -353,9 +363,12 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
     const f = origen[i].f;
     return [{ n: i + 1, lat: f.eudr_lat, lng: f.eudr_lng, polygon: Array.isArray(f.eudr_polygon_geojson) ? f.eudr_polygon_geojson : null }];
   });
-  const mapaUrl = mapaDeCafetalesUrl(enMapa);
+  const mapaUrl = publico ? null : mapaDeCafetalesUrl(enMapa);
   const ancla = fincas.find((f) => f.lat != null && f.lng != null);
-  const ubicacionUrl = ancla ? mapaDeUbicacionUrl(ancla.lat!, ancla.lng!) : null;
+  // En público, el pin del mapa regional va a un decimal (~11 km): dice la región sin decir el predio (la URL del mapa la lee
+  // cualquiera, y lleva las coordenadas).
+  const aproxima = (v: number) => Math.round(v * 10) / 10;
+  const ubicacionUrl = ancla ? (publico ? mapaDeUbicacionUrl(aproxima(ancla.lat!), aproxima(ancla.lng!), "640x360") : mapaDeUbicacionUrl(ancla.lat!, ancla.lng!)) : null;
 
   // ── La Visa EUDR del lote (heredada del Pasaporte de las fincas) ──
   const status = lotEudrStatus(lot, origen.map((x) => camposDe(x.f)));
@@ -408,7 +421,9 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
     .map((v) => ({ nombre: capitaliza(String(v.name).trim()), pct: numero(v.pct) }));
 
   const caracterizacion = caracterizacionDelDossier(ds as Record<string, unknown>, aceptada ? planillaDeEvaluacion(aceptada) : null, lang);
-  const catalogoUrl = lot.public_code ? `${SITIO}/ctcx-public-catalogue/${encodeURIComponent(lot.public_code)}` : null;
+  // V5.198: la dirección pública del lote es su referencia (`CTC-L-…`), y solo existe si el lote está en la vitrina.
+  const referenciaPublica = (vitrinaRaw as { referencia: string } | null)?.referencia ?? null;
+  const catalogoUrl = referenciaPublica ? `${SITIO}${rutaDelLote(referenciaPublica)}` : null;
   const qrSvg = catalogoUrl ? await QRCode.toString(catalogoUrl, { type: "svg", margin: 0, color: { dark: "#17121F", light: "#00000000" } }) : null;
 
   return {
@@ -462,7 +477,8 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
     },
     imagenGrado: (() => {
       // Una imagen que no se haya mostrado ya: foto del lote, la cuarta de la galería, la foto de otra finca; si no, la de CTCx.
-      const libre = [...fotosDelLote, galeriaIds[3], ...origen.slice(1).map((x) => x.f.profile_photo_asset_id)].map((id) => (id ? urls.get(id) : undefined)).find((u): u is string => !!u);
+      // En público, nunca la galería del productor (puede tener personas): solo fotos del lote o de otra finca.
+      const libre = [...fotosDelLote, publico ? null : galeriaIds[3], ...origen.slice(1).map((x) => x.f.profile_photo_asset_id)].map((id) => (id ? urls.get(id) : undefined)).find((u): u is string => !!u);
       return libre ? { url: libre, porDefecto: false } : { url: IMAGEN_DE_ORIGEN_POR_DEFECTO, porDefecto: true };
     })(),
     variedadesInfo: variedades.map((v) => {
@@ -494,9 +510,11 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
     catalogoUrl,
     qrSvg,
     generatedOn: new Date().toISOString(),
-    blindaje: {
-      puedeImprimir: (((firmadosRaw as { id: string }[] | null) ?? []).length) > 0,
-      marca: textoDeMarca({ referencia: ctcLotReference(lot.id), productor: producer?.fullName ?? null, fecha: new Date(), lang }),
-    },
+    blindaje: publico
+      ? { puedeImprimir: true, marca: "" }
+      : {
+          puedeImprimir: (((firmadosRaw as { id: string }[] | null) ?? []).length) > 0,
+          marca: textoDeMarca({ referencia: ctcLotReference(lot.id), productor: producer?.fullName ?? null, fecha: new Date(), lang }),
+        },
   };
 }

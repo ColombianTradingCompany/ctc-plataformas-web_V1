@@ -7,7 +7,10 @@ import { origenDeSuperficie } from "@/lib/red/subdominios";
 import { RUTA_PORTAL } from "@/lib/catalogo/codigoPublico";
 import type { SneakPeekLang, SneakPeekLot, SneakPeekPayload } from "@/lib/catalogo/sneakPeek";
 import { CatalogoPopup } from "./CatalogoPopup";
-import { RadarIntrinseco } from "./RadarIntrinseco";
+import { descriptorLabel, familiaDe } from "@/lib/catacion/rueda";
+import { IconoDeNota } from "@/components/catacion/IconosDeSabor";
+import { BarraDeIntensidad, oscurece } from "@/components/kaffetal-regal/dossier/figuras";
+import { RadarCvaTarjeta } from "./RadarCvaTarjeta";
 import styles from "./SneakPeek.module.css";
 
 // ── «Active Catalogue Sneak Peek» · el módulo reutilizable ───────────────────
@@ -18,12 +21,14 @@ import styles from "./SneakPeek.module.css";
 // 2026-08-17) y lo que lo anuncia en CTC Home, en Kaffetal Regal y en CaaS.
 // Plan: docs/V5_CONSOLAS_PLAN.md §1.
 //
-// LAS DOS CARAS (maquetas del owner, 2026-08-17). DELANTE va la FICHA del lote:
-// la foto con «Ver detalle» encima y el rótulo de temporada, el nombre, variedad
-// y altitud, las notas de cata y, abajo, el sello del grado frente al puntaje SCA
-// con la finca y el municipio. DETRÁS va el ANÁLISIS: la telaraña de los diez
-// atributos del formulario SCA, el botón de la ficha técnica en el medio y el
-// extracto de la rueda de catación al pie.
+// LAS DOS CARAS (maquetas del owner, 2026-08-17; V5.198, con los lotes REALES del
+// Triage). DELANTE va la FICHA del lote: la foto con «Ver detalle» encima (y
+// «Próximamente» si todavía no está declarado en el Catálogo Activo), el nombre,
+// variedad y altitud, las notas que marcó el Q-Grader y, abajo, el sello del grado
+// frente al Punto (CVA) con la finca y el municipio. DETRÁS va el ANÁLISIS: la
+// telaraña de 8 esquinas del CVA, las notas de la rueda con su ícono y su
+// intensidad, y el botón del Dossier público del lote (el que reemplazó a la ficha
+// técnica).
 // El reparto no es estético: delante va lo que identifica y hace querer mirar,
 // detrás lo que explica POR QUÉ ese café puntúa lo que puntúa. Y en ninguna de
 // las dos hay un dato comercial — la cara pública enseña el café, no el negocio.
@@ -63,9 +68,9 @@ const T: Record<
     portal: string;
     portalAria: string;
     aria: string;
-    est: string;
-    sca: string;
-    ficha: string;
+    dossier: string;
+    proximamente: string;
+    notas: string;
     verMas: string;
     volver: string;
     flechaAnterior: string;
@@ -81,9 +86,9 @@ const T: Record<
     portal: "Buscar mi lote por su código",
     portalAria: "Find my Lot — buscar un lote por su código en el catálogo público de CTCx",
     aria: "Vistazo al Catálogo Activo de CTC",
-    est: "est.",
-    sca: "SCA",
-    ficha: "Ver ficha técnica",
+    dossier: "Ver el Dossier del lote",
+    proximamente: "Próximamente",
+    notas: "Notas de la rueda del sabor, con su intensidad de 0 a 15",
     verMas: "Ver detalle",
     volver: "Volver",
     flechaAnterior: "Ver lotes anteriores",
@@ -98,9 +103,9 @@ const T: Record<
     portal: "Find my lot by its code",
     portalAria: "Find my Lot — look up a lot by its code in the CTCx public catalogue",
     aria: "A peek at the CTC Active Catalogue",
-    est: "est.",
-    sca: "SCA",
-    ficha: "See datasheet",
+    dossier: "See the lot dossier",
+    proximamente: "Coming soon",
+    notas: "Flavour wheel notes, with their intensity from 0 to 15",
     verMas: "See detail",
     volver: "Back",
     flechaAnterior: "Previous lots",
@@ -115,9 +120,9 @@ const T: Record<
     portal: "Mein Los per Code finden",
     portalAria: "Find my Lot — ein Los per Code im öffentlichen CTCx-Katalog suchen",
     aria: "Ein Blick in den aktiven Katalog von CTC",
-    est: "gesch.",
-    sca: "SCA",
-    ficha: "Datenblatt ansehen",
+    dossier: "Los-Dossier ansehen",
+    proximamente: "Demnächst",
+    notas: "Noten des Aromarads, mit ihrer Intensität von 0 bis 15",
     verMas: "Details ansehen",
     volver: "Zurück",
     flechaAnterior: "Vorherige Lots",
@@ -148,6 +153,14 @@ const CHERRY_PICKED_HREF =
 const PORTAL_HREF =
   process.env.NODE_ENV === "development" ? RUTA_PORTAL : `${origenDeSuperficie(RUTA_PORTAL)}${RUTA_PORTAL}`;
 
+// El Dossier público de cada lote (V5.198) cuelga del mismo portal: ABSOLUTO contra la casa matriz por la misma razón que
+// `PORTAL_HREF`. El documento habla español e inglés; la página en alemán abre el inglés.
+const PORTAL_BASE = process.env.NODE_ENV === "development" ? "" : origenDeSuperficie(RUTA_PORTAL);
+
+/** El nombre de una nota de la rueda en el idioma de la página (la rueda está en español e inglés; el alemán lee el inglés). */
+const nombreDeNota = (id: string, lang: SneakPeekLang) => descriptorLabel(id, lang === "de" ? "en" : lang);
+const fmtIntensidad = (v: number, lang: SneakPeekLang) => v.toLocaleString(lang === "es" ? "es-CO" : lang === "de" ? "de-DE" : "en-GB", { maximumFractionDigits: 1 });
+
 function Tarjeta({
   lot,
   lang,
@@ -170,6 +183,8 @@ function Tarjeta({
   const grado = GRADO_POR_ID[lot.grade];
   const origen = [lot.municipio, lot.departamento].filter(Boolean).join(", ");
   const specs = [lot.variety, lot.altitudeM != null ? `${lot.altitudeM} m` : null].filter(Boolean).join("  ·  ");
+  // Las notas que marcó el Q-Grader, las más intensas primero: lo que el café SABE, en una línea.
+  const notas = lot.notes.slice(0, 5).map((x) => nombreDeNota(x.id, lang)).join(" · ");
   const inerte = duplicada || !volteada ? -1 : undefined;
   const cajaRef = useRef<HTMLDivElement | null>(null);
   const pulsar = () => cajaRef.current && onVoltear(cajaRef.current);
@@ -188,7 +203,8 @@ function Tarjeta({
         >
           <span className={styles.photo}>
             {lot.image ? (
-              <Image src={lot.image} alt="" width={660} height={440} sizes="320px" />
+              // La foto de una finca la sirve `/api/catalogo/foto/…` ya recortada y en WebP: sin segundo rodeo por el optimizador.
+              <Image src={lot.image} alt="" width={660} height={440} sizes="320px" unoptimized={lot.image.startsWith("/api/")} />
             ) : (
               // Sin foto, el sello del grado a lo grande: es la cara oficial de
               // cada grado y nunca falta.
@@ -201,13 +217,14 @@ function Tarjeta({
             <span className={styles.verDetalle} aria-hidden>
               {t.verMas} +
             </span>
-            {lot.mock && <span className={styles.seasonTag}>{lot.season[lang]}</span>}
+            {/* V5.198: un lote del Triage que todavía no se declaró en el Catálogo Activo no se puede comprar aún: se dice. */}
+            {!lot.inCatalogue && <span className={styles.seasonTag}>{t.proximamente}</span>}
           </span>
 
           <span className={styles.frontBody}>
             <b className={styles.name}>{lot.name}</b>
             {specs && <span className={styles.specs}>{specs}</span>}
-            {lot.cup && <span className={styles.cup}>{lot.cup}</span>}
+            {notas && <span className={styles.cup}>{notas}</span>}
 
             {/* El pie de la cara: el sello del grado frente al puntaje y al
                 origen. Aquí el sello SÍ cabe a tamaño legible — el que quedaba
@@ -223,9 +240,8 @@ function Tarjeta({
               />
               <span className={styles.frontFootDatos}>
                 <span className={styles.score}>
-                  <i className={styles.sca}>{t.sca}</i>
+                  <i className={styles.sca}>{lot.scoreProtocol}</i>
                   {lot.score}
-                  {lot.scoreEstimated && <i className={styles.est}>{t.est}</i>}
                 </span>
                 <span className={styles.finca}>{lot.finca}</span>
                 {origen && <span className={styles.origin}>{origen}</span>}
@@ -243,35 +259,45 @@ function Tarjeta({
             </span>
           </button>
 
-          {/* La telaraña de los diez atributos del formulario SCA. */}
-          {lot.intrinseco && (
+          {/* La telaraña de 8 esquinas del CVA (la evaluación afectiva que rige el grado). */}
+          {lot.cva && (
             <span className={styles.radarBox}>
-              <RadarIntrinseco valores={lot.intrinseco} lang={lang} />
+              <RadarCvaTarjeta valores={lot.cva} lang={lang} />
             </span>
           )}
 
-          {/* La ficha, en el medio y a lo ancho: es la acción del reverso. */}
-          {lot.datasheetUrl && (
-            <a
-              className={styles.ficha}
-              href={lot.datasheetUrl}
-              target="_blank"
-              rel="noopener"
-              tabIndex={inerte}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {t.ficha} <span aria-hidden>↗</span>
-            </a>
+          {/* Las notas de la rueda con su ícono y su intensidad (0 a 15): la evaluación descriptiva. */}
+          {lot.notes.length > 0 && (
+            <ul className={styles.notasTarjeta} aria-label={t.notas}>
+              {lot.notes.slice(0, lot.cva ? 5 : 6).map((x) => {
+                const color = familiaDe(x.id)?.color ?? "#8A8F98";
+                return (
+                  <li key={x.id}>
+                    <span className={styles.notaIcono} style={{ background: `${color}24`, color: oscurece(color, 0.2) }}>
+                      <IconoDeNota id={x.id} size={24} strokeWidth={1.8} />
+                    </span>
+                    <span className={styles.notaNombre}>{nombreDeNota(x.id, lang)}</span>
+                    <span className={styles.notaBarra}>
+                      <BarraDeIntensidad valor={x.intensidad} color={color} />
+                    </span>
+                    <span className={styles.notaValor}>{fmtIntensidad(x.intensidad, lang)}</span>
+                  </li>
+                );
+              })}
+            </ul>
           )}
 
-          {/* Y al pie, el extracto de la rueda de catación: los sectores del
-              lote encendidos sobre la rueda SCA, el resto atenuado. Sin rótulos
-              — a este tamaño serían ruido; los lleva la ficha en PDF. */}
-          {lot.wheel && (
-            <span className={styles.wheelBox}>
-              <Image src={lot.wheel} alt="" width={520} height={520} sizes="230px" unoptimized />
-            </span>
-          )}
+          {/* El Dossier público, al pie y a lo ancho: es la acción del reverso (V5.198: reemplaza a la ficha técnica). */}
+          <a
+            className={`${styles.ficha} ${styles.fichaAlPie}`}
+            href={`${PORTAL_BASE}${lot.dossierPath}${lang === "es" ? "" : "?lang=en"}`}
+            target="_blank"
+            rel="noopener"
+            tabIndex={inerte}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {t.dossier} <span aria-hidden>↗</span>
+          </a>
         </div>
       </div>
     </div>

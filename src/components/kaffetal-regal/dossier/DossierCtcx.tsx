@@ -7,7 +7,11 @@
 // taza (radar, rueda) · análisis físico (rendimiento, mallas, medidores) · mejora y respaldo (anotaciones de la Rueda del
 // Sabor, certificaciones, ficha pública). Presentacional: los datos los reúne `lib/kaffetal/dossierDatos.ts`.
 // Solo afirma lo que la plataforma tiene; cada bloque dice su vacío.
+// V5.198 (owner, 2026-10-10): el MISMO documento es el Dossier público del CTCx Public Catalogue cuando trae `d.publico`
+// (lo pone `lib/kaffetal/dossierPublico.ts`, la lista blanca): sin la Visa ni la Mejora, el origen por región y sin productor,
+// el respaldo sin la matriz interna, sin marca de agua y con la vuelta a «Find my Lot».
 
+import Link from "next/link";
 import { Big_Shoulders } from "next/font/google";
 import { Bean, Bug, Check, Clock, Coffee, Droplets, Grid3x3, Mountain, Scale, Sprout, TriangleAlert, X } from "lucide-react";
 import type { DossierCtcxData, EstadoCriterio } from "@/lib/kaffetal/dossierDatos";
@@ -58,7 +62,7 @@ const ORDEN_DE_HOJAS = ["portada", "origen", "taza", "visa", "grado", "fisico", 
 
 /** V5.197: una fila de la descriptiva que no es nota (la acidez, la sensación en boca): su ícono, qué se marcó, la intensidad
  *  en casillas y lo que escribió el Q-Grader. */
-function Descriptiva({ icono, titulo, linea, sub, intensidad, texto, nota }: { icono: React.ReactNode; titulo: string; linea: string; sub: string | null; intensidad: number | null; texto: string; nota: string | null }) {
+function Descriptiva({ icono, titulo, linea, sub, intensidad, texto, nota }: { icono: React.ReactNode; titulo: string; linea: string | null; sub: string | null; intensidad: number | null; texto: string; nota: string | null }) {
   return (
     <div className={s.descriptivaCaja}>
       <span className={s.descriptivaIcono}>{icono}</span>
@@ -67,10 +71,12 @@ function Descriptiva({ icono, titulo, linea, sub, intensidad, texto, nota }: { i
           <span className={s.k}>{titulo}</span>
           <span className={s.descriptivaValor}>{texto}</span>
         </div>
-        <div className={s.descriptivaLinea}>
-          {linea}
-          {sub ? <span className={s.notaSub}> · {sub}</span> : null}
-        </div>
+        {linea && (
+          <div className={s.descriptivaLinea}>
+            {linea}
+            {sub ? <span className={s.notaSub}> · {sub}</span> : null}
+          </div>
+        )}
         {intensidad != null && <BarraDeIntensidad valor={intensidad} color={MORADO} etiqueta={`${titulo}: ${texto}`} />}
         {nota && <div className={s.notaComentario}>«{nota}»</div>}
       </div>
@@ -89,6 +95,7 @@ function IconoCriterio({ estado }: { estado: EstadoCriterio }) {
 
 export function DossierCtcx({ d }: { d: DossierCtcxData }) {
   const t = TEXTOS[d.lang];
+  const pub = d.publico ?? null;
   const loc = d.lang === "en" ? "en-GB" : "es-CO";
   const fecha = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString(loc, { day: "2-digit", month: "short", year: "numeric" }) : null);
   const num = (v: number | null | undefined, dec = 2) => (v == null ? null : v.toLocaleString(loc, { minimumFractionDigits: dec, maximumFractionDigits: dec }));
@@ -109,7 +116,7 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
 
   // ── Encabezado y pie comunes ──
   const marco = (id: Hoja["id"], n: number, total: number, cuerpo: React.ReactNode) => (
-    <section className={s.hoja} key={id} aria-label={id === "portada" ? t.doc : t.secciones[id]}>
+    <section className={s.hoja} key={id} aria-label={id === "portada" ? (pub ? t.docPublico : t.doc) : t.secciones[id]}>
       <div className={s.franja} aria-hidden>
         <span />
         <span />
@@ -129,7 +136,7 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
       )}
       <div className={s.cuerpo}>{cuerpo}</div>
       {/* V5.168 · el blindaje: la marca de agua en cada hoja, en pantalla y en el PDF. */}
-      <MarcaDeAgua texto={d.blindaje.marca} />
+      {d.blindaje.marca ? <MarcaDeAgua texto={d.blindaje.marca} /> : null}
       <div className={s.pie}>
         <span>{CTC_LEGAL_LINE}</span>
         <span className={s.mono}>
@@ -154,7 +161,7 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
             {/* eslint-disable-next-line @next/next/no-img-element -- documento imprimible */}
             <img src="/tools/assets/ctcx-logo.png" alt="Colombian Trading Company" style={{ height: "11mm" }} />
             <span style={{ textAlign: "right" }}>
-              <b style={{ color: "var(--tinta)", fontSize: "9pt" }}>{t.doc}</b>
+              <b style={{ color: "var(--tinta)", fontSize: "9pt" }}>{pub ? t.docPublico : t.doc}</b>
               <br />
               {t.generado} {fecha(d.generatedOn)}
             </span>
@@ -190,12 +197,6 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
                 <span className={s.mono} translate="no">
                   {d.lot.reference}
                 </span>
-                {d.lot.publicCode ? (
-                  <>
-                    {" "}
-                    · {t.codigoPublico} <span className={s.mono}>{d.lot.publicCode}</span>
-                  </>
-                ) : null}
               </p>
             </div>
             <div className={s.sello}>
@@ -254,6 +255,93 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
       ),
   });
 
+  // V5.198 · el origen PÚBLICO: la región (pin a un decimal, ~11 km), la altitud y la finca con su historia; sin el mapa de los
+  // cafetales, sin coordenadas, sin vereda ni tenencia y sin el productor (la vitrina enseña la finca, nunca a la persona).
+  const origenPublico = pub ? (
+    <>
+      <div>
+        <h2 className={s.h2}>{t.origenTitulo}</h2>
+        {finca && (
+          <p className={s.lead}>
+            <b style={{ color: "var(--tinta)" }}>{finca.name}</b>
+            {lugar ? ` · ${lugar}` : ""}
+          </p>
+        )}
+      </div>
+      <figure className={s.mapa} style={{ margin: 0 }}>
+        {d.ubicacionUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- mapa estático de Google
+          <img className={s.mapaImg} src={d.ubicacionUrl} alt={t.region} />
+        ) : (
+          <div className={cx(s.vacio, s.mapaImg)} style={{ border: 0 }}>
+            {t.region}: {lugar ?? "—"}
+          </div>
+        )}
+        <figcaption className={s.mapaPie}>{t.regionPie}</figcaption>
+      </figure>
+      {finca && (
+        <div className={s.datosYAltitud}>
+          <div>
+            <div className={s.datos3}>
+              <Dato k={t.municipio} v={finca.municipio} />
+              <Dato k={t.departamento} v={finca.departamento} />
+              <Dato k={t.pais} v={finca.pais} />
+              <Dato k={t.altitud} v={(finca.altitud ?? d.lot.altitudeM) != null ? `${(finca.altitud ?? d.lot.altitudeM)!.toLocaleString(loc)} m` : null} />
+              <Dato k={t.area} v={finca.hectares != null ? `${finca.hectares.toLocaleString(loc)} ha` : null} />
+              <Dato k={t.sistema} v={finca.sistema ? t.sistemaLabel[finca.sistema] ?? finca.sistema : null} />
+            </div>
+            {finca.infra.length > 0 && (
+              <div style={{ marginTop: "3mm" }}>
+                <div className={s.k} style={{ marginBottom: "1.2mm" }}>
+                  {t.infraTitulo}
+                </div>
+                <div className={s.chips}>
+                  {finca.infra.map((k) => (
+                    <span key={k} className={s.chip}>
+                      {t.infra[k] ?? k}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          {(finca.altitud ?? d.lot.altitudeM) != null && (
+            <div>
+              <div className={s.k}>{t.escalaAltitud}</div>
+              <AltitudEnLaMontana metros={(finca.altitud ?? d.lot.altitudeM)!} etiqueta={t.altitud} loc={loc} />
+            </div>
+          )}
+        </div>
+      )}
+      {finca && (finca.historia || finca.caracteristicas) && (
+        <div className={s.mitades}>
+          {finca.historia && (
+            <div>
+              <div className={s.h3}>{t.historia}</div>
+              <p className={s.cita} style={{ WebkitLineClamp: 8 }}>
+                {finca.historia}
+              </p>
+            </div>
+          )}
+          {finca.caracteristicas && (
+            <div>
+              <div className={s.h3}>{t.caracteristicas}</div>
+              <p className={s.cita} style={{ WebkitLineClamp: 8 }}>
+                {finca.caracteristicas}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+      {d.visa.status.code === "eudr_ready" && (
+        <div className={s.limpio}>
+          <Check size={22} strokeWidth={2.5} color="var(--ok)" aria-hidden />
+          <span>{t.eudrListo}</span>
+        </div>
+      )}
+    </>
+  ) : null;
+
   // ── 2 · Origen ──────────────────────────────────────────────────────────
   hojas.push({
     id: "origen",
@@ -262,7 +350,7 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
         "origen",
         n,
         total,
-        <>
+        pub ? origenPublico : <>
           <div>
             <h2 className={s.h2}>{t.origenTitulo}</h2>
             {finca && (
@@ -770,7 +858,7 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
                       <Descriptiva
                         icono={ICONO_DE_ACIDEZ[desc.acidez.tipo ?? ""]({ size: 24, strokeWidth: 1.7 })}
                         titulo={t.acidez}
-                        linea={desc.acidez.tipo ? t.acidezTipo[desc.acidez.tipo][0] : t.sinTipoAcidez}
+                        linea={desc.acidez.tipo ? t.acidezTipo[desc.acidez.tipo][0] : null}
                         sub={desc.acidez.tipo ? t.acidezTipo[desc.acidez.tipo][1] : null}
                         intensidad={desc.acidez.intensidad}
                         texto={intensidad(desc.acidez.intensidad)}
@@ -781,7 +869,7 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
                       <Descriptiva
                         icono={ICONO_DE_TEXTURA[(desc.boca.texturas[0]?.key ?? "") as keyof typeof ICONO_DE_TEXTURA]({ size: 24, strokeWidth: 1.7 })}
                         titulo={t.boca}
-                        linea={desc.boca.texturas.length ? desc.boca.texturas.map((x) => x.label).join(" · ") : t.sinTextura}
+                        linea={desc.boca.texturas.length ? desc.boca.texturas.map((x) => x.label).join(" · ") : null}
                         sub={null}
                         intensidad={desc.boca.intensidad}
                         texto={intensidad(desc.boca.intensidad)}
@@ -864,7 +952,7 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
       { k: t.densidad, dec: declarado(dec.densidad != null ? `${dec.densidad.toLocaleString(loc)} g/L` : null, "density"), med: cif.densidad != null ? `${cif.densidad.toLocaleString(loc)} g/L` : null },
       { k: t.aw, dec: declarado(dec.aw != null ? num(dec.aw, 3) : null, "water_activity"), med: cif.aw != null ? num(cif.aw, 3) : null },
       { k: t.factor, dec: declarado(dec.factor != null ? num(dec.factor) : null, "yield_factor"), med: cif.factor != null ? num(cif.factor) : null },
-    ].filter((x) => x.dec || x.med);
+    ].filter((x) => !pub && (x.dec || x.med));
     hojas.push({
       id: "fisico",
       render: (n, total) =>
@@ -1099,6 +1187,21 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
           <div>
             <h2 className={s.h2}>{t.respaldoHojaTitulo}</h2>
           </div>
+          {/* V5.198 · en el Dossier público la Mejora no va (es devolución al productor), pero su lectura del perfil sí: es la
+              taza contada, y le dice al comprador lo mismo que la rueda. */}
+          {pub && d.lectura.intro && (
+            <div>
+              <div className={s.h3}>{t.lecturaTitulo}</div>
+              <div className={s.lectura}>
+                <p>{d.lectura.intro}</p>
+                {d.lectura.parrafos.map((x) => (
+                  <p key={x}>{x}</p>
+                ))}
+                {d.lectura.sintesis && <p>{d.lectura.sintesis}</p>}
+              </div>
+              <p className={s.nota}>{t.lecturaFuente}</p>
+            </div>
+          )}
           <div>
             <div className={s.h3}>{t.certs}</div>
             {d.certificates.length ? (
@@ -1106,7 +1209,7 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
                 <thead>
                   <tr>
                     <th>{t.esquema}</th>
-                    <th>{t.numero}</th>
+                    {!pub && <th>{t.numero}</th>}
                     <th>{t.vigencia}</th>
                   </tr>
                 </thead>
@@ -1114,7 +1217,7 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
                   {d.certificates.map((x, i) => (
                     <tr key={i}>
                       <td>{x.schemeLabel}</td>
-                      <td className={s.mono}>{x.certNumber || "—"}</td>
+                      {!pub && <td className={s.mono}>{x.certNumber || "—"}</td>}
                       <td>{[fecha(x.validFrom), fecha(x.validTo)].filter(Boolean).join(" · ") || "—"}</td>
                     </tr>
                   ))}
@@ -1124,16 +1227,18 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
               <p className={s.nota}>{t.sinCerts}</p>
             )}
           </div>
-          <div>
-            <div className={s.h3}>{t.respaldoTitulo}</div>
-            <p className={s.nota} style={{ marginTop: 0, marginBottom: "2mm" }}>
-              {t.respaldoLead}
-            </p>
-            <MatrizDeRespaldo columnas={t.respaldoCols} filas={respaldo} />
-          </div>
+          {!pub && (
+            <div>
+              <div className={s.h3}>{t.respaldoTitulo}</div>
+              <p className={s.nota} style={{ marginTop: 0, marginBottom: "2mm" }}>
+                {t.respaldoLead}
+              </p>
+              <MatrizDeRespaldo columnas={t.respaldoCols} filas={respaldo} />
+            </div>
+          )}
           <div className={s.cierre}>
             <div>
-              <p style={{ margin: 0, fontSize: "8.5pt" }}>{t.aviso}</p>
+              <p style={{ margin: 0, fontSize: "8.5pt" }}>{pub ? t.avisoPublico : t.aviso}</p>
               {d.catalogoUrl && (
                 <p className={s.nota}>
                   {t.catalogo}: <span className={s.mono}>{d.catalogoUrl.replace(/^https:\/\//, "")}</span>
@@ -1154,15 +1259,26 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
       ),
   });
 
+  if (pub) {
+    for (const fuera of ["visa", "mejora"]) {
+      const i = hojas.findIndex((h) => h.id === fuera);
+      if (i >= 0) hojas.splice(i, 1);
+    }
+  }
   hojas.sort((a, b) => ORDEN_DE_HOJAS.indexOf(a.id) - ORDEN_DE_HOJAS.indexOf(b.id));
   const total = hojas.length;
   return (
     <div className={cx(s.lienzo, display.variable)} lang={d.lang}>
       <div className={s.barra}>
-        <a href={`/kaffetal-regal/dossier/${d.lot.id}?lang=${d.lang === "en" ? "es" : "en"}`}>{t.otroIdioma}</a>
+        {pub && (
+          <Link href={pub.volver} className={s.barraVolver}>
+            ← {t.volverPortal}
+          </Link>
+        )}
+        <a href={`${pub ? pub.url : `/kaffetal-regal/dossier/${d.lot.id}`}?lang=${d.lang === "en" ? "es" : "en"}`}>{t.otroIdioma}</a>
         {d.blindaje.puedeImprimir ? <BotonImprimir label={t.imprimir} /> : <span className={s.candado}>{AVISO_SIN_CONTRATO[d.lang]}</span>}
       </div>
-      <Blindaje puedeImprimir={d.blindaje.puedeImprimir} aviso={AVISO_SIN_CONTRATO[d.lang]} />
+      {!pub && <Blindaje puedeImprimir={d.blindaje.puedeImprimir} aviso={AVISO_SIN_CONTRATO[d.lang]} />}
       {hojas.map((h, i) => h.render(i + 1, total))}
     </div>
   );

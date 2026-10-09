@@ -19,6 +19,34 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.198] — 2026-10-10 (commit pendiente)
+
+- **Cambiado**: el **bloque del Catálogo Activo** de CTC, Kaffetal Regal y la familia Cherry Picked enseña los **lotes reales** que
+  llegaron al Triage de Catálogo Activo (un trato por ventana vigente, una declaración viva o una partida libre del Stock CTCx), los
+  más recientes primero (owner, 2026-10-10). Cada tarjeta lleva la foto de la finca o del lote, el Punto con su protocolo (CVA), las
+  notas que marcó el Q-Grader y, si aún no está declarado en el catálogo, «Próximamente». En el reverso, la **telaraña de 8 esquinas
+  del CVA**, las notas con su ícono y su intensidad, y el botón al Dossier público.
+- **Añadido**: el **Dossier público** del lote en el CTCx Public Catalogue (`/ctcx-public-catalogue/CTC-L-XXXXXXXX`), una versión
+  simplificada del Dossier que **reemplaza a la ficha técnica**: portada, origen por región, perfil de taza, grado, análisis físico
+  y respaldo (con la lectura del perfil). Sin la Visa ni el Pasaporte EUDR ni sus enlaces, sin el productor, sin las coordenadas ni
+  el mapa de los cafetales (el mapa regional lleva el pin a un decimal, ~11 km), sin lo que el productor declaró, sin las
+  anotaciones de mejora ni las conjeturas, sin el número de cada certificado y sin marca de agua; se puede imprimir. En español e
+  inglés, con la vuelta a «Find my Lot».
+- **Cambiado**: la dirección pública de un lote es su **referencia** `CTC-L-XXXXXXXX` (la que ya lleva en el paquete de muestra y en
+  el Dossier). Un código viejo `CTCX-…` y una referencia mal escrita redirigen con 308; la ficha técnica vieja
+  (`/docs/ficha/[lotId]`) redirige al Dossier público; el QR del Dossier del productor lleva allí cuando el lote está en la vitrina.
+- **Retirado**: los siete lotes **mock** de la temporada anterior (`sneakPeekMock.ts`, sus fotos, sus ruedas y sus fichas en PDF, y
+  los generadores `build-fichas-mock`, `build-ruedas-mock` y `analisis-intrinseco`), el paquete público (`PaquetePublico.tsx`), la
+  proyección de la ficha (`fichaPublica.ts`) y la telaraña de diez atributos SCA de la tarjeta (`RadarIntrinseco.tsx`).
+- **Datos**: vista nueva `public_lot_vitrina` (la lee `anon`, solo en lectura): los lotes del Triage con sus columnas de exhibición;
+  del `datasheet` solo el nombre del producto y la bandera de la foto; un lote de CTCx Selection no devuelve su finca ni su foto.
+  La foto de la tarjeta la sirve `/api/catalogo/foto/[referencia]` pasando por esa vista (recortada a 3:2 en WebP, nunca la URL
+  firmada).
+- **Seguridad**: el Dossier público es una **lista blanca** (`lib/kaffetal/dossierPublico.ts`) y lo carga el service role SOLO
+  después de la vista. `qa-ficha-publica` reescrito (28: un dossier lleno de centinelas, ninguno privado sobrevive; dos mutaciones
+  muerden), `qa-sneak-peek` reescrito (117: la vista, los mock retirados, el reverso nuevo), `qa-catalogo-publico` (133: la
+  referencia carácter a carácter, la página nueva) y `qa-compras` (107) al día.
+
 ## [V5.197] — 2026-10-10 (commit d80e49d)
 
 - **Cambiado**: el **Perfil de taza del Dossier del lote** (owner, 2026-10-10): la evaluación afectiva del CVA es ahora una

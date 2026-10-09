@@ -2,270 +2,160 @@
 //
 //   node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/qa-sneak-peek-check.mjs
 //
-// Vigila las dos promesas del módulo, que son promesas de NEGOCIO y no de estilo:
+// Vigila las promesas del módulo, que son promesas de NEGOCIO y no de estilo:
 //   1. Que por la cinta no pueda salir NADA comercial. La cinta se enseña sin
-//      sesión en seis superficies; el día que alguien añada un precio «solo para
+//      sesión en siete superficies; el día que alguien añada un precio «solo para
 //      la tarjeta», esto falla.
-//   2. Que LAS DEFINICIONES DE LA CASA MANDEN SOBRE LA FUENTE EXTERNA (regla del
-//      owner, 2026-08-17): si el dato que viene de Notion contradice lo que
-//      define este repo, gana el repo. Hoy eso se traduce en el grado (que sale
-//      del puntaje) y en la validez del propio puntaje.
-//   3. Que los lotes mock estén marcados y se puedan retirar de un tirón —
-//      rotulados como temporada anterior, con id del espacio reservado, en UN
-//      solo archivo y con el grado que su puntaje manda (su origen, Notion, tiene
-//      el grado mal en 6 de 7 fichas: ver docs/V5_CONSOLAS_PLAN.md §9).
+//   2. Que la cinta enseñe lotes REALES (V5.198, owner 2026-10-10): los que llegaron
+//      al Triage de Catálogo Activo, leídos de una vista estrecha que lee `anon`
+//      (`public_lot_vitrina`). Los siete lotes mock de la temporada anterior (V4.x)
+//      se retiraron con sus fotos, sus ruedas, sus fichas en PDF y sus generadores,
+//      y no pueden volver por la puerta de atrás.
+//   3. Que la tarjeta que se voltea siga siendo usable y accesible (las maquetas del
+//      owner del 2026-08-17), con el reverso de la V5.198: la telaraña del CVA, las
+//      notas con su ícono y el Dossier público.
 //
-// No levanta la aplicación ni toca la base: son comprobaciones sobre los datos
-// reales del módulo y sobre el texto de los archivos que lo montan. Mismo patrón
+// No levanta la aplicación ni toca la base: son comprobaciones sobre el texto de
+// los archivos que montan el módulo y sobre la migración de la vista. Mismo patrón
 // que `qa-nav-check.mjs`, por el mismo motivo — lo que hay que proteger es una
 // regla, y una regla se comprueba aquí y no a ojo.
 
-import { readFileSync, existsSync } from "node:fs";
-import { SNEAK_PEEK_MOCK, MOCK_ID_PREFIX } from "../src/lib/catalogo/sneakPeekMock.ts";
-import { gradoDelLote, puntajeValido, GRADO_POR_ID } from "../src/lib/grados/definicion.ts";
-import { triadaDeLaFicha } from "../src/lib/pvc/triadaDelLote.ts";
+import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 let ok = 0;
 const fallos = [];
 const check = (nombre, cond) => (cond ? ok++ : fallos.push(nombre));
 
-const lee = (ruta) => readFileSync(new URL(`../${ruta}`, import.meta.url), "utf8");
+const lee = (ruta) => readFileSync(new URL(`../${ruta}`, import.meta.url), "utf8").replace(/\r\n/g, "\n");
+const existe = (ruta) => existsSync(new URL(`../${ruta}`, import.meta.url));
+const sinComentarios = (t) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "").replace(/\{\/\*[\s\S]*?\*\/\}/g, "");
 
 const LIB = lee("src/lib/catalogo/sneakPeek.ts");
-const MOCK_SRC = lee("src/lib/catalogo/sneakPeekMock.ts");
+const VISTA = lee("src/lib/catalogo/vitrinaVista.ts");
+const VITRINA = lee("src/lib/catalogo/vitrina.ts");
+const SQL = lee("docs/migraciones/2026-10-10_vitrina_publica.sql");
 const RUTA_API = lee("src/app/api/catalogo/sneak-peek/route.ts");
+const RUTA_FOTO = lee("src/app/api/catalogo/foto/[referencia]/route.ts");
 const COMPONENTE = lee("src/components/catalogo/SneakPeek.tsx");
+const RADAR = lee("src/components/catalogo/RadarCvaTarjeta.tsx");
 const TIENDA = lee("src/components/cherry-picked/CherryPickedExperience.tsx");
 const POPUP = lee("src/components/catalogo/CatalogoPopup.tsx");
 const CAAS = lee("src/components/services/CaasLanding.tsx");
+const CSS = lee("src/components/catalogo/SneakPeek.module.css");
 
 // ── 1. Nada comercial en el tipo que viaja al navegador ──────────────────────
 // La garantía es estructural: si el tipo no tiene dónde meter un precio, no hay
 // descuido posible. Se mira el bloque del tipo, no todo el archivo (los
 // comentarios NOMBRAN esos campos justamente para explicar que están fuera).
 const bloqueTipo = LIB.slice(LIB.indexOf("export type SneakPeekLot = {"), LIB.indexOf("export type SneakPeekPayload"));
-const PROHIBIDOS = [
-  "price",
-  "precio",
-  "moq",
-  "unit_kg",
-  "unitKg",
-  "total_kg",
-  "totalKg",
-  "sold",
-  "deposit",
-  "anticipo",
-  "arrival",
-  "transparency",
-  "eur",
-  "cop",
-];
+check("se encontró el tipo SneakPeekLot", bloqueTipo.length > 200);
+const PROHIBIDOS = ["price", "precio", "moq", "unit_kg", "unitKg", "total_kg", "totalKg", "kg", "sold", "deposit", "anticipo", "arrival", "transparency", "eur", "cop", "fob", "ancla", "op", "productor", "producer", "lat", "lng", "datasheet"];
 for (const campo of PROHIBIDOS) {
-  check(
-    `el tipo SneakPeekLot no declara «${campo}»`,
-    !new RegExp(`^\\s*${campo}[?]?\\s*:`, "im").test(bloqueTipo)
-  );
+  check(`el tipo SneakPeekLot no declara «${campo}»`, !new RegExp(`^\\s*${campo}[?]?\\s*:`, "im").test(bloqueTipo));
 }
 
-// ── 2. Solo lee la vista pública estrecha ────────────────────────────────────
-check("la librería lee `public_lot_catalog`", LIB.includes('.from("public_lot_catalog")'));
-check(
-  "no lee `lots` ni `fincas` directamente",
-  !LIB.includes('.from("lots")') && !LIB.includes('.from("fincas")')
-);
-check(
-  "de `lot_listings` solo saca el id de lo publicado (nunca precio ni kilos)",
-  LIB.includes('.from("lot_listings").select("lot_id").eq("status", "published")')
-);
-// Se busca la LECTURA, no la palabra: el archivo nombra esa vista en un
-// comentario justamente para explicar que se queda fuera.
-check("no lee la vista de precios de transparencia", !LIB.includes('.from("public_transparency_pricing")'));
-check("usa el cliente anónimo y sin cookies", LIB.includes("createEphemeralClient"));
+// ── 2. Solo lee la vista pública estrecha de la vitrina (V5.198) ────────────
+check("la vista se llama `public_lot_vitrina` y vive en un módulo sin imports", /export const VISTA_VITRINA = "public_lot_vitrina";/.test(VISTA) && !/^import\s/m.test(VISTA));
+check("la cinta lee ESA vista con el cliente anónimo", LIB.includes("createEphemeralClient()") && LIB.includes("supabase.from(VISTA_VITRINA).select(COLUMNAS_VITRINA)"));
+check("y no lee `lots`, `fincas` ni el catálogo de la tienda", !LIB.includes('.from("lots")') && !LIB.includes('.from("fincas")') && !LIB.includes('.from("lot_listings")') && !LIB.includes('.from("public_transparency_pricing")'));
+{
+  const columnas = /COLUMNAS_VITRINA =\s*"([^"]+)"/.exec(VISTA)?.[1].split(",").map((c) => c.trim()) ?? [];
+  check(`las columnas de la vista son de exhibición (${columnas.length})`, columnas.length >= 15 && columnas.includes("referencia") && columnas.includes("en_catalogo") && columnas.includes("tiene_foto"));
+  const malas = columnas.filter((c) => /datasheet|lat|lng|poligono|polygon|producer|productor|nit|precio|price|fob|kg|ancla|op_pct|phone|email/i.test(c));
+  check(`y ninguna es privada ni comercial${malas.length ? ` (${malas.join(", ")})` : ""}`, malas.length === 0);
+}
+check("la taza se lee DESPUÉS de la compuerta, solo para esos lotes, y solo la que rige", LIB.includes("const tazas = await tazasDe(vivas.map((f) => f.lot_id));") && LIB.includes('.eq("status", "accepted")') && LIB.includes('.eq("rige_grado", true)'));
+check("y se reduce a lo que pinta el reverso: los 8 del CVA y las notas con su intensidad", LIB.includes("cifras.cva.length === 8 ? cifras.cva.map((x) => ({ k: x.k, v: x.v })) : null") && LIB.includes(".map((x) => ({ id: x.id, intensidad: x.intensidad }))"));
 check("Tyrian queda fuera del teaser (es solo de subasta)", LIB.includes('=== "tyrian"'));
 
-// ── 3. La ruta pública ───────────────────────────────────────────────────────
+// La vista misma (la migración): quién entra, qué sale y quién la lee.
+check("vista: solo galardonados con grado, sin Tyrian", SQL.includes("where l.stage = 'galardonado'") && SQL.includes("and l.grade <> 'tyrian'"));
+check("vista: solo lo que llegó al Triage (trato por ventana vigente, declaración viva o partida libre del Stock CTCx)", SQL.includes("c.status = 'active' and c.ventana_tipo is not null") && SQL.includes("cf.estado = 'declarada'") && SQL.includes("p.anulada_at is null and not p.comprometido") && SQL.includes("and (ct.lot_id is not null or d.lot_id is not null or s.lot_id is not null);"));
+check("vista: del `datasheet` solo sale el nombre del producto y la BANDERA de la foto", (SQL.match(/l\.datasheet/g) ?? []).length === 3 && SQL.includes("l.datasheet ->> 'product_name'") && SQL.includes("as tiene_foto"));
+check("vista: un lote de CTCx Selection no devuelve su finca ni su foto (D3.1)", SQL.includes("case when cm.lot_id is null then f.name end as finca_name") && /cm\.lot_id is null\s+and \(f\.profile_photo_asset_id/.test(SQL));
+check("vista: la lee anon SOLO en lectura", SQL.includes("revoke all on public.public_lot_vitrina from public, anon, authenticated;") && SQL.includes("grant select on public.public_lot_vitrina to anon, authenticated, service_role;"));
+
+// ── 3. Las rutas públicas ────────────────────────────────────────────────────
 check("la ruta sirve el payload de la librería", RUTA_API.includes("getSneakPeekPayload"));
 check("la ruta no se congela en el build", RUTA_API.includes('export const dynamic = "force-dynamic"'));
 check("la ruta cachea en el CDN", /s-maxage=\d+/.test(RUTA_API));
+check("la foto pasa por la compuerta (la vista) y sale recortada en WebP, nunca la URL firmada", RUTA_FOTO.includes("fotoDeLaVitrina(referencia)") && RUTA_FOTO.includes('"content-type": "image/webp"') && VITRINA.includes("const fila = await filaDeLaVitrina(referencia);\n  if (!fila || !fila.tiene_foto || fila.ctc_selection) return null;") && VITRINA.includes(".webp({ quality: 74 })") && !/return url/.test(VITRINA));
+check("la tarjeta pide la foto a esa ruta (cuelga de /api, que el proxy excluye)", LIB.includes("fila.tiene_foto ? `/api/catalogo/foto/${fila.referencia}` : undefined"));
 
 // ── 4. El componente no se cae solo y respeta el movimiento reducido ─────────
 check("si la petición falla, la cinta no se dibuja", COMPONENTE.includes("if (failed) return null"));
-check(
-  "una cinta vacía tampoco se dibuja",
-  COMPONENTE.includes("data.lots.length === 0") && COMPONENTE.includes("return null")
-);
-const CSS = lee("src/components/catalogo/SneakPeek.module.css");
+check("una cinta vacía tampoco se dibuja", COMPONENTE.includes("data.lots.length === 0") && COMPONENTE.includes("return null"));
 check("respeta prefers-reduced-motion", CSS.includes("prefers-reduced-motion"));
-// La cinta ya NO es una animación CSS (V4.20): con `@keyframes` el navegador
-// reinicia la animación al cambiar velocidad o sentido, que era el salto que se
-// veía al pasar el ratón por una flecha. Lo que se vigila ahora es el motor.
 check("la cinta no vuelve a depender de una animación CSS", !CSS.includes("@keyframes sp-slide"));
 check("la mueve un bucle de rAF sobre translate3d", COMPONENTE.includes("requestAnimationFrame") && COMPONENTE.includes("translate3d"));
 check("la velocidad se PERSIGUE, no se asigna de golpe", COMPONENTE.includes("velRef.current +="));
 
-// ── 5. Los mock: marcados, rotulados y retirables ───────────────────────────
-check("hay exactamente 7 lotes mock", SNEAK_PEEK_MOCK.length === 7);
-check(
-  "todos llevan `mock: true`",
-  SNEAK_PEEK_MOCK.every((l) => l.mock === true)
-);
-check(
-  "todos tienen id del espacio reservado",
-  SNEAK_PEEK_MOCK.every((l) => l.id.startsWith(MOCK_ID_PREFIX))
-);
-check(
-  "ninguno repite id",
-  new Set(SNEAK_PEEK_MOCK.map((l) => l.id)).size === SNEAK_PEEK_MOCK.length
-);
-check(
-  "todos rotulan la temporada en los tres idiomas",
-  SNEAK_PEEK_MOCK.every((l) => ["es", "en", "de"].every((k) => typeof l.season?.[k] === "string" && l.season[k].length > 3))
-);
-check(
-  "el rótulo dice que son de la temporada ANTERIOR",
-  SNEAK_PEEK_MOCK.every((l) => /anterior|last season|vorsaison/i.test(l.season.es + l.season.en + l.season.de))
-);
-check(
-  "ninguno es Tyrian",
-  SNEAK_PEEK_MOCK.every((l) => l.grade !== "tyrian")
-);
-// El grado tiene que ser el que los puntos mandan (V5.160: El Punto y la Tríada — la tríada sale de la variedad y el
-// proceso del mock, sin reconocimientos).
-for (const l of SNEAK_PEEK_MOCK) {
-  const tri = triadaDeLaFicha({ varieties: [{ name: l.variety, pct: "100", base: l.process, special: "" }], awards: "" }).triada;
-  const esperado = gradoDelLote(Number(l.score), tri).grado;
-  check(
-    `${l.id}: grado «${l.grade}» coherente con el Punto ${l.score} × ${tri.variedad}${tri.proceso}${tri.reconocimiento} (${esperado?.id ?? "sin grado"})`,
-    esperado?.id === l.grade
-  );
+// ── 5. Los mock se retiraron de verdad (V5.198) ─────────────────────────────
+check("no existe `sneakPeekMock.ts`", !existe("src/lib/catalogo/sneakPeekMock.ts"));
+check("ni sus fotos y ruedas, ni sus fichas en PDF", !existe("public/images/catalogo/sneak-peek") || readdirSync(new URL("../public/images/catalogo/sneak-peek", import.meta.url)).length === 0);
+check("ni las fichas en PDF de los mock", !existe("public/docs/fichas-mock") || readdirSync(new URL("../public/docs/fichas-mock", import.meta.url)).length === 0);
+check("ni sus generadores", !existe("scripts/build-fichas-mock.mjs") && !existe("scripts/build-ruedas-mock.mjs") && !existe("scripts/lib/analisis-intrinseco.mjs"));
+{
+  // Ningún literal «mock-lote» entrecomillado en todo `src` (un dato mock que volviera por otro archivo).
+  const enSrc = [];
+  const recorre = (dir) => {
+    for (const n of readdirSync(dir)) {
+      const p = join(dir, n);
+      if (statSync(p).isDirectory()) recorre(p);
+      else if (/\.(ts|tsx)$/.test(n) && /["']mock-lote/.test(readFileSync(p, "utf8"))) enSrc.push(p);
+    }
+  };
+  recorre(fileURLToPath(new URL("../src", import.meta.url)));
+  check(`ningún archivo de src trae datos mock («mock-lote» entrecomillado)${enSrc.length ? `: ${enSrc.join(", ")}` : ""}`, enSrc.length === 0);
 }
-check(
-  "cada mock tiene lo mínimo para una tarjeta honesta",
-  SNEAK_PEEK_MOCK.every(
-    (l) => l.name && l.code && l.finca && l.departamento && l.variety && l.process && l.cup && l.score
-  )
-);
-check(
-  "las notas de cata caben en la tarjeta (<= 95 caracteres)",
-  SNEAK_PEEK_MOCK.every((l) => l.cup.length <= 95)
-);
-check(
-  "el archivo de mock lleva la receta de retirada en su cabecera",
-  MOCK_SRC.includes("CÓMO SE RETIRA")
-);
-check(
-  "el relleno con mock se retira solo al haber 7 lotes vivos",
-  LIB.includes("SNEAK_PEEK_CARDS - vivos.length")
-);
-
-// Un solo sitio con datos mock: si mañana alguien los copia a otro archivo, esto
-// falla y la retirada de un tirón sigue siendo posible.
-const OTROS = [
-  ["src/lib/catalogo/sneakPeek.ts", LIB],
-  ["src/app/api/catalogo/sneak-peek/route.ts", RUTA_API],
-  ["src/components/catalogo/SneakPeek.tsx", COMPONENTE],
-  ["src/components/cherry-picked/CherryPickedExperience.tsx", TIENDA],
-];
-for (const [ruta, texto] of OTROS) {
-  // Un literal ENTRECOMILLADO es dato; la misma cadena en un comentario es
-  // documentación (y varios de estos archivos explican el espacio de ids).
-  // Comilla simple o doble, no tilde invertida: en los comentarios de este
-  // repo el estilo JSDoc usa `así` para nombrar cosas, y eso no es un dato.
-  check(`${ruta} no contiene datos mock («mock-lote» entrecomillado)`, !/["']mock-lote/.test(texto));
-}
+check("la cinta ya no rellena con mock ni lleva rótulo de temporada", !LIB.includes("SNEAK_PEEK_MOCK") && !/^\s*season[?]?\s*:/m.test(bloqueTipo) && !/^\s*mock[?]?\s*:/m.test(bloqueTipo));
 
 // ── 6. La compuerta del catálogo en la tienda (decisión D0.5) ────────────────
 // El catálogo completo solo con sesión: `loadCatalog()` no puede volver a
 // correr para un visitante anónimo.
-// El efecto de arranque es el que decide qué ve un visitante: dentro de él,
-// la petición del catálogo tiene que ir DESPUÉS de la guarda que exige sesión.
-// (Hay una tercera llamada, al refrescar tras un pedido, que por definición ya
-// es de alguien con sesión — de ahí que se mire el orden y no el número.)
 const efecto = TIENDA.slice(TIENDA.indexOf("supabase.auth.getSession()"), TIENDA.indexOf("onAuthStateChange"));
 const guarda = efecto.indexOf("if (!data.session?.user) return;");
 const carga = efecto.indexOf("loadCatalog()");
 check("el efecto de arranque tiene la guarda de sesión", guarda !== -1);
 check("`loadCatalog()` va después de la guarda, nunca antes", carga !== -1 && carga > guarda);
-check(
-  "la parrilla (Grados/Black) se pinta solo con sesión",
-  /\{userId \? \(\s*<>\s*<GradosSection/.test(TIENDA)
-);
+check("la parrilla (Grados/Black) se pinta solo con sesión", /\{userId \? \(\s*<>\s*<GradosSection/.test(TIENDA));
 check("el visitante recibe la cinta en ese sitio", TIENDA.includes("<SneakPeek"));
 check("la cinta hereda el ancla `grados` de la parrilla", TIENDA.includes('id="grados"'));
 check("al cerrar sesión se vacían los lotes", TIENDA.includes("setLots([])"));
-check(
-  "sin sesión el índice no ofrece la sección Black, que no existe",
-  TIENDA.includes('t.quickNav.filter((s) => s.id !== "black")')
-);
+check("sin sesión el índice no ofrece la sección Black, que no existe", TIENDA.includes('t.quickNav.filter((s) => s.id !== "black")'));
 
-// ── 7. Las definiciones de la casa mandan sobre la fuente externa ───────────
-// Regla del owner (2026-08-17): si Notion contradice una definición del repo,
-// gana el repo. Lo del grado ya se comprueba arriba; aquí, que el puntaje sea
-// válido en la escala (dos decimales como máximo, dentro de 80–100) y que el
-// grado exista en la definición única.
-for (const l of SNEAK_PEEK_MOCK) {
-  check(`${l.id}: el puntaje ${l.score} es válido en la escala`, puntajeValido(Number(l.score)));
-  check(`${l.id}: el grado existe en la definición única`, !!GRADO_POR_ID[l.grade]);
-}
+// ── 7. La tarjeta de un lote real (V5.198) ───────────────────────────────────
+check("«Próximamente» en la foto de un lote que todavía no está declarado en el Catálogo Activo", COMPONENTE.includes("{!lot.inCatalogue && <span className={styles.seasonTag}>{t.proximamente}</span>}"));
+check("el puntaje lleva el protocolo del Punto (CVA o SCA), no un «SCA» fijo ni un «est.»", COMPONENTE.includes("<i className={styles.sca}>{lot.scoreProtocol}</i>") && !COMPONENTE.includes("scoreEstimated"));
+check("las notas de la cara son las que marcó el Q-Grader, en el idioma de la página", COMPONENTE.includes('const notas = lot.notes.slice(0, 5).map((x) => nombreDeNota(x.id, lang)).join(" · ");') && COMPONENTE.includes('descriptorLabel(id, lang === "de" ? "en" : lang)'));
+check("la foto de una finca no da un segundo rodeo por el optimizador", COMPONENTE.includes('unoptimized={lot.image.startsWith("/api/")}'));
 
-// ── 8. La tarjeta que se voltea: foto, ficha y accesibilidad ────────────────
-for (const l of SNEAK_PEEK_MOCK) {
-  check(`${l.id}: declara foto`, typeof l.image === "string" && l.image.startsWith("/images/catalogo/sneak-peek/"));
-  check(`${l.id}: la foto existe en el disco`, !!l.image && existsSync(new URL(`../public${l.image}`, import.meta.url)));
-  check(`${l.id}: declara ficha técnica`, typeof l.datasheetUrl === "string");
-  check(`${l.id}: la ficha existe en el disco`, !!l.datasheetUrl && existsSync(new URL(`../public${l.datasheetUrl}`, import.meta.url)));
-  // El proxy antepone la base del subdominio a todo lo que no esté excluido del
-  // matcher: una ficha fuera de `docs/` daría 404 en los 18 subdominios.
-  check(`${l.id}: la ficha cuelga de /docs/ (excluida del proxy)`, !!l.datasheetUrl && l.datasheetUrl.startsWith("/docs/"));
-}
+// ── 8. La tarjeta que se voltea: accesibilidad ──────────────────────────────
 check("la cara delantera es un botón con aria-expanded", COMPONENTE.includes("aria-expanded={volteada}"));
 check("Escape cierra la tarjeta abierta", COMPONENTE.includes('e.key === "Escape"'));
 check("la cinta se para con una tarjeta abierta", /objetivoVelRef.current = volteada[\s\S]{0,40}\? 0/.test(COMPONENTE));
-// El sentido por defecto es hacia la DERECHA (owner, 2026-08-17): velocidad base
-// POSITIVA, que es como el motor expresa ese sentido.
 check("el sentido por defecto es hacia la derecha", /const BASE = \d+;/.test(COMPONENTE) && !/const BASE = -/.test(COMPONENTE));
 check("la copia del bucle no recibe foco", COMPONENTE.includes("tabIndex={duplicada ? -1 : undefined}"));
-check("el enlace de la ficha no voltea la tarjeta al pulsarlo", COMPONENTE.includes("e.stopPropagation()"));
-check("la ficha se abre en otra pestaña sin ceder la ventana", COMPONENTE.includes('rel="noopener"'));
+check("el enlace del Dossier no voltea la tarjeta al pulsarlo", COMPONENTE.includes("e.stopPropagation()"));
+check("el Dossier se abre en otra pestaña sin ceder la ventana", COMPONENTE.includes('rel="noopener"'));
 check("el volteo respeta prefers-reduced-motion", CSS.includes(".inner{transition:none}"));
 
-// ── 9. La rueda de catación en el reverso ───────────────────────────────────
-for (const l of SNEAK_PEEK_MOCK) {
-  check(`${l.id}: declara rueda`, typeof l.wheel === "string" && l.wheel.includes("rueda-"));
-  check(`${l.id}: la rueda existe en el disco`, !!l.wheel && existsSync(new URL(`../public${l.wheel}`, import.meta.url)));
-}
-check("el reverso pinta la rueda", COMPONENTE.includes("styles.wheelBox"));
-// La rueda sale de la herramienta de la casa, no de una segunda rueda paralela.
-check(
-  "la rueda la genera la herramienta de catación de la casa",
-  lee("scripts/build-ruedas-mock.mjs").includes("public/tools/catacion/rueda-catacion.html")
-);
+// ── 9. El reverso: la telaraña del CVA, las notas con ícono y el Dossier público (V5.198) ──
+check("el reverso pinta la telaraña de 8 esquinas del CVA (no la de los diez atributos SCA de los mock)", COMPONENTE.includes("<RadarCvaTarjeta valores={lot.cva} lang={lang} />") && !COMPONENTE.includes("RadarIntrinseco") && !existe("src/components/catalogo/RadarIntrinseco.tsx"));
+check("la telaraña de la tarjeta: octógono de cara plana, de 1 a 9, con los colores del tema", RADAR.includes("const ang = (i: number) => (Math.PI * 2 * i) / n - Math.PI / 2 + Math.PI / n;") && RADAR.includes("const MIN = 1;") && RADAR.includes("const MAX = 9;") && RADAR.includes("styles.radarFigura") && ["es:", "en:", "de:"].every((k) => RADAR.includes(k)));
+check("las notas del reverso llevan su ícono (el de la rueda), su intensidad en casillas y su valor", COMPONENTE.includes("<IconoDeNota id={x.id} size={24} strokeWidth={1.8} />") && COMPONENTE.includes("<BarraDeIntensidad valor={x.intensidad} color={color} />") && COMPONENTE.includes("fmtIntensidad(x.intensidad, lang)"));
+check("ya no hay rueda de imagen ni ficha técnica en el reverso", !COMPONENTE.includes("styles.wheelBox") && !COMPONENTE.includes("datasheetUrl"));
+check("el botón del reverso abre el Dossier público, ABSOLUTO contra la casa matriz", COMPONENTE.includes("const PORTAL_BASE = process.env.NODE_ENV === \"development\" ? \"\" : origenDeSuperficie(RUTA_PORTAL);") && COMPONENTE.includes('href={`${PORTAL_BASE}${lot.dossierPath}${lang === "es" ? "" : "?lang=en"}`}') && LIB.includes("dossierPath: rutaDelLote(fila.referencia)"));
+check("y va al pie del reverso", COMPONENTE.includes("className={`${styles.ficha} ${styles.fichaAlPie}`}") && CSS.includes(".fichaAlPie{margin-top:auto}") && CSS.includes(".ficha{") && CSS.includes("margin:10px auto 4px"));
+check("el reverso no repite el puntaje", !/styles\.scoreRow/.test(COMPONENTE));
 
 // ── 10. Las flechas de los extremos ─────────────────────────────────────────
 check("hay flecha a cada lado", COMPONENTE.includes("styles.flechaIzq") && COMPONENTE.includes("styles.flechaDer"));
 check("aceleran con el ratón Y con el foco", COMPONENTE.includes("onMouseEnter") && COMPONENTE.includes("onFocus"));
 check("y sueltan al salir", COMPONENTE.includes("onMouseLeave") && COMPONENTE.includes("onBlur"));
 check("la flecha izquierda invierte el sentido", COMPONENTE.includes('impulso === "izq"') && COMPONENTE.includes("-RAPIDO"));
-
-// ── 13. Centrar y crecer al abrir (owner, 2026-08-17) ───────────────────────
-check("al pulsar se centra la tarjeta antes de voltearla", COMPONENTE.includes("centrarYVoltear"));
-check("el destino se calcula con el centro de la cinta", COMPONENTE.includes("cinta.clientWidth / 2 - centroTarjeta"));
-check("se elige la copia más cercana de la tarjeta", COMPONENTE.includes("while (destino - posRef.current > w / 2)"));
-check("y se voltea solo AL LLEGAR", COMPONENTE.includes("alLlegarRef.current = () => setVolteada"));
-// El envoltorio del bucle no puede pelearse con el centrado: si envuelve
-// mientras se persigue un destino, la tarjeta no llega nunca y no se voltea.
-check("el bucle no envuelve mientras centra", COMPONENTE.includes("if (destinoRef.current === null) {"));
-check("la tarjeta abierta crece un 15 %", CSS.includes(".flipped{transform:scale(1.15)"));
-check("y se pone por encima de sus vecinas", /\.flipped\{[^}]*z-index/.test(CSS));
-
-// ── 14. El Análisis Intrínseco de la ficha ──────────────────────────────────
-const ANALISIS_SRC = lee("scripts/lib/analisis-intrinseco.mjs");
-check("la ficha lleva el análisis intrínseco", lee("scripts/build-fichas-mock.mjs").includes("radarSVG"));
-check("son los diez atributos del formulario SCA", (ANALISIS_SRC.match(/clave: "/g) || []).length === 10);
-check(
-  "y el archivo AVISA de que esos números son inventados por encargo",
-  /INVENTADOS, POR ENCARGO/.test(ANALISIS_SRC)
-);
 check("las flechas llevan rótulo accesible", COMPONENTE.includes("t.flechaAnterior") && COMPONENTE.includes("t.flechaSiguiente"));
 
 // ── 11. La ventana del catálogo ─────────────────────────────────────────────
@@ -277,167 +167,59 @@ check("en las superficies CP el botón abre el login sin navegar", POPUP.include
 
 // ── 12. La landing de CaaS monta el módulo ──────────────────────────────────
 check("CaaS monta la cinta", CAAS.includes("<SneakPeek"));
-// Se miden los USOS en el JSX, no la primera aparición del nombre: las claves
-// aparecen antes en la declaración del tipo y en los tres diccionarios, así que
-// un `indexOf` a secas comparaba con la línea equivocada.
-check(
-  "y la monta ENTRE «las dos clases» y «Dónde encaja»",
-  CAAS.indexOf("{chrome.offerH2}") < CAAS.indexOf("<SneakPeek") &&
-    CAAS.indexOf("<SneakPeek") < CAAS.indexOf("{chrome.modelosH2}")
-);
+check("y la monta ENTRE «las dos clases» y «Dónde encaja»", CAAS.indexOf("{chrome.offerH2}") < CAAS.indexOf("<SneakPeek") && CAAS.indexOf("<SneakPeek") < CAAS.indexOf("{chrome.modelosH2}"));
 
-// ── 15. Las dos caras, según las maquetas del owner (2026-08-17) ────────────
-// CARA: foto con «Ver detalle» encima, nombre, variedad·altitud, notas y el pie
-// con el sello del grado frente al puntaje, la finca y el municipio.
-check(
-  "«Ver detalle» va sobre la foto",
-  COMPONENTE.includes("styles.verDetalle") && /\.verDetalle\{\s*position:absolute/.test(CSS)
-);
-check("la cara lleva el sello del grado a tamaño legible", COMPONENTE.includes("styles.sello") && /\.sello\{width:7\d px?|\.sello\{width:72px/.test(CSS));
+// ── 13. Centrar y crecer al abrir (owner, 2026-08-17) ───────────────────────
+check("al pulsar se centra la tarjeta antes de voltearla", COMPONENTE.includes("centrarYVoltear"));
+check("el destino se calcula con el centro de la cinta", COMPONENTE.includes("cinta.clientWidth / 2 - centroTarjeta"));
+check("se elige la copia más cercana de la tarjeta", COMPONENTE.includes("while (destino - posRef.current > w / 2)"));
+check("y se voltea solo AL LLEGAR", COMPONENTE.includes("alLlegarRef.current = () => setVolteada"));
+check("el bucle no envuelve mientras centra", COMPONENTE.includes("if (destinoRef.current === null) {"));
+check("la tarjeta abierta crece un 15 %", CSS.includes(".flipped{transform:scale(1.15)"));
+check("y se pone por encima de sus vecinas", /\.flipped\{[^}]*z-index/.test(CSS));
+
+// ── 15. La cara, según las maquetas del owner (2026-08-17) ──────────────────
+check("«Ver detalle» va sobre la foto", COMPONENTE.includes("styles.verDetalle") && /\.verDetalle\{\s*position:absolute/.test(CSS));
+check("la cara lleva el sello del grado a tamaño legible", COMPONENTE.includes("styles.sello") && /\.sello\{width:72px/.test(CSS));
 check("la cara lleva el puntaje, la finca y el municipio", COMPONENTE.includes("styles.frontFoot") && COMPONENTE.includes("styles.finca"));
 check("la cara lleva variedad y altitud", COMPONENTE.includes("lot.variety, lot.altitudeM != null"));
-// REVERSO: telaraña, ficha en el medio, rueda al pie.
-check("el reverso lleva la telaraña", COMPONENTE.includes("<RadarIntrinseco"));
-check("y la ficha centrada entre la telaraña y la rueda", CSS.includes(".ficha{") && CSS.includes("margin:10px auto 4px"));
-check("el reverso ya no repite el puntaje ni las notas", !/styles\.scoreRow/.test(COMPONENTE));
 
-// ── 16. Los diez atributos, sin arrastrar `server-only` al navegador ─────────
-// ⚠️ Importar un VALOR desde `lib/catalogo/sneakPeek.ts` (que es `server-only`)
-// mete Supabase en el paquete del cliente y tumba la página con un 500 que
-// `tsc --noEmit` NO ve. Por eso la lista vive en un archivo puro.
-const ATRIB_SRC = lee("src/lib/catalogo/atributosSca.ts");
-const RADAR_SRC = lee("src/components/catalogo/RadarIntrinseco.tsx");
-check(
-  "los atributos viven en un archivo SIN server-only",
-  !/^\s*import "server-only"/m.test(ATRIB_SRC)
-);
-check("y son los diez del formulario", (ATRIB_SRC.match(/^  "/gm) || []).length === 10);
-check(
-  "el radar toma el VALOR del archivo puro, no del módulo server-only",
-  RADAR_SRC.includes('from "@/lib/catalogo/atributosSca"') &&
-    /import type \{ SneakPeekLang \} from "@\/lib\/catalogo\/sneakPeek"/.test(RADAR_SRC)
-);
-for (const l of SNEAK_PEEK_MOCK) {
-  check(`${l.id}: trae los diez atributos`, !!l.intrinseco && Object.keys(l.intrinseco).length === 10);
-  const suma = l.intrinseco ? Object.values(l.intrinseco).reduce((a, b) => a + b, 0) : 0;
-  check(`${l.id}: los diez suman su puntaje (${l.score})`, Math.abs(suma - Number(l.score)) < 0.01);
+// ── 16. El componente de cliente no arrastra el módulo `server-only` ─────────
+// ⚠️ Importar un VALOR desde `lib/catalogo/sneakPeek.ts` (que es `server-only`) mete Supabase en el paquete del cliente y tumba la
+// página con un 500 que `tsc --noEmit` NO ve. Del módulo solo se toman TIPOS.
+for (const [n, f] of [["SneakPeek.tsx", COMPONENTE], ["RadarCvaTarjeta.tsx", RADAR]]) {
+  const imports = [...f.matchAll(/^import (type )?\{[^}]*\} from "@\/lib\/catalogo\/sneakPeek";/gm)];
+  check(`${n} importa de sneakPeek.ts solo TIPOS`, imports.every((m) => m[1] === "type "));
 }
+check("la cinta lee la vista desde un módulo sin `sharp` ni el cargador del dossier", LIB.includes('from "./vitrinaVista";') && !LIB.includes('from "./vitrina";'));
 
 // ── D3.1 · la vitrina de un lote comprado en firme (V4.28) ───────────────────
-// El owner decidió el 2026-08-18 que un lote que CTC compra sale en las
-// tarjetas a nombre de CTC, SIN tocar su finca real. La regla tiene dos mitades
-// y las dos se comprueban aquí, porque cada una falla de forma distinta:
-//
-//   1. Que la vista NO devuelva el nombre de la finca cuando el lote está
-//      comprado. `public_lot_catalog` la lee `anon`: si devolviera el nombre y
-//      lo tapáramos solo en el componente, cualquiera lo leería por la API.
-//   2. Que el rótulo salga de `legal.ts` y no esté escrito a mano en la vista
-//      ni en el componente — una segunda definición de la razón social es una
-//      contradicción esperando su turno.
+// El owner decidió el 2026-08-18 que un lote que CTC compra sale en las tarjetas a nombre de CTC, SIN tocar su finca real. La vista
+// NO devuelve el nombre de la finca en ese caso (§2) y el rótulo sale del perfil de CTCx Selection (`rotuloCtcx` → `legal.ts`).
 {
-  const sneak = lee("src/lib/catalogo/sneakPeek.ts");
-  const tienda = lee("src/components/cherry-picked/CherryPickedExperience.tsx");
-
-  check(
-    "la cinta pide ctc_selection a la vista",
-    sneak.includes("ctc_selection")
-  );
-  check(
-    "la tienda pide ctc_selection a la vista",
-    tienda.includes("ctc_selection")
-  );
-  // V5.85 (fase 8): el rótulo es el PERFIL ÚNICO de CTCx Selection (`rotuloCtcx`, `lib/catalogo/perfilCtcx.ts`), que cae a la
-  // razón social de `legal.ts` cuando no hay perfil — sigue sin haber una segunda definición escrita a mano.
   const perfil = lee("src/lib/catalogo/perfilCtcx.ts");
-  check(
-    "el rótulo de CTC sale del perfil de CTCx Selection en la cinta (rotuloCtcx → legal.ts), no escrito a mano",
-    sneak.includes("rotuloCtcx(perfil)") && !/finca:\s*["'`]C(TC|olombian)/.test(sneak) && perfil.includes('from "@/lib/legal"') && /return nombre \|\| CTC_RAZON/.test(perfil)
-  );
-  check(
-    "y en la tienda, el mismo rótulo",
-    tienda.includes("rotuloCtcx(perfil)")
-  );
-  check(
-    "ningún componente escribe la razón social a mano",
-    !sneak.includes('"Colombian Trading Company"') && !tienda.includes('"Colombian Trading Company"')
-  );
+  check("la cinta pide ctc_selection a la vista", VISTA.includes("ctc_selection") && LIB.includes("fila.ctc_selection"));
+  check("la tienda pide ctc_selection a la vista", TIENDA.includes("ctc_selection"));
+  check("el rótulo de CTC sale del perfil de CTCx Selection en la cinta (rotuloCtcx → legal.ts), no escrito a mano", LIB.includes("rotuloCtcx(perfil)") && !/finca:\s*["'`]C(TC|olombian)/.test(LIB) && perfil.includes('from "@/lib/legal"') && /return nombre \|\| CTC_RAZON/.test(perfil));
+  check("y en la tienda, el mismo rótulo", TIENDA.includes("rotuloCtcx(perfil)"));
+  check("ningún componente escribe la razón social a mano", !LIB.includes('"Colombian Trading Company"') && !TIENDA.includes('"Colombian Trading Company"'));
+  check("la vitrina sigue enseñando CTC en vez de la finca cuando el lote es de CTC Selection", /ctc_selection\s*\?\s*rotuloCtcx\(perfil\)/.test(TIENDA) && /ctc_selection\s*\?\s*rotuloCtcx\(perfil\)/.test(LIB));
 }
 
 // ── La promesa pública y lo que la tarjeta enseña, ATADAS ──────────────────
-// D3.1 quita la finca de la vitrina cuando CTC compró el lote en firme. El
-// Manifiesto, en su pilar 01, promete «finca, personas, proceso y evaluación,
-// verificables lote a lote». Leído a secas, esa promesa y esa tarjeta no
-// encajaban — y no solo por la finca: la tarjeta **nunca** ha mostrado al
-// productor, de ningún lote (el tipo `Lot` no tiene campo).
-//
-// No se retiró la promesa, porque es cierta: se le añadió el DÓNDE (la ficha
-// técnica y la DDS), que es donde la sección de EUDR ya decía que vive y donde
-// el owner dijo en D3.1 que se muestra la finca real.
-//
-// Aquí se atan las dos mitades. Quitarle el «dónde» al pilar deja una promesa
-// que la tarjeta no cumple; devolver la finca a la tarjeta rompe D3.1. Ninguna
-// de las dos falla sola en ningún sitio, así que fallan aquí.
+// El Manifiesto, en su pilar 01, promete «finca, personas, proceso y evaluación, verificables lote a lote» y dice DÓNDE: en la
+// ficha técnica (hoy el Dossier público, V5.198) y en la DDS. Quitarle el «dónde» al pilar deja una promesa que la tarjeta no
+// cumple; devolver la finca a la tarjeta de un lote de CTC rompe D3.1.
 {
-  const manifiesto = readFileSync(new URL("../src/components/cherry-picked/ManifiestoSection.tsx", import.meta.url), "utf8");
-
-  // El pilar 01 dice dónde se verifica, en los TRES idiomas. Se busca por el
-  // término de cada lengua: si mañana se traduce mal, el hueco se ve aquí.
+  const manifiesto = lee("src/components/cherry-picked/ManifiestoSection.tsx");
   check("manifiesto ES: el pilar 01 dice dónde (ficha técnica y DDS)", /verificables lote a lote en la ficha técnica y en la DDS/.test(manifiesto));
   check("manifiesto EN: el pilar 01 dice dónde (datasheet and DDS)", /verifiable lot by lot on the datasheet and the DDS/.test(manifiesto));
   check("manifiesto DE: el pilar 01 dice dónde (Datenblatt und DDS)", /überprüfbar — im Datenblatt und in der DDS/.test(manifiesto));
-
-  // Y que siga escrito POR QUÉ: sin la razón, el próximo repaso de copy se lo
-  // lleva por «redundante».
   check("y queda escrito por qué el pilar dice dónde", manifiesto.includes("EL PILAR 01 DICE DÓNDE SE VERIFICA"));
-
-  // La otra mitad: la tarjeta sigue tapando la finca del lote comprado. Si esto
-  // se revirtiera, el «dónde» del pilar sobraría — y al revés.
-  const vitrinaTienda = lee("src/components/cherry-picked/CherryPickedExperience.tsx");
-  const vitrinaCinta = lee("src/lib/catalogo/sneakPeek.ts");
-  check(
-    "la vitrina sigue enseñando CTC en vez de la finca cuando el lote es de CTC Selection",
-    /ctc_selection\s*\?\s*rotuloCtcx\(perfil\)/.test(vitrinaTienda) && /ctc_selection\s*\?\s*rotuloCtcx\(perfil\)/.test(vitrinaCinta)
-  );
 }
 
-// ── Las dos discrepancias resueltas, CLAVADAS ──────────────────────────────
-// D0.9 y D0.10 se cerraron el 2026-08-19 leyendo Notion y, en el caso de la
-// variedad, preguntándole al owner. Pero AGUAS ARRIBA LOS DOS ERRORES SIGUEN
-// AHÍ: la ficha del Bourbon conserva `Variedad: Castillo`, y el Gesha sigue
-// relacionado con «La Floresta».
-//
-// Esto importa porque este archivo es TEMPORAL: el día que los lotes se
-// importen de verdad —de Notion o de la base—, esos dos valores volverían a
-// entrar sin que nada falle. Serían dos campos plausibles en dos tarjetas
-// bonitas. Así que se fijan aquí: si alguien los cambia, que sea a sabiendas y
-// leyendo por qué, no de rebote en una importación.
-{
-  const lote = (n) => SNEAK_PEEK_MOCK.find((l) => l.id.endsWith(n));
-
-  // D0.9 — el título manda sobre el campo `Variedad`. La taza lo respalda: 87.00
-  // floral/mandarina/cardamomo, contra los dos Castillo de la MISMA finca a
-  // 84.25 y 84.50 con chocolate y especias.
-  const dos = lote("02");
-  check("D0.9: la tarjeta 2 sigue siendo Bourbon, no Castillo", dos?.variety === "Bourbon");
-
-  // D0.10 — La Floresta no cultiva Gesha («Castillo 90%, colombia 10%»), así que
-  // el lote no puede salir de allí. La Fortaleza sí cuadra con título, proveedor
-  // y RUT. Se clava también la altura: 1300 m (La Floresta) contra 1700 m.
-  const tres = lote("03");
-  check("D0.10: la tarjeta 3 sigue en La Fortaleza, no La Floresta", tres?.finca === "La Fortaleza");
-  check("D0.10: con su municipio de Ragonvalia", tres?.municipio === "Ragonvalia");
-  check("D0.10: y a 1700 m, no a los 1300 m de La Floresta", tres?.altitudeM === 1700);
-
-  // Y que el archivo siga EXPLICANDO por qué, que es la mitad del valor: un
-  // valor clavado sin su razón se desclava en cuanto alguien lo cuestione.
-  const fuente = readFileSync(new URL("../src/lib/catalogo/sneakPeekMock.ts", import.meta.url), "utf8");
-  check("D0.9 deja escrito que está resuelta", fuente.includes("D0.9 RESUELTA"));
-  check("D0.10 deja escrito que está resuelta", fuente.includes("D0.10 RESUELTA"));
-  check(
-    "y que aguas arriba sigue sin corregirse",
-    (fuente.match(/PENDIENTE AGUAS ARRIBA/g) ?? []).length === 2
-  );
-}
+// Solo comprueba que el código no contiene los nombres en ejecución (los comentarios pueden contar la historia).
+check("ninguna lectura de la vista vieja de la tienda en la cinta", !sinComentarios(LIB).includes("public_lot_catalog"));
 
 console.log(`${ok} comprobaciones OK, ${fallos.length} fallos`);
 for (const f of fallos) console.log("  FALLO:", f);

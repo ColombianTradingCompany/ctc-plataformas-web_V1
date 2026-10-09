@@ -21,8 +21,9 @@ que voltean) es la cara pública del catálogo; el catálogo con precios pide se
 | `/cherry-picked-roast` · `/cherry-picked-x` | scaffolds + suscripción (`newsletter_subscribers`, fuentes `roast`/`x`) |
 | `/caas` (`/co-create` → 308) | landing + formulario Clase B (pilar `cocreate` — la MARCA es CaaS, la CLAVE es cocreate) |
 | `/api/catalogo/sneak-peek` | la cinta (anon, `s-maxage=900`) |
-| `/docs/ficha/[lotId]` | ficha pública de un lote vivo sobre **lista blanca** (charter `plataforma`, la ruta cuelga de `/docs` por el proxy) |
-| `/ctcx-public-catalogue` · `/ctcx-public-catalogue/[codigo]` | «Find my Lot» y el paquete público del lote por su `lots.public_code` (V5.48; charter `plataforma`, nacida en `consolas` · OCP, **solo www**) |
+| `/docs/ficha/[lotId]` | desde la V5.198 solo redirige (308) al Dossier público de un lote de la vitrina, o 404 (la ficha técnica se retiró) |
+| `/ctcx-public-catalogue` · `/ctcx-public-catalogue/[codigo]` | «Find my Lot» y el **Dossier público** del lote por su referencia `CTC-L-XXXXXXXX` (V5.198; un código viejo `CTCX-…` redirige; V5.48, charter `plataforma`, nacida en `consolas` · OCP, **solo www**) |
+| `/api/catalogo/foto/[referencia]` | la foto de la tarjeta de un lote de la vitrina (V5.198; pasa por la vista, WebP 3:2) |
 
 ## Mapa de código
 
@@ -31,8 +32,9 @@ que voltean) es la cara pública del catálogo; el catálogo con precios pide se
   `data.ts` (`moqOf`, `importe` —antes `eur`, V5.52—, `fmt`, `ASSOC_BLACK_MOQ = 350`).
 - `src/components/cherry-picked-hub/HubLanding.tsx`, `cherry-picked-roast/`, `cherry-picked-x/`,
   `src/components/services/CaasLanding.tsx`.
-- `src/components/catalogo/SneakPeek.tsx` (montado en 7 superficies), `src/lib/catalogo/{sneakPeek,sneakPeekMock,
-  atributosSca,fichaPublica,perfilCtcx}.ts` (`perfilCtcx.ts`, V5.85: el perfil único de CTCx Selection, sin `server-only`, lo leen la cinta, la tienda, el portal y la ficha) (`sneakPeek.ts` es `server-only`: **nunca importar un VALOR desde cliente**).
+- `src/components/catalogo/SneakPeek.tsx` (montado en 7 superficies) y `RadarCvaTarjeta.tsx` (V5.198), `src/lib/catalogo/{sneakPeek,
+  vitrina,vitrinaVista,atributosSca,perfilCtcx}.ts` (V5.198: la vitrina de los lotes del Triage y el Dossier público, que proyecta
+  `src/lib/kaffetal/dossierPublico.ts`) (`perfilCtcx.ts`, V5.85: el perfil único de CTCx Selection, sin `server-only`, lo leen la cinta, la tienda, el portal y la ficha) (`sneakPeek.ts` es `server-only`: **nunca importar un VALOR desde cliente**).
 - `src/lib/subastas/{tipos,buyerActions}.ts` (`listarSubastas`, `pujar`: sesión + Pintón; la regla del
   monto vive en el trigger `auction_bids_guard`).
 - `src/lib/newsletter/actions.ts` (`SOURCES`), `src/lib/market/` (lee), `src/lib/leads/actions.ts` (CaaS, compartido).
@@ -57,7 +59,8 @@ con cuenta QA — **hoy no corre**: las cuentas de prueba se eliminaron en la V5
 
 - **Nada comercial sale por la cinta**: el tipo `SneakPeekLot` no tiene dónde ponerlo; un campo nuevo se
   añade a propósito y el guardián obliga a justificarlo. Tyrian nunca aparece en la cinta (es de subasta).
-- **La ficha pública es lista BLANCA** (`fichaPublica.ts`): una clave nueva del formulario nace privada.
+- **El Dossier público es lista BLANCA** (`lib/kaffetal/dossierPublico.ts`, V5.198; antes la ficha pública, `fichaPublica.ts`): un
+  campo nuevo del dossier nace privado, y el service role lo carga SOLO después de la vista `public_lot_vitrina`.
 - **Dos caras del lote comprado en firme**: la vitrina muestra el **perfil único de CTCx Selection** (`ctc_selection`, que desde la
   V5.85 sale de `compras` y desde la V5.195 solo de las compras de CTCx Selection —un saco recibido por un trato por ventanas ya no
   oculta la finca—; el rótulo es `rotuloCtcx(perfil)`, que cae a `CTC_RAZON`), la ficha muestra la finca real como dato.
@@ -80,6 +83,12 @@ con cuenta QA — **hoy no corre**: las cuentas de prueba se eliminaron en la V5
 
 ## Pendientes
 
+- **V5.198 · la vitrina real y el Dossier público** (owner, 2026-10-10; ejecutado desde WRAP-COMMIT-PUSH). La cinta lee
+  `public_lot_vitrina` (los lotes que llegaron al Triage) y ya no tiene mock; el reverso pinta la telaraña del CVA, las notas con su
+  ícono (`components/catacion/IconosDeSabor.tsx`) y el botón al Dossier público, que reemplazó a la ficha técnica. Abierto: (1) el
+  Manifiesto (pilar 01) sigue diciendo «en la ficha técnica y en la DDS» — hoy esa ficha es el Dossier público; cambiar el texto en
+  los tres idiomas lo decide el owner; (2) la tienda (catálogo con sesión) sigue leyendo `public_lot_catalog` y sus fichas propias:
+  llevarle el Dossier público al detalle de un listado es una tanda aparte.
 - **V5.196 · el Catálogo Activo lo gobierna el Triage** (ejecutado desde `consolas`; sin código de la tienda tocado salvo dos
   comentarios de `src/lib/catalogo/sneakPeek{,Mock}.ts` que nombraban `publishLot`): `lot_listings.total_kg` son ahora kg de **verde**
   declarados (antes kg de CPS 1:1) y `price_per_kg` no puede bajar del FOB mínimo del lote (la base lo rechaza). La tienda no cambia: ya

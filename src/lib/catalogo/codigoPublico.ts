@@ -33,9 +33,11 @@
 // 3. NO SE DERIVA DE NADA. El código es aleatorio y vive en su columna. No sale
 //    de `lot_id` (sería otro `codigoDeLote` con otra cara), ni de
 //    `lot_listings.id` (un lote republicado estrenaría código y rompería la
-//    bolsa ya impresa), ni de `datasheet.ctc_uid` — ese identificador está en
-//    `NUNCA_PUBLICOS` de `fichaPublica.ts`, y un identificador privado que se
-//    vuelve público es una puerta de un solo sentido.
+//    bolsa ya impresa), ni de `datasheet.ctc_uid` — ese identificador es privado
+//    (estaba en `NUNCA_PUBLICOS` de la ficha pública que la V5.198 reemplazó por el
+//    Dossier público), y un identificador privado que se vuelve público es una
+//    puerta de un solo sentido. (La REFERENCIA de abajo sí sale del id: decisión
+//    del owner del 2026-10-10, ver su bloque.)
 //
 // Módulo PURO a propósito: sin `server-only`, sin imports. El formulario de
 // «Find my Lot» es un componente de cliente y necesita importar
@@ -117,4 +119,37 @@ export const RUTA_PORTAL = "/ctcx-public-catalogue";
 /** La URL pública de un lote, relativa. Se absolutiza igual que `RUTA_PORTAL`. */
 export function rutaDelCodigo(codigo: string): string {
   return `${RUTA_PORTAL}/${codigo}`;
+}
+
+// ── V5.198 (owner, 2026-10-10) · la REFERENCIA del lote es su dirección pública ─────────────────────────────────────────
+// «"Find my Lot" […] con la cual debo escribir solo los 8 dígitos después de "CTC-L-"; ya deben ser encontrados los lotes que ya
+// están en el Triage». La referencia `CTC-L-XXXXXXXX` es la que el lote YA lleva en el paquete de muestra, en la planilla del
+// Q-Grader, en el Dossier y en el OCP (`ctcLotReference`: los ocho primeros caracteres hexadecimales de su id, en mayúsculas).
+// Desde la V5.198 es la dirección del lote en el portal; el código `CTCX-XXXX-XXXX` de arriba (V5.48) queda como dirección VIEJA
+// que la ruta redirige a la nueva. Sigue valiendo la nota 1 de la cabecera: la referencia NO es una credencial — la vista
+// `public_lot_vitrina` la expone a `anon`, y lo que se enseña con ella es lo que cualquiera puede ver.
+
+/** El prefijo de la referencia, fijo en el buscador: quien busca solo escribe los ocho caracteres. */
+export const PREFIJO_REFERENCIA = "CTC-L-";
+
+/** Lo que se confunde al leer una etiqueta impresa. Ninguno es hexadecimal, así que no tapa un carácter legítimo. */
+const AMBIGUOS_HEX: Record<string, string> = { O: "0", I: "1", L: "1" };
+
+/**
+ * Lleva lo que teclearon a la referencia canónica `CTC-L-XXXXXXXX` (hexadecimal en mayúsculas), o `null` si no lo es. Perdona
+ * minúsculas, espacios, guiones y el prefijo escrito o ausente; no perdona longitudes (la ruta canoniza con un 308 permanente).
+ */
+export function normalizaReferencia(entrada: string): string | null {
+  if (typeof entrada !== "string") return null;
+  let limpio = entrada.toUpperCase().replace(/[^0-9A-Z]/g, "");
+  // El prefijo se quita ANTES de leer los ambiguos: «CTCL» lleva una L que no es un uno.
+  if (limpio.startsWith("CTCL") && limpio.length === 4 + LARGO_CUERPO) limpio = limpio.slice(4);
+  if (limpio.length !== LARGO_CUERPO) return null;
+  const cuerpo = [...limpio].map((c) => AMBIGUOS_HEX[c] ?? c).join("");
+  return /^[0-9A-F]{8}$/.test(cuerpo) ? `${PREFIJO_REFERENCIA}${cuerpo}` : null;
+}
+
+/** La URL pública de un lote por su referencia (el Dossier público), relativa. Se absolutiza igual que `RUTA_PORTAL`. */
+export function rutaDelLote(referencia: string): string {
+  return `${RUTA_PORTAL}/${referencia}`;
 }

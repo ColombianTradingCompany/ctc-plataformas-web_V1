@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { getSneakPeekPayload } from "@/lib/catalogo/sneakPeek";
 
 // ── El vistazo al Catálogo Activo ────────────────────────────────────────────
-// Pública a propósito, y sin nada comercial dentro: solo las columnas de
-// exhibición de la vista `public_lot_catalog` (nombre, grado, puntaje, finca,
-// municipio, altitud, variedad, proceso, notas). Ni precios, ni MOQ, ni kilos —
-// eso vive detrás del login de Cherry Picked. Ver `lib/catalogo/sneakPeek.ts`.
+// Pública a propósito, y sin nada comercial dentro: las columnas de exhibición de
+// la vista `public_lot_vitrina` (V5.198: los lotes que llegaron al Triage) y la taza
+// que rige (los ocho atributos del CVA y las notas de la rueda). Ni precios, ni MOQ,
+// ni kilos — eso vive detrás del login de Cherry Picked. Ver `lib/catalogo/sneakPeek.ts`.
 //
 // Mismo montaje que la cinta de mercado de Home (`api/home/ticker`): la ruta no
 // se congela en el build (`force-dynamic`) y encima va una cabecera de caché
@@ -28,7 +28,7 @@ export async function GET() {
     // La cinta es un vistazo: si algo se rompe, devuelve vacío y el componente
     // no pinta nada. Una portada nunca se cae por un adorno informativo.
     return NextResponse.json(
-      { lots: [], source: "mock", generatedAt: new Date().toISOString(), error: (e as Error).message },
+      { lots: [], generatedAt: new Date().toISOString(), error: (e as Error).message },
       { status: 200 }
     );
   }

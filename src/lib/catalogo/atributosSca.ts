@@ -10,9 +10,10 @@
 // un error que `tsc --noEmit` NO ve, porque para TypeScript el import es válido.
 // Lo cazó el servidor de desarrollo, no la compuerta.
 //
-// El ORDEN importa: es el que recorre la telaraña del «Análisis Intrínseco», en
-// la tarjeta (`components/catalogo/RadarIntrinseco.tsx`) y en la ficha en PDF
-// (`scripts/lib/analisis-intrinseco.mjs`). Cambiarlo redibuja las dos.
+// El ORDEN importa: es el del formulario, y lo recorren la Ficha (`fichas/tipos.ts`,
+// `FichaDatos`) y la Arena. Hasta la V5.197 también la telaraña del «Análisis
+// Intrínseco» de la tarjeta del Sneak Peek; desde la V5.198 la tarjeta pinta la del
+// CVA (`components/catalogo/RadarCvaTarjeta.tsx`) con los lotes reales.
 
 export const ATRIBUTOS_SCA = [
   "fragancia",

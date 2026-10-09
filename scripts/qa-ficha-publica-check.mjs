@@ -1,225 +1,150 @@
-// Guardián de la ficha pública de un lote (V4.42).
+// Guardián de lo PÚBLICO de un lote: el Dossier público (V5.198) y sus puertas.
 //
 //   node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/qa-ficha-publica-check.mjs
 //
-// LO QUE PROTEGE. `lots.datasheet` son 110 claves: el formulario ENTERO de la
-// ficha técnica, pensado para el expediente interno. Dentro van el NIT y la
-// razón social del productor, su nombre, la georreferencia del predio, quién
-// catató, y el bloque `eudr_*` con la evaluación de RIESGO que CTC hace del
-// proveedor. El §9 del plan decía «generar el PDF desde `lots.datasheet` y el
-// botón se enciende para todo el catálogo»: hacerlo así lo publicaba todo.
+// LO QUE PROTEGE. Desde la V4.42 la cara pública de un lote era una «ficha técnica» proyectada de `lots.datasheet` con una lista
+// blanca (`fichaPublica.ts`). Desde la V5.198 (owner, 2026-10-10: «El Datasheet va a ser reemplazado por una versión simplificada
+// del Dossier que omite los enlaces al pasaporte y la visa») esa cara es el DOSSIER PÚBLICO del CTCx Public Catalogue. El dossier
+// del productor reúne MUCHO más que la ficha: el nombre, el contacto, el avatar y la galería del productor, las coordenadas y el
+// polígono de la finca, la vereda, la tenencia, los siete criterios del Pasaporte EUDR, la DDS, lo que el productor declaró, las
+// anotaciones de mejora, las conjeturas, el número de cada certificado y la marca de agua con su nombre. Ninguno sale.
 //
-// ⚠️ Y el peor era `estate`. Por D3.1 la tarjeta de un lote comprado en firme
-// no enseña la finca — y ese PDF la habría puesto a un clic de esa tarjeta.
-//
-// La defensa es una LISTA BLANCA. Este guardián existe para que siga siéndolo:
-// prueba con el juego de claves REAL —las 110 que hay hoy en la base, no unas
-// inventadas— y comprueba que solo salen las nombradas.
+// La defensa sigue siendo una LISTA BLANCA (`lib/kaffetal/dossierPublico.ts`): el objeto público se ARMA campo por campo. Este
+// guardián la prueba con un dossier LLENO DE CENTINELAS —un valor reconocible en cada campo privado— y comprueba que ninguno
+// sobrevive. Y vigila las puertas: la compuerta es la vista `public_lot_vitrina`; el dossier se lee DESPUÉS.
 
 import { readFileSync } from "node:fs";
-import {
-  fichaPublica,
-  fichaVale,
-  CAMPOS_PUBLICOS,
-  NUNCA_PUBLICOS,
-} from "../src/lib/catalogo/fichaPublica.ts";
+import { dossierPublico } from "../src/lib/kaffetal/dossierPublico.ts";
 
 let ok = 0;
 const fallos = [];
 const check = (n, c) => (c ? ok++ : fallos.push(n));
+const lee = (r) => readFileSync(new URL(`../${r}`, import.meta.url), "utf8").replace(/\r\n/g, "\n");
+const sinComentarios = (t) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 
-const CTC = "Colombian Trading Company SAS";
+// ── Un dossier COMPLETO con centinelas: lo privado lleva «PRIVADO_…», lo público «PUBLICO_…» ──
+const finca = {
+  id: "PRIVADO_finca_id",
+  code: "PRIVADO_finca_code",
+  name: "PUBLICO_finca",
+  vereda: "PRIVADO_vereda",
+  municipio: "PUBLICO_municipio",
+  departamento: "PUBLICO_departamento",
+  pais: "Colombia",
+  hectares: 3,
+  altitud: 1624,
+  lat: 6.48765432,
+  lng: -73.2654321,
+  vertices: 4,
+  poligono: [{ lat: 6.48711111, lng: -73.26522222 }],
+  sistema: "sombra",
+  siembra: "PRIVADO_siembra",
+  tenencia: "PRIVADO_tenencia",
+  infra: ["patios"],
+  historia: "PUBLICO_historia",
+  caracteristicas: "PUBLICO_caracteristicas",
+  fotoUrl: "PUBLICO_foto_finca",
+  kg: 777,
+  pasaporte: { code: "apta", label: "Apta", tone: "ok" },
+  criterios: [{ id: "tenencia", estado: "ok", detalle: "PRIVADO_criterio" }],
+};
+const completo = {
+  lang: "es",
+  lot: {
+    id: "lote-1", name: "PUBLICO_lote", reference: "CTC-L-ABCD1234", publicCode: "PRIVADO_codigo_viejo", productName: "PUBLICO_producto", species: "Arabica",
+    variety: "Gesha", variedades: [{ nombre: "Gesha", pct: 100 }], process: "Lavado", altitudeM: 1700, harvestFrom: null, harvestTo: null, archetype: null,
+    declarado: { humedad: 99.11, densidad: 999, aw: 0.999, factor: 99.99, noSabe: ["PRIVADO_nosabe"] },
+  },
+  productor: { nombre: "PRIVADO_productor", empresa: "PRIVADO_empresa", contacto: "PRIVADO_contacto", avatarUrl: "PRIVADO_avatar", galeria: ["PRIVADO_galeria"] },
+  fincas: [finca, { ...finca, name: "PRIVADO_otra_finca", fotoUrl: "PRIVADO_otra_foto" }],
+  mapaUrl: "PRIVADO_mapa_cafetales",
+  ubicacionUrl: "PUBLICO_mapa_regional",
+  visa: { status: { code: "eudr_ready", label: "Lista", tone: "ok" }, paisRiesgo: "estándar", dds: { reference: "PRIVADO_dds", verificationCode: "PRIVADO_dds_codigo", filedAt: null }, sellos: [{ label: "PUBLICO_sello", verified: true }] },
+  grado: { grado: null, punto: null, triada: { triada: { variedad: "A", proceso: "C", reconocimiento: "C" }, variedad: { por: "" }, proceso: { por: "" }, reconocimiento: { por: "" } }, puntaje: null },
+  imagenGrado: { url: "PUBLICO_imagen_grado", porDefecto: false },
+  variedadesInfo: [],
+  lectura: { intro: "PUBLICO_lectura", parrafos: [], sintesis: null },
+  conjeturas: [{ titulo: "PRIVADO_conjetura", texto: "PRIVADO_conjetura", area: "taza", tono: "atencion", icono: "taza", evidencia: "PRIVADO_evidencia" }],
+  evaluacion: { sca: 85, factor: 92, fecha: "2026-10-01", fuente: "q_grader_batch" },
+  caracterizacion: {
+    b1: { variedades: [{ nombre: "PRIVADO_b1", pct: "100", proceso: "" }], pares: [{ k: "PRIVADO_b1", v: "PRIVADO_b1" }] },
+    b2: { sca: null, cva: null, rueda: [{ ruta: "PUBLICO_rueda", detalle: "", comentario: "PUBLICO_comentario" }], descriptivo: [], perfil: "PUBLICO_perfil" },
+    b3: { pares: [{ k: "PUBLICO_b3", v: "1" }], defectos: [], mallas: [], estadoMallas: null, notas: "PRIVADO_notas_del_analisis" },
+    anotaciones: [{ id: "x", nota: "PRIVADO_anotacion", ruta: "PRIVADO_anotacion", causa: "PRIVADO_causa" }],
+    cifras: null,
+  },
+  ficha: { atributos: { PRIVADO_ficha: 8 } },
+  fichaSource: "productor",
+  certificates: [{ schemeLabel: "PUBLICO_certificado", certNumber: "PRIVADO_numero_certificado", validFrom: "2026-01-01", validTo: "2027-01-01" }],
+  catalogoUrl: "PUBLICO_catalogo",
+  qrSvg: "<svg/>",
+  generatedOn: "2026-10-10T00:00:00Z",
+  blindaje: { puedeImprimir: false, marca: "PRIVADO_marca_con_el_productor" },
+};
 
-// Las 110 claves reales de `lots.datasheet` (leídas de la base el 2026-08-19).
-// Se guardan aquí a propósito: el guardián tiene que correr sin credenciales,
-// y lo que importa no es el valor sino que NINGUNA clave de fuera de la lista
-// blanca sobreviva a la proyección.
-const CLAVES_REALES = `about_origin, additional_estate_ids, analysis_notes, awards, b1_unknown, base_processing,
-cert_attachments, contributions, country, county_muni, county_muni_text, ctc_uid, cupping_profile, estate,
-eudr_cert_scheme, eudr_chain_complexity, eudr_country, eudr_country_risk, eudr_custody_method,
-eudr_custody_notes, eudr_custody_stages, eudr_docs_available, eudr_illegality_indicators,
-eudr_mitigation_actions, eudr_mitigation_effective, eudr_mitigation_responsible, eudr_product_risk,
-eudr_product_risk_factors, eudr_risk_level, eudr_traceability_confirmed, extra_video_assets,
-fa_green_remainder, fa_parch_hum, fa_primary_defect, fa_secondary_defect, fa_start, ft2_a3_na, ft2_a4_na,
-ft2_b2_na, ft2_b3_na, geo_ref, green_bean_density, green_bean_humidity, harvest_from, harvest_season,
-harvest_to, harvest_year, hs_code, intl_birdfriendly, intl_bpa, intl_cafe, intl_cert_other_text, intl_demeter,
-intl_eudr, intl_eujas, intl_fairtrade, intl_fairtradeusa, intl_foe, intl_globalgap, intl_iwca, intl_nespresso,
-intl_organic, intl_other, intl_rainforest, intl_spp, masl, mesh_europa, mesh_extra, mesh_peaberry,
-mesh_residue, mesh_supremo, mesh_supremo_plus, mesh_ugq, multi_origin_specs, nit_rut, origin_category,
-origin_cert_do, origin_cert_dor, origin_cert_fedecafe, origin_cert_igp, origin_cert_other,
-origin_cert_other_text, plantation_age, product_name, product_type, productor, qgrader_1, qgrader_2,
-qgrader_3, qgrader_cert, qgrader_lab, qgrader_name, razon_social, region_dep, revision_date, sca_acidity,
-sca_aftertaste, sca_balance, sca_body, sca_clean_cup, sca_cuppers, sca_flavor, sca_fragrance, sca_sweetness,
-sca_uniformity, special_processing, species, varieties, water_activity, yield_factor_producer`
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
-
-check("el juego de claves real tiene las 110", CLAVES_REALES.length === 110);
-
-// Una ficha con TODAS las claves llenas: el peor caso, todo relleno con algo
-// reconocible para poder buscarlo en la salida.
-const TODO = Object.fromEntries(CLAVES_REALES.map((k) => [k, `VALOR_${k}`]));
-
-// ── 1. Ni una clave de fuera de la lista blanca sobrevive ──────────────────
+// ── 1. Ni un centinela privado sobrevive a la proyección ───────────────────
 {
-  const f = fichaPublica(TODO, { ctcSelection: false, rotuloCTC: CTC });
-  const salieron = Object.keys(f);
-  const coladas = salieron.filter((k) => !CAMPOS_PUBLICOS.includes(k));
-  check(`no se cuela ninguna clave fuera de la lista${coladas.length ? ` (${coladas.join(", ")})` : ""}`, coladas.length === 0);
-  check("y sí sale lo que debe salir", salieron.length === CAMPOS_PUBLICOS.length);
+  const pub = dossierPublico(completo, { url: "/ctcx-public-catalogue/CTC-L-ABCD1234", volver: "/ctcx-public-catalogue", ctcx: null });
+  const json = JSON.stringify(pub);
+  const coladas = [...new Set(json.match(/PRIVADO_[a-z_]+/g) ?? [])];
+  check(`ningún dato privado sale en el dossier público${coladas.length ? ` (${coladas.join(", ")})` : ""}`, coladas.length === 0);
+  check("ni las coordenadas ni el polígono de la finca", !json.includes("6.487") && !json.includes("-73.265") && pub.fincas[0].lat === null && pub.fincas[0].poligono.length === 0 && pub.mapaUrl === null);
+  check("ni lo que el productor declaró (no se exhibe su diferencia con lo medido)", !json.includes("99.11") && !json.includes("999") && pub.lot.declarado.noSabe.length === 0);
+  check("y sí sale lo que debe salir: finca, región, historia, foto, taza, lectura, certificado sin número, el mapa regional", ["PUBLICO_finca", "PUBLICO_municipio", "PUBLICO_departamento", "PUBLICO_historia", "PUBLICO_caracteristicas", "PUBLICO_foto_finca", "PUBLICO_mapa_regional", "PUBLICO_comentario", "PUBLICO_perfil", "PUBLICO_lectura", "PUBLICO_certificado", "PUBLICO_sello", "PUBLICO_b3", "PUBLICO_producto"].every((k) => json.includes(k)));
+  check("UNA sola finca (la que se enseña), sin el código interno", pub.fincas.length === 1 && pub.fincas[0].code === "" && pub.fincas[0].id === "");
+  check("se puede imprimir y no lleva marca de agua (no hay productor que nombrar)", pub.blindaje.puedeImprimir === true && pub.blindaje.marca === "");
+  check("el documento sabe que es público: su dirección y la vuelta a «Find my Lot»", pub.publico?.url === "/ctcx-public-catalogue/CTC-L-ABCD1234" && pub.publico.volver === "/ctcx-public-catalogue");
 }
 
-// ── 2. Las que duelen, una por una ─────────────────────────────────────────
-// Se comprueban por NOMBRE y por VALOR: que la clave no esté, y que su
-// contenido no aparezca en ningún otro campo por un copiado descuidado.
+// ── 2. D3.1: un lote de CTCx Selection se enseña a nombre de CTCx, sin nada de la finca ──
 {
-  const f = fichaPublica(TODO, { ctcSelection: false, rotuloCTC: CTC });
-  const serializada = JSON.stringify(f);
-  for (const clave of NUNCA_PUBLICOS) {
-    check(`nunca sale «${clave}»`, !(clave in f));
-    check(`ni su valor por otra puerta («${clave}»)`, !serializada.includes(`VALOR_${clave}`));
-  }
+  const pub = dossierPublico(completo, { url: "/x", volver: "/y", ctcx: { nombre: "CTCx Selection", descripcion: "El perfil de CTCx", imagenUrl: "https://img/ctcx.jpg" } });
+  const json = JSON.stringify(pub);
+  check("CTCx Selection: la finca es el rótulo de CTCx", pub.fincas[0].name === "CTCx Selection");
+  check("CTCx Selection: no queda rastro del nombre, la historia, la foto ni la infraestructura de la finca", !json.includes("PUBLICO_finca") && !json.includes("PUBLICO_historia") && !json.includes("PUBLICO_caracteristicas") && !json.includes("PUBLICO_foto_finca") && pub.fincas[0].infra.length === 0 && pub.fincas[0].hectares === null);
+  check("CTCx Selection: la foto y la imagen del grado son las de CTCx", pub.fincas[0].fotoUrl === "https://img/ctcx.jpg" && pub.imagenGrado.url === "https://img/ctcx.jpg");
 }
 
-// ── 3. D3.1: en CTC Selection la ficha dice CTC, no la finca ───────────────
-// Esta es la razón de ser del módulo. Si esto se cae, la ficha desmiente a la
-// tarjeta y el nombre que la vitrina tapa queda a un clic.
+// ── 3. Que siga siendo LISTA BLANCA ────────────────────────────────────────
 {
-  const comprado = fichaPublica(TODO, { ctcSelection: true, rotuloCTC: CTC });
-  check("CTC Selection: `estate` es el rótulo de CTC", comprado.estate === CTC);
-  check("CTC Selection: no queda rastro del nombre real de la finca", !JSON.stringify(comprado).includes("VALOR_estate"));
-
-  const normal = fichaPublica(TODO, { ctcSelection: false, rotuloCTC: CTC });
-  check("lote normal: `estate` es la finca de verdad", normal.estate === "VALOR_estate");
-
-  // Y aunque la finca venga vacía, un lote de CTC Selection enseña el rótulo:
-  // una ficha muda ahí se leería como un dato que falta, no como una decisión.
-  const sinFinca = fichaPublica({ ...TODO, estate: "" }, { ctcSelection: true, rotuloCTC: CTC });
-  check("CTC Selection con finca vacía: sigue diciendo CTC", sinFinca.estate === CTC);
+  const fuente = sinComentarios(lee("src/lib/kaffetal/dossierPublico.ts"));
+  check("la proyección no copia objetos enteros por un atajo (`...d`, `...f`, `Object.assign`)", !/\.\.\.(d|f|b2|b3|d\.lot|d\.visa|d\.caracterizacion)\b/.test(fuente) && !/Object\.assign/.test(fuente));
+  check("es un módulo PURO (solo tipos)", !/^import (?!type )/m.test(fuente));
+  check("queda escrito por qué es lista blanca", lee("src/lib/kaffetal/dossierPublico.ts").includes("LISTA BLANCA, NO NEGRA"));
 }
 
-// ── 4. Solo escalares ──────────────────────────────────────────────────────
-// Un objeto o arreglo anidado puede arrastrar dentro lo que sea —una lista de
-// fincas aportantes, un adjunto— y la lista blanca solo mira el primer nivel.
+// ── 4. Las puertas ─────────────────────────────────────────────────────────
 {
-  const sucio = fichaPublica(
-    {
-      varieties: ["Gesha", { finca_oculta: "La Fortaleza" }],
-      cupping_profile: { texto: "floral", interno: "VALOR_nit_rut" },
-      masl: 1700,
-      estate: "La Pradera",
-      sca_fragrance: 8.5,
-    },
-    { ctcSelection: false, rotuloCTC: CTC }
-  );
-  check("un arreglo anidado no pasa", sucio.varieties === undefined);
-  check("un objeto anidado tampoco", sucio.cupping_profile === undefined);
-  check("y lo escalar sí", sucio.masl === 1700 && sucio.estate === "La Pradera" && sucio.sca_fragrance === 8.5);
-  check("nada de lo anidado se filtró", !JSON.stringify(sucio).includes("La Fortaleza") && !JSON.stringify(sucio).includes("VALOR_nit_rut"));
+  const vitrina = lee("src/lib/catalogo/vitrina.ts");
+  const pagina = lee("src/app/ctcx-public-catalogue/[codigo]/page.tsx");
+  const vieja = lee("src/app/docs/ficha/[lotId]/page.tsx");
+  const datos = lee("src/lib/kaffetal/dossierDatos.ts");
+
+  // La COMPUERTA es la vista, con el cliente anónimo; el dossier se lee DESPUÉS y sale por la proyección.
+  check("la vitrina se lee con el cliente anónimo", /const anon = createEphemeralClient\(\);\n  const \{ data \} = await anon\.from\(VISTA_VITRINA\)/.test(vitrina));
+  check("el dossier público se carga SOLO tras pasar la vista, en modo público, y sale por `dossierPublico()`", /const fila = await filaDeLaVitrina\(referencia\);\n  if \(!fila\) return null;\n  const datos = await cargarDossier\(createServiceRoleClient\(\), fila\.lot_id, lang, \{ publico: true \}\);/.test(vitrina) && vitrina.includes("return dossierPublico(datos, {"));
+  check("un código viejo (CTCX) se resuelve contra la vista pública del catálogo, NUNCA contra `lots`", vitrina.includes('anon.from("public_lot_catalog").select("lot_id").eq("public_code", codigo)') && !/from\("lots"\)[\s\S]{0,200}public_code/.test(vitrina));
+  check("la página del portal pinta el dossier que devuelve la compuerta, o 404", pagina.includes("const datos = await dossier(c.codigo, lang);\n  if (!datos) notFound();\n  return <DossierCtcx d={datos} />;"));
+  check("y no toca la base por su cuenta", !/createServiceRoleClient|createEphemeralClient|\.from\("/.test(sinComentarios(pagina)));
+  check("la ficha técnica vieja (`/docs/ficha/[lotId]`) ya no sirve nada: redirige al dossier de un lote de la vitrina, o 404", vieja.includes("const fila = await filaDeLaVitrina(ctcLotReference(lotId));") && vieja.includes("if (!fila || fila.lot_id !== lotId) notFound();") && vieja.includes("permanentRedirect(") && !/datasheet|createServiceRoleClient/.test(sinComentarios(vieja)));
+  check("la proyección de la ficha (`fichaPublica.ts`) y el paquete (`PaquetePublico.tsx`) se retiraron", !(await import("node:fs")).existsSync(new URL("../src/lib/catalogo/fichaPublica.ts", import.meta.url)) && !(await import("node:fs")).existsSync(new URL("../src/components/catalogo/PaquetePublico.tsx", import.meta.url)));
+
+  // El cargador en modo público no lee al productor ni arma el mapa de los cafetales, y el pin regional va a un decimal.
+  check("cargador público: sin productor, sin galería, sin mapa de cafetales", datos.includes("publico ? Promise.resolve(new Map() as Awaited<ReturnType<typeof fetchProducerContacts>>) : fetchProducerContacts(") && datos.includes('publico ? Promise.resolve({ data: null }) : service.from("producer_profiles")') && datos.includes("const mapaUrl = publico ? null : mapaDeCafetalesUrl(enMapa);"));
+  check("cargador público: el pin del mapa regional a un decimal (~11 km)", datos.includes("const aproxima = (v: number) => Math.round(v * 10) / 10;") && datos.includes("mapaDeUbicacionUrl(aproxima(ancla.lat!), aproxima(ancla.lng!), \"640x360\")"));
+  check("cargador público: la imagen del grado nunca sale de la galería del productor", datos.includes("publico ? null : galeriaIds[3]"));
+  check("el QR del dossier lleva a la dirección pública SOLO si el lote está en la vitrina", datos.includes('service.from("public_lot_vitrina").select("referencia").eq("lot_id", lotId).maybeSingle()') && datos.includes("const catalogoUrl = referenciaPublica ? `${SITIO}${rutaDelLote(referenciaPublica)}` : null;"));
 }
 
-// ── 5. Entradas rotas no revientan ni abren la puerta ──────────────────────
-for (const malo of [null, undefined, "", 0, [], "una cadena", 42, true]) {
-  const f = fichaPublica(malo, { ctcSelection: false, rotuloCTC: CTC });
-  check(`entrada ${JSON.stringify(malo)} → ficha vacía`, Object.keys(f).length === 0);
-}
-// Un arreglo NO se trata como objeto: `Array.isArray` va antes que `typeof`.
-check("un arreglo con claves no se cuela", Object.keys(fichaPublica(Object.assign([], TODO), { ctcSelection: false, rotuloCTC: CTC })).length === 0);
-// Cadenas vacías o de solo espacios no ocupan sitio en la ficha.
-check("una cadena vacía no ocupa campo", fichaPublica({ estate: "   " }, { ctcSelection: false, rotuloCTC: CTC }).estate === undefined);
-
-// ── 6. El botón no se enciende sobre una ficha vacía ───────────────────────
-// Un visitante que hace clic y ve una hoja en blanco aprende que la ficha no
-// sirve, y eso no se desaprende.
+// ── 5. El documento en modo público ────────────────────────────────────────
 {
-  check("ficha vacía no vale", !fichaVale({}));
-  check("solo origen no vale", !fichaVale({ estate: "La Pradera" }));
-  check("solo taza no vale", !fichaVale({ sca_fragrance: 8.5 }));
-  check("taza + origen sí vale", fichaVale({ sca_fragrance: 8.5, estate: "La Pradera" }));
-  check("perfil de cata también cuenta como taza", fichaVale({ cupping_profile: "floral", region_dep: "Santander" }));
-}
-
-// ── 7. Que siga siendo lista BLANCA ────────────────────────────────────────
-// El día que alguien la convierta en lista negra —«copio todo menos esto»—,
-// una clave nueva del formulario nacerá pública. Esto lo denuncia.
-{
-  const fuente = readFileSync(new URL("../src/lib/catalogo/fichaPublica.ts", import.meta.url), "utf8");
-  check("la proyección recorre CAMPOS_PUBLICOS, no las claves de la entrada", /for \(const campo of CAMPOS_PUBLICOS\)/.test(fuente));
-  check("no se copia el objeto entero por ningún atajo", !/\.\.\.bruto|Object\.assign\(salida/.test(fuente));
-  check("queda escrito por qué es lista blanca", fuente.includes("LISTA BLANCA, NO NEGRA"));
-}
-
-// ── 8. El camino real: las páginas y la cinta ─────────────────────────────
-// La proyección puede ser perfecta y aun así sobrar, si alguien lee el
-// `datasheet` por otra puerta. Esto vigila las puertas que existen — TRES desde
-// la V5.48, cuando «Find my Lot» (`/ctcx-public-catalogue/[codigo]`) abrió la
-// tercera. Cada puerta nueva se añade AQUÍ, no en su propio guardián: este es
-// el archivo donde el siguiente barrido va a buscar quién toca el `datasheet`.
-{
-  const pagina = readFileSync(new URL("../src/app/docs/ficha/[lotId]/page.tsx", import.meta.url), "utf8");
-  const cinta = readFileSync(new URL("../src/lib/catalogo/sneakPeek.ts", import.meta.url), "utf8");
-
-  // La COMPUERTA es la vista. Si el lote no está publicado no aparece en
-  // `public_lot_catalog`, y el `datasheet` no se llega a tocar. Verificado
-  // además contra la base: los dos lotes reales con ficha, sin publicar, dan
-  // 404 (2026-08-19).
-  check("la ficha se cierra sobre `public_lot_catalog`", pagina.includes('from("public_lot_catalog")'));
-  check("y responde 404 a lo que no salga de ahí", /if \(!fila\) notFound\(\)/.test(pagina));
-  check("valida el id antes de preguntar nada", /UUID\.test\(lotId\)/.test(pagina));
-
-  // El `datasheet` SOLO puede salir por la proyección. Ni una lectura suelta.
-  check("el `datasheet` pasa siempre por fichaPublica()", /fichaPublica\(crudo\?\.datasheet/.test(pagina));
-  // Se cuenta sobre el CÓDIGO, no sobre la prosa: los comentarios de esa página
-  // explican largo y tendido por qué el `datasheet` no se sirve, y contarlos
-  // haría fallar al guardián por decir la verdad. Mismo tropiezo que en
-  // `qa-crm-interes-check.mjs`.
-  const sinComentarios = (t) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
-  const lecturas = (sinComentarios(pagina).match(/datasheet/g) ?? []).length;
-  check(`la página toca \`datasheet\` solo dos veces: leerlo y proyectarlo (${lecturas})`, lecturas === 2);
-  check("la página no serializa la fila cruda", !/JSON\.stringify\(crudo/.test(pagina));
-
-  // La cinta pide la BANDERA, nunca el contenido: es anónima y pública.
-  check("la cinta pide `tiene_ficha`", cinta.includes("tiene_ficha"));
-  check("y NO pide el datasheet", !/select\([^)]*datasheet/s.test(cinta));
-
-  // ⚠️ Gotcha 12: la URL cuelga de `/docs`, que el proxy excluye. Una ruta no
-  // excluida se reescribiría en un subdominio y daría 404 — y este enlace se
-  // abre desde las siete superficies donde está montada la cinta.
-  check("el botón apunta a /docs/ficha/…", /datasheetUrl: fila\.tiene_ficha \? `\/docs\/ficha\//.test(cinta));
-  const proxy = readFileSync(new URL("../src/proxy.ts", import.meta.url), "utf8");
-  check("y `docs/` sigue excluido del matcher del proxy", /matcher:[^\]]*docs\//s.test(proxy));
-
-  // ── La TERCERA puerta (V5.48): el paquete público de «Find my Lot» ───────
-  // Mismas cinco afirmaciones que la ficha, sobre el archivo nuevo. Si alguien
-  // «simplifica» esta ruta para que busque el código en `lots` en vez de en la
-  // vista, un lote sin publicar se volvería visible con solo saber su código —
-  // y los códigos se leen en bloque desde `public_lot_catalog`, que es anónima.
-  const paquete = readFileSync(
-    new URL("../src/app/ctcx-public-catalogue/[codigo]/page.tsx", import.meta.url),
-    "utf8"
-  );
-  check("el paquete público se cierra sobre `public_lot_catalog`", paquete.includes('from("public_lot_catalog")'));
-  check(
-    "y NUNCA resuelve el código contra `lots`",
-    !/from\("lots"\)[\s\S]{0,200}public_code/.test(paquete) && !/\.eq\("public_code"[\s\S]{0,120}from\("lots"\)/.test(paquete)
-  );
-  check("responde 404 a lo que no salga de la vista", /if \(!lote\) notFound\(\)/.test(paquete));
-  check("normaliza el código antes de preguntar nada", /const c = canonico\(codigo\)/.test(paquete));
-  check("canoniza con 308 y no con 307", paquete.includes("permanentRedirect(") && !/[^t]\bredirect\(/.test(paquete));
-  check("el `datasheet` pasa siempre por fichaPublica()", /fichaPublica\(crudo\?\.datasheet/.test(paquete));
-  const lecturasPaquete = (sinComentarios(paquete).match(/datasheet/g) ?? []).length;
-  check(
-    `el paquete toca \`datasheet\` solo dos veces: leerlo y proyectarlo (${lecturasPaquete})`,
-    lecturasPaquete === 2
-  );
-  check("el paquete no serializa la fila cruda", !/JSON\.stringify\(crudo/.test(paquete));
-
-  // El componente que PINTA el paquete es de cliente, así que todo lo que
-  // reciba cruza al navegador. No puede leer nada por su cuenta.
-  const vista = readFileSync(new URL("../src/components/catalogo/PaquetePublico.tsx", import.meta.url), "utf8");
-  check("el componente del paquete no consulta la base", !/from\("|createClient|supabase/.test(sinComentarios(vista)));
-  check("ni recibe el datasheet crudo", !/datasheet/.test(sinComentarios(vista)));
+  const doc = lee("src/components/kaffetal-regal/dossier/DossierCtcx.tsx");
+  check("en público no van la Visa ni la Mejora (ni sus enlaces al Pasaporte y a la Visa)", doc.includes('for (const fuera of ["visa", "mejora"]) {') && doc.includes("if (pub) {"));
+  const iniOrigen = doc.indexOf("const origenPublico = pub ? (");
+  const bloqueOrigen = doc.slice(iniOrigen, doc.indexOf(") : null;", iniOrigen));
+  check("el origen público: región, altitud y finca; sin productor, sin coordenadas, sin el mapa de los cafetales", doc.includes("pub ? origenPublico : <>") && iniOrigen > 0 && bloqueOrigen.length > 500 && !/d\.productor|finca\.lat|finca\.lng|finca\.poligono|finca\.vereda|finca\.tenencia|d\.mapaUrl/.test(bloqueOrigen));
+  check("sin lo declarado frente a lo medido, sin la matriz interna y sin número de certificado", doc.includes("].filter((x) => !pub && (x.dec || x.med));") && doc.includes("{!pub && (\n            <div>\n              <div className={s.h3}>{t.respaldoTitulo}</div>") && doc.includes("{!pub && <th>{t.numero}</th>}"));
+  check("sin blindaje ni marca de agua, y con la vuelta a «Find my Lot»", doc.includes("{!pub && <Blindaje") && doc.includes("{d.blindaje.marca ? <MarcaDeAgua texto={d.blindaje.marca} /> : null}") && doc.includes("<Link href={pub.volver} className={s.barraVolver}>"));
 }
 
 if (fallos.length) {
@@ -227,4 +152,4 @@ if (fallos.length) {
   for (const f of fallos) console.error("   " + f);
   process.exit(1);
 }
-console.log(`✓ qa-ficha-publica: ${ok} comprobaciones OK, 0 fallos (${CLAVES_REALES.length} claves reales probadas)`);
+console.log(`✓ qa-ficha-publica: ${ok} comprobaciones OK, 0 fallos (dossier público con centinelas)`);

@@ -33,8 +33,11 @@ import {
   ALFABETO,
   LARGO_CUERPO,
   normalizaCodigo,
+  normalizaReferencia,
   esCanonico,
   rutaDelCodigo,
+  rutaDelLote,
+  PREFIJO_REFERENCIA,
   RUTA_PORTAL,
 } from "../src/lib/catalogo/codigoPublico.ts";
 import { RUTAS_SOLO_WWW, SUBDOMAIN_ROUTES } from "../src/lib/red/subdominios.ts";
@@ -140,6 +143,28 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
   check("la ruta la arma el módulo, no cada pantalla", rutaDelCodigo("CTCX-2345-6789") === `${RUTA}/CTCX-2345-6789`);
 }
 
+// ── 5b. La REFERENCIA del lote, dirección pública desde la V5.198 ──────────
+// Owner, 2026-10-10: «Find my Lot […] debo escribir solo los 8 dígitos después de "CTC-L-"». La referencia SÍ sale del id del
+// lote (`ctcLotReference`: sus ocho primeros caracteres hexadecimales) — es la que el lote ya lleva impresa en el paquete de
+// muestra y en el Dossier. El código viejo de arriba sigue sin derivarse de nada y su ruta redirige a la referencia.
+{
+  const ref = "CTC-L-7E360302";
+  check("el prefijo fijo del buscador es «CTC-L-»", PREFIJO_REFERENCIA === "CTC-L-");
+  check("ida y vuelta de la referencia canónica", normalizaReferencia(ref) === ref);
+  check("minúsculas", normalizaReferencia("ctc-l-7e360302") === ref);
+  check("solo los ocho caracteres (lo que se escribe en el buscador)", normalizaReferencia("7e360302") === ref && normalizaReferencia(" 7E36 0302 ") === ref);
+  check("sin guiones", normalizaReferencia("CTCL7E360302") === ref);
+  check("O se lee como cero, I y L como uno (ninguna es hexadecimal)", normalizaReferencia("7E36O3O2") === ref && normalizaReferencia("1I1L0000") === "CTC-L-11110000");
+  check("el prefijo se quita ANTES de leer los ambiguos (la L de «CTCL» no es un uno)", normalizaReferencia("ctcl00000001") === "CTC-L-00000001");
+  for (const [nombre, entrada] of [["corto", "7E36030"], ["largo", "7E3603021"], ["no hexadecimal", "7E36030G"], ["vacío", ""], ["un código viejo", "CTCX-2345-6789"]]) {
+    check(`la referencia rechaza ${nombre}`, normalizaReferencia(entrada) === null);
+  }
+  check("rechaza lo que no sea texto", normalizaReferencia(undefined) === null && normalizaReferencia(12345678) === null);
+  check("la ruta del lote la arma el módulo", rutaDelLote(ref) === `${RUTA}/${ref}`);
+  const ficha = lee("src/components/kaffetal-regal/data.ts");
+  check("es la MISMA referencia que el lote lleva en el paquete de muestra y el Dossier (`ctcLotReference`)", /return "CTC-L-" \+ id\.replace\(\/-\/g, ""\)\.slice\(0, 8\)\.toUpperCase\(\);/.test(ficha));
+}
+
 // ── 6. La ruta SOLO-www y sus DOS lectores ─────────────────────────────────
 {
   // Las dos mitades nombran la ruta: el mapa de la red (`subdominios.ts`) y el
@@ -192,9 +217,11 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
   check("sin generateStaticParams (se quedaría viejo al publicar un lote)", !/generateStaticParams/.test(paquete));
   // El canonical de CADA lote es su propia ruta. Firmar la del portal dejaría a
   // todos los lotes declarando la misma página canónica.
-  check("cada lote firma su canonical completo", /route: rutaDelCodigo\(lote\.codigo\)/.test(paquete));
+  check("cada lote firma su canonical completo (su referencia)", /route: rutaDelLote\(lote\.referencia\)/.test(paquete));
   check("y devuelve {} para un código desconocido", /if \(!lote\) return \{\};/.test(paquete));
-  check("lee la vista con el cliente anónimo", /createEphemeralClient\(\)/.test(paquete));
+  check("lee la vista con el cliente anónimo (en `lib/catalogo/vitrina.ts`)", /createEphemeralClient\(\)/.test(lee("src/lib/catalogo/vitrina.ts")) && /from "@\/lib\/catalogo\/vitrina"/.test(paquete));
+  check("una referencia mal escrita y un código viejo se canonizan con 308, nunca con 307", paquete.includes("permanentRedirect(rutaDelLote(referencia));") && paquete.includes("permanentRedirect(`${rutaDelLote(c.codigo)}") && !/[^t]\bredirect\(/.test(paquete));
+  check("un código viejo solo si EMPIEZA por CTCX (ocho caracteres sueltos son una referencia)", paquete.includes("if (/^\\s*ctcx/i.test(s)) {"));
   check("y el lote comparte la tarjeta del portal", paquete.includes('image: "ctcx-public-catalogue.jpg"'));
 
   // `generateMetadata` NO puede redirigir ni lanzar 404: Next la ejecuta aparte
@@ -251,7 +278,6 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
     "src/components/catalogo/CatalogoPublicoLanding.tsx",
     "src/components/catalogo/BuscadorDeLote.tsx",
     "src/components/catalogo/PuertasDelPortal.tsx",
-    "src/components/catalogo/PaquetePublico.tsx",
     "src/components/catalogo/ProcedenciaCTCx.tsx",
     // La cinta del Catálogo Activo entra aquí desde la V5.49, cuando estrenó la
     // puerta al portal: su diccionario alimenta las siete superficies, así que
@@ -314,7 +340,7 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
   );
   const portada = lee("src/components/catalogo/CatalogoPublicoLanding.tsx");
   check("la portada la monta", portada.includes("<ProcedenciaCTCx"));
-  check("y el paquete del lote también firma", lee("src/components/catalogo/PaquetePublico.tsx").includes("logo-ctc.webp"));
+  check("y el Dossier público del lote firma con la marca de CTCx en cada hoja", lee("src/components/kaffetal-regal/dossier/DossierCtcx.tsx").includes('src="/tools/assets/ctcx-logo.png" alt="Colombian Trading Company"'));
 
   // Las fotos son del archivo de CTC y viven optimizadas. Si alguien apunta a
   // un original de `reference/`, no se despliega: esa carpeta no va al build.

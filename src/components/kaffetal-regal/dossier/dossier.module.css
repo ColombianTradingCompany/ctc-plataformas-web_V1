@@ -446,3 +446,6 @@
 
 /* V5.168 · sin contrato firmado, el lugar del botón de imprimir dice por qué no está. */
 .candado { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; font-size: 9.5pt; color: var(--tinta-suave); border: 1px dashed var(--linea); background: #fff; }
+
+/* V5.198 · el Dossier público: la vuelta a «Find my Lot» va a la izquierda de la barra. */
+.barraVolver { margin-right: auto; }

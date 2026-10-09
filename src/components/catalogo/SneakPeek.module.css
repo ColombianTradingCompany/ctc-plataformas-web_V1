@@ -182,12 +182,6 @@
   font-family:var(--font-spline-mono),monospace;
   font-size:9.5px;font-weight:700;letter-spacing:.1em;color:var(--muted);
 }
-/* «est.» = puntaje declarado por el productor, sin contrastar. Nunca puede
-   parecer un puntaje verificado. */
-.est{
-  font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
-  color:var(--muted);
-}
 
 .origin{font-size:11.5px;color:var(--muted);line-height:1.35}
 .specs{
@@ -300,11 +294,17 @@
   font-size:7px;letter-spacing:.03em;fill:var(--muted);
 }
 
-.wheelBox{
-  margin-top:auto;
-  display:flex;align-items:center;justify-content:center;width:100%;
-}
-.wheelBox img{width:100%;height:auto;max-width:186px;display:block}
+/* V5.198 · las notas de la rueda en el reverso: ícono en el tinte de su familia, nombre, intensidad en 15 casillas y su valor.
+   El color de cada nota lo pone el componente (es el de su familia en la rueda); lo demás, el tema. */
+.notasTarjeta{list-style:none;margin:8px 0 0;padding:0;width:100%;display:grid;gap:6px}
+.notasTarjeta li{display:grid;grid-template-columns:24px minmax(0,1fr) 62px 24px;gap:8px;align-items:center;font-size:11.5px;color:var(--ink)}
+.notaIcono{width:24px;height:24px;display:grid;place-items:center;border-radius:6px}
+.notaIcono svg{width:15px;height:15px}
+.notaNombre{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.notaBarra{display:block}
+.notaValor{font-family:var(--font-spline-mono),monospace;font-size:10px;color:var(--muted);text-align:right}
+/* El botón del Dossier va al PIE del reverso, quede lo que quede arriba. */
+.fichaAlPie{margin-top:auto}
 
 /* ── La ventana del catálogo ───────────────────────────────────────────────── */
 .popup{max-width:560px}

@@ -121,16 +121,17 @@ const compras = lee("src/app/ocp/(app)/comprasActions.ts");
   const caras = [
     ["cinta", "src/lib/catalogo/sneakPeek.ts"],
     ["tienda", "src/components/cherry-picked/CherryPickedExperience.tsx"],
-    ["portal", "src/app/ctcx-public-catalogue/[codigo]/page.tsx"],
-    ["ficha", "src/app/docs/ficha/[lotId]/page.tsx"],
   ];
   for (const [n, f] of caras) {
     const t = lee(f);
     check(`la ${n} enseña el perfil (rotuloCtcx) en vez de la finca y lo lee de la vista pública`, /ctc_selection \? rotuloCtcx\(perfil\)/.test(t) && t.includes("VISTA_PERFIL_CTCX"));
   }
-  check("la cinta y el portal pintan la imagen por lote, con la del perfil de respaldo", lee(caras[0][1]).includes("urlDeImagenCtcx(fila.ctcx_imagen_path) ?? perfil.imagenUrl") && lee(caras[2][1]).includes("urlDeImagenCtcx(fila.ctcx_imagen_path) ?? perfil.imagenUrl"));
+  // V5.198: el portal pinta el Dossier PÚBLICO (`lib/catalogo/vitrina.ts` → `dossierPublico()`); la ficha técnica se retiró y su
+  // dirección redirige al dossier. La regla de CTCx Selection (D3.1) vive en la vitrina: rótulo, descripción e imagen del perfil.
+  const vitrina = lee("src/lib/catalogo/vitrina.ts");
+  check("el Dossier público de un lote de CTCx Selection enseña el perfil (rótulo, descripción, imagen) y lo lee de la vista pública", vitrina.includes("if (fila.ctc_selection) {") && vitrina.includes("ctcx = { nombre: rotuloCtcx(perfil), descripcion: perfil.descripcion, imagenUrl: urlDeImagenCtcx(fila.ctcx_imagen_path) ?? perfil.imagenUrl };") && vitrina.includes("VISTA_PERFIL_CTCX"));
+  check("la cinta y el portal pintan la imagen por lote, con la del perfil de respaldo", lee(caras[0][1]).includes("urlDeImagenCtcx(fila.ctcx_imagen_path) ?? perfil.imagenUrl") && vitrina.includes("urlDeImagenCtcx(fila.ctcx_imagen_path) ?? perfil.imagenUrl"));
   check("ni la cinta ni la tienda escriben la razón social a mano", !lee(caras[0][1]).includes('"Colombian Trading Company"') && !lee(caras[1][1]).includes('"Colombian Trading Company"'));
-  check("la ficha pública sigue cerrándose sobre la lista blanca con el rótulo del perfil", lee(caras[3][1]).includes("rotuloCTC: rotuloCtcx(perfil)") && lee(caras[2][1]).includes("rotuloCTC: rotuloCtcx(perfil)"));
 }
 
 // ── 8. El circuito y la barra del productor: «CTCx Selection» con la misma regla ──

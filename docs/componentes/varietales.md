@@ -51,6 +51,10 @@ alcanza a CTC Tech y CaaS; un cambio en `VARIETIES` alcanza a la Ficha de Kaffet
 
 ## Pendientes
 
+- **V6 · objetivo 1, tanda E: Varietales con la narrativa vigente** (owner, 2026-10-10, al declarar la V6.0;
+  `docs/PLAN_V6_OBJETIVOS.md` §1, dueño de la tanda `plataforma`): `VarietalesLanding.tsx` (ES · EN · DE) promete que lo que se siembre
+  serán «los Gold y Tyrian de sus próximas Arenas»; desde la V5.77 la Arena no da el grado (lo dan el Punto y la Tríada, V5.160), y la
+  marca CTCx depende de la decisión 1 del owner.
 - Guardián ligero de leads compartido con CTC Tech (`qa-leads-check.mjs`).
 - El catálogo real de plántulas (qué se ofrece, precios, viveros) es del owner: hoy la landing recoge el
   interés, no vende.

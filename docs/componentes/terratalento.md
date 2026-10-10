@@ -66,6 +66,10 @@ responder.
 
 ## Pendientes
 
+- **V6 · objetivo 1, tanda E: la marca y los idiomas** (owner, 2026-10-10, al declarar la V6.0; `docs/PLAN_V6_OBJETIVOS.md` §1, dueño
+  de la tanda `plataforma`): Terratalento está **solo en español** (`app/terratalento/page.tsx` monta el `LangProvider`, pero
+  `TerratalentoExperience.tsx` no tiene diccionario), contra «tres idiomas en toda superficie pública» (`ALINEACION` §1); pasarlo a ES · EN · DE es la decisión 5 del owner.
+  La marca CTCx, la decisión 1.
 - Nada que construir en seis meses (owner). Mantener: responder el interés desde el BCP.
 - Al separar: grupo «Terratalento» en la barra lateral, clave en `build_kickoff.py`, guardián propio, y
   retomar `TERRATALENTO_V2_PLAN.md` §4 (tableros, Google login, información contractual).

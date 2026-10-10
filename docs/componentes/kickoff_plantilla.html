@@ -67,6 +67,8 @@
   /* un prompt */
   .prompt { background: var(--surface); border: 1px solid var(--rule); border-radius: 4px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 18px 20px 20px; scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 16px); min-width: 0; }
   .prompt:target, .prompt:focus { border-color: var(--accent); outline: none; }
+  /* Objetivos V6: lo que sigue a la V6.0 va primero y con el filo del acento, para que se vea al abrir. */
+  .prompt.objetivo { border-left: 4px solid var(--accent); }
   .prompt header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; align-items: start; }
   .prompt .head { min-width: 0; }
   .prompt h3 { font: 700 21px/1.2 var(--cond); margin: 0 0 6px; text-wrap: balance; }
@@ -117,7 +119,7 @@
 
   <main>
     <h1>El prompt con el que arranca cada conversación</h1>
-    <p class="intro">Una conversación = un componente. Escribe la tarea en «Hoy:», copia, pega en una conversación nueva del grupo que indica la ficha. El prompt manda a la sesión a leer su charter, el maestro (<code>docs/ALINEACION.md</code>) y las reglas de la casa antes de tocar nada.</p>
+    <p class="intro">Una conversación = un componente (o un objetivo V6). Escribe la tarea en «Hoy:», copia, pega en una conversación nueva del grupo que indica la ficha. El prompt manda a la sesión a leer su charter o su plan, el maestro (<code>docs/ALINEACION.md</code>) y las reglas de la casa antes de tocar nada. Lo que sigue a la V6.0 va primero: <a href="#objetivo-1">Objetivos V6</a>.</p>
     <ol class="como">@@PASOS@@</ol>
     <p class="oro"><strong>Regla de oro.</strong> Si la tarea cruza dos componentes, se arranca en el que la ORIGINA (la consola, casi siempre) y el otro recibe un pendiente con dueño.</p>
 

@@ -4,6 +4,11 @@
 > «ECP · Modelo de Producción → Empacado». Se ejecuta en tres tandas que se despliegan solas (§5). Lo que este plan supone y el
 > owner puede corregir está en §6; lo que deja fuera, con dueño, en §7.
 
+> **Estado (V6.0, 2026-10-10).** Las tres tandas están hechas (A V5.194 · B V5.195 · C V5.196) y la V5.203 unió Adquisición de Stock
+> Café → Stock CTCx → Triage → CTCx Selection → Catálogo Activo como un circuito. El plan sigue mandando sobre el Stock, el Empacado
+> hasta FOB y el Triage; lo que sigue es el **objetivo 2 de `docs/PLAN_V6_OBJETIVOS.md`** (Triage y Catálogo Activo), que continúa
+> desde los §6 y §7 de este plan.
+
 ## 0. Lo que pidió el owner
 
 > «Tenemos que hacer un cambio importante en la interfaz y funcionalidad del módulo de "Ofertas CP Aceptadas". La idea de este es ser

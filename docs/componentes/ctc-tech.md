@@ -60,6 +60,9 @@ cambiar de estado, ver fincas/lotes/pedidos vinculados. **OCP** no interviene. U
 
 ## Pendientes
 
+- **V6 · objetivo 1, tanda E: la marca en CTC Tech** (owner, 2026-10-10, al declarar la V6.0; `docs/PLAN_V6_OBJETIVOS.md` §1, dueño
+  de la tanda `plataforma`): si el paso de «CTC» a «CTCx» alcanza a nombres de producto como «CTC Tech» es la decisión 1 del owner
+  (§5 del plan). El copy compartido vive en `servicesCopy.tsx` (con Varietales y CaaS): tocarlo es cambio transversal.
 - Un guardián ligero para la lista blanca y el aprovisionamiento (`qa-leads-check.mjs`), compartido con
   Varietales y CaaS.
 - El contenido de la landing (oferta agronómica concreta) es del owner; hoy es la propuesta genérica.

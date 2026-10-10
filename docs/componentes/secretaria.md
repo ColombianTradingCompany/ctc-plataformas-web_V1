@@ -121,12 +121,26 @@ de Notion con `ctc_id` huérfano. En Notion no hay guardián: la disciplina es e
   `revision_almacenaje` (V5.88), `bodega_muestras` y `trilla_verde` (V5.89), `sample_kit` y `compra_destinada` (V5.90); y las
   notas de `evaluacion_registrada_centro`, `graded` y `apreciacion_registrada`, que desde la V5.92 llevan el rótulo del Punto
   (nativo u homologado desde CVA). La lista exacta de cada versión está en su fila de §3; no se duplica aquí.
+- **Lo que le dejaron las versiones V5.94–V5.196** — tampoco estaba anotado aquí; lo recoge el nodo final (alineación de la V6.0,
+  2026-10-10) desde las filas «Para `secretaria`» de `ALINEACION` §3, que nombran a este componente y no llegaron a su charter. Antes de
+  F1, decidir qué se espeja de: **(a)** notas del productor nuevas o con forma nueva — `revision_almacenaje`, que habla de la reserva CPS (V5.94), la solicitud
+  que nace `postulated` con la coinversión del 30 % (V5.95), `signed` con `notes` (V5.97: la firma del contrato avisa), el
+  `context_label` «Ficha CTC-L-…» (V5.100: el código del lote es `CTC-L-XXXXXXXX`), notas con `seccion` y adjunto (V5.124), la nota
+  «Solicitud de chequeo» de la finca (V5.128) y la nota «retirado por CTCx» **sin `lot_id` ni `finca_id`** (V5.134); **(b)** lo que
+  DESAPARECE: un productor borrado por inactividad sale del espejo en el siguiente barrido (V5.103), y un lote o una finca pueden
+  borrarse con todo su circuito (V5.134: copia en `borrados_nucleares`; ningún id guardado se puede dar por vivo); **(c)** las mezclas
+  como tipo de lote (V5.99: `mezcla_cerrada` puede fallar con «varios productores»: un blend de varios productores es de CTCx); **(d)** filas nuevas de `audit_log` del Stock CTCx
+  (`stock_*`, `kit_lote_anadido` con la partida, V5.195) y del Triage (`triage_*`, `listado_editado`, V5.196; el O&P vive solo en la
+  base y no se espeja). Las V5.139 y V5.143 también nombran a este componente: la franja de sesión asistida y la nota «Asistencia
+  CTCx» (V5.139), y `lot_referencias`, lo que el productor agrega a un lote cerrado (V5.143). La lista exacta está en cada fila de §3.
 - **F3**: Plataformas Web CTC con versión viva y charter; Reuniones ↔ `transcripts`; Objetivos y Tareas ↔
   «Pendientes» de los charters con propiedad `Componente`.
 - Datos de humo en producción (cuentas y fincas de prueba fuera de `prueba-*`): lista previa y limpieza
   desde el BCP antes de conciliar (owner, plan §5.6). **Hecho en parte** (nodo final, wrap V47): el juego de prueba del
   circuito (contrato, oferta, listado y lote) se borró en la V5.76, las cinco `prueba-*` en la V5.89 y las cuatro
-  `@ctc-qa-test.co` con sus 5 leads en la V5.92. Queda revisar fincas y lotes de prueba sueltos antes de conciliar.
+  `@ctc-qa-test.co` con sus 5 leads en la V5.92. Queda revisar fincas y lotes de prueba sueltos antes de conciliar. **Desde la
+  V5.98** hay de nuevo dos cuentas `@ctc-qa-test.co` (un productor y un comprador de auditoría, del nodo final): están excluidas del
+  espejo por la regla de arriba y no se borran como humo.
 
 ## Kick-off
 

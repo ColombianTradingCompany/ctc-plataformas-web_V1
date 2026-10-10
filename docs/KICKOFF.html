@@ -67,6 +67,8 @@
   /* un prompt */
   .prompt { background: var(--surface); border: 1px solid var(--rule); border-radius: 4px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 18px 20px 20px; scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 16px); min-width: 0; }
   .prompt:target, .prompt:focus { border-color: var(--accent); outline: none; }
+  /* Objetivos V6: lo que sigue a la V6.0 va primero y con el filo del acento, para que se vea al abrir. */
+  .prompt.objetivo { border-left: 4px solid var(--accent); }
   .prompt header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; align-items: start; }
   .prompt .head { min-width: 0; }
   .prompt h3 { font: 700 21px/1.2 var(--cond); margin: 0 0 6px; text-wrap: balance; }
@@ -111,8 +113,13 @@
 <div class="wrap" id="inicio" tabindex="-1">
   <nav aria-label="Índice de prompts">
     <p class="brand">Kick-offs<br>CTC Platforms</p>
-    <p class="sub">18 prompts · compilado sobre la V5.92</p>
-    <p class="nav-label">Componentes</p><ul>
+    <p class="sub">21 prompts · compilado sobre la V5.201</p>
+    <p class="nav-label">Objetivos V6</p><ul>
+<li><a href="#objetivo-1">Objetivo 1 · Las landing pages con la narrativa vigente</a></li>
+<li><a href="#objetivo-2">Objetivo 2 · Triage y Catálogo Activo</a></li>
+<li><a href="#objetivo-3">Objetivo 3 · El login de Cherry Picked</a></li>
+</ul>
+<p class="nav-label">Componentes</p><ul>
 <li><a href="#consolas">CTC Consolas internas</a></li>
 <li><a href="#socios">Red de Socios</a></li>
 <li><a href="#secretaria">Secretaría CTC</a></li>
@@ -140,11 +147,79 @@
 
   <main>
     <h1>El prompt con el que arranca cada conversación</h1>
-    <p class="intro">Una conversación = un componente. Escribe la tarea en «Hoy:», copia, pega en una conversación nueva del grupo que indica la ficha. El prompt manda a la sesión a leer su charter, el maestro (<code>docs/ALINEACION.md</code>) y las reglas de la casa antes de tocar nada.</p>
-    <ol class="como"><li><strong>Abrir Claude Code en <code>C:\dev\ctc-platforms\ctc-platform</code>.</strong> Para CommaaS, en <code>C:\dev\commaas-hub\commaas</code>. Nunca en la carpeta vieja de OneDrive: la memoria de Claude va atada a la carpeta. La sesión de la Secretaría necesita además los conectores de Notion, Google (Drive · Gmail · Calendar) y Make activos.</li><li><strong>Filar la conversación en el grupo de la barra lateral.</strong> El que lleva el nombre del componente (ya existen los doce).</li><li><strong>Pegar el prompt y sustituir <code>&lt;la tarea&gt;</code>.</strong> Y <code>&lt;nombre&gt;</code> / <code>&lt;id&gt;</code> / <code>&lt;nodo&gt;</code> en las herramientas y los socios.</li><li><strong>Cerrar la tanda.</strong> La sesión deja el charter con sus «Pendientes» al día y, si el cambio alcanza a otro componente, una línea en <code>docs/ALINEACION.md</code> §3. La siguiente sesión de ese componente empieza leyendo eso.</li><li><strong>Pasar por el nodo final.</strong> Cuando una o varias tandas ya están empujadas, la conversación «WRAP-COMMIT-PUSH (CTC Platforms)» audita que el maestro y los charters digan lo mismo y, si toca, compila el wrap del mapa.</li></ol>
+    <p class="intro">Una conversación = un componente (o un objetivo V6). Escribe la tarea en «Hoy:», copia, pega en una conversación nueva del grupo que indica la ficha. El prompt manda a la sesión a leer su charter o su plan, el maestro (<code>docs/ALINEACION.md</code>) y las reglas de la casa antes de tocar nada. Lo que sigue a la V6.0 va primero: <a href="#objetivo-1">Objetivos V6</a>.</p>
+    <ol class="como"><li><strong>Abrir Claude Code en <code>C:\dev\ctc-platforms\ctc-platform</code>.</strong> Para CommaaS, en <code>C:\dev\commaas-hub\commaas</code>. Nunca en la carpeta vieja de OneDrive: la memoria de Claude va atada a la carpeta. La sesión de la Secretaría necesita además los conectores de Notion, Google (Drive · Gmail · Calendar) y Make activos.</li><li><strong>Filar la conversación en el grupo de la barra lateral.</strong> El que lleva el nombre del componente (ya existen los doce); para un objetivo V6, el que indica su ficha.</li><li><strong>Pegar el prompt y sustituir <code>&lt;la tarea&gt;</code>.</strong> Y <code>&lt;nombre&gt;</code> / <code>&lt;id&gt;</code> / <code>&lt;nodo&gt;</code> en las herramientas y los socios.</li><li><strong>Cerrar la tanda.</strong> La sesión deja el charter con sus «Pendientes» al día y, si el cambio alcanza a otro componente, una línea en <code>docs/ALINEACION.md</code> §3. La siguiente sesión de ese componente empieza leyendo eso.</li><li><strong>Pasar por el nodo final.</strong> Cuando una o varias tandas ya están empujadas, la conversación «WRAP-COMMIT-PUSH (CTC Platforms)» audita que el maestro y los charters digan lo mismo y, si toca, compila el wrap del mapa.</li></ol>
     <p class="oro"><strong>Regla de oro.</strong> Si la tarea cruza dos componentes, se arranca en el que la ORIGINA (la consola, casi siempre) y el otro recibe un pendiente con dueño.</p>
 
-    <h2 class="band">Componentes</h2>
+    <h2 class="band">Objetivos V6</h2>
+<p class="lede">Lo que sigue a la V6.0 (owner, 2026-10-10; plan <code>docs/PLAN_V6_OBJETIVOS.md</code>): tres objetivos, <strong>una conversación por objetivo</strong>, arrancada con su prompt. Cada tanda es una versión con su guardián y es de su dueño, y <strong>ninguna empieza sin las decisiones del owner del §5</strong> que la condicionan: la sesión las pregunta primero.</p>
+<section class="prompt objetivo" id="objetivo-1" tabindex="-1"><header><div class="head"><h3>Objetivo 1 · Las landing pages con la narrativa vigente</h3><div class="meta"><span class="chip">objetivo 1 · plataforma · kaffetal-regal · cherry-picked · la red</span><span class="grupo">Grupo: CTC Consolas internas (vía plataforma, dueña de las fuentes compartidas): una sola conversación para el objetivo</span></div><p class="charter">Plan · <code>docs/PLAN_V6_OBJETIVOS.md §1</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-objetivo-1"><span>Hoy:</span><input id="hoy-objetivo-1" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tanda&gt;" data-hueco="&lt;la tanda&gt;"></label><button type="button" class="copy" data-target="pre-objetivo-1">Copiar prompt</button></div><div class="scroll"><pre id="pre-objetivo-1" tabindex="0">Trabajas en el OBJETIVO 1 de la V6 de la plataforma CTC: «Las landing pages con la narrativa y los conceptos vigentes»
+(repo C:\dev\ctc-platforms\ctc-platform, rama main). Una conversación para todo el objetivo; cada TANDA es de su dueño:
+A fuentes compartidas y SEO (plataforma) · B Kaffetal Regal (kaffetal-regal) · C CTC Home (plataforma) · D Cherry Picked
+(cherry-picked) · E el resto de la red (el charter de cada superficie). Antes de tocar nada lee, en este orden:
+1. docs/PLAN_V6_OBJETIVOS.md §1, §4 y §5  ← el objetivo, las 16 incongruencias, las tandas y las decisiones que las condicionan
+2. docs/ALINEACION.md                      ← los contratos (grados, vocabulario, i18n, SEO) y el registro de permeación (§3)
+3. el charter del dueño de la tanda         ← docs/componentes/&lt;clave&gt;.md; de CTC Home y el SEO, docs/HANDOFF.md (plataforma)
+4. AGENTS.md                                ← la compuerta y las reglas de la casa
+La narrativa sale de las v4 (C:\dev\ctc-platforms\reference\narrativa-2026-10-08-en\textos_{es,en,de,ja}.py) con UNA
+corrección: el CVA es el protocolo principal y el SCA 2004 vale lo mismo (V5.189; PLAN_CIRCUITO_DEL_LOTE §10.6). La v4 de
+Cherry Picked no existe: la tanda D no empieza sin ella.
+REGLA ANTI-CIRCUNVENCIÓN (owner, 2026-10-10): nada público ni del comprador facilita llegar al productor sin pasar
+por CTCx — ni el nombre de la finca (tampoco dentro del nombre del lote), ni el municipio, ni la historia de la finca, ni su
+foto de perfil; los documentos que salen llevan marca de agua.
+Ningún texto nuevo promete «de qué finca salió» (tema 16).
+NINGUNA TANDA EMPIEZA sin las decisiones del owner del §5 que la condicionan (A: 1, 2 y 3 · B y C: 3 · D: 3, 4 y 5 · E: 5).
+Pregúntamelas primero en una lista numerada corta y espera; lo que conteste queda escrito en el §5 antes del código.
+Una tanda = una versión con su guardián (los que el §1 nombra para ella). Las líneas citadas en el plan son del 2026-10-10:
+re-verifícalas contra el código. Cada superficie se verifica en vivo en ES · EN · DE.
+Al terminar cada tanda: compuerta completa, APP_VERSION + CHANGELOG en el mismo commit, sello del sha, push, verificación
+en vivo, asiento en el log de arquitectura, lo cerrado tachado en PLAN_V6_OBJETIVOS, «Pendientes» del charter del dueño al día
+y una línea en ALINEACION §3.
+Hoy: &lt;la tanda&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> preguntar las decisiones 1, 2 y 3 del §5 y, con ellas, la tanda A (el calendario de ciclos para CTC, Kaffetal Regal y Cherry Picked, <code>jsonLd.ts</code> y las metadatas): la fuente compartida va antes que las superficies que la leen.</p></section>
+<section class="prompt objetivo" id="objetivo-2" tabindex="-1"><header><div class="head"><h3>Objetivo 2 · Triage y Catálogo Activo</h3><div class="meta"><span class="chip">objetivo 2 · consolas · cherry-picked</span><span class="grupo">Grupo: CTC Consolas internas: una sola conversación para el objetivo</span></div><p class="charter">Plan · <code>docs/PLAN_V6_OBJETIVOS.md §2 + docs/PLAN_TRIAGE_CATALOGO.md</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-objetivo-2"><span>Hoy:</span><input id="hoy-objetivo-2" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tanda&gt;" data-hueco="&lt;la tanda&gt;"></label><button type="button" class="copy" data-target="pre-objetivo-2">Copiar prompt</button></div><div class="scroll"><pre id="pre-objetivo-2" tabindex="0">Trabajas en el OBJETIVO 2 de la V6 de la plataforma CTC: «Triage y Catálogo Activo» (dueño: consolas; con cherry-picked
+para la tienda que vende lo declarado; repo C:\dev\ctc-platforms\ctc-platform, rama main). Antes de tocar nada lee, en este orden:
+1. docs/PLAN_V6_OBJETIVOS.md §2, §4 y §5  ← el objetivo, sus incongruencias abiertas, las tandas y las decisiones que las condicionan
+2. docs/PLAN_TRIAGE_CATALOGO.md           ← el plan que manda (§6 las 12 suposiciones, §7 lo que quedó fuera de alcance)
+3. CHANGELOG.md, la entrada V5.203         ← Adquisición → Stock CTCx → Triage → CTCx Selection → Catálogo Activo ya es un circuito
+4. docs/ALINEACION.md y docs/componentes/consolas.md (y cherry-picked.md si la tanda toca la tienda)
+5. AGENTS.md                               ← la compuerta y las reglas de la casa
+El O&amp;P de CTCx vive SOLO en la base (platform_settings.triage_catalogo): nunca su valor en el repo, en un documento ni en un
+mensaje.
+REGLA ANTI-CIRCUNVENCIÓN (owner, 2026-10-10): nada público ni del comprador facilita llegar al productor sin pasar
+por CTCx — ni el nombre de la finca (tampoco dentro del nombre del lote), ni el municipio, ni la historia de la finca, ni su
+foto de perfil; los documentos que salen llevan marca de agua.
+La única proyección pública del lote (tanda B) la respeta como la vitrina y el Dossier público.
+NINGUNA TANDA EMPIEZA sin las decisiones del owner del §5 que la condicionan (A: 3 y la última pregunta de la 10 —¿una referencia
+de Empacado hasta FOB por puerto o una sola?—, más el flete real · B: 3, 6, 7, 8 y 13 · C: 9 · D: 10). Pregúntamelas primero en
+una lista numerada corta y espera; lo que conteste queda escrito en el §5 antes del código.
+Una tanda = una versión con su guardián (qa-triage-catalogo, qa-stock-ctcx, qa-empaque-fob y los que el §2 nombra). Las consolas
+no se conducen en navegador: verifica con guardianes y SQL. qa-checkout escribe en producción: solo a mano.
+Al terminar cada tanda: compuerta completa, APP_VERSION + CHANGELOG en el mismo commit, sello del sha, push, verificación
+en vivo, asiento en el log de arquitectura, lo cerrado tachado en PLAN_V6_OBJETIVOS, «Pendientes» del charter del dueño al día
+y una línea en ALINEACION §3.
+Hoy: &lt;la tanda&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> leer la entrada V5.203 del CHANGELOG y hacer la tanda A: con la referencia de Empacado hasta FOB de flete real que traiga el owner, declarar los 6 tratos vigentes (hoy 0 declaraciones) y comparar el ancla con el N2 del PVC; verificar con SQL.</p></section>
+<section class="prompt objetivo" id="objetivo-3" tabindex="-1"><header><div class="head"><h3>Objetivo 3 · El login de Cherry Picked</h3><div class="meta"><span class="chip">objetivo 3 · cherry-picked</span><span class="grupo">Grupo: Cherry Picked: una sola conversación para el objetivo</span></div><p class="charter">Plan · <code>docs/PLAN_V6_OBJETIVOS.md §3 + docs/componentes/cherry-picked.md</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-objetivo-3"><span>Hoy:</span><input id="hoy-objetivo-3" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tanda&gt;" data-hueco="&lt;la tanda&gt;"></label><button type="button" class="copy" data-target="pre-objetivo-3">Copiar prompt</button></div><div class="scroll"><pre id="pre-objetivo-3" tabindex="0">Trabajas en el OBJETIVO 3 de la V6 de la plataforma CTC: «El login de Cherry Picked: UI/UX y lo que ve el comprador»
+(dueño: cherry-picked; repo C:\dev\ctc-platforms\ctc-platform, rama main). Antes de tocar nada lee, en este orden:
+1. docs/PLAN_V6_OBJETIVOS.md §3, §4 y §5  ← el objetivo, sus siete problemas, las tandas y las decisiones que las condicionan
+2. docs/componentes/cherry-picked.md      ← tu charter
+3. docs/ALINEACION.md                      ← contratos transversales y el registro de permeación (§3)
+4. AGENTS.md                               ← la compuerta y las reglas de la casa
+Lo más grave (2026-10-10): un comprador que inicia sesión ve el catálogo VACÍO; desaparecen la cinta y «Find my Lot».
+REGLA ANTI-CIRCUNVENCIÓN (owner, 2026-10-10): nada público ni del comprador facilita llegar al productor sin pasar
+por CTCx — ni el nombre de la finca (tampoco dentro del nombre del lote), ni el municipio, ni la historia de la finca, ni su
+foto de perfil; los documentos que salen llevan marca de agua.
+La tarjeta del lote (tanda B) va SIN finca ni municipio.
+NINGUNA TANDA EMPIEZA sin las decisiones del owner del §5 que la condicionan (A: 6, 11 y 13 · B: 3 · C: 3, 7, 8 y 12 · D: 12), y
+la C tampoco antes de la tanda B del objetivo 2 (las reglas comerciales salen del Triage). Pregúntamelas primero en una lista
+numerada corta y espera; lo que conteste queda escrito en el §5 antes del código.
+Una tanda = una versión con su guardián (qa-sneak-peek fija cómo pinta la tienda con sesión; los demás, en el §3). La cuenta de
+auditoría del comprador (V5.98, en .env.local) es del nodo final: la usan qa-guard y qa-checkout, que escriben en producción y
+se corren a mano. Para conducir la tienda con sesión hace falta la decisión 13.
+Al terminar cada tanda: compuerta completa, APP_VERSION + CHANGELOG en el mismo commit, sello del sha, push, verificación
+en vivo, asiento en el log de arquitectura, lo cerrado tachado en PLAN_V6_OBJETIVOS, «Pendientes» del charter del dueño al día
+y una línea en ALINEACION §3.
+Hoy: &lt;la tanda&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> preguntar las decisiones 6, 11 y 13 del §5 y hacer la tanda A (entrada y continuidad), empezando por lo más grave: con sesión, el catálogo sale vacío.</p></section>
+<h2 class="band">Componentes</h2>
 <section class="prompt" id="consolas" tabindex="-1"><header><div class="head"><h3>CTC Consolas internas</h3><div class="meta"><span class="chip">consolas</span><span class="grupo">Grupo: CTC Consolas internas</span></div><p class="charter">Charter · <code>docs/componentes/consolas.md</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-consolas"><span>Hoy:</span><input id="hoy-consolas" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-consolas">Copiar prompt</button></div><div class="scroll"><pre id="pre-consolas" tabindex="0">Trabajas SOLO en el componente «CTC Consolas internas» (clave: consolas) de la plataforma CTC
 (repo C:\dev\ctc-platforms\ctc-platform, rama main). Antes de tocar nada lee, en este orden:
 1. docs/componentes/consolas.md   ← tu charter
@@ -157,11 +232,15 @@ Internas» del rail del ECP (Definición de Contexto, Modelo Económico —PVC y
 con sus cotizadores y anclas) NO son tuyos: son del charter herramientas-internas.
 Tuyos son su rail, sus permisos y sus rutas — y llevar lo que esos modelos calculan a ofertas, contratos y veredicto.
 Busca claves de permiso y revalidatePath, no solo rutas. Las consolas no se conducen en navegador.
+Los planes que mandan: docs/PLAN_CIRCUITO_DEL_LOTE.md, docs/PLAN_CICLOS.md y docs/PLAN_TRIAGE_CATALOGO.md; lo que
+sigue a la V6.0 está en docs/PLAN_V6_OBJETIVOS.md (el objetivo 2, Triage y Catálogo Activo, es tuyo) — ninguna
+tanda de ese plan empieza sin las decisiones del owner de su §5. Lo público de un lote sale solo de la vista
+public_lot_vitrina y de la lista blanca del Dossier público (ALINEACION §1).
 Los WRAPS del mapa interactivo se llaman SOLO desde la conversación «WRAP-COMMIT-PUSH (CTC Platforms)»
 de este grupo (ALINEACION §5.3: el nodo final, que audita maestro ↔ charters antes de compilar); tu asiento en el log va en el mismo commit que la versión (qa-arqlog).
 Al terminar: compuerta completa, APP_VERSION + CHANGELOG en el mismo commit, sello del sha, push,
 verificación en vivo, entrada en el log de arquitectura, y «Pendientes» de este charter al día.
-Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> CN-1 del plan de narrativa, la única fecha dura: revisar la edición PVC-F4-2026 y publicar el PVC de ene–mar 2027 <strong>antes del 15-oct-2026</strong> (espera la decisión O-1 del owner). Si O-1 no ha llegado: CN-2 (razón social completa en <code>legal.ts</code>, marca CTCx en las consolas, Papagayo Beans® en ficha pública y OG del lote), que no depende de nadie.</p></section>
+Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> El objetivo 2 de <code>docs/PLAN_V6_OBJETIVOS.md</code> (Triage y Catálogo Activo) tiene su propio prompt en «Objetivos V6». Para otra tarea de las consolas, los «Pendientes» del charter; CN-2 (la razón social en <code>legal.ts</code>, la marca CTCx) espera la decisión 1 del §5 de ese plan. (CN-1, publicar el PVC antes del 15-oct-2026, la superaron los Ciclos: PVC-F4-2026 rige hasta el 3-ene-2027.)</p></section>
 <section class="prompt" id="socios" tabindex="-1"><header><div class="head"><h3>Red de Socios</h3><div class="meta"><span class="chip">socios</span><span class="grupo">Grupo: Red de Socios (una conversación por nodo)</span></div><p class="charter">Charter · <code>docs/componentes/socios.md</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-socios"><span>Hoy:</span><input id="hoy-socios" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-socios">Copiar prompt</button></div><div class="scroll"><pre id="pre-socios" tabindex="0">Trabajas SOLO en el componente «Red de Socios» (clave: socios) de la plataforma CTC
 (repo C:\dev\ctc-platforms\ctc-platform, rama main), y dentro de él en EL NODO &lt;nodo&gt;
 (centro-calidad · agente-carga · agente-nacionalizacion · master-roaster · estudio-contenido).
@@ -209,7 +288,7 @@ línea en el §3 y mi visto bueno, y quien lo lleva a la superficie es el OCP. L
 plan o de la documentación, nunca del módulo que vigila.
 Al terminar: compuerta (incl. los qa-pvc-*, qa-grados, qa-rutas-consolas), APP_VERSION + CHANGELOG + asiento en el
 log de arquitectura, sello, push, verificación en vivo, y «Pendientes» de este charter al día.
-Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> Elegir el MODELO de la sesión. Con fecha: <strong>CN-1</strong>, publicar el PVC de ene–mar 2027 antes del 15-oct-2026 (espera la decisión O-1). Sin dependencias: el <strong>brief del Modelo de Logística</strong> (qué cuesta después del FOB por volumen y región — columna marítima, DDP consolidado ≠ dedicado, regiones como dato) o el del <strong>Modelo de Procesamiento</strong> (finca → CPS → verde → empacado → embalado, con mermas y costos), que hoy son piezas sueltas en <code>lectura.ts</code>, <code>canales.ts</code> y los cotizadores del ECP.</p></section>
+Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> Elegir el MODELO de la sesión. Con fecha: revisar el borrador <strong>PVC-F1-2027</strong> que dejó el agente del PVC (V5.179) y publicarlo <strong>a más tardar el 29-nov-2026</strong> (<code>docs/PLAN_CICLOS.md</code> §1). Sin dependencias: el <strong>brief del Modelo de Logística</strong> (qué cuesta después del FOB por volumen y región — columna marítima, DDP consolidado ≠ dedicado, regiones como dato) o el del <strong>Modelo de Procesamiento</strong> (finca → CPS → verde → empacado → embalado, con mermas y costos), que hoy son piezas sueltas en <code>lectura.ts</code>, <code>canales.ts</code> y los cotizadores del ECP.</p></section>
 <section class="prompt" id="biblia" tabindex="-1"><header><div class="head"><h3>La Biblia del Café</h3><div class="meta"><span class="chip">biblia</span><span class="grupo">Grupo: Biblia del Café</span></div><p class="charter">Charter · <code>docs/componentes/biblia.md</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-biblia"><span>Hoy:</span><input id="hoy-biblia" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-biblia">Copiar prompt</button></div><div class="scroll"><pre id="pre-biblia" tabindex="0">Trabajas SOLO en «La Biblia del Café» (clave: biblia), la app interna en
 C:\dev\ctc-platforms\apps-internas\biblia_del_cafe\biblia-del-cafe\ (sesión abierta desde
 C:\dev\ctc-platforms\ctc-platform). Antes de tocar nada lee, en este orden:
@@ -228,8 +307,12 @@ Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.
 3. AGENTS.md                            ← la compuerta y las reglas de la casa
 El productor nunca escribe grado ni estado: si tu tarea necesita que el OCP haga algo distinto, se
 anota como pendiente con dueño «consolas» y una línea en el §3. Campos nuevos del datasheet con
-default seguro. Se verifica en vivo con la sesión asistida del OCP sobre un productor o un Proveedor
-Desacoplado (las cuentas prueba-* ya no existen desde la V5.89). Al terminar:
+default seguro. Lo que KR deja ver en público (el Dossier público, la landing) no lleva al productor sin
+pasar por CTCx (ALINEACION §1, «Lo público del lote»). Se verifica en vivo con la sesión asistida del OCP
+sobre un productor o un Proveedor Desacoplado (las cuentas prueba-* ya no existen desde la V5.89; la
+cuenta de productor de auditoría de la V5.98 es del nodo final y la usa qa-guard). Si la tarea es el
+objetivo V6 de la landing, lee además docs/PLAN_V6_OBJETIVOS.md §1 y no empieces sin las decisiones del
+owner de su §5. Al terminar:
 compuerta completa (incl. qa-kr-panel, qa-kr-ficha), APP_VERSION + CHANGELOG, sello del sha, push,
 verificación en vivo, log de arquitectura, y «Pendientes» de este charter al día.
 Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> Recorrer el bloque B del artefacto de revisión sobre el panel nuevo (B3/B4 primero) y convertir cada «Fix» en una tanda; después, estrenar el escáner visual con un soporte real.</p></section>
@@ -238,14 +321,18 @@ Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.
 1. docs/componentes/cherry-picked.md   ← tu charter
 2. docs/ALINEACION.md                  ← contratos transversales y el registro de permeación (§3)
 3. AGENTS.md                           ← la compuerta y las reglas de la casa
-Nada comercial sale por la cinta; la ficha pública es lista blanca; las lecturas públicas van por las
-vistas estrechas, nunca por una política ancha; la subasta es EUR/kg y adjudicar es del OCP. Si tu
-tarea necesita que el OCP publique, adjudique o responda distinto, es pendiente con dueño «consolas»
-y una línea en el §3. Se verifica en la vitrina pública; no quedan cuentas de comprador de prueba
-(V5.92): si la tarea necesita una sesión de comprador, pídesela al owner. Al terminar: compuerta completa
-(incl. qa-sneak-peek, qa-subastas), APP_VERSION + CHANGELOG, sello, push, verificación en vivo, log
-de arquitectura, y «Pendientes» al día.
-Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> Preparar la primera subasta real (recorrer <code>/cherry-picked-green</code> con una cuenta Pintón contra una subasta abierta por el OCP en pruebas) y revisar la ficha pública y la cinta con el primer lote publicado.</p></section>
+Nada comercial sale por la cinta; el Dossier público es lista blanca; nada público ni del comprador
+lleva al productor sin pasar por CTCx (ni finca ni municipio: ALINEACION §1, «Lo público del lote»);
+las lecturas públicas van por las vistas estrechas, nunca por una política ancha; la subasta es EUR/kg
+y adjudicar es del OCP. Si tu tarea necesita que el OCP declare, publique, adjudique o responda
+distinto, es pendiente con dueño «consolas» y una línea en el §3. Si es uno de los objetivos V6, lee
+además docs/PLAN_V6_OBJETIVOS.md y no empieces una tanda sin las decisiones del owner de su §5.
+Se verifica en la vitrina pública; la cuenta de comprador de auditoría (V5.98) es del nodo final y
+qa-checkout se corre a mano con ella: si la tarea necesita una sesión de comprador en el navegador,
+acuérdalo con el owner. Al terminar: compuerta completa (incl. qa-sneak-peek, qa-subastas,
+qa-ficha-publica), APP_VERSION + CHANGELOG, sello, push, verificación en vivo, log de arquitectura,
+y «Pendientes» al día.
+Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> El objetivo 3 de <code>docs/PLAN_V6_OBJETIVOS.md</code> (el login y lo que ve el comprador) tiene su propio prompt en «Objetivos V6» y empieza por lo más grave: con sesión, el catálogo sale vacío. Para otra tarea, los «Pendientes» del charter; la primera subasta real espera CN-4 (la puja a US$) y la decisión 12 del §5 de ese plan (los 3 compradores están en Verde y la puja exige Pintón).</p></section>
 <section class="prompt" id="herramientas-cafe" tabindex="-1"><header><div class="head"><h3>Herramientas del Café</h3><div class="meta"><span class="chip">herramientas-cafe</span><span class="grupo">Grupo: Herramientas del Café</span></div><p class="charter">Charter · <code>docs/componentes/herramientas-cafe.md</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-herramientas-cafe"><span>Hoy:</span><input id="hoy-herramientas-cafe" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-herramientas-cafe">Copiar prompt</button></div><div class="scroll"><pre id="pre-herramientas-cafe" tabindex="0">Trabajas SOLO en el componente «Herramientas del Café» (clave: herramientas-cafe) de la plataforma CTC
 (repo C:\dev\ctc-platforms\ctc-platform, rama main), y dentro de él en LA HERRAMIENTA &lt;id&gt;.
 Antes de tocar nada lee, en este orden:
@@ -305,23 +392,25 @@ plataforma CTC (repo C:\dev\ctc-platforms\ctc-platform, rama main; vía `platafo
 que el maestro y el plan de cada componente están en el mismo punto, y solo entonces compilar el wrap del mapa y
 empujar. No construyes funcionalidades. Antes de tocar nada lee, en este orden:
 1. docs/ALINEACION.md     ← el maestro: §1 contratos, §3 permeación, §3b pendientes cruzados, §5.3 tu regla
-2. docs/componentes/*.md  ← los trece charters, sección «Pendientes» (y el tablero del plan vigente:
-                            docs/PLAN_NARRATIVA_2026-09-17.md §8)
+2. docs/componentes/*.md  ← los trece charters, sección «Pendientes» (y los tableros de los planes en vigor:
+                            docs/PLAN_V6_OBJETIVOS.md §1–§3 y §5 · PLAN_CIRCUITO_DEL_LOTE §5 · PLAN_CICLOS §9 ·
+                            PLAN_TRIAGE_CATALOGO §5; el §8 de docs/PLAN_NARRATIVA_2026-09-17.md, para lo que no absorbieron)
 3. AGENTS.md y el log vigente docs/architecture/Log_Documentacion_Interactiva_V*.txt (su cabecera dice cómo se
    valida un wrap y qué enseñó el anterior)
 LA AUDITORÍA, en este orden:
 (1) git fetch + status: árbol limpio y a la par de origin/main; ninguna otra sesión corriendo.
-(2) APP_VERSION ↔ CHANGELOG ↔ asientos del log ↔ insignia en vivo (curl -L a www: «V5.NN · build &lt;sha&gt;»).
+(2) APP_VERSION ↔ CHANGELOG ↔ asientos del log ↔ insignia en vivo (curl -L a www: «VN.NN · build &lt;sha&gt;»).
 (3) Cada fila de §3b reflejada en «Pendientes» del charter de su dueño, y al revés; y cada «Para X» de §3 desde el
     último wrap aterrizado en «Pendientes» del charter de X (si la sesión que lo escribió no pudo, lo haces tú).
 (4) Lo que un documento da por pendiente y otro —o el CHANGELOG, o el código— da por hecho.
 (5) Cifras y reglas que se contradicen entre documentos.
-(6) El tablero del plan contra el código.
+(6) Los tableros de los planes contra el código (lo que una tanda cerró, tachado en su plan).
 (7) tsc · eslint (línea base 8) · los scripts/qa-*.mjs, con CINCO excepciones que NO entran en un bucle:
     · qa-cromatografia-modelo y qa-transcripciones-nube GASTAN DINERO (API de Anthropic, AssemblyAI): solo a mano,
       cuando la tanda toca su módulo, y diciéndome el costo antes;
-    · qa-guard y qa-checkout piden cuentas de prueba por argv, y hoy no hay ninguna (V5.89, V5.92): no corren
-      hasta que yo decida qué cuentas vuelven (ALINEACION §4.6);
+    · qa-guard y qa-checkout ESCRIBEN EN PRODUCCIÓN: desde la V5.98 leen de .env.local (QA_*) las dos cuentas de
+      auditoría @ctc-qa-test.co, que son tuyas, y limpian lo que escriben; solo a mano (qa-checkout pide además un
+      listado y los kilos);
     · qa-tools-puente-conformance exige un next dev en el puerto 3210 (y borra .next/dev antes del build siguiente).
     Lee la cabecera de un guardián antes de meterlo en una batería. Y un guardián no verifica nada si copia la
     regla del código: la regla sale del plan.
@@ -347,7 +436,7 @@ Terratalento vive aquí EN ESPERA (docs/componentes/terratalento.md): solo retro
 durante ~6 meses; no se construye nada nuevo ahí sin el owner.
 Todo cambio aquí PERMEA: cada tanda deja su línea en el §3 con los componentes afectados, y verifica en
 las superficies que tocan el contrato (una superficie nueva = una línea en subdominios.ts + DNS a mano).
-Al terminar: compuerta completa (incl. qa-rutas-consolas, qa-nav, qa-grados, qa-encoding, qa-guard),
+Al terminar: compuerta completa (incl. qa-rutas-consolas, qa-nav, qa-grados, qa-encoding; qa-guard a mano: escribe en producción),
 APP_VERSION + CHANGELOG, sello del sha, push, verificación en vivo en www y en el subdominio afectado,
 log de arquitectura.
 Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> la política de privacidad de la red (GDPR / Ley 1581, declarando a Resend como subprocesador) — la deuda transversal más vieja; y el toggle de leaked-password protection en Supabase.</p></section>

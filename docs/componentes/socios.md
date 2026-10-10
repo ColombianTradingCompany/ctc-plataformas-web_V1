@@ -65,7 +65,7 @@ por Server Action con el service role — la tabla es de `consolas`. Ningún otr
 
 ## Guardianes
 
-**`qa-centro-calidad-check.mjs`** (65, V5.81 — el paso 11 del folio: la pantalla y las acciones del Centro no leen productor,
+**`qa-centro-calidad-check.mjs`** (65 en la V5.81; 313 al 2026-10-10 — el paso 11 del folio: la pantalla y las acciones del Centro no leen productor,
 finca, variedad ni ficha; el módulo se activa por credencial y el Q-Grader firma con su contacto; registrar ≠ confirmar; la
 fórmula del CVA y la rueda única). Lo tocan también `qa-recuperacion-check.mjs` (las cinco puertas de socio) y
 `qa-rutas-consolas` (el rail de `/bcp/socios`).
@@ -98,6 +98,20 @@ fórmula del CVA y la rueda única). Lo tocan también `qa-recuperacion-check.mj
 
 ## Pendientes
 
+- **V6 · objetivo 1, tanda E: la narrativa de los nodos** (owner, 2026-10-10, al declarar la V6.0; `docs/PLAN_V6_OBJETIVOS.md` §1,
+  dueño de la tanda `plataforma`, con este componente para `partners.ts`). Es **SO-1** del plan de narrativa: `partners.ts` presenta al
+  Centro de Calidad sin el CIR de Santander y como quien defiende «la calidad que la Arena certificó» (desde la V5.81 evalúa él), al
+  Master Roaster sin etiquetas ni regiones, y al Estudio de Contenido grabando y editando «la Arena» (desde la V5.77 no hay gala). Las landings de los nodos están **solo en español**,
+  contra «tres idiomas en toda superficie pública» (`ALINEACION` §1): pasarlas a ES · EN · DE es la decisión 5 del owner (§5 del
+  plan). Guardianes: `qa-recuperacion`, `qa-rutas-consolas`, `qa-nav`.
+- **V5.145 · la sesión de un socio vive en SU cookie, `ctc-socios-auth`** (owner, 2026-10-02: «que la sesión del Centro de Calidad
+  dure al menos 10 horas»; ejecutado desde `consolas`; no estaba anotado aquí, lo recoge el nodo final el 2026-10-10). Todo lo que
+  autentica a un socio usa `createPartnerSessionClient()` (`src/lib/supabase/server.ts`, `PARTNER_AUTH_COOKIE`): `requirePartner` y
+  `getPartnerIdentity`, el login y el logout de `/api/socios/auth`, el cambio de contraseña (`panel/actions.ts`) y la vía «socio» de
+  `studioGate`; nunca `createSessionClient()`. El proxy la renueva solo en `/socios`, y una credencial de socio ya no deja sesión en
+  las plataformas públicas. El latido `SesionViva` (`panel/SesionViva.tsx`) solo está en Evaluación de Lotes. **Abierto**: (a) nadie
+  lo ha conducido con la credencial real del Centro (lo confirma el owner al entrar); (b) los talleres del Estudio de Contenido (Source
+  Wrapper, Datawave, RT-Scriptor) no tienen el latido (charter `coffeed`). `qa-centro-calidad` lo prueba con la librería real.
 - **V5.192 · Centro de Calidad · «Ver planilla»** (owner: «que pueda abrir las fichas de evaluación ya dadas de alta, sin poder
   editarlas»): la hoja de un alta confirmada o en espera de CTC, con el editor apagado, sus notas, su código interno y su reporte; sin
   ningún botón que guarde (`VerPlanillaButton` en `PlanillaCentro.tsx`). Lo dado de alta solo vuelve a editarse si CTC lo devuelve.
@@ -134,7 +148,8 @@ fórmula del CVA y la rueda única). Lo tocan también `qa-recuperacion-check.mj
   (owner: vista SCA · CVA · Ambas; el SCA 2004 nativo es el protocolo primario y calibra la escala; un CVA solo se homologa —por lo
   general baja— con intervalo y rige el piso, nunca Tyrian; «Ambas» alimenta el banco comparativo que el owner pedirá a los Q-Graders).
   `src/lib/arena/homologacion.ts` (de `consolas`); `lot_evaluations.punto` · `cva_total`; el Centro enseña el Punto con su procedencia
-  (`rotuloDelPunto`). `qa-centro-calidad` §5 y §7 (los vectores del informe se leen del plan). **Queda**: el «uso
+  (`rotuloDelPunto`). *(Anulado en la V5.189: el CVA es el protocolo principal y un SCA 2004 vale lo mismo; ya no hay homologación,
+  piso ni recata — `src/lib/arena/punto.ts` y `equivalencia.ts`; viñeta V5.189, arriba.)* `qa-centro-calidad` §5 y §7 (los vectores del informe se leen del plan). **Queda**: el «uso
   directo» (emitir una Ficha Técnica o un reporte sin bache — respuesta 5), `Procesamiento de Lotes` (Etapa 3), la variante
   interna de la Datasheet Tool (charter `herramientas-cafe`; **V5.130**: la planilla ya trae su radar, la rueda como rueda y la
   granulometría con barras, sin espacio muerto y con conmutador ES · EN — el idioma lo lleva `PlanillaCentro` y traduce también

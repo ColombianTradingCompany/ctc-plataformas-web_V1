@@ -138,6 +138,10 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 
 ## Pendientes
 
+- **V6 · objetivo 1, tanda E: la marca en Herramientas del Café** (owner, 2026-10-10, al declarar la V6.0;
+  `docs/PLAN_V6_OBJETIVOS.md` §1, dueño de la tanda `plataforma`): la landing (`HerramientasLanding.tsx`)
+  pasa a la marca **CTCx** según la decisión 1 del owner. Sigue abierta, de este charter, la decisión sobre `catacion` y
+  `green-datasheet` frente a la Coffee Datasheet Tool (viñeta V5.132) y si queda una sola implementación (viñeta V5.137).
 - **V5.189 · dos ayudas de la Coffee Datasheet Tool dicen la regla de CTCx** (owner, ejecutado desde `consolas`; plan
   `PLAN_CIRCUITO_DEL_LOTE` §10.6): «SCA 2004 y CVA no son lo mismo» (`INFO.dif`) y «El puntaje afectivo CVA» (`INFO.cva_punt`), en
   ES · EN · DE, ya no dicen que un 84 del 2004 y uno del CVA «no son comparables»: siguen diciendo que salen de escalas distintas y que

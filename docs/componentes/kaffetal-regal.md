@@ -22,7 +22,7 @@ salieron de la barra. El vocabulario lo asentó el owner el 2026-09-20 y vive es
 |---|---|
 | `/kaffetal-regal` | landing + app (`KaffetalExperience.tsx`: landing · panel · Ficha; `?m=` legado → pestaña/drill) |
 | `/kaffetal-regal/certificacion/[id]` · `/certificacion-lote/[id]` | Pasaporte EUDR de la finca y Visa del lote (vocabulario de la V5.65). V5.113: la Visa se descarga desde la tarjeta del lote («⬇ Descargar Visa EUDR», como el Pasaporte) cuando CTCx la otorgó (`apto` o posterior) Y el Pasaporte de la finca está vigente (`lotEudrStatus` = «Visa lista»); con Visa y sin Pasaporte vigente, la tarjeta lo dice |
-| `/kaffetal-regal/dossier/[id]?lang=es\|en` | el **dossier del lote** ES/EN (`LotDossierDoc`, V5.79): la Ficha descargable |
+| `/kaffetal-regal/dossier/[id]?lang=es\|en` | el **Dossier CTCx** del lote, ES/EN (`dossier/DossierCtcx.tsx` desde la V5.166, que borró `LotDossierDoc` de la V5.79): la Ficha descargable, con blindaje y marca de agua; imprime con contrato firmado. Su versión PÚBLICA (lista blanca `dossierPublico()`, V5.198; sin finca desde la V5.202) la sirve `/ctcx-public-catalogue/CTC-L-…` |
 | `/kaffetal-regal/herramientas/[slug]` | la concha de Herramientas del Café en esta superficie (charter `herramientas-cafe`) |
 | `/api/kaffetal-regal/next-step` | el asesor «¿Y ahora qué?» (plumbing conservado a propósito) |
 | `/kaffetal-regal/auth/callback` | OAuth de Google |
@@ -142,8 +142,8 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 | OCP · Lotes | **EVA** (checklist + `lotEudrGate`) → `apto` + sello; borrado de abandonados | `markLotApto`, `actions.ts` |
 | OCP · Productor (V5.103) | **la vida de la cuenta**: una cuenta Marchitando sin finca ni lote recibe un recordatorio, al mes un aviso y al mes siguiente se borra sola (cron semanal), salvo que el owner la proteja; el owner también puede borrarla a mano («Borrar Cuenta» escrito). Los dos correos son texto plano por el remitente único (`src/lib/inactividad/correos.ts`) | `src/lib/inactividad/`, `/ocp/kr?productor=`, `qa-inactividad` |
 | OCP · Productores, Fincas y Lotes (`/ocp/kr`, V5.61 — eran tres módulos) | la **Visa** de la finca (aprobar · rechazar · compartir la certificación), la **EVA** del lote (checklist y veredicto Apto/No apto), el recibo de la muestra, la DDS | `actions.ts` (sin cambios) |
-| OCP · Nominados (Lotes a Evaluar · en Evaluación) | bache al Centro de Calidad (V5.80–V5.81), confirmar o devolver el alta del Q-Grader y el **veredicto** — decide **el Punto** (`decidirPorPunto`, `src/lib/arena/homologacion.ts`, V5.92) → `gradoPorPuntaje` → `galardonado` (~~+ Club~~: el galardón no reparte membresía desde la V5.77) | `recordEvaluationVerdict` |
-| OCP · Ofertas / Contratos | emisión de ofertas ancladas al PVC (temporada · directa · excepción · black · subasta) y la decisión «sin oferta»; la firma del contrato (que nace lleno de la aceptación con declaración, V5.83); **el trato mes a mes** (V5.84: pedido · envío · pago por mes; la **ruptura** la declara el owner y congela la cuenta — `producer_profiles.estado_cuenta` —; la renovación a los 90 días) | `ofertasActions`, `contractActions` |
+| OCP · Nominados (Lotes a Evaluar · en Evaluación) | bache al Centro de Calidad (V5.80–V5.81), confirmar o devolver el alta del Q-Grader y el **veredicto** — decide **el Punto** (`decidirPorPunto(p, tríada)`, ~~`src/lib/arena/homologacion.ts`, V5.92~~ `src/lib/arena/punto.ts` desde la V5.189: CVA o SCA 2004, que vale lo mismo) → ~~`gradoPorPuntaje`~~ los puntos de la tríada (`gradoPorPuntos`, V5.160) → `galardonado` (~~+ Club~~: el galardón no reparte membresía desde la V5.77) | `recordEvaluationVerdict` |
+| OCP · Ofertas / Contratos | emisión de ofertas ancladas al PVC (temporada · directa · excepción · black · subasta) y la decisión «sin oferta»; la firma del contrato (que nace lleno de la aceptación con declaración, V5.83); ~~**el trato mes a mes** (V5.84: pedido · envío · pago por mes; … la renovación a los 90 días)~~ — **retirado en la V5.176** (`PLAN_CICLOS.md` §8): rige el **trato por ventanas** (la fecha de firma decide la ventana; venta semanal, baches, despacho, recibo con humedad y aw, pago 60/40, renovación prellenada en la semana 4; `ventanaActions.ts`), y desde la V5.190 el contrato provisional de la sesión asistida que el productor ratifica; la **ruptura** la sigue declarando el owner y congela la cuenta — `producer_profiles.estado_cuenta` — | `ofertasActions`, `contractActions`, `ventanaActions` |
 | OCP · Fichas | el set de Fichas Técnicas y cuál es la **oficial ★** | `fichasActions` |
 | BCP · Kaffetal Regal Arena (del OCP hasta la V5.59) | ~~la invitación a la **vitrina** (Blue/Gold/Tyrian con contrato)~~ — desde la V5.77, **sesiones de segunda apreciación** sobre lotes galardonados: cada apreciación llega al productor como nota y como una evaluación más, y el owner puede elegir la que rige | `arenaActions.ts` (`registrarApreciacion`, `elegirEvaluacionQueRige`) |
 | ~~BCP · Kaffetal Club (del OCP hasta la V5.59)~~ OCP · Campañas de Subvención (V5.77) | ~~membresía (llega con el galardón), campañas de pasaporte~~ — el Club dejó de ser membresía en la V5.77; quedan los **códigos de subvención** (30–70 % sobre la tarifa de $200.000) que el productor canjea al solicitar | `subvencionesActions.ts`, `/ocp/subvenciones` |
@@ -152,6 +152,29 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V6 · objetivo 1, tanda B: la landing de Kaffetal Regal con la narrativa vigente** (owner, 2026-10-10, al declarar la V6.0;
+  plan `docs/PLAN_V6_OBJETIVOS.md` §1, una conversación desde `docs/KICKOFF.md` «Objetivos V6»; fila en `ALINEACION` §3b). Índice
+  (`Landing`), Bienvenidos (los 6 pasos de la v4), Oportunidad (multiplicadores y Punto/Tríada leídos de la fuente: hoy dice «SCA
+  desde 82» y una escala base 100 que no es la de `motor.ts`), Trato (la tabla Cherry Picked vs CTCx Selection; hoy cuenta el trato
+  viejo de 15 kg, 3 meses y escalera 400 → 200 → 100, y la humedad 10–11,5 %), PorQué (todavía nombra el Kaffetal Club), Arena (sesión
+  de segunda apreciación, no podio ni «otra vez a ciegas»), las preguntas de `faq.ts` (alimenta el JSON-LD `FAQPage`: «certificación
+  gratuita», los videos como obligatorios y el trato viejo; faltan PVC, Flete, Tríada, Selection y Dossier/Find my Lot), `LoginModal`
+  (solo ES; «siga su fila para la Arena») y la metadata («Jornada de Arena»). La narrativa fuente es la v4 del 2026-10-08, **corregida**:
+  el CVA es el protocolo principal (V5.189). No empieza sin la decisión 3 del owner (§5 del plan; el calendario, decisión 2, llega con la tanda A); y lo que la landing
+  prometa del productor y su finca respeta la regla de la V5.202 (nada público lleva al productor sin pasar por CTCx). Guardianes:
+  `qa-solicitud-evaluacion`, `qa-kr-panel`, `qa-nav`, `qa-catalogo-publico`. Recoge el pendiente de la V5.188 («El trato» y el FAQ).
+- **Contratos provisionales por ratificar** (SQL del 2026-10-10): los 6 contratos por ventana vigentes son **provisionales** y 0 están
+  ratificados (V5.190). Ratificar es del productor («Ratificar y firmar» en «Contratos»); conducirlo con uno real sigue pendiente.
+  Y del **owner**: las tres imágenes de firma de los intentos fallidos del 2026-10-08 (`kaffetal-media/contratos/oferta-3a609a57-…/
+  firma-productor-*`, ningún contrato las referencia) **siguen ahí** (3 objetos, SQL del 2026-10-10); borrarlas es permanente y lo hace
+  él desde el panel de Supabase (`PLAN_CICLOS.md` §11, decisión 4).
+- **V5.98 · las cuentas de auditoría también son de este componente** (anotado por el nodo final el 2026-10-10: la fila de
+  `ALINEACION` §3 no llegó aquí). Hay una cuenta de productor de auditoría `@ctc-qa-test.co`, del nodo final, con sus credenciales solo
+  en `.env.local`; `qa-guard-check` la usa y limpia lo que escribe. Si un tablero cuenta productores, esa cuenta está (nada la filtra en
+  pantalla), y el remitente único no le manda correo.
+- **V5.119 · `finca_certificates` (tabla de KR) gana `corroboracion_asset_id` y `corroboracion_filename`** (anotado por el nodo final el
+  2026-10-10; la fila de `ALINEACION` §3 no llegó aquí): el archivo con el que CTCx corrobora una certificación en la revisión EUDR de
+  la finca del OCP. Lo escribe el OCP con service role; el panel del productor no lo enseña.
 - **V5.201 · el Dossier público es un documento continuo y no se imprime** (owner, 2026-10-10; ejecutado desde WRAP-COMMIT-PUSH).
   `DossierCtcx` con `d.publico`: las hojas pasan a secciones de UNA columna (`seccionContinua`, ancla `dossier-<id>`, sin cabecera
   ni pie por hoja), el índice de la portada enlaza, `NavegacionDelDossier` (botón fijo abajo con la lista de secciones y la que se
@@ -275,7 +298,11 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   un reporte puede pedir revisión. **La Ficha congelada no se toca**: nada de esto entra en `lots.datasheet`, en el puntaje ni
   en el grado. Abierto, **con decisión del owner**: (a) el botón sale con la Ficha cerrada, no solo con la Visa ya emitida —
   si debe esperar a la Visa, es una línea; (b) las fotos agregadas después no pasan a ser «las fotos del lote» en la vitrina
-  (hoy la vitrina no pinta fotos de lote; cuando lo haga, decidir si toma B4, las agregadas o ambas); (c) un reporte
+  (hoy la vitrina no pinta fotos de lote; cuando lo haga, decidir si toma B4, las agregadas o ambas) — **el código ya lo decidió**: la
+  vitrina de la V5.198 tomaba la foto de la finca o la primera de B4, y desde la V5.202 **solo las fotos del LOTE de B4**, nunca la
+  foto de perfil de la finca ni `lot_referencias` (`src/lib/catalogo/vitrina.ts`), y de ellas solo las que CTCx aprueba una a una
+  en la vista del lote del OCP (`lot_fotos_publicas`, `src/lib/catalogo/fotosPublicas.ts`; el productor ve al subirlas qué no debe
+  llevar una foto pública); falta que el owner lo confirme; (c) un reporte
   revisado no dispara una evaluación nueva: sigue su circuito aparte.
 - **V5.139 · polígono opcional con 4 ha o menos, y franja «Sesión asistida»** (owner, 2026-10-02; ejecutado desde la conversación
   de `consolas`). **La regla del punto** (`src/lib/geo/referencia.ts`): con más de 4 ha el polígono ES la geolocalización y el
@@ -363,8 +390,10 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   nodo final, wrap V47, 2026-09-25): `Lot.officialPunto` (opcional, `data.ts`; lo llena `KaffetalExperience` desde
   `lot_evaluations.punto`) y el rótulo de «Lotes Galardonados» (`EvaluacionesTab`): «Punto homologado (piso)» y «Homologado desde
   CVA … · no catado en SCA · hasta X con una recata SCA» cuando la evaluación que rige fue CVA; las notas al productor dicen el
-  origen. `sca_total` ES el Punto (el piso si es homologado; nunca Tyrian homologado — **anulado en la V5.189**: el Punto es el CVA o un 2004 que vale lo mismo). **Pendiente KR**: el **dossier ES/EN**
-  (`LotDossierDoc`) todavía no dice el origen del Punto (fila en `ALINEACION` §3b, con la ficha pública de `cherry-picked`).
+  origen. `sca_total` ES el Punto (el piso si es homologado; nunca Tyrian homologado — **anulado en la V5.189**: el Punto es el CVA o un 2004 que vale lo mismo). ~~**Pendiente KR**: el **dossier ES/EN**
+  (`LotDossierDoc`) todavía no dice el origen del Punto (fila en `ALINEACION` §3b, con la ficha pública de `cherry-picked`).~~
+  **Resuelto**: `LotDossierDoc` se borró en la V5.166 y `DossierCtcx.tsx` dice «Punto CVA» o «Punto SCA 2004» en sus dos modos (el
+  del productor y el público); de esa fila de §3b solo queda la tienda de `cherry-picked`.
 - **La Arena y el Club cambiaron (V5.77, fase 1 del `PLAN_CIRCUITO_DEL_LOTE`) — copy de KR con dueño `kaffetal-regal`**: el
   Club como membresía **ya no existe** (firmar y publicar no lo exigen; el galardón no lo reparte). ~~`ContratosTab`
   («Pasaporte del Club», `isClubMember`) y el gate visual de «Mis contratos» hablan de algo retirado~~ — **retirado de
@@ -511,10 +540,13 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 - **Recorrer el bloque B del artefacto de revisión V5.0** sobre el panel nuevo (owner; B3/B4 primero)
   — el artefacto: `C:\dev\ctc-platforms\reference\review-v5\ctc-v5-review.html`.
-- **Estrenar el escáner visual** con soportes reales (los 7 lotes de producción siguen en `borrador`).
+- **Estrenar el escáner visual** con soportes reales (~~los 7 lotes de producción siguen en `borrador`~~ la cifra caducó: al
+  2026-10-10 hay 14 lotes, 8 galardonados y 6 en `borrador`, por SQL).
 - **Pagos**: se integrarán **los dos, Nequi y Zulu** (owner, 2026-09-19; el 16-sep el CEO había aplazado Nequi) — se
-  configuran más adelante; Stripe sigue aplazado. «Evaluar mi Café» sigue mandando a
-  `info@` mientras no haya medio de pago.
+  configuran más adelante; Stripe sigue aplazado. ~~«Evaluar mi Café» sigue mandando a
+  `info@` mientras no haya medio de pago.~~ Desde la V5.129 la tarjeta de la solicitud y la factura de cobro leen el **carril de
+  pago** que CTCx escribe en el OCP (`platform_settings.carril_de_pago_evaluacion`); mientras no esté configurado —y al 2026-10-10 no lo
+  está— las dos caras lo dicen y mandan a escribir a CTCx (`info@`).
 - **Google OAuth**: la línea del redirect-allowlist en Supabase para las puertas que lo ofrecen.
 - **Confirmación de correo en el alta** (memoria `project_kr_email_confirmation`): verificar que el
   SMTP/rate-limit de Supabase no bloquea registros reales antes de la beta.
@@ -530,8 +562,12 @@ Trabajas SOLO en el componente «Kaffetal Regal» (clave: kaffetal-regal) de la 
 3. AGENTS.md                            ← la compuerta y las reglas de la casa
 El productor nunca escribe grado ni estado: si tu tarea necesita que el OCP haga algo distinto, se
 anota como pendiente con dueño «consolas» y una línea en el §3. Campos nuevos del datasheet con
-default seguro. Se verifica en vivo con la sesión asistida del OCP sobre un productor o un Proveedor
-Desacoplado (las cuentas prueba-* ya no existen desde la V5.89). Al terminar:
+default seguro. Lo que KR deja ver en público (el Dossier público, la landing) no lleva al productor sin
+pasar por CTCx (ALINEACION §1, «Lo público del lote»). Se verifica en vivo con la sesión asistida del OCP
+sobre un productor o un Proveedor Desacoplado (las cuentas prueba-* ya no existen desde la V5.89; la
+cuenta de productor de auditoría de la V5.98 es del nodo final y la usa qa-guard). Si la tarea es el
+objetivo V6 de la landing, lee además docs/PLAN_V6_OBJETIVOS.md §1 y no empieces sin las decisiones del
+owner de su §5. Al terminar:
 compuerta completa (incl. qa-kr-panel, qa-kr-ficha), APP_VERSION + CHANGELOG, sello del sha, push,
 verificación en vivo, log de arquitectura, y «Pendientes» de este charter al día.
 Hoy: <la tarea>.

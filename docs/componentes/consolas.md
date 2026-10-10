@@ -17,8 +17,9 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 - **OCP · Operational Control Panel — *Operation***: el **pasaporte del lote** de punta a punta —
   **«Productores, Fincas y Lotes»** (`/ocp/kr`, V5.61: UNA tabla de grano lote con su mapa, y la vista completa por
   `?lote=` · `?finca=` · `?productor=` — visa EUDR, EVA y sello dentro), nominados (bache y veredicto Q-Grader),
-  **ofertas**, catálogo, contratos, **subastas**, **fichas**
-  (escáner), CTC Selection. (Los cuatro CRM de Cherry Picked se fueron a la LCP en la V5.59.)
+  **ofertas**, catálogo, contratos (desde la V5.196, el **Triage de Catálogo Activo**), **subastas**, **fichas**
+  (escáner; el set vive en la vista del lote y `/ocp/fichas` es un 308 a `/ocp/kr` desde la V5.97), CTC Selection, y el **Stock CTCx**
+  (V5.195). (Los cuatro CRM de Cherry Picked se fueron a la LCP en la V5.59.)
 - **ECP · Executive Control Panel — *Execution***: **con qué decide la casa y qué tiene pendiente** (V5.60). Cabecera «ECP ·
   Ejecución»: el **Tablero de Ejecución** (el Panel del ECP: las tareas DERIVADAS de las cuatro consolas en un sitio —
   `src/lib/panel/{tareas,tareasCarga}.ts`) y **Transcripciones** (con Stripe y la Herramienta de Guion, de este charter desde
@@ -40,7 +41,7 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 |---|---|---|
 | `/login` · `/verify` · `/panel` · `/cambiar-contrasena` | login maestro (2FA), selector, cambio forzado | `src/app/api/panel/auth/{password,verify,logout}` |
 | `/bcp/(app)/…` | Business | Ecosistema de Valor: `herramientas`, `directorio`, `coffeed`, `ctc-tech`, `varietales`, `terratalento`, `arena` (+ `[sessionId]`: sesiones de segunda apreciación, V5.77; + `temporadas`) · Configuración: `usuarios`, `socios/[nodo]`, `documentacion`, `mapa`, `consumo`, `plataformas`. `club` → 308 a `/ocp/subvenciones` (V5.77) |
-| `/ocp/(app)/…` | Operation — **el rail es el cuadro del owner (V5.63)**: Kaffetal Regal · Catálogo · Manejo de Stock Físico | `kr` (+ `kr/[id]/{dossier,kml}`, el Pasaporte de una finca) · **`asistencia`** y **`desacoplado`** (V5.75: la sesión asistida y el proveedor sin buzón, `src/lib/asistencia/`) · **`subvenciones`** (+ `campanas/[id]`, V5.77: las campañas del Club, `subvencionesActions.ts`) · **`solicitudes`**, `a-evaluar` y `en-evaluacion` (las TRES vistas de lo que fue Nominados: `nominados/CircuitoVista.tsx`; V5.80: la solicitud con factura y subvención, los Baches de Evaluación, el veredicto hasta la fase 4) · **`muestras`** (V5.80: Gestión de Muestras, 1.ª tanda) · `ofertas` («Pendiente Oferta»), `catalogo` (V5.196: los listados con sus entradas y su ancla; lo comercial), `contratos` (V5.196: el **Triage de Catálogo Activo** — `TriageBoard.tsx`, `triageActions.ts`, `src/lib/triage/{fobMinimo,servidor}.ts` —; + `lista`, `[id]`, `humedad`), `subastas`, `fichas`, `ctc-selection` (V5.85: «Oferta desde CTCx Selection», la disponibilidad de lo comprado en firme + el perfil único y la imagen por lote) · **`compras`** (+ `compras/mezclas`, `compras/mezclas/[id]` — V5.85/V5.87: el registro de compras en firme y las mezclas; desde la V5.195 la entrada se llama **«Adquisición de Stock Café»** y cada compra es de CTCx Selection o solo de stock; `comprasActions.ts`, `src/lib/compras/{reglas,mezclas,mezclasServidor,sampleKits,sampleKitsServidor}.ts`) · **`stock`** (+ `stock/sample-kits`, `stock/sample-kits/[id]` — V5.195: **«Stock CTCx»** en Manejo de Stock Físico, el café físico en partidas de pergamino · verde · tostado · empacado con su linaje y su cuadre, `stockActions.ts`, `src/lib/stock/{linaje,servidor}.ts`; los Sample Kits CP · Plus · Max armado → enviado · anulado son su segunda pestaña, sobre partidas; la URL de la V5.90 va con un 308) |
+| `/ocp/(app)/…` | Operation — **el rail es el cuadro del owner (V5.63)**: Kaffetal Regal · Catálogo · Manejo de Stock Físico | `kr` (+ `kr/[id]/{dossier,kml}`, el Pasaporte de una finca) · **`asistencia`** y **`desacoplado`** (V5.75: la sesión asistida y el proveedor sin buzón, `src/lib/asistencia/`) · **`subvenciones`** (+ `campanas/[id]`, V5.77: las campañas del Club, `subvencionesActions.ts`) · **`solicitudes`**, `a-evaluar` y `en-evaluacion` (las TRES vistas de lo que fue Nominados: `nominados/CircuitoVista.tsx`; V5.80: la solicitud con factura y subvención, los Baches de Evaluación, el veredicto hasta la fase 4) · **`muestras`** (V5.80: Gestión de Muestras, 1.ª tanda) · `ofertas` («Pendiente Oferta»), `catalogo` (V5.196: los listados con sus entradas y su ancla; lo comercial), `contratos` (V5.196: el **Triage de Catálogo Activo** — `TriageBoard.tsx`, `triageActions.ts`, `src/lib/triage/{fobMinimo,servidor}.ts` —; + `lista`, `[id]`, `humedad`), `subastas`, ~~`fichas`~~ (308 a `/ocp/kr` desde la V5.97: `FichasClient.tsx` vive en `kr/`), `ctc-selection` (V5.85: «Oferta desde CTCx Selection», la disponibilidad de lo comprado en firme + el perfil único y la imagen por lote) · **`compras`** (+ `compras/mezclas`, `compras/mezclas/[id]` — V5.85/V5.87: el registro de compras en firme y las mezclas; desde la V5.195 la entrada se llama **«Adquisición de Stock Café»** y cada compra es de CTCx Selection o solo de stock; `comprasActions.ts`, `src/lib/compras/{reglas,mezclas,mezclasServidor,sampleKits,sampleKitsServidor}.ts`) · **`stock`** (+ `stock/sample-kits`, `stock/sample-kits/[id]` — V5.195: **«Stock CTCx»** en Manejo de Stock Físico, el café físico en partidas de pergamino · verde · tostado · empacado con su linaje y su cuadre, `stockActions.ts`, `src/lib/stock/{linaje,servidor}.ts`; los Sample Kits CP · Plus · Max armado → enviado · anulado son su segunda pestaña, sobre partidas; la URL de la V5.90 va con un 308) |
 | `/ecp/(app)/…` | Execution | `/ecp` (Tablero de Ejecución), `transcripciones` — y, **de `herramientas-internas`**: `direccionamiento/*`, `pvc/*`, `cotizador-{lotes,logistico,empaque}`, `anclas-mercado`, `automatizaciones` |
 | `/lcp/(app)/…` | Relationship (V5.59) | `buzon`, `leads`, `lista-espera` (`?lista=ctc-home·roast·x·directorio·herramientas·terratalento`), `crm/{caas,green,roast,x}` |
 | `/bcp|/ocp|/ecp/<modulo>/[[...resto]]` | **talones 308** de las mudanzas V4.24–V5.61 (53 rutas; nueve viajes de vuelta en la V5.60; cuatro «muchas a una» en la V5.61) | fuente: `src/lib/panel/rutasMovidas.ts`; fuera de `(app)` a propósito |
@@ -85,7 +86,8 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
   (subvención, factura, recibo) y `muestrasActions.ts` (ubicar, salidas — `borrador`).
 - **`src/lib/catacion/rueda.ts`** (V5.81, puro): la taxonomía ÚNICA de la rueda de sabores (nueve familias SCA/WCR, ES/EN;
   `lot_evaluations.rueda` guarda solo ids). La planilla `src/components/bcp/LabEvalEditor.tsx` + `src/lib/arena/labEvaluation.ts`
-  (SCA 2004 y/o CVA con `computeSca2004`/`computeCva`; desde la V5.92 dual, con `homologacion.ts` para el Punto) la usan el Centro de Calidad (charter `socios`), el OCP y la Arena.
+  (SCA 2004 y/o CVA con `computeSca2004`/`computeCva`; desde la V5.92 dual; ~~con `homologacion.ts` para el Punto~~ desde la V5.189
+  el CVA es el principal y un SCA 2004 vale lo mismo: `src/lib/arena/punto.ts` y `equivalencia.ts`) la usan el Centro de Calidad (charter `socios`), el OCP y la Arena.
 - **La oferta anclada al PVC** (V5.82): `ofertasActions.ts` (`emitOffer` temporada · directa · excepcion · black · subasta,
   `decidirNoOfertar`, `reabrirDecision`) pide el precio a `pvcParaGrado` (`src/lib/pvc/servicio.ts`, de `herramientas-internas`,
   sobre `src/lib/pvc/precio.ts` puro) y los términos a `src/lib/trato/terminos.ts`; `reevaluar` vive en `nominadosActions.ts`.
@@ -99,7 +101,7 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 `muestras` · `muestra_movimientos` (V5.80) ·
 `arena_entry_codes` · `arena_sessions` · `arena_session_lots` · `arena_scores` · `lot_evaluations`
 (filas `q_grader_batch` y `bcp_arena`) · `lot_offers` (emisión) · `lot_fichas` (escáner y set) ·
-`lot_auctions` (administración) · `black_negotiations` (DORMIDA desde la V5.85: sin lector ni escritor) · **`compras`** (+ `destino` V5.90) · **`ctcx_selection_lotes`** (V5.85) · **`mezclas`** (+ `tipo`, `temporada`, `objetivo_temporada_kg` V5.91) · **`mezcla_componentes`** (V5.87) · **`sample_kits`** · **`sample_kit_items`** (V5.90; `partida_id` y `kg` V5.195) · **`stock_partidas`** · **`stock_transformaciones`** · **`stock_salidas`** (V5.195, el Stock CTCx: congeladas por compuerta, nada se borra) · **`catalogo_fuentes`** (V5.196, las declaraciones del Triage con su FOB mínimo; se retiran, no se editan) · `purchase_contracts` · `contract_months` (V5.84, el trato mes a mes) ·
+`lot_auctions` (administración) · `black_negotiations` (DORMIDA desde la V5.85: sin lector ni escritor) · **`compras`** (+ `destino` V5.90) · **`ctcx_selection_lotes`** (V5.85) · **`mezclas`** (+ `tipo`, `temporada`, `objetivo_temporada_kg` V5.91) · **`mezcla_componentes`** (V5.87) · **`sample_kits`** · **`sample_kit_items`** (V5.90; `partida_id` y `kg` V5.195) · **`stock_partidas`** · **`stock_transformaciones`** · **`stock_salidas`** (V5.195, el Stock CTCx: congeladas por compuerta, nada se borra) · **`catalogo_fuentes`** (V5.196, las declaraciones del Triage con su FOB mínimo; se retiran, no se editan) · `purchase_contracts` · `contract_months` (V5.84, el trato mes a mes; DORMIDA desde la V5.176, `PLAN_CICLOS.md` §8) ·
 `contract_releases` (desde la V5.84, espejo de cada envío registrado) ·
 `humidity_readings` · `lot_listings` (publicación) · `club_campaigns` · `ai_usage` · `transcripts` ·
 `transcript_workers` (+ RPC `claim_transcript_job`).
@@ -141,6 +143,9 @@ solicitudes de revisión de datos con su punto y su adjunto. **`qa-visa-check.mj
 línea de tiempo contra el corte EUDR, Sí/No en color, fichas, coordenada copiable, evidencia del chequeo ×4, archivo de corroboración por
 certificación). **`qa-borrado-nuclear-check.mjs`** (32, V5.134 — el borrado nuclear: clase `emite`, doble confirmación revalidada en el servidor, archivar antes de borrar, los cinco bloqueos, el aviso sin el motivo, el archivo de solo lectura). **`qa-inactividad-check.mjs`** (26, V5.103 — la regla pura del barrido de inactividad contra el código; el sello solo si el correo salió;
 la única rutina de borrado; el cron con tres barridos; las acciones del OCP con clase `emite`; las cuentas protegidas del owner en el acta).
+**`qa-ciclos-check.mjs`** (146 — el calendario ISO, la ventana que decide la fecha de firma, los mínimos y la corrección del PVC por
+ciclo; `docs/PLAN_CICLOS.md`) · **`qa-triage-catalogo-check.mjs`** (V5.196 — el Triage y el ancla del precio) · **`qa-stock-ctcx-check.mjs`**
+(V5.195 — las partidas, el linaje y el cuadre; los tres los añadió el nodo final al charter el 2026-10-10).
 `qa-direccionamiento` y `qa-anclas` pasaron a `herramientas-internas` el 2026-09-19.
 
 ## Reglas propias
@@ -177,18 +182,47 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
 
 ## Pendientes
 
+- **V6 · objetivo 2: Triage y Catálogo Activo** (owner, 2026-10-10, al declarar la V6.0; plan `docs/PLAN_V6_OBJETIVOS.md` §2, una
+  conversación desde `docs/KICKOFF.md` «Objetivos V6»; el plan que manda sigue siendo `docs/PLAN_TRIAGE_CATALOGO.md`; fila en
+  `ALINEACION` §3b). Dueño este componente, con `cherry-picked` en la tienda. **A** · activar con datos reales: una referencia de
+  Empacado hasta FOB con flete real (hoy la única es «REF 1 TEST»), declarar los seis tratos (0 declaraciones al 2026-10-10) y comparar
+  el ancla con el N2 del PVC, todo verificado por SQL. **B** · del Triage a la tienda sin perder reglas: `deposit_pct` y `arrival_date`
+  (se editan en el Catálogo Activo y no llegan a la tienda ni a `place_order`, que fijan el 30 %), un solo MOQ (228 kg en `motor.ts`,
+  252 en el charter de CP, 350 en `ASSOC_BLACK_MOQ`), `spot` y `pre` visibles por grado, «kg de verde» y una sola proyección pública
+  (hoy la tienda lee `public_lot_catalog` y la vitrina `public_lot_vitrina`). **C** · las ventas salen del stock y de la cuenta del
+  contrato (plan §7). **D** · la UX del Triage (la ruta `/ocp/triage` con su 308, declarar en lote, tostado y empacado, mezclas físicas).
+  Guardianes: `qa-triage-catalogo`, `qa-stock-ctcx`, `qa-compras`, `qa-moneda`, `qa-sneak-peek`, `qa-catalogo-publico`,
+  `qa-ficha-publica`; `qa-checkout` a mano. Ninguna tanda empieza sin las decisiones 3 y 6 a 10 del owner, y la 13 si la tanda conduce la tienda (§5 del plan); antes de
+  empezar, leer la entrada de la V5.203 en el CHANGELOG (Adquisición → Stock CTCx → Triage → Selection → Catálogo Activo).
+- **Lo que la auditoría de privacidad del 2026-10-10 deja a este componente** (dueño de las vistas y de la publicación; filas en
+  `ALINEACION` §3b, con `cherry-picked` como lector): (a) la política `lot_listings_select_public` es `using (true)` para todo rol y
+  deja a `anon` leer todos los listados, también los borradores y los archivados con su precio: estrecharla antes de que el Triage
+  declare el primero; (b) la vista `public_transparency_pricing` deja a `anon` leer el precio al productor del contrato
+  (`price_per_kg_locked`) de un listado con transparencia encendida: el owner decide si se queda; (c) `public_lot_catalog` conserva
+  `finca_name` y `municipio` a null desde la V5.202 (~~y su `name` es todavía el que escribe el productor~~ — corregido en la misma
+  V5.202: el nombre generado, como la vitrina, que conserva también las dos columnas a null): quitarlos de las dos vistas es DDL
+  cuando nadie los lea. Hoy las tres devuelven 0 filas.
+- **El carril de pago de la evaluación sigue sin configurar** (V5.129; SQL del 2026-10-10: no hay fila
+  `platform_settings.carril_de_pago_evaluacion`). Lo escribe el owner o un colaborador con nivel en «Solicitudes de Evaluación»
+  (`solicitudesActions.ts`); mientras falte, la tarjeta de la solicitud en Kaffetal Regal y la factura lo dicen y mandan a escribir a
+  CTCx. Zulu, como pasarela, sigue sin integrar (fila de `ALINEACION` §3b; nodo final, 2026-10-10).
 - **V5.196 · el Triage de Catálogo Activo** (tanda C del plan `docs/PLAN_TRIAGE_CATALOGO.md`, ejecutada desde el nodo final; las tres
   tandas del plan quedan hechas): `/ocp/contratos` declara los tratos por ventana y el Stock CTCx al Catálogo Activo con su FOB mínimo,
-  el ancla del precio. **Pendiente del owner, en este orden**: (1) escribir el **O&P de CTCx** y la trilla en los ajustes del triage
-  (sin O&P no se declara por defecto); (2) guardar la primera **referencia de Empacado hasta FOB** con tarifa real de flete (ECP); (3)
-  declarar los seis tratos vigentes (Blue, Black, Red) y revisar el ancla de cada uno frente al N2 del PVC. **Fuera de alcance, con
+  el ancla del precio. **Pendiente del owner, en este orden**: (1) ~~escribir el **O&P de CTCx** y la trilla en los ajustes del triage
+  (sin O&P no se declara por defecto)~~ **hecho el 2026-10-09** (`platform_settings.triage_catalogo` configurado a las 21:55 UTC; su
+  valor vive solo en la base); (2) ~~guardar la primera **referencia de Empacado hasta FOB** con tarifa real de flete (ECP)~~ **hecho a
+  medias el 2026-10-09**: hay una referencia vigente, `EF-2026-001`, guardada a las 21:56 UTC, pero se llama «REF 1 TEST»; cambiarla por
+  una con flete real es la tanda A del objetivo 2 de `PLAN_V6_OBJETIVOS.md`; (3)
+  declarar los seis tratos vigentes (Blue, Black, Red) y revisar el ancla de cada uno frente al N2 del PVC — **sigue pendiente** (al
+  2026-10-10, 0 declaraciones en `catalogo_fuentes`; los 6 tratos son provisionales, ver Kaffetal Regal). **Fuera de alcance, con
   dueño** (plan §7): las ventas de la tienda como salidas del stock y ventas del contrato (la conversión verde → CPS; hoy CTCx confirma
   la venta semanal en kg de CPS a mano), una tienda de tostado y empacado (`cherry-picked`), las mezclas físicas.
 - **V5.195 · el Stock CTCx** (tanda B del plan `docs/PLAN_TRIAGE_CATALOGO.md`, ejecutada desde el nodo final): `/ocp/stock` con el
   linaje y el cuadre; el café entra solo al recibir, al pagar y al registrar una compra que llegó; los Sample Kits se arman con
   partidas (`/ocp/stock/sample-kits`). **Pendiente del owner**: recorrerlo con el primer café real (el despacho del saco de 70 kg de
   La Floresta, `pendiente`, entrará solo al recibirse) y decir si las propuestas de reparto (trilla ≈ 80 % de verde · tostión ≈ 85 %)
-  le sirven de punto de partida. **Sigue aquí**: la tanda C (el Triage). Fuera de alcance, con dueño (plan §7): las mezclas físicas
+  le sirven de punto de partida. **Estado al 2026-10-10** (SQL): una partida, `SX-2026-0001` (15 kg de pergamino de una compra
+  registrada ese día), y 6 despachos de contrato en `pendiente`; ningún café de un trato ha entrado todavía. **Sigue aquí**: la tanda C (el Triage). Fuera de alcance, con dueño (plan §7): las mezclas físicas
   (una partida que nace de varias) y las ventas de la tienda como salidas del stock.
 - **V5.194 · arranca el Triage de Catálogo Activo** (owner, 2026-10-09; plan `docs/PLAN_TRIAGE_CATALOGO.md`): «Ofertas CP
   Aceptadas» se rebautiza «Triage de Catálogo Activo» y recibe las ofertas aceptadas y el Stock CTCx (que absorbe el Stock de
@@ -360,6 +394,9 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
   V5.71–V5.92 (los 22 asientos del log V46) con la plataforma en **V5.92**. **La V6.0 NO se declara en ese wrap**: el owner la declarará
   al cerrar la **Etapa 2** (correr el circuito del lote de punta a punta con Asistencia a Proveedores y Proveedor Desacoplado, afinando el
   OCP hasta el Catálogo Activo), en una conversación nueva — el mismo patrón de la V5.0: el hito marca el corte estable y abre la etapa.
+  **Cerrado el 2026-10-10**: el owner declaró la **V6.0** al cerrar el sprint («quiero cerrar este largo sprint de desarrollo para llevar
+  todo el sistema a la V6.0»), después de la V5.201 y de las dos tandas que salen antes (V5.202 y V5.203). Lo que la Etapa 2 no llegó a
+  conducir en el navegador sigue en estos «Pendientes»; lo que viene son los tres objetivos de `docs/PLAN_V6_OBJETIVOS.md` (arriba).
   Las decisiones del owner del 2026-09-25 quedaron todas ejecutadas (V5.89–V5.92); **ningún brief de la Etapa 1** (Muestras,
   Compras, rutas del proveedor) tiene decisión abierta — los de **Plataformas de Pagos**, **Seguimiento de Temas** y
   **Simplificar el OCP** (este absorbido en lo esencial por el plan del circuito) siguen con las suyas (nodo final, wrap V47).
@@ -672,7 +709,10 @@ la única rutina de borrado; el cron con tres barridos; las acciones del OCP con
   «descuento». La línea está en `ALINEACION` §3. Lo que queda es **copy con dueño `kaffetal-regal`** (`EvaluacionesTab`,
   `PorQueSection`, `faq.ts` n.º 3, `TratoSection`) y la regeneración de `reference/narrativa-2026-09-17/`, que es del owner
   y vive fuera del repo.
-- **DOS GUARDIANES SIN CORRER, por falta de credenciales** (2026-09-18). `qa-guard-check.mjs` y `qa-checkout-check.mjs`
+- ~~**DOS GUARDIANES SIN CORRER, por falta de credenciales**~~ — **superado en la V5.98** (owner, 2026-09-30): hay dos cuentas de
+  auditoría `@ctc-qa-test.co`, un productor y un comprador, del nodo final, con sus credenciales solo en `.env.local`; `qa-guard-check`
+  y `qa-checkout-check` las leen de ahí, limpian lo que escriben y se corren a mano (`ALINEACION` §4.6). `qa-checkout-check` pide
+  además un listado publicado, y al 2026-10-10 hay 0. Lo que sigue es la historia (2026-09-18). `qa-guard-check.mjs` y `qa-checkout-check.mjs`
   piden las cuentas `prueba-*` por argv (memoria `ctc-qa-fleet`) y esta sesión no las tenía. Quedan **sin ejecutar** dos
   cosas de la V5.48–V5.52: la afirmación nueva «producer CANNOT set `public_code`» —que sí se verificó por SQL,
   simulando el rol `authenticated`, y devolvió «Estos campos solo puede actualizarlos CTC.»— y el circuito de
@@ -773,6 +813,10 @@ Internas» del rail del ECP (Definición de Contexto, Modelo Económico —PVC y
 con sus cotizadores y anclas) NO son tuyos: son del charter herramientas-internas.
 Tuyos son su rail, sus permisos y sus rutas — y llevar lo que esos modelos calculan a ofertas, contratos y veredicto.
 Busca claves de permiso y revalidatePath, no solo rutas. Las consolas no se conducen en navegador.
+Los planes que mandan: docs/PLAN_CIRCUITO_DEL_LOTE.md, docs/PLAN_CICLOS.md y docs/PLAN_TRIAGE_CATALOGO.md; lo que
+sigue a la V6.0 está en docs/PLAN_V6_OBJETIVOS.md (el objetivo 2, Triage y Catálogo Activo, es tuyo) — ninguna
+tanda de ese plan empieza sin las decisiones del owner de su §5. Lo público de un lote sale solo de la vista
+public_lot_vitrina y de la lista blanca del Dossier público (ALINEACION §1).
 Los WRAPS del mapa interactivo se llaman SOLO desde la conversación «WRAP-COMMIT-PUSH (CTC Platforms)»
 de este grupo (ALINEACION §5.3: el nodo final, que audita maestro ↔ charters antes de compilar); tu asiento en el log va en el mismo commit que la versión (qa-arqlog).
 Al terminar: compuerta completa, APP_VERSION + CHANGELOG en el mismo commit, sello del sha, push,

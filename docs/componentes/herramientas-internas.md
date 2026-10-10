@@ -117,12 +117,19 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
 
 ## Pendientes
 
+- **V6 · lo que los objetivos de `docs/PLAN_V6_OBJETIVOS.md` le piden a este componente** (owner, 2026-10-10, al declarar la V6.0;
+  anotado por el nodo final). **Objetivo 2, tanda A** (dueño `consolas`): la referencia de Empacado hasta FOB con **flete real** —la
+  única vigente, `EF-2026-001`, se llama «REF 1 TEST»— y el **N2 del PVC** contra el que el Triage compara el ancla de cada trato.
+  **Objetivo 1, tanda A** (dueño `plataforma`): la propuesta es que el calendario público de CTC, KR y CP pase a los Ciclos y lea
+  las fechas de las ediciones (`src/lib/trato/calendario.ts`, `public_pvc_next`; decisión 2 del owner): si se aprueba, una edición
+  sin fechas o sin publicar se notará en las tres landings. La edición siguiente, PVC-F1-2027, sigue en borrador con plazo del owner el 29-nov-2026 (viñeta V5.179).
 - **V5.196 · las referencias de Empacado hasta FOB ya anclan precios**: el Triage de Catálogo Activo (`consolas`) suma una referencia
   vigente al café de cada declaración para su FOB mínimo (lo que el plan llamó «el ancla»); la declaración guarda su referencia y la
   cifra. Retirar una referencia no cambia las declaraciones ya hechas.
 - **V5.194 · Empacado hasta FOB** (owner, 2026-10-09; ejecutado desde el nodo final, plan `docs/PLAN_TRIAGE_CATALOGO.md` §2.2):
   reemplazó al costo de empaque de la máquina de sellado (la amortización y el Cuadro de evaluación salieron por pedido del owner).
-  **Pendiente del owner**: guardar la primera referencia con una **tarifa real de flete** al puerto que use — sin una referencia
+  **Pendiente del owner**: ~~guardar la primera referencia~~ (**hecho a medias el 2026-10-09**: `EF-2026-001` está vigente, pero es
+  «REF 1 TEST») con una **tarifa real de flete** al puerto que use — sin una referencia
   vigente el Triage (tanda C) no podrá anclar el FOB mínimo —, y revisar los valores por defecto (del cotizador logístico de
   2026-08: bolsa $5.000, caja de 12 kg $7.000 y de 24 kg $10.000, saco $12.000 + GrainPro $10.000, estiba $55.000, agencia,
   certificados, re-pesaje, inspección y terminal) y la productividad (125 kg por jornal al vacío, 500 en sacos). El saco de 35 kg
@@ -132,8 +139,8 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
   (los umbrales se leen igual en los dos protocolos); la «fase 2» lee `PuntoSca` de `src/lib/arena/punto.ts` y suma el surplus sobre
   el Punto (no hay piso).
 - **V5.179 · el agente de la edición siguiente** (`src/lib/pvc/{agente,insumos}.ts`, cron `/api/cron/agente-pvc` 11:40 UTC, tarjeta «Edición siguiente», Tablero con `?borrador=`). Hay un borrador vivo: **PVC-F1-2027 = $2.500.000** (pedido por el owner el 2026-10-07; el cron no lo rehace, solo recuerda el plazo). Pendiente del owner: revisar lo ARRASTRADO (el informe sugiere C strip 303,2 US¢/lb y advierte que el costo de feb-2026 subestima el piso) y publicarlo desde el Tablero a más tardar el **29-nov-2026**; puede regenerarlo el 16-nov con datos frescos. Pendiente técnico: el libro de IA no anota el costo de las búsquedas web (solo tokens) ni las llamadas abortadas por tiempo.
-- **V5.178 · la vigilancia de la corrección** (`src/lib/pvc/vigilancia.ts`, cron `/api/cron/vigilancia-pvc` 11:25 UTC, tabla `pvc_correcciones`, tarjeta en Ediciones): 15 de 20 lecturas FNC, alza/baja ±10 %, una por ciclo y por PVC; el owner aprueba (publica la edición corregida con `publicarEdicionCorregida` → `calcularConPvc`) o rechaza; vence al terminar el ciclo. Pendiente: tanda 4 (b), el agente que propone la edición siguiente en la semana 1 del ciclo 2.
-- **V5.177 · Flete a CTCx** (owner, 2026-10-07): el «auxilio de transporte» de la V5.174 se descarta (no existe: las cooperativas descuentan el flete de la base FNC). `pvc_editions.flete_por_region` = tres niveles por carga (Regional Santander $25.000 · Nacional Centro $50.000 · Nacional Sur $70.000), editables en Ediciones → «Variables de la edición» (owner, auditoría; no entran en la huella). `pvcParaGrado(…, { fleteRegion })` los suma al precio final (`src/lib/trato/flete.ts`). Pendiente (tanda 4): que el agente copie el flete de la edición anterior al proponer la siguiente.
+- **V5.178 · la vigilancia de la corrección** (`src/lib/pvc/vigilancia.ts`, cron `/api/cron/vigilancia-pvc` 11:25 UTC, tabla `pvc_correcciones`, tarjeta en Ediciones): 15 de 20 lecturas FNC, alza/baja ±10 %, una por ciclo y por PVC; el owner aprueba (publica la edición corregida con `publicarEdicionCorregida` → `calcularConPvc`) o rechaza; vence al terminar el ciclo. ~~Pendiente: tanda 4 (b), el agente que propone la edición siguiente en la semana 1 del ciclo 2.~~ **Hecho en la V5.179** (el agente, arriba).
+- **V5.177 · Flete a CTCx** (owner, 2026-10-07): el «auxilio de transporte» de la V5.174 se descarta (no existe: las cooperativas descuentan el flete de la base FNC). `pvc_editions.flete_por_region` = tres niveles por carga (Regional Santander $25.000 · Nacional Centro $50.000 · Nacional Sur $70.000), editables en Ediciones → «Variables de la edición» (owner, auditoría; no entran en la huella). `pvcParaGrado(…, { fleteRegion })` los suma al precio final (`src/lib/trato/flete.ts`). ~~Pendiente (tanda 4): que el agente copie el flete de la edición anterior al proponer la siguiente.~~ **Hecho en la V5.179**: `agente.ts` copia `flete_por_region` de la edición vigente al borrador (`PLAN_CICLOS.md` §9).
 - **V5.174 · variables de la edición** (fechas ISO, mínimos por grado, rangos de calidad, auxilio de transporte) en `pvc_editions` y en la pestaña Ediciones; PVC-F4-2026 re-fechado a 28 sep – 3 ene; `correccion.ts` (pura) lista para la vigilancia de la tanda 4.
 - **2026-10-07 · `docs/PLAN_CICLOS.md` §1 y §6** (owner): ediciones del PVC en trimestres de 13 semanas ISO (14 en años de 53) con fechas, mínimos por grado, rangos de calidad y auxilio de transporte como variables de la edición; agente en la semana 1 del ciclo 2 con publicación a más tardar en la semana 2; corrección por ciclo (15 de 20 lecturas FNC, ±10 %) que reemplaza el «10 de 15». Tandas 1 y 4.
 - **V5.160 · la escala de puntos GOBIERNA** (owner, 2026-10-06; ejecutado desde `consolas`). `escala.ts` deja de ser «la
@@ -179,16 +186,23 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
   ejecutado). Lo que dejó: la pestaña «Modelo Económico» de Direccionamiento era el sitio reservado para el TEXTO de doctrina
   («cómo gana dinero el negocio: margen por unidad CTCx / KR / CP») y nunca se escribió; al retirarla, **esa pieza ya no tiene
   pantalla**. Cuando el owner la redacte, va DENTRO del Modelo Económico (`/ecp/pvc`), no en una pestaña aparte.
-- **Con fecha — CN-1**: revisar la edición vigente PVC-F4-2026 (15-sep → 15-dic) para alinear los trimestres desde enero y
-  **publicar el PVC de ene–mar 2027 antes del 15-oct-2026** (espera la decisión O-1 del owner). La clave «CN-» del plan de
+- ~~**Con fecha — CN-1**: revisar la edición vigente PVC-F4-2026 (15-sep → 15-dic) para alinear los trimestres desde enero y
+  **publicar el PVC de ene–mar 2027 antes del 15-oct-2026** (espera la decisión O-1 del owner).~~ **CN-1, superado por
+  `PLAN_CICLOS.md`** (V5.174–V5.179): PVC-F4-2026 se re-fechó al trimestre ISO (2026-09-28 → 2027-01-03) y PVC-F1-2027 existe como
+  borrador (2027-01-04 → 2027-04-04, SQL del 2026-10-10); el plazo vigente es el del agente, arriba (publicarlo a más tardar el
+  **29-nov-2026**). La clave «CN-» del plan de
   narrativa se conserva aunque el dueño ya no sea `consolas`; lo mismo **CN-8** (regiones y motor v2.2.0) y la mitad de
   modelo de **CN-9** (la escala de puntos; la puerta en el veredicto sigue siendo del OCP). **HI-1** (calculadora «PVC ×
   grado» para OCP, KR y campo) ya era de aquí: su primera versión es la pestaña Grados (V5.45).
 - **Conflicto vivo en un precio real** (2026-09-18): la edición PVC-F4-2026 rotula su fila «Gold» como *88,0–88,9* y
   `definicion.ts` dice Gold 86,00–87,99. El owner decidió que manda `definicion.ts` — **cerrado en la V5.82** (fase 5 del `PLAN_CIRCUITO_DEL_LOTE`, desde `consolas`): `RANGOS` del motor TS se DERIVA de `definicion.ts` (`80,00–81,99`…) y `precio.ts` no lee el `rango` de una edición publicada (las de antes conservan los rótulos viejos). Quedan con dueño aquí los rótulos del motor Python (`pvc_model_v2.py`) y del tablero HTML (`PVC_Tablero.html:232`), que deben decir lo mismo.
-- **Validar la escala de puntos con el owner** antes de tocar `definicion.ts` (`ALINEACION` §3b): multiplicativa, K derivada,
-  puerta 80–81,99, Tyrian exige SCA ≥ 89; y fijar el X % del collar de TRM (propuesta 6 %).
-- **Fase 2 del PVC** (`docs/PVC_BCP_PLAN.md` §7–§9): las cinco decisiones están **tomadas** (owner,
+- ~~**Validar la escala de puntos con el owner** antes de tocar `definicion.ts` (`ALINEACION` §3b): multiplicativa, K derivada,
+  puerta 80–81,99, Tyrian exige SCA ≥ 89;~~ **superado en la V5.160** (la escala gobierna `definicion.ts`; viñeta V5.160, arriba). **Queda
+  solo** fijar el X % del collar de TRM (propuesta 6 %).
+- **Fase 2 del PVC** (`docs/PVC_BCP_PLAN.md` §7–§9) — **PARCIAL al 2026-10-10**: `gradoPorPuntos` (`definicion.ts`) y `puntosCtc`
+  (`escala.ts`) existen desde las V5.158–V5.162 y la escala gobierna desde la V5.160; **quedan** `DENSIDAD_REFERENCIA` (pendiente del
+  comité, `escala.ts`), el collar de TRM, `moqPorGrado` desde la edición (no existe en `src/`; `ASSOC_BLACK_MOQ` sigue en CP) y la exhibición
+  por moneda de destino (el FOB mínimo en US$ ya lo calcula el Triage desde la V5.196, `src/lib/triage/fobMinimo.ts`); CN-4 es de `consolas`. Lo que sigue es el texto original. Las cinco decisiones están **tomadas** (owner,
   2026-09-15). Toca ejecutarlas en una versión: `definicion.ts` pasa a la escala de puntos CTC (§9.1; toca el
   contrato de grados de `ALINEACION` §1 y a KR, CP, OCP, cotizadores y Notion), `moqPorGrado` desde la edición
   (~~§9.2~~ — el cuadro del §9.2 y las filas Black/Red del §9.3 los supera el **§14.8**, V5.91: 3 cargas, el MOQ de compra;

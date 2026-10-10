@@ -65,6 +65,14 @@ Un cambio en el modelo de verificación toca `sanitizeDoc`, el BCP y la insignia
 
 ## Pendientes
 
+- **V6 · objetivo 1, tanda E: el Directorio con la narrativa vigente** (owner, 2026-10-10, al declarar la V6.0;
+  `docs/PLAN_V6_OBJETIVOS.md` §1, dueño de la tanda `plataforma`, con este componente). El bloque del ecosistema de la landing
+  (`Landing.tsx`, hacia las líneas 318–405, inventario del 2026-10-10) cuenta el modelo viejo: «Cupping Arena: catación a ciegas ante
+  Q-Graders, dos veces al año» (desde la V5.77 la Arena es una sesión de segunda apreciación), «Certificación CTC gratis» (la
+  evaluación cuesta $200.000 con la coinversión de CTCx), Europa y el embarque a Ámsterdam (la narrativa v4 habla de FOB en US$ y
+  regiones habilitadas: decisión 3 del owner). Y la landing está **solo en español**, contra «tres idiomas en toda superficie
+  pública» (`ALINEACION` §1): pasarla a ES · EN · DE es la decisión 5 del owner. Los cursos SCA del Directorio son legítimos y no se
+  tocan. Guardianes de la tanda: `qa-recuperacion`, `qa-rutas-consolas`, `qa-nav`.
 - **Guardián propio** (`qa-directorio-check.mjs`): el ciclo `pendiente → aprobado/rechazado → retiro`, la
   insignia pública derivada, y que la búsqueda sin tildes siga viva.
 - **Verificar que `directoriodelcafe.ctcexport.com` resuelve y sirve con TLS** (el doc de dominio deja el paso

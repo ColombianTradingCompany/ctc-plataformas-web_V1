@@ -6,6 +6,11 @@
 > `docs/PVC_BCP_PLAN.md` (calendario de publicación, disparador) remiten aquí. **No hay contratos en producción** al
 > escribirlo: el cambio no migra nada.
 
+> **Estado (V6.0, 2026-10-10).** Las tandas del §9 están hechas (V5.174–V5.179) y el §11 (la aceptación provisional) en la V5.190;
+> el plan sigue mandando sobre el trato de Cherry Picked en la V6.0. Lo que viene está en `docs/PLAN_V6_OBJETIVOS.md`: el objetivo 1
+> lleva el calendario de ciclos a las landings (tanda A, decisión 2 del owner) y el objetivo 2 continúa el Triage, que lleva al
+> Catálogo Activo lo declarado en los tratos por ventana.
+
 ## 0. Por qué
 
 - Los perfiles sensoriales de los primeros «pepeos» no son representativos: el productor **evalúa su lote cuando quiera**

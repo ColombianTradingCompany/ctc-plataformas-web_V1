@@ -149,7 +149,9 @@ CV App Manager extraído del BCP).
       compilados desde los charters por `docs/componentes/build_kickoff.py` — los diez componentes
       + `plataforma` + CommaaS —, cada uno con su grupo, su charter y una sugerencia de primera tarea.
       Se ejecutó antes que 3.7 por decisión del owner.)*
-- [ ] **3.9 Decomisionar OneDrive** (§4) — desde una sesión fresca.
+- [x] **3.9 Decomisionar OneDrive** (§4) — desde una sesión fresca. *(comprobado el 2026-10-10: la carpeta de OneDrive
+      del §4 ya no existe y `AGENTS.md` la da por decomisionada; la clave de
+      memoria vieja sigue en `.claude/projects` sin carpeta de trabajo, como permite el paso 3.)*
 
 ## 4 · Decomisionar la carpeta de OneDrive (sesión FRESCA, todo lo demás cerrado)
 

@@ -24,7 +24,7 @@ blanca → noticia elegida → capítulo (Haiku, a propósito) + portada (Gemini
 |---|---|
 | `/coffeed` | la Home propia del muro (Clase C: solo capítulos `published` + anuncios) |
 | `/bcp/coffeed` | `CoffeedConsole`: Entregas · Redacción · Muro · Identidad · Canon |
-| `/socios/estudio-contenido/panel` (+ `/source-wrapper`, `/datawave`, `/rt-scriptor`) | el taller del socio (`studioGate()`: socio con cookie pública O operador con grant de BCP) |
+| `/socios/estudio-contenido/panel` (+ `/source-wrapper`, `/datawave`, `/rt-scriptor`) | el taller del socio (`studioGate()`: socio con ~~cookie pública~~ su cookie propia `ctc-socios-auth` —`createPartnerSessionClient`, desde la V5.145— O operador con grant de BCP, por la cookie del panel) |
 | el muro en KR (módulo), CP Green (`#coffeed`) y Directorio (pestaña, miembros verificados) | `CoffeedWall` compartido |
 
 ## Mapa de código
@@ -77,6 +77,14 @@ formato toca el trigger, la action y el cliente a la vez — y las tres superfic
 
 ## Pendientes
 
+- **V6 · objetivo 1, tanda E: la marca en Coffeed** (owner, 2026-10-10; `docs/PLAN_V6_OBJETIVOS.md` §1, dueño de la tanda
+  `plataforma`): la marca **CTCx** donde el muro y su Home dicen «CTC» (hasta dónde llega el cambio de nombre es la decisión 1 del
+  owner, §5 del plan). El contenido de los capítulos sigue en español a propósito. Guardianes de la tanda: `qa-recuperacion`,
+  `qa-rutas-consolas`, `qa-nav`.
+- **V5.145 · el socio del Estudio entra con su propia cookie** (`ctc-socios-auth`; ejecutado desde `consolas`; no estaba anotado aquí,
+  lo recoge el nodo final el 2026-10-10): la vía «socio» de `studioGate` usa `createPartnerSessionClient()` (`studioGate.ts`), y una
+  credencial del Estudio ya no deja sesión en las plataformas públicas. **Abierto**: los talleres (Source Wrapper, Datawave,
+  RT-Scriptor) no tienen el latido `SesionViva` que la V5.145 puso en Evaluación de Lotes del Centro de Calidad (charter `socios`).
 - **V5.200 · el ticker de la portada de CTC solo con noticias del café** (owner, 2026-10-10; ejecutado desde WRAP-COMMIT-PUSH). El
   ticker (`src/lib/market/ticker.ts`, componente ctc-home) lee los medios de la lista blanca de Coffeed; desde aquí a un medio
   generalista (el que tiene palabras clave) le aplica el filtro de la Redacción y además `esTitularDelCafe` (este módulo,

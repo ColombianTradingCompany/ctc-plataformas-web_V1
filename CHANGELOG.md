@@ -19,7 +19,22 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.203] — 2026-10-10 (commit pendiente)
+## [V6.0] — 2026-10-10 (commit pendiente)
+
+- **Hito**: **V6.0** — el owner cierra el sprint de desarrollo («quiero cerrar este largo sprint de desarrollo para llevar todo el
+  sistema a la V6.0») y deja el terreno para tres objetivos de mejora, cada uno con su plan y su prompt de arranque:
+  **(1)** las landing pages con la narrativa y los conceptos vigentes, **(2)** el Triage y el Catálogo Activo, **(3)** el login de
+  Cherry Picked (UI/UX y contenido). Desde la V5.92 (V47 del mapa) la plataforma ganó: el Centro de Calidad con su informe, la
+  equivalencia CVA ↔ SCA 2004 con el CVA como protocolo principal (V5.189) y el grado por El Punto y la Tríada; ofertas ancladas al
+  PVC con firma y contrato provisional; los Ciclos de Cherry Picked por ventanas (venta semanal, baches, despachos, 60/40, flete) con
+  la vigilancia y el agente del PVC; el Stock CTCx, el Triage de Catálogo Activo con su FOB mínimo y Adquisición de Stock Café; el
+  Dossier CTCx y el Dossier público con su vitrina, Find my Lot por `CTC-L-` y la regla de que nada público lleve al productor.
+- **Docs**: `docs/PLAN_V6_OBJETIVOS.md` (estado de partida, incongruencias por tema, tandas y las decisiones del owner que las
+  condicionan); `docs/KICKOFF.md` con la sección «Objetivos V6»; `ALINEACION.md` con los contratos «Lo público del lote» y «El
+  calendario de los Ciclos», §3b al día y los tres objetivos con dueño; los trece charters reconciliados con §3; AGENTS y HANDOFF en
+  la V6.0 (144 tablas base y 7 vistas, 77 guardianes, los planes en vigor).
+
+## [V5.203] — 2026-10-10 (commit 46323af)
 
 - **Corregido**: **«CTCx Compras» (Adquisición de Stock Café, `/ocp/compras`) se caía cada vez que se abría** desde la primera compra
   (owner: «no parece estar funcionando bien»): `stock_partidas.compra_id` es único y PostgREST devuelve un objeto, no una lista
@@ -45,7 +60,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 - **Seguridad**: guardianes `qa-compras` (190), `qa-stock-ctcx` (79), `qa-triage-catalogo` (61) y `qa-circuito` (60); 39 mutaciones,
   todas atrapadas.
 
-## [V5.202] — 2026-10-10 (commit pendiente)
+## [V5.202] — 2026-10-10 (commit f012665)
 
 - **Seguridad**: **lo público del lote ya no lleva al productor** (owner, 2026-10-10: el Dossier público «necesita mantener el
   Watermark y omitir info que haga fácil circumventar a CTCx para llegar al Productor»). La auditoría del día encontró que un

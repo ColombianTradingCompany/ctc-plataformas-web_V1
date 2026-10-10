@@ -23,8 +23,15 @@
 //                  Cherry Picked, Herramientas con modelo de acceso y concha
 //                  segura, «Mis solicitudes» en KR, y la lista de nueve
 //                  pendientes cerrada]. Es el corte sobre el que arranca la
-//                  etapa siguiente, «Launch Beta Testing»). No exige una
-//                  reescritura — marca un estado estable del todo.
+//                  etapa siguiente, «Launch Beta Testing»). V6.0 = declarada
+//                  por el owner el 2026-10-10 al cerrar el sprint V5.93–V5.203:
+//                  el circuito del lote completo en código [Centro de Calidad
+//                  con el CVA principal, ofertas ancladas al PVC con firma, los
+//                  Ciclos de Cherry Picked por ventanas, Stock CTCx, Triage de
+//                  Catálogo Activo con FOB mínimo, Dossier CTCx y Dossier
+//                  público sin nada que lleve al productor]; lo que sigue vive
+//                  en docs/PLAN_V6_OBJETIVOS.md. No exige una reescritura —
+//                  marca un estado estable del todo.
 //   - MENOR (x.N)  sube UNA vez por cada tanda de trabajo que se despliega.
 //                  Súbala en el MISMO commit que la tanda; si se olvida, el
 //                  SHA de abajo delata igual qué build está corriendo.
@@ -33,7 +40,7 @@
 // Documentacion_Interactiva_V15.0(...).html). Esa numera SNAPSHOTS DE DOCUMENTO
 // y avanza con su propio ritmo de "Version Wrap" — que las dos digan "V15" o
 // "V1" al mismo tiempo sería coincidencia, no relación.
-export const APP_VERSION = "5.203";
+export const APP_VERSION = "6.0";
 
 /** "V1.0" — lo que se pinta en pantalla. */
 export const VERSION_LABEL = `V${APP_VERSION}`;

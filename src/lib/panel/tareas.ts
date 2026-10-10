@@ -30,7 +30,10 @@ export type TareaDeConsola = {
  *  el ciclo (`muestra:<lote>:<fecha>`) para que una casilla marcada no tape la revisión siguiente. */
 //  `pvc` (V5.178): una corrección del PVC propuesta por la vigilancia del ciclo (`pvc:correccion:<id>`) y (V5.179) el borrador
 //  del agente por publicar (`pvc:edicion:<código>`); los resuelve el owner en ECP → Modelo Económico.
-export const TIPOS_DE_TAREA = ["lead", "finca", "comm", "humidity", "lot", "muestra", "pvc"] as const;
+//  `despacho` y `partida` (V6.1, lo que la V5.203 dejó «sin hacer»): un saco o adelanto de un trato por ventana vencido sin
+//  despacharse (`despacho:vencido:<id>`, se resuelve en la ficha del contrato) y una partida libre del Stock CTCx sin declarar
+//  (`partida:declarar:<id>`, se resuelve en el Triage); las dos del OCP, deducidas en `src/lib/stock/circuito.ts`.
+export const TIPOS_DE_TAREA = ["lead", "finca", "comm", "humidity", "lot", "muestra", "pvc", "despacho", "partida"] as const;
 export type TipoDeTarea = (typeof TIPOS_DE_TAREA)[number];
 
 export function tipoDeLaTarea(key: string): TipoDeTarea | null {

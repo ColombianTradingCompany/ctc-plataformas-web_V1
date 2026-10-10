@@ -30,7 +30,7 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
-import { BUCKET_CTCX, CLAVE_PERFIL_CTCX, KINDS_COMPRA_EN_FIRME, disponibleKg, esCompraEnFirme, resumenDeCompras } from "../src/lib/compras/reglas.ts";
+import { BUCKET_CTCX, CLAVE_PERFIL_CTCX, KINDS_COMPRA_EN_FIRME, STAGING_ABANDONO_MS, abandonadasDelStaging, disponibleKg, esCompraEnFirme, resumenDeCompras } from "../src/lib/compras/reglas.ts";
 import { aPerfilCtcx, rotuloCtcx, urlDeImagenCtcx } from "../src/lib/catalogo/perfilCtcx.ts";
 import { CTC_RAZON } from "../src/lib/legal.ts";
 import { estadoDelCircuito } from "../src/lib/ocp/circuito.ts";
@@ -485,6 +485,25 @@ const compras = lee("src/app/ocp/(app)/comprasActions.ts");
   check("H15 · la fila pedida por ?compra= se resalta desde el servidor y abre «Anuladas» si lo es; «Anuladas» con su cabecera", pagina.includes("${c.id === elegida ? s.filaElegida : \"\"}") && pagina.includes("open={a.anuladas.some((c) => c.id === elegida)}") && /Anuladas \(\{a\.anuladas\.length\}\)[\s\S]*?<thead>[\s\S]*?<th>Anulada<\/th>/.test(pagina) && /\.filaElegida td \{/.test(lee("src/app/ocp/(app)/compras/compras.module.css")));
   check("H15 · «Registrada» enseña la fecha del registro (no la del pago)", carga.includes("registradaAt: c.created_at") && /<th>Registrada<\/th>[\s\S]*?\{fechaCorta\(c\.registradaAt\)\}/.test(pagina));
   check("H12 · el alta a mano no canta éxito junto a un aviso (lo garantiza ActionForm)", lee("src/components/panel/ActionForm.tsx").includes("if (successMessage && !res.aviso) setListo(successMessage);"));
+}
+
+// ── 15. V6.1: el barrido del staging de imágenes abandonadas (lo que la V5.203 dejó «sin hacer») ─────────────────────────────
+{
+  const ahora = Date.parse("2026-10-10T12:00:00Z");
+  const h = 60 * 60 * 1000;
+  const objetos = [
+    { name: "vieja.jpg", created_at: "2026-10-10T10:30:00Z" },
+    { name: "justo.jpg", created_at: new Date(ahora - h).toISOString() },
+    { name: "fresca.jpg", created_at: "2026-10-10T11:30:00Z" },
+    { name: "sin-fecha.jpg", created_at: null },
+    { name: "fecha-rota.jpg", created_at: "ayer" },
+  ];
+  check("15 · una subida se considera abandonada a la hora (STAGING_ABANDONO_MS = 1 h)", STAGING_ABANDONO_MS === h);
+  check("15 · abandonadasDelStaging: la vieja y la de justo una hora sí; la fresca no", abandonadasDelStaging(objetos, ahora).map((o) => o.name).join(",") === "vieja.jpg,justo.jpg");
+  check("15 · abandonadasDelStaging: sin `created_at` legible no se borra a ciegas", !abandonadasDelStaging(objetos, ahora).some((o) => o.name === "sin-fecha.jpg" || o.name === "fecha-rota.jpg") && abandonadasDelStaging([], ahora).length === 0);
+  const acciones = lee("src/app/ocp/(app)/comprasActions.ts");
+  check("15 · barrerStagingCtcx recorre perfil/ y cada lotes/<id>/, solo archivos (id), y borra con remove", acciones.includes('const carpetas = ["perfil"];') && acciones.includes('await bucket.list("lotes", { limit: 1000 })') && acciones.includes("for (const l of lotes ?? []) if (!l.id) carpetas.push(`lotes/${l.name}`);") && acciones.includes("abandonadasDelStaging((data ?? []).filter((x) => !!x.id), ahora)") && acciones.includes("if (borrar.length) await bucket.remove(borrar);"));
+  check("15 · el barrido corre al firmar una subida nueva, antes de crear la ruta, y nunca la estorba (try/catch)", /await barrerStagingCtcx\(service\);[^\n]*\n\s*const path = `\$\{carpeta\}\$\{randomUUID\(\)\}\.\$\{ext\}`;/.test(acciones) && /async function barrerStagingCtcx\([\s\S]*?try \{[\s\S]*?\} catch \{/.test(acciones));
 }
 
 if (fallos.length) {

@@ -2,6 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { equivalenteEnRaiz, movimientosDe } from "@/lib/stock/linaje";
+import { esPartidaDeclarable } from "@/lib/stock/franja";
 import { cargarStock, type StockCargado } from "@/lib/stock/servidor";
 import {
   esDeDespacho, listaDe, motivoParaNoAnular, motivoParaNoDestinar, origenLegible, precioLegible, raizVivaDe, siguientesPasos,
@@ -212,7 +213,7 @@ export async function cargarAdquisicion(service: SupabaseClient): Promise<Adquis
       // H10: en kg de CPS equivalentes (la raíz de una compra es pergamino): el verde y el tostado se cuentan por lo que fueron.
       disponibleCps += equivalenteEnRaiz(p, m.disponibleKg);
       if (p.id === raiz?.id) conMovimientos = m.transformadoKg > 0 || m.salidoKg > 0 || m.reservadoKitKg > 0 || m.declaradoKg > 0;
-      const declarableAqui = !p.comprometido && !!p.lotId && lot?.grade !== "tyrian" && (p.contenido === "pergamino" || p.contenido === "verde");
+      const declarableAqui = esPartidaDeclarable(p, lot ? { grade: lot.grade } : null); // V6.1: la regla única de `franja.ts`
       if (declarableAqui && m.disponibleKg > (declarable?.kg ?? 0)) declarable = { partidaId: p.id, kg: r1(m.disponibleKg) };
     }
     const ids = new Set(familia.map((p) => p.id));

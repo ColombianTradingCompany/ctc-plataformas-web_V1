@@ -46,6 +46,16 @@ export function porDeclararEnVerde(entradas: readonly { kg: number; conversion: 
   return Math.round(entradas.reduce((a, e) => a + (Number(e.kg) || 0) * (Number(e.conversion) || 0), 0));
 }
 
+/** V6.1: una partida que el Triage puede DECLARAR — viva, no comprometida, de pergamino o de verde, con lote y no Tyrian. La MISMA
+ *  regla en la franja (`cargarCircuitoDelStock`), en Adquisición (`declarableAqui`) y en la tarea derivada «partida por declarar» del
+ *  Tablero de Ejecución (`pendientesDelCircuito`): antes vivía escrita dos veces y una tercera la habría desalineado. */
+export function esPartidaDeclarable(
+  p: { anulada: boolean; comprometido: boolean; contenido: string; lotId: string | null },
+  lote: { grade: string | null } | null | undefined
+): boolean {
+  return !p.anulada && !p.comprometido && !!p.lotId && !!lote && lote.grade !== "tyrian" && (p.contenido === "pergamino" || p.contenido === "verde");
+}
+
 const kg = (n: number) => `${fmtKg(Math.round(n * 10) / 10)} kg`;
 const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`;
 

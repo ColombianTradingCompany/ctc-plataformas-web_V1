@@ -4,7 +4,7 @@ import { conversionDeFactor, cuentaDelContrato } from "@/lib/triage/fobMinimo";
 import { factoresQueRigen } from "@/lib/triage/servidor";
 import { movimientosDe } from "./linaje";
 import { cargarStock, type StockCargado } from "./servidor";
-import { porDeclararEnVerde, type DatosDeLaFranja } from "./franja";
+import { esPartidaDeclarable, porDeclararEnVerde, type DatosDeLaFranja } from "./franja";
 
 // ── La franja del circuito del stock · la carga (V5.203, owner 2026-10-10) ──────────────────────────────────────────────────────
 // Los números de `franja.ts`, leídos de la base con las MISMAS cuentas que cada tablero: el disponible de `movimientosDe` (que ya resta
@@ -50,7 +50,7 @@ export async function cargarCircuitoDelStock(service: SupabaseClient, stockPrevi
     else if (p.estado === "verde") verdeKg += disp;
     else otrosKg += disp;
     const lote = p.lotId ? stock.lotes[p.lotId] : null;
-    if (lote && lote.grade !== "tyrian" && (p.contenido === "pergamino" || p.contenido === "verde")) {
+    if (lote && esPartidaDeclarable(p, lote)) {
       stockKg += disp;
       stockPartidas += 1;
       declarables.push({ kg: disp, lotId: lote.id, verde: p.contenido === "verde" });
@@ -103,4 +103,50 @@ export async function cargarCircuitoDelStock(service: SupabaseClient, stockPrevi
     enCatalogo: { kgVerde: r1(fuentes.reduce((a, f) => a + Number(f.kg_verde), 0)), declaraciones: fuentes.length, listados: listados.filter((l) => l.status !== "archived").length },
     vendido: listados.length ? { kgVerde: r1(listados.reduce((a, l) => a + Number(l.sold_kg ?? 0), 0)) } : null,
   };
+}
+
+// ── Lo que el circuito le pide a alguien (V6.1; lo que la V5.203 dejó «sin hacer») ─────────────────────────────────────────────
+// Dos tareas derivadas para el Tablero de Ejecución (`tareasCarga.ts`), deducidas del mismo estado que pintan Adquisición y el
+// Triage: un saco o adelanto de un trato por ventana vigente, todavía `pendiente`, cuyo plazo (o su prórroga: la MISMA regla que
+// «vencido» en Adquisición, `prorroga_hasta ?? plazo` contra el día de Colombia) ya pasó; y una partida libre del Stock CTCx que el
+// Triage puede declarar y no ha declarado (`esPartidaDeclarable` + disponible > 0, la cuenta de «Por declarar»). Nunca lanza.
+
+export type PendientesDelCircuito = {
+  sacosVencidos: { id: string; contractId: string; lotName: string; tipo: "saco" | "adelanto"; kg: number; vence: string }[];
+  partidasPorDeclarar: { id: string; codigo: string; lotName: string; kg: number; contenido: string }[];
+};
+
+const uno = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? v[0] ?? null : v ?? null);
+
+export async function pendientesDelCircuito(service: SupabaseClient, hoy: string): Promise<PendientesDelCircuito> {
+  try {
+    const [stock, { data: dRaw }] = await Promise.all([
+      cargarStock(service),
+      service
+        .from("contract_despachos")
+        .select("id, contract_id, tipo, kg, plazo, prorroga_hasta, purchase_contracts!inner(status, lots(name))")
+        .eq("estado", "pendiente")
+        .in("tipo", ["saco", "adelanto"])
+        .eq("purchase_contracts.status", "active")
+        .order("plazo", { ascending: true }),
+    ]);
+    type Fila = { id: string; contract_id: string; tipo: "saco" | "adelanto"; kg: number | string; plazo: string | null; prorroga_hasta: string | null; purchase_contracts: { lots: { name: string } | { name: string }[] | null } | { lots: { name: string } | { name: string }[] | null }[] | null };
+    const sacosVencidos: PendientesDelCircuito["sacosVencidos"] = [];
+    for (const d of (dRaw as unknown as Fila[] | null) ?? []) {
+      const vence = d.prorroga_hasta ?? d.plazo;
+      if (!vence || !(vence < hoy)) continue;
+      sacosVencidos.push({ id: d.id, contractId: d.contract_id, lotName: uno(uno(d.purchase_contracts)?.lots)?.name ?? "—", tipo: d.tipo, kg: r1(Number(d.kg)), vence });
+    }
+    const partidasPorDeclarar: PendientesDelCircuito["partidasPorDeclarar"] = [];
+    for (const p of stock.partidas) {
+      const lote = p.lotId ? stock.lotes[p.lotId] : null;
+      if (!esPartidaDeclarable(p, lote)) continue;
+      const disp = movimientosDe(p, stock).disponibleKg;
+      if (!(disp > 0)) continue;
+      partidasPorDeclarar.push({ id: p.id, codigo: p.codigo, lotName: lote?.name ?? "—", kg: r1(disp), contenido: p.contenido });
+    }
+    return { sacosVencidos, partidasPorDeclarar };
+  } catch {
+    return { sacosVencidos: [], partidasPorDeclarar: [] };
+  }
 }

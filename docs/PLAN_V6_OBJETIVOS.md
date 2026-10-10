@@ -106,8 +106,9 @@ de empezar**.
   vitrina `public_lot_vitrina` (el Punto de la evaluación que rige, la referencia CTC-L-). Hoy coinciden; con una re-evaluación no.
 - La vitrina pública enseña los tratos sin declarar como «Próximamente»; la tienda con sesión, nada.
 - La tienda dice «kg» sin decir «de verde» (pendiente del charter de CP desde la V5.196).
-- Privacidad (crítico del 2026-10-10): `lot_listings` lo lee `anon` entero (borradores y archivados, con precio); la vista de
-  transparencia del precio al productor — ver lo que la V5.203/V6.0 dejó hecho en su CHANGELOG antes de tocarla.
+- Privacidad (crítico del 2026-10-10): ~~`lot_listings` lo lee `anon` entero (borradores y archivados, con precio)~~ **cerrado en la
+  V6.1** (`status = 'published'`, solo `anon` y `authenticated`); la vista de transparencia del precio al productor devuelve desde la
+  V6.1 solo listados publicados y solo SELECT — si se queda es la decisión pendiente (`ALINEACION` §3b).
 - Fuera de alcance según el plan (§7): que una venta de la tienda descuente el stock o la cuenta del contrato; declarar tostado o
   empacado; las mezclas físicas.
 

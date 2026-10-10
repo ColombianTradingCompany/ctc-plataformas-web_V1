@@ -44,8 +44,8 @@ que voltean) es la cara pública del catálogo; el catálogo con precios pide se
 `buyer_profiles` (guard: no auto-asignar puntos/nivel) · `lot_reservations` · `orders` · `order_items` ·
 `points_ledger` · `sample_pack_orders` · `auction_bids` (vía `pujar`) · `newsletter_subscribers` (escritura
 por `newsletter/actions`).
-**Solo lee**: `lot_listings` (los declara el Triage del OCP desde la V5.196; hoy por una política ancha,
-`lot_listings_select_public`, que es fila de `ALINEACION` §3b), `shipping_zones`, `lot_auctions`, las vistas
+**Solo lee**: `lot_listings` (los declara el Triage del OCP desde la V5.196; desde la V6.1 la política
+`lot_listings_select_public` solo deja leer `status = 'published'`, lo mismo que la tienda pide), `shipping_zones`, `lot_auctions`, las vistas
 `public_lot_vitrina` (V5.198, la cinta y el portal), `public_lot_catalog` (la tienda) y `public_transparency_pricing`
 (SECURITY DEFINER, columnas estrechas — **jamás** sustituir por una política ancha sobre `lots`/`fincas`), `market_anchors`,
 `coffeed_sources`. RPC `place_order`.
@@ -126,7 +126,8 @@ listado publicado y al 2026-10-10 hay 0, así que corre cuando el Triage declare
   `docs/migraciones/2026-10-10_vitrina_sin_finca.sql`): su `name` es el MISMO nombre generado que la vitrina, `ficha_notas_cata`
   va a null y la tarjeta pinta la región con `pais` (`CherryPickedExperience.tsx`); `place_order` guarda también el nombre
   generado. Queda la lectura doble (`public_lot_catalog` y `public_lot_vitrina`), que es la tanda B del objetivo 3. Y la tienda lee también `public_transparency_pricing` (el precio al productor; `anon` la
-  puede leer) y `lot_listings`, cuya política deja a `anon` leer todos los listados: las dos son filas de `ALINEACION` §3b.
+  puede leer, desde la V6.1 solo de listados publicados y solo SELECT — si se queda es decisión del owner, fila de `ALINEACION` §3b)
+  y `lot_listings`, cuya política desde la V6.1 solo deja leer lo publicado (cerrado).
 - **V5.132 · la Coffee Datasheet Tool no está repartida a Cherry Picked** (`cp = false`; `GadgetsSection` nombra las herramientas
   por id): anotado aquí por el nodo final (2026-10-10), porque la fila de `ALINEACION` §3 no llegó a este charter. Si el owner la
   quiere en Green, es el registro de `herramientas-cafe` más un nombre en `GadgetsSection`.

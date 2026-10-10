@@ -245,6 +245,22 @@ check("2 · las salidas a mano son venta, consumo y ajuste; la de un kit no", L.
   check("8 · H11: ETIQUETA_DE_ORIGEN se arma con el diccionario único (DESTINO_LABEL · ORIGEN_LABEL)", servidor.includes("selection: `Compra ${DESTINO_LABEL.selection}`") && servidor.includes("despacho: ORIGEN_LABEL.saco") && servidor.includes("manual: ORIGEN_LABEL.ingreso"));
 }
 
+// ── 9. V6.1: la regla única «declarable» y las dos tareas derivadas del circuito (lo que la V5.203 dejó «sin hacer») ──────────
+{
+  const F = await import("../src/lib/stock/franja.ts");
+  const T = await import("../src/lib/panel/tareas.ts");
+  const base = { anulada: false, comprometido: false, contenido: "pergamino", lotId: "l1" };
+  check("9 · esPartidaDeclarable: viva, libre, pergamino o verde, con lote y no Tyrian", F.esPartidaDeclarable(base, { grade: "blue" }) && F.esPartidaDeclarable({ ...base, contenido: "verde" }, { grade: "black" }));
+  check("9 · esPartidaDeclarable: NO si anulada, comprometida, tostada, sin lote, lote desconocido o Tyrian", !F.esPartidaDeclarable({ ...base, anulada: true }, { grade: "blue" }) && !F.esPartidaDeclarable({ ...base, comprometido: true }, { grade: "blue" }) && !F.esPartidaDeclarable({ ...base, contenido: "tostado" }, { grade: "blue" }) && !F.esPartidaDeclarable({ ...base, lotId: null }, { grade: "blue" }) && !F.esPartidaDeclarable(base, null) && !F.esPartidaDeclarable(base, { grade: "tyrian" }));
+  const carga = lee("src/lib/stock/circuito.ts");
+  check("9 · la franja, Adquisición y los pendientes del circuito usan la MISMA regla (ninguno la reescribe)", carga.includes("if (lote && esPartidaDeclarable(p, lote)) {") && carga.includes("if (!esPartidaDeclarable(p, lote)) continue;") && lee("src/lib/compras/adquisicionServidor.ts").includes("const declarableAqui = esPartidaDeclarable(p, lot ? { grade: lot.grade } : null);") && !/lot\?\.grade !== "tyrian" && \(p\.contenido === "pergamino"/.test(lee("src/lib/compras/adquisicionServidor.ts")));
+  check("9 · pendientesDelCircuito: sacos y adelantos PENDIENTES de tratos vigentes, vencidos por `prorroga_hasta ?? plazo` contra el día de Colombia; partidas declarables con disponible > 0; nunca lanza", carga.includes('.eq("estado", "pendiente")') && carga.includes('.in("tipo", ["saco", "adelanto"])') && carga.includes("const vence = d.prorroga_hasta ?? d.plazo;") && carga.includes("if (!vence || !(vence < hoy)) continue;") && carga.includes("const disp = movimientosDe(p, stock).disponibleKg;\n      if (!(disp > 0)) continue;\n      partidasPorDeclarar.push(") && /catch \{\s*return \{ sacosVencidos: \[\], partidasPorDeclarar: \[\] \};/.test(carga));
+  const tareas = lee("src/lib/panel/tareasCarga.ts");
+  check("9 · Tablero de Ejecución: los dos tipos de tarea existen y son del OCP (su casilla se puede marcar desde el OCP y el ECP)", T.TIPOS_DE_TAREA.includes("despacho") && T.TIPOS_DE_TAREA.includes("partida") && T.consolasDeLaTarea("despacho:vencido:x").includes("ocp") && T.consolasDeLaTarea("partida:declarar:x").includes("ocp") && T.consolasDeLaTarea("partida:declarar:x").includes("ecp"));
+  check("9 · la tarea del saco vencido lleva a la ficha del contrato (prórroga, despacho o faltante) con el día de Colombia", tareas.includes("await pendientesDelCircuito(service, hoyEnColombia())") && tareas.includes("key: `despacho:vencido:${d.id}`") && tareas.includes("href: `/ocp/contratos/${d.contractId}`"));
+  check("9 · la tarea de la partida sin declarar abre el Triage con el formulario en ESA partida", tareas.includes("key: `partida:declarar:${p.id}`") && tareas.includes("href: `/ocp/contratos?partida=${p.id}&declarar=1`"));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-stock-ctcx: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const x of fallos) console.error("   " + x);

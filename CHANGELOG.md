@@ -19,6 +19,35 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.1] — 2026-10-10 (commit pendiente)
+
+- **Seguridad**: **solo lo publicado es público** (auditoría de privacidad del 2026-10-10, hallazgos (a) y (b) del charter de
+  `consolas`; sin decisión del owner de por medio): la política `lot_listings_select_public` pasa de `using (true)` para todo rol a
+  `status = 'published'` solo para `anon` y `authenticated` — por REST ya no se leen borradores ni archivados con su precio; la tienda
+  pedía solo lo publicado y ahora la base lo garantiza; `place_order` es SECURITY DEFINER y el Triage escribe con el service role,
+  así que nada cambia para ellos—; y `public_transparency_pricing` solo devuelve listados publicados y solo admite SELECT
+  (`revoke all` + `grant select`, como `public_lot_catalog` en la V5.202). Si la transparencia del precio al productor se queda
+  sigue siendo decisión del owner (`ALINEACION` §3b). Aplicada antes de la primera declaración del Triage: hoy 0 listados.
+- **Añadido**: **dos tareas derivadas del circuito del stock** en el Tablero de Ejecución y en el Panel del OCP (lo que la V5.203
+  dejó «sin hacer»): un **saco o adelanto de un trato por ventana vencido** sin despacharse (`prorroga_hasta ?? plazo` contra el
+  día de Colombia, la misma regla que «vencido» en Adquisición; lleva a la ficha del contrato: prórroga, despacho o faltante) y una
+  **partida libre del Stock CTCx sin declarar** (lleva al Triage con el formulario abierto en esa partida). Tipos `despacho` y
+  `partida` en `tareas.ts`; la carga, `pendientesDelCircuito` (`src/lib/stock/circuito.ts`), nunca lanza. Al 2026-10-10 (SQL):
+  0 sacos vencidos (los 6 despachos pendientes vencen desde el 2026-10-11) y 1 partida sin declarar (SX-2026-0001, 15 kg de
+  pergamino de la compra de prueba).
+- **Cambiado**: la regla «partida declarable» (viva, libre, pergamino o verde, con lote, no Tyrian) vive una sola vez
+  (`esPartidaDeclarable`, `src/lib/stock/franja.ts`): la franja del circuito, Adquisición y las tareas la comparten.
+- **Corregido**: **barrido del staging de imágenes de CTCx Selection**: una subida firmada y nunca fijada quedaba para siempre en el
+  bucket privado; al firmar una subida nueva se borran las abandonadas (más de una hora) de `perfil/` y de cada `lotes/<id>/`
+  (`barrerStagingCtcx` en `comprasActions.ts`; `STAGING_ABANDONO_MS` y `abandonadasDelStaging` en `reglas.ts`); el barrido nunca
+  estorba la subida que lo disparó. Hoy el staging está vacío.
+- **Datos**: migración `2026-10-10_lot_listings_solo_publicados` aplicada y verificada por SQL (política `{anon,authenticated}` ·
+  `status = 'published'`; la vista con su `where`; `anon` y `authenticated` solo con SELECT).
+- **Seguridad**: guardianes `qa-triage-catalogo` (65), `qa-stock-ctcx` (86) y `qa-compras` (195) con los casos nuevos;
+  `qa-circuito`, `qa-ciclos`, `qa-muestras`, `qa-sneak-peek`, `qa-catalogo-publico`, `qa-ficha-publica` y `qa-niveles` en verde.
+- **Docs**: charter `consolas` (Pendientes al día: la V5.203 sin «sin hacer», los hallazgos (a) y (b) de la auditoría), charter
+  `cherry-picked` (lo que lee), `ALINEACION` §1 «Lo público del lote», §3 y §3b, `PLAN_V6_OBJETIVOS` §2.
+
 ## [V6.0] — 2026-10-10 (commit 1130833)
 
 > **Wrap V48** (2026-10-10): ciclo compilado en `Documentacion_Interactiva_V48.0(f21b327).html` — 45 nodos (+3) · 208 fichas (+33) · 82 trazas (+14, y unas 25 reescritas sobre su sucesor) · 135 wires (+27) · 42 CTX (+4) · 666 ANN (+191) · Postgres 144 tablas. Ciento doce asientos (V5.93–V6.0), compilados en siete lotes con dueño exclusivo y un verificador cada uno; tres nodos nuevos (el OCP, el Dossier, la Coffee Datasheet Tool); el renderizador ya no pinta «undefined» en las ANN de un solo tag. La auditoría documental salió antes, en el commit de docs 95ef547.

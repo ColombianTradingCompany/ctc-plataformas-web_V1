@@ -24,6 +24,19 @@ export const BUCKET_CTCX_STAGING = "ctcx-selection-staging";
 export const EXTENSION_DE_IMAGEN_CTCX: Readonly<Record<string, string>> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 /** El tope de una imagen (el mismo `file_size_limit` del bucket de staging). */
 export const MAX_MB_IMAGEN_CTCX = 5;
+/** V6.1 · el barrido del staging (lo que la V5.203 dejó «sin hacer»): una subida que `fijarImagenCtcx` nunca recogió —el navegador
+ *  se cerró, la fijación falló— quedaba en el bucket privado para siempre. Pasada esta edad se considera ABANDONADA y se borra en el
+ *  siguiente `crearUrlDeSubidaCtcx` (`barrerStagingCtcx`). Una hora: ninguna subida legítima tarda tanto entre firmar y fijar. */
+export const STAGING_ABANDONO_MS = 60 * 60 * 1000;
+
+/** PURO: de una lista de objetos del staging, los abandonados a `ahoraMs` (sin `created_at` legible no se tocan: no se borra a ciegas). */
+export function abandonadasDelStaging<T extends { name: string; created_at?: string | null }>(objetos: readonly T[], ahoraMs: number): T[] {
+  return objetos.filter((o) => {
+    const t = o.created_at ? Date.parse(o.created_at) : NaN;
+    return Number.isFinite(t) && ahoraMs - t >= STAGING_ABANDONO_MS;
+  });
+}
+
 /** La clave de `platform_settings` con el perfil ÚNICO de CTCx Selection (respuesta 7 del owner, 23-sep). */
 export const CLAVE_PERFIL_CTCX = "ctcx_selection_perfil";
 

@@ -7,7 +7,7 @@ import type { ActionResult } from "@/components/panel/ActionForm";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { edicionVigente, hoyEnColombia } from "@/lib/pvc/servicio";
-import { BUCKET_CTCX, BUCKET_CTCX_STAGING, CLAVE_PERFIL_CTCX, EXTENSION_DE_IMAGEN_CTCX, MAX_MB_IMAGEN_CTCX } from "@/lib/compras/reglas";
+import { BUCKET_CTCX, BUCKET_CTCX_STAGING, CLAVE_PERFIL_CTCX, EXTENSION_DE_IMAGEN_CTCX, MAX_MB_IMAGEN_CTCX, abandonadasDelStaging } from "@/lib/compras/reglas";
 import { errorDeFechas, esDeDespacho, esDestino, fechaCorta, fuenteDePrecioManual, motivoParaNoAnular, motivoParaNoDestinar, notaDeAnulacionAlProductor, notaDeCompraAlProductor } from "@/lib/compras/adquisicion";
 import { leerVitrinaDelLote } from "@/lib/compras/adquisicionServidor";
 import { cambioAlAnular, cambioAlDestinar, cambioAlRegistrar, esCompraSelection } from "@/lib/compras/selection";
@@ -189,6 +189,27 @@ async function loteConSelectionViva(service: ReturnType<typeof createServiceRole
 }
 const SIN_SELECTION_VIVA = "La imagen por lote es de un lote COMPRADO en firme como CTCx Selection: este no tiene compras de Selection vivas (la vitrina no la enseñaría).";
 
+/** V6.1: el barrido del staging — borra las subidas ABANDONADAS (firmadas y nunca fijadas, más viejas que `STAGING_ABANDONO_MS`) de
+ *  `perfil/` y de cada `lotes/<id>/`. Corre al pedir una URL nueva, porque es el único momento en que alguien está mirando; informa,
+ *  no manda: si falla, la subida sigue. El bucket no se lista desde fuera (solo el service role). */
+async function barrerStagingCtcx(service: ReturnType<typeof createServiceRoleClient>): Promise<void> {
+  try {
+    const bucket = service.storage.from(BUCKET_CTCX_STAGING);
+    const carpetas = ["perfil"];
+    const { data: lotes } = await bucket.list("lotes", { limit: 1000 });
+    for (const l of lotes ?? []) if (!l.id) carpetas.push(`lotes/${l.name}`);
+    const ahora = Date.now();
+    const borrar: string[] = [];
+    for (const carpeta of carpetas) {
+      const { data } = await bucket.list(carpeta, { limit: 1000 });
+      for (const o of abandonadasDelStaging((data ?? []).filter((x) => !!x.id), ahora)) borrar.push(`${carpeta}/${o.name}`);
+    }
+    if (borrar.length) await bucket.remove(borrar);
+  } catch {
+    // El barrido es limpieza: nunca estorba la subida que lo disparó.
+  }
+}
+
 /** La URL firmada para subir una imagen (del perfil o de un lote comprado) al STAGING privado. V5.203 · corrección (decisión 1): el
  *  nombre es aleatorio (uuid + la extensión de su tipo) —nunca el del archivo, que puede decir la finca— y lo público llega después,
  *  re-codificado por `fijarImagenCtcx`. */
@@ -201,6 +222,7 @@ export async function crearUrlDeSubidaCtcx(destino: DestinoCtcx, tipo: string): 
   const ext = EXTENSION_DE_IMAGEN_CTCX[String(tipo ?? "")];
   if (!ext) return { ok: false, error: "Solo se admiten imágenes JPEG, PNG o WebP." };
   if (destino.tipo === "lote" && !(await loteConSelectionViva(service, destino.lotId))) return { ok: false, error: SIN_SELECTION_VIVA };
+  await barrerStagingCtcx(service); // V6.1: lo abandonado se va antes de firmar la subida nueva
   const path = `${carpeta}${randomUUID()}.${ext}`;
   const { data, error } = await service.storage.from(BUCKET_CTCX_STAGING).createSignedUploadUrl(path);
   if (error || !data) return { ok: false, error: "No se pudo preparar la subida." };

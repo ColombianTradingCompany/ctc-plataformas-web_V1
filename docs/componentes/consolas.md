@@ -182,12 +182,19 @@ ciclo; `docs/PLAN_CICLOS.md`) · **`qa-triage-catalogo-check.mjs`** (V5.196 — 
 
 ## Pendientes
 
+- **V6.1 · solo lo publicado es público, dos tareas del circuito y el barrido del staging** (2026-10-10, desde este componente,
+  sin decisiones del owner de por medio; ver el CHANGELOG): la política de `lot_listings` y la vista `public_transparency_pricing`
+  estrechadas (hallazgos (a) y (b) de la auditoría, abajo), las dos tareas derivadas que la V5.203 dejó sin hacer (saco o adelanto
+  de trato vencido → ficha del contrato; partida libre sin declarar → Triage) y el barrido del staging de imágenes de CTCx
+  Selection. **Queda**: el objetivo 2 sigue esperando las decisiones 3 y 6 a 10 del owner (§5 de `PLAN_V6_OBJETIVOS`); la
+  decisión (b) sobre la transparencia del precio al productor; y ver las dos tareas con datos reales (los 6 despachos pendientes
+  vencen desde el 2026-10-11: el Tablero empezará a enseñarlos; la partida SX-2026-0001 de la compra de prueba ya sale).
 - **V5.203 · Adquisición de Stock Café arreglada y el circuito como uno** (owner, 2026-10-10; ejecutado desde WRAP-COMMIT-PUSH). Ver el
   CHANGELOG. Para el owner: la compra de prueba «Test Nota 1» (15 kg, SX-2026-0001) ya se puede ANULAR desde Adquisición (le deja al
   productor una nota correctora); decidir si el alta a mano con café declarado se iguala a «Es de» (hoy una pide confirmar y la otra
   se bloquea); la marca Selection sigue siendo por LOTE (¿por declaración?) y el nombre definitivo de «Oferta desde CTCx Selection».
-  Sin hacer: las tareas derivadas del ECP para sacos vencidos y stock sin declarar (`tareasCarga.ts`), y un barrido del staging de
-  imágenes abandonadas.
+  ~~Sin hacer: las tareas derivadas del ECP para sacos vencidos y stock sin declarar (`tareasCarga.ts`), y un barrido del staging de
+  imágenes abandonadas~~ — **hechos en la V6.1**.
 - **V6 · objetivo 2: Triage y Catálogo Activo** (owner, 2026-10-10, al declarar la V6.0; plan `docs/PLAN_V6_OBJETIVOS.md` §2, una
   conversación desde `docs/KICKOFF.md` «Objetivos V6»; el plan que manda sigue siendo `docs/PLAN_TRIAGE_CATALOGO.md`; fila en
   `ALINEACION` §3b). Dueño este componente, con `cherry-picked` en la tienda. **A** · activar con datos reales: una referencia de
@@ -201,10 +208,12 @@ ciclo; `docs/PLAN_CICLOS.md`) · **`qa-triage-catalogo-check.mjs`** (V5.196 — 
   `qa-ficha-publica`; `qa-checkout` a mano. Ninguna tanda empieza sin las decisiones 3 y 6 a 10 del owner, y la 13 si la tanda conduce la tienda (§5 del plan); antes de
   empezar, leer la entrada de la V5.203 en el CHANGELOG (Adquisición → Stock CTCx → Triage → Selection → Catálogo Activo).
 - **Lo que la auditoría de privacidad del 2026-10-10 deja a este componente** (dueño de las vistas y de la publicación; filas en
-  `ALINEACION` §3b, con `cherry-picked` como lector): (a) la política `lot_listings_select_public` es `using (true)` para todo rol y
+  `ALINEACION` §3b, con `cherry-picked` como lector): (a) ~~la política `lot_listings_select_public` es `using (true)` para todo rol y
   deja a `anon` leer todos los listados, también los borradores y los archivados con su precio: estrecharla antes de que el Triage
-  declare el primero; (b) la vista `public_transparency_pricing` deja a `anon` leer el precio al productor del contrato
-  (`price_per_kg_locked`) de un listado con transparencia encendida: el owner decide si se queda; (c) `public_lot_catalog` conserva
+  declare el primero~~ **hecho en la V6.1** (`status = 'published'`, solo `anon` y `authenticated`; migración
+  `2026-10-10_lot_listings_solo_publicados`); (b) la vista `public_transparency_pricing` deja a `anon` leer el precio al productor
+  del contrato (`price_per_kg_locked`) de un listado con transparencia encendida (desde la V6.1 solo de listados PUBLICADOS y solo
+  SELECT): el owner decide si se queda; (c) `public_lot_catalog` conserva
   `finca_name` y `municipio` a null desde la V5.202 (~~y su `name` es todavía el que escribe el productor~~ — corregido en la misma
   V5.202: el nombre generado, como la vitrina, que conserva también las dos columnas a null): quitarlos de las dos vistas es DDL
   cuando nadie los lea. Hoy las tres devuelven 0 filas.

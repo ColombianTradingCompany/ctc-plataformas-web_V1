@@ -166,6 +166,16 @@ const sql = acta.replace(/^--.*$/gm, "");
   check("7 · H14: el Triage no dice que la vitrina enseñe la finca", !/(no con la finca|en vez de la finca|perfil de CTCx, no con)/.test(tablero));
 }
 
+// ── 8. V6.1: solo lo publicado es público (auditoría de privacidad del 2026-10-10, hallazgos (a) y (b)) ──────────────────────
+{
+  const acta61 = lee("docs/migraciones/2026-10-10_lot_listings_solo_publicados.sql");
+  const tienda = lee("src/components/cherry-picked/CherryPickedExperience.tsx");
+  check("8 · la política lot_listings_select_public deja leer SOLO status = 'published', y solo a anon y authenticated", /drop policy if exists lot_listings_select_public on public\.lot_listings;\s*create policy lot_listings_select_public on public\.lot_listings\s+for select to anon, authenticated\s+using \(status = 'published'\);/.test(acta61));
+  check("8 · public_transparency_pricing: solo listados publicados, solo SELECT (revoke all + grant select)", /create or replace view public\.public_transparency_pricing as[\s\S]*?where ll\.status = 'published'\s+and ll\.transparency_credit_enabled = true\s+and pc\.status = 'active';/.test(acta61) && acta61.includes("revoke all on public.public_transparency_pricing from public, anon, authenticated;") && acta61.includes("grant select on public.public_transparency_pricing to anon, authenticated, service_role;"));
+  check("8 · la tienda sigue pidiendo solo lo publicado (el filtro y la política dicen lo mismo)", /\.from\("lot_listings"\)[\s\S]{0,300}?\.eq\("status", "published"\)/.test(tienda));
+  check("8 · ningún lector de la casa con sesión de anon o de usuario pide lot_listings sin status (la política lo haría devolver vacío en silencio)", !/createClient\(\)[\s\S]{0,2000}?\.from\("lot_listings"\)(?![\s\S]{0,300}?\.eq\("status", "published"\))/.test(tienda));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-triage-catalogo: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const x of fallos) console.error("   " + x);

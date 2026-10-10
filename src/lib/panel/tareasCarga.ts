@@ -6,6 +6,10 @@ import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { consolaDelPilar, tableroDelPilar } from "./leadsPilares";
 import type { TareaDeConsola } from "./tareas";
 import { revisionesDeAlmacenaje } from "@/lib/muestras/almacenajeCarga";
+import { pendientesDelCircuito } from "@/lib/stock/circuito";
+import { fmtKg } from "@/lib/stock/linaje";
+import { hoyEnColombia } from "@/lib/pvc/servicio";
+import { fechaParaElProductor } from "@/lib/trato/fechas";
 
 // ── Las tareas derivadas de la casa · la CARGA (V5.60) ───────────────────────
 // Las cinco lecturas que antes hacía el Panel del OCP por su cuenta, en un sitio.
@@ -151,6 +155,31 @@ export async function cargarTareas(service: SupabaseClient): Promise<{
       sublabel: `revisar lo arrastrado y publicar desde el Tablero a más tardar el ${ag.destino.publicaAMasTardar}`,
       href: "/ecp/pvc#siguiente",
       consola: "ecp",
+    });
+  }
+
+  // V6.1 (lo que la V5.203 dejó «sin hacer»): el circuito del stock pide a alguien. Un saco o adelanto de un trato por ventana cuyo
+  // plazo (o su prórroga) venció sin despacharse se resuelve en la ficha del contrato (prórroga, despacho o faltante); una partida
+  // libre del Stock CTCx que el Triage no ha declarado se resuelve en el Triage, con su formulario abierto en ESA partida.
+  const circuito = await pendientesDelCircuito(service, hoyEnColombia());
+  for (const d of circuito.sacosVencidos) {
+    pon({
+      key: `despacho:vencido:${d.id}`,
+      icon: "📦",
+      label: `${d.tipo === "adelanto" ? "Adelanto" : "Saco"} de trato vencido — lote ${d.lotName} (${fmtKg(d.kg)} kg CPS, plazo ${fechaParaElProductor(d.vence) ?? d.vence})`,
+      sublabel: "prorrogar, registrar el despacho o declarar el faltante en la ficha del contrato",
+      href: `/ocp/contratos/${d.contractId}`,
+      consola: "ocp",
+    });
+  }
+  for (const p of circuito.partidasPorDeclarar) {
+    pon({
+      key: `partida:declarar:${p.id}`,
+      icon: "🏷️",
+      label: `Declarar la partida ${p.codigo} en el Triage — lote ${p.lotName} (${fmtKg(p.kg)} kg de ${p.contenido} libres)`,
+      sublabel: "Stock CTCx sin declarar en el Catálogo Activo",
+      href: `/ocp/contratos?partida=${p.id}&declarar=1`,
+      consola: "ocp",
     });
   }
 

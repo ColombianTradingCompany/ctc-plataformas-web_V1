@@ -103,3 +103,18 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
   `.env.local`: a mano), `qa-tools-puente-conformance` (next dev en 3210), y los dos que gastan dinero.
 
 ══════════════════════════════════════════════════════════════════════════════
+
+## [2026-10-10] V6.1 · Solo lo publicado es público · dos tareas del circuito del stock · barrido del staging
+- Base: `lot_listings_select_public` pasa de `using (true)` (todo rol) a `status = 'published'` para `anon` y `authenticated`;
+  `public_transparency_pricing` solo con listados publicados y solo SELECT (migración `docs/migraciones/2026-10-10_lot_listings_solo_publicados.sql`).
+  Cambio de arquitectura menor: la lectura pública de `lot_listings` deja de ser una política ancha (patrón de la casa, ALINEACION §1).
+  La tienda (`CherryPickedExperience.tsx`) no cambia: ya pedía solo lo publicado. `place_order` (definer) y `triage_*` (service role) tampoco.
+- Tablero de Ejecución (`n-consoles`) y Panel del OCP (`n-ocp`): dos tareas derivadas nuevas, `despacho:vencido:<id>` (saco o adelanto
+  de un trato por ventana vencido sin despacharse → `/ocp/contratos/<id>`) y `partida:declarar:<id>` (partida libre del Stock CTCx sin
+  declarar → `/ocp/contratos?partida=<id>&declarar=1`). Código: `src/lib/stock/circuito.ts` (`pendientesDelCircuito`),
+  `src/lib/panel/tareasCarga.ts`, `src/lib/panel/tareas.ts` (tipos `despacho` y `partida`). Regla única «partida declarable»:
+  `esPartidaDeclarable` en `src/lib/stock/franja.ts`, usada por la franja, `adquisicionServidor.ts` y las tareas.
+- `src/app/ocp/(app)/comprasActions.ts`: `barrerStagingCtcx` al firmar una subida (borra las abandonadas de más de una hora en
+  `perfil/` y `lotes/<id>/`); `src/lib/compras/reglas.ts`: `STAGING_ABANDONO_MS`, `abandonadasDelStaging`.
+- DICT: ninguna entrada nueva. Guardianes: `qa-triage-catalogo` 65 (+4) · `qa-stock-ctcx` 86 (+7) · `qa-compras` 195 (+5).
+(commit: pendiente)

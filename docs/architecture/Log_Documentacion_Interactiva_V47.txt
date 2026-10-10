@@ -730,4 +730,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-10] V5.201 · Ajustes de la portada de CTC: el gráfico de las olas, el carrusel con el dedo, el Dossier público continuo sin imprimir, el ecosistema a dos columnas, «Click me» en el calendario y el pie sin el logotipo
 - ANN `src/components/ctc-home/{MomentSection.tsx,MomentSection.module.css,EcosystemSection.module.css,Footer.tsx,Footer.module.css}`, `src/components/{HarvestCalendar.tsx,HarvestCalendar.module.css}`, `src/components/catalogo/{SneakPeek.tsx,SneakPeek.module.css}`, `src/components/kaffetal-regal/dossier/{DossierCtcx.tsx,NavegacionDelDossier.tsx,dossier.module.css,textos.ts}`, `src/lib/kaffetal/{dossierPublico.ts,dossierDatos.ts}`, `scripts/{qa-sneak-peek-check.mjs,qa-ficha-publica-check.mjs,qa-catalogo-publico-check.mjs}`, `src/lib/version.ts`, `docs/componentes/{cherry-picked.md,kaffetal-regal.md}`, `docs/ALINEACION.md`.
-(commit: pendiente)
+(commit: 742536f)

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.201] — 2026-10-10 (commit pendiente)
+## [V5.201] — 2026-10-10 (commit 742536f)
 
 - **Cambiado**: el **gráfico de «Contexto · Por qué ahora»** de la portada de CTC (owner, 2026-10-10). El nombre de cada ola va
   PEGADO a su cima, en una píldora de su color unida por un hilo a su punto numerado (antes flotaban a media altura y el de la 4.ª

@@ -92,6 +92,11 @@ listado publicado y al 2026-10-10 hay 0, así que corre cuando el Triage declare
 
 ## Pendientes
 
+- **V5.202 · la vitrina y la tienda sin datos que lleven al productor** (owner, 2026-10-10; ejecutado desde WRAP-COMMIT-PUSH). La
+  cinta pinta el nombre generado, la referencia, el sello, el Punto y la región; `public_lot_catalog` (la tienda) sirve el mismo
+  nombre, sin finca, municipio ni notas libres, y es de solo lectura; el pedido guarda el nombre generado; la subasta Tyrian sin
+  sesión ya no enseña la finca. Abierto, decisión del owner: el pilar 01 del Manifiesto sigue prometiendo «finca, personas…
+  verificables lote a lote en la ficha técnica» (lo fija `qa-sneak-peek`). Y el pie de Green ya no lleva el loop grande.
 - **V6 · lo que sigue: tres frentes de este componente** (owner, 2026-10-10, al declarar la V6.0; plan
   `docs/PLAN_V6_OBJETIVOS.md`, una conversación por objetivo desde `docs/KICKOFF.md` «Objetivos V6»; **ninguna tanda empieza sin
   las decisiones del owner de su §5**; fila en `ALINEACION` §3b):

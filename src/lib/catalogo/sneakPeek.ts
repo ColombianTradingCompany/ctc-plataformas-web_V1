@@ -5,7 +5,8 @@ import { esGradoValido, GRADO_POR_ID, SCA_DECIMALES, type GradoId } from "@/lib/
 import { caracterizacionDelDossier, planillaDeEvaluacion } from "@/lib/kaffetal/dossierEvaluacion";
 import { aPerfilCtcx, rotuloCtcx, urlDeImagenCtcx, PERFIL_CTCX_SELECT, VISTA_PERFIL_CTCX, type FilaPerfilCtcx, type PerfilCtcx } from "./perfilCtcx";
 import { rutaDelLote } from "./codigoPublico";
-import { COLUMNAS_VITRINA, VISTA_VITRINA, type FilaVitrina } from "./vitrinaVista";
+import { COLUMNAS_VITRINA, VISTA_VITRINA, altitudPublica, regionDeLaVitrina, type FilaVitrina } from "./vitrinaVista";
+import { procesoPublico, variedadPublica } from "./nombrePublico";
 
 // ── «Active Catalogue Sneak Peek» · el dato ──────────────────────────────────
 // El vistazo al Catálogo Activo que se enseña SIN sesión: en CTC Home y en la
@@ -18,6 +19,12 @@ import { COLUMNAS_VITRINA, VISTA_VITRINA, type FilaVitrina } from "./vitrinaVist
 // temporada anterior (`sneakPeekMock.ts`, sus fotos, sus ruedas y sus fichas en PDF) se retiraron: la cinta enseña SOLO lotes
 // reales, los que llegaron al Triage (un trato por ventana vigente, una declaración viva o una partida en el Stock CTCx), los más
 // recientes primero. Si todavía no está declarado en el Catálogo Activo, la tarjeta lo dice («Próximamente»).
+//
+// V5.202 (owner, 2026-10-10): lo público debe «omitir info que haga fácil circumventar a CTCx para llegar al Productor». La tarjeta
+// ya no lleva la finca ni el municipio (la vista tampoco los trae): enseña la REGIÓN («Santander, Colombia») y un nombre generado.
+// Tampoco viaja el `lot_id`: la clave de la tarjeta es su referencia. Tras la revisión del nodo final (mismo día): la tarjeta PINTA
+// la referencia (dos lotes pueden llamarse igual: el nombre es generado), la variedad y el proceso salen solo si son canónicos (la
+// vista ya los normaliza; aquí se repite por si la vista vieja sigue puesta), y la altitud va en tramos de 100 m.
 //
 // DE DÓNDE LEE, Y POR QUÉ DE AHÍ. De la vista `public_lot_vitrina` (V5.198), con el cliente anónimo: una vista estrecha, legible
 // por `anon`, con las columnas de exhibición de esos lotes y nada más (ni la Ficha cruda, ni la georreferencia, ni el productor).
@@ -46,19 +53,21 @@ export type SneakPeekGrade = Exclude<GradoId, "tyrian">;
 export type SneakPeekNota = { id: string; intensidad: number };
 
 export type SneakPeekLot = {
-  /** `lot_id` de la vista. */
-  id: string;
-  /** La referencia que ve el comprador y que busca «Find my Lot»: `CTC-L-XXXXXXXX`. */
+  /** La referencia que ve el comprador y que busca «Find my Lot»: `CTC-L-XXXXXXXX`. Es también la clave de la tarjeta (V5.202: el
+   *  `lot_id` ya no viaja al navegador). */
   code: string;
+  /** El nombre PÚBLICO que genera la vista (V5.202): variedades + proceso · región + año, sin la finca. */
   name: string;
   grade: SneakPeekGrade;
   /** El Punto que rige el grado, con los dos decimales de la escala, o «—». */
   score: string;
   /** El protocolo de ese Punto: CVA (el principal desde la V5.189) o SCA 2004, que vale lo mismo. */
   scoreProtocol: "CVA" | "SCA";
-  finca: string;
-  municipio: string | null;
-  departamento: string | null;
+  /** V5.202: la región que se enseña, «departamento, país». Nunca la finca ni el municipio. */
+  region: string;
+  /** D3.1: el rótulo de CTCx Selection si CTCx compró el lote en firme; null en los demás. */
+  rotulo: string | null;
+  /** V5.202 (nodo final): el piso del tramo de 100 m (1794 → 1700); la tarjeta pinta «1.700–1.800 m». */
   altitudeM: number | null;
   variety: string | null;
   process: string | null;
@@ -68,8 +77,8 @@ export type SneakPeekLot = {
   cva: { k: string; v: number }[] | null;
   /** ¿Ya está declarado en el Catálogo Activo? Si no, la tarjeta dice «Próximamente». */
   inCatalogue: boolean;
-  /** La foto de la cara frontal: la de la finca o del lote (`/api/catalogo/foto/…`), o la imagen de CTCx Selection. Sin ella, la
-   *  tarjeta cae al sello del grado, que nunca falta. */
+  /** La foto de la cara frontal: la del LOTE (`/api/catalogo/foto/…`; V5.202: nunca la de la finca), o la imagen de CTCx
+   *  Selection. Sin ella, la tarjeta cae al sello del grado, que nunca falta. */
   image?: string;
   /** El Dossier público del lote (CTCx Public Catalogue), RELATIVO: el componente lo hace absoluto contra `www`. */
   dossierPath: string;
@@ -115,23 +124,21 @@ function aTarjeta(fila: FilaVitrina, perfil: PerfilCtcx, taza: { cva: { k: strin
   if (!id || !esGradoValido(id) || id === "tyrian") return null;
   const grade: SneakPeekGrade = id;
   return {
-    id: fila.lot_id,
     code: fila.referencia,
     name: fila.nombre,
     grade,
     score: fila.punto != null ? Number(fila.punto).toFixed(SCA_DECIMALES) : "—",
     scoreProtocol: fila.protocolo === "sca2004" ? "SCA" : "CVA",
-    // La vitrina de un lote que CTC compró en firme lleva a CTC, no a la finca (decisión del owner, D3.1). La vista ya NO devuelve
-    // el nombre real en ese caso —es legible por `anon`, taparlo aquí no serviría de nada—, así que esto pone el RÓTULO desde su
-    // fuente única.
-    finca: fila.ctc_selection ? rotuloCtcx(perfil) : fila.finca_name ?? "—",
-    // V5.85: la imagen por lote de CTCx Selection (o la del perfil); V5.198: la de la finca o el lote, servida por la compuerta.
+    // La vitrina de un lote que CTC compró en firme lleva a CTC (decisión del owner, D3.1): el RÓTULO sale de su fuente única.
+    // V5.202: ningún lote enseña su finca (la vista ya no la devuelve); todos enseñan su región.
+    rotulo: fila.ctc_selection ? rotuloCtcx(perfil) : null,
+    region: regionDeLaVitrina(fila),
+    // V5.85: la imagen por lote de CTCx Selection (o la del perfil); V5.198/V5.202: la del LOTE, servida por la compuerta.
     image: fila.ctc_selection ? (urlDeImagenCtcx(fila.ctcx_imagen_path) ?? perfil.imagenUrl ?? undefined) : fila.tiene_foto ? `/api/catalogo/foto/${fila.referencia}` : undefined,
-    municipio: fila.municipio,
-    departamento: fila.departamento,
-    altitudeM: fila.altitud_m,
-    variety: fila.variedad,
-    process: fila.proceso,
+    // V5.202 (nodo final): lo canónico y el tramo, aunque la vista ya los entregue así (idempotente).
+    altitudeM: altitudPublica(fila.altitud_m),
+    variety: variedadPublica(fila.variedad),
+    process: procesoPublico(fila.proceso),
     notes: taza?.notas ?? [],
     cva: taza?.cva ?? null,
     inCatalogue: fila.en_catalogo,

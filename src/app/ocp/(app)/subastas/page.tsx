@@ -64,6 +64,9 @@ export default async function OcpSubastasPage() {
   for (const p of (profiles as { id: string; full_name: string | null; email: string | null }[] | null) ?? []) buyerName.set(p.id, p.full_name ?? p.email ?? p.id.slice(0, 8));
   for (const b of (buyerProfiles as { profile_id: string; company_name: string | null }[] | null) ?? []) if (b.company_name) buyerName.set(b.profile_id, b.company_name);
 
+  // V5.202 (owner, 2026-10-10): las subastas nuevas no guardan la finca (su foto pública es sin sesión); la consola la sigue viendo,
+  // leída del lote.
+  const fincaDelLote = new Map(lots.map((l) => [l.id, ((Array.isArray(l.fincas) ? l.fincas[0] : l.fincas) as { name: string } | null)?.name ?? null]));
   const withOpen = new Set(auctions.filter((a) => a.status === "abierta").map((a) => a.lot_id));
   const elegibles = lots.filter((l) => !withOpen.has(l.id));
 
@@ -83,7 +86,7 @@ export default async function OcpSubastasPage() {
       endsAt: a.ends_at,
       vencida: subastaVencida(a.ends_at),
       lotName: a.lot_name,
-      fincaName: a.finca_name,
+      fincaName: a.finca_name ?? fincaDelLote.get(a.lot_id) ?? null,
       score: a.score != null ? Number(a.score) : null,
       notes: a.notes,
       adjudicatedAt: a.adjudicated_at,

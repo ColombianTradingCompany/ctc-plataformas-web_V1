@@ -27,6 +27,7 @@ import { fichaDeVariedad, rangoDeAltitud, GRANO_LABEL } from "@/lib/catacion/var
 import { IMAGEN_DE_ORIGEN_POR_DEFECTO } from "@/lib/imagenDeOrigen";
 import { ESTADOS_DE_CONTRATO_FIRMADO, textoDeMarca } from "@/lib/kaffetal/blindaje";
 import { rutaDelLote } from "@/lib/catalogo/codigoPublico";
+import { fotosB4, fotosPublicasDelLote } from "@/lib/catalogo/fotosPublicas";
 
 export type { Lang };
 
@@ -101,6 +102,13 @@ export type DossierCtcxData = {
   };
   /** V5.167: la imagen de la hoja del grado: una foto del lote, o una del productor que no se haya usado, o la de CTCx. */
   imagenGrado: { url: string; porDefecto: boolean };
+  /** V5.202: las fotos del LOTE (B4), ya preparadas: hasta dos para el productor; en PÚBLICO, como mucho UNA (la portada) y solo
+   *  si CTCx la APROBÓ (`lot_fotos_publicas`). Son las únicas que enseña el Dossier público (`dossierPublico()`): ni la foto de
+   *  perfil de la finca ni la galería del productor. */
+  fotosDelLote: string[];
+  /** V5.202 (nodo final, 2026-10-10): el perfil de CTCx Selection de un lote comprado en firme (su rótulo y su descripción, texto
+   *  de CTCx). Lo pone SOLO `dossierPublico()`; el documento lo pinta en el origen público bajo un rótulo propio. */
+  perfilCtcx?: { rotulo: string; descripcion: string } | null;
   /** V5.167: cada variedad del lote con su ficha del Mapa de Variedades (si la herramienta la tiene). */
   variedadesInfo: {
     nombre: string;
@@ -171,16 +179,19 @@ const sinRaya = (v: string) => v.replace(/\s*—\s*/g, ", ").replace(/,\s*([.,])
 export const capitaliza = (v: string) => (v ? v.charAt(0).toLocaleUpperCase("es") + v.slice(1) : v);
 
 /** Una foto de Storage lista para el documento: orientada, con el lado mayor en 1.600 px y en JPEG (data URI). Si algo
- *  falla, la URL firmada original: el dossier nunca se queda sin la foto por optimizarla. */
-async function fotoParaImprimir(url: string): Promise<string> {
+ *  falla, la URL firmada original: el dossier nunca se queda sin la foto por optimizarla.
+ *  V5.202 (owner, 2026-10-10): en PÚBLICO, si falla, `null` y no la URL firmada: el original trae su EXIF (un JPEG de teléfono
+ *  puede llevar el GPS) y su ruta lleva el uid del productor. Re-codificada por sharp, la foto sale sin metadatos. */
+export async function fotoParaImprimir(url: string, publico = false): Promise<string | null> {
+  const siFalla = publico ? null : url;
   try {
     const r = await fetch(url);
-    if (!r.ok) return url;
+    if (!r.ok) return siFalla;
     const entrada = Buffer.from(await r.arrayBuffer());
     const salida = await sharp(entrada).rotate().resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true }).jpeg({ quality: 78, mozjpeg: true }).toBuffer();
     return `data:image/jpeg;base64,${salida.toString("base64")}`;
   } catch {
-    return url;
+    return siFalla;
   }
 }
 
@@ -225,6 +236,21 @@ export function mapaDeCafetalesUrl(parcelas: { n: number; lat?: string | number 
   return `https://maps.googleapis.com/maps/api/staticmap?${params.toString()}`;
 }
 
+/** V5.202 (nodo final, 2026-10-10): el mapa PÚBLICO de la región, centrado por el NOMBRE del departamento y el país (Google Static
+ *  Maps geocodifica una dirección en `center` y en `markers`): ninguna coordenada de la finca entra en la URL, ni redondeada (a
+ *  medio grado, el pin de Ragonvalia caía a 9 km, y dos fincas del mismo departamento daban pines distintos). */
+export function mapaDeRegionUrl(departamento: string | null | undefined, pais: string | null | undefined, size = "640x360"): string | null {
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const dep = (departamento ?? "").trim();
+  const lugar = [dep, (pais ?? "").trim() || "Colombia"].filter(Boolean).join(", ");
+  if (!apiKey) return null;
+  const params = new URLSearchParams({ size, scale: "2", format: "jpg", maptype: "terrain", zoom: dep ? "6" : "4", center: lugar, key: apiKey });
+  params.append("markers", `color:0x3D0A8A|${lugar}`);
+  params.append("style", "feature:poi|visibility:off");
+  params.append("style", "feature:road|visibility:simplified");
+  return `https://maps.googleapis.com/maps/api/staticmap?${params.toString()}`;
+}
+
 /** El mapa de ubicación: la región, con un pin en la finca (sin satélite: la cuenta de Google es de la UE, ver `mapPreviewUrl`). */
 export function mapaDeUbicacionUrl(lat: number, lng: number, size = "300x400"): string | null {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -251,9 +277,13 @@ export function criteriosDeLaFinca(f: Pick<FincaRow, "eudr_deforestation_free" |
   ];
 }
 
-/** V5.198: `publico` = para el Dossier público (`lib/catalogo/vitrina.ts`): no lee al productor ni su galería, no arma el mapa de
- *  los cafetales y pone el pin del mapa regional a un decimal (~11 km). El documento que sale de aquí pasa además por
- *  `dossierPublico()`, la lista blanca: esto ahorra trabajo, aquello es la garantía. */
+/** V5.198: `publico` = para el Dossier público (`lib/catalogo/vitrina.ts`): no lee al productor ni su galería y no arma el mapa de
+ *  los cafetales. El documento que sale de aquí pasa además por `dossierPublico()`, la lista blanca: esto ahorra trabajo, aquello
+ *  es la garantía.
+ *  V5.202 (owner, 2026-10-10): en público tampoco firma la foto de perfil de las fincas, una foto que no se pudo preparar no sale
+ *  (nunca la URL firmada del original), y —tras la revisión del nodo final— de las fotos del lote solo UNA, la portada, y solo si
+ *  CTCx la APROBÓ (`lot_fotos_publicas`); el mapa regional se centra por el NOMBRE del departamento (`mapaDeRegionUrl`), sin
+ *  coordenadas de la finca. */
 export async function cargarDossier(service: SupabaseClient, lotId: string, lang: Lang, opciones: { publico?: boolean } = {}): Promise<(DossierCtcxData & { producerId: string }) | null> {
   const publico = opciones.publico === true;
   const { data: lotRaw } = await service
@@ -315,11 +345,13 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
 
   const perfil = perfilRaw as { company_name: string | null; avatar_asset_id: string | null; gallery_asset_ids: string[] | null } | null;
   const galeriaIds = (perfil?.gallery_asset_ids ?? []).slice(0, 4);
-  const fotosDelLote = (((lot.datasheet as { b4_files_foto?: { assetId: string }[] } | null)?.b4_files_foto ?? []) as { assetId: string }[]).map((x) => x.assetId).filter(Boolean).slice(0, 2);
-  const firmadas = await signedKaffetalMediaUrls(service, [perfil?.avatar_asset_id, ...galeriaIds, ...fotosDelLote, ...origen.map((x) => x.f.profile_photo_asset_id)]);
+  const b4 = fotosB4((lot.datasheet as { b4_files_foto?: unknown } | null)?.b4_files_foto);
+  // V5.202 (nodo final, 2026-10-10): en PÚBLICO, solo fotos que CTCx APROBÓ y como mucho UNA (la portada); falla cerrada.
+  const fotosDelLote = publico ? (await fotosPublicasDelLote(service, lot.id, b4)).slice(0, 1) : b4.slice(0, 2);
+  const firmadas = await signedKaffetalMediaUrls(service, [perfil?.avatar_asset_id, ...galeriaIds, ...fotosDelLote, ...(publico ? [] : origen.map((x) => x.f.profile_photo_asset_id))]);
   // Las fotos van ya orientadas, reducidas y en JPEG: el PDF del navegador incrusta un JPEG tal cual, pero una foto de
   // 5.700 px (o un WebP) la vuelve a codificar sin pérdida, y un dossier pesaba 29 MB.
-  const urls = new Map(await Promise.all([...firmadas].map(async ([id, url]) => [id, await fotoParaImprimir(url)] as const)));
+  const urls = new Map(await Promise.all([...firmadas].map(async ([id, url]) => [id, await fotoParaImprimir(url, publico)] as const)));
   const producer = producers.get(lot.producer_id);
 
   // ── Las fincas, con su geometría y su expediente EUDR ──
@@ -349,7 +381,8 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
       infra: f.eudr_local_infra ?? [],
       historia: f.history_text?.trim() || null,
       caracteristicas: f.characteristics_text?.trim() || null,
-      fotoUrl: f.profile_photo_asset_id ? urls.get(f.profile_photo_asset_id) ?? null : null,
+      // V5.202: en público, nunca la foto de perfil de la finca.
+      fotoUrl: !publico && f.profile_photo_asset_id ? urls.get(f.profile_photo_asset_id) ?? null : null,
       kg,
       pasaporte: fincaEudrStatus(camposDe(f)),
       criterios: criteriosDeLaFinca(f, { vertices: poly.length, punto: lat != null && lng != null }),
@@ -365,10 +398,9 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
   });
   const mapaUrl = publico ? null : mapaDeCafetalesUrl(enMapa);
   const ancla = fincas.find((f) => f.lat != null && f.lng != null);
-  // En público, el pin del mapa regional va a un decimal (~11 km): dice la región sin decir el predio (la URL del mapa la lee
-  // cualquiera, y lleva las coordenadas).
-  const aproxima = (v: number) => Math.round(v * 10) / 10;
-  const ubicacionUrl = ancla ? (publico ? mapaDeUbicacionUrl(aproxima(ancla.lat!), aproxima(ancla.lng!), "640x360") : mapaDeUbicacionUrl(ancla.lat!, ancla.lng!)) : null;
+  // En público el mapa regional no lleva NINGUNA coordenada de la finca (la URL del mapa la lee cualquiera): se centra por el nombre
+  // del departamento y el país. V5.202 (nodo final, 2026-10-10): antes iba con el pin redondeado a medio grado.
+  const ubicacionUrl = publico ? mapaDeRegionUrl(fincas[0]?.departamento, fincas[0]?.pais) : ancla ? mapaDeUbicacionUrl(ancla.lat!, ancla.lng!) : null;
 
   // ── La Visa EUDR del lote (heredada del Pasaporte de las fincas) ──
   const status = lotEudrStatus(lot, origen.map((x) => camposDe(x.f)));
@@ -477,10 +509,12 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
     },
     imagenGrado: (() => {
       // Una imagen que no se haya mostrado ya: foto del lote, la cuarta de la galería, la foto de otra finca; si no, la de CTCx.
-      // En público, nunca la galería del productor (puede tener personas): solo fotos del lote o de otra finca.
-      const libre = [...fotosDelLote, publico ? null : galeriaIds[3], ...origen.slice(1).map((x) => x.f.profile_photo_asset_id)].map((id) => (id ? urls.get(id) : undefined)).find((u): u is string => !!u);
+      // En público, NINGUNA foto (V5.202, nodo final: la única foto pública es la portada aprobada; el grado lleva la imagen de CTCx
+      // Selection o la ilustración por defecto, y eso lo decide `dossierPublico()`).
+      const libre = publico ? undefined : [...fotosDelLote, galeriaIds[3], ...origen.slice(1).map((x) => x.f.profile_photo_asset_id)].map((id) => (id ? urls.get(id) : undefined)).find((u): u is string => !!u);
       return libre ? { url: libre, porDefecto: false } : { url: IMAGEN_DE_ORIGEN_POR_DEFECTO, porDefecto: true };
     })(),
+    fotosDelLote: fotosDelLote.map((id) => urls.get(id)).filter((u): u is string => !!u),
     variedadesInfo: variedades.map((v) => {
       const f = fichaDeVariedad(v.nombre);
       return {
@@ -511,7 +545,7 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
     qrSvg,
     generatedOn: new Date().toISOString(),
     blindaje: publico
-      ? { puedeImprimir: false, marca: "" } // V5.201: el público no se imprime (owner); `dossierPublico()` lo vuelve a fijar
+      ? { puedeImprimir: false, marca: "" } // V5.201: el público no se imprime (owner); `dossierPublico()` fija su marca PÚBLICA (V5.202)
       : {
           puedeImprimir: (((firmadosRaw as { id: string }[] | null) ?? []).length) > 0,
           marca: textoDeMarca({ referencia: ctcLotReference(lot.id), productor: producer?.fullName ?? null, fecha: new Date(), lang }),

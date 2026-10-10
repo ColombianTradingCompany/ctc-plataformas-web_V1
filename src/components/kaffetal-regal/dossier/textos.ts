@@ -23,6 +23,8 @@ const ES = {
   cosecha: "Cosecha",
   referencia: "Referencia",
   fotoFinca: "Finca",
+  // V5.202 (owner): en el Dossier público la foto de la portada es del LOTE, nunca de la finca.
+  fotoLote: "Foto del lote",
   // Origen
   origenTitulo: "De dónde viene este café",
   cafetales: "Cafetales del lote",
@@ -135,8 +137,10 @@ const ES = {
   // V5.198 (owner): el Dossier público del CTCx Public Catalogue.
   docPublico: "Dossier público del lote",
   volverPortal: "Find my Lot",
-  regionPie: "La región del lote. La ubicación exacta de la finca no se publica.",
+  regionPie: "La región del lote, a nivel de departamento. La finca y su ubicación no se publican.",
   region: "Región",
+  // V5.202 (nodo final, 2026-10-10): la descripción del perfil de CTCx Selection, en el origen público de SUS lotes.
+  perfilCtcx: "Perfil de CTCx Selection",
   eudrListo: "Lista para EUDR: trazabilidad hasta la finca, según el Reglamento (UE) 2023/1115.",
   avisoPublico: `Expediente público del lote en el CTCx Public Catalogue. Lo produce ${CTC_RAZON} con lo que el productor registró en Kaffetal Regal y lo que CTCx contrastó; lo que CTCx no verificó no se afirma. Para comprarlo o pedir una muestra, escriba a CTCx en ctcexport.com.`,
   // V5.201 (owner): el Dossier público es un documento continuo que se navega desde abajo y no se imprime.
@@ -241,6 +245,7 @@ const EN: Textos = {
   cosecha: "Harvest",
   referencia: "Reference",
   fotoFinca: "Farm",
+  fotoLote: "Lot photo",
   origenTitulo: "Where this coffee comes from",
   cafetales: "The lot's coffee plots",
   ubicacion: "Location",
@@ -346,8 +351,9 @@ const EN: Textos = {
   notasTitulo: "Notes on the flavour wheel",
   docPublico: "Public lot dossier",
   volverPortal: "Find my Lot",
-  regionPie: "The lot's region. The farm's exact location is not published.",
+  regionPie: "The lot's region, at department level. The farm and its location are not published.",
   region: "Region",
+  perfilCtcx: "CTCx Selection profile",
   eudrListo: "EUDR ready: traceable to the farm, under Regulation (EU) 2023/1115.",
   avisoPublico: `Public file of the lot in the CTCx Public Catalogue. Produced by ${CTC_RAZON} from what the producer registered in Kaffetal Regal and what CTCx checked; what CTCx did not verify is not claimed. To buy it or request a sample, write to CTCx at ctcexport.com.`,
   portadaNav: "Cover",

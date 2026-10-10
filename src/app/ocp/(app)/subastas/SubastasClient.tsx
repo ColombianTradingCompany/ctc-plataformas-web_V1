@@ -91,7 +91,8 @@ export function AbrirSubastaForm({ lotId, lotName }: { lotId: string; lotName: s
   return (
     <div style={{ border: "1px dashed var(--line)", borderRadius: 8, padding: "10px 12px", marginTop: 6, display: "grid", gap: 6 }}>
       <p className={styles.meta} style={{ margin: 0 }}>
-        La subasta de <b>{lotName}</b> se muestra en Cherry Picked Green con sus datos públicos (nombre, finca, variedad, proceso, altitud, puntaje). La puja es en EUR/kg.
+        {/* V5.202 (owner, 2026-10-10): la vitrina Tyrian es sin sesión: nada que lleve al productor. */}
+        La subasta de <b>{lotName}</b> se muestra en Cherry Picked Green, sin sesión, con sus datos públicos: el nombre generado (variedades, proceso, región y año; nunca el nombre del lote ni la finca), la variedad, el proceso, la altitud en tramos de 100 m y el puntaje. La puja es en EUR/kg.
       </p>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         <select value={fracciones} onChange={(e) => setFracciones(e.target.value as "1" | "2")} style={{ maxWidth: 170 }}>

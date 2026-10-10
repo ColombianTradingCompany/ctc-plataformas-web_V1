@@ -15,6 +15,13 @@
 // columna de papel con las secciones una tras otra (cada una con su ancla, sin cabecera ni pie de página; la línea legal va una
 // vez, al final), el índice de la portada enlaza a ellas y `NavegacionDelDossier` flota abajo. Sin botón de imprimir, y si
 // alguien imprime desde el navegador sale solo el aviso de que se consulta en línea. El del productor no cambia.
+// V5.202 (owner, 2026-10-10): el público «necesita mantener el Watermark y omitir info que haga fácil circumventar a CTCx para
+// llegar al Productor». Cada sección lleva la marca de agua PÚBLICA (no nombra a nadie) y el documento enseña la REGIÓN: ni la
+// finca, ni el municipio, ni su historia, ni su área; el título es el nombre público del lote y la foto, la del lote. Sigue sin
+// imprimir y sin bloquear copiar (es para que lo lea un comprador). El del productor no cambia.
+// V5.202, tras la revisión del nodo final (mismo día): la marca pública va como MOSAICO SVG (`MarcaDeAguaMosaico`: cubre cualquier
+// alto y pesa poco), la altitud en tramos de 100 m, el origen sin repetir departamento y país (ya están en la frase de arriba), y un
+// lote de CTCx Selection enseña la descripción de su perfil bajo su propio rótulo.
 
 import Link from "next/link";
 import { Big_Shoulders } from "next/font/google";
@@ -28,7 +35,8 @@ import { ICONO_DE_ACIDEZ, ICONO_DE_TEXTURA, IconoDeNota } from "@/components/cat
 import { TEXTOS, type Textos } from "./textos";
 import { BotonImprimir } from "./BotonImprimir";
 import { NavegacionDelDossier } from "./NavegacionDelDossier";
-import { MarcaDeAgua } from "../blindaje/MarcaDeAgua";
+import { MarcaDeAgua, MarcaDeAguaMosaico } from "../blindaje/MarcaDeAgua";
+import { tramoDeAltitud } from "@/lib/catalogo/vitrinaVista";
 import { Blindaje } from "../blindaje/Blindaje";
 import { AVISO_SIN_CONTRATO } from "@/lib/kaffetal/blindaje";
 import { AltitudEnLaMontana, BarraDeIntensidad, EscalaCtc, IlustracionGranos, IlustracionTaza, MORADO, Mallas, MatrizDeRespaldo, Medidor, Radar, RadarCva, Rendimiento, RuedaFamilias, oscurece } from "./figuras";
@@ -114,8 +122,12 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
   const c = d.caracterizacion;
   const cif = c.cifras ?? null;
   const g = d.grado;
-  const titulo = d.lot.productName || d.lot.name;
-  const lugar = finca ? [finca.municipio, finca.departamento, finca.pais].filter(Boolean).join(", ") : null;
+  // V5.202: en público el título es el nombre PÚBLICO del lote (lo genera la vista; el del productor y el del producto solían
+  // llevar la finca), y el lugar es la región: departamento y país, sin el municipio.
+  const titulo = pub ? d.lot.name : d.lot.productName || d.lot.name;
+  const lugar = finca ? [pub ? null : finca.municipio, finca.departamento, finca.pais].filter(Boolean).join(", ") : null;
+  // En público `dossierPublico()` deja vacío el nombre de la finca; solo un lote de CTCx Selection (D3.1) trae ahí su rótulo.
+  const rotuloCtcx = pub ? finca?.name || null : null;
   const cosecha =
     d.lot.harvestFrom && d.lot.harvestTo
       ? `${new Date(d.lot.harvestFrom).toLocaleDateString(loc, { day: "2-digit", month: "short" })} ${d.lang === "en" ? "to" : "a"} ${fecha(d.lot.harvestTo)}`
@@ -142,6 +154,8 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
           </div>
         )}
         <div className={s.cuerpo}>{cuerpo}</div>
+        {/* V5.202 · la marca de agua PÚBLICA en cada sección, como mosaico SVG (cubre cualquier alto; su patrón lleva el id de la sección). */}
+        {d.blindaje.marca ? <MarcaDeAguaMosaico texto={d.blindaje.marca} id={`marca-${id}`} opacidad={0.06} /> : null}
       </section>
     ) : (
     <section className={s.hoja} key={id} aria-label={id === "portada" ? t.doc : t.secciones[id]}>
@@ -198,10 +212,17 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
             {finca?.fotoUrl ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element -- foto firmada de Storage */}
-                <img src={finca.fotoUrl} alt={`${t.fotoFinca} ${finca.name}`} />
+                <img src={finca.fotoUrl} alt={pub ? `${rotuloCtcx ?? t.fotoLote} · ${titulo}` : `${t.fotoFinca} ${finca.name}`} />
                 <span className={s.portadaFotoPie}>
-                  {t.fotoFinca} {finca.name}
-                  {lugar ? ` · ${lugar}` : ""}
+                  {pub ? (
+                    // V5.202: en público la foto es del LOTE (o la imagen de CTCx Selection) y el pie dice la región.
+                    [rotuloCtcx ?? t.fotoLote, lugar].filter(Boolean).join(" · ")
+                  ) : (
+                    <>
+                      {t.fotoFinca} {finca.name}
+                      {lugar ? ` · ${lugar}` : ""}
+                    </>
+                  )}
                 </span>
               </>
             ) : d.mapaUrl ? (
@@ -221,7 +242,7 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
                 {titulo}
               </h1>
               <p className={s.portadaSub}>
-                {titulo !== d.lot.name ? `${d.lot.name} · ` : ""}
+                {!pub && titulo !== d.lot.name ? `${d.lot.name} · ` : ""}
                 <span className={s.mono} translate="no">
                   {d.lot.reference}
                 </span>
@@ -252,7 +273,7 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
           </div>
           <div className={s.datosPortada}>
             <Dato k={t.origenDe} v={lugar} />
-            <Dato k={t.altitud} v={d.lot.altitudeM != null ? `${d.lot.altitudeM.toLocaleString(loc)} m` : null} />
+            <Dato k={t.altitud} v={pub ? tramoDeAltitud(d.lot.altitudeM, loc) : d.lot.altitudeM != null ? `${d.lot.altitudeM.toLocaleString(loc)} m` : null} />
             <Dato k={t.variedad} v={d.lot.variety || d.lot.variedades.map((v) => v.nombre).join(", ") || null} />
             <Dato k={t.proceso} v={d.lot.process} />
             <Dato k={t.cosecha} v={cosecha} />
@@ -293,16 +314,21 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
       ),
   });
 
-  // V5.198 · el origen PÚBLICO: la región (pin a un decimal, ~11 km), la altitud y la finca con su historia; sin el mapa de los
-  // cafetales, sin coordenadas, sin vereda ni tenencia y sin el productor (la vitrina enseña la finca, nunca a la persona).
+  // V5.198 · el origen PÚBLICO: la región, la altitud y el sistema de cultivo; sin el mapa de los cafetales, sin coordenadas, sin
+  // vereda ni tenencia y sin el productor.
+  // V5.202 (owner, 2026-10-10): tampoco la finca: ni su nombre, ni el municipio, ni el área, ni su historia o sus características
+  // (texto libre: una historia nombraba su vereda), ni la infraestructura de un canal propio (la quita `dossierPublico()`). El
+  // mapa regional se centra por el nombre del departamento (sin coordenadas). La altitud va en tramos de 100 m, y el departamento y
+  // el país no se repiten en los datos: ya los dice la frase de arriba. Un lote de CTCx Selection lleva la descripción de su perfil.
+  const altitudPub = finca ? finca.altitud ?? d.lot.altitudeM : d.lot.altitudeM;
   const origenPublico = pub ? (
     <>
       <div>
         <h2 className={s.h2}>{t.origenTitulo}</h2>
-        {finca && (
+        {lugar && (
           <p className={s.lead}>
-            <b style={{ color: "var(--tinta)" }}>{finca.name}</b>
-            {lugar ? ` · ${lugar}` : ""}
+            {rotuloCtcx ? `${rotuloCtcx} · ` : ""}
+            <b style={{ color: "var(--tinta)" }}>{lugar}</b>
           </p>
         )}
       </div>
@@ -320,14 +346,16 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
       {finca && (
         <div className={s.datosYAltitud}>
           <div>
-            <div className={s.datos3}>
-              <Dato k={t.municipio} v={finca.municipio} />
-              <Dato k={t.departamento} v={finca.departamento} />
-              <Dato k={t.pais} v={finca.pais} />
-              <Dato k={t.altitud} v={(finca.altitud ?? d.lot.altitudeM) != null ? `${(finca.altitud ?? d.lot.altitudeM)!.toLocaleString(loc)} m` : null} />
-              <Dato k={t.area} v={finca.hectares != null ? `${finca.hectares.toLocaleString(loc)} ha` : null} />
+            <div className={s.datos2}>
+              <Dato k={t.altitud} v={tramoDeAltitud(altitudPub, loc)} />
               <Dato k={t.sistema} v={finca.sistema ? t.sistemaLabel[finca.sistema] ?? finca.sistema : null} />
             </div>
+            {d.perfilCtcx && (
+              <div style={{ marginTop: "3mm" }}>
+                <div className={s.k}>{t.perfilCtcx}</div>
+                <p className={s.cita}>{d.perfilCtcx.descripcion}</p>
+              </div>
+            )}
             {finca.infra.length > 0 && (
               <div style={{ marginTop: "3mm" }}>
                 <div className={s.k} style={{ marginBottom: "1.2mm" }}>
@@ -343,30 +371,11 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
               </div>
             )}
           </div>
-          {(finca.altitud ?? d.lot.altitudeM) != null && (
+          {altitudPub != null && (
             <div>
               <div className={s.k}>{t.escalaAltitud}</div>
-              <AltitudEnLaMontana metros={(finca.altitud ?? d.lot.altitudeM)!} etiqueta={t.altitud} loc={loc} />
-            </div>
-          )}
-        </div>
-      )}
-      {finca && (finca.historia || finca.caracteristicas) && (
-        <div className={s.mitades}>
-          {finca.historia && (
-            <div>
-              <div className={s.h3}>{t.historia}</div>
-              <p className={s.cita} style={{ WebkitLineClamp: 8 }}>
-                {finca.historia}
-              </p>
-            </div>
-          )}
-          {finca.caracteristicas && (
-            <div>
-              <div className={s.h3}>{t.caracteristicas}</div>
-              <p className={s.cita} style={{ WebkitLineClamp: 8 }}>
-                {finca.caracteristicas}
-              </p>
+              {/* El dibujo pone la línea a mitad del tramo y escribe el tramo, no la altitud exacta. */}
+              <AltitudEnLaMontana metros={altitudPub + 50} etiqueta={t.altitud} loc={loc} rotulo={tramoDeAltitud(altitudPub, loc)} />
             </div>
           )}
         </div>

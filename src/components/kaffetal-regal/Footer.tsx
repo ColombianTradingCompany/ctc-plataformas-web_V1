@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { SocialLinks } from "@/components/SocialLinks";
 import { useLang, type Lang } from "@/components/lang/i18n";
 import { LegalFooter } from "@/components/LegalFooter";
@@ -59,8 +58,9 @@ export function Footer() {
   return (
     <footer className={styles.footer}>
       <div className={`wrap ${styles.foot}`}>
+        {/* V5.202 (owner, 2026-10-10): «quítalos también allí» — el logotipo completo grande que abría el pie y el loop de íconos
+            que lo cerraba se fueron, como en el pie de la portada de ctcexport.com (V5.201). La marca sigue en la cabecera y en la barra legal. */}
         <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
-          <Image src="/images/shared/ctc-logo-full.png" alt="Colombian Trading Company" width={2234} height={1231} className={styles.ctcLogo} />
           <span>
             {t.line1}
             <br />
@@ -72,14 +72,6 @@ export function Footer() {
         </div>
         <div className="mono">Cra. 4 #8N-30, vía Guatiguará, casa 205, conjunto campestre Santillana · Piedecuesta, Santander · info@ctcexport.com</div>
         <SocialLinks />
-        {/* Loop de iconos CTC (sketch, alfa real) — la misma marca animada del
-            hero de ctcexport.com, como sello de cierre de la familia. */}
-        {/* `lazy` desde el V2 (2026-08-13): el loop pasó de 310 KB a ~2,3 MB al
-            ganar las transiciones, y en el pie SIEMPRE está bajo el pliegue —
-            aquí no cuesta nada esperar a que el lector llegue. En el hero de
-            ctcexport.com sigue cargando de inmediato, que es donde se ve. */}
-        {/* eslint-disable-next-line @next/next/no-img-element -- animated WebP, must not go through next/image */}
-        <img className={styles.iconLoop} src="/images/shared/ctc-loading-icons.webp" alt="" aria-hidden loading="lazy" decoding="async" />
       </div>
 
       <LegalFooter lang={lang} />

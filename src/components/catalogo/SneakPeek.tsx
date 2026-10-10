@@ -6,6 +6,8 @@ import { GRADO_POR_ID } from "@/lib/grados/definicion";
 import { origenDeSuperficie } from "@/lib/red/subdominios";
 import { PREFIJO_REFERENCIA, RUTA_PORTAL, cuerpoDeReferencia, normalizaReferencia } from "@/lib/catalogo/codigoPublico";
 import type { SneakPeekLang, SneakPeekLot, SneakPeekPayload } from "@/lib/catalogo/sneakPeek";
+// V5.202: un módulo SIN imports (no arrastra Supabase al cliente): el tramo de altitud con los separadores del idioma.
+import { tramoDeAltitud } from "@/lib/catalogo/vitrinaVista";
 import { CatalogoPopup } from "./CatalogoPopup";
 import { descriptorLabel, familiaDe } from "@/lib/catacion/rueda";
 import { IconoDeNota } from "@/components/catacion/IconosDeSabor";
@@ -25,7 +27,8 @@ import styles from "./SneakPeek.module.css";
 // Triage). DELANTE va la FICHA del lote: la foto con «Ver detalle» encima (y
 // «Próximamente» si todavía no está declarado en el Catálogo Activo), el nombre,
 // variedad y altitud, las notas que marcó el Q-Grader y, abajo, el sello del grado
-// frente al Punto (CVA) con la finca y el municipio. DETRÁS va el ANÁLISIS: la
+// frente al Punto (CVA) con la región (V5.202: ya no la finca ni el municipio; un
+// lote de CTCx Selection lleva además su rótulo). DETRÁS va el ANÁLISIS: la
 // telaraña de 8 esquinas del CVA, las notas de la rueda con su ícono y su
 // intensidad, y el botón del Dossier público del lote (el que reemplazó a la ficha
 // técnica).
@@ -186,7 +189,9 @@ const PORTAL_BASE = process.env.NODE_ENV === "development" ? "" : origenDeSuperf
 
 /** El nombre de una nota de la rueda en el idioma de la página (la rueda está en español e inglés; el alemán lee el inglés). */
 const nombreDeNota = (id: string, lang: SneakPeekLang) => descriptorLabel(id, lang === "de" ? "en" : lang);
-const fmtIntensidad = (v: number, lang: SneakPeekLang) => v.toLocaleString(lang === "es" ? "es-CO" : lang === "de" ? "de-DE" : "en-GB", { maximumFractionDigits: 1 });
+/** El locale de cada idioma de la cinta (separadores de miles y decimales). */
+const LOCALE: Record<SneakPeekLang, string> = { es: "es-CO", en: "en-GB", de: "de-DE" };
+const fmtIntensidad = (v: number, lang: SneakPeekLang) => v.toLocaleString(LOCALE[lang], { maximumFractionDigits: 1 });
 
 function Tarjeta({
   lot,
@@ -208,8 +213,8 @@ function Tarjeta({
 }) {
   const t = T[lang];
   const grado = GRADO_POR_ID[lot.grade];
-  const origen = [lot.municipio, lot.departamento].filter(Boolean).join(", ");
-  const specs = [lot.variety, lot.altitudeM != null ? `${lot.altitudeM} m` : null].filter(Boolean).join("  ·  ");
+  // V5.202 (nodo final): la altitud en su tramo de 100 m («1.700–1.800 m»), nunca la exacta.
+  const specs = [lot.variety, lot.altitudeM != null ? tramoDeAltitud(lot.altitudeM, LOCALE[lang]) : null].filter(Boolean).join("  ·  ");
   // Las notas que marcó el Q-Grader, las más intensas primero: lo que el café SABE, en una línea.
   const notas = lot.notes.slice(0, 5).map((x) => nombreDeNota(x.id, lang)).join(" · ");
   const inerte = duplicada || !volteada ? -1 : undefined;
@@ -224,13 +229,13 @@ function Tarjeta({
           type="button"
           className={`${styles.face} ${styles.front}`}
           onClick={pulsar}
-          aria-label={t.tarjetaAria(lot.name)}
+          aria-label={t.tarjetaAria(`${lot.name} · ${lot.code}`)}
           aria-expanded={volteada}
           tabIndex={duplicada ? -1 : undefined}
         >
           <span className={styles.photo}>
             {lot.image ? (
-              // La foto de una finca la sirve `/api/catalogo/foto/…` ya recortada y en WebP: sin segundo rodeo por el optimizador.
+              // La foto del lote la sirve `/api/catalogo/foto/…` ya recortada y en WebP: sin segundo rodeo por el optimizador.
               <Image src={lot.image} alt="" width={660} height={440} sizes="320px" unoptimized={lot.image.startsWith("/api/")} />
             ) : (
               // Sin foto, el sello del grado a lo grande: es la cara oficial de
@@ -250,12 +255,21 @@ function Tarjeta({
 
           <span className={styles.frontBody}>
             <b className={styles.name}>{lot.name}</b>
+            {/* V5.202 (nodo final): la referencia, bajo el nombre. El nombre es GENERADO y dos lotes pueden compartirlo; la referencia
+                los distingue (y es lo que se busca en «Find my Lot»). */}
+            <span className={styles.code} translate="no">
+              {lot.code}
+            </span>
             {specs && <span className={styles.specs}>{specs}</span>}
             {notas && <span className={styles.cup}>{notas}</span>}
 
             {/* El pie de la cara: el sello del grado frente al puntaje y al
                 origen. Aquí el sello SÍ cabe a tamaño legible — el que quedaba
-                en una mancha gris era el de 36 px de la primera versión. */}
+                en una mancha gris era el de 36 px de la primera versión.
+                V5.202 (owner, 2026-10-10): lo público omite lo que lleva al
+                productor, así que el origen es la REGIÓN («Santander, Colombia»),
+                en negrita donde antes iba la finca; un lote de CTCx Selection
+                lleva su rótulo en esa línea y la región debajo. */}
             <span className={styles.frontFoot}>
               <Image
                 className={styles.sello}
@@ -270,8 +284,14 @@ function Tarjeta({
                   <i className={styles.sca}>{lot.scoreProtocol}</i>
                   {lot.score}
                 </span>
-                <span className={styles.finca}>{lot.finca}</span>
-                {origen && <span className={styles.origin}>{origen}</span>}
+                {lot.rotulo ? (
+                  <>
+                    <span className={styles.rotulo}>{lot.rotulo}</span>
+                    {lot.region && <span className={styles.origin}>{lot.region}</span>}
+                  </>
+                ) : (
+                  lot.region && <span className={styles.region}>{lot.region}</span>
+                )}
               </span>
             </span>
           </span>
@@ -529,6 +549,7 @@ export function SneakPeek({
 
   /** Lleva la tarjeta al centro de la cinta y, al llegar, la voltea. */
   const centrarYVoltear = useCallback(
+    // V5.202: la tarjeta se identifica por su referencia (`CTC-L-…`); el `lot_id` ya no viaja al navegador.
     (elemento: HTMLElement, idLote: string) => {
       if (volteada === idLote) {
         setVolteada(null);
@@ -669,12 +690,12 @@ export function SneakPeek({
       <div className={styles.strip}>
         {data.lots.map((lot) => (
           <Tarjeta
-            key={lot.id}
+            key={lot.code}
             lot={lot}
             lang={lang}
             duplicada={duplicada}
-            volteada={volteada === lot.id}
-            onVoltear={(el) => centrarYVoltear(el, lot.id)}
+            volteada={volteada === lot.code}
+            onVoltear={(el) => centrarYVoltear(el, lot.code)}
           />
         ))}
       </div>

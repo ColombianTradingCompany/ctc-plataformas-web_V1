@@ -3,6 +3,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import { normalizaCodigo, normalizaReferencia, rutaDelLote } from "@/lib/catalogo/codigoPublico";
 import { cargaDossierPublico, filaDeLaVitrina, referenciaDeCodigoViejo } from "@/lib/catalogo/vitrina";
+import { regionDeLaVitrina, tramoDeAltitud } from "@/lib/catalogo/vitrinaVista";
 import { metadatosDeSuperficie } from "@/lib/seo/openGraph";
 import { DossierCtcx } from "@/components/kaffetal-regal/dossier/DossierCtcx";
 
@@ -47,12 +48,16 @@ export async function generateMetadata({ params }: { params: Promise<{ codigo: s
   if (!c || c.tipo !== "lote") return {};
   const lote = await fila(c.codigo);
   if (!lote) return {};
-  const origen = [lote.ctc_selection ? null : lote.finca_name, [lote.municipio, lote.departamento].filter(Boolean).join(", ")].filter(Boolean).join(" · ");
+  // V5.202 (owner, 2026-10-10): lo público omite lo que lleva al productor. El título y la descripción (que repiten la vista previa
+  // al compartir el enlace: og:title, og:description, la tarjeta de Twitter) dicen la REGIÓN, nunca la finca ni el municipio, y el
+  // nombre es el PÚBLICO que genera la vista (variedades + proceso · región + año). Tras la revisión del nodo final, la altitud va
+  // en su tramo de 100 m («1.700–1.800 m»; la vista ya la entrega redondeada hacia abajo).
+  const origen = regionDeLaVitrina(lote);
   return metadatosDeSuperficie({
     // El canonical es la ruta COMPLETA del lote: firmar la del portal dejaría a todos los lotes con la misma página canónica.
     route: rutaDelLote(lote.referencia),
     title: `${lote.nombre} · ${lote.referencia} · CTCx`,
-    description: [origen, lote.variedad, lote.proceso, lote.punto != null ? `${Number(lote.punto).toFixed(2)} ${lote.protocolo === "sca2004" ? "SCA" : "CVA"}` : null].filter(Boolean).join(" · "),
+    description: [origen, tramoDeAltitud(lote.altitud_m), lote.variedad, lote.proceso, lote.punto != null ? `${Number(lote.punto).toFixed(2)} ${lote.protocolo === "sca2004" ? "SCA" : "CVA"}` : null].filter(Boolean).join(" · "),
     siteName: "Colombian Trading Company",
     image: "ctcx-public-catalogue.jpg",
     imageAlt: "Patio de secado de café en Santander con «Find my Lot» y el logotipo de Colombian Trading Company",

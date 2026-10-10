@@ -49,6 +49,7 @@ const T: Record<
     cierreH2: string;
   }
 > = {
+  // V5.202 (owner, 2026-10-10): el Dossier público omite lo que lleva al productor; el expediente dice la REGIÓN, no la finca.
   es: {
     tag: "CTCx · Catálogo público",
     sub: "Escriba la referencia de su lote —los ocho caracteres después de «CTC-L-»— y vea su Dossier público: origen, variedad, proceso, altura, taza y grado. Sin cuenta y sin registro.",
@@ -57,8 +58,8 @@ const T: Record<
     queTag: "Qué es este portal",
     queH2: "El expediente del lote, en abierto",
     que: [
-      "Cada café que CTCx lleva al mundo tiene un expediente: de qué finca salió, cómo se procesó, a qué altura creció y qué puntúa en taza. Este portal abre la parte de ese expediente que es de todos.",
-      "Lo que aquí se ve sale de la misma base con la que CTCx opera — no es material de venta escrito aparte. Lo que no sale es lo que no le toca a un visitante: los datos fiscales del productor, la georreferencia del predio y la evaluación de riesgo del proveedor se quedan en el expediente interno.",
+      "Cada café que CTCx lleva al mundo tiene un expediente: de qué región salió, cómo se procesó, a qué altura creció y qué puntúa en taza. Este portal abre la parte de ese expediente que es de todos.",
+      "Lo que aquí se ve sale de la misma base con la que CTCx opera — no es material de venta escrito aparte. Lo que no sale es lo que no le toca a un visitante: los datos fiscales del productor, el nombre de la finca y su georreferencia, y la evaluación de riesgo del proveedor se quedan en el expediente interno.",
       "Aparecen los lotes que ya pasaron la evaluación de CTCx y llegaron al Catálogo Activo, aunque todavía no se puedan comprar. Un café que sigue en evaluación no tiene nada que enseñar aquí, y responde «no encontrado» a propósito.",
     ],
     cadenaTag: "De la finca a la taza",
@@ -80,8 +81,8 @@ const T: Record<
     queTag: "What this portal is",
     queH2: "The lot's file, in the open",
     que: [
-      "Every coffee CTCx takes to the world has a file: which farm it came from, how it was processed, at what altitude it grew and how it scores in the cup. This portal opens the part of that file that belongs to everyone.",
-      "What you see here comes from the same database CTCx runs on — it is not sales copy written separately. What does not come out is what a visitor has no business with: the grower's tax details, the plot's geolocation and the supplier risk assessment stay in the internal file.",
+      "Every coffee CTCx takes to the world has a file: which region it came from, how it was processed, at what altitude it grew and how it scores in the cup. This portal opens the part of that file that belongs to everyone.",
+      "What you see here comes from the same database CTCx runs on — it is not sales copy written separately. What does not come out is what a visitor has no business with: the grower's tax details, the farm's name and geolocation, and the supplier risk assessment stay in the internal file.",
       "The lots that passed the CTCx evaluation and reached the Active Catalogue appear here, even before they can be bought. A coffee still under evaluation has nothing to show here, and answers «not found» on purpose.",
     ],
     cadenaTag: "From the farm to the cup",
@@ -103,8 +104,8 @@ const T: Record<
     queTag: "Was dieses Portal ist",
     queH2: "Die Akte des Loses, offen einsehbar",
     que: [
-      "Jeder Kaffee, den CTCx in die Welt bringt, hat eine Akte: von welcher Finca er stammt, wie er aufbereitet wurde, auf welcher Höhe er wuchs und wie er in der Tasse bewertet wird. Dieses Portal öffnet den Teil dieser Akte, der allen gehört.",
-      "Was hier zu sehen ist, stammt aus derselben Datenbank, mit der CTCx arbeitet — es ist kein separat verfasster Verkaufstext. Was nicht herauskommt, ist das, was einen Besucher nichts angeht: Steuerdaten des Produzenten, Georeferenz des Grundstücks und Risikobewertung des Lieferanten bleiben in der internen Akte.",
+      "Jeder Kaffee, den CTCx in die Welt bringt, hat eine Akte: aus welcher Region er stammt, wie er aufbereitet wurde, auf welcher Höhe er wuchs und wie er in der Tasse bewertet wird. Dieses Portal öffnet den Teil dieser Akte, der allen gehört.",
+      "Was hier zu sehen ist, stammt aus derselben Datenbank, mit der CTCx arbeitet — es ist kein separat verfasster Verkaufstext. Was nicht herauskommt, ist das, was einen Besucher nichts angeht: Steuerdaten des Produzenten, Name und Georeferenz der Finca sowie die Risikobewertung des Lieferanten bleiben in der internen Akte.",
       "Hier erscheinen die Lose, die die Bewertung von CTCx bestanden haben und den aktiven Katalog erreicht haben, auch bevor sie kaufbar sind. Ein Kaffee, der noch in der Bewertung ist, hat hier nichts zu zeigen und antwortet absichtlich «nicht gefunden».",
     ],
     cadenaTag: "Von der Finca in die Tasse",

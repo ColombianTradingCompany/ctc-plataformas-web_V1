@@ -11,6 +11,8 @@ import { MONEDA_SUBASTA } from "@/lib/precios/moneda";
 const SUB = MONEDA_SUBASTA.simbolo;
 import { useLang, type Lang } from "./i18n";
 import { subastaVencida, tierAlcanza, type MembershipTier, type SubastaPublica } from "@/lib/subastas/tipos";
+// V5.202: un módulo SIN imports: el tramo de altitud de 100 m con los separadores del idioma.
+import { tramoDeAltitud } from "@/lib/catalogo/vitrinaVista";
 import styles from "./TyrianSection.module.css";
 
 // ── Subasta Tyrian · la puja del comprador (V5.24) ──────────────────────────
@@ -139,7 +141,8 @@ export function TyrianSection({
           <div>
             <p className="eyebrow" style={{ color: "#E9B7D2" }}>{t.eyebrow}</p>
             <h2 style={{ margin: "10px 0 14px" }}>
-              {mostrada ? `Tyrian · ${mostrada.lotName}${mostrada.fincaName ? ` · ${mostrada.fincaName}` : ""}` : "Tyrian"}
+              {/* V5.202 (owner, 2026-10-10): la vitrina Tyrian se ve sin sesión: el nombre PÚBLICO (generado, con la región), nunca la finca. */}
+              {mostrada ? `Tyrian · ${mostrada.lotName}` : "Tyrian"}
             </h2>
             <p>{t.intro}</p>
             {!mostrada && <p style={{ marginTop: 14, color: "#F6E9F0" }}>{t.none}</p>}
@@ -148,7 +151,7 @@ export function TyrianSection({
                 {!abierta && <><span className={styles.k}>{t.lastTitle}</span><span>{mostrada.status === "adjudicada" ? t.awarded : t.closedChip}</span></>}
                 {mostrada.variety && <><span className={styles.k}>{t.kVariety}</span><span>{mostrada.variety}</span></>}
                 {mostrada.process && <><span className={styles.k}>{t.kProcess}</span><span>{mostrada.process}</span></>}
-                {mostrada.altitudeM != null && <><span className={styles.k}>{t.kAlt}</span><span>{fmt(mostrada.altitudeM, lang)} {t.masl}</span></>}
+                {mostrada.altitudeM != null && <><span className={styles.k}>{t.kAlt}</span><span>{tramoDeAltitud(mostrada.altitudeM, LOCALE[lang], t.masl)}</span></>}
                 {mostrada.score != null && <><span className={styles.k}>{t.kScore}</span><span>{importe(mostrada.score, lang)}</span></>}
                 <span className={styles.k}>{abierta ? t.kClose : t.kClosed}</span><span>{fecha(mostrada.endsAt)}</span>
               </div>

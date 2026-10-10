@@ -19,6 +19,35 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.202] — 2026-10-10 (commit pendiente)
+
+- **Seguridad**: **lo público del lote ya no lleva al productor** (owner, 2026-10-10: el Dossier público «necesita mantener el
+  Watermark y omitir info que haga fácil circumventar a CTCx para llegar al Productor»). La auditoría del día encontró que un
+  anónimo llegaba al productor en dos pasos: veía la finca y el municipio (en la vista que lee `anon` por REST, la tarjeta de la
+  cinta, el título y la descripción de la página —también al compartir el enlace—, el pie de la foto del Dossier) y los 6 lotes
+  llevaban la finca o el municipio en su nombre. Ahora el **nombre público se genera** (variedades canónicas + proceso base ·
+  departamento + año: «Castillo Lavado · Santander 2026»; lo que escribió el productor y no está en la lista canónica no sale) en
+  `public_lot_vitrina`, `public_lot_catalog` (la tienda) y `place_order` (el pedido), con una sola función SQL
+  (`nombre_publico_lote`); `finca_name` y `municipio` quedan a `null` en las dos vistas (se borran en una limpieza futura); el
+  Dossier público pierde la historia y las características de la finca (texto libre), su foto de perfil, el área y la
+  infraestructura que delata canal propio (tostadora, molino, empacadora, vacío); la altitud sale en tramos de 100 m; el mapa
+  regional se centra por el nombre del departamento, sin coordenadas; la subasta Tyrian sin sesión ya no enseña la finca.
+- **Añadido**: **las fotos del lote solo salen si CTCx las aprueba** (tabla `lot_fotos_publicas`; en la vista del lote de
+  `/ocp/kr`, «Pública en la vitrina: sí/no», clase emite, con rastro): la revisión encontró una cara en primer plano y a una persona
+  junto a una casa. Hasta aprobar, la tarjeta y el Dossier pintan el sello del grado. El productor ve al subir sus fotos B4 el
+  consejo «sin personas reconocibles, letreros, logos ni datos de contacto».
+- **Añadido**: **marca de agua pública** en cada sección del Dossier público («CTCx Public Catalogue · CTC-L-… · Se compra solo a
+  través de CTCx · ctcexport.com · fecha»), en mosaico SVG que cubre cualquier alto; no nombra a nadie. La tarjeta de la cinta
+  pinta la referencia bajo el nombre (dos lotes pueden llamarse igual).
+- **Retirado**: el logotipo completo grande y el loop de íconos de los pies de Kaffetal Regal y Cherry Picked Green (owner: «quítalos
+  también allí»; como el pie de CTC Home en la V5.201).
+- **Seguridad**: `public_lot_catalog` queda de solo lectura para `anon`/`authenticated` (tenía todos los privilegios); una foto que
+  falla en público ya no devuelve la URL firmada del original (con EXIF); la caché de la foto pública baja a 10 minutos.
+- **Datos**: migraciones `2026-10-10_fotos_publicas` y `2026-10-10_vitrina_sin_finca` aplicadas (con `compras_anulacion` de la V5.203
+  antes, que sus vistas leen). Verificado con SQL: los 6 lotes salen con su nombre generado, sin finca ni municipio, sin foto.
+- **Seguridad**: guardianes `qa-ficha-publica` (82), `qa-sneak-peek` (146, compara fila a fila la lista de variedades de SQL con la
+  de TS), `qa-catalogo-publico` (157), `qa-subastas` (35) y `qa-centro-calidad` (313); 57 mutaciones, todas atrapadas.
+
 ## [V5.201] — 2026-10-10 (commit 742536f)
 
 - **Cambiado**: el **gráfico de «Contexto · Por qué ahora»** de la portada de CTC (owner, 2026-10-10). El nombre de cada ola va

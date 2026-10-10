@@ -419,6 +419,34 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
   check("una referencia que no lleva a un lote pinta «no encontramos ese lote», con el buscador y las puertas del portal (y responde 404)", noEncontrado.includes("<LoteNoEncontrado />") && vista.includes("<BuscadorDeLote />") && vista.includes("<PuertasDelPortal />") && vista.includes('titulo: "No encontramos ese lote"'));
 }
 
+// ── 13. Lo público no lleva al productor (V5.202) ─────────────────────────
+// El owner, 2026-10-10: el Dossier público «necesita mantener el Watermark y omitir info que haga fácil circumventar a CTCx para
+// llegar al Productor». El título y la descripción del lote salen también en la vista previa al compartir el enlace (og:title,
+// og:description, la tarjeta de Twitter): pegarlo en WhatsApp enseñaba la finca y el municipio.
+{
+  const paquete = sinComentarios(lee("src/app/ctcx-public-catalogue/[codigo]/page.tsx"));
+  const meta = /export async function generateMetadata\(\{[\s\S]*?\n\}/.exec(paquete)?.[0] ?? "";
+  check("V5.202 · los metadatos del lote no llevan la finca ni el municipio", meta.length > 0 && !/finca_name|municipio/.test(meta));
+  check("V5.202 · su origen es la región (departamento, país) de una sola fuente", meta.includes("const origen = regionDeLaVitrina(lote);") && /\[fila\.departamento, fila\.pais\]/.test(lee("src/lib/catalogo/vitrinaVista.ts")));
+  check("V5.202 · el título lleva el nombre PÚBLICO de la vista (generado, sin la finca), la referencia y CTCx", meta.includes("title: `${lote.nombre} · ${lote.referencia} · CTCx`,") && !/finca_name|municipio/.test(sinComentarios(lee("src/lib/catalogo/vitrinaVista.ts"))));
+  // V5.202 (nodo final): la altitud exacta, con una variedad rara y el departamento, puede señalar una finca: en público, su tramo.
+  check("V5.202 · la descripción da la altitud en su TRAMO de 100 m, nunca la exacta", meta.includes("description: [origen, tramoDeAltitud(lote.altitud_m), lote.variedad, lote.proceso,") && !/altitud_m\}? ?m`|`\$\{lote\.altitud_m\}/.test(meta));
+  check("V5.202 · la descripción de la portada ya no promete la finca", !lee("src/app/ctcx-public-catalogue/page.tsx").includes("finca y región") && lee("src/app/ctcx-public-catalogue/page.tsx").includes("vea su Dossier público: región, variedad"));
+  const portada = lee("src/components/catalogo/CatalogoPublicoLanding.tsx");
+  check("V5.202 · la portada promete «de qué región salió», no «de qué finca» (los tres idiomas)", portada.includes("de qué región salió") && portada.includes("which region it came from") && portada.includes("aus welcher Region er stammt") && !/de qué finca salió|which farm it came from|von welcher Finca er stammt/.test(portada));
+
+  // La vista que lee `anon`: la nueva migración la rehace con los MISMOS permisos, y la vieja del catálogo deja la finca a null.
+  const vieja = lee("docs/migraciones/2026-10-10_vitrina_publica.sql").replace(/\r\n/g, "\n");
+  const nueva = lee("docs/migraciones/2026-10-10_vitrina_sin_finca.sql").replace(/\r\n/g, "\n");
+  const permisos = (t) => (t.match(/^(revoke|grant) [^\n]*public_lot_vitrina[^\n]*$/gm) ?? []).join("\n");
+  check("V5.202 · la vista nueva revoca y otorga EXACTAMENTE lo mismo que la V5.198 (anon y authenticated solo leen)", permisos(nueva).length > 0 && permisos(nueva) === permisos(vieja) && permisos(nueva).includes("grant select on public.public_lot_vitrina to anon, authenticated, service_role;"));
+  const catalogo = nueva.slice(nueva.indexOf("create or replace view public.public_lot_catalog as"), nueva.indexOf("CREATE OR REPLACE FUNCTION public.place_order("));
+  check("V5.202 · `public_lot_catalog` (la lee anon) se reemplaza con las mismas columnas y la finca y el municipio a null", catalogo.length > 200 && catalogo.includes("null::text as finca_name,") && catalogo.includes("null::text as municipio,") && !/\bf\.name\b|f\.municipio/.test(catalogo.replace(/--[^\n]*/g, "")));
+  // V5.202 (nodo final): anon tenía TODOS los privilegios sobre esta vista (no podía escribir solo porque tiene joins).
+  check("V5.202 · `public_lot_catalog`: anon y authenticated solo LEEN (revoke all + grant select)", catalogo.includes("revoke all on public.public_lot_catalog from public, anon, authenticated;\ngrant select on public.public_lot_catalog to anon, authenticated, service_role;"));
+  check("V5.202 · y un código viejo se sigue resolviendo por esa vista (`lot_id`), sin leer la finca", lee("src/lib/catalogo/vitrina.ts").includes('anon.from("public_lot_catalog").select("lot_id").eq("public_code", codigo)'));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-catalogo-publico: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("   " + f);

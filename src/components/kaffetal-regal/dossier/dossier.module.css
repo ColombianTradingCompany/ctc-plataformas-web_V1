@@ -251,6 +251,8 @@
 .tercios { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6mm; }
 .datos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm 5mm; }
 .datos3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm 5mm; }
+/* V5.202 · el origen PÚBLICO tiene dos datos (altitud y sistema): sin el departamento y el país, que ya dice la frase de arriba. */
+.datos2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3mm 5mm; }
 
 .mapa { position: relative; border: 1px solid var(--linea); background: #fff; align-self: start; }
 .mapa img { width: 100%; height: auto; display: block; }
@@ -455,7 +457,8 @@
    aire de abajo es el sitio del botón de navegación, para que no tape el final del documento. */
 .lienzoContinuo { padding-bottom: 112px; }
 .papel { width: 210mm; max-width: 100%; margin: 0 auto; background: #fff; box-shadow: 0 10px 34px rgba(48, 24, 96, 0.14); }
-.seccionContinua { padding: 0 14mm; }
+/* V5.202 · `position: relative`: cada sección lleva encima su marca de agua pública (`MarcaDeAgua`, capa absoluta). */
+.seccionContinua { position: relative; padding: 0 14mm; }
 .seccionContinua:focus { outline: none; }
 .cabezaSeccion {
   display: flex;

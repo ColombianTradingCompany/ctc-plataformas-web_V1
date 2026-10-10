@@ -126,15 +126,20 @@
 .frontBody{display:flex;flex-direction:column;flex:1;gap:6px;padding:15px 17px 15px;min-width:0}
 
 /* El pie de la cara: el sello del grado a la izquierda y, enfrente, el puntaje
-   con la finca y el municipio. Es la línea que identifica el lote de un vistazo. */
+   con la región. Es la línea que identifica el lote de un vistazo.
+   V5.202 (owner, 2026-10-10): sin la finca ni el municipio. La región va en
+   negrita en la línea que era de la finca (sin hueco); un lote de CTCx Selection
+   lleva ahí su rótulo y la región debajo, en gris. */
 .frontFoot{display:flex;align-items:center;gap:12px;margin-top:auto;padding-top:12px}
 .sello{width:72px;height:72px;flex:none;object-fit:contain;border-radius:50%}
 .frontFootDatos{display:flex;flex-direction:column;align-items:flex-end;text-align:right;margin-left:auto;min-width:0}
-.finca{font-size:12.5px;font-weight:700;color:var(--ink);margin-top:3px}
+.region,.rotulo{font-size:12.5px;font-weight:700;color:var(--ink);margin-top:3px;line-height:1.3}
 .name{
   font-size:15px;font-weight:800;letter-spacing:.005em;line-height:1.25;
   display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
 }
+/* V5.202 (nodo final): la referencia, en mono, bajo el nombre (el nombre es generado y dos lotes pueden compartirlo). */
+.code{font-family:var(--font-spline-mono),monospace;font-size:10.5px;font-weight:600;letter-spacing:.06em;color:var(--muted);margin-top:-2px}
 .line{display:flex;align-items:center;gap:9px;min-width:0}
 .grade{
   font-family:var(--font-spline-mono),monospace;

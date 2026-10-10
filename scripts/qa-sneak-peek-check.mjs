@@ -14,6 +14,16 @@
 //   3. Que la tarjeta que se voltea siga siendo usable y accesible (las maquetas del
 //      owner del 2026-08-17), con el reverso de la V5.198: la telaraña del CVA, las
 //      notas con su ícono y el Dossier público.
+//   4. V5.202 (owner, 2026-10-10): que lo público no lleve al productor («omitir info
+//      que haga fácil circumventar a CTCx para llegar al Productor»): la vista no
+//      expone la finca ni el municipio, su nombre es GENERADO (nunca el del productor),
+//      la foto es del lote, y la tarjeta enseña la región. Ni el `lot_id` viaja.
+//      Tras la revisión del nodo final (mismo día): la migración ya no borra columnas
+//      (`create or replace`, mismo orden; se aplica antes o después de desplegar), el
+//      nombre no lleva texto libre (variedades de la lista canónica —la misma en SQL y
+//      en TS, comparada aquí fila a fila— y proceso de su enum), `public_lot_catalog`
+//      lleva el MISMO nombre y solo se lee, la altitud va en tramos de 100 m y la foto
+//      solo si CTCx la aprobó.
 //
 // No levanta la aplicación ni toca la base: son comprobaciones sobre el texto de
 // los archivos que montan el módulo y sobre la migración de la vista. Mismo patrón
@@ -23,6 +33,9 @@
 import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { VARIEDADES_PUBLICAS, TILDES_DE, TILDES_A, claveDeVariedad, variedadPublica, nombrePublicoDelLote } from "../src/lib/catalogo/nombrePublico.ts";
+import { PROCESOS_BASE } from "../src/components/kaffetal-regal/ficha/fichaData.ts";
+import { altitudPublica, tramoDeAltitud } from "../src/lib/catalogo/vitrinaVista.ts";
 
 let ok = 0;
 const fallos = [];
@@ -35,7 +48,28 @@ const sinComentarios = (t) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/
 const LIB = lee("src/lib/catalogo/sneakPeek.ts");
 const VISTA = lee("src/lib/catalogo/vitrinaVista.ts");
 const VITRINA = lee("src/lib/catalogo/vitrina.ts");
-const SQL = lee("docs/migraciones/2026-10-10_vitrina_publica.sql");
+// V5.202: la vista vigente es la de `2026-10-10_vitrina_sin_finca.sql` (`create or replace` sobre la de `_vitrina_publica.sql`, tras
+// la revisión del nodo final: antes era drop + create y obligaba a un orden frágil de despliegue). Se miran sus secciones —(0) las
+// funciones, (1) la vitrina, (2) el catálogo, (3) `place_order`— sin los comentarios SQL ni los `comment on …` (cuentan la historia
+// y nombran lo que quitan).
+const SQL_NUEVA = lee("docs/migraciones/2026-10-10_vitrina_sin_finca.sql");
+const sinComentariosSql = (t) => t.replace(/--[^\n]*/g, "").replace(/comment on (view|function) [\s\S]*?';/g, "");
+const SQL_TODO = sinComentariosSql(SQL_NUEVA);
+const corta = (desde, hasta) => SQL_TODO.slice(SQL_TODO.indexOf(desde), hasta ? SQL_TODO.indexOf(hasta) : undefined);
+const SQL_FUNCIONES = corta("create or replace function public.clave_de_variedad(", "create or replace view public.public_lot_vitrina as");
+const SQL = corta("create or replace view public.public_lot_vitrina as", "create or replace view public.public_lot_catalog as");
+const SQL_CATALOGO = corta("create or replace view public.public_lot_catalog as", "CREATE OR REPLACE FUNCTION public.place_order(");
+const SQL_PEDIDO = corta("CREATE OR REPLACE FUNCTION public.place_order(");
+/** ¿Aparecen estos trozos EN ESTE ORDEN? (las columnas de una vista: `create or replace` exige el mismo orden). */
+const enOrden = (texto, trozos) => {
+  let i = 0;
+  for (const x of trozos) {
+    const j = texto.indexOf(x, i);
+    if (j < 0) return false;
+    i = j + x.length;
+  }
+  return true;
+};
 const RUTA_API = lee("src/app/api/catalogo/sneak-peek/route.ts");
 const RUTA_FOTO = lee("src/app/api/catalogo/foto/[referencia]/route.ts");
 const COMPONENTE = lee("src/components/catalogo/SneakPeek.tsx");
@@ -63,8 +97,9 @@ check("y no lee `lots`, `fincas` ni el catálogo de la tienda", !LIB.includes('.
 {
   const columnas = /COLUMNAS_VITRINA =\s*"([^"]+)"/.exec(VISTA)?.[1].split(",").map((c) => c.trim()) ?? [];
   check(`las columnas de la vista son de exhibición (${columnas.length})`, columnas.length >= 15 && columnas.includes("referencia") && columnas.includes("en_catalogo") && columnas.includes("tiene_foto"));
-  const malas = columnas.filter((c) => /datasheet|lat|lng|poligono|polygon|producer|productor|nit|precio|price|fob|kg|ancla|op_pct|phone|email/i.test(c));
-  check(`y ninguna es privada ni comercial${malas.length ? ` (${malas.join(", ")})` : ""}`, malas.length === 0);
+  // V5.202: tampoco la finca, el municipio, la vereda ni la historia: llevan al productor.
+  const malas = columnas.filter((c) => /datasheet|lat|lng|poligono|polygon|producer|productor|nit|precio|price|fob|kg|ancla|op_pct|phone|email|finca|municipio|vereda|historia/i.test(c));
+  check(`y ninguna es privada, comercial ni lleva al productor${malas.length ? ` (${malas.join(", ")})` : ""}`, malas.length === 0);
 }
 check("la taza se lee DESPUÉS de la compuerta, solo para esos lotes, y solo la que rige", LIB.includes("const tazas = await tazasDe(vivas.map((f) => f.lot_id));") && LIB.includes('.eq("status", "accepted")') && LIB.includes('.eq("rige_grado", true)'));
 check("y se reduce a lo que pinta el reverso: los 8 del CVA y las notas con su intensidad", LIB.includes("cifras.cva.length === 8 ? cifras.cva.map((x) => ({ k: x.k, v: x.v })) : null") && LIB.includes(".map((x) => ({ id: x.id, intensidad: x.intensidad }))"));
@@ -73,9 +108,44 @@ check("Tyrian queda fuera del teaser (es solo de subasta)", LIB.includes('=== "t
 // La vista misma (la migración): quién entra, qué sale y quién la lee.
 check("vista: solo galardonados con grado, sin Tyrian", SQL.includes("where l.stage = 'galardonado'") && SQL.includes("and l.grade <> 'tyrian'"));
 check("vista: solo lo que llegó al Triage (trato por ventana vigente, declaración viva o partida libre del Stock CTCx)", SQL.includes("c.status = 'active' and c.ventana_tipo is not null") && SQL.includes("cf.estado = 'declarada'") && SQL.includes("p.anulada_at is null and not p.comprometido") && SQL.includes("and (ct.lot_id is not null or d.lot_id is not null or s.lot_id is not null);"));
-check("vista: del `datasheet` solo sale el nombre del producto y la BANDERA de la foto", (SQL.match(/l\.datasheet/g) ?? []).length === 3 && SQL.includes("l.datasheet ->> 'product_name'") && SQL.includes("as tiene_foto"));
-check("vista: un lote de CTCx Selection no devuelve su finca ni su foto (D3.1)", SQL.includes("case when cm.lot_id is null then f.name end as finca_name") && /cm\.lot_id is null\s+and \(f\.profile_photo_asset_id/.test(SQL));
-check("vista: la lee anon SOLO en lectura", SQL.includes("revoke all on public.public_lot_vitrina from public, anon, authenticated;") && SQL.includes("grant select on public.public_lot_vitrina to anon, authenticated, service_role;"));
+{
+  // V5.202: del `datasheet` la vista solo lee la BANDERA de la foto del lote, y se lo pasa entero a `nombre_publico_lote`, que solo
+  // lee sus variedades (y cada nombre pasa por la lista canónica).
+  const claves = [...SQL.matchAll(/l\.datasheet -> '([a-z0-9_]+)'/g)].map((m) => m[1]);
+  const clavesFn = [...SQL_FUNCIONES.matchAll(/p_datasheet -> '([a-z0-9_]+)'/g)].map((m) => m[1]);
+  check(`vista: del \`datasheet\` solo lee la bandera de la foto, y la función del nombre solo las variedades (${[...new Set([...claves, ...clavesFn])].join(", ")})`, claves.length >= 2 && claves.every((k) => k === "b4_files_foto") && clavesFn.length >= 2 && clavesFn.every((k) => k === "varieties") && !/->>/.test(SQL.replace(/foto\.v ->> 'assetId'|r\.punto ->> 'protocoloFuente'/g, "")) && !/->>/.test(SQL_FUNCIONES.replace(/e\.v ->> 'name'/g, "")) && SQL_FUNCIONES.includes("public.variedad_publica(e.v ->> 'name')"));
+}
+// V5.202 (nodo final): «NOMBRE GENERADO SIN TEXTO LIBRE». Una sola función en la base, que usan las dos vistas y `place_order`.
+const LLAMADA_NOMBRE = "public.nombre_publico_lote(l.id, l.datasheet, l.ficha_variedad, l.ficha_proceso, f.departamento, f.pais, l.harvest_to, l.harvest_from, l.created_at)";
+check("V5.202 · vista: el nombre es GENERADO por la función común (variedades + proceso · región + año), nunca el del productor ni el del producto", SQL.includes(`${LLAMADA_NOMBRE} as nombre,`) && SQL_FUNCIONES.includes("create or replace function public.nombre_publico_lote(") && /\nstable\n/.test(SQL_FUNCIONES.slice(SQL_FUNCIONES.indexOf("public.nombre_publico_lote("))) && SQL_FUNCIONES.includes("to_char(p_harvest_to, 'YYYY')") && !/product_name/.test(SQL + SQL_FUNCIONES + SQL_CATALOGO) && !/\bl\.name\b/.test(SQL + SQL_CATALOGO));
+check("V5.202 · las funciones son PURAS (no leen tablas) y con search_path vacío", !/\bfrom public\.|join public\./.test(SQL_FUNCIONES) && (SQL_FUNCIONES.match(/set search_path = ''/g) ?? []).length === 4);
+{
+  // La lista VALUES de `public.variedad_publica` es EXACTAMENTE la de `nombrePublico.ts` (la Ficha + el Mapa de Variedades + alias).
+  const fn = SQL_FUNCIONES.slice(SQL_FUNCIONES.indexOf("create or replace function public.variedad_publica("), SQL_FUNCIONES.indexOf("create or replace function public.proceso_publico("));
+  const filas = [...fn.matchAll(/\('([^']*)', '([^']*)'\)/g)].map((m) => `${m[1]}=${m[2]}`);
+  const ts = VARIEDADES_PUBLICAS.map(([k, n]) => `${k}=${n}`);
+  const sobran = filas.filter((x) => !ts.includes(x));
+  const faltan = ts.filter((x) => !filas.includes(x));
+  check(`V5.202 · la lista canónica de variedades es la MISMA en SQL y en TS (${filas.length} filas)${sobran.length || faltan.length ? ` — sobran en SQL: ${sobran.slice(0, 5).join(", ")}; faltan: ${faltan.slice(0, 5).join(", ")}` : ""}`, filas.length > 100 && filas.length === ts.length && sobran.length === 0 && faltan.length === 0);
+  const clave = SQL_FUNCIONES.slice(SQL_FUNCIONES.indexOf("create or replace function public.clave_de_variedad("), SQL_FUNCIONES.indexOf("create or replace function public.variedad_publica("));
+  check("V5.202 · y la CLAVE se calcula igual: la misma tabla de tildes, NFC, sin paréntesis, solo a-z 0-9 . espacio", clave.includes(`'${TILDES_DE}',`) && clave.includes(`'${TILDES_A}'`) && clave.includes("normalize(coalesce(p_nombre, ''), NFC)") && clave.includes(String.raw`'\(.*?\)', ' ', 'g'), '[^a-z0-9. ]+', ' ', 'g'), '\s+', ' ', 'g'))`) && claveDeVariedad("  Castillo (General) ") === "castillo" && claveDeVariedad("Borbón Rosado") === "borbon rosado");
+  const proc = SQL_FUNCIONES.slice(SQL_FUNCIONES.indexOf("create or replace function public.proceso_publico("), SQL_FUNCIONES.indexOf("create or replace function public.nombre_publico_lote("));
+  const cuando = [...proc.matchAll(/when '([a-z]+)' then '([A-Za-z]+)'/g)].map((m) => `${m[1]}=${m[2]}`);
+  check("V5.202 · el proceso público es el enum de la Ficha (Lavado · Honey · Natural), ni uno más", JSON.stringify(cuando) === JSON.stringify(PROCESOS_BASE.map((p) => `${p.toLowerCase()}=${p}`)));
+  // El centinela: una variedad que el productor escribió con su finca no sale; la canónica sale con su nombre canónico.
+  const n = nombrePublicoDelLote({ lotId: "abcdef12-0000-0000-0000-000000000000", varieties: [{ name: "PRIVADO_finca" }, { name: "Castillo PRIVADO_finca" }, { name: "costa rica 95" }, { name: "Costa Rica 95" }], fichaVariedad: "PRIVADO_finca", fichaProceso: "PRIVADO_proceso", departamento: "Santander", pais: null, harvestTo: "2026-06-30" });
+  check(`V5.202 · centinela «PRIVADO_finca»: ni la variedad libre ni el proceso libre entran en el nombre (${n})`, n === "Costa Rica 95 · Santander 2026" && variedadPublica("PRIVADO_finca") === null && variedadPublica("Castillo Mirador del Pino") === null && variedadPublica("Costa rica 95") === "Costa Rica 95");
+}
+check("V5.202 · vista: la variedad y el proceso salen normalizados (lo desconocido, null), la altitud en tramos de 100 m", SQL.includes("public.variedad_publica(l.ficha_variedad) as variedad,") && SQL.includes("public.proceso_publico(l.ficha_proceso) as proceso,") && SQL.includes("(l.ficha_altitud_m / 100) * 100 as altitud_m,") && altitudPublica(1794) === 1700 && altitudPublica(1393) === 1300 && tramoDeAltitud(1794, "es-CO") === "1.700–1.800 m" && tramoDeAltitud(null) === null);
+check("V5.202 · vista: la finca y el municipio siguen en su sitio, SIEMPRE null (no se lee el nombre de la finca)", SQL.includes("null::text as finca_name,") && SQL.includes("null::text as municipio,") && !/\bf\.name\b|f\.municipio|f\.vereda/.test(SQL) && SQL.includes("f.departamento,") && SQL.includes("as pais,"));
+check("V5.202 · vista: la foto es solo la del LOTE que CTCx APROBÓ (nunca la de perfil de la finca) y un lote de CTCx Selection no enseña foto propia", !/profile_photo_asset_id/.test(SQL) && /cm\.lot_id is null\s+and exists \(/.test(SQL) && SQL.includes("l.datasheet -> 'b4_files_foto'") && /as foto\(v\)\s+join public\.lot_fotos_publicas fp on fp\.lot_id = l\.id and fp\.asset_id::text = lower\(btrim\(foto\.v ->> 'assetId'\)\)\s+\) as tiene_foto/.test(SQL) && !/(left|right|full|cross)\s+join public\.lot_fotos_publicas/i.test(SQL));
+// V5.202 (verificación del nodo final, 2026-10-10): el `join` de las aprobaciones es INTERNO; un `left join` dentro del `exists`
+// devolvería verdadero con cualquier foto B4, aprobada o no (la prueba de mutación lo pasaba con el `includes` de antes).
+check("V5.203 · vista: una compra ANULADA no hace del lote uno de CTCx Selection", SQL.includes("where cp.destino = 'selection' and cp.anulada_at is null"));
+// V5.202 (nodo final): «MIGRACIÓN SIN ORDEN FRÁGIL». Ni un `drop`: `create or replace` con las MISMAS columnas en el MISMO orden,
+// para que el código desplegado (el viejo, que pide `finca_name` y `municipio`, y el nuevo) lea la vista antes y después.
+check("V5.202 · vista: `create or replace` (nada de drop) con sus 18 columnas en el MISMO orden, y la lee anon SOLO en lectura, con los MISMOS permisos de la V5.198", SQL.startsWith("create or replace view public.public_lot_vitrina as") && !/drop view/i.test(SQL_TODO) && enOrden(SQL.slice(SQL.indexOf("\nselect\n")), ["as lot_id,", "as referencia,", "as nombre,", "l.grade,", "as variedad,", "as proceso,", "as altitud_m,", "as punto,", "as protocolo,", "as finca_name,", "as municipio,", "f.departamento,", "as pais,", "as ctc_selection,", "as ctcx_imagen_path,", "as en_catalogo,", "as desde,", "as tiene_foto\nfrom"]) && SQL.includes("revoke all on public.public_lot_vitrina from public, anon, authenticated;") && SQL.includes("grant select on public.public_lot_vitrina to anon, authenticated, service_role;") && lee("docs/migraciones/2026-10-10_vitrina_publica.sql").includes("revoke all on public.public_lot_vitrina from public, anon, authenticated;\ngrant select on public.public_lot_vitrina to anon, authenticated, service_role;"));
+check("V5.202 · la migración va en UNA transacción y empieza comprobando lo que necesita (V5.203 `anulada_at` y `lot_fotos_publicas`)", /^begin;$/m.test(SQL_TODO) && /^commit;$/m.test(SQL_TODO) && SQL_TODO.indexOf("begin;") < SQL_TODO.indexOf("create or replace function") && SQL_TODO.includes("column_name = 'anulada_at'") && SQL_TODO.includes("to_regclass('public.lot_fotos_publicas') is null") && SQL_NUEVA.includes("se puede aplicar ANTES o DESPUÉS de desplegar") && SQL_NUEVA.includes("PENDIENTE (limpieza futura"));
 
 // ── 3. Las rutas públicas ────────────────────────────────────────────────────
 check("la ruta sirve el payload de la librería", RUTA_API.includes("getSneakPeekPayload"));
@@ -203,8 +273,17 @@ check("y se pone por encima de sus vecinas", /\.flipped\{[^}]*z-index/.test(CSS)
 // ── 15. La cara, según las maquetas del owner (2026-08-17) ──────────────────
 check("«Ver detalle» va sobre la foto", COMPONENTE.includes("styles.verDetalle") && /\.verDetalle\{\s*position:absolute/.test(CSS));
 check("la cara lleva el sello del grado a tamaño legible", COMPONENTE.includes("styles.sello") && /\.sello\{width:72px/.test(CSS));
-check("la cara lleva el puntaje, la finca y el municipio", COMPONENTE.includes("styles.frontFoot") && COMPONENTE.includes("styles.finca"));
+// V5.202 (owner, 2026-10-10): sin la finca ni el municipio; la región en la línea que era de la finca (sin hueco).
+check("V5.202 · la cara lleva el puntaje y la REGIÓN, sin la finca ni el municipio", COMPONENTE.includes("styles.frontFoot") && COMPONENTE.includes("lot.region && <span className={styles.region}>{lot.region}</span>") && COMPONENTE.includes("<span className={styles.rotulo}>{lot.rotulo}</span>") && !/lot\.finca|lot\.municipio|lot\.departamento|styles\.finca/.test(COMPONENTE) && CSS.includes(".region,.rotulo{font-size:12.5px;font-weight:700;"));
+check("V5.202 · el tipo de la tarjeta no tiene dónde poner la finca, el municipio ni el `lot_id`", !/^\s*(finca|municipio|id)[?]?\s*:/m.test(bloqueTipo) && /^\s*region: string;/m.test(bloqueTipo) && LIB.includes("region: regionDeLaVitrina(fila),") && !/fila\.lot_id,?\n/.test(LIB.slice(LIB.indexOf("function aTarjeta("), LIB.indexOf("async function leeVitrina("))));
+check("V5.202 · la clave de cada tarjeta (y la que se voltea) es su referencia", COMPONENTE.includes("key={lot.code}") && COMPONENTE.includes("volteada={volteada === lot.code}") && COMPONENTE.includes("centrarYVoltear(el, lot.code)") && !COMPONENTE.includes("lot.id"));
+check("V5.202 · la región es departamento y país, de una sola fuente", VISTA.includes("export function regionDeLaVitrina(") && VISTA.includes("[fila.departamento, fila.pais]"));
 check("la cara lleva variedad y altitud", COMPONENTE.includes("lot.variety, lot.altitudeM != null"));
+// V5.202 (nodo final): el nombre es GENERADO y dos lotes pueden compartirlo («Castillo Lavado · Santander 2026»): la referencia los
+// distingue a la vista y para un lector de pantalla.
+check("V5.202 · la cara PINTA la referencia (mono, bajo el nombre) y la lleva en su aria-label", COMPONENTE.includes("<span className={styles.code} translate=\"no\">\n              {lot.code}\n            </span>") && COMPONENTE.includes("aria-label={t.tarjetaAria(`${lot.name} · ${lot.code}`)}") && /\.code\{font-family:var\(--font-spline-mono\)/.test(CSS));
+check("V5.202 · la altitud de la cara es su TRAMO de 100 m, con los separadores del idioma", COMPONENTE.includes("tramoDeAltitud(lot.altitudeM, LOCALE[lang])") && COMPONENTE.includes('import { tramoDeAltitud } from "@/lib/catalogo/vitrinaVista";') && !/\$\{lot\.altitudeM\} m/.test(COMPONENTE));
+check("V5.202 · la tarjeta normaliza otra vez variedad, proceso y altitud (idempotente; por si la vista vieja sigue puesta)", LIB.includes("altitudeM: altitudPublica(fila.altitud_m),") && LIB.includes("variety: variedadPublica(fila.variedad),") && LIB.includes("process: procesoPublico(fila.proceso),"));
 
 // ── 16. El componente de cliente no arrastra el módulo `server-only` ─────────
 // ⚠️ Importar un VALOR desde `lib/catalogo/sneakPeek.ts` (que es `server-only`) mete Supabase en el paquete del cliente y tumba la
@@ -224,14 +303,24 @@ check("la cinta lee la vista desde un módulo sin `sharp` ni el cargador del dos
   check("la tienda pide ctc_selection a la vista", TIENDA.includes("ctc_selection"));
   check("el rótulo de CTC sale del perfil de CTCx Selection en la cinta (rotuloCtcx → legal.ts), no escrito a mano", LIB.includes("rotuloCtcx(perfil)") && !/finca:\s*["'`]C(TC|olombian)/.test(LIB) && perfil.includes('from "@/lib/legal"') && /return nombre \|\| CTC_RAZON/.test(perfil));
   check("y en la tienda, el mismo rótulo", TIENDA.includes("rotuloCtcx(perfil)"));
+  // V5.202: la vista vieja de la tienda (`public_lot_catalog`, la lee anon) ya no devuelve la finca ni el municipio de ningún lote.
+  check("V5.202 · `public_lot_catalog` conserva sus columnas pero la finca y el municipio van a null para todos", SQL_CATALOGO.includes("null::text as finca_name,") && SQL_CATALOGO.includes("null::text as municipio,") && !/\bf\.name\b|f\.municipio/.test(SQL_CATALOGO) && SQL_CATALOGO.includes("where c.destino = 'selection' and c.anulada_at is null"));
+  // V5.202 (nodo final): su `name` era `lots.name` (los 6 lotes de la vitrina llevaban ahí la finca o el municipio) y anon lo leía.
+  check("V5.202 · `public_lot_catalog`: el MISMO nombre generado, las notas de cata (texto libre) a null, variedad y proceso normalizados, altitud en tramos", SQL_CATALOGO.includes(`${LLAMADA_NOMBRE} as name,`) && SQL_CATALOGO.includes("null::text as ficha_notas_cata,") && SQL_CATALOGO.includes("public.variedad_publica(l.ficha_variedad) as ficha_variedad,") && SQL_CATALOGO.includes("public.proceso_publico(l.ficha_proceso) as ficha_proceso,") && SQL_CATALOGO.includes("(l.ficha_altitud_m / 100) * 100 as ficha_altitud_m,") && !/\bl\.ficha_notas_cata\b/.test(SQL_CATALOGO));
+  check("V5.202 · `public_lot_catalog`: sus 16 columnas en su orden y `pais` AL FINAL; anon y authenticated solo LEEN (revoke all + grant select)", SQL_CATALOGO.startsWith("create or replace view public.public_lot_catalog as") && enOrden(SQL_CATALOGO, ["as lot_id,", "as name,", "l.grade,", "as ficha_variedad,", "as ficha_proceso,", "as ficha_altitud_m,", "l.ficha_puntaje_estimado,", "as ficha_notas_cata,", "as finca_name,", "as municipio,", "f.departamento,", "as official_score,", "as ctc_selection,", "as tiene_ficha,", "l.public_code,", "as ctcx_imagen_path,", "as pais\nfrom"]) && SQL_CATALOGO.includes("revoke all on public.public_lot_catalog from public, anon, authenticated;") && SQL_CATALOGO.includes("grant select on public.public_lot_catalog to anon, authenticated, service_role;"));
+  check("V5.202 · `place_order` guarda en el pedido el nombre GENERADO, no `lots.name` (el resto, la función de siempre)", SQL_PEDIDO.includes(`select ${LLAMADA_NOMBRE}\n      into v_lot_name`) && !SQL_PEDIDO.includes("select name into v_lot_name") && SQL_PEDIDO.includes(" SECURITY DEFINER\n SET search_path TO 'public'") && SQL_PEDIDO.includes("coalesce(v_lot_name, '—')") && SQL_PEDIDO.includes("insert into points_ledger (buyer_id, points_delta, reason, order_id)"));
+  check("V5.202 · y la tienda enseña la región «departamento, país» (el MISMO formato que la cinta), sin un hueco ni la finca", TIENDA.includes('origin: [catalog.ctc_selection ? rotuloCtcx(perfil) : null, regionDeLaVitrina({ departamento: catalog.departamento, pais: catalog.pais ?? null })].filter(Boolean).join(" · ") || "—",') && TIENDA.includes('alt: tramoDeAltitud(catalog.ficha_altitud_m) ?? "—",') && !/finca_name|municipio/.test(sinComentarios(TIENDA)));
   check("ningún componente escribe la razón social a mano", !LIB.includes('"Colombian Trading Company"') && !TIENDA.includes('"Colombian Trading Company"'));
   check("la vitrina sigue enseñando CTC en vez de la finca cuando el lote es de CTC Selection", /ctc_selection\s*\?\s*rotuloCtcx\(perfil\)/.test(TIENDA) && /ctc_selection\s*\?\s*rotuloCtcx\(perfil\)/.test(LIB));
 }
 
 // ── La promesa pública y lo que la tarjeta enseña, ATADAS ──────────────────
 // El Manifiesto, en su pilar 01, promete «finca, personas, proceso y evaluación, verificables lote a lote» y dice DÓNDE: en la
-// ficha técnica (hoy el Dossier público, V5.198) y en la DDS. Quitarle el «dónde» al pilar deja una promesa que la tarjeta no
-// cumple; devolver la finca a la tarjeta de un lote de CTC rompe D3.1.
+// ficha técnica y en la DDS. Estas comprobaciones solo impiden que el pilar pierda el «dónde» por un descuido; NO dicen que el
+// Dossier público enseñe la finca: desde la V5.202 (owner, 2026-10-10: «omitir info que haga fácil circumventar a CTCx para llegar
+// al Productor») no la enseña, ni a las personas. La redacción del pilar choca con eso y CAMBIARLA ES DECISIÓN DEL OWNER (queda
+// como pendiente con dueño; propuesta de la revisión: «…verificables lote a lote en la DDS que recibe el comprador»). Hasta que
+// decida, este guardián conserva su texto; devolver la finca a la tarjeta de un lote de CTC sigue rompiendo D3.1.
 {
   const manifiesto = lee("src/components/cherry-picked/ManifiestoSection.tsx");
   check("manifiesto ES: el pilar 01 dice dónde (ficha técnica y DDS)", /verificables lote a lote en la ficha técnica y en la DDS/.test(manifiesto));

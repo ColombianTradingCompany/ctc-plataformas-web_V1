@@ -10,6 +10,7 @@ import { PostularOnBehalfButton } from "../nominados/NominadosClient";
 import { ActionForm } from "@/components/panel/ActionForm";
 import { reviewEvaluationClaim } from "../evaluationActions";
 import { RevisionDeReferencia } from "./RevisionDeReferencia";
+import { FotosPublicas } from "./FotosPublicas";
 import { IMAGEN_DE_ORIGEN_POR_DEFECTO } from "@/lib/imagenDeOrigen";
 import { esReporte, estadoDeReferencia, resumenDePlanillaCtcx, resumenDeReferencia, rowToReferencia, type LotReferencia, type LotReferenciaRow } from "@/lib/kaffetal/referencias";
 import { LotFichasCard } from "./FichasClient";
@@ -380,6 +381,13 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
         derivedClaimRows={claimRowsFor(lot)}
         archetypeLabel={archetypeFor(lot)}
         eudrFincas={fincasDeOrigen(lot)}
+      />
+      {/* V5.202 (owner, 2026-10-10): qué foto B4 del lote sale en lo público. Ninguna sale sin que CTCx la apruebe, una por una. */}
+      <FotosPublicas
+        service={service}
+        lotId={lot.id}
+        // Verificación del nodo final (V5.202): una entrada B4 sin `assetId` (dato viejo o a medio subir) no tumba la vista del lote.
+        fotos={(lot.datasheet?.b4_files_foto ?? []).filter((f) => !!f?.assetId).map((f) => ({ assetId: f.assetId, fileName: f.fileName || "foto", url: signedUrls.get(f.assetId) ?? null }))}
       />
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-start", marginTop: 14 }}>
         {lot.stage === "no_apto" && <RevertNoAptoButton lotId={lot.id} />}

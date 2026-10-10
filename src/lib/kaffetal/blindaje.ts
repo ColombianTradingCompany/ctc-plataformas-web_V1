@@ -24,6 +24,18 @@ export function textoDeMarca(o: { referencia: string; productor: string | null; 
   return ["CTCx", o.referencia, o.productor || null, uso, f].filter(Boolean).join(" · ");
 }
 
+/** V5.202 (owner, 2026-10-10): el Dossier público «necesita mantener el Watermark y omitir info que haga fácil circumventar a CTCx
+ *  para llegar al Productor». Su marca NO nombra a nadie: solo el catálogo, la referencia (y solo si tiene la forma `CTC-L-` + 8
+ *  hexadecimales: nada más puede colarse por ahí), que se compra a través de CTCx, el sitio y la fecha de consulta. No recibe
+ *  nombre de persona ni de finca, a propósito: no tiene dónde ponerlos. El español lleva verbo, a la par del inglés (nodo final,
+ *  2026-10-10): «Se compra solo a través de CTCx». */
+export function textoDeMarcaPublica(o: { referencia: string; fecha: Date | string; lang?: "es" | "en" }): string {
+  const f = new Date(o.fecha).toISOString().slice(0, 10);
+  const ref = /^CTC-L-[0-9A-F]{8}$/.test(o.referencia) ? o.referencia : null;
+  const solo = o.lang === "en" ? "Sourced only through CTCx" : "Se compra solo a través de CTCx";
+  return ["CTCx Public Catalogue", ref, solo, "ctcexport.com", f].filter(Boolean).join(" · ");
+}
+
 export const AVISO_SIN_CONTRATO = {
   es: "La impresión y la descarga se habilitan cuando su contrato con CTCx esté firmado.",
   en: "Printing and download are enabled once your contract with CTCx is signed.",

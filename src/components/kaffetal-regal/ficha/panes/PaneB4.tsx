@@ -7,6 +7,7 @@ import { FileDrop } from "../../FileDrop";
 import { ReportFiles } from "./ReportFiles";
 import type { PaneProps } from "./types";
 import { ALT_DE_LA_IMAGEN_POR_DEFECTO, IMAGEN_DE_ORIGEN_POR_DEFECTO } from "@/lib/imagenDeOrigen";
+import { CONSEJO_FOTO_PUBLICA } from "@/lib/catalogo/fotosPublicas";
 import styles from "../../FichaView.module.css";
 
 // ── B4 · Fotos y Video del Café ─────────────────────────────────────────────
@@ -45,6 +46,9 @@ const FOTO_TIPS = [
   "Una del cafetal o del lote en el árbol, y otra del café ya beneficiado (pergamino seco, secado o empaque).",
   "Con luz natural y el lente limpio: temprano en la mañana o al final de la tarde es cuando mejor sale.",
   "Enfoque de cerca el grano en al menos una — es lo primero que mira un comprador.",
+  // V5.202 (owner, 2026-10-10): una foto del lote sale en el catálogo público SOLO si CTCx la aprueba, y lo público no debe llevar
+  // al productor. El consejo es el mismo texto que CTCx ve al aprobarla (`CONSEJO_FOTO_PUBLICA`, `lib/catalogo/fotosPublicas.ts`).
+  `${CONSEJO_FOTO_PUBLICA} CTCx revisa cada foto antes de enseñarla en el catálogo público.`,
   "Sin filtros ni retoques: la foto es evidencia del lote, no publicidad.",
 ];
 

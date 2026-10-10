@@ -5,6 +5,8 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { officialAverages, type EvaluationRow } from "@/lib/evaluations";
 import type { MembershipTier } from "@/lib/subastas/tipos";
+import { nombrePublicoDelLote, procesoPublico, variedadPublica } from "@/lib/catalogo/nombrePublico";
+import { altitudPublica } from "@/lib/catalogo/vitrinaVista";
 
 // ── Subastas Tyrian · el lado de CTCx (V5.24) ───────────────────────────────
 // CTCx ABRE la subasta sobre un lote Tyrian galardonado (por mitades o el
@@ -13,6 +15,11 @@ import type { MembershipTier } from "@/lib/subastas/tipos";
 // y NADA MÁS: la oferta al productor sigue siendo COP/kg y la decide CTCx en
 // /ocp/ofertas («Registrar mejor postor») — las monedas no se mezclan y el
 // circuito oferta → aceptación → contrato (V5.18) no cambia.
+// V5.202 (owner, 2026-10-10): lo público debe «omitir info que haga fácil circumventar a CTCx para llegar al Productor». La vitrina
+// Tyrian se ve SIN sesión (`buyerActions.listarSubastas`), así que la foto pública de la subasta ya no lleva `lots.name` (el
+// productor lo escribe y solía llevar la finca) ni `finca_name`: lleva el nombre GENERADO (variedades canónicas + proceso · región
+// + año, `nombrePublicoDelLote`, el espejo en TS de la función de la base), la variedad y el proceso solo si son canónicos, y la
+// altitud en su tramo de 100 m. `finca_name` queda a null en las subastas nuevas (la consola la lee del lote).
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -46,7 +53,7 @@ export async function abrirSubasta(lotId: string, formData: FormData): Promise<R
 
   const { data: lot } = await service
     .from("lots")
-    .select("id, name, stage, grade, ficha_variedad, ficha_proceso, ficha_altitud_m, fincas(name)")
+    .select("id, stage, grade, ficha_variedad, ficha_proceso, ficha_altitud_m, harvest_from, harvest_to, created_at, datasheet->varieties, fincas(departamento, pais)")
     .eq("id", lotId)
     .maybeSingle();
   if (!lot) return { ok: false, error: "El lote no existe." };
@@ -59,7 +66,18 @@ export async function abrirSubasta(lotId: string, formData: FormData): Promise<R
 
   const { data: evals } = await service.from("lot_evaluations").select("source, status, sca_total, factor_rendimiento, rige_grado, created_at").eq("lot_id", lotId);
   const avg = officialAverages(((evals as EvaluationRow[] | null) ?? []));
-  const finca = (Array.isArray(lot.fincas) ? lot.fincas[0] : lot.fincas) as { name: string } | null;
+  const finca = (Array.isArray(lot.fincas) ? lot.fincas[0] : lot.fincas) as { departamento: string | null; pais: string | null } | null;
+  const nombrePublico = nombrePublicoDelLote({
+    lotId,
+    varieties: (lot as { varieties?: unknown }).varieties,
+    fichaVariedad: lot.ficha_variedad,
+    fichaProceso: lot.ficha_proceso,
+    departamento: finca?.departamento,
+    pais: finca?.pais,
+    harvestTo: lot.harvest_to,
+    harvestFrom: lot.harvest_from,
+    creado: lot.created_at,
+  });
 
   const { error } = await service.from("lot_auctions").insert({
     lot_id: lotId,
@@ -69,11 +87,11 @@ export async function abrirSubasta(lotId: string, formData: FormData): Promise<R
     incremento_eur_kg: incremento,
     tier_minimo: tierMinimo,
     ends_at: endsAt.toISOString(),
-    lot_name: lot.name,
-    finca_name: finca?.name ?? null,
-    variety: lot.ficha_variedad ?? null,
-    process: lot.ficha_proceso ?? null,
-    altitude_m: lot.ficha_altitud_m ?? null,
+    lot_name: nombrePublico,
+    finca_name: null,
+    variety: variedadPublica(lot.ficha_variedad),
+    process: procesoPublico(lot.ficha_proceso),
+    altitude_m: altitudPublica(lot.ficha_altitud_m),
     score: avg.scaAverage,
     notes,
     created_by: adminId,

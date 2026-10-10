@@ -9,6 +9,7 @@ import { dossierPublico } from "@/lib/kaffetal/dossierPublico";
 import { RUTA_PORTAL, rutaDelLote } from "./codigoPublico";
 import { aPerfilCtcx, rotuloCtcx, urlDeImagenCtcx, PERFIL_CTCX_SELECT, VISTA_PERFIL_CTCX, type FilaPerfilCtcx } from "./perfilCtcx";
 import { COLUMNAS_VITRINA, VISTA_VITRINA, type FilaVitrina } from "./vitrinaVista";
+import { fotosB4, fotosPublicasDelLote } from "./fotosPublicas";
 
 // ── V5.198 (owner, 2026-10-10) · la VITRINA: los lotes que llegaron al Triage de Catálogo Activo ─────────────────────────────
 // «Quiero que los lotes que lleguen al Triage de Catálogo Activo aparezcan ya en el bloque que usamos en las páginas (CTC, KR,
@@ -53,20 +54,24 @@ export async function cargaDossierPublico(referencia: string, lang: Lang): Promi
     const perfil = aPerfilCtcx(((await anon.from(VISTA_PERFIL_CTCX).select(PERFIL_CTCX_SELECT).maybeSingle()).data as FilaPerfilCtcx | null) ?? null);
     ctcx = { nombre: rotuloCtcx(perfil), descripcion: perfil.descripcion, imagenUrl: urlDeImagenCtcx(fila.ctcx_imagen_path) ?? perfil.imagenUrl };
   }
-  return dossierPublico(datos, { url: rutaDelLote(referencia), volver: RUTA_PORTAL, ctcx });
+  // V5.202 (owner, 2026-10-10): el Dossier público lleva el nombre PÚBLICO que genera la vista (variedades + proceso · región +
+  // año), nunca el del productor ni el del producto: solían llevar la finca.
+  return dossierPublico(datos, { url: rutaDelLote(referencia), volver: RUTA_PORTAL, ctcx, nombre: fila.nombre });
 }
 
-/** La foto de la tarjeta de un lote de la vitrina: la de su finca o, si no, la primera del lote, recortada a 3:2 en WebP. Nunca la
- *  de un lote de CTCx Selection (la vista ya lo marca sin foto: lleva la imagen de CTCx). */
+/** La foto de la tarjeta de un lote de la vitrina: la primera del LOTE que CTCx APROBÓ, recortada a 3:2 en WebP. Nunca la de un
+ *  lote de CTCx Selection (la vista ya lo marca sin foto: lleva la imagen de CTCx).
+ *  V5.202 (owner, 2026-10-10): nunca la foto de PERFIL de la finca (puede enseñar la casa, un letrero o venir de las redes del
+ *  productor, y una búsqueda inversa lleva a él); solo las fotos del lote (b4), y de ellas solo las que CTCx aprobó
+ *  (`lot_fotos_publicas`, `fotosPublicasDelLote`: falla cerrada). Es la MISMA que la portada del Dossier público. Sale
+ *  re-codificada por sharp, sin metadatos. */
 export async function fotoDeLaVitrina(referencia: string): Promise<Buffer | null> {
   const fila = await filaDeLaVitrina(referencia);
   if (!fila || !fila.tiene_foto || fila.ctc_selection) return null;
   const service = createServiceRoleClient();
-  const { data } = await service.from("lots").select("datasheet->b4_files_foto, fincas(profile_photo_asset_id)").eq("id", fila.lot_id).maybeSingle();
-  const fila2 = data as { b4_files_foto?: { assetId?: string }[] | null; fincas?: { profile_photo_asset_id: string | null } | { profile_photo_asset_id: string | null }[] | null } | null;
-  const finca = Array.isArray(fila2?.fincas) ? fila2?.fincas[0] : fila2?.fincas;
-  const delLote = Array.isArray(fila2?.b4_files_foto) ? fila2.b4_files_foto.map((x) => x?.assetId).find((x): x is string => !!x) : undefined;
-  const asset = finca?.profile_photo_asset_id ?? delLote ?? null;
+  const { data } = await service.from("lots").select("datasheet->b4_files_foto").eq("id", fila.lot_id).maybeSingle();
+  const fila2 = data as { b4_files_foto?: unknown } | null;
+  const [asset] = await fotosPublicasDelLote(service, fila.lot_id, fotosB4(fila2?.b4_files_foto));
   if (!asset) return null;
   const url = (await signedKaffetalMediaUrls(service, [asset])).get(asset);
   if (!url) return null;

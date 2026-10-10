@@ -152,6 +152,12 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.202 · el Dossier público ya no lleva al productor, con marca de agua** (owner, 2026-10-10; ejecutado desde WRAP-COMMIT-PUSH).
+  La lista blanca `dossierPublico()` recibe el nombre generado de la vista y deja fuera la finca, el municipio, la historia y las
+  características, la foto de perfil de la finca, el área y la infraestructura de canal propio; la portada lleva como mucho UNA foto
+  del lote aprobada por CTCx y la hoja del grado la imagen de CTCx o la ilustración; la marca de agua pública (`textoDeMarcaPublica`,
+  `MarcaDeAguaMosaico`) no nombra a nadie. El productor ve en B4 el consejo de qué no fotografiar. Abierto: el proceso especial
+  (texto libre) se omite en público; recuperarlo pide una lista cerrada.
 - **V6 · objetivo 1, tanda B: la landing de Kaffetal Regal con la narrativa vigente** (owner, 2026-10-10, al declarar la V6.0;
   plan `docs/PLAN_V6_OBJETIVOS.md` §1, una conversación desde `docs/KICKOFF.md` «Objetivos V6»; fila en `ALINEACION` §3b). Índice
   (`Landing`), Bienvenidos (los 6 pasos de la v4), Oportunidad (multiplicadores y Punto/Tríada leídos de la fuente: hoy dice «SCA

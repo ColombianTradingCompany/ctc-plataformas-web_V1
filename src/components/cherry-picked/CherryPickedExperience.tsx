@@ -7,6 +7,8 @@ import { QuickNav, type QuickNavLabels, type QuickNavSection } from "@/component
 import { SneakPeek } from "@/components/catalogo/SneakPeek";
 import { DIRECTORIO_HREF } from "@/lib/directorioLink";
 import { aPerfilCtcx, rotuloCtcx, PERFIL_CTCX_SELECT, VISTA_PERFIL_CTCX, type FilaPerfilCtcx, type PerfilCtcx } from "@/lib/catalogo/perfilCtcx";
+// V5.202: un módulo SIN imports (no arrastra nada al cliente): la región y el tramo de altitud con el MISMO formato que la cinta.
+import { regionDeLaVitrina, tramoDeAltitud } from "@/lib/catalogo/vitrinaVista";
 import { createClient } from "@/lib/supabase/client";
 import { Header } from "./Header";
 import { Hero } from "./Hero";
@@ -163,10 +165,10 @@ type CatalogRow = {
   ficha_puntaje_estimado: number | null;
   official_score: number | null;
   ficha_notas_cata: string | null;
-  finca_name: string | null;
   ctc_selection: boolean;
-  municipio: string | null;
   departamento: string | null;
+  /** V5.202 (nodo final): llega con `2026-10-10_vitrina_sin_finca.sql`; con la vista vieja no viene (ver `loadCatalog`). */
+  pais?: string | null;
 };
 
 type TransparencyRow = { lot_listing_id: string; price_per_kg_locked: number; reference_price_snapshot: number };
@@ -183,9 +185,13 @@ function listingToLot(row: ListingRow, catalog: CatalogRow | undefined, transpar
     name: catalog.name,
     // Un lote que CTC compró en firme se muestra a nombre de CTC (D3.1): el
     // REGISTRO conserva la finca real —pasaporte y rastro EUDR intactos—,
-    // la VITRINA enseña a quien vende. La vista ya no devuelve el nombre de
-    // la finca en ese caso, así que aquí solo se pone el rótulo.
-    origin: `${catalog.ctc_selection ? rotuloCtcx(perfil) : catalog.finca_name ?? "—"} · ${catalog.municipio ?? "—"}, ${catalog.departamento ?? "—"}`,
+    // la VITRINA enseña a quien vende.
+    // V5.202 (owner, 2026-10-10): lo que lee `anon` no lleva al productor, así
+    // que `public_lot_catalog` ya no devuelve la finca ni el municipio de NINGÚN
+    // lote: la tarjeta enseña la región, sin un «—» de hueco, con el MISMO
+    // formato que la cinta y el Dossier público («Santander, Colombia»). El
+    // nombre (`catalog.name`) es el GENERADO por la vista, sin texto libre.
+    origin: [catalog.ctc_selection ? rotuloCtcx(perfil) : null, regionDeLaVitrina({ departamento: catalog.departamento, pais: catalog.pais ?? null })].filter(Boolean).join(" · ") || "—",
     variety: catalog.ficha_variedad || "—",
     process: catalog.ficha_proceso || "—",
     // Prefer the real official average (accepted lot_evaluations) over the
@@ -199,7 +205,8 @@ function listingToLot(row: ListingRow, catalog: CatalogRow | undefined, transpar
         ? String(catalog.ficha_puntaje_estimado)
         : "—",
     scoreEstimated: catalog.official_score == null && catalog.ficha_puntaje_estimado != null,
-    alt: catalog.ficha_altitud_m != null ? `${catalog.ficha_altitud_m} m` : "—",
+    // V5.202 (nodo final): la altitud en su tramo de 100 m (la vista ya la entrega redondeada hacia abajo).
+    alt: tramoDeAltitud(catalog.ficha_altitud_m) ?? "—",
     total: row.total_kg,
     sold: row.sold_kg,
     unit: row.unit_kg,
@@ -249,10 +256,22 @@ function Experience() {
         .from("lot_listings")
         .select("id, lot_id, commercial_mode, unit_kg, moq_kg, total_kg, sold_kg, price_per_kg")
         .eq("status", "published"),
+      // V5.202 (nodo final, 2026-10-10): con `pais` (la región «Santander, Colombia»). La migración que lo añade se puede aplicar
+      // antes o después de desplegar; con la vista vieja esa columna no existe y PostgREST respondería 400 (la tienda sin lotes),
+      // así que entonces se pide sin ella y la región queda en el departamento.
       supabase
         .from("public_lot_catalog")
         .select(
-          "lot_id, name, grade, ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_puntaje_estimado, official_score, ficha_notas_cata, finca_name, municipio, departamento, ctc_selection"
+          "lot_id, name, grade, ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_puntaje_estimado, official_score, ficha_notas_cata, departamento, ctc_selection, pais"
+        )
+        .then((r) =>
+          r.error
+            ? supabase
+                .from("public_lot_catalog")
+                .select(
+                  "lot_id, name, grade, ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_puntaje_estimado, official_score, ficha_notas_cata, departamento, ctc_selection"
+                )
+            : r
         ),
       supabase.from("public_transparency_pricing").select("lot_listing_id, price_per_kg_locked, reference_price_snapshot"),
       supabase.from("shipping_zones").select("code, label, rate_per_kg").order("sort_order"),

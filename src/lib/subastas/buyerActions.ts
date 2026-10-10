@@ -10,6 +10,8 @@ import {
   type MembershipTier,
   type SubastaPublica,
 } from "./tipos";
+import { nombrePublicoDelLote, procesoPublico, variedadPublica } from "@/lib/catalogo/nombrePublico";
+import { altitudPublica } from "@/lib/catalogo/vitrinaVista";
 
 // ── Subastas Tyrian · el lado del comprador (V5.24) ─────────────────────────
 // Dos verbos para Cherry Picked Green: VER las subastas (anónimo también —
@@ -18,6 +20,10 @@ import {
 // service-role-only: esto es la única puerta, y aquí se verifica identidad y
 // nivel antes de tocar nada. La regla del monto vive en el guard trigger —
 // dos pujas simultáneas se serializan en la base, no aquí.
+// V5.202 (owner, 2026-10-10): la vitrina Tyrian se ve SIN sesión, y lo público debe «omitir info que haga fácil circumventar a CTCx
+// para llegar al Productor». No lee `finca_name` ni enseña la foto `lot_name` de la subasta (las viejas guardaban `lots.name`, que
+// solía llevar la finca): el nombre se GENERA del lote (`nombrePublicoDelLote`: variedades canónicas + proceso · región + año), y
+// la variedad, el proceso y la altitud salen normalizados (lo canónico; la altitud en su tramo de 100 m).
 
 type AuctionRow = {
   id: string;
@@ -28,8 +34,7 @@ type AuctionRow = {
   incremento_eur_kg: number | string;
   tier_minimo: MembershipTier;
   ends_at: string;
-  lot_name: string;
-  finca_name: string | null;
+  lot_id: string;
   variety: string | null;
   process: string | null;
   altitude_m: number | null;
@@ -40,7 +45,18 @@ type AuctionRow = {
 type BidRow = { auction_id: string; fraccion: number; buyer_id: string; amount_eur_kg: number | string; estado: string };
 
 const AUCTION_COLS =
-  "id, status, fracciones, kg_total, precio_salida_eur_kg, incremento_eur_kg, tier_minimo, ends_at, lot_name, finca_name, variety, process, altitude_m, score, notes";
+  "id, lot_id, status, fracciones, kg_total, precio_salida_eur_kg, incremento_eur_kg, tier_minimo, ends_at, variety, process, altitude_m, score, notes";
+
+type LoteRow = {
+  id: string;
+  ficha_variedad: string | null;
+  ficha_proceso: string | null;
+  harvest_from: string | null;
+  harvest_to: string | null;
+  created_at: string | null;
+  varieties: unknown;
+  fincas: { departamento: string | null; pais: string | null } | { departamento: string | null; pais: string | null }[] | null;
+};
 
 /** La vitrina: la subasta abierta (si la hay) y las últimas adjudicadas. */
 export async function listarSubastas(): Promise<{ subastas: SubastaPublica[]; tier: MembershipTier | null; userId: string | null }> {
@@ -68,6 +84,17 @@ export async function listarSubastas(): Promise<{ subastas: SubastaPublica[]; ti
     .select("auction_id, fraccion, buyer_id, amount_eur_kg, estado")
     .in("auction_id", auctions.map((a) => a.id));
   const bids = (bidRows as BidRow[] | null) ?? [];
+  // V5.202: el nombre PÚBLICO de cada lote subastado, generado de sus datos (nunca `lots.name` ni la finca).
+  const { data: loteRows } = await service
+    .from("lots")
+    .select("id, ficha_variedad, ficha_proceso, harvest_from, harvest_to, created_at, datasheet->varieties, fincas(departamento, pais)")
+    .in("id", [...new Set(auctions.map((a) => a.lot_id))]);
+  const nombres = new Map(
+    ((loteRows as LoteRow[] | null) ?? []).map((l) => {
+      const f = Array.isArray(l.fincas) ? l.fincas[0] : l.fincas;
+      return [l.id, nombrePublicoDelLote({ lotId: l.id, varieties: l.varieties, fichaVariedad: l.ficha_variedad, fichaProceso: l.ficha_proceso, departamento: f?.departamento, pais: f?.pais, harvestTo: l.harvest_to, harvestFrom: l.harvest_from, creado: l.created_at })];
+    })
+  );
 
   const subastas = auctions.map((a): SubastaPublica => {
     const fracciones = (a.fracciones === 1 ? 1 : 2) as 1 | 2;
@@ -99,11 +126,10 @@ export async function listarSubastas(): Promise<{ subastas: SubastaPublica[]; ti
       incremento: inc,
       tierMinimo: a.tier_minimo,
       endsAt: a.ends_at,
-      lotName: a.lot_name,
-      fincaName: a.finca_name,
-      variety: a.variety,
-      process: a.process,
-      altitudeM: a.altitude_m,
+      lotName: nombres.get(a.lot_id) ?? nombrePublicoDelLote({ lotId: a.lot_id, varieties: null, fichaVariedad: a.variety, fichaProceso: a.process, departamento: null, pais: null }),
+      variety: variedadPublica(a.variety),
+      process: procesoPublico(a.process),
+      altitudeM: altitudPublica(a.altitude_m),
       score: a.score != null ? Number(a.score) : null,
       notes: a.notes,
       fraccionesDetalle: detalle,

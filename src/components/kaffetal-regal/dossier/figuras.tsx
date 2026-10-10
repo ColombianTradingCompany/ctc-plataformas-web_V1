@@ -453,7 +453,8 @@ export function MatrizDeRespaldo({ columnas, filas }: { columnas: string[]; fila
 // a los datos, no los reemplazan.
 
 /** La altitud de la finca sobre una silueta de montañas: tres cordilleras en tintes, la cota de la finca y su marca. */
-export function AltitudEnLaMontana({ metros, etiqueta, loc = "es-CO" }: { metros: number; etiqueta: string; loc?: string }) {
+/** `rotulo` (V5.202, Dossier público): lo que se escribe junto a la línea en vez de «N m» (el tramo «1.700–1.800 m»). */
+export function AltitudEnLaMontana({ metros, etiqueta, loc = "es-CO", rotulo }: { metros: number; etiqueta: string; loc?: string; rotulo?: string | null }) {
   const W = 240;
   const H = 150;
   const TOPE = 2600;
@@ -474,8 +475,8 @@ export function AltitudEnLaMontana({ metros, etiqueta, loc = "es-CO" }: { metros
       ))}
       <line x1={0} y1={yf} x2={W} y2={yf} stroke={TINTA} strokeWidth={1} strokeDasharray="3 3" />
       <circle cx={150} cy={yf} r={4.5} fill={TINTA} />
-      <text x={158} y={yf - 6} fontSize={13} fontWeight={700} fill={TINTA}>
-        {metros.toLocaleString(loc)} m
+      <text x={rotulo ? W : 158} y={yf - 6} fontSize={13} fontWeight={700} fill={TINTA} textAnchor={rotulo ? "end" : undefined}>
+        {rotulo || `${metros.toLocaleString(loc)} m`}
       </text>
     </svg>
   );

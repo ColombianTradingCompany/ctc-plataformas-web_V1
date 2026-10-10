@@ -43,8 +43,8 @@ export type SubastaPublica = {
   incremento: number;
   tierMinimo: MembershipTier;
   endsAt: string;
+  /** V5.202: el nombre PÚBLICO del lote (generado: variedades + proceso · región + año). Sin la finca: la vitrina es sin sesión. */
   lotName: string;
-  fincaName: string | null;
   variety: string | null;
   process: string | null;
   altitudeM: number | null;

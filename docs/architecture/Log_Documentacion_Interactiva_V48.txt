@@ -148,4 +148,4 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
   `SellBuyCtas.tsx` manda a comprar con `?login=1`.
 - Wires nuevos: CTC Home → portada CP (`?login=1`) → Green (`?cuenta=1`); la tienda → `public_lot_vitrina` → Dossier público.
 - Guardián nuevo `qa-cp-sesion-check.mjs` (33); `qa-sneak-peek` con la guarda nueva. Sin cambios en la base.
-(commit: pendiente)
+(commit: 834959b)

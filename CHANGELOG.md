@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.3] — 2026-10-11 (commit pendiente)
+## [V6.3] — 2026-10-11 (commit 834959b)
 
 - **Cambiado**: **el login de Cherry Picked y lo que ve el comprador con sesión** (owner, noche del 2026-10-10: «una mejora
   sustancial a la interfaz UI/UX del login de Cherry Picked [...] que el sitio interactúe con el catálogo activo y que integre más de

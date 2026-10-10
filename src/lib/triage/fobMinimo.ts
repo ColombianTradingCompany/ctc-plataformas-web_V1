@@ -16,6 +16,18 @@ import { BANDAS5, PARAMS_V211, type Banda5 } from "@/lib/pvc/motor";
 /** Dónde vive el Triage: la ruta de «Ofertas CP Aceptadas» se conservó (los contratos siguen en `/ocp/contratos/<id>`). */
 export const TRIAGE_PATH = "/ocp/contratos";
 export const CONTRATOS_LISTA_PATH = "/ocp/contratos/lista";
+
+/** V5.203 · corrección (H15): el enlace a una entrada del Triage. `?partida=` / `?contrato=` desplaza hasta ella y la resalta; el
+ *  formulario solo se abre solo con `declarar` (los enlaces «Declarar en el Triage →»). Un enlace de CONSULTA («En catálogo CF-…»,
+ *  «Triage →» del Stock) ya no abre el formulario de corregir por su cuenta. */
+export function rutaDelTriage(e: { partida?: string | null; contrato?: string | null; declarar?: boolean }): string {
+  const q = new URLSearchParams();
+  if (e.partida) q.set("partida", e.partida);
+  else if (e.contrato) q.set("contrato", e.contrato);
+  if (e.declarar && (e.partida || e.contrato)) q.set("declarar", "1");
+  const qs = q.toString();
+  return qs ? `${TRIAGE_PATH}?${qs}` : TRIAGE_PATH;
+}
 export const CLAVE_AJUSTES_TRIAGE = "triage_catalogo";
 
 /** PVC v2.1.1: 125 kg de CPS dan 93,09 kg de excelso en FR 94, de los que se garantizan 78 (`kg_excelso`, `kg_g`). */

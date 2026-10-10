@@ -90,6 +90,7 @@ export function validarEnvioDeKit(tipo: TipoDeKit, items: readonly ItemDeKit[]):
 }
 
 export const KIT_STATUS_LABEL: Record<"armado" | "enviado" | "anulado", string> = { armado: "Armado", enviado: "Enviado", anulado: "Anulado" };
-/** A qué va una compra (V5.195): CTCx Selection (la vitrina enseña el perfil de CTCx) o solo Stock CTCx (un saco de un trato por
- *  ventanas, café para kits): no hace del lote un CTCx Selection. Hasta la V5.194 el segundo se llamaba «Sample Kits». */
-export const DESTINO_LABEL: Record<"selection" | "stock", string> = { selection: "CTCx Selection", stock: "Solo Stock CTCx" };
+/** A qué va una compra (V5.195): CTCx Selection (la vitrina enseña el rótulo y la imagen de CTCx) o solo stock (un saco de un trato
+ *  por ventanas, café para kits): no hace del lote un CTCx Selection. Hasta la V5.194 el segundo se llamaba «Sample Kits».
+ *  V5.203 (H11): el rótulo vive en UN diccionario (`selection.ts`); aquí se re-exporta para quien ya lo importaba de este módulo. */
+export { DESTINO_LABEL } from "./selection";

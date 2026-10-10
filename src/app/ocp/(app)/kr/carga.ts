@@ -9,6 +9,7 @@ import { fincaEudrFieldsDe, type FilaDeFincaParaLaVisa } from "@/lib/ocp/fincaEu
 import { ESTADO_DE_CONTRATO, ESTADO_DE_OFERTA, etapaDelLote, evaDelLote, fichaHecha, gradoLabel } from "@/lib/ocp/etapas";
 import { estadoDelCircuito, type EstadoDelCircuito } from "@/lib/ocp/circuito";
 import { enMora, moraDelTrato } from "@/lib/trato/mesAMes";
+import { lotesSelection } from "@/lib/compras/selection";
 import type { Gestion } from "@/lib/asistencia/desacoplado";
 import type { EudrStatus } from "@/lib/eudr";
 
@@ -141,10 +142,12 @@ export async function cargarKr(service: SupabaseClient, opciones: { productorId?
       service.from("lot_evaluations").select("lot_id").eq("source", "q_grader_batch").eq("status", "pending"),
       // V5.84: los meses del trato, para derivar la mora (decisión 6: visible, nunca automática).
       service.from("contract_months").select("contract_id, pedido_at, enviado_at"),
-      // V5.85: lo comprado en firme por CTCx → lateral «CTCx Selection» del circuito.
-      service.from("compras").select("lot_id"),
+      // V5.85: lo comprado en firme por CTCx → lateral «CTCx Selection» del circuito. V5.203 (owner, 2026-10-10 · bug B2): SOLO las
+      // compras de Selection vivas — un saco «solo stock» de un trato por ventana no hace del lote del productor un lote de CTCx.
+      service.from("compras").select("lot_id, destino, anulada_at"),
     ]);
-  const compradoEnFirme = new Set(((coRaw as { lot_id: string }[] | null) ?? []).map((r) => r.lot_id));
+  // La misma regla que la vitrina y el Catálogo Activo (`esCompraSelection`, vía `lotesSelection`).
+  const compradoEnFirme = lotesSelection((coRaw as { lot_id: string; destino: string; anulada_at: string | null }[] | null) ?? []);
   const pendientesDelCentro = new Set(((evRaw as { lot_id: string }[] | null) ?? []).map((r) => r.lot_id));
   const mesesPorContrato = new Map<string, { pedidoAt: string | null; enviadoAt: string | null }[]>();
   for (const m of (cmRaw as { contract_id: string; pedido_at: string | null; enviado_at: string | null }[] | null) ?? []) {

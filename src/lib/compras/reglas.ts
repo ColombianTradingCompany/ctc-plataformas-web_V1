@@ -13,8 +13,17 @@ export function esCompraEnFirme(kind: string | null | undefined): boolean {
   return kind != null && (KINDS_COMPRA_EN_FIRME as readonly string[]).includes(kind);
 }
 
-/** El bucket PÚBLICO de las imágenes de la vitrina de CTCx Selection (son de la casa, no del productor). */
+/** El bucket PÚBLICO de las imágenes de la vitrina de CTCx Selection (son de la casa, no del productor). Desde la corrección de la V5.203
+ *  solo lo escribe el servidor, con la imagen ya re-codificada (WebP, sin EXIF ni GPS) y un nombre aleatorio; nadie lo puede listar. */
 export const BUCKET_CTCX = "ctcx-selection";
+/** V5.203 · corrección (nodo final, 2026-10-10 · privacidad, hallazgo 1): el bucket PRIVADO donde el navegador sube la imagen cruda
+ *  (URL firmada, nombre = uuid + extensión de su tipo); `fijarImagenCtcx` la re-codifica con sharp y la borra de aquí
+ *  (`docs/migraciones/2026-10-10_ctcx_selection_imagenes.sql`). */
+export const BUCKET_CTCX_STAGING = "ctcx-selection-staging";
+/** Los tipos de imagen que se aceptan, con la extensión de su nombre en el staging (nunca el nombre original del archivo). */
+export const EXTENSION_DE_IMAGEN_CTCX: Readonly<Record<string, string>> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+/** El tope de una imagen (el mismo `file_size_limit` del bucket de staging). */
+export const MAX_MB_IMAGEN_CTCX = 5;
 /** La clave de `platform_settings` con el perfil ÚNICO de CTCx Selection (respuesta 7 del owner, 23-sep). */
 export const CLAVE_PERFIL_CTCX = "ctcx_selection_perfil";
 

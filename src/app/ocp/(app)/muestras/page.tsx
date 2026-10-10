@@ -15,7 +15,8 @@ export const dynamic = "force-dynamic";
 // del productor son de uso EXCLUSIVO de CTCx (owner, 2026-09-25; diagrama en `reference/muestras-y-sample-kits-2026-09-25/`):
 // 1 × 250 g para el Q-Grader · 3 × 250 g de reserva CPS (V5.94: la revisión de los 90 días gasta una) · 1 kg «Evaluación CTCx»
 // que se TRILLA por completo (~750 g de verde: 400 g de tostado para ensayos piloto + 2 × 125 g de verde al vacío). Las muestras para compradores NO salen de aquí: salen de
-// Adquisición de Stock. EL SALDO SE DERIVA (`saldoDe`): recibido − Σ salidas. El recibo vive en Solicitudes de Evaluación.
+// los Sample Kits del Stock CTCx (V5.195; antes, Adquisición de Stock — V5.203: el enlace visible ya apunta allí; la nota de versión
+// vive solo en este comentario, H15). EL SALDO SE DERIVA (`saldoDe`): recibido − Σ salidas. El recibo vive en Solicitudes de Evaluación.
 // Pestañas: qué hay y dónde (por lote, con su bodega) · bodegas (V5.89: responsable, dirección, capacidad en muestras de 1 kg,
 // estado; la ocupación se deriva) · revisión de almacenaje a los 90 días (V5.88, derivada) · pedidos de muestra (V5.88).
 
@@ -92,7 +93,7 @@ export default async function GestionDeMuestrasPage({ searchParams }: { searchPa
       <p className={styles.subtitle}>
         Cada muestra física que pasa por CTC: qué lote, cuántos kilos llegaron y cómo se partieron ({PARTICION_KG.map((p) => `${p.kg * 1000} g ${TIPO_LABEL[p.tipo]}`).join(" · ")}
         ), en qué bodega está, quién la tiene y qué salió. Los 2 kg son de <b>uso exclusivo de CTCx</b> (evaluación y ensayos): las muestras para compradores
-        salen de <Link href="/ocp/compras">Adquisición de Stock</Link>. El saldo se deriva, nunca se guarda. El recibo se hace en{" "}
+        salen de los <Link href="/ocp/stock/sample-kits">Sample Kits del Stock CTCx</Link>. El saldo se deriva, nunca se guarda. El recibo se hace en{" "}
         <Link href="/ocp/solicitudes">Solicitudes de Evaluación</Link>.
       </p>
 

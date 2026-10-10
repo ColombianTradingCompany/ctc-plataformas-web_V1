@@ -5,13 +5,19 @@ import { cargarTriage } from "@/lib/triage/servidor";
 import { TRIAGE_PATH } from "@/lib/triage/fobMinimo";
 import { archivarListado, editarListado } from "../catalogActions";
 import { CatalogoTabs } from "./CatalogoTabs";
+import { CircuitoDelStock } from "../CircuitoDelStock";
+import { lotesSelection } from "@/lib/compras/selection";
 import styles from "@/components/panel/shared.module.css";
 
 // ── OCP · Catálogo · Catálogo Activo (V5.196) ──────────────────────────────────────────────────────────────────────────────────
 // Lo publicado. Desde la V5.196 un lote entra SOLO desde el Triage de Catálogo Activo (`/ocp/contratos`): su listado suma los kg de
 // VERDE declarados, su ANCLA es el mayor FOB mínimo de sus entradas y el precio de venta no baja de ella (lo cuida la base). Aquí se
 // edita lo comercial y se archiva lo que ya no tiene entradas. Un lote comprado en firme sale como CTCx Selection (la vitrina enseña
-// el perfil, no la finca). (Hasta la V5.195 esta página publicaba a mano: kg de CPS 1:1 y precio tecleado.)
+// el rótulo y la imagen de CTCx en vez de las fotos del lote; desde la V5.202 ningún lote enseña la finca). (Hasta la V5.195 esta página
+// publicaba a mano: kg de CPS 1:1 y precio tecleado.)
+// V5.203 (owner, 2026-10-10): la franja del circuito arriba; cada entrada enlaza a su partida del Stock CTCx o a su contrato (el código
+// CF- desplaza hasta su entrada en el Triage: es una consulta, no abre el formulario); «CTCx Selection» con la regla única
+// (`esCompraSelection`: Selection y no anulada).
 
 export const dynamic = "force-dynamic";
 
@@ -24,16 +30,18 @@ export default async function CatalogoActivoPage() {
   const service = createServiceRoleClient();
   const [triage, { data: comprasRows }] = await Promise.all([
     cargarTriage(service),
-    // V5.85 · V5.195: los lotes comprados en firme como CTCx Selection (no los sacos de un trato, que son solo stock).
-    service.from("compras").select("lot_id").eq("destino", "selection"),
+    // V5.85 · V5.195: los lotes comprados en firme como CTCx Selection (no los sacos de un trato, que son solo stock). V5.203: vivas.
+    service.from("compras").select("lot_id, destino, anulada_at").eq("destino", "selection"),
   ]);
-  const selection = new Set(((comprasRows ?? []) as { lot_id: string }[]).map((c) => c.lot_id));
+  const selection = lotesSelection(((comprasRows ?? []) as { lot_id: string; destino: string; anulada_at: string | null }[]));
   const vivas = triage.declaraciones.filter((d) => d.viva);
   const activos = triage.listados.filter((l) => l.status !== "archived");
   const archivados = triage.listados.filter((l) => l.status === "archived");
 
   return (
     <div>
+      {/* V5.203 · corrección (H15): la franja va primero, como en Adquisición y el Stock CTCx; luego las pestañas del tablero. */}
+      <CircuitoDelStock actual="catalogo" />
       <CatalogoTabs />
       <h1 className={styles.title}>Catálogo Activo</h1>
       <p className={styles.subtitle}>
@@ -70,7 +78,15 @@ export default async function CatalogoActivoPage() {
                     <ul style={{ margin: "4px 0 0", paddingLeft: 18 }}>
                       {entradas.map((d) => (
                         <li key={d.id}>
-                          {d.codigo} · {d.tipo === "contrato" ? "contrato" : `stock ${d.partidaCodigo ?? ""}`} · {kg(d.kgVerde)} kg de verde · FOB mínimo {usd(d.fobUsdKg, 3)}/kg
+                          <Link href={d.partidaId ? `${TRIAGE_PATH}?partida=${d.partidaId}` : d.contractId ? `${TRIAGE_PATH}?contrato=${d.contractId}` : TRIAGE_PATH}>{d.codigo}</Link> ·{" "}
+                          {d.tipo === "contrato" ? (
+                            d.contractId ? <Link href={`/ocp/contratos/${d.contractId}`}>contrato</Link> : "contrato"
+                          ) : d.partidaId ? (
+                            <>stock <Link href={`/ocp/stock?partida=${d.partidaId}`}>{d.partidaCodigo ?? "partida"}</Link></>
+                          ) : (
+                            `stock ${d.partidaCodigo ?? ""}`
+                          )}{" "}
+                          · {kg(d.kgVerde)} kg de verde · FOB mínimo {usd(d.fobUsdKg, 3)}/kg
                         </li>
                       ))}
                     </ul>

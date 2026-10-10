@@ -152,15 +152,26 @@ export type CompraCandidata = ComponenteDeMezcla & {
   compraKg: number;
 };
 
-/** Las compras del grado con destino CTCx Selection y kilos sin asignar (menos las que ya están en la mezcla). */
+/** Las compras del grado con destino CTCx Selection y kilos sin asignar (menos las que ya están en la mezcla). V5.203: sin las anuladas,
+ *  y lo libre lo limita también el Stock CTCx (lo mismo que mira `agregarComponente`): la lista ya no promete kilos que luego rechaza. */
 export async function comprasDisponiblesPara(service: SupabaseClient, grado: GradoDeMezcla, mezclaId: string): Promise<CompraCandidata[]> {
   const [{ data: cRaw }, { data: enMezcla }] = await Promise.all([
-    service.from("compras").select(`id, kg, grado, lot_id, ${SELECT_LOTE_PARA_MEZCLA}`).eq("grado", grado).eq("destino", "selection").order("created_at", { ascending: false }),
+    service.from("compras").select(`id, kg, grado, lot_id, ${SELECT_LOTE_PARA_MEZCLA}`).eq("grado", grado).eq("destino", "selection").is("anulada_at", null).order("created_at", { ascending: false }),
     service.from("mezcla_componentes").select("compra_id").eq("mezcla_id", mezclaId),
   ]);
   const compras = (cRaw as unknown as CompraEmb[] | null) ?? [];
   const ya = new Set(((enMezcla as { compra_id: string }[] | null) ?? []).map((r) => r.compra_id));
   const asignado = await asignadoPorCompra(service, compras.map((c) => c.id));
+  const libreEnStock = new Map<string, number>();
+  if (compras.length) {
+    const { data: rRaw } = await service.from("stock_partidas").select("id, compra_id").in("compra_id", compras.map((c) => c.id)).is("anulada_at", null);
+    await Promise.all(
+      ((rRaw as { id: string; compra_id: string }[] | null) ?? []).map(async (r) => {
+        const { data } = await service.rpc("stock_disponible", { p_partida: r.id });
+        libreEnStock.set(r.compra_id, Number(data ?? 0));
+      })
+    );
+  }
   const producers = await fetchProducerContacts(service, [...new Set(compras.map((c) => composicionDelLote(c.lots).producerId).filter(Boolean))]);
   return compras
     .filter((c) => !ya.has(c.id))
@@ -180,7 +191,7 @@ export async function comprasDisponiblesPara(service: SupabaseClient, grado: Gra
         variedades: comp.variedades,
         procesos: comp.procesos,
         grado: c.grado,
-        disponibleKg: Math.max(0, Math.round((compraKg - (asignado.get(c.id) ?? 0)) * 10) / 10),
+        disponibleKg: Math.max(0, Math.round(Math.min(compraKg - (asignado.get(c.id) ?? 0), libreEnStock.get(c.id) ?? Number.POSITIVE_INFINITY) * 10) / 10),
         lotId: c.lot_id,
         lotName: comp.lotName,
         fincaName: comp.fincaName,

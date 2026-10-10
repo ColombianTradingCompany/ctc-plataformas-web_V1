@@ -7,12 +7,19 @@
 // Stock CTCx—; cada una se corrige o se acepta tal cual y se declara con su FOB mínimo, que se desglosa en vivo con la misma cuenta
 // que guarda la base (`src/lib/triage/fobMinimo.ts` · `triage_declarar`). Al lado, el N2 de su banda en el PVC vigente: se exhibe,
 // no gobierna.
+//
+// V5.203 (owner, 2026-10-10: «…mejora el UI/UX […] también en relación a su interacción con el Triage de Catálogo Activo y la Oferta
+// de CTCx Selection»): enlaces profundos `?partida=` / `?contrato=` que desplazan hasta la entrada y abren su formulario; cada entrada
+// del stock dice de dónde viene (Compra CTCx Selection · Compra solo stock · Saco de trato por ventana) y qué verá la vitrina; lo que
+// el Triage deja fuera se explica; cada declaración CF- enlaza a su partida o a su contrato. El disponible ya resta lo declarado (H1).
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ESTADO_INFO, fmtCop, fmtKg } from "@/lib/stock/linaje";
 import { calcularFobMinimo, empaqueSinEmpacar, precioInicial } from "@/lib/triage/fobMinimo";
+import { porDeclararEnVerde } from "@/lib/stock/franja";
+import { rutaDeLaCompra } from "@/lib/compras/adquisicion";
 import type { Declaracion, EntradaContrato, EntradaStock, LoteDelTriage, Triage } from "@/lib/triage/servidor";
 import { declararEnCatalogo, guardarAjustesDelTriage, retirarDelCatalogo } from "../triageActions";
 import shared from "@/components/panel/shared.module.css";
@@ -53,15 +60,47 @@ type Entrada = {
   reemplaza: Declaracion | null;
 };
 
-export function TriageBoard({ triage }: { triage: Triage }) {
+/** V5.203 · corrección (H15): `declarar` (de `rutaDelTriage({ …, declarar: true })`) distingue «Declarar en el Triage →» de un enlace de
+ *  consulta («En catálogo CF-…», «Triage →» del Stock): la consulta desplaza y resalta, pero no abre ningún formulario por su cuenta. */
+export type AbrirEnElTriage = { partida: string | null; contrato: string | null; declarar?: boolean };
+
+/** La clave del formulario que abre un enlace profundo de DECLARAR: corregir su declaración viva (allí se suman kilos), o declarar. */
+function claveInicial(t: Triage, abrir: AbrirEnElTriage | undefined): string | null {
+  if (!abrir?.declarar) return null;
+  const vivas = t.declaraciones.filter((d) => d.viva);
+  if (abrir?.partida) {
+    const x = t.stock.find((e) => e.partidaId === abrir.partida);
+    const d = vivas.find((f) => f.partidaId === abrir.partida);
+    if (d && x) return `f:${d.id}`;
+    if (x && x.declarable && x.disponibleKg > 0) return `s:${x.partidaId}`;
+  }
+  if (abrir?.contrato) {
+    const c = t.contratos.find((e) => e.contractId === abrir.contrato);
+    const d = vivas.find((f) => f.contractId === abrir.contrato);
+    if (d && c) return `f:${d.id}`;
+    if (c && c.porDeclararKg > 0) return `c:${c.contractId}`;
+  }
+  return null;
+}
+
+export function TriageBoard({ triage, abrir }: { triage: Triage; abrir?: AbrirEnElTriage }) {
   const router = useRouter();
-  const [abierta, setAbierta] = useState<string | null>(null);
+  const [abierta, setAbierta] = useState<string | null>(() => claveInicial(triage, abrir));
   const [aviso, setAviso] = useState<{ texto: string; error: boolean } | null>(null);
-  const { ajustes, edicion, referencias, contratos, stock, declaraciones, listados } = triage;
+  const { ajustes, edicion, referencias, contratos, stock, declaraciones, listados, excluidas } = triage;
   const vivas = declaraciones.filter((d) => d.viva);
+  const destino = abrir?.partida ? `entrada-s-${abrir.partida}` : abrir?.contrato ? `entrada-c-${abrir.contrato}` : null;
+  const noEsta = (!!abrir?.partida && !stock.some((x) => x.partidaId === abrir.partida)) || (!!abrir?.contrato && !contratos.some((c) => c.contractId === abrir.contrato));
+  useEffect(() => {
+    if (destino) document.getElementById(destino)?.scrollIntoView({ block: "center" });
+  }, [destino]);
   const listadoDe = useMemo(() => new Set(listados.filter((l) => l.status !== "archived").map((l) => l.lotId)), [listados]);
   const kgEnCatalogo = vivas.reduce((a, d) => a + d.kgVerde, 0);
-  const porDeclararVerde = contratos.reduce((a, c) => a + c.porDeclararKg * c.conversion, 0) + stock.filter((x) => x.declarable).reduce((a, x) => a + x.disponibleKg * x.conversion, 0);
+  // V5.203 · corrección (H5): la MISMA cuenta que la franja del circuito (`porDeclararEnVerde`, ya redondeada).
+  const porDeclararVerde = porDeclararEnVerde([
+    ...contratos.map((c) => ({ kg: c.porDeclararKg, conversion: c.conversion })),
+    ...stock.filter((x) => x.declarable).map((x) => ({ kg: x.disponibleKg, conversion: x.conversion })),
+  ]);
   const alertas = contratos.filter((c) => c.deMasKg > 0).length + vivas.filter((d) => d.contratoVigente === false).length;
   const listo = () => {
     setAbierta(null);
@@ -118,9 +157,23 @@ export function TriageBoard({ triage }: { triage: Triage }) {
         </p>
       )}
       {aviso && <p className={aviso.error ? s.error : s.ok} role="status">{aviso.texto}</p>}
+      {noEsta && (
+        <p className={s.aviso} role="status">
+          {abrir?.partida ? (
+            <>
+              La partida pedida no está entre las entradas del Triage: no tiene café libre, no tiene lote, está comprometida o es de un Tyrian.
+              Mírela en el <Link href={`/ocp/stock?partida=${abrir.partida}`}>Stock CTCx →</Link>
+            </>
+          ) : (
+            <>
+              El contrato pedido no está entre los tratos por ventana vigentes: <Link href={`/ocp/contratos/${abrir?.contrato ?? ""}`}>ábralo →</Link>
+            </>
+          )}
+        </p>
+      )}
 
       <div className={s.kpis}>
-        <div className={s.kpi}><span>Por declarar</span><b>≈ {fmtKg(Math.round(porDeclararVerde))} kg</b><span>de verde, en contratos y stock</span></div>
+        <div className={s.kpi}><span>Por declarar</span><b>≈ {fmtKg(porDeclararVerde)} kg</b><span>de verde, en contratos y stock</span></div>
         <div className={s.kpi}><span>En el Catálogo Activo</span><b>{fmtKg(Math.round(kgEnCatalogo * 10) / 10)} kg</b><span>{vivas.length} entrada{vivas.length === 1 ? "" : "s"} · {listados.filter((l) => l.status !== "archived").length} listado{listados.filter((l) => l.status !== "archived").length === 1 ? "" : "s"}</span></div>
         <div className={s.kpi}><span>TRM</span><b>{edicion ? fmtKg(edicion.trm) : "—"}</b><span>{edicion ? `edición ${edicion.codigo}` : "sin edición vigente"}</span></div>
         <div className={s.kpi}><span>Declarado de más</span><b>{alertas}</b><span>{alertas ? "corregir abajo" : "todo en regla"}</span></div>
@@ -136,7 +189,7 @@ export function TriageBoard({ triage }: { triage: Triage }) {
             {contratos.map((c) => {
               const enVivo = vivas.filter((d) => d.contractId === c.contractId);
               return (
-                <article key={c.contractId} className={s.entrada} style={conGrado(c.lote.grade)}>
+                <article key={c.contractId} id={`entrada-c-${c.contractId}`} className={`${s.entrada} ${destino === `entrada-c-${c.contractId}` ? s.destacada : ""}`} style={conGrado(c.lote.grade)}>
                   <div className={s.entradaHead}>
                     <h3>
                       <Link href={`/ocp/contratos/${c.contractId}`}>{c.lote.name}</Link>
@@ -151,6 +204,8 @@ export function TriageBoard({ triage }: { triage: Triage }) {
                     <span>{c.conversionFuente === "factor" ? `FR ${fmtKg(Math.round((c.lote.fr ?? 0) * 100) / 100)}` : "sin FR (PVC: FR 94)"} → {str(c.conversion)} kg verde/kg CPS</span>
                     {c.enCatalogoKg > 0 && <span className={s.estadoCatalogo}>✓ en el catálogo: {fmtKg(c.enCatalogoKg)} kg CPS</span>}
                   </div>
+                  {/* V5.203 · corrección (H14): desde la V5.202 ningún lote enseña la finca; lo que cambia es el rótulo y la imagen. */}
+                  {c.loteSelection && <p className={s.vitrinaSelection}>El lote tiene una compra CTCx Selection: en la vitrina todo el lote —también este trato— sale con el rótulo y la imagen de CTCx, no con las fotos del lote.</p>}
                   {c.deMasKg > 0 && <p className={s.alerta}>Declarado de más: {fmtKg(c.deMasKg)} kg de CPS por encima de lo que el contrato puede ofrecer (el productor retiró café). Corrija la declaración.</p>}
                   <div className={s.botones}>
                     {c.porDeclararKg > 0 && enVivo.length === 0 && abierta !== `c:${c.contractId}` && (
@@ -176,6 +231,26 @@ export function TriageBoard({ triage }: { triage: Triage }) {
           Las partidas libres del <Link href="/ocp/stock">Stock CTCx</Link> (lo comprometido no entra). Se declara pergamino —convertido a verde— o verde,
           también empacado; lo tostado se ve, pero la tienda Green vende verde.
         </p>
+        {(excluidas.sinLote > 0 || excluidas.comprometidas > 0 || excluidas.tyrian > 0) && (
+          <ul className={s.excluidas}>
+            {excluidas.sinLote > 0 && (
+              <li>
+                {excluidas.sinLote} partida{excluidas.sinLote === 1 ? "" : "s"} sin lote de la plataforma (ingreso a mano): no se declara{excluidas.sinLote === 1 ? "" : "n"}. Para
+                declarar{excluidas.sinLote === 1 ? "la" : "las"}, anule el ingreso y vuelva a ingresar{excluidas.sinLote === 1 ? "la" : "las"} con su lote en el <Link href="/ocp/stock">Stock CTCx →</Link>
+              </li>
+            )}
+            {excluidas.comprometidas > 0 && (
+              <li>
+                {excluidas.comprometidas} partida{excluidas.comprometidas === 1 ? "" : "s"} comprometida{excluidas.comprometidas === 1 ? "" : "s"} (lo vendido a nombre del productor): ya tiene{excluidas.comprometidas === 1 ? "" : "n"} comprador.
+              </li>
+            )}
+            {excluidas.tyrian > 0 && (
+              <li>
+                {excluidas.tyrian} partida{excluidas.tyrian === 1 ? "" : "s"} de Tyrian: va{excluidas.tyrian === 1 ? "" : "n"} a subasta, no al catálogo.
+              </li>
+            )}
+          </ul>
+        )}
         {stock.length === 0 ? (
           <p className={s.vacio}>No hay partidas libres con disponible.</p>
         ) : (
@@ -183,14 +258,24 @@ export function TriageBoard({ triage }: { triage: Triage }) {
             {stock.map((x) => {
               const enVivo = vivas.filter((d) => d.partidaId === x.partidaId);
               return (
-                <article key={x.partidaId} className={s.entrada} style={conGrado(x.lote.grade)}>
+                <article key={x.partidaId} id={`entrada-s-${x.partidaId}`} className={`${s.entrada} ${destino === `entrada-s-${x.partidaId}` ? s.destacada : ""}`} style={conGrado(x.lote.grade)}>
                   <div className={s.entradaHead}>
                     <h3>
                       <Link href={`/ocp/stock?partida=${x.partidaId}`}>{x.codigo}</Link> · {x.lote.name}
                       <span className={s.grado}>{NOMBRE_GRADO[x.lote.grade ?? ""] ?? x.lote.grade}</span>
+                      <span className={`${s.origen} ${x.origen.clase === "selection" ? s.origenSelection : ""}`}>{x.origen.etiqueta}</span>
                     </h3>
-                    <small>{ESTADO_INFO[x.estado].nombre}{x.estado === "empacado" ? ` de ${x.contenido}` : ""}{x.presentacion ? ` · ${x.presentacion}` : ""} · {x.lote.producerName}</small>
+                    <small>
+                      {ESTADO_INFO[x.estado].nombre}{x.estado === "empacado" ? ` de ${x.contenido}` : ""}{x.presentacion ? ` · ${x.presentacion}` : ""} · {x.lote.producerName}
+                      {x.origen.compraId && <> · <Link href={rutaDeLaCompra(x.origen.compraId)}>su compra</Link></>}
+                      {x.origen.contractId && <> · <Link href={`/ocp/contratos/${x.origen.contractId}`}>su contrato</Link></>}
+                    </small>
                   </div>
+                  {x.origen.clase === "selection" ? (
+                    <p className={s.vitrinaSelection}>Compra CTCx Selection: en la vitrina el lote sale con el rótulo y la imagen de CTCx, no con las fotos del lote.</p>
+                  ) : x.loteSelection ? (
+                    <p className={s.vitrinaSelection}>El lote tiene una compra CTCx Selection: en la vitrina todo el lote —también esta partida— sale con el rótulo y la imagen de CTCx, no con las fotos del lote.</p>
+                  ) : null}
                   <div className={s.cifras}>
                     <span>Costo <b>{fmtCop(x.costoCopKg)}/kg</b> de {x.contenido}</span>
                     <span>Disponible <b>{fmtKg(x.disponibleKg)} kg</b>{x.contenido === "pergamino" ? ` ≈ ${fmtKg(Math.round(x.disponibleKg * x.conversion * 10) / 10)} kg verde` : ""}</span>
@@ -456,7 +541,15 @@ function DeclaracionFila({ d, onRetirada, onError }: { d: Declaracion; onRetirad
   return (
     <div className={s.declaracion}>
       <div>
-        <b>{d.codigo}</b> · {d.tipo === "contrato" ? "contrato" : `stock ${d.partidaCodigo ?? ""}`} · <b>{fmtKg(d.kgVerde)} kg</b> de verde ({fmtKg(d.kgOrigen)} kg de origen × {str(d.conversion, 4)})
+        <b>{d.codigo}</b> ·{" "}
+        {d.tipo === "contrato" ? (
+          d.contractId ? <Link href={`/ocp/contratos/${d.contractId}`}>contrato</Link> : "contrato"
+        ) : d.partidaId ? (
+          <>stock <Link href={`/ocp/stock?partida=${d.partidaId}`}>{d.partidaCodigo ?? "partida"}</Link></>
+        ) : (
+          `stock ${d.partidaCodigo ?? ""}`
+        )}{" "}
+        · <b>{fmtKg(d.kgVerde)} kg</b> de verde ({fmtKg(d.kgOrigen)} kg de origen × {str(d.conversion, 4)})
         {d.contratoVigente === false && <span className={s.alerta} style={{ display: "block" }}>El contrato ya no está vigente: retire esta declaración.</span>}
         <small>
           café {fmtCop(d.cafeCopKg)} + empacado {fmtCop(d.empaqueCopKg)} ({d.referenciaCodigo}) + O&P → FOB mínimo <b>{fmtCop(d.fobCopKg)}</b> · <b>{usd(d.fobUsdKg, 3)}</b>/kg a TRM {fmtKg(d.trm)}

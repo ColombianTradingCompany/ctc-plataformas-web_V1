@@ -251,6 +251,7 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // los contratos, sus despachos y la humedad son sus pestañas.
           { href: "/ocp/contratos", label: "Triage de Catálogo Activo" },
           // Decisión 7 (V5.85): la disponibilidad de lo comprado en firme (`compras`) — el staging del Catálogo Activo del lado Compras.
+          // V5.203: su disponible se lee del Stock CTCx real y su «Declarar en el Triage →» abre esa partida.
           { href: "/ocp/ctc-selection", label: "Oferta desde CTCx Selection" },
           // «Stock de Sample Kits» (V5.90) salió de aquí en la V5.195: el Stock CTCx lo absorbió (Manejo de Stock Físico, abajo).
           // Nota 5: lo publicado. Las subastas Tyrian son su pestaña (Tyrian no se oferta: se subasta).

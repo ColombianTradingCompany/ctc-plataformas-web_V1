@@ -1,0 +1,51 @@
+/* OCP · Adquisición de Stock Café (V5.203). Dos pestañas —Por recibir · Compras— y una tabla compacta: cada fila dice de dónde viene
+   la compra, de quién es (Selection o solo stock), dónde está en el Stock CTCx y cuál es su siguiente paso en el circuito. Los cambios
+   («Es de», ubicar, anular) van plegados en la fila para que la tabla no crezca. Colores con respaldo para cuando el tema no los define. */
+
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line, #e5e2ee); margin: 4px 0 16px; flex-wrap: wrap; }
+.tab { padding: 8px 14px; font-size: 13.5px; font-weight: 600; color: var(--muted, #6b7280); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tab:hover { color: var(--ink, #1f1a2e); }
+.tabActiva { color: var(--ink, #1f1a2e); border-bottom-color: var(--primary, #3c0a86); }
+.tabLink { margin-left: auto; }
+
+.desplazable { overflow-x: auto; border: 1px solid var(--line, #e5e2ee); border-radius: 10px; background: var(--card, #fff); }
+.tabla { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.tabla th { text-align: left; font-weight: 600; color: var(--muted, #6b7280); padding: 8px 10px; border-bottom: 1px solid var(--line, #e5e2ee); white-space: nowrap; font-size: 11.5px; }
+.tabla td { padding: 8px 10px; vertical-align: top; border-top: 1px solid var(--line, #e5e2ee); }
+.tabla tr:first-child td { border-top: 0; }
+.tabla .num { text-align: right; white-space: nowrap; }
+.tabla a { color: inherit; }
+.fila:target { background: color-mix(in srgb, var(--primary, #3c0a86) 7%, var(--card, #fff)); }
+/* V5.203 · corrección (H15): un <Link> hace pushState y no activa :target — la fila pedida por ?compra= se resalta desde el servidor. */
+.filaElegida td { background: color-mix(in srgb, var(--primary, #3c0a86) 9%, var(--card, #fff)); }
+.filaElegida td:first-child { box-shadow: inset 3px 0 0 var(--primary, #3c0a86); }
+.tachada td { color: var(--muted, #6b7280); }
+.tachada td:not(:last-child) { text-decoration: line-through; }
+.sub { display: block; font-size: 11.5px; color: var(--muted, #6b7280); margin-top: 2px; white-space: normal; }
+
+.chip { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; text-decoration: none; }
+.chipSelection { background: #ede9fe; color: #4c1d95; }
+.chipStock { background: #e0f2fe; color: #075985; }
+.paso { display: inline-block; margin: 0 4px 4px 0; padding: 3px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; text-decoration: none; border: 1px solid var(--line, #e5e2ee); color: var(--ink, #1f1a2e); background: var(--paper, #faf9fd); white-space: nowrap; }
+.pasoDeclarar { border-color: #d97706; color: #92400e; background: #fffbeb; }
+.pasoCatalogo { border-color: #16a34a; color: #166534; background: #f0fdf4; }
+
+.plegable summary { cursor: pointer; font-size: 11.5px; color: var(--primary, #3c0a86); font-weight: 600; margin-top: 4px; list-style: none; }
+.plegable summary::-webkit-details-marker { display: none; }
+.plegable summary::before { content: "▸ "; }
+.plegable[open] summary::before { content: "▾ "; }
+.plegableCuerpo { margin-top: 6px; padding: 8px 10px; border: 1px solid var(--line, #e5e2ee); border-radius: 8px; background: var(--paper, #faf9fd); min-width: 220px; max-width: 320px; white-space: normal; }
+.plegableCuerpo input, .plegableCuerpo select { width: 100%; padding: 6px 8px; border: 1.5px solid var(--line, #e5e2ee); border-radius: 7px; font-size: 12.5px; background: var(--card, #fff); color: var(--ink, #1f1a2e); font-family: inherit; margin: 4px 0 6px; }
+.regla { font-size: 11.5px; color: #92400e; margin: 0; }
+/* Decisión 2 (corrección V5.203): la casilla con que se confirma un cambio de la cara de un lote en la vitrina. */
+.confirma { display: flex; gap: 6px; align-items: flex-start; font-size: 12px; font-weight: 600; color: #92400e; margin: 4px 0 6px; }
+.confirma input { width: auto !important; margin: 2px 0 0 !important; }
+
+.registrar { margin: 0 0 18px; }
+.registrar > summary { display: inline-block; cursor: pointer; list-style: none; }
+.registrar > summary::-webkit-details-marker { display: none; }
+.aviso { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: #fffbeb; color: #92400e; font-size: 13px; border: 1px solid #fde68a; }
+.aviso a { color: inherit; font-weight: 700; }
+.vitrina { font-size: 12px; color: var(--muted, #6b7280); margin: 4px 0 0; }
+.vacio { color: var(--muted, #6b7280); font-size: 13px; padding: 14px; border: 1px dashed var(--line, #e5e2ee); border-radius: 10px; }
+.vencido { color: #b91c1c; font-weight: 700; }

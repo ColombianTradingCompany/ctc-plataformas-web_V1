@@ -20,7 +20,14 @@ import styles from "@/components/panel/shared.module.css";
 // resultado y el rechazo se muestra inline. Este componente generaliza ese
 // patrón para cualquier formulario del panel.
 
-export type ActionResult = { ok: true } | { ok: false; error: string };
+// V5.203: `aviso` (opcional) = lo principal se hizo, pero algo de después no (p. ej. el pago quedó y la compra no entró al stock). Se
+// pinta en ámbar; nunca se traga en silencio (regla de la casa) y no invita a repetir lo que ya se hizo.
+export type ActionResult = { ok: true; aviso?: string } | { ok: false; error: string };
+
+// V5.203 (owner, 2026-10-10 — «CTCx Compras no parece estar funcionando bien»): una compra a mano se registraba sin decir nada y el
+// formulario quedaba lleno, así que un segundo clic la registraba dos veces. Tres props OPCIONALES (los usos de antes no cambian):
+// `successMessage` (se dice al salir bien), `resetOnSuccess` (el formulario vuelve a vacío) y `onSuccess` (solo desde un componente
+// cliente: un servidor no puede pasar funciones).
 
 export function ActionForm({
   action,
@@ -32,6 +39,9 @@ export function ActionForm({
   className,
   style,
   disabled,
+  successMessage,
+  resetOnSuccess = false,
+  onSuccess,
 }: {
   action: (formData: FormData) => Promise<ActionResult>;
   children?: ReactNode;
@@ -42,10 +52,15 @@ export function ActionForm({
   className?: string;
   style?: React.CSSProperties;
   disabled?: boolean;
+  successMessage?: string;
+  resetOnSuccess?: boolean;
+  onSuccess?: () => void;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [listo, setListo] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
 
   return (
     <form
@@ -53,12 +68,21 @@ export function ActionForm({
       style={style}
       onSubmit={(e) => {
         e.preventDefault();
-        const formData = new FormData(e.currentTarget);
+        const form = e.currentTarget;
+        const formData = new FormData(form);
         setError(null);
+        setListo(null);
+        setAviso(null);
         startTransition(async () => {
           const res = await action(formData);
-          if (res.ok) router.refresh();
-          else setError(res.error);
+          if (res.ok) {
+            if (resetOnSuccess) form.reset();
+            // V5.203 · corrección (H12): con un aviso, el éxito no se canta a la vez («ya está en el stock» junto a «no entró al stock»).
+            if (successMessage && !res.aviso) setListo(successMessage);
+            if (res.aviso) setAviso(res.aviso);
+            onSuccess?.();
+            router.refresh();
+          } else setError(res.error);
         });
       }}
     >
@@ -69,6 +93,16 @@ export function ActionForm({
       {error && (
         <p className={styles.warn} style={{ marginTop: 8 }}>
           {error}
+        </p>
+      )}
+      {aviso && !error && (
+        <p className={styles.warn} role="status" style={{ marginTop: 8 }}>
+          {aviso}
+        </p>
+      )}
+      {listo && !error && (
+        <p role="status" style={{ marginTop: 8, fontSize: 12.5, fontWeight: 600, color: "#166534" }}>
+          {listo}
         </p>
       )}
     </form>

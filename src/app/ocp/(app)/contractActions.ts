@@ -9,7 +9,7 @@ import { mesesDelTrato, renovacionDebida } from "@/lib/trato/mesAMes";
 import { RENOVACION_DIAS } from "@/lib/trato/terminos";
 import { esCompraEnFirme } from "@/lib/compras/reglas";
 import { STOCK_PATH } from "@/lib/stock/linaje";
-import { crearRaizDeStock } from "@/lib/stock/servidor";
+import { crearRaizDeStock, mensajeDeLaBase } from "@/lib/stock/servidor";
 import { formatCop } from "@/lib/arena/inscriptions";
 import { sendTransactionalEmail } from "@/lib/email/leadEmails";
 import { origenDeSuperficie } from "@/lib/red/subdominios";
@@ -111,6 +111,31 @@ const mesValido = (contract: { freeze_months: number | null } | null, mes: numbe
   return Number.isInteger(mes) && mes >= 1 && mes <= meses;
 };
 
+type ContratoDelMes = NonNullable<Awaited<ReturnType<typeof contratoYMeses>>["contract"]>;
+
+/** V5.203 · corrección (H1/H2): la compra del mes pagado de una compra en firme —la MISMA fila al pagar y al reintentar—. Única por
+ *  (contrato, mes) en la base (`compras_contract_mes_key`). */
+function compraDelMes(contract: ContratoDelMes, e: { mes: number; kg: number; cop: number; enviadoAt: string | null; pagadoAt: string; ref: string | null; kind: string; por: string }) {
+  return {
+    lot_id: contract.lot_id,
+    contract_id: contract.id,
+    mes: e.mes,
+    grado: contract.grade_snapshot,
+    kg: e.kg,
+    cop_kg: Number(contract.price_per_kg_locked ?? 0) || Math.round(e.cop / e.kg),
+    total_cop: e.cop,
+    pvc_edition_id: contract.pvc_edition_id ?? null,
+    modificador_pct: contract.modificador_pct ?? null,
+    precio_fuente: contract.reference_price_source ?? `oferta ${e.kind}`,
+    acordada_at: contract.signed_at,
+    recibida_at: e.enviadoAt,
+    pagada_at: e.pagadoAt,
+    pago_ref: e.ref,
+    origen: "contrato",
+    registrada_por: e.por,
+  };
+}
+
 /** Si todos los meses del periodo están enviados y pagados, el trato queda cumplido (sin tocar nada más). */
 async function cerrarSiCumplido(service: ReturnType<typeof createServiceRoleClient>, contractId: string, adminId: string) {
   const { contract, meses } = await contratoYMeses(service, contractId);
@@ -205,27 +230,11 @@ export async function registrarPagoDelMes(contractId: string, mes: number, formD
   // Compras: ese café es de CTCx y se ofrece como CTCx Selection. Un Lote de Temporada NO pasa por aquí (se vende a nombre del productor).
   const { data: oferta } = contract.offer_id ? await service.from("lot_offers").select("kind").eq("id", contract.offer_id).maybeSingle() : { data: null };
   const kgComprados = Number(fila.enviado_kg ?? 0);
+  const avisos: string[] = [];
   if (oferta && esCompraEnFirme(oferta.kind) && contract.grade_snapshot && contract.grade_snapshot !== "tyrian" && kgComprados > 0) {
-    const compra = {
-      lot_id: contract.lot_id,
-      contract_id: contractId,
-      mes,
-      grado: contract.grade_snapshot,
-      kg: kgComprados,
-      cop_kg: Number(contract.price_per_kg_locked ?? 0) || Math.round(cop / kgComprados),
-      total_cop: cop,
-      pvc_edition_id: contract.pvc_edition_id ?? null,
-      modificador_pct: contract.modificador_pct ?? null,
-      precio_fuente: contract.reference_price_source ?? `oferta ${oferta.kind}`,
-      acordada_at: contract.signed_at,
-      recibida_at: fila.enviado_at,
-      pagada_at: fecha,
-      pago_ref: ref,
-      origen: "contrato",
-      registrada_por: adminId,
-    };
+    const compra = compraDelMes(contract, { mes, kg: kgComprados, cop, enviadoAt: fila.enviado_at, pagadoAt: fecha, ref, kind: oferta.kind, por: adminId });
     const { data: previa } = await service.from("compras").select("id").eq("contract_id", contractId).eq("mes", mes).maybeSingle();
-    const { data: guardada } = previa
+    const { data: guardada, error: errorCompra } = previa
       ? await service.from("compras").update(compra).eq("id", previa.id).select("id").single()
       : await service.from("compras").insert(compra).select("id").single();
     if (guardada) {
@@ -234,7 +243,19 @@ export async function registrarPagoDelMes(contractId: string, mes: number, formD
       // mientras no se haya movido (`stock_raiz` es idempotente por compra).
       const raiz = await crearRaizDeStock(service, { lotId: contract.lot_id, estado: "pergamino", kg: kgComprados, costoCopKg: compra.cop_kg, origen: "compra", compraId: guardada.id, nota: `mes ${mes} · lote ${lot.name}`, por: adminId });
       if (raiz.ok) await service.from("audit_log").insert({ entity_type: "stock_partida", entity_id: raiz.id, action: "stock_raiz_compra", performed_by: adminId, notes: `${raiz.codigo ?? ""} · mes ${mes} · ${kgComprados} kg de pergamino` });
+      else {
+        // V5.203 (B8): ningún fallo se traga en silencio — el pago quedó; que no entrara al stock queda en el rastro y en pantalla.
+        avisos.push(`La compra del mes ${mes} quedó registrada, pero no entró al Stock CTCx (${mensajeDeLaBase(raiz.error)}): use «Reintentar la entrada al Stock CTCx» en el aviso de este contrato (o «Entrar al stock» en Adquisición de Stock Café).`);
+        await service.from("audit_log").insert({ entity_type: "compra", entity_id: guardada.id, action: "compra_sin_stock", performed_by: adminId, notes: mensajeDeLaBase(raiz.error).slice(0, 300) });
+      }
       revalidatePath(STOCK_PATH);
+    } else {
+      // V5.203 (B8): el pago del mes quedó, pero la compra no — se dice y queda en el rastro. Corrección (H2): el formulario de pago ya
+      // no aparece con el mes pagado, así que el camino es el aviso fijo del contrato con «Reintentar la compra».
+      const motivo = mensajeDeLaBase(errorCompra?.message ?? "sin fila");
+      console.error("registrarPagoDelMes: la compra no se guardó", errorCompra);
+      avisos.push(`El pago del mes ${mes} quedó registrado, pero la compra de CTCx no (${motivo}). Use «Reintentar la compra» en el aviso de este contrato.`);
+      await service.from("audit_log").insert({ entity_type: "purchase_contract", entity_id: contractId, action: "compra_no_registrada", performed_by: adminId, notes: `mes ${mes} · ${motivo}`.slice(0, 300) });
     }
     revalidatePath("/ocp/compras");
     revalidatePath("/ocp/ctc-selection");
@@ -249,6 +270,69 @@ export async function registrarPagoDelMes(contractId: string, mes: number, formD
   await cerrarSiCumplido(service, contractId, adminId);
   revalidatePath(`/ocp/contratos/${contractId}`);
   revalidatePath("/ocp/contratos");
+  return avisos.length ? { ok: true, aviso: avisos.join(" ") } : { ok: true };
+}
+
+/** V5.203 · corrección (nodo final, 2026-10-10 · H1/H2): crea lo que le FALTA a un mes PAGADO de una compra en firme (directa · Black)
+ *  —su compra y su partida en el Stock CTCx—, una sola vez: la compra es única por (contrato, mes) y `stock_raiz` es idempotente por
+ *  compra. Lo pinta el aviso fijo de la ficha del contrato (derivado de los datos: sobrevive al refresco). `emite`: escribe lo que leen
+ *  Adquisición, CTCx Selection, el Stock y la vitrina. No exige el trato vigente: el último pago puede haberlo dejado cumplido. */
+export async function reintentarCompraDelMes(contractId: string, mes: number): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const { contract, lot, meses } = await contratoYMeses(service, contractId);
+  if (!contract || !lot) return { ok: false, error: "Contrato no encontrado." };
+  if (!mesValido(contract, mes)) return { ok: false, error: "Ese mes no está en el periodo del trato." };
+  const fila = meses.find((m) => m.mes === mes);
+  if (!fila?.pagado_at) return { ok: false, error: "Ese mes no está pagado: su compra nace al registrar el pago." };
+  const kg = Number(fila.enviado_kg ?? 0);
+  if (!(kg > 0)) return { ok: false, error: "Ese mes no tiene kilos enviados: no lleva compra." };
+  const { data: oferta } = contract.offer_id ? await service.from("lot_offers").select("kind").eq("id", contract.offer_id).maybeSingle() : { data: null };
+  if (!oferta || !esCompraEnFirme(oferta.kind) || !contract.grade_snapshot || contract.grade_snapshot === "tyrian") {
+    return { ok: false, error: "Este trato no es una compra en firme (directa o Black): sus meses no llevan compra de CTCx." };
+  }
+  const { data: pago } = await service.from("contract_months").select("pagado_cop, pago_ref").eq("id", fila.id).maybeSingle();
+  const cop = Number((pago as { pagado_cop: number | string | null } | null)?.pagado_cop ?? 0) || Math.round(kg * Number(contract.price_per_kg_locked ?? 0));
+  const ref = (pago as { pago_ref: string | null } | null)?.pago_ref ?? null;
+
+  // 1) La compra.
+  let compraId = ((await service.from("compras").select("id").eq("contract_id", contractId).eq("mes", mes).maybeSingle()).data as { id: string } | null)?.id ?? null;
+  let compraCreada = false;
+  const fila2 = compraDelMes(contract, { mes, kg, cop, enviadoAt: fila.enviado_at, pagadoAt: fila.pagado_at, ref, kind: oferta.kind, por: adminId });
+  if (!compraId) {
+    const { data: nueva, error } = await service.from("compras").insert(fila2).select("id").single();
+    if (nueva) {
+      compraId = (nueva as { id: string }).id;
+      compraCreada = true;
+      await service.from("audit_log").insert({ entity_type: "compra", entity_id: compraId, action: "compra_registrada", performed_by: adminId, notes: `${lot.name} · mes ${mes} · ${kg} kg · contrato · reintento` });
+    } else {
+      // Otro reintento pudo ganarle (único por contrato y mes): se usa la suya; si no hay, el error es de verdad.
+      compraId = ((await service.from("compras").select("id").eq("contract_id", contractId).eq("mes", mes).maybeSingle()).data as { id: string } | null)?.id ?? null;
+      if (!compraId) return { ok: false, error: "La compra sigue sin poder registrarse: " + mensajeDeLaBase(error?.message) };
+    }
+  }
+
+  // 2) La partida.
+  const { data: yaEnStock } = await service.from("stock_partidas").select("codigo").eq("compra_id", compraId).maybeSingle();
+  const revalidar = () => {
+    revalidatePath(`/ocp/contratos/${contractId}`);
+    revalidatePath("/ocp/compras");
+    revalidatePath("/ocp/ctc-selection");
+    revalidatePath(STOCK_PATH);
+  };
+  if (yaEnStock) {
+    revalidar();
+    return compraCreada ? { ok: true } : { ok: true, aviso: `Nada que reintentar: la compra del mes ${mes} ya estaba en el Stock CTCx (${(yaEnStock as { codigo: string }).codigo}).` };
+  }
+  const raiz = await crearRaizDeStock(service, { lotId: contract.lot_id, estado: "pergamino", kg, costoCopKg: fila2.cop_kg, origen: "compra", compraId, nota: `mes ${mes} · lote ${lot.name}`, por: adminId });
+  revalidar();
+  if (!raiz.ok) {
+    const motivo = mensajeDeLaBase(raiz.error);
+    return compraCreada ? { ok: true, aviso: `La compra del mes ${mes} quedó registrada, pero sigue sin entrar al Stock CTCx (${motivo}): vuelva a intentarlo.` } : { ok: false, error: `La compra del mes ${mes} sigue sin poder entrar al Stock CTCx: ${motivo}` };
+  }
+  await service.from("audit_log").insert({ entity_type: "stock_partida", entity_id: raiz.id, action: "stock_raiz_compra", performed_by: adminId, notes: `${raiz.codigo ?? ""} · mes ${mes} · ${kg} kg de pergamino · reintento` });
   return { ok: true };
 }
 

@@ -19,6 +19,32 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.203] — 2026-10-10 (commit pendiente)
+
+- **Corregido**: **«CTCx Compras» (Adquisición de Stock Café, `/ocp/compras`) se caía cada vez que se abría** desde la primera compra
+  (owner: «no parece estar funcionando bien»): `stock_partidas.compra_id` es único y PostgREST devuelve un objeto, no una lista
+  (`a.stock_partidas.find is not a function`, en los registros de Vercel). Normalizado en todo el OCP, y el OCP tiene por fin un
+  `error.tsx` (un tablero que falla ya no tumba la consola). Además: una compra «solo stock» ya no marca el lote como CTCx Selection
+  en `/ocp/kr` (una sola regla, `lib/compras/selection.ts`); la nota al productor depende del destino; no se aceptan fechas futuras;
+  «Es de» no cambia en una mezcla viva, en un saco de trato ni con café declarado; el precio ya no dice «PVC PVC-»; ubicar una
+  compra ubica su partida; los fallos al registrar la compra de un saco o de un mes ya no se tragan.
+- **Añadido**: **anular una compra** a mano (con su partida, en la misma transacción: `compra_anular`; columnas `anulada_*` y guards
+  en la base) y **«Reintentar la compra»** en la ficha del contrato cuando un despacho o un mes quedó sin su compra (aviso fijo
+  derivado de los datos; `compras.despacho_id`). Al quitar la última compra Selection de un lote que sale en la vitrina, o al
+  registrar una en un lote que ya sale, la pantalla pide confirmar qué cambia en lo público.
+- **Cambiado**: **Adquisición rehecha** (pestañas Por recibir · Compras · Mezclas; «Por recibir» con los sacos de los tratos por
+  ventana y su plazo; tabla compacta con el origen legible, «Es de», la partida y el siguiente paso; formulario a mano plegado, sin
+  destino por defecto y con aviso de trato vivo) y **el circuito como uno**: una franja común (Por recibir → En stock → Por declarar
+  en kg de verde → En el Catálogo Activo) arriba de Adquisición, Stock CTCx, Triage, CTCx Selection y Catálogo Activo; el Triage
+  abre una entrada por enlace (`?partida=`, `?contrato=`), dice de dónde viene cada partida y qué queda fuera; CTCx Selection lee el
+  stock real; el disponible en pantalla resta lo declarado, como la base.
+- **Seguridad**: **la imagen de CTCx Selection** sube a un bucket privado de staging con nombre aleatorio y el servidor la publica
+  re-codificada (sin EXIF/GPS); el bucket público ya no se puede listar y solo admite WebP; al dejar de ser Selection, su imagen se
+  borra.
+- **Datos**: migraciones `2026-10-10_compras_anulacion` y `2026-10-10_ctcx_selection_imagenes` aplicadas.
+- **Seguridad**: guardianes `qa-compras` (190), `qa-stock-ctcx` (79), `qa-triage-catalogo` (61) y `qa-circuito` (60); 39 mutaciones,
+  todas atrapadas.
+
 ## [V5.202] — 2026-10-10 (commit pendiente)
 
 - **Seguridad**: **lo público del lote ya no lleva al productor** (owner, 2026-10-10: el Dossier público «necesita mantener el

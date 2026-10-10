@@ -20,6 +20,9 @@ const revalidar = () => {
   revalidatePath(STOCK_PATH);
   revalidatePath(`${STOCK_PATH}/sample-kits`);
   revalidatePath("/ocp/compras");
+  // V5.203: el Triage y CTCx Selection leen el disponible del stock.
+  revalidatePath("/ocp/contratos");
+  revalidatePath("/ocp/ctc-selection");
 };
 const n = (v: unknown) => {
   const x = typeof v === "number" ? v : Number(String(v ?? "").replace(",", ".").trim());
@@ -155,9 +158,19 @@ export async function ubicarPartida(partidaId: string, ubicacion: string): Promi
   const u = t(ubicacion, 200);
   const { error } = await service.from("stock_partidas").update({ ubicacion: u }).eq("id", p0.id);
   if (error) return { ok: false, error: mensajeDeLaBase(error.message) };
+  // V5.203 (B7): una sola verdad — la raíz de una compra lleva la ubicación de su compra (Adquisición enseña la misma).
+  let aviso: string | undefined;
+  if (p0.compraId && p0.raizId === p0.id) {
+    const { error: e2 } = await service.from("compras").update({ ubicacion: u }).eq("id", p0.compraId).is("anulada_at", null);
+    if (e2) aviso = `La partida quedó ubicada, pero su compra no (${mensajeDeLaBase(e2.message)}).`;
+  } else if (p0.despachoId && p0.raizId === p0.id) {
+    // V5.203 · corrección (H1/H2): la partida de un despacho que nació sin su compra la encuentra por el despacho (`compras.despacho_id`).
+    const { error: e2 } = await service.from("compras").update({ ubicacion: u }).eq("despacho_id", p0.despachoId).is("anulada_at", null);
+    if (e2) aviso = `La partida quedó ubicada, pero su compra no (${mensajeDeLaBase(e2.message)}).`;
+  }
   await service.from("audit_log").insert({ entity_type: "stock_partida", entity_id: p0.id, action: "stock_ubicada", performed_by: p.userId, notes: `${p0.codigo} · ${u ?? "sin ubicación"}` });
   revalidar();
-  return { ok: true };
+  return aviso ? { ok: true, aviso } : { ok: true };
 }
 
 export type DatosDeIngreso = {
@@ -227,11 +240,25 @@ export async function entrarCompraAlStock(compraId: string, formData: FormData):
   if (!p.ok) return { ok: false, error: p.error };
   if (!esUuid(compraId)) return { ok: false, error: "Compra no encontrada." };
   const service = createServiceRoleClient();
-  const { data: c } = await service.from("compras").select("id, lot_id, kg, cop_kg, ubicacion").eq("id", compraId).maybeSingle();
+  const { data: c } = await service.from("compras").select("id, lot_id, kg, cop_kg, total_cop, ubicacion, anulada_at, despacho_id").eq("id", compraId).maybeSingle();
   if (!c) return { ok: false, error: "Compra no encontrada." };
-  const compra = c as { id: string; lot_id: string; kg: number | string; cop_kg: number | string; ubicacion: string | null };
+  const compra = c as { id: string; lot_id: string; kg: number | string; cop_kg: number | string; total_cop: number | string; ubicacion: string | null; anulada_at: string | null; despacho_id: string | null };
+  // V5.203: una compra anulada no entra al stock (la base lo repite: `guard_stock_partida_compra`).
+  if (compra.anulada_at) return { ok: false, error: "Esa compra está anulada: no entra al Stock CTCx." };
   const ubicacion = t(formData?.get("ubicacion"), 200) ?? compra.ubicacion;
-  const r = await crearRaizDeStock(service, { lotId: compra.lot_id, estado: "pergamino", kg: Number(compra.kg), costoCopKg: Number(compra.cop_kg), origen: "compra", compraId: compra.id, ubicacion, por: p.userId });
+  // V5.203 · corrección (H1/H2): la compra de un saco o un adelanto entra con SU despacho. Si la partida del despacho ya existe (nació
+  // sin la compra), no se crea otra —duplicaría el café— ni se toca la suya (`stock_raiz` le reescribiría kg y costo).
+  if (compra.despacho_id) {
+    const { data: delDespacho } = await service.from("stock_partidas").select("codigo").eq("despacho_id", compra.despacho_id).maybeSingle();
+    if (delDespacho) return { ok: false, error: `Esa compra ya está en el Stock CTCx: es la partida ${(delDespacho as { codigo: string }).codigo} de su despacho.` };
+  }
+  const kg = Number(compra.kg);
+  const r = await crearRaizDeStock(
+    service,
+    compra.despacho_id
+      ? { lotId: compra.lot_id, estado: "pergamino", kg, costoCopKg: kg > 0 && Number(compra.total_cop) > 0 ? Number(compra.total_cop) / kg : Number(compra.cop_kg), origen: "despacho", despachoId: compra.despacho_id, compraId: compra.id, ubicacion, por: p.userId }
+      : { lotId: compra.lot_id, estado: "pergamino", kg, costoCopKg: Number(compra.cop_kg), origen: "compra", compraId: compra.id, ubicacion, por: p.userId }
+  );
   if (!r.ok) return { ok: false, error: mensajeDeLaBase(r.error) };
   await service.from("compras").update({ recibida_at: new Date().toISOString() }).eq("id", compra.id).is("recibida_at", null);
   await service.from("audit_log").insert({ entity_type: "compra", entity_id: compra.id, action: "compra_al_stock", performed_by: p.userId, notes: `${r.codigo ?? ""} · ${fmtKg(Number(compra.kg))} kg de pergamino` });

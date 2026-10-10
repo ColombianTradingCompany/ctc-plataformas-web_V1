@@ -43,7 +43,8 @@ export default async function MezclasPage() {
         Ya no hay regla de «3 a 4 productores, una carga cada uno» (owner, 2026-09-25): el mínimo lo pone el <b>MOQ de compra</b> —una demanda de al
         menos {MOQ_CARGAS_BLACK_RED} cargas ({MOQ_KG_MEZCLA} kg de CPS)— y para estas mezclas CTCx <b>asegura un mínimo por temporada</b> desde
         Adquisición (el objetivo de cada mezcla; informa, no bloquea). Se arma como borrador con {MIN_COMPONENTES} o más lotes y se <b>cierra</b> cuando
-        tiene tipo (la base lo vuelve a derivar). Lo asignado descuenta de lo disponible en <Link href="/ocp/ctc-selection">Oferta desde CTCx Selection</Link>.
+        tiene tipo (la base lo vuelve a derivar). Lo asignado reserva kilos de la partida de su compra en el <Link href="/ocp/stock">Stock CTCx</Link> (ya no
+        se pueden trillar, dar salida ni declarar en el Triage) y se ve en <Link href="/ocp/ctc-selection">Oferta desde CTCx Selection</Link>.
         Una mezcla cerrada no se edita: se anula.
       </p>
 

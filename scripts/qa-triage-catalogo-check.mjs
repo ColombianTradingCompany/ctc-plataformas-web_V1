@@ -18,6 +18,12 @@
 //   4. LAS ACCIONES: emiten, no lanzan, toman el lote y el precio de origen de la base, y dejan auditoría; el Catálogo Activo ya no
 //      publica a mano.
 //   5. LAS PANTALLAS y EL RAIL: el Triage en `/ocp/contratos` (los contratos en `/lista`), el Catálogo sobre las declaraciones.
+//   6. V5.203 (owner, 2026-10-10): los ENLACES PROFUNDOS (`?partida=` · `?contrato=` desplazan y abren el formulario de esa entrada),
+//      el ORIGEN de cada entrada del stock (Compra CTCx Selection · Compra solo stock · Saco de trato por ventana) y lo que verá la
+//      vitrina, lo que el Triage deja fuera explicado, y cada declaración CF- enlazada a su partida o a su contrato.
+//   7. V5.203 · corrección (nodo final, 2026-10-10 · H15): un enlace de CONSULTA (`?partida=`) desplaza y resalta, y solo «Declarar en
+//      el Triage →» (`rutaDelTriage({ …, declarar: true })` → `&declarar=1`) abre el formulario; los textos de la vitrina dicen la
+//      diferencia real desde la V5.202 —el rótulo y la imagen de CTCx frente a las fotos del lote, nunca «la finca»— (H14); el plural.
 
 import { existsSync, readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
@@ -106,7 +112,7 @@ const sql = acta.replace(/^--.*$/gm, "");
 // ── 5. Las pantallas y el rail ───────────────────────────────────────────────────────────────────────────────────────────────
 {
   const pagina = lee("src/app/ocp/(app)/contratos/page.tsx");
-  check("5 · /ocp/contratos es el Triage; un enlace viejo con ?status= va a la lista de contratos", pagina.includes("<TriageBoard triage={triage} />") && pagina.includes("if (status) redirect(`${CONTRATOS_LISTA_PATH}?status=${encodeURIComponent(status)}`);") && existe("src/app/ocp/(app)/contratos/lista/page.tsx"));
+  check("5 · /ocp/contratos es el Triage; un enlace viejo con ?status= va a la lista de contratos", pagina.includes('triage={triage} abrir={{ partida: esUuid(partida), contrato: esUuid(contrato), declarar: declarar === "1" }} />') && pagina.includes("<TriageBoard key={`${partida ?? \"\"}:${contrato ?? \"\"}:${declarar ?? \"\"}`}") && pagina.includes("if (status) redirect(`${CONTRATOS_LISTA_PATH}?status=${encodeURIComponent(status)}`);") && existe("src/app/ocp/(app)/contratos/lista/page.tsx"));
   const tabs = lee("src/app/ocp/(app)/catalogo/CatalogoTabs.tsx");
   check("5 · las pestañas: Triage · Contratos · Humedad", tabs.includes('{ href: "/ocp/contratos", label: "Triage" }') && tabs.includes('{ href: "/ocp/contratos/lista", label: "Contratos" }') && tabs.includes('{ href: "/ocp/contratos/humedad", label: "Humedad" }'));
   const catalogo = CONSOLES.ocp.nav.find((g) => g.label === "OCP · Catálogo");
@@ -116,8 +122,48 @@ const sql = acta.replace(/^--.*$/gm, "");
   check("5 · el tablero marca lo declarado de más y el contrato que ya no está vigente", tablero.includes("Declarado de más:") && tablero.includes("El contrato ya no está vigente: retire esta declaración."));
   const cat = lee("src/app/ocp/(app)/catalogo/page.tsx");
   check("5 · el Catálogo Activo lee las declaraciones (cargarTriage), enseña el ancla y edita lo comercial", cat.includes("cargarTriage(service)") && cat.includes("ancla {usd(l.anclaUsdKg, 3)}/kg") && cat.includes("editarListado.bind(null, l.id)") && !cat.includes("publishLot"));
-  check("5 · CTCx Selection y el detalle del contrato mandan a declarar en el Triage", lee("src/app/ocp/(app)/ctc-selection/page.tsx").includes('<Link href="/ocp/contratos">Declarar en el Triage →</Link>') && lee("src/app/ocp/(app)/contratos/[id]/page.tsx").includes('<Link href="/ocp/contratos">Declarar en el Triage →</Link>'));
+  // V5.203: el enlace abre ESA entrada (la partida del lote de Selection; el trato por ventana); un trato mes a mes no se declara como
+  // contrato (el Triage solo carga tratos por ventana): su compra entra al Stock y esa partida se declara (hueco H9).
+  const detalle = lee("src/app/ocp/(app)/contratos/[id]/page.tsx");
+  check("5 · CTCx Selection y el detalle del contrato mandan a declarar en el Triage, a SU entrada", lee("src/app/ocp/(app)/ctc-selection/page.tsx").includes("<Link href={rutaDelTriage({ partida: l.declarable.id, declarar: true })}>Declarar en el Triage →</Link>") && detalle.includes("<Link href={rutaDelTriage({ contrato: id, declarar: true })}>Declarar en el Triage →</Link>") && !detalle.includes('<Link href="/ocp/contratos">Declarar en el Triage →</Link>'));
   check("5 · el plan nombra la tanda y este guardián", lee("docs/PLAN_TRIAGE_CATALOGO.md").includes("| **C · Triage de Catálogo Activo** | V5.196 |") && lee("docs/PLAN_TRIAGE_CATALOGO.md").includes("`qa-triage-catalogo`"));
+}
+
+// ── 6. V5.203: enlaces profundos, origen de cada entrada, lo excluido, declaraciones enlazadas ───────────────────────────────────
+{
+  const pagina = lee("src/app/ocp/(app)/contratos/page.tsx");
+  const tablero = lee("src/app/ocp/(app)/contratos/TriageBoard.tsx");
+  const servidor = lee("src/lib/triage/servidor.ts");
+  const stockServ = lee("src/lib/stock/servidor.ts");
+  const cat = lee("src/app/ocp/(app)/catalogo/page.tsx");
+  check("6 · la página lee ?partida= y ?contrato= (solo uuid) y se los pasa al tablero", pagina.includes("searchParams: Promise<{ status?: string; partida?: string; contrato?: string; declarar?: string }>") && /const esUuid = \(v: string \| undefined\) => \(v && \/\^\[0-9a-f-\]\{36\}\$\/i\.test\(v\) \? v : null\);/.test(pagina));
+  check("6 · el enlace abre el formulario de ESA entrada (corregir su declaración viva, o declarar) y desplaza hasta ella", tablero.includes("useState<string | null>(() => claveInicial(triage, abrir))") && tablero.includes("if (!abrir?.declarar) return null;") && tablero.includes("if (d && x) return `f:${d.id}`;") && tablero.includes("if (x && x.declarable && x.disponibleKg > 0) return `s:${x.partidaId}`;") && tablero.includes("if (c && c.porDeclararKg > 0) return `c:${c.contractId}`;") && tablero.includes("document.getElementById(destino)?.scrollIntoView({ block: \"center\" })") && tablero.includes("id={`entrada-s-${x.partidaId}`}") && tablero.includes("id={`entrada-c-${c.contractId}`}"));
+  check("6 · si la entrada pedida no está, lo dice (y manda al Stock o al contrato)", tablero.includes("La partida pedida no está entre las entradas del Triage") && tablero.includes("El contrato pedido no está entre los tratos por ventana vigentes"));
+  // V5.203 · corrección (H11): los rótulos se arman con el diccionario único de `compras/selection.ts`; aquí se comprueba el resultado.
+  const SEL = await import("../src/lib/compras/selection.ts");
+  const etiqueta = { selection: `Compra ${SEL.DESTINO_LABEL.selection}`, stock: `Compra ${SEL.DESTINO_LABEL.stock.toLowerCase()}`, despacho: SEL.ORIGEN_LABEL.saco, manual: SEL.ORIGEN_LABEL.ingreso };
+  check("6 · los rótulos del origen, en UN sitio: Compra CTCx Selection · Compra solo stock · Saco de trato por ventana · Ingreso a mano", etiqueta.selection === "Compra CTCx Selection" && etiqueta.stock === "Compra solo stock" && etiqueta.despacho === "Saco de trato por ventana" && etiqueta.manual === "Ingreso a mano" && /selection: `Compra \$\{DESTINO_LABEL\.selection\}`,\s*stock: `Compra \$\{DESTINO_LABEL\.stock\.toLowerCase\(\)\}`,\s*despacho: ORIGEN_LABEL\.saco,/.test(stockServ) && stockServ.includes("manual: ORIGEN_LABEL.ingreso") && stockServ.includes('const clase: ClaseDeOrigen = c && esCompraSelection(c) ? "selection" : "stock";'));
+  check("6 · cada entrada del stock lleva el origen de su RAÍZ y si su lote sale como CTCx Selection", servidor.includes("const o = stockCrudo.origenes[p.raizId];") && servidor.includes("loteSelection: selection.has(lote.id)") && servidor.includes("lotesSelection(") && tablero.includes("{x.origen.etiqueta}"));
+  // V5.203 · corrección (H14): desde la V5.202 ningún lote enseña la finca; lo que cambia es el rótulo y la imagen de CTCx.
+  check("6 · si es Selection, el aviso: en la vitrina sale con el rótulo y la imagen de CTCx, no con las fotos del lote (también un trato de un lote Selection)", tablero.includes("Compra CTCx Selection: en la vitrina el lote sale con el rótulo y la imagen de CTCx, no con las fotos del lote.") && tablero.includes("{c.loteSelection && <p className={s.vitrinaSelection}>") && !/no con la finca|perfil de CTCx, no/.test(tablero));
+  check("6 · lo que se queda fuera se explica: sin lote (al Stock CTCx), comprometido, Tyrian", servidor.includes("const excluidas: ExcluidasDelTriage = { sinLote: 0, comprometidas: 0, tyrian: 0 };") && tablero.includes("sin lote de la plataforma (ingreso a mano)") && tablero.includes('<Link href="/ocp/stock">Stock CTCx →</Link>') && tablero.includes("va{excluidas.tyrian === 1 ? \"\" : \"n\"} a subasta"));
+  check("6 · cada declaración CF- enlaza a su partida o a su contrato (Triage y Catálogo Activo)", tablero.includes("<Link href={`/ocp/stock?partida=${d.partidaId}`}>") && tablero.includes("<Link href={`/ocp/contratos/${d.contractId}`}>contrato</Link>") && cat.includes("<Link href={`/ocp/stock?partida=${d.partidaId}`}>") && cat.includes("`${TRIAGE_PATH}?partida=${d.partidaId}`"));
+  check("6 · la franja del circuito encabeza el Triage y el Catálogo Activo", pagina.includes('<CircuitoDelStock actual="triage" />') && cat.includes('<CircuitoDelStock actual="catalogo" />'));
+  check("6 · el disponible de cada entrada es el de la base (movimientosDe ya resta lo declarado, H1)", servidor.includes("const m = movimientosDe(p, stockCrudo);") && stockServ.includes('service.from("catalogo_fuentes").select("id, codigo, partida_id, kg_origen").eq("estado", "declarada")'));
+}
+
+// ── 7. V5.203 · corrección (nodo final, 2026-10-10): consulta ≠ declarar (H15), los textos de la vitrina (H14), el plural ──────────
+{
+  const F = await import("../src/lib/triage/fobMinimo.ts");
+  check("7 · H15: rutaDelTriage — la consulta solo desplaza; «declarar» añade &declarar=1; sin entrada, el Triage a secas", F.rutaDelTriage({ partida: "p1" }) === "/ocp/contratos?partida=p1" && F.rutaDelTriage({ partida: "p1", declarar: true }) === "/ocp/contratos?partida=p1&declarar=1" && F.rutaDelTriage({ contrato: "c1", declarar: true }) === "/ocp/contratos?contrato=c1&declarar=1" && F.rutaDelTriage({ declarar: true }) === "/ocp/contratos");
+  const tablero = lee("src/app/ocp/(app)/contratos/TriageBoard.tsx");
+  const pagina = lee("src/app/ocp/(app)/contratos/page.tsx");
+  check("7 · H15: el tablero solo abre un formulario con «declarar»; la página lo lee de ?declarar=1", /function claveInicial\(t: Triage, abrir: AbrirEnElTriage \| undefined\): string \| null \{\s*if \(!abrir\?\.declarar\) return null;/.test(tablero) && pagina.includes('declarar: declarar === "1"'));
+  const A = await import("../src/lib/compras/adquisicion.ts");
+  const pasos = A.siguientesPasos({ anulada: false, raiz: { id: "r1", codigo: "SX-1" }, disponibleKg: 15, declarable: { partidaId: "p9", kg: 15 }, declaraciones: [{ codigo: "CF-1", partidaId: "p8", kgVerde: 9 }], mezclas: [] });
+  check("7 · H15: en Adquisición, «En catálogo CF-…» es consulta y «Declarar en el Triage →» abre el formulario", pasos.find((p) => p.tipo === "catalogo")?.href === "/ocp/contratos?partida=p8" && pasos.find((p) => p.tipo === "declarar")?.href === "/ocp/contratos?partida=p9&declarar=1");
+  check("7 · H15: «Para declararla(s)» concuerda con el número de partidas sin lote", tablero.includes('declarar{excluidas.sinLote === 1 ? "la" : "las"}') && tablero.includes('ingresar{excluidas.sinLote === 1 ? "la" : "las"}'));
+  check("7 · H14: el Triage no dice que la vitrina enseñe la finca", !/(no con la finca|en vez de la finca|perfil de CTCx, no con)/.test(tablero));
 }
 
 if (fallos.length) {

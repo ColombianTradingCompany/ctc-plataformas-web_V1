@@ -172,7 +172,9 @@ check(`TOTAL: las ${combinaciones} combinaciones dan un estado conocido y etique
   check("y no se inventa etiquetas del circuito por su cuenta", !/["'`](Solicitada|A evaluar|En evaluación|Evaluado|No superó|Sin oferta|Pendiente de oferta|Catálogo activo|En mora|Ruptura|CTCx Selection)["'`]/.test(tabla));
   // V5.85 (fase 8): lo comprado en firme se lee de `compras` (la tabla) y de la oferta del contrato + un mes pagado (KR), con
   // `esCompraEnFirme` como única definición de qué clases compran en firme — `qa-compras` afina el resto.
-  check("la tabla del OCP deriva «CTCx Selection» de compras", tabla.includes('from("compras").select("lot_id")') && tabla.includes("compradoEnFirme: compradoEnFirme.has(l.id)"));
+  // V5.203 (owner, 2026-10-10 · bug B2): solo las compras de Selection VIVAS (`lotesSelection` → `esCompraSelection`); un saco «solo
+  // stock» ya no marca el lote del productor como CTCx Selection. `qa-compras` prueba la regla con casos.
+  check("la tabla del OCP deriva «CTCx Selection» de las compras de Selection vivas", tabla.includes('from("compras").select("lot_id, destino, anulada_at")') && tabla.includes("lotesSelection(") && tabla.includes("compradoEnFirme: compradoEnFirme.has(l.id)"));
   // V5.84 (fase 7): la mora la deriva `mesAMes.ts` de `contract_months` — la tabla del OCP y la barra del productor pasan
   // `enMora` calculado con la MISMA función (`enMora(moraDelTrato(...))`); ninguna lee una columna «mora».
   check("la tabla del OCP deriva la mora con enMora(moraDelTrato()) de mesAMes.ts", /enMora\(moraDelTrato\(/.test(tabla) && tabla.includes('from "@/lib/trato/mesAMes"'));

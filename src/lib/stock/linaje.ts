@@ -94,6 +94,9 @@ export type Salida = { id: string; partidaId: string; tipo: TipoDeSalida; kg: nu
 export type ReservaDeKit = { partidaId: string; kg: number; kitId: string; kitCodigo: string };
 /** Lo asignado a mezclas no anuladas, por compra (las mezclas siguen sobre `compras`, plan §6.12): reserva kilos de la raíz de esa compra. */
 export type ReservaDeMezcla = { compraId: string; kg: number };
+/** V5.203 (owner, 2026-10-10 · hueco H1): lo DECLARADO vivo en el Triage (`catalogo_fuentes.kg_origen`, en el estado de la partida)
+ *  sigue en la bodega pero ya no está libre — la base lo resta en `stock_disponible` desde la V5.196 y la pantalla no lo restaba. */
+export type ReservaDeCatalogo = { partidaId: string; kg: number; codigo: string; fuenteId: string };
 
 export type StockCrudo = {
   partidas: Partida[];
@@ -101,6 +104,8 @@ export type StockCrudo = {
   salidas: Salida[];
   reservasKit: ReservaDeKit[];
   reservasMezcla: ReservaDeMezcla[];
+  /** Opcional para que un escenario escrito antes de la V5.203 (sin declaraciones) siga valiendo. */
+  reservasCatalogo?: ReservaDeCatalogo[];
 };
 
 // ── Lo derivado de una partida ───────────────────────────────────────────────────────────────────────────────────────────────
@@ -111,28 +116,35 @@ export type Movimientos = {
   salidoKg: number;
   reservadoKitKg: number;
   reservadoMezclaKg: number;
+  /** V5.203: lo declarado vivo en el Catálogo Activo (Triage) desde esta partida. */
+  declaradoKg: number;
   /** Lo que sigue físicamente en esta partida: kg − transformado − salido (las reservas siguen en la bodega). */
   restoKg: number;
-  /** Lo que se puede usar: resto − reservas. La misma cuenta que `stock_disponible` en la base. */
+  /** Lo que se puede usar: resto − kits − mezclas − lo declarado. La misma cuenta que `stock_disponible` en la base (V5.196). */
   disponibleKg: number;
 };
 
 export function movimientosDe(p: Partida, s: StockCrudo): Movimientos {
-  if (p.anulada) return { transformadoKg: 0, salidoKg: 0, reservadoKitKg: 0, reservadoMezclaKg: 0, restoKg: 0, disponibleKg: 0 };
+  if (p.anulada) return { transformadoKg: 0, salidoKg: 0, reservadoKitKg: 0, reservadoMezclaKg: 0, declaradoKg: 0, restoKg: 0, disponibleKg: 0 };
   const transformadoKg = s.transformaciones.filter((t) => t.madreId === p.id && !t.anulada).reduce((a, t) => a + t.kgEntrada, 0);
   const salidoKg = s.salidas.filter((x) => x.partidaId === p.id && !x.anulada).reduce((a, x) => a + x.kg, 0);
   const reservadoKitKg = s.reservasKit.filter((x) => x.partidaId === p.id).reduce((a, x) => a + x.kg, 0);
   const reservadoMezclaKg = p.compraId ? s.reservasMezcla.filter((x) => x.compraId === p.compraId).reduce((a, x) => a + x.kg, 0) : 0;
+  const declaradoKg = (s.reservasCatalogo ?? []).filter((x) => x.partidaId === p.id).reduce((a, x) => a + x.kg, 0);
   const restoKg = r3(p.kg - transformadoKg - salidoKg);
   return {
     transformadoKg: r3(transformadoKg),
     salidoKg: r3(salidoKg),
     reservadoKitKg: r3(reservadoKitKg),
     reservadoMezclaKg: r3(reservadoMezclaKg),
+    declaradoKg: r3(declaradoKg),
     restoKg,
-    disponibleKg: Math.max(0, r3(restoKg - reservadoKitKg - reservadoMezclaKg)),
+    disponibleKg: Math.max(0, r3(restoKg - reservadoKitKg - reservadoMezclaKg - declaradoKg)),
   };
 }
+
+/** V5.203: las declaraciones vivas (CF-…) de una partida, para decir «En el Catálogo Activo: N kg (CF-…)». */
+export const declaracionesDe = (partidaId: string, s: Pick<StockCrudo, "reservasCatalogo">) => (s.reservasCatalogo ?? []).filter((x) => x.partidaId === partidaId);
 
 /** Cuántos kg del estado de la raíz son estos kg de la partida (la humedad y los residuos van cargados; las pérdidas, no). */
 export const equivalenteEnRaiz = (p: Pick<Partida, "equivalencia">, kg: number) => r3(kg * p.equivalencia);

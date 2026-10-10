@@ -11,6 +11,7 @@ import {
   recordHumidityReading,
   registrarEnvioDelMes,
   registrarPagoDelMes,
+  reintentarCompraDelMes,
   resolveReconditioning,
   signContract,
 } from "../../contractActions";
@@ -23,7 +24,10 @@ import { MAX_RECORDATORIOS_MORA } from "@/lib/trato/mora";
 import styles from "@/components/panel/shared.module.css";
 import { MODALIDAD_LABEL, fechaLarga, type Modalidad } from "@/lib/trato/modalidades";
 import { cuentaDeVentana } from "@/lib/trato/cuenta";
-import { cobrarFaltante, confirmarDespacho, confirmarVentaSemanal, prepararRenovacion, prorrogarLoVendido, recibirDespacho } from "../../ventanaActions";
+import { cobrarFaltante, confirmarDespacho, confirmarVentaSemanal, prepararRenovacion, prorrogarLoVendido, recibirDespacho, reintentarCompraDelDespacho } from "../../ventanaActions";
+import { esCompraEnFirme } from "@/lib/compras/reglas";
+import { faltaDelDespacho, faltaDelMes, type FaltaDeCompra } from "@/lib/compras/adquisicion";
+import { rutaDelTriage } from "@/lib/triage/fobMinimo";
 import { hoyEnColombia } from "@/lib/pvc/servicio";
 import { documentoDelFirmante, esTipoDeDocumento } from "@/lib/trato/documento";
 
@@ -33,6 +37,11 @@ import { documentoDelFirmante, esTipoDeDocumento } from "@/lib/trato/documento";
 // catálogo), registra el PAGO (primera semana del mes siguiente) y ve los RETIROS del productor. La mora y la
 // ruptura potencial se DERIVAN y se pintan (decisión 6: nunca automática); la ruptura la declara el OWNER a mano y
 // congela la cuenta; a los 90 días de la firma, «Ofrecer renovación» emite la oferta nueva al PVC vigente.
+//
+// V5.203 · corrección (nodo final, 2026-10-10 · H1/H2): si al recibir un saco o un adelanto, o al pagar un mes de una compra en firme,
+// la compra o su partida del Stock CTCx no se registraron, la ficha lo dice con un aviso FIJO derivado de los datos (antes vivía en el
+// formulario que lo disparó y se iba con el refresco) y ofrece «Reintentar», que crea lo que falte una sola vez. Y la frase «al pagar
+// el mes, la compra entra al Stock CTCx» solo sale en un trato de compra en firme (directa · Black), el único en que es cierta (H15).
 
 export const dynamic = "force-dynamic";
 
@@ -67,7 +76,7 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
   const { data: contract } = await service
     .from("purchase_contracts")
     .select(
-      "id, status, grade_snapshot, signed_at, reference_price_source, reference_price_snapshot, price_per_kg_locked, quantity_frozen_kg, terms_version, declaracion, compra_inicial_kg, modificador_pct, freeze_months, ruptura_at, ruptura_motivo, renovado_at, lugar_entrega, producer_signed_at, producer_signer_name, producer_signer_doc_tipo, producer_signer_doc_numero, producer_signature_path, provisional_at, provisional_responsable, provisional_por, ratificado_at, producer_signature_meta, contract_text_version, contract_text_sha256, vigencia_hasta, redeclarar_min_kg, redeclarar_at, redeclarado_at, redeclarado_kg, redeclaracion_origen, redeclarar_aviso_at, lots(name, producer_id, fincas(name)), ventana_tipo, ventana_ciclos, precio_regla, saco_kg, minimo_kg, sin_retiro, vigencia_desde, retiro_libre_pct"
+      "id, status, grade_snapshot, signed_at, reference_price_source, reference_price_snapshot, price_per_kg_locked, quantity_frozen_kg, terms_version, declaracion, compra_inicial_kg, modificador_pct, freeze_months, ruptura_at, ruptura_motivo, renovado_at, offer_id, lugar_entrega, producer_signed_at, producer_signer_name, producer_signer_doc_tipo, producer_signer_doc_numero, producer_signature_path, provisional_at, provisional_responsable, provisional_por, ratificado_at, producer_signature_meta, contract_text_version, contract_text_sha256, vigencia_hasta, redeclarar_min_kg, redeclarar_at, redeclarado_at, redeclarado_kg, redeclaracion_origen, redeclarar_aviso_at, lots(name, producer_id, fincas(name)), ventana_tipo, ventana_ciclos, precio_regla, saco_kg, minimo_kg, sin_retiro, vigencia_desde, retiro_libre_pct"
     )
     .eq("id", id)
     .single();
@@ -119,6 +128,49 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
   const ventas = (ventasRaw as Record<string, unknown>[] | null) ?? [];
   const ventasVigentes = ventas.filter((v) => !v.anulada_at);
   const retiros = (retirosRaw as Record<string, unknown>[] | null) ?? [];
+  // ── H1/H2: lo que les falta a los recibos y a los meses pagados (su compra, su partida), derivado de los datos ────────────────
+  const gradoComprable = !!contract.grade_snapshot && contract.grade_snapshot !== "tyrian";
+  const offerId = (contract as { offer_id?: string | null }).offer_id ?? null;
+  const { data: oferta } = offerId ? await service.from("lot_offers").select("kind").eq("id", offerId).maybeSingle() : { data: null };
+  const enFirme = esCompraEnFirme((oferta as { kind: string | null } | null)?.kind);
+  const faltas: FaltaDeCompra[] = [];
+  let faltasSinComprobar: string | null = null;
+  const recibidos = despachos.filter((d) => d.estado === "recibido" && d.resultado !== "devolucion").map((d) => String(d.id));
+  if (recibidos.length) {
+    const [{ data: pRaw, error: e1 }, { data: cRaw, error: e2 }] = await Promise.all([
+      service.from("stock_partidas").select("codigo, compra_id, despacho_id").in("despacho_id", recibidos),
+      service.from("compras").select("id, despacho_id").in("despacho_id", recibidos),
+    ]);
+    if (e1 || e2) faltasSinComprobar = (e1 ?? e2)?.message ?? "sin respuesta";
+    else {
+      const partidas = (pRaw as { codigo: string; compra_id: string | null; despacho_id: string }[] | null) ?? [];
+      const compras = new Set(((cRaw as { despacho_id: string }[] | null) ?? []).map((c) => c.despacho_id));
+      for (const d of despachos) {
+        const partida = partidas.find((p) => p.despacho_id === String(d.id)) ?? null;
+        const f = faltaDelDespacho(
+          { id: String(d.id), tipo: String(d.tipo), estado: String(d.estado), resultado: d.resultado == null ? null : String(d.resultado) },
+          { gradoComprable, partida, compra: !!partida?.compra_id || compras.has(String(d.id)) }
+        );
+        if (f) faltas.push(f);
+      }
+    }
+  }
+  const mesesPagados = meses.filter((m) => m.pagadoAt && Number(m.enviadoKg ?? 0) > 0);
+  if (!porVentana && enFirme && gradoComprable && mesesPagados.length) {
+    const { data: cRaw, error: e1 } = await service.from("compras").select("id, mes").eq("contract_id", id).not("mes", "is", null);
+    const comprasDelMes = (cRaw as { id: string; mes: number }[] | null) ?? [];
+    const { data: pRaw, error: e2 } = comprasDelMes.length ? await service.from("stock_partidas").select("codigo, compra_id").in("compra_id", comprasDelMes.map((c) => c.id)) : { data: [], error: null };
+    if (e1 || e2) faltasSinComprobar = (e1 ?? e2)?.message ?? "sin respuesta";
+    else {
+      const partidas = (pRaw as { codigo: string; compra_id: string }[] | null) ?? [];
+      for (const m of mesesPagados) {
+        const compra = comprasDelMes.find((c) => c.mes === m.mes) ?? null;
+        const f = faltaDelMes({ mes: m.mes, pagadoAt: m.pagadoAt, enviadoKg: m.enviadoKg }, { enFirme, gradoComprable, compra: !!compra, partida: compra ? partidas.find((p) => p.compra_id === compra.id) ?? null : null });
+        if (f) faltas.push(f);
+      }
+    }
+  }
+
   const cuenta = porVentana
     ? cuentaDeVentana({
         declaradoKg: Number(contract.quantity_frozen_kg ?? 0),
@@ -185,6 +237,24 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
         <p className={styles.meta}>Contrato anterior a la firma digital del productor (V5.168).</p>
       )}
 
+      {/* H1/H2: el aviso FIJO de lo que falta (sobrevive al refresco: sale de los datos, no del formulario que lo disparó). */}
+      {(faltas.length > 0 || faltasSinComprobar) && (
+        <div className={styles.card} role="alert" style={{ flexDirection: "column", alignItems: "stretch", gap: 8, marginBottom: 14, borderLeft: "4px solid #d97706", background: "#fffbeb" }}>
+          <h3 style={{ margin: 0, color: "#92400e" }}>Falta registrar una compra o su entrada al Stock CTCx</h3>
+          {faltasSinComprobar && <p className={styles.meta} style={{ margin: 0, color: "#92400e" }}>No se pudo comprobar si a los recibos o a los meses pagados les falta su compra ({faltasSinComprobar}).</p>}
+          {faltas.map((f) => (
+            <div key={f.clave} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <p className={styles.meta} style={{ margin: 0, color: "#3A2C00", flex: "1 1 320px" }}>{f.texto}</p>
+              {f.tipo === "despacho" && f.despachoId ? (
+                <ActionForm action={reintentarCompraDelDespacho.bind(null, f.despachoId)} submitLabel={f.boton} pendingLabel="Reintentando…" buttonClassName="btn btn-sm btn-solid" />
+              ) : f.mes != null ? (
+                <ActionForm action={reintentarCompraDelMes.bind(null, id, f.mes)} submitLabel={f.boton} pendingLabel="Reintentando…" buttonClassName="btn btn-sm btn-solid" />
+              ) : null}
+            </div>
+          ))}
+        </div>
+      )}
+
       {contract.status === "pending_signature" ? (
         <ActionForm
           action={signContract.bind(null, id)}
@@ -220,14 +290,19 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
               Ventana <b>{cv.vigencia_desde ? fechaLarga(cv.vigencia_desde) : "—"} → {cv.vigencia_hasta ? fechaLarga(cv.vigencia_hasta) : "—"}</b> ({cv.ventana_tipo === "extendida" ? "extendida" : "un ciclo"}
               {cv.ventana_ciclos?.length ? ` · ${cv.ventana_ciclos.join(" y ")}` : ""}) · declarado <b>{cuenta.declaradoKg} kg</b> · vendido {cuenta.vendidoKg} kg · retirado {cuenta.retiradoKg} kg · <b>en la vitrina {cuenta.disponibleKg} kg</b>
               {cv.sin_retiro ? " · sin retiro libre (declaración reducida)" : ` · retiro libre ${Number(cv.retiro_libre_pct ?? 0)} % (quedan ${cuenta.libreRestanteKg} kg)`}
+              {/* V5.203 (owner, 2026-10-10 · hueco H9): el trato por ventana se declara en el Triage — el enlace abre SU entrada. */}
+              {contract.status === "active" && <> · <Link href={rutaDelTriage({ contrato: id, declarar: true })}>Declarar en el Triage →</Link></>}
             </p>
           ) : (
           <p className={styles.meta} style={{ marginTop: 6 }}>
             Comprometido <b>{resumen.comprometidoKg} kg</b> · retirado {resumen.retiradoKg} kg · <b>vigente {resumen.vigenteKg} kg</b> · pedido {resumen.pedidoKg} kg · enviado{" "}
             {resumen.enviadoKg} kg · pagado <b>{formatCop(resumen.pagadoCop)}</b>
             {resumen.penalidadCop > 0 && <> · penalidades {formatCop(resumen.penalidadCop)}</>} · mes en curso {resumen.mesEnCurso} de {nMeses}
-            {/* Decisión 7 (V5.85) · V5.196: se publica declarando en el Triage de Catálogo Activo (con su FOB mínimo). */}
-            {resumen.enviadoKg > 0 && <> · <Link href="/ocp/contratos">Declarar en el Triage →</Link></>}
+            {/* Decisión 7 (V5.85) · V5.196: se publica declarando en el Triage de Catálogo Activo (con su FOB mínimo). V5.203 (hueco H9): un
+                trato mes a mes NO se declara como contrato (el Triage solo carga tratos por ventana): al pagar el mes, su compra entra al
+                Stock CTCx y ESA partida se declara. */}
+            {/* H15: solo es cierto en una compra en firme (directa · Black): un Lote de Temporada no genera compra al pagar. */}
+            {resumen.enviadoKg > 0 && enFirme && <> · al pagar el mes, la compra entra al <Link href="/ocp/stock">Stock CTCx</Link> y se declara en el <Link href="/ocp/contratos">Triage →</Link></>}
           </p>
           )}
           {contract.status === "ruptura" && (

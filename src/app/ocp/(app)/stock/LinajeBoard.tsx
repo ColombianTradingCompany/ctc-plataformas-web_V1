@@ -9,16 +9,21 @@
 //
 // Las cuentas son las de `src/lib/stock/linaje.ts` (las mismas que la base). Las curvas se dibujan midiendo las cajas: se miden en el
 // callback de un ResizeObserver (que también avisa al empezar a observar), nunca con un setState directo en el efecto.
+//
+// V5.203 (owner, 2026-10-10): el disponible resta también lo declarado vivo en el Triage (como `stock_disponible`, hueco H1) y la
+// partida lo dice —«En el Catálogo Activo: N kg (CF-…) → Triage»—; la raíz que viene de una compra enlaza a su fila en Adquisición.
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ESTADOS, ESTADO_INFO, ORIGEN_LABEL, SALIDAS_A_MANO, SALIDA_LABEL, TRANSFORMACIONES, caminoDe, equivalenteEnRaiz,
-  erroresDeTransformacion, faltaPorCuadrar, familias, fmtCop, fmtKg, movimientosDe, previaDeTransformacion, propuestaDeTransformacion,
+  declaracionesDe, erroresDeTransformacion, faltaPorCuadrar, familias, fmtCop, fmtKg, movimientosDe, previaDeTransformacion, propuestaDeTransformacion,
   transformacionesDesde, type ContenidoDePartida, type Cuadre, type EstadoDePartida, type Familia, type Partida, type TipoDeTransformacion,
 } from "@/lib/stock/linaje";
 import type { StockCargado } from "@/lib/stock/servidor";
+import { rutaDeLaCompra } from "@/lib/compras/adquisicion";
+import { VITRINA_SEGUN_DESTINO } from "@/lib/compras/selection";
 import {
   anularIngreso, anularSalida, anularTransformacion, ingresarAlStock, registrarSalida, transformarPartida, ubicarPartida,
 } from "../stockActions";
@@ -79,8 +84,9 @@ export function LinajeBoard({ stock, lotes, partidaInicial }: { stock: StockCarg
       <p className={shared.subtitle}>
         El café que está físicamente en CTCx —recibido de un trato, comprado en firme o ingresado a mano—, en partidas de pergamino, verde,
         tostado o empacado. Cada familia es el café tal como entró y todo lo que salió de él: pase el cursor por una caja para ver de dónde
-        viene y a dónde fue, y haga clic para trillarla, tostarla, empacarla o darle salida. Las muestras del circuito siguen en{" "}
-        <Link href="/ocp/muestras">Gestión de Muestras</Link>.
+        viene y a dónde fue, y haga clic para trillarla, tostarla, empacarla o darle salida. Lo comprado llega desde{" "}
+        <Link href="/ocp/compras">Adquisición de Stock Café</Link>; lo libre se declara en el <Link href="/ocp/contratos">Triage de Catálogo Activo</Link>.
+        Las muestras del circuito siguen en <Link href="/ocp/muestras">Gestión de Muestras</Link>.
       </p>
 
       <div className={s.kpis}>
@@ -152,8 +158,9 @@ function FamiliaCard({ familia, stock, elegida, hover, onElegir, onHover }: {
         </h3>
         <small>
           {lote ? `${lote.producerName}${lote.fincaName ? ` · ${lote.fincaName}` : ""} · ` : ""}
-          {origen?.tipo ?? ORIGEN_LABEL[raiz.origen]}
-          {origen?.detalle ? ` (${origen.detalle})` : ""}
+          {origen?.etiqueta ?? origen?.tipo ?? ORIGEN_LABEL[raiz.origen]}
+          {origen?.detalle && origen.clase === "despacho" ? ` (${origen.detalle})` : ""}
+          {origen?.compraId && <> · <Link href={rutaDeLaCompra(origen.compraId)}>su compra</Link></>}
           {origen?.contractId && <> · <Link href={`/ocp/contratos/${origen.contractId}`}>contrato</Link></>} · entró {fmtKg(raiz.kg)} kg de {ESTADO_INFO[raiz.estado].nombre.toLowerCase()} el {fecha(raiz.createdAt)}
         </small>
       </div>
@@ -319,7 +326,18 @@ function CuadreBar({ cuadre, raiz }: { cuadre: Cuadre; raiz: Partida }) {
 }
 
 // ── La partida elegida ───────────────────────────────────────────────────────────────────────────────────────────────────────
-type Aviso = { texto: string; error: boolean } | null;
+// V5.203 · corrección (H12): tres tonos — bien (verde), falló (rojo) y «se hizo, pero algo de después no» (ámbar, `s.avisoParcial`).
+type Aviso = { texto: string; tono: "ok" | "error" | "parcial" } | null;
+
+/** V5.203 · corrección (H6): qué pasa en la vitrina con el café de esta partida. La marca CTCx Selection va por LOTE (la vista
+ *  `public_lot_vitrina`), no por compra ni por partida; lo comprometido (vendido) y lo que no tiene lote no van a la vitrina, y un Tyrian
+ *  va a subasta. Desde la V5.202 ningún lote enseña la finca: lo que cambia es el rótulo y la imagen de CTCx frente a las fotos del lote. */
+function enLaVitrina(partida: Partida, stock: StockCargado): string {
+  if (partida.comprometido) return "No va a la vitrina (vendido: ya tiene comprador).";
+  if (!partida.lotId) return "No va a la vitrina (sin lote de la plataforma).";
+  if (stock.lotes[partida.lotId]?.grade === "tyrian") return "No va a la vitrina (Tyrian: va a subasta).";
+  return stock.lotesSelection.includes(partida.lotId) ? `El lote es CTCx Selection. ${VITRINA_SEGUN_DESTINO.selection}` : `El lote no es CTCx Selection. ${VITRINA_SEGUN_DESTINO.stock}`;
+}
 
 function PanelDePartida({ partida, stock, onCerrar, onElegir, onCambio }: {
   partida: Partida; stock: StockCargado; onCerrar: () => void; onElegir: (id: string) => void; onCambio: () => void;
@@ -333,6 +351,7 @@ function PanelDePartida({ partida, stock, onCerrar, onElegir, onCambio }: {
   const hechas = stock.transformaciones.filter((t) => t.madreId === partida.id && !t.anulada);
   const salidas = stock.salidas.filter((x) => x.partidaId === partida.id && !x.anulada);
   const reservas = stock.reservasKit.filter((r) => r.partidaId === partida.id);
+  const declaradas = declaracionesDe(partida.id, stock);
   const tipos = transformacionesDesde(partida.estado);
   const [aviso, setAviso] = useState<Aviso>(null);
   const [busy, setBusy] = useState(false);
@@ -346,13 +365,15 @@ function PanelDePartida({ partida, stock, onCerrar, onElegir, onCambio }: {
     setAviso(null);
     const r = await fn();
     setBusy(false);
-    setAviso(r.ok ? { texto: ok, error: false } : { texto: r.error ?? "No se pudo.", error: true });
+    // V5.203: un `aviso` (lo principal se hizo, algo de después no) se dice en ámbar, nunca se calla.
+    const avisoDeLaAccion = r.ok && "aviso" in r && typeof (r as { aviso?: unknown }).aviso === "string" ? (r as { aviso: string }).aviso : null;
+    setAviso(r.ok ? (avisoDeLaAccion ? { texto: avisoDeLaAccion, tono: "parcial" } : { texto: ok, tono: "ok" }) : { texto: r.error ?? "No se pudo.", tono: "error" });
     if (r.ok) onCambio();
   };
   const hijasMovidas = (txId: string) =>
     stock.partidas.filter((p) => p.madreTransformacionId === txId && !p.anulada).some((h) => {
       const mh = movimientosDe(h, stock);
-      return mh.transformadoKg > 0 || mh.salidoKg > 0 || mh.reservadoKitKg > 0;
+      return mh.transformadoKg > 0 || mh.salidoKg > 0 || mh.reservadoKitKg > 0 || mh.declaradoKg > 0;
     });
 
   return (
@@ -376,9 +397,19 @@ function PanelDePartida({ partida, stock, onCerrar, onElegir, onCambio }: {
               <button type="button" className={s.enlace} onClick={() => onElegir(madre.id)}>{madre.codigo}</button> ({fecha(madreTx.fecha)})
             </>
           ) : (
-            <>{stock.origenes[partida.id]?.tipo ?? ORIGEN_LABEL[partida.origen]}{stock.origenes[partida.id]?.detalle ? ` · ${stock.origenes[partida.id]?.detalle}` : ""}</>
+            <>
+              {stock.origenes[partida.id]?.tipo ?? ORIGEN_LABEL[partida.origen]}
+              {stock.origenes[partida.id]?.detalle ? ` · ${stock.origenes[partida.id]?.detalle}` : ""}
+              {partida.compraId && <> · <Link href={rutaDeLaCompra(partida.compraId)}>su compra en Adquisición →</Link></>}
+            </>
           )}
         </dd>
+        {!partida.anulada && (
+          <>
+            <dt>En la vitrina</dt>
+            <dd>{enLaVitrina(partida, stock)}</dd>
+          </>
+        )}
         <dt>Kg</dt>
         <dd><b>{fmtKg(partida.kg)}</b> al nacer · {fmtKg(m.restoKg)} siguen aquí</dd>
         <dt>Disponible</dt>
@@ -386,7 +417,16 @@ function PanelDePartida({ partida, stock, onCerrar, onElegir, onCambio }: {
           <b>{fmtKg(m.disponibleKg)} kg</b>
           {m.reservadoKitKg > 0 && <> · {fmtKg(m.reservadoKitKg)} reservados en kits</>}
           {m.reservadoMezclaKg > 0 && <> · {fmtKg(m.reservadoMezclaKg)} en mezclas</>}
+          {m.declaradoKg > 0 && <> · {fmtKg(m.declaradoKg)} declarados</>}
         </dd>
+        {declaradas.length > 0 && (
+          <>
+            <dt>En el Catálogo Activo</dt>
+            <dd>
+              {fmtKg(m.declaradoKg)} kg ({declaradas.map((d) => d.codigo).join(", ")}) · <Link href={`/ocp/contratos?partida=${partida.id}`}>Triage →</Link>
+            </dd>
+          </>
+        )}
         <dt>Equivale a</dt>
         <dd>{fmtKg(equivalenteEnRaiz(partida, 1))} kg de {raiz.estado} por kg ({fmtKg(equivalenteEnRaiz(partida, m.restoKg))} kg por lo que sigue aquí)</dd>
         <dt>Costo</dt>
@@ -410,19 +450,19 @@ function PanelDePartida({ partida, stock, onCerrar, onElegir, onCambio }: {
           </>
         )}
       </dl>
-      {aviso && <p className={aviso.error ? s.error : s.ok} role="status">{aviso.texto}</p>}
+      {aviso && <p className={aviso.tono === "error" ? s.error : aviso.tono === "parcial" ? s.avisoParcial : s.ok} role="status">{aviso.texto}</p>}
 
       {!partida.anulada && tipos.length > 0 && m.disponibleKg > 0 && (
         <div className={s.seccion}>
           <h3>Transformar</h3>
-          <TransformarForm key={`${partida.id}:${m.disponibleKg}`} partida={partida} disponibleKg={m.disponibleKg} tipos={tipos} raizEstado={raiz.estado} onListo={(codigo) => { setAviso({ texto: `Registrada ${codigo}.`, error: false }); onCambio(); }} />
+          <TransformarForm key={`${partida.id}:${m.disponibleKg}`} partida={partida} disponibleKg={m.disponibleKg} tipos={tipos} raizEstado={raiz.estado} onListo={(codigo) => { setAviso({ texto: `Registrada ${codigo}.`, tono: "ok" }); onCambio(); }} />
         </div>
       )}
 
       {!partida.anulada && m.disponibleKg > 0 && (
         <div className={s.seccion}>
           <h3>Dar salida</h3>
-          <SalidaForm key={`${partida.id}:${m.disponibleKg}`} partida={partida} disponibleKg={m.disponibleKg} onListo={() => { setAviso({ texto: "Salida registrada.", error: false }); onCambio(); }} />
+          <SalidaForm key={`${partida.id}:${m.disponibleKg}`} partida={partida} disponibleKg={m.disponibleKg} onListo={() => { setAviso({ texto: "Salida registrada.", tono: "ok" }); onCambio(); }} />
         </div>
       )}
 
@@ -499,7 +539,14 @@ function PanelDePartida({ partida, stock, onCerrar, onElegir, onCambio }: {
         </div>
       )}
 
-      {!partida.anulada && partida.origen === "manual" && !partida.madreTransformacionId && hechas.length === 0 && salidas.length === 0 && reservas.length === 0 && (
+      {!partida.anulada && partida.origen === "compra" && partida.compraId && (
+        <p className={s.previa}>
+          Esta partida es la raíz de una compra: si la compra se registró por error, se anula con ella en{" "}
+          <Link href={rutaDeLaCompra(partida.compraId)}>Adquisición de Stock Café</Link>.
+        </p>
+      )}
+
+      {!partida.anulada && partida.origen === "manual" && !partida.madreTransformacionId && hechas.length === 0 && salidas.length === 0 && reservas.length === 0 && declaradas.length === 0 && (
         <div className={s.seccion}>
           <h3>Anular el ingreso</h3>
           <p className={s.previa}>Si se registró por error. Queda en el rastro con su motivo; nada se borra.</p>

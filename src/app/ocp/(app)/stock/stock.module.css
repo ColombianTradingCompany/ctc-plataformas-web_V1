@@ -83,6 +83,8 @@
 .enlace { background: none; border: 0; padding: 0; color: var(--primary, #3c0a86); text-decoration: underline; font: inherit; cursor: pointer; }
 .ok { margin: 8px 0 0; padding: 8px 11px; border-radius: 8px; background: #ecfdf3; color: #166534; font-size: 12.5px; }
 .error { margin: 8px 0 0; padding: 8px 11px; border-radius: 8px; background: #fef2f2; color: #991b1b; font-size: 12.5px; }
+/* V5.203 · corrección (H12): lo principal se hizo, pero algo de después no (p. ej. la partida quedó ubicada y su compra no): ámbar. */
+.avisoParcial { margin: 8px 0 0; padding: 8px 11px; border-radius: 8px; background: #fffbeb; color: #92400e; font-size: 12.5px; border: 1px solid #fde68a; }
 .movs { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; font-size: 12.5px; }
 .movs li { border: 1px solid var(--line, #e5e2ee); border-radius: 8px; padding: 7px 9px; }
 .movs small { display: block; color: var(--muted, #6b7280); }

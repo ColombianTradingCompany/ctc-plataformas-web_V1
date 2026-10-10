@@ -5,7 +5,8 @@ import { evaluacionQueRige } from "@/lib/evaluations";
 import { edicionVigente } from "@/lib/pvc/servicio";
 import { cargarReferenciasEmpaque, type ReferenciaEmpaque } from "@/lib/produccion/referencias";
 import { movimientosDe, type ContenidoDePartida, type EstadoDePartida } from "@/lib/stock/linaje";
-import { cargarStock } from "@/lib/stock/servidor";
+import { cargarStock, ETIQUETA_DE_ORIGEN, type ClaseDeOrigen } from "@/lib/stock/servidor";
+import { lotesSelection } from "@/lib/compras/selection";
 import { CLAVE_AJUSTES_TRIAGE, conversionDeFactor, cuentaDelContrato, n2DelGrado } from "./fobMinimo";
 
 // ── Triage de Catálogo Activo · la carga (V5.196) ──────────────────────────────────────────────────────────────────────────────
@@ -32,7 +33,12 @@ export type EntradaContrato = {
   conversionFuente: "factor" | "pvc";
   vigenciaHasta: string | null;
   ventanaTipo: string | null;
+  /** V5.203: el lote tiene una compra CTCx Selection viva — la marca va por lote: TODO su listado sale con el perfil de CTCx (H2). */
+  loteSelection: boolean;
 };
+
+/** V5.203 (owner, 2026-10-10): de dónde viene una entrada del stock, en las palabras del circuito (la de su raíz). */
+export type OrigenDeEntrada = { clase: ClaseDeOrigen; etiqueta: string; compraId: string | null; contractId: string | null };
 
 export type EntradaStock = {
   partidaId: string;
@@ -48,7 +54,12 @@ export type EntradaStock = {
   conversionFuente: "uno" | "factor" | "pvc";
   /** Lo tostado (y lo empacado de tostado) se ve pero no se declara: la tienda vende verde (plan §6.10). */
   declarable: boolean;
+  origen: OrigenDeEntrada;
+  loteSelection: boolean;
 };
+
+/** V5.203 (hueco H10): lo que el Triage NO muestra del Stock CTCx y por qué (partidas vivas con café libre). */
+export type ExcluidasDelTriage = { sinLote: number; comprometidas: number; tyrian: number };
 
 export type Declaracion = {
   id: string;
@@ -109,6 +120,7 @@ export type Triage = {
   stock: EntradaStock[];
   declaraciones: Declaracion[];
   listados: Listado[];
+  excluidas: ExcluidasDelTriage;
 };
 
 const uno = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? v[0] ?? null : v ?? null);
@@ -122,20 +134,33 @@ export async function leerAjustesDelTriage(service: SupabaseClient): Promise<Aju
 
 type FilaLote = { id: string; name: string; grade: string | null; public_code: string | null; producer_id: string; fincas: { name: string } | { name: string }[] | null };
 
+/** El factor de rendimiento de la evaluación que RIGE cada lote (null si no hay). V5.203 · corrección (H5): exportado para que la franja
+ *  del circuito (`lib/stock/circuito.ts`) convierta a verde con el MISMO FR que el Triage. */
+export async function factoresQueRigen(service: SupabaseClient, ids: string[]): Promise<Map<string, number | null>> {
+  const out = new Map<string, number | null>();
+  const unicos = [...new Set(ids.filter(Boolean))];
+  if (!unicos.length) return out;
+  const { data: eRaw } = await service.from("lot_evaluations").select("lot_id, status, sca_total, factor_rendimiento, rige_grado, source, created_at").in("lot_id", unicos);
+  type FilaEv = { lot_id: string; status: "pending" | "accepted" | "rejected"; sca_total: number | null; factor_rendimiento: number | null; rige_grado: boolean | null; source: string | null; created_at: string | null };
+  const evs = (eRaw as FilaEv[] | null) ?? [];
+  for (const id of unicos) {
+    const rige = evaluacionQueRige(evs.filter((e) => e.lot_id === id));
+    out.set(id, rige?.factor_rendimiento != null ? Number(rige.factor_rendimiento) : null);
+  }
+  return out;
+}
+
 async function lotes(service: SupabaseClient, ids: string[]): Promise<Map<string, LoteDelTriage>> {
   const out = new Map<string, LoteDelTriage>();
   const unicos = [...new Set(ids.filter(Boolean))];
   if (!unicos.length) return out;
-  const [{ data: lRaw }, { data: eRaw }] = await Promise.all([
+  const [{ data: lRaw }, fr] = await Promise.all([
     service.from("lots").select("id, name, grade, public_code, producer_id, fincas(name)").in("id", unicos),
-    service.from("lot_evaluations").select("lot_id, status, sca_total, factor_rendimiento, rige_grado, source, created_at").in("lot_id", unicos),
+    factoresQueRigen(service, unicos),
   ]);
   const filas = (lRaw as unknown as FilaLote[] | null) ?? [];
   const productores = await fetchProducerContacts(service, filas.map((l) => l.producer_id));
-  type FilaEv = { lot_id: string; status: "pending" | "accepted" | "rejected"; sca_total: number | null; factor_rendimiento: number | null; rige_grado: boolean | null; source: string | null; created_at: string | null };
-  const evs = (eRaw as FilaEv[] | null) ?? [];
   for (const l of filas) {
-    const rige = evaluacionQueRige(evs.filter((e) => e.lot_id === l.id));
     out.set(l.id, {
       id: l.id,
       name: l.name,
@@ -143,7 +168,7 @@ async function lotes(service: SupabaseClient, ids: string[]): Promise<Map<string
       producerName: productores.get(l.producer_id)?.fullName ?? "Productor",
       fincaName: uno(l.fincas)?.name ?? null,
       publicCode: l.public_code,
-      fr: rige?.factor_rendimiento != null ? Number(rige.factor_rendimiento) : null,
+      fr: fr.get(l.id) ?? null,
     });
   }
   return out;
@@ -159,7 +184,7 @@ type FilaFuente = {
 };
 
 export async function cargarTriage(service: SupabaseClient): Promise<Triage> {
-  const [ajustes, edicion, referencias, stockCrudo, { data: cRaw }, { data: fRaw }, { data: lRaw }] = await Promise.all([
+  const [ajustes, edicion, referencias, stockCrudo, { data: cRaw }, { data: fRaw }, { data: lRaw }, { data: coRaw }] = await Promise.all([
     leerAjustesDelTriage(service),
     edicionVigente(),
     cargarReferenciasEmpaque(service, { soloVigentes: true }),
@@ -167,7 +192,10 @@ export async function cargarTriage(service: SupabaseClient): Promise<Triage> {
     service.from("purchase_contracts").select("id, lot_id, status, ventana_tipo, quantity_frozen_kg, price_per_kg_locked, vigencia_hasta").eq("status", "active").not("ventana_tipo", "is", null).order("created_at", { ascending: false }),
     service.from("catalogo_fuentes").select("id, codigo, lot_id, listing_id, tipo, contract_id, partida_id, kg_verde, kg_origen, conversion, precio_origen_cop_kg, trilla_cop_kg, cafe_cop_kg, referencia_id, empaque_cop_kg, op_pct, trm, fob_min_cop_kg, fob_min_usd_kg, pvc_n2_usd_kg, estado, nota, created_at, retirada_at, retirada_motivo, empaque_fob_referencias(codigo), stock_partidas(codigo)").order("created_at", { ascending: false }).limit(500),
     service.from("lot_listings").select("id, lot_id, status, commercial_mode, unit_kg, moq_kg, total_kg, sold_kg, price_per_kg, deposit_pct, arrival_date, transparency_credit_enabled, lots(name, grade, public_code)").order("created_at", { ascending: false }),
+    // V5.203: qué lotes salen en la vitrina como CTCx Selection (la misma regla que la vitrina: `esCompraSelection`).
+    service.from("compras").select("lot_id, destino, anulada_at"),
   ]);
+  const selection = lotesSelection((coRaw as { lot_id: string; destino: string; anulada_at: string | null }[] | null) ?? []);
 
   const declaraciones: Declaracion[] = ((fRaw as unknown as FilaFuente[] | null) ?? []).map((f) => ({
     id: f.id,
@@ -238,12 +266,21 @@ export async function cargarTriage(service: SupabaseClient): Promise<Triage> {
       conversionFuente: conv.fuente,
       vigenciaHasta: c.vigencia_hasta,
       ventanaTipo: c.ventana_tipo,
+      loteSelection: selection.has(lote.id),
     });
   }
 
   const entradasStock: EntradaStock[] = [];
+  // V5.203 (H10): lo que se queda fuera, contado (partidas vivas con café libre) para decirlo en pantalla.
+  const excluidas: ExcluidasDelTriage = { sinLote: 0, comprometidas: 0, tyrian: 0 };
+  for (const p of stockCrudo.partidas) {
+    if (p.anulada || !(movimientosDe(p, stockCrudo).disponibleKg > 0)) continue;
+    if (!p.lotId) excluidas.sinLote += 1;
+    else if (p.comprometido) excluidas.comprometidas += 1;
+  }
   for (const p of partidasLibres) {
     const lote = p.lotId ? loteDe.get(p.lotId) : null;
+    if (lote?.grade === "tyrian" && movimientosDe(p, stockCrudo).disponibleKg > 0) excluidas.tyrian += 1;
     if (!lote || lote.grade === "tyrian") continue;
     const m = movimientosDe(p, stockCrudo);
     const declaradoKg = vivas.filter((d) => d.partidaId === p.id).reduce((a, d) => a + d.kgOrigen, 0);
@@ -263,6 +300,11 @@ export async function cargarTriage(service: SupabaseClient): Promise<Triage> {
       conversion: esVerde ? 1 : conv.conversion,
       conversionFuente: esVerde ? "uno" : conv.fuente,
       declarable: p.contenido === "verde" || p.contenido === "pergamino",
+      origen: (() => {
+        const o = stockCrudo.origenes[p.raizId];
+        return o ? { clase: o.clase, etiqueta: o.etiqueta, compraId: o.compraId, contractId: o.contractId } : { clase: "manual" as const, etiqueta: ETIQUETA_DE_ORIGEN.manual, compraId: null, contractId: null };
+      })(),
+      loteSelection: selection.has(lote.id),
     });
   }
 
@@ -302,5 +344,6 @@ export async function cargarTriage(service: SupabaseClient): Promise<Triage> {
     stock: entradasStock,
     declaraciones,
     listados,
+    excluidas,
   };
 }

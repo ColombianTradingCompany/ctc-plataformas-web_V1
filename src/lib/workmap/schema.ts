@@ -188,7 +188,8 @@ const NODES: MapNode[] = [
   t("lot_listings", "lot_listings", "lot_listings", ["OCP · Catálogo", "CP · tienda"], "comercio", 2670, 470),
   t("orders", "orders / order_items", "orders", ["CP · checkout", "OCP"], "comercio", 2670, 620),
   // V5.85 (fase 8): `black_negotiations` quedó DORMIDA (CRM retirado, 0 filas, sin escritor); lo comprado en firme vive en `compras`.
-  t("compras", "compras / ctcx_selection_lotes", "compras", ["OCP · Compras", "OCP · Oferta desde CTCx Selection"], "comercio", 2670, 770),
+  // V5.203: la pantalla se llama «Adquisición de Stock Café» en todas partes (el rail, las cabeceras y los enlaces).
+  t("compras", "compras / ctcx_selection_lotes", "compras", ["OCP · Adquisición de Stock Café", "OCP · Oferta desde CTCx Selection"], "comercio", 2670, 770),
   t("contract_releases", "contract_releases / humidity_readings", "contract_releases", ["OCP · Contratos / Humedad", "KR · Contratos y Compras"], "comercio", 2670, 920),
   // Kaffetal Club
   t("club_campaigns", "club_campaigns", "club_campaigns", ["BCP · Kaffetal Club"], "club", 2990, 190),

@@ -52,7 +52,8 @@ export type EntradaDelCircuito = {
   sinOferta?: boolean;
   /** `moraDelTrato(contract_months)` ∈ {con_recargo, ruptura_potencial} sobre un contrato vivo (V5.84, derivado). */
   enMora?: boolean;
-  /** Hay filas en `compras` para el lote: CTCx lo compró en firme (oferta directa · black pagada, o a mano) (V5.85). */
+  /** CTCx lo compró en firme como CTCx Selection (oferta directa · black pagada, o a mano) (V5.85). V5.203: SOLO una compra de
+   *  Selection viva (`esCompraSelection`) — un saco «solo stock» de un trato por ventana no cuenta (bug B2). */
   compradoEnFirme?: boolean;
   /** `lots.grade`: solo lo escribe el veredicto del Q-Grader. */
   grado: string | null;

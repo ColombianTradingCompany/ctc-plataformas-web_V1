@@ -152,6 +152,9 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **Para kaffetal-regal (de la V5.203)**: `src/components/kaffetal-regal/panel/PerfilTab.tsx` decide «CTCx Selection» con su propia regla
+  (contrato directa/Black con un mes pagado); el OCP usa `lib/compras/selection.ts` (compra con destino selection y no anulada).
+  Unificarlas.
 - **V5.202 · el Dossier público ya no lleva al productor, con marca de agua** (owner, 2026-10-10; ejecutado desde WRAP-COMMIT-PUSH).
   La lista blanca `dossierPublico()` recibe el nombre generado de la vista y deja fuera la finca, el municipio, la historia y las
   características, la foto de perfil de la finca, el área y la infraestructura de canal propio; la portada lleva como mucho UNA foto

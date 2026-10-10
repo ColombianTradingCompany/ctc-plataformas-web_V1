@@ -4,13 +4,17 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { BUCKET_CTCX } from "@/lib/compras/reglas";
+import { BUCKET_CTCX_STAGING, EXTENSION_DE_IMAGEN_CTCX, MAX_MB_IMAGEN_CTCX } from "@/lib/compras/reglas";
 import { crearUrlDeSubidaCtcx, fijarImagenCtcx, quitarImagenCtcx, type DestinoCtcx } from "../comprasActions";
 import styles from "@/components/panel/shared.module.css";
 
-// La imagen del perfil de CTCx Selection o de un lote comprado (V5.85). Sube DIRECTO al bucket público con una URL firmada
-// (una Server Action no carga archivos: Next capa el cuerpo en 1 MB) y luego la deja fijada con la acción.
-const MAX_MB = 5;
+// La imagen del perfil de CTCx Selection o de un lote comprado (V5.85). Sube DIRECTO con una URL firmada (una Server Action no carga
+// archivos: Next capa el cuerpo en 1 MB) y luego la deja fijada con la acción.
+// V5.203 · corrección (nodo final, 2026-10-10 · privacidad, hallazgo 1): sube al STAGING PRIVADO con un nombre aleatorio (el servidor lo
+// pone: uuid + la extensión de su tipo, nunca el nombre del archivo); `fijarImagenCtcx` la re-codifica con sharp —sin EXIF ni GPS— y
+// solo entonces la publica. Así una foto tomada en la finca no lleva su ubicación a la vitrina.
+const MAX_MB = MAX_MB_IMAGEN_CTCX;
+const TIPOS = Object.keys(EXTENSION_DE_IMAGEN_CTCX);
 
 export function ImagenCtcxUploader({ destino, imagenUrl, alt, etiqueta }: { destino: DestinoCtcx; imagenUrl: string | null; alt?: string | null; etiqueta: string }) {
   const router = useRouter();
@@ -20,14 +24,14 @@ export function ImagenCtcxUploader({ destino, imagenUrl, alt, etiqueta }: { dest
   const [altText, setAltText] = useState(alt ?? "");
 
   async function subir(file: File) {
-    if (!file.type.startsWith("image/")) return setError("Solo se admiten imágenes.");
+    if (!TIPOS.includes(file.type)) return setError("Solo se admiten imágenes JPEG, PNG o WebP.");
     if (file.size > MAX_MB * 1024 * 1024) return setError(`La imagen supera ${MAX_MB} MB.`);
     setBusy(true);
     setError(null);
     try {
-      const url = await crearUrlDeSubidaCtcx(destino, file.name);
+      const url = await crearUrlDeSubidaCtcx(destino, file.type);
       if (!url.ok) throw new Error(url.error);
-      const { error: upErr } = await createClient().storage.from(BUCKET_CTCX).uploadToSignedUrl(url.path, url.token, file, { contentType: file.type, upsert: true });
+      const { error: upErr } = await createClient().storage.from(BUCKET_CTCX_STAGING).uploadToSignedUrl(url.path, url.token, file, { contentType: file.type });
       if (upErr) throw new Error(upErr.message);
       const fijada = await fijarImagenCtcx(destino, url.path, altText);
       if (!fijada.ok) throw new Error(fijada.error);
@@ -60,13 +64,14 @@ export function ImagenCtcxUploader({ destino, imagenUrl, alt, etiqueta }: { dest
       <div style={{ display: "grid", gap: 6, minWidth: 220 }}>
         <span className={styles.meta}>{etiqueta}</span>
         <input placeholder="Texto alternativo (opcional)" value={altText} onChange={(e) => setAltText(e.target.value)} style={{ fontSize: 12.5 }} />
-        <input ref={inputRef} type="file" accept="image/*" disabled={busy} onChange={(e) => e.target.files?.[0] && subir(e.target.files[0])} style={{ fontSize: 12.5 }} />
+        <input ref={inputRef} type="file" accept={TIPOS.join(",")} disabled={busy} onChange={(e) => e.target.files?.[0] && subir(e.target.files[0])} style={{ fontSize: 12.5 }} />
+        <span className={styles.meta}>Se publica re-codificada (sin datos de ubicación ni de la cámara) y con un nombre aleatorio.</span>
         {imagenUrl && (
           <button type="button" className="btn btn-sm" disabled={busy} onClick={quitar} style={{ justifySelf: "start" }}>
             Quitar imagen
           </button>
         )}
-        {busy && <span className={styles.meta}>Subiendo…</span>}
+        {busy && <span className={styles.meta}>Subiendo y re-codificando…</span>}
         {error && <span className={styles.warn}>{error}</span>}
       </div>
     </div>

@@ -182,6 +182,12 @@ ciclo; `docs/PLAN_CICLOS.md`) · **`qa-triage-catalogo-check.mjs`** (V5.196 — 
 
 ## Pendientes
 
+- **V5.203 · Adquisición de Stock Café arreglada y el circuito como uno** (owner, 2026-10-10; ejecutado desde WRAP-COMMIT-PUSH). Ver el
+  CHANGELOG. Para el owner: la compra de prueba «Test Nota 1» (15 kg, SX-2026-0001) ya se puede ANULAR desde Adquisición (le deja al
+  productor una nota correctora); decidir si el alta a mano con café declarado se iguala a «Es de» (hoy una pide confirmar y la otra
+  se bloquea); la marca Selection sigue siendo por LOTE (¿por declaración?) y el nombre definitivo de «Oferta desde CTCx Selection».
+  Sin hacer: las tareas derivadas del ECP para sacos vencidos y stock sin declarar (`tareasCarga.ts`), y un barrido del staging de
+  imágenes abandonadas.
 - **V6 · objetivo 2: Triage y Catálogo Activo** (owner, 2026-10-10, al declarar la V6.0; plan `docs/PLAN_V6_OBJETIVOS.md` §2, una
   conversación desde `docs/KICKOFF.md` «Objetivos V6»; el plan que manda sigue siendo `docs/PLAN_TRIAGE_CATALOGO.md`; fila en
   `ALINEACION` §3b). Dueño este componente, con `cherry-picked` en la tienda. **A** · activar con datos reales: una referencia de

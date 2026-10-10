@@ -19,6 +19,12 @@
 //      por `crearRaizDeStock` (y lo vendido, comprometido); las acciones emiten, no lanzan y dejan auditoría.
 //   6. LA PANTALLA y EL RAIL: `/ocp/stock` con el linaje y sus pestañas; las curvas se miden sin setState directo en el efecto; el
 //      Stock CTCx en Manejo de Stock Físico y el talón de `RUTAS_MOVIDAS` hacia sus Sample Kits.
+//   7. V5.203 (owner, 2026-10-10 · hueco H1): la pantalla resta lo DECLARADO vivo en el Triage, como `stock_disponible` (la base lo
+//      hacía desde la V5.196 y la pantalla no: ofrecía transformar, dar salida o armar kits con kilos ya en el catálogo); y la FRANJA
+//      del circuito (Por recibir → En stock → Por declarar → En el Catálogo Activo → Vendido) con los mismos números.
+//   8. V5.203 · corrección (nodo final, 2026-10-10): «Por declarar» en kg de VERDE con la cuenta del Triage (H5); la marca Selection
+//      por LOTE en el panel de la partida —vendido o sin lote: no va a la vitrina— (H6); el éxito parcial en ámbar (H12); la compra de
+//      cada raíz se lee con `anulada_at` y la franja no cuenta las partidas anuladas (H13); la raíz de un despacho y su compra (H1/H2).
 
 import { existsSync, readFileSync } from "node:fs";
 
@@ -142,9 +148,14 @@ check("2 · las salidas a mano son venta, consumo y ajuste; la de un kit no", L.
   const contrato = lee("src/app/ocp/(app)/contractActions.ts");
   const compras = lee("src/app/ocp/(app)/comprasActions.ts");
   const acciones = lee("src/app/ocp/(app)/stockActions.ts");
-  check("5 · recibir un despacho: pergamino a lo pagado por kg; lo vendido, comprometido; una devolución no entra", ventana.includes('if (resultado !== "devolucion") {') && ventana.includes('crearRaizDeStock(service, { lotId: c.lot_id, estado: "pergamino", kg: kgRecibido') && ventana.includes('comprometido: d.tipo === "vendido"'));
+  // V5.203 · corrección (H1/H2): la raíz de un despacho la arma `raizDelDespacho` —la MISMA al recibir y al reintentar—.
+  check("5 · recibir un despacho: pergamino a lo pagado por kg; lo vendido, comprometido; una devolución no entra", ventana.includes('if (resultado !== "devolucion") {') && ventana.includes("crearRaizDeStock(service, raizDelDespacho(c, lot.name, d, { kg: kgRecibido, pagado, compraId, por: p.userId }))") && /function raizDelDespacho\([\s\S]*?return \{ lotId: c\.lot_id, estado: "pergamino", kg: e\.kg, costoCopKg: e\.pagado > 0 && e\.kg > 0 \? e\.pagado \/ e\.kg : Number\(d\.cop_kg\), origen: "despacho", despachoId: d\.id, compraId: e\.compraId, comprometido: d\.tipo === "vendido"/.test(ventana));
   check("5 · pagar el mes de una compra en firme y la compra a mano que ya llegó entran por la misma puerta", contrato.includes('crearRaizDeStock(service, { lotId: contract.lot_id, estado: "pergamino", kg: kgComprados') && /if \(recibidaAt\) \{\s*const raiz = await crearRaizDeStock\(/.test(compras));
-  check("5 · «Entrar al stock» (la compra registrada antes de llegar) y el ingreso a mano también", /export async function entrarCompraAlStock\([\s\S]*?crearRaizDeStock\(service, \{ lotId: compra\.lot_id, estado: "pergamino"/.test(acciones) && /export async function ingresarAlStock\([\s\S]*?crearRaizDeStock\(service, \{ lotId, origenTexto, estado, contenido, kg, costoCopKg: costo, origen: "manual"/.test(acciones));
+  check("5 · «Entrar al stock» (la compra registrada antes de llegar) y el ingreso a mano también", /export async function entrarCompraAlStock\([\s\S]*?crearRaizDeStock\(\s*service,[\s\S]*?\{ lotId: compra\.lot_id, estado: "pergamino", kg, costoCopKg: Number\(compra\.cop_kg\), origen: "compra", compraId: compra\.id/.test(acciones) && /export async function ingresarAlStock\([\s\S]*?crearRaizDeStock\(service, \{ lotId, origenTexto, estado, contenido, kg, costoCopKg: costo, origen: "manual"/.test(acciones));
+  // V5.203 · corrección (H1/H2): la compra de un saco o un adelanto entra con SU despacho, y si la partida del despacho ya existe no se
+  // duplica (ni se le reescriben kg y costo).
+  check("5 · H1/H2: «Entrar al stock» de una compra de despacho no duplica la partida del despacho (y entra con origen despacho)", /export async function entrarCompraAlStock\([\s\S]*?if \(compra\.despacho_id\) \{[\s\S]*?\.eq\("despacho_id", compra\.despacho_id\)[\s\S]*?if \(delDespacho\) return \{ ok: false/.test(acciones) && /origen: "despacho", despachoId: compra\.despacho_id, compraId: compra\.id/.test(acciones));
+  check("5 · H1/H2: ubicar la raíz de un despacho ubica la compra enlazada por el despacho", /export async function ubicarPartida\([\s\S]*?else if \(p0\.despachoId && p0\.raizId === p0\.id\)[\s\S]*?\.eq\("despacho_id", p0\.despachoId\)/.test(acciones));
   check("5 · un ingreso a mano lleva su nota; sin lote, dice de dónde es el café", acciones.includes("Un ingreso a mano lleva su nota") && acciones.includes("Sin lote de la plataforma, diga de dónde es el café"));
   const exportadas = [...acciones.matchAll(/export async function (\w+)\(/g)].map((m) => m[1]);
   check("5 · todas las acciones del stock EMITEN (lo que escriben lo declara el Triage y surte los kits)", acciones.startsWith('"use server";') && acciones.includes('const permiso = () => permisoDeEscritura("ocp", "emite");') && exportadas.length === 8 && exportadas.every((fn) => new RegExp(`export async function ${fn}\\([\\s\\S]*?\\)\\s*:\\s*Promise<[\\s\\S]*?>\\s*\\{\\s*const p = await permiso\\(\\);\\s*if \\(!p\\.ok\\) return`).test(acciones)), exportadas.join(","));
@@ -167,6 +178,71 @@ check("2 · las salidas a mano son venta, consumo y ajuste; la de un kit no", L.
   const mudanza = RUTAS_MOVIDAS.find((r) => r.a === `${L.STOCK_PATH}/sample-kits`);
   check("6 · la ruta vieja de los Sample Kits va con un 308 a su pestaña nueva (RUTAS_MOVIDAS + talón)", !!mudanza && mudanza.desde === "V5.195" && existe(`src/app${mudanza.de}/[[...resto]]/page.tsx`));
   check("6 · el plan nombra la tanda y este guardián", lee("docs/PLAN_TRIAGE_CATALOGO.md").includes("| **B · Stock CTCx** | V5.195 |") && lee("docs/PLAN_TRIAGE_CATALOGO.md").includes("`qa-stock-ctcx`"));
+}
+
+// ── 7. V5.203: lo declarado se resta (H1) y la franja del circuito ──────────────────────────────────────────────────────────────
+{
+  // El mismo escenario, con 8 kg del verde v2 declarados vivos en el Triage (CF-…): siguen en la bodega, ya no están libres.
+  const conCatalogo = { ...stock, reservasCatalogo: [{ partidaId: "v2", kg: 8, codigo: "CF-2026-0001", fuenteId: "cf1" }] };
+  const m2 = L.movimientosDe(v2, conCatalogo);
+  check("7 · H1: lo declarado vivo se resta del disponible (20 → 12) y sigue en la bodega (resto 20)", m2.disponibleKg === 12 && m2.declaradoKg === 8 && m2.restoKg === 20, JSON.stringify(m2));
+  check("7 · H1: lo declarado de una partida no toca a las demás; sin declaraciones (un escenario de antes) nada cambia", L.movimientosDe(v1, conCatalogo).disponibleKg === 5 && L.movimientosDe(v2, stock).disponibleKg === 20 && L.movimientosDe(v2, stock).declaradoKg === 0);
+  check("7 · H1: kits + mezclas + lo declarado nunca dejan el disponible negativo", L.movimientosDe(v2, { ...stock, reservasCatalogo: [{ partidaId: "v2", kg: 25, codigo: "CF-X", fuenteId: "x" }] }).disponibleKg === 0);
+  check("7 · H1: una partida anulada no tiene nada declarado ni libre", L.movimientosDe({ ...v2, anulada: true }, conCatalogo).disponibleKg === 0 && L.movimientosDe({ ...v2, anulada: true }, conCatalogo).declaradoKg === 0);
+  check("7 · H1: el cuadre de la familia no cambia por declarar (lo declarado sigue físicamente aquí)", L.familias(conCatalogo)[0].cuadre.sumaKg === f.cuadre.sumaKg && L.familias(conCatalogo)[0].cuadre.cuadra);
+  check("7 · H1: las declaraciones de una partida se listan (para «En el Catálogo Activo: N kg (CF-…)»)", L.declaracionesDe("v2", conCatalogo).map((d) => d.codigo).join(",") === "CF-2026-0001" && L.declaracionesDe("v1", conCatalogo).length === 0);
+  const servidor = lee("src/lib/stock/servidor.ts");
+  const tablero = lee("src/app/ocp/(app)/stock/LinajeBoard.tsx");
+  check("7 · H1: cargarStock lee lo declarado vivo de cada partida (y así lo usan el linaje, el Triage, los kits y la franja)", servidor.includes('service.from("catalogo_fuentes").select("id, codigo, partida_id, kg_origen").eq("estado", "declarada").not("partida_id", "is", null)') && servidor.includes("return { partidas, transformaciones, salidas, reservasKit, reservasMezcla, reservasCatalogo, lotes, origenes, kits, lotesSelection: conSelection };") && lee("src/lib/compras/sampleKitsServidor.ts").includes("movimientosDe(p, stock).disponibleKg") && lee("src/lib/triage/servidor.ts").includes("movimientosDe(p, stockCrudo)"));
+  check("7 · H1: el panel de la partida dice «En el Catálogo Activo: N kg (CF-…) → Triage»; una partida declarada ya se movió", tablero.includes("<dt>En el Catálogo Activo</dt>") && tablero.includes("<Link href={`/ocp/contratos?partida=${partida.id}`}>Triage →</Link>") && tablero.includes("mh.reservadoKitKg > 0 || mh.declaradoKg > 0") && /salidas\.length === 0 && reservas\.length === 0 && declaradas\.length === 0/.test(tablero));
+  check("7 · el comentario de la cuenta dice la verdad: la misma que `stock_disponible` CON lo declarado", lee("src/lib/stock/linaje.ts").includes("resto − kits − mezclas − lo declarado. La misma cuenta que `stock_disponible` en la base (V5.196)"));
+
+  // La franja del circuito.
+  const F = await import("../src/lib/stock/franja.ts");
+  const datos = {
+    porRecibir: { despachosKg: 420, despachos: 6, comprasKg: 0, compras: 0 },
+    enStock: { pergaminoKg: 15, verdeKg: 0, otrosKg: 0, partidas: 1 },
+    porDeclarar: { stockKg: 15, stockPartidas: 1, contratosKgCps: 39200, contratos: 6, verdeKg: 25100 },
+    enCatalogo: { kgVerde: 0, declaraciones: 0, listados: 0 },
+    vendido: null,
+  };
+  const pasos = F.pasosDeLaFranja(datos, "compras");
+  check("7 · la franja: cuatro pasos en el orden del circuito (y «Vendido» solo si hay listados)", pasos.map((p) => p.clave).join(",") === "por_recibir,en_stock,por_declarar,en_catalogo" && F.pasosDeLaFranja({ ...datos, vendido: { kgVerde: 12 } }, "compras").length === 5);
+  check("7 · la franja resalta el paso de cada pantalla", ["compras", "stock", "triage", "selection", "catalogo"].every((pantalla) => F.pasosDeLaFranja(datos, pantalla).filter((p) => p.actual).length === 1 && F.pasosDeLaFranja(datos, pantalla).find((p) => p.actual)?.clave === F.PASO_DE_LA_PANTALLA[pantalla]) && F.PASO_DE_LA_PANTALLA.triage === "por_declarar" && F.PASO_DE_LA_PANTALLA.stock === "en_stock");
+  check("7 · la franja marca lo pendiente: por recibir y por declarar (con los tratos por ventana)", pasos[0].pendiente && pasos[2].pendiente && !pasos[1].pendiente && !F.pasosDeLaFranja({ ...datos, porRecibir: { despachosKg: 0, despachos: 0, comprasKg: 0, compras: 0 }, porDeclarar: { stockKg: 0, stockPartidas: 0, contratosKgCps: 0, contratos: 0, verdeKg: 0 } }, "stock").some((p) => p.pendiente));
+  check("7 · la franja enlaza a cada tablero (Por recibir abre su pestaña en Adquisición)", pasos[0].href === "/ocp/compras?vista=por-recibir" && pasos[1].href === L.STOCK_PATH && pasos[2].href === "/ocp/contratos" && pasos[3].href === "/ocp/catalogo");
+  const carga = lee("src/lib/stock/circuito.ts");
+  check("7 · la carga de la franja usa las MISMAS cuentas (movimientosDe, cuentaDelContrato) y solo sacos/adelantos de tratos vigentes", carga.startsWith('import "server-only";') && carga.includes("movimientosDe(p, stock).disponibleKg") && carga.includes("cuentaDelContrato({") && carga.includes('.in("tipo", ["saco", "adelanto"]).eq("purchase_contracts.status", "active")'));
+  const pantallas = [["src/app/ocp/(app)/compras/page.tsx", "compras"], ["src/app/ocp/(app)/stock/page.tsx", "stock"], ["src/app/ocp/(app)/contratos/page.tsx", "triage"], ["src/app/ocp/(app)/ctc-selection/page.tsx", "selection"], ["src/app/ocp/(app)/catalogo/page.tsx", "catalogo"]].filter(([f, a]) => !lee(f).includes(`<CircuitoDelStock actual="${a}"`)).map(([f]) => f);
+  check("7 · la franja encabeza Adquisición, Stock CTCx, Triage, CTCx Selection y Catálogo Activo", pantallas.length === 0, pantallas.join(", "));
+  const comp = existe("src/app/ocp/(app)/CircuitoDelStock.tsx") ? lee("src/app/ocp/(app)/CircuitoDelStock.tsx") : "";
+  check("7 · la franja es un componente de SERVIDOR que, si la lectura falla, no se pinta (no tumba el tablero)", !comp.includes('"use client"') && comp.includes("export async function CircuitoDelStock(") && /try \{\s*datos = await cargarCircuitoDelStock\(/.test(comp) && comp.includes("if (!datos) return null;"));
+
+  // ── 8. V5.203 · corrección (nodo final, 2026-10-10) ──
+  // H5: «Por declarar» = la cifra del Triage, en kg de verde. 15 kg de pergamino a 0,6 + 10 de verde + 100 de CPS de un trato a 0,6 = 79.
+  const verde = F.porDeclararEnVerde([{ kg: 15, conversion: 0.6 }, { kg: 10, conversion: 1 }, { kg: 100, conversion: 0.6 }]);
+  check("8 · H5: porDeclararEnVerde suma kg × conversión (1 para lo verde) y redondea como el Triage", verde === 79 && F.porDeclararEnVerde([]) === 0 && F.porDeclararEnVerde([{ kg: 0.4, conversion: 1 }]) === 0);
+  const pd = pasos.find((p) => p.clave === "por_declarar");
+  check("8 · H5: la franja dice «≈ N kg verde» (no suma pergamino y verde tal cual) y cuenta partidas y tratos", pd?.valor === `≈ ${L.fmtKg(25100)} kg verde` && /1 partida/.test(pd?.sub ?? "") && /6 tratos por ventana/.test(pd?.sub ?? ""), JSON.stringify(pd));
+  const tablero3 = lee("src/app/ocp/(app)/contratos/TriageBoard.tsx");
+  check("8 · H5: el Triage y la franja usan la MISMA cuenta (porDeclararEnVerde) y el mismo FR (factoresQueRigen + conversionDeFactor)", tablero3.includes("porDeclararEnVerde([") && tablero3.includes("...contratos.map((c) => ({ kg: c.porDeclararKg, conversion: c.conversion })),") && tablero3.includes("...stock.filter((x) => x.declarable).map((x) => ({ kg: x.disponibleKg, conversion: x.conversion })),") && tablero3.includes("<b>≈ {fmtKg(porDeclararVerde)} kg</b>") && carga.includes("porDeclararEnVerde([") && carga.includes("...declarables.map((d) => ({ kg: d.kg, conversion: d.verde ? 1 : conv(d.lotId) })),") && carga.includes("...tratosPorDeclarar.map((t) => ({ kg: t.kg, conversion: conv(t.lotId) })),") && carga.includes("factoresQueRigen(service,") && carga.includes("conversionDeFactor(fr.get(lotId) ?? null).conversion") && lee("src/lib/triage/servidor.ts").includes("export async function factoresQueRigen(") && /fr: fr\.get\(l\.id\) \?\? null/.test(lee("src/lib/triage/servidor.ts")));
+  // H13: lo que la franja da por «ya en el stock» son las partidas VIVAS; y la compra de cada raíz se lee con su anulación.
+  check("8 · H13: la franja no cuenta la partida anulada de una compra como «ya en el stock»", carga.includes("stock.partidas.filter((p) => !p.anulada).map((p) => p.compraId)"));
+  // V5.203 · verificación (nodo final, 2026-10-10): la compra creada al reintentar está en el stock por su DESPACHO (la partida nació sin
+  // ella): la franja no la cuenta «sin entrar», igual que Adquisición.
+  check("8 · H1/H2: la franja reconoce en el stock la compra de un reintento por su despacho (como Adquisición)", carga.includes('service.from("compras").select("id, kg, anulada_at, despacho_id")') && carga.includes("stock.partidas.filter((p) => !p.anulada).map((p) => p.despachoId)") && carga.includes("!(c.despacho_id && despachoConPartida.has(c.despacho_id))"));
+  check("8 · H13: cargarStock lee la compra de cada raíz CON anulada_at (esCompraSelection no ve viva una anulada)", servidor.includes('service.from("compras").select("id, origen, destino, contract_id, mes, anulada_at").in("id", compraIds)'));
+  // H6: la marca Selection va por LOTE.
+  check("8 · H6: cargarStock dice qué LOTES son CTCx Selection (lotesSelection, la regla de la vitrina)", servidor.includes('service.from("compras").select("lot_id, destino, anulada_at").eq("destino", "selection")') && servidor.includes("lotesSelection((selRaw"));
+  check("8 · H6: el panel de la partida dice la vitrina por LOTE; lo vendido y lo sin lote no van a la vitrina; un Tyrian, a subasta", tablero.includes("function enLaVitrina(partida: Partida, stock: StockCargado): string") && tablero.includes('if (partida.comprometido) return "No va a la vitrina (vendido: ya tiene comprador).";') && tablero.includes('if (!partida.lotId) return "No va a la vitrina (sin lote de la plataforma).";') && tablero.includes("stock.lotesSelection.includes(partida.lotId)") && tablero.includes("<dd>{enLaVitrina(partida, stock)}</dd>") && !tablero.includes("sale como lote del productor.`"));
+  // H12: tres tonos.
+  const css = lee("src/app/ocp/(app)/stock/stock.module.css");
+  check("8 · H12: el éxito parcial (un aviso) va en ámbar, no en el rojo del error", tablero.includes('aviso.tono === "error" ? s.error : aviso.tono === "parcial" ? s.avisoParcial : s.ok') && /\.avisoParcial \{[^}]*#fffbeb/.test(css) && !tablero.includes("error: !!avisoDeLaAccion"));
+  // H15: la franja va primero en los cinco tableros (antes, en el Triage y el Catálogo, debajo de las pestañas).
+  const franjaTarde = [["src/app/ocp/(app)/compras/page.tsx", "<nav className={s.tabs}"], ["src/app/ocp/(app)/stock/page.tsx", "<StockTabs"], ["src/app/ocp/(app)/contratos/page.tsx", "<CatalogoTabs"], ["src/app/ocp/(app)/catalogo/page.tsx", "<CatalogoTabs"]].filter(([f, tabs]) => { const t = lee(f); return !(t.indexOf("<CircuitoDelStock") > -1 && t.indexOf("<CircuitoDelStock") < t.indexOf(tabs)); }).map(([f]) => f);
+  check("8 · H15: la franja va antes que las pestañas en todos los tableros", franjaTarde.length === 0, franjaTarde.join(", "));
+  // H11: los rótulos del origen salen del diccionario único.
+  check("8 · H11: ETIQUETA_DE_ORIGEN se arma con el diccionario único (DESTINO_LABEL · ORIGEN_LABEL)", servidor.includes("selection: `Compra ${DESTINO_LABEL.selection}`") && servidor.includes("despacho: ORIGEN_LABEL.saco") && servidor.includes("manual: ORIGEN_LABEL.ingreso"));
 }
 
 if (fallos.length) {

@@ -15,7 +15,7 @@ import { minimoDeContinuidad, minimoDelGrado } from "@/lib/trato/minimos";
 import { ADELANTO_RENOVACION_KG } from "@/lib/trato/terminos";
 import { despachoDeLoVendido } from "@/lib/trato/ventanaServidor";
 import { STOCK_PATH } from "@/lib/stock/linaje";
-import { crearRaizDeStock } from "@/lib/stock/servidor";
+import { crearRaizDeStock, mensajeDeLaBase, type ArgsRaiz } from "@/lib/stock/servidor";
 import { emitOffer } from "./ofertasActions";
 
 // ── La operación del trato por VENTANAS en el OCP (V5.176 · docs/PLAN_CICLOS.md §3–§5, tanda 3) ────────────────────────────────
@@ -30,6 +30,10 @@ import { emitOffer } from "./ofertasActions";
 //     retiro penalizado (4 % por carga); la ruptura la declara el owner, como siempre.
 //   · PREPARAR LA RENOVACIÓN — desde la semana 4 del último ciclo de la ventana: la invitación de la ventana siguiente queda
 //     prellenada (mínimo de continuidad, adelanto típico, misma entrega) a una aprobación de distancia.
+//   · REINTENTAR LA COMPRA (V5.203 · corrección, nodo final 2026-10-10 · H1/H2) — si al recibir un saco o un adelanto su compra o su
+//     partida del Stock CTCx no se registraron, la ficha del contrato lo dice con un aviso FIJO (derivado de los datos, no del
+//     formulario) y este botón crea lo que falte, una sola vez: la compra es única por despacho (`compras.despacho_id`) y la partida
+//     también (`stock_raiz`). Antes el aviso mandaba a registrar la compra a mano, lo que DUPLICABA el café en el stock.
 // Clase de todas: «emite» (escriben lo que lee el productor y mueven dinero). Devuelven resultado, nunca lanzan.
 
 const permiso = () => permisoDeEscritura("ocp", "emite");
@@ -74,6 +78,23 @@ async function avisar(service: ReturnType<typeof createServiceRoleClient>, lot: 
   const { data: perfil } = await service.from("profiles").select("email").eq("id", lot.producer_id).maybeSingle();
   const correo = (perfil as { email: string | null } | null)?.email ?? null;
   if (correo) await sendTransactionalEmail(correo, asunto, `${texto}\n\n${enlaceKr()}`);
+}
+
+const esUuid = (v: unknown): v is string => typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+
+/** V5.203 · corrección (H1/H2): la compra de un saco o un adelanto recibido —la MISMA fila al recibir y al reintentar—, con su
+ *  `despacho_id` (único: un despacho, una compra). Solo stock: no hace del lote un CTCx Selection. */
+function compraDelDespacho(c: Contrato, d: { id: string; tipo: string; cop_kg: number | string }, e: { kg: number; totalCop: number; recibidoAt: string; ref: string | null; nota: string | null; por: string }) {
+  return {
+    lot_id: c.lot_id, contract_id: c.id, despacho_id: d.id, grado: c.grade_snapshot, kg: e.kg, cop_kg: Number(d.cop_kg), total_cop: e.totalCop,
+    pvc_edition_id: c.pvc_edition_id, precio_fuente: `trato por ventana · ${d.tipo}`, acordada_at: c.vigencia_desde, recibida_at: e.recibidoAt,
+    pagada_at: e.recibidoAt, pago_ref: e.ref, origen: "contrato", destino: "stock", registrada_por: e.por, nota: e.nota,
+  };
+}
+
+/** …y su raíz en el Stock CTCx: en pergamino, a lo pagado por kg; lo vendido, comprometido (ya tiene comprador). */
+function raizDelDespacho(c: Contrato, lotName: string, d: { id: string; tipo: string; cop_kg: number | string }, e: { kg: number; pagado: number; compraId: string | null; por: string }): ArgsRaiz {
+  return { lotId: c.lot_id, estado: "pergamino", kg: e.kg, costoCopKg: e.pagado > 0 && e.kg > 0 ? e.pagado / e.kg : Number(d.cop_kg), origen: "despacho", despachoId: d.id, compraId: e.compraId, comprometido: d.tipo === "vendido", nota: `${d.tipo} · lote ${lotName}`, por: e.por };
 }
 
 function revalidar(contractId: string) {
@@ -195,15 +216,24 @@ export async function recibirDespacho(despachoId: string, formData: FormData): P
   // El saco y el adelanto son de CTCx: quedan en Compras (solo stock: no hacen del lote un CTCx Selection). Lo vendido se vende a
   // nombre del productor.
   let compraId: string | null = null;
+  // V5.203 (B8): lo que falle después del recibo (la compra, la partida) se dice en pantalla y queda en el rastro; el recibo ya quedó.
+  const avisos: string[] = [];
   if (d.tipo !== "vendido" && resultado !== "devolucion" && c.grade_snapshot && c.grade_snapshot !== "tyrian") {
-    const { data: compra } = await service
+    const { data: compra, error: errorCompra } = await service
       .from("compras")
-      .insert({ lot_id: c.lot_id, contract_id: c.id, grado: c.grade_snapshot, kg: kgRecibido, cop_kg: Number(d.cop_kg), total_cop: pagado60 + pagoRecepcion, pvc_edition_id: c.pvc_edition_id, precio_fuente: `trato por ventana · ${d.tipo}`, acordada_at: c.vigencia_desde, recibida_at: now, pagada_at: now, pago_ref: ref, origen: "contrato", destino: "stock", registrada_por: p.userId, nota: resultado === "compra_ajustada" ? `fuera de rango: ${calidad.motivo} · ajuste ${ajuste} %` : null })
+      .insert(compraDelDespacho(c, d, { kg: kgRecibido, totalCop: pagado60 + pagoRecepcion, recibidoAt: now, ref, nota: resultado === "compra_ajustada" ? `fuera de rango: ${calidad.motivo} · ajuste ${ajuste} %` : null, por: p.userId }))
       .select("id")
       .single();
     if (compra) {
       compraId = compra.id;
       await service.from("audit_log").insert({ entity_type: "compra", entity_id: compra.id, action: "compra_registrada", performed_by: p.userId, notes: `${lot.name} · ${d.tipo} · ${kgRecibido} kg · Stock CTCx` });
+    } else {
+      const motivo = mensajeDeLaBase(errorCompra?.message ?? "sin fila");
+      console.error("recibirDespacho: la compra no se guardó", errorCompra);
+      // V5.203 · corrección (H2): NO se manda a registrarla a mano —la partida nace igual, abajo, y una compra a mano con su recibo
+      // metería el mismo café dos veces—; el aviso fijo del contrato ofrece «Reintentar la compra».
+      avisos.push(`El ${d.tipo} quedó recibido, pero su compra no se registró (${motivo}). No la registre a mano (duplicaría el café en el stock): use «Reintentar la compra» en el aviso de este contrato.`);
+      await service.from("audit_log").insert({ entity_type: "purchase_contract", entity_id: c.id, action: "compra_no_registrada", performed_by: p.userId, notes: `${d.tipo} ${d.id.slice(0, 8)} · ${motivo}`.slice(0, 300) });
     }
     revalidatePath("/ocp/compras");
   }
@@ -211,8 +241,12 @@ export async function recibirDespacho(despachoId: string, formData: FormData): P
   // pero ya tiene comprador: no surte kits ni se declara al catálogo). Una devolución no entra.
   if (resultado !== "devolucion") {
     const pagado = pagado60 + pagoRecepcion;
-    const raiz = await crearRaizDeStock(service, { lotId: c.lot_id, estado: "pergamino", kg: kgRecibido, costoCopKg: pagado > 0 && kgRecibido > 0 ? pagado / kgRecibido : Number(d.cop_kg), origen: "despacho", despachoId: d.id, compraId, comprometido: d.tipo === "vendido", nota: `${d.tipo} · lote ${lot.name}`, por: p.userId });
+    const raiz = await crearRaizDeStock(service, raizDelDespacho(c, lot.name, d, { kg: kgRecibido, pagado, compraId, por: p.userId }));
     if (raiz.ok) await service.from("audit_log").insert({ entity_type: "stock_partida", entity_id: raiz.id, action: "stock_raiz_despacho", performed_by: p.userId, notes: `${raiz.codigo ?? ""} · ${d.tipo} · ${kgRecibido} kg de pergamino${d.tipo === "vendido" ? " · comprometido" : ""}` });
+    else {
+      avisos.push(`El ${d.tipo} quedó recibido, pero no entró al Stock CTCx (${mensajeDeLaBase(raiz.error)}). No lo ingrese a mano (quedaría sin su despacho${d.tipo === "vendido" ? " y sin comprometer" : " ni su compra"}): use «Reintentar» en el aviso de este contrato.`);
+      await service.from("audit_log").insert({ entity_type: "purchase_contract", entity_id: c.id, action: "despacho_sin_stock", performed_by: p.userId, notes: `${d.tipo} ${d.id.slice(0, 8)} · ${mensajeDeLaBase(raiz.error)}`.slice(0, 300) });
+    }
     revalidatePath(STOCK_PATH);
   }
   await service.from("audit_log").insert({ entity_type: "purchase_contract", entity_id: c.id, action: "despacho_recibido", performed_by: p.userId, notes: `${d.tipo} · ${peso} kg · humedad ${humedad} % · aw ${aw} · ${resultado}${ajuste != null ? ` (${ajuste} %)` : ""} · pago al recibir ${formatCop(pagoRecepcion)}` });
@@ -224,6 +258,74 @@ export async function recibirDespacho(despachoId: string, formData: FormData): P
         : `CTCx recibió su despacho (${d.tipo}) fuera de rango (${calidad.motivo}) y lo compra con un pago adicional del ${ajuste} %: ${formatCop(pagoRecepcion)}.`;
   await avisar(service, lot, c.lot_id, texto, `Recibo de su despacho · lote ${lot.name}`, p.userId);
   revalidar(c.id);
+  return avisos.length ? { ok: true, aviso: avisos.join(" ") } : { ok: true };
+}
+
+/** V5.203 · corrección (H1/H2): crea lo que le FALTA a un despacho recibido —su compra (saco · adelanto) y su partida en el Stock CTCx—,
+ *  una sola vez: la compra es única por despacho (`compras.despacho_id`, índice único) y `stock_raiz` es idempotente por despacho. La
+ *  base no deja cambiar el vínculo de una partida que nació sin su compra (`guard_stock_partida`): se dice, y Adquisición las une por
+ *  el despacho. `emite`: escribe lo que leen Adquisición, el Stock y la vitrina. */
+export async function reintentarCompraDelDespacho(despachoId: string): Promise<ActionResult> {
+  const p = await permiso();
+  if (!p.ok) return { ok: false, error: p.error };
+  if (!esUuid(despachoId)) return { ok: false, error: "Despacho no encontrado." };
+  const service = createServiceRoleClient();
+  const { data: dRaw } = await service.from("contract_despachos").select("id, contract_id, tipo, kg, cop_kg, estado, resultado, peso_kg, pago_despacho_cop, pago_recepcion_cop, recibido_at, pago_ref, ajuste_pct").eq("id", despachoId).maybeSingle();
+  const d = dRaw as { id: string; contract_id: string; tipo: string; kg: number | string; cop_kg: number | string; estado: string; resultado: string | null; peso_kg: number | string | null; pago_despacho_cop: number | string | null; pago_recepcion_cop: number | string | null; recibido_at: string | null; pago_ref: string | null; ajuste_pct: number | string | null } | null;
+  if (!d) return { ok: false, error: "Despacho no encontrado." };
+  if (d.estado !== "recibido" || d.resultado === "devolucion") return { ok: false, error: "Solo se reintenta lo de un despacho recibido (y no devuelto)." };
+  const { c, lot } = await contrato(service, d.contract_id);
+  if (!c || !lot) return { ok: false, error: "Contrato no encontrado." };
+  const kgRecibido = Math.min(Number(d.peso_kg ?? d.kg), Number(d.kg));
+  const pagado = Number(d.pago_despacho_cop ?? 0) + Number(d.pago_recepcion_cop ?? 0);
+  const recibidoAt = d.recibido_at ?? new Date().toISOString();
+  const { data: pRaw } = await service.from("stock_partidas").select("id, codigo, compra_id").eq("despacho_id", d.id).maybeSingle();
+  const partida = pRaw as { id: string; codigo: string; compra_id: string | null } | null;
+
+  // 1) La compra (solo un saco o un adelanto de un grado que se compra).
+  const llevaCompra = d.tipo !== "vendido" && !!c.grade_snapshot && c.grade_snapshot !== "tyrian";
+  let compraId: string | null = partida?.compra_id ?? null;
+  let compraCreada = false;
+  if (llevaCompra && !compraId) {
+    const { data: previa } = await service.from("compras").select("id").eq("despacho_id", d.id).maybeSingle();
+    compraId = (previa as { id: string } | null)?.id ?? null;
+    if (!compraId) {
+      const nota = d.resultado === "compra_ajustada" ? `fuera de rango · ajuste ${Number(d.ajuste_pct ?? 0)} % · registrada al reintentar` : "registrada al reintentar";
+      const { data: nueva, error } = await service.from("compras").insert(compraDelDespacho(c, d, { kg: kgRecibido, totalCop: pagado, recibidoAt, ref: d.pago_ref, nota, por: p.userId })).select("id").single();
+      if (nueva) {
+        compraId = (nueva as { id: string }).id;
+        compraCreada = true;
+        await service.from("audit_log").insert({ entity_type: "compra", entity_id: compraId, action: "compra_registrada", performed_by: p.userId, notes: `${lot.name} · ${d.tipo} · ${kgRecibido} kg · Stock CTCx · reintento` });
+      } else {
+        // Otro reintento pudo ganarle (el índice único lo rechaza): se usa la suya; si no hay, el error es de verdad.
+        const { data: otra } = await service.from("compras").select("id").eq("despacho_id", d.id).maybeSingle();
+        compraId = (otra as { id: string } | null)?.id ?? null;
+        if (!compraId) return { ok: false, error: "La compra sigue sin poder registrarse: " + mensajeDeLaBase(error?.message) };
+      }
+    }
+  }
+
+  // 2) La partida (si no existe; si existe, `stock_raiz` la devuelve tal cual).
+  let codigo = partida?.codigo ?? null;
+  if (!partida) {
+    const raiz = await crearRaizDeStock(service, raizDelDespacho(c, lot.name, d, { kg: kgRecibido, pagado, compraId, por: p.userId }));
+    if (!raiz.ok) {
+      revalidar(c.id);
+      revalidatePath("/ocp/compras");
+      const motivo = mensajeDeLaBase(raiz.error);
+      return compraCreada ? { ok: true, aviso: `La compra quedó registrada, pero el café sigue sin entrar al Stock CTCx (${motivo}): vuelva a intentarlo.` } : { ok: false, error: `El café sigue sin poder entrar al Stock CTCx: ${motivo}` };
+    }
+    codigo = raiz.codigo;
+    await service.from("audit_log").insert({ entity_type: "stock_partida", entity_id: raiz.id, action: "stock_raiz_despacho", performed_by: p.userId, notes: `${raiz.codigo ?? ""} · ${d.tipo} · ${kgRecibido} kg de pergamino${d.tipo === "vendido" ? " · comprometido" : ""} · reintento` });
+  }
+  revalidar(c.id);
+  revalidatePath("/ocp/compras");
+  revalidatePath(STOCK_PATH);
+  // 3) Una partida que nació sin su compra no se enlaza después: se dice (Adquisición la encuentra por el despacho).
+  if (partida && !partida.compra_id && compraId) {
+    return { ok: true, aviso: `La compra quedó registrada y enlazada a su despacho. La partida ${partida.codigo} no cambia: la base no deja cambiar el vínculo de una partida, así que Adquisición las une por el despacho.` };
+  }
+  if (partida && !compraCreada) return { ok: true, aviso: `Nada que reintentar: ${codigo ?? "la partida"} ya estaba en el Stock CTCx${llevaCompra ? " con su compra" : ""}.` };
   return { ok: true };
 }
 

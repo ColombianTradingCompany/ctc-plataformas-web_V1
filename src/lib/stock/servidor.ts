@@ -1,8 +1,9 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
+import { DESTINO_LABEL, ORIGEN_LABEL, esCompraSelection, lotesSelection } from "@/lib/compras/selection";
 import type {
-  ContenidoDePartida, EstadoDePartida, OrigenDePartida, Partida, ReservaDeKit, ReservaDeMezcla, Salida, StockCrudo, TipoDeSalida,
+  ContenidoDePartida, EstadoDePartida, OrigenDePartida, Partida, ReservaDeCatalogo, ReservaDeKit, ReservaDeMezcla, Salida, StockCrudo, TipoDeSalida,
   TipoDeTransformacion, Transformacion,
 } from "./linaje";
 
@@ -12,15 +13,34 @@ import type {
 // puerta por la que el café entra al stock desde otro módulo (recibir un despacho, pagar el mes de una compra en firme, registrar
 // una compra a mano, el ingreso a mano): llama a `stock_raiz`, que es idempotente por compra y por despacho. No tiene compuerta:
 // la pasa la acción que la llama. Nunca lanza: devuelve `{ ok:false }` y lo escribe en el log del servidor.
+// V5.203 (owner, 2026-10-10): `cargarStock` lee también lo DECLARADO vivo en el Triage (`reservasCatalogo`), así el disponible de la
+// pantalla es el de `stock_disponible` (hueco H1); y el origen de cada raíz lleva su clase del circuito (`ETIQUETA_DE_ORIGEN`).
+// V5.203 · corrección (nodo final, 2026-10-10): la compra de cada raíz se lee CON `anulada_at` (sin ella `esCompraSelection` veía viva
+// una anulada, H13); `lotesSelection` dice qué LOTES salen en la vitrina como CTCx Selection (la marca va por lote, no por compra ni por
+// partida: el panel de la partida lo dice así, H6); y los rótulos salen del diccionario único de `compras/selection.ts` (H11).
 
 export type LoteDelStock = { id: string; name: string; grade: string | null; publicCode: string | null; producerName: string; fincaName: string | null };
-export type OrigenDeRaiz = { tipo: string; detalle: string; contractId: string | null };
+/** V5.203 (owner, 2026-10-10): de dónde viene una raíz, en las palabras del circuito — el Triage, CTCx Selection, Adquisición y el linaje
+ *  lo dicen igual (con `DESTINO_LABEL` y `ORIGEN_LABEL`, el diccionario único). `clase` NO decide la vitrina: la marca Selection va por
+ *  LOTE (`lotesSelection`); la clase dice de qué compra viene esta raíz. */
+export type ClaseDeOrigen = "selection" | "stock" | "despacho" | "vendido" | "manual";
+export const ETIQUETA_DE_ORIGEN: Record<ClaseDeOrigen, string> = {
+  selection: `Compra ${DESTINO_LABEL.selection}`,
+  stock: `Compra ${DESTINO_LABEL.stock.toLowerCase()}`,
+  despacho: ORIGEN_LABEL.saco,
+  vendido: ORIGEN_LABEL.vendido,
+  manual: ORIGEN_LABEL.ingreso,
+};
+export type OrigenDeRaiz = { tipo: string; detalle: string; contractId: string | null; clase: ClaseDeOrigen; compraId: string | null; etiqueta: string };
 
 export type StockCargado = StockCrudo & {
   lotes: Record<string, LoteDelStock>;
   /** De dónde salió cada raíz (por id de partida raíz): el despacho (saco · adelanto · vendido) o la compra (contrato · manual). */
   origenes: Record<string, OrigenDeRaiz>;
   kits: Record<string, { codigo: string; status: string }>;
+  /** V5.203 · corrección (H6): los lotes con al menos una compra CTCx Selection VIVA — los que la vitrina enseña con el rótulo y la
+   *  imagen de CTCx. Lista (no Set) porque el tablero del Stock es un componente de cliente. */
+  lotesSelection: string[];
 };
 
 type FilaPartida = {
@@ -66,12 +86,16 @@ export const aPartida = (r: FilaPartida): Partida => ({
 });
 
 export async function cargarStock(service: SupabaseClient): Promise<StockCargado> {
-  const [{ data: pRaw }, { data: tRaw }, { data: sRaw }, { data: kRaw }, { data: mRaw }] = await Promise.all([
+  const [{ data: pRaw }, { data: tRaw }, { data: sRaw }, { data: kRaw }, { data: mRaw }, { data: fRaw }, { data: selRaw }] = await Promise.all([
     service.from("stock_partidas").select(COLUMNAS_PARTIDA).order("created_at", { ascending: true }).limit(5000),
     service.from("stock_transformaciones").select("id, codigo, tipo, madre_id, kg_entrada, merma_humedad_kg, residuos_kg, perdidas_kg, costo_operacion_cop, fecha, nota, anulada_at, anulada_motivo").order("created_at", { ascending: true }).limit(5000),
     service.from("stock_salidas").select("id, partida_id, tipo, kg, kit_id, motivo, fecha, anulada_at").order("created_at", { ascending: true }).limit(5000),
     service.from("sample_kit_items").select("partida_id, kg, kit_id, sample_kits!inner(codigo, status)").not("partida_id", "is", null).limit(5000),
     service.from("mezcla_componentes").select("compra_id, kg, mezclas!inner(status)").neq("mezclas.status", "anulada").limit(5000),
+    // V5.203 (H1): lo declarado vivo en el Triage desde cada partida — la base ya lo resta en `stock_disponible`.
+    service.from("catalogo_fuentes").select("id, codigo, partida_id, kg_origen").eq("estado", "declarada").not("partida_id", "is", null).limit(5000),
+    // V5.203 · corrección (H6): qué lotes son CTCx Selection (la misma regla que la vitrina).
+    service.from("compras").select("lot_id, destino, anulada_at").eq("destino", "selection").limit(5000),
   ]);
   const partidas = ((pRaw as FilaPartida[] | null) ?? []).map(aPartida);
   const transformaciones: Transformacion[] = ((tRaw as FilaTx[] | null) ?? []).map((t) => ({
@@ -107,6 +131,7 @@ export async function cargarStock(service: SupabaseClient): Promise<StockCargado
     for (const k of (data as { id: string; codigo: string; status: string }[] | null) ?? []) kits[k.id] = { codigo: k.codigo, status: k.status };
   }
   const reservasMezcla: ReservaDeMezcla[] = ((mRaw as unknown as { compra_id: string; kg: number | string }[] | null) ?? []).map((m) => ({ compraId: m.compra_id, kg: Number(m.kg) }));
+  const reservasCatalogo: ReservaDeCatalogo[] = ((fRaw as { id: string; codigo: string; partida_id: string; kg_origen: number | string }[] | null) ?? []).map((f) => ({ partidaId: f.partida_id, kg: Number(f.kg_origen), codigo: f.codigo, fuenteId: f.id }));
 
   // Los lotes, con su productor y su finca.
   const lotIds = [...new Set(partidas.map((p) => p.lotId).filter((id): id is string => !!id))];
@@ -127,20 +152,34 @@ export async function cargarStock(service: SupabaseClient): Promise<StockCargado
   const compraIds = raices.map((p) => p.compraId).filter((id): id is string => !!id);
   const [{ data: dRaw }, { data: cRaw }] = await Promise.all([
     despachoIds.length ? service.from("contract_despachos").select("id, tipo, contract_id, recibido_at").in("id", despachoIds) : Promise.resolve({ data: [] }),
-    compraIds.length ? service.from("compras").select("id, origen, destino, contract_id, mes").in("id", compraIds) : Promise.resolve({ data: [] }),
+    // H13: con `anulada_at` — sin ella, `esCompraSelection` daba por viva una compra anulada.
+    compraIds.length ? service.from("compras").select("id, origen, destino, contract_id, mes, anulada_at").in("id", compraIds) : Promise.resolve({ data: [] }),
   ]);
   const despachos = new Map(((dRaw as { id: string; tipo: string; contract_id: string; recibido_at: string | null }[] | null) ?? []).map((d) => [d.id, d]));
-  const compras = new Map(((cRaw as { id: string; origen: string; destino: string; contract_id: string | null; mes: number | null }[] | null) ?? []).map((c) => [c.id, c]));
+  const compras = new Map(((cRaw as { id: string; origen: string; destino: string; contract_id: string | null; mes: number | null; anulada_at: string | null }[] | null) ?? []).map((c) => [c.id, c]));
   const TIPO_DESPACHO: Record<string, string> = { saco: "Saco", adelanto: "Adelanto", vendido: "Vendido (a nombre del productor)" };
   for (const p of raices) {
     const d = p.despachoId ? despachos.get(p.despachoId) : null;
     const c = p.compraId ? compras.get(p.compraId) : null;
-    if (d) origenes[p.id] = { tipo: "Despacho recibido", detalle: TIPO_DESPACHO[d.tipo] ?? d.tipo, contractId: d.contract_id };
-    else if (c) origenes[p.id] = { tipo: c.origen === "contrato" ? "Compra en firme" : "Compra a mano", detalle: `${c.destino === "selection" ? "CTCx Selection" : "solo stock"}${c.mes ? ` · mes ${c.mes}` : ""}`, contractId: c.contract_id };
-    else origenes[p.id] = { tipo: "Ingreso a mano", detalle: p.origenTexto ?? "", contractId: null };
+    if (d) {
+      const clase: ClaseDeOrigen = d.tipo === "vendido" ? "vendido" : "despacho";
+      origenes[p.id] = { tipo: "Despacho recibido", detalle: TIPO_DESPACHO[d.tipo] ?? d.tipo, contractId: d.contract_id, clase, compraId: p.compraId, etiqueta: d.tipo === "adelanto" ? ORIGEN_LABEL.adelanto : ETIQUETA_DE_ORIGEN[clase] };
+    } else if (p.compraId) {
+      // V5.203: la misma regla que la vitrina (`esCompraSelection`); sin la fila (no debería pasar), se dice compra a secas.
+      const clase: ClaseDeOrigen = c && esCompraSelection(c) ? "selection" : "stock";
+      origenes[p.id] = {
+        tipo: c?.origen === "contrato" ? "Compra en firme" : ORIGEN_LABEL.manual,
+        detalle: c ? `${clase === "selection" ? DESTINO_LABEL.selection : DESTINO_LABEL.stock.toLowerCase()}${c.mes ? ` · ${ORIGEN_LABEL.mes(c.mes).toLowerCase()}` : ""}` : "",
+        contractId: c?.contract_id ?? null,
+        clase,
+        compraId: p.compraId,
+        etiqueta: ETIQUETA_DE_ORIGEN[clase],
+      };
+    } else origenes[p.id] = { tipo: ORIGEN_LABEL.ingreso, detalle: p.origenTexto ?? "", contractId: null, clase: "manual", compraId: null, etiqueta: ETIQUETA_DE_ORIGEN.manual };
   }
 
-  return { partidas, transformaciones, salidas, reservasKit, reservasMezcla, lotes, origenes, kits };
+  const conSelection = [...lotesSelection((selRaw as { lot_id: string; destino: string; anulada_at: string | null }[] | null) ?? [])];
+  return { partidas, transformaciones, salidas, reservasKit, reservasMezcla, reservasCatalogo, lotes, origenes, kits, lotesSelection: conSelection };
 }
 
 export type ArgsRaiz = {

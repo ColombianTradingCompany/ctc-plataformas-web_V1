@@ -1,233 +1,240 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { ActionForm } from "@/components/panel/ActionForm";
 import { formatCop } from "@/lib/arena/inscriptions";
 import { GRADO_POR_ID } from "@/lib/grados/definicion";
 import { resumenDeCompras } from "@/lib/compras/reglas";
-import { DESTINO_LABEL } from "@/lib/compras/sampleKits";
-import { STOCK_PATH } from "@/lib/stock/linaje";
-import { destinarCompra, registrarCompraManual, ubicarCompra } from "../comprasActions";
+import { DESTINO_LABEL } from "@/lib/compras/selection";
+import { estadoDelDespacho, fechaCorta } from "@/lib/compras/adquisicion";
+import { cargarAdquisicion, type CompraDeAdquisicion, type DespachoPorRecibir } from "@/lib/compras/adquisicionServidor";
+import { STOCK_PATH, fmtKg } from "@/lib/stock/linaje";
+import { TRIAGE_PATH } from "@/lib/triage/fobMinimo";
+import { hoyEnColombia } from "@/lib/pvc/servicio";
+import { anularCompra, destinarCompra, ubicarCompra } from "../comprasActions";
 import { entrarCompraAlStock } from "../stockActions";
+import { CircuitoDelStock } from "../CircuitoDelStock";
+import { CompraManualForm, type TratoParaAviso } from "./CompraManualForm";
 import styles from "@/components/panel/shared.module.css";
+import s from "./compras.module.css";
 
-// ── OCP · Manejo de Stock Físico · CTCx Selection · Compras (V5.85 · 2.ª tanda V5.87) ──────────
-// El registro de cada compra EN FIRME de CTCx (brief `consolas-ctcx-selection-compras.md`): qué café, a quién, cuántos kilos,
-// a qué precio (citando su edición del PVC), cuándo se pagó, cuándo llegó y DÓNDE está (V5.87, decisión 2 del brief: texto
-// libre hasta que el owner fije los sitios). Una compra nace del PAGO de un mes de un contrato `directa`/`black`
-// (`registrarPagoDelMes`) o a mano, aquí, con su nota. Cómo se combina vive en Mezclas (V5.87); lo DISPONIBLE no se guarda:
-// se deriva en «Oferta desde CTCx Selection» (comprado − en mezclas − vendido). La pantalla habla en kg de CPS: la
-// conversión a verde la da el Modelo de Producción (su brief), aquí no se inventa un factor (decisión 5).
-// V5.195: lo que llega entra al Stock CTCx (`/ocp/stock`) como una partida de pergamino; la columna «Stock CTCx» la enseña, y lo
-// que se registró antes de llegar entra con «Entrar al stock».
-
+export const metadata: Metadata = { title: "Adquisición de Stock Café · OCP", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
-type MezclaEmb = { codigo: string; status: string };
-type CompraRow = {
-  id: string;
-  lot_id: string;
-  contract_id: string | null;
-  mes: number | null;
-  grado: string;
-  kg: number | string;
-  cop_kg: number | string;
-  total_cop: number | string;
-  precio_fuente: string | null;
-  modificador_pct: number | string | null;
-  acordada_at: string | null;
-  recibida_at: string | null;
-  pagada_at: string | null;
-  pago_ref: string | null;
-  origen: string;
-  nota: string | null;
-  ubicacion: string | null;
-  destino: "selection" | "stock";
-  lots: { id: string; name: string; producer_id: string; fincas: { name: string } | null } | null;
-  pvc_editions: { code: string } | null;
-  mezcla_componentes: { kg: number | string; mezclas: MezclaEmb | MezclaEmb[] | null }[];
-  stock_partidas: { id: string; codigo: string; anulada_at: string | null }[];
-};
-type LoteRow = { id: string; name: string; grade: string | null; fincas: { name: string } | null };
+// ── OCP · Manejo de Stock Físico · Adquisición de Stock Café (V5.85 · rehecha en la V5.203) ──────────────────────────────────────
+// El registro de cada compra EN FIRME de CTCx: qué café, a quién, cuántos kilos, a qué precio (con su edición del PVC), cuándo se pagó,
+// cuándo llegó, dónde está y si es de CTCx Selection o solo stock. Una compra nace al pagar el mes de un contrato directa o Black, al
+// recibir el saco o el adelanto de un trato por ventana, o a mano. Lo que llega entra al Stock CTCx (V5.195) y desde allí se declara en el
+// Triage de Catálogo Activo (V5.196). La pantalla habla en kg de CPS: la conversión a verde la hace el Triage (decisión 5).
+//
+// V5.203 (owner, 2026-10-10): «CTCx Compras no parece estar funcionando bien; revísalo y mejora el UI/UX con la nueva información que
+// tienes donde sea pertinente (también en relación a su interacción con el Triage de Catálogo Activo y la Oferta de CTCx Selection)».
+// La página se caía desde la primera compra (B1: el embed `stock_partidas` es uno a uno; lo normaliza `cargarAdquisicion`). Ahora:
+// la franja del circuito arriba; dos pestañas —«Por recibir» (los sacos y adelantos pendientes de los tratos por ventana y las compras
+// sin entrar al stock) y «Compras» (el registro)— más Mezclas; una tabla de ocho columnas con el origen legible, «Es de» con sus reglas
+// (B5), el stock REAL de la compra y su SIGUIENTE PASO (entrar al stock → declarar en el Triage → en el catálogo); anular con motivo
+// (B9); y el alta a mano plegada, sin destino por defecto, con el aviso de un trato vivo y el formulario que se vacía al registrar.
+//
+// V5.203 · corrección (nodo final, 2026-10-10 · revisión de textos y privacidad):
+//   · decisión 2 / H7 — quitar o poner la marca Selection a un lote que YA sale en la vitrina (cambiar «Es de», anular, el alta) pide
+//     CONFIRMAR (`confirma_vitrina`) con el texto de lo que cambia; si otra compra ya decide la vitrina, se dice que no cambia (H6);
+//   · H3 las fechas `date` en UTC (`fechaCorta`); H4 el estado de un saco sin prometer un 60 % que no se pagó; H8 si una lectura falla,
+//     solo la alerta (sin indicadores ni tablas vacías que mientan); H10 lo libre en kg de CPS equivalentes; H15 la fila que se pide por
+//     `?compra=` se resalta desde el servidor (y abre «Anuladas» si lo es), «Registrada» es la fecha del registro y «Anuladas» tiene
+//     su cabecera.
 
-const fecha = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("es-CO") : "—");
-const td: React.CSSProperties = { padding: "6px 8px", whiteSpace: "nowrap", verticalAlign: "top" };
-const uno = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? v[0] ?? null : v ?? null);
+type Vista = "por-recibir" | "compras";
 
-export default async function ComprasPage() {
+const gradoNombre = (g: string | null) => GRADO_POR_ID[(g ?? "") as keyof typeof GRADO_POR_ID]?.nombre ?? g ?? "—";
+const kg1 = (n: number) => fmtKg(Math.round(n * 10) / 10);
+const esUuid = (v: string | undefined) => (v && /^[0-9a-f-]{36}$/i.test(v) ? v : null);
+
+export default async function AdquisicionPage({ searchParams }: { searchParams: Promise<{ vista?: string; compra?: string }> }) {
+  const { vista: v, compra: compraPedida } = await searchParams;
+  const vista: Vista = v === "por-recibir" ? "por-recibir" : "compras";
+  const elegida = esUuid(compraPedida);
   const service = createServiceRoleClient();
-  const [{ data: cRaw }, { data: gRaw }] = await Promise.all([
-    service
-      .from("compras")
-      .select(
-        "id, lot_id, contract_id, mes, grado, kg, cop_kg, total_cop, precio_fuente, modificador_pct, acordada_at, recibida_at, pagada_at, pago_ref, origen, nota, ubicacion, destino, lots(id, name, producer_id, fincas(name)), pvc_editions(code), mezcla_componentes(kg, mezclas(codigo, status)), stock_partidas(id, codigo, anulada_at)"
-      )
-      .order("created_at", { ascending: false }),
-    service.from("lots").select("id, name, grade, fincas(name)").eq("stage", "galardonado").neq("grade", "tyrian").order("name"),
-  ]);
-  const compras = (cRaw as unknown as CompraRow[] | null) ?? [];
-  const galardonados = (gRaw as unknown as LoteRow[] | null) ?? [];
-  const producers = await fetchProducerContacts(service, [...new Set(compras.map((c) => c.lots?.producer_id ?? "").filter(Boolean))]);
-  const resumen = resumenDeCompras(compras.map((c) => ({ lotId: c.lot_id, grado: c.grado, kg: Number(c.kg), totalCop: Number(c.total_cop), recibidaAt: c.recibida_at, pagadaAt: c.pagada_at })));
-  // Lo asignado a mezclas (no anuladas) por compra: descuenta de lo disponible (derivado, nunca guardado).
-  const enMezcla = (c: CompraRow) => c.mezcla_componentes.filter((m) => uno(m.mezclas)?.status !== "anulada");
-  const kgEnMezclas = Math.round(compras.reduce((a, c) => a + enMezcla(c).reduce((b, m) => b + Number(m.kg), 0), 0) * 10) / 10;
-
+  const a = await cargarAdquisicion(service);
+  const hoy = hoyEnColombia();
+  const sinRecibir = a.compras.filter((c) => !c.raiz);
+  const sacos = a.porRecibir.filter((d) => d.tipo !== "vendido");
+  const vendidos = a.porRecibir.filter((d) => d.tipo === "vendido");
+  const resumen = resumenDeCompras(a.compras.map((c) => ({ lotId: c.lotId, grado: c.grado, kg: c.kg, totalCop: c.totalCop, recibidaAt: c.recibidaAt, pagadaAt: c.pagadaAt })));
+  const selectionKg = a.compras.filter((c) => c.destino === "selection").reduce((x, c) => x + c.kg, 0);
+  const porDeclarar = a.compras.filter((c) => c.pasos.some((p) => p.tipo === "declarar")).length;
   const kpis = [
-    { k: "Compras en firme", v: String(resumen.compras), sub: `${resumen.lotes} lote${resumen.lotes === 1 ? "" : "s"}` },
-    { k: "Kg comprados (CPS)", v: String(resumen.kgComprados), sub: `${resumen.kgRecibidos} kg recibidos` },
-    { k: "En mezclas", v: `${kgEnMezclas} kg`, sub: "asignado a mezclas no anuladas" },
-    { k: "Solo stock", v: `${Math.round(compras.filter((c) => c.destino === "stock").reduce((a, c) => a + Number(c.kg), 0) * 10) / 10} kg`, sub: "sin la marca CTCx Selection (sacos, café para kits)" },
+    { k: "Por recibir", v: `${kg1(sacos.reduce((x, d) => x + d.kg, 0) + sinRecibir.reduce((x, c) => x + c.kg, 0))} kg`, sub: `${sacos.length} saco${sacos.length === 1 ? "" : "s"} de trato · ${sinRecibir.length} compra${sinRecibir.length === 1 ? "" : "s"} sin entrar` },
+    { k: "Compras", v: String(resumen.compras), sub: `${kg1(resumen.kgComprados)} kg de CPS · ${resumen.lotes} lote${resumen.lotes === 1 ? "" : "s"}` },
+    { k: "CTCx Selection", v: `${kg1(selectionKg)} kg`, sub: `solo stock: ${kg1(resumen.kgComprados - selectionKg)} kg` },
+    // H10: en kg de CPS EQUIVALENTES (lo trillado o tostado se cuenta por lo que fue en pergamino).
+    { k: "Libre en el stock", v: `≈ ${kg1(a.compras.reduce((x, c) => x + c.disponibleKg, 0))} kg`, sub: `de CPS equivalentes · ${porDeclarar ? `${porDeclarar} compra${porDeclarar === 1 ? "" : "s"} por declarar en el Triage` : "nada por declarar"}` },
     { k: "Pagado", v: formatCop(resumen.copPagado), sub: "compras con pago registrado" },
-    ...Object.entries(resumen.porGrado).map(([g, v]) => ({ k: `${GRADO_POR_ID[g as keyof typeof GRADO_POR_ID]?.nombre ?? g}`, v: `${v.kg} kg`, sub: `${v.compras} compra${v.compras === 1 ? "" : "s"}` })),
   ];
+  const lotesParaComprar = a.galardonados.map((l) => ({ id: l.id, etiqueta: `${l.name} · ${l.fincaName ?? "—"} · ${gradoNombre(l.grade)}` }));
+  const tratos: Record<string, TratoParaAviso> = Object.fromEntries(Object.entries(a.tratosVivos).map(([lotId, t]) => [lotId, { contractId: t.contractId, precioTexto: formatCop(t.precioCopKg), pvcCode: t.pvcCode }]));
 
   return (
     <div>
+      <CircuitoDelStock actual="compras" stock={a.stock} />
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
         <h1 className={styles.title}>Adquisición de Stock Café</h1>
-        <span style={{ display: "flex", gap: 14 }}>
-          <Link href="/ocp/compras/mezclas" className={styles.backLink}>
-            Mezclas →
-          </Link>
+        <span style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
           <Link href={STOCK_PATH} className={styles.backLink}>
             Stock CTCx →
+          </Link>
+          <Link href={TRIAGE_PATH} className={styles.backLink}>
+            Triage de Catálogo Activo →
           </Link>
         </span>
       </div>
       <p className={styles.subtitle}>
-        El registro de cada compra <b>en firme</b> de CTCx: qué café, a quién, cuántos kilos, a qué precio (con su edición del PVC),
-        cuándo se pagó, cuándo llegó, dónde está y <b>si es de CTCx Selection</b> —lo que se ofrece en{" "}
-        <Link href="/ocp/ctc-selection">Oferta desde CTCx Selection</Link>, con el perfil de CTCx en vez de la finca— o <b>solo de stock</b>
-        (un saco de un trato por ventanas, café para kits). Lo que llega entra al <Link href={STOCK_PATH}>Stock CTCx</Link> en pergamino: allí se
-        trilla, se tuesta, se empaca y se arman los Sample Kits. Cómo se combina lo de Selection vive en{" "}
-        <Link href="/ocp/compras/mezclas">Mezclas</Link>.
-      </p>
-      <p className={styles.meta} style={{ marginBottom: 18 }}>
-        Una compra nace sola al <b>pagar el mes</b> de un contrato directa o Black (<Link href="/ocp/contratos/lista">Contratos</Link>). A mano,
-        abajo, se documenta lo que se compró fuera de la plataforma (la ruta Desacoplada, un acuerdo directo): siempre con su nota.
-        Tyrian no se compra: va a subasta. Todo en kg de CPS (pergamino seco); la conversión a verde es del Modelo de Producción.
+        Lo que CTCx compra en firme y por qué camino: al <b>pagar el mes</b> de un contrato directa o Black, al <b>recibir el saco o el adelanto</b>{" "}
+        de un trato por ventana, o <b>a mano</b>. Cada compra es de <b>{DESTINO_LABEL.selection}</b> (en la vitrina el lote sale con el rótulo y la
+        imagen de CTCx, no con sus fotos) o <b>{DESTINO_LABEL.stock.toLowerCase()}</b>. Lo que llega entra al <Link href={STOCK_PATH}>Stock CTCx</Link> en
+        pergamino y desde allí se declara en el <Link href={TRIAGE_PATH}>Triage de Catálogo Activo</Link>; el perfil y las imágenes de Selection viven en{" "}
+        <Link href="/ocp/ctc-selection">Oferta desde CTCx Selection</Link>. Todo en kg de CPS (pergamino seco). Tyrian no se compra: va a subasta.
       </p>
 
-      <div className={styles.kpiGrid}>
-        {kpis.map((kpi) => (
-          <div key={kpi.k} className={styles.kpiCard}>
-            <span className={styles.kpiTop}>
-              <span className={styles.kpiK}>{kpi.k}</span>
-            </span>
-            <span className={styles.kpiV}>{kpi.v}</span>
-            <span className={styles.kpiSub}>{kpi.sub}</span>
+      <nav className={s.tabs} aria-label="Adquisición de Stock Café">
+        <Link href="/ocp/compras?vista=por-recibir" className={`${s.tab} ${vista === "por-recibir" ? s.tabActiva : ""}`} aria-current={vista === "por-recibir" ? "page" : undefined}>
+          Por recibir{a.errorDeLectura ? "" : ` (${sacos.length + sinRecibir.length})`}
+        </Link>
+        <Link href="/ocp/compras" className={`${s.tab} ${vista === "compras" ? s.tabActiva : ""}`} aria-current={vista === "compras" ? "page" : undefined}>
+          Compras{a.errorDeLectura ? "" : ` (${a.compras.length})`}
+        </Link>
+        <Link href="/ocp/compras/mezclas" className={`${s.tab} ${s.tabLink}`}>
+          Mezclas →
+        </Link>
+      </nav>
+
+      {a.errorDeLectura ? (
+        // H8: con una lectura caída no se pintan indicadores en cero ni «no hay compras»: solo lo que pasó.
+        <p className={s.aviso} role="alert">
+          No se pudieron leer {a.errorDeLectura}. Esta pantalla no enseña cifras ni tablas mientras tanto: serían falsas. Si acaba de desplegarse una
+          versión nueva, puede faltar aplicar su migración; si no, recargue en un momento.
+        </p>
+      ) : (
+        <>
+          <div className={styles.kpiGrid}>
+            {kpis.map((kpi) => (
+              <div key={kpi.k} className={styles.kpiCard}>
+                <span className={styles.kpiTop}>
+                  <span className={styles.kpiK}>{kpi.k}</span>
+                </span>
+                <span className={styles.kpiV}>{kpi.v}</span>
+                <span className={styles.kpiSub}>{kpi.sub}</span>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      <section style={{ marginTop: 30 }}>
+          {vista === "por-recibir" ? (
+            <PorRecibir sacos={sacos} vendidos={vendidos.length} sinRecibir={sinRecibir} hoy={hoy} />
+          ) : (
+            <>
+              <details className={s.registrar}>
+                <summary className="btn btn-sm btn-solid">Registrar una compra a mano</summary>
+                <CompraManualForm lotes={lotesParaComprar} tratos={tratos} vitrina={a.vitrinaDeLotes} hoy={hoy} />
+              </details>
+              <TablaDeCompras compras={a.compras} lotesConTrato={new Set(Object.keys(a.tratosVivos))} elegida={elegida} />
+              {a.anuladas.length > 0 && (
+                <details style={{ marginTop: 16 }} open={a.anuladas.some((c) => c.id === elegida)}>
+                  <summary className={styles.meta} style={{ cursor: "pointer" }}>
+                    Anuladas ({a.anuladas.length})
+                  </summary>
+                  <div className={s.desplazable} style={{ marginTop: 8 }}>
+                    <table className={s.tabla}>
+                      <thead>
+                        <tr>
+                          <th>Fecha</th>
+                          <th>Lote</th>
+                          <th>Grado</th>
+                          <th className={s.num}>kg CPS · total</th>
+                          <th>Origen</th>
+                          <th>Anulada</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {a.anuladas.map((c) => (
+                          <tr key={c.id} id={`compra-${c.id}`} className={`${s.tachada} ${c.id === elegida ? s.filaElegida : ""}`}>
+                            <td>{fechaCorta(c.fecha)}</td>
+                            <td>{c.lotName}</td>
+                            <td>{gradoNombre(c.grado)}</td>
+                            <td className={s.num}>
+                              {kg1(c.kg)} kg · {formatCop(c.totalCop)}
+                            </td>
+                            <td>{c.origen}</td>
+                            <td>
+                              el {fechaCorta(c.anuladaAt)}
+                              <span className={s.sub}>{c.anuladaMotivo}</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </details>
+              )}
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Por recibir ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+function PorRecibir({ sacos, vendidos, sinRecibir, hoy }: { sacos: DespachoPorRecibir[]; vendidos: number; sinRecibir: CompraDeAdquisicion[]; hoy: string }) {
+  return (
+    <>
+      <section style={{ marginTop: 24 }}>
         <div className={styles.sectionHead}>
-          <h2>Compras ({compras.length})</h2>
+          <h2>Sacos y adelantos de los tratos por ventana ({sacos.length})</h2>
         </div>
-        {compras.length === 0 ? (
-          <p className={styles.empty}>Todavía no hay compras en firme registradas.</p>
+        <p className={styles.meta} style={{ marginBottom: 10 }}>
+          Lo que CTCx ya compró a un productor con trato por ventana y aún no llega. Se confirma (60 %) y se recibe (40 %) en su contrato: al
+          recibirlo nace la compra —solo stock— y su partida en el Stock CTCx.
+          {vendidos > 0 && ` Además hay ${vendidos} despacho${vendidos === 1 ? "" : "s"} de lo vendido en Cherry Picked: no son compras de CTCx (entran al stock comprometidos).`}
+        </p>
+        {sacos.length === 0 ? (
+          <p className={s.vacio}>No hay sacos ni adelantos pendientes.</p>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
+          <div className={s.desplazable}>
+            <table className={s.tabla}>
               <thead>
-                <tr style={{ color: "var(--muted)", textAlign: "left" }}>
-                  <th style={td}>Pagada</th>
-                  <th style={td}>Lote</th>
-                  <th style={td}>Productor · finca</th>
-                  <th style={td}>Grado</th>
-                  <th style={{ ...td, textAlign: "right" }}>kg CPS</th>
-                  <th style={{ ...td, textAlign: "right" }}>COP/kg</th>
-                  <th style={{ ...td, textAlign: "right" }}>Total</th>
-                  <th style={td}>Precio</th>
-                  <th style={td}>Recibida</th>
-                  <th style={td}>Es de</th>
-                  <th style={td}>En mezcla</th>
-                  <th style={td}>Ubicación</th>
-                  <th style={td}>Stock CTCx</th>
-                  <th style={td}>Origen</th>
+                <tr>
+                  <th>Plazo</th>
+                  <th>Lote · productor</th>
+                  <th>Qué</th>
+                  <th className={s.num}>kg CPS</th>
+                  <th className={s.num}>Total</th>
+                  <th>Estado</th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
-                {compras.map((c) => {
-                  const mezclas = enMezcla(c);
-                  const asignado = Math.round(mezclas.reduce((a, m) => a + Number(m.kg), 0) * 10) / 10;
+                {sacos.map((d) => {
+                  const vence = d.prorrogaHasta ?? d.plazo;
                   return (
-                    <tr key={c.id} style={{ borderTop: "1px solid var(--line)" }}>
-                      <td style={td}>
-                        {fecha(c.pagada_at)}
-                        {c.pago_ref && <div className={styles.meta}>ref. {c.pago_ref}</div>}
+                    <tr key={d.id}>
+                      <td>
+                        {/* H3: `plazo` y `prorroga_hasta` son `date`: se leen en UTC (en Bogotá salían un día antes). */}
+                        <span className={vence && vence < hoy ? s.vencido : undefined}>{fechaCorta(vence)}</span>
+                        {d.prorrogaHasta && <span className={s.sub}>con prórroga</span>}
+                        {vence && vence < hoy && <span className={s.sub}>vencido</span>}
                       </td>
-                      <td style={td}>{c.lots?.name ?? "—"}</td>
-                      <td style={td}>
-                        {producers.get(c.lots?.producer_id ?? "")?.fullName ?? "Productor"}
-                        <div className={styles.meta}>{c.lots?.fincas?.name ?? "—"}</div>
+                      <td>
+                        <Link href={`/ocp/kr?lote=${d.lotId}`}>{d.lotName}</Link>
+                        <span className={s.sub}>{d.producerName}</span>
                       </td>
-                      <td style={td}>
-                        <span className={styles.badge}>{GRADO_POR_ID[c.grado as keyof typeof GRADO_POR_ID]?.nombre ?? c.grado}</span>
+                      <td>{d.tipo === "adelanto" ? "Adelanto" : "Saco"}</td>
+                      <td className={s.num}>{kg1(d.kg)}</td>
+                      <td className={s.num}>
+                        {formatCop(d.totalCop)}
+                        <span className={s.sub}>{formatCop(d.copKg)}/kg</span>
                       </td>
-                      <td style={{ ...td, textAlign: "right" }}>{Number(c.kg)}</td>
-                      <td style={{ ...td, textAlign: "right" }}>{formatCop(Number(c.cop_kg))}</td>
-                      <td style={{ ...td, textAlign: "right" }}>
-                        <b>{formatCop(Number(c.total_cop))}</b>
-                      </td>
-                      <td style={td}>
-                        {c.pvc_editions?.code ? `PVC ${c.pvc_editions.code}` : c.precio_fuente ?? "—"}
-                        {c.modificador_pct != null && Number(c.modificador_pct) !== 0 && <> ({Number(c.modificador_pct) > 0 ? "+" : ""}{Number(c.modificador_pct)} %)</>}
-                      </td>
-                      <td style={td}>{fecha(c.recibida_at)}</td>
-                      <td style={td}>
-                        <ActionForm action={destinarCompra.bind(null, c.id)} submitLabel="Cambiar" pendingLabel="…" buttonClassName="btn btn-sm" style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                          <select name="destino" defaultValue={c.destino} style={{ fontSize: 12 }}>
-                            {(Object.keys(DESTINO_LABEL) as (keyof typeof DESTINO_LABEL)[]).map((d) => (
-                              <option key={d} value={d}>{DESTINO_LABEL[d]}</option>
-                            ))}
-                          </select>
-                        </ActionForm>
-                      </td>
-                      <td style={td}>
-                        {asignado > 0 ? (
-                          <>
-                            {asignado} kg
-                            <div className={styles.meta}>{mezclas.map((m) => uno(m.mezclas)?.codigo).filter(Boolean).join(", ")}</div>
-                          </>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td style={td}>
-                        <ActionForm action={ubicarCompra.bind(null, c.id)} submitLabel="Ubicar" pendingLabel="…" buttonClassName="btn btn-sm" style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                          <input name="ubicacion" defaultValue={c.ubicacion ?? ""} placeholder="finca · Centro · bodega" style={{ width: 140, fontSize: 12 }} />
-                        </ActionForm>
-                      </td>
-                      <td style={td}>
-                        {(() => {
-                          const raiz = c.stock_partidas.find((p) => !p.anulada_at);
-                          return raiz ? (
-                            <Link href={`${STOCK_PATH}?partida=${raiz.id}`}>
-                              <code>{raiz.codigo}</code>
-                            </Link>
-                          ) : (
-                            <ActionForm action={entrarCompraAlStock.bind(null, c.id)} submitLabel="Entrar al stock" pendingLabel="…" buttonClassName="btn btn-sm" />
-                          );
-                        })()}
-                      </td>
-                      <td style={td}>
-                        {c.origen === "contrato" ? (
-                          <>
-                            contrato{c.mes ? ` · mes ${c.mes}` : ""}
-                            {c.contract_id && (
-                              <div className={styles.meta}>
-                                <Link href={`/ocp/contratos/${c.contract_id}`}>ver contrato</Link>
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            manual
-                            {c.nota && <div className={styles.meta} style={{ whiteSpace: "normal", maxWidth: 260 }}>{c.nota}</div>}
-                          </>
-                        )}
+                      <td>{estadoDelDespacho({ estado: d.estado, pago60: d.pago60 })}</td>
+                      <td>
+                        <Link href={`/ocp/contratos/${d.contractId}`}>Ver el contrato →</Link>
                       </td>
                     </tr>
                   );
@@ -238,69 +245,205 @@ export default async function ComprasPage() {
         )}
       </section>
 
-      <section style={{ marginTop: 34 }}>
+      <section style={{ marginTop: 28 }}>
         <div className={styles.sectionHead}>
-          <h2>Registrar una compra a mano</h2>
+          <h2>Compras registradas que no han entrado al stock ({sinRecibir.length})</h2>
         </div>
-        <ActionForm action={registrarCompraManual} submitLabel="Registrar la compra" pendingLabel="Registrando…" buttonClassName="btn btn-solid" className={styles.card} style={{ display: "block" }}>
-          <p className={styles.meta} style={{ marginBottom: 10 }}>
-            Para lo comprado fuera de la plataforma. El precio queda referido a la edición del PVC vigente el día del pago; la nota es obligatoria
-            (de dónde sale la compra). Solo lotes galardonados, nunca Tyrian. Si ya llegó (con fecha de recibo), entra solo al Stock CTCx; si no,
-            entra con «Entrar al stock» cuando llegue.
-          </p>
-          <div className={styles.formGrid}>
-            <div className={styles.field} style={{ gridColumn: "1 / -1" }}>
-              <label htmlFor="compra-lote">Lote</label>
-              <select id="compra-lote" name="lot_id" required defaultValue="">
-                <option value="" disabled>
-                  Elija el lote galardonado…
-                </option>
-                {galardonados.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.name} · {l.fincas?.name ?? "—"} · {GRADO_POR_ID[(l.grade ?? "") as keyof typeof GRADO_POR_ID]?.nombre ?? l.grade}
-                  </option>
+        <p className={styles.meta} style={{ marginBottom: 10 }}>
+          Se registraron antes de llegar. Cuando el café esté en CTCx, «Entrar al stock» crea su partida de pergamino (con la ubicación de la compra).
+        </p>
+        {sinRecibir.length === 0 ? (
+          <p className={s.vacio}>Todas las compras vivas están en el Stock CTCx.</p>
+        ) : (
+          <div className={s.desplazable}>
+            <table className={s.tabla}>
+              <thead>
+                <tr>
+                  <th>Registrada</th>
+                  <th>Lote · productor</th>
+                  <th className={s.num}>kg CPS</th>
+                  <th>Es de</th>
+                  <th>Dónde está</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {sinRecibir.map((c) => (
+                  <tr key={c.id}>
+                    <td>
+                      {fechaCorta(c.registradaAt)}
+                      {c.pagadaAt && <span className={s.sub}>pagada el {fechaCorta(c.pagadaAt)}</span>}
+                    </td>
+                    <td>
+                      <Link href={`/ocp/kr?lote=${c.lotId}`}>{c.lotName}</Link>
+                      <span className={s.sub}>{c.producerName}</span>
+                    </td>
+                    <td className={s.num}>{kg1(c.kg)}</td>
+                    <td>{DESTINO_LABEL[c.destino]}</td>
+                    <td>{c.ubicacion ?? "—"}</td>
+                    <td>
+                      <ActionForm action={entrarCompraAlStock.bind(null, c.id)} submitLabel="Entrar al stock" pendingLabel="…" buttonClassName="btn btn-sm btn-solid" />
+                    </td>
+                  </tr>
                 ))}
-              </select>
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="compra-kg">Kilos de CPS</label>
-              <input id="compra-kg" name="kg" inputMode="decimal" required />
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="compra-cop">Precio pagado (COP/kg)</label>
-              <input id="compra-cop" name="cop_kg" inputMode="numeric" required />
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="compra-pagada">Pagada el</label>
-              <input id="compra-pagada" name="pagada_at" type="date" />
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="compra-ref">Referencia del pago</label>
-              <input id="compra-ref" name="pago_ref" />
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="compra-recibida">Recibida el</label>
-              <input id="compra-recibida" name="recibida_at" type="date" />
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="compra-ubicacion">Dónde está el café</label>
-              <input id="compra-ubicacion" name="ubicacion" placeholder="finca · Centro de Calidad · bodega" />
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="compra-destino">Es de</label>
-              <select id="compra-destino" name="destino" defaultValue="selection">
-                {(Object.keys(DESTINO_LABEL) as (keyof typeof DESTINO_LABEL)[]).map((d) => (
-                  <option key={d} value={d}>{DESTINO_LABEL[d]}</option>
-                ))}
-              </select>
-            </div>
-            <div className={styles.field} style={{ gridColumn: "1 / -1" }}>
-              <label htmlFor="compra-nota">Nota (obligatoria)</label>
-              <input id="compra-nota" name="nota" placeholder="Acuerdo por WhatsApp del 12/10; factura N.º…" required />
-            </div>
+              </tbody>
+            </table>
           </div>
-        </ActionForm>
+        )}
       </section>
+    </>
+  );
+}
+
+// ── El registro ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+function TablaDeCompras({ compras, lotesConTrato, elegida }: { compras: CompraDeAdquisicion[]; lotesConTrato: Set<string>; elegida: string | null }) {
+  if (compras.length === 0) {
+    return <p className={s.vacio}>Todavía no hay compras en firme registradas. Nacen solas al pagar el mes de un contrato directa o Black y al recibir el saco o el adelanto de un trato por ventana; o se registran a mano, arriba.</p>;
+  }
+  return (
+    <div className={s.desplazable}>
+      <table className={s.tabla}>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Lote · productor</th>
+            <th>Grado</th>
+            <th className={s.num}>kg CPS · COP/kg · total</th>
+            <th>Origen</th>
+            <th>Es de</th>
+            <th>Stock CTCx</th>
+            <th>Siguiente paso</th>
+          </tr>
+        </thead>
+        <tbody>
+          {compras.map((c) => {
+            const otro = c.destino === "selection" ? "stock" : "selection";
+            const noCambia = c.noDestinable[otro];
+            return (
+              <tr key={c.id} id={`compra-${c.id}`} className={`${s.fila} ${c.id === elegida ? s.filaElegida : ""}`}>
+                <td>
+                  {fechaCorta(c.fecha)}
+                  {c.pagoRef && <span className={s.sub}>ref. {c.pagoRef}</span>}
+                  {!c.pagadaAt && <span className={s.sub}>sin pago registrado</span>}
+                </td>
+                <td>
+                  <Link href={`/ocp/kr?lote=${c.lotId}`}>{c.lotName}</Link>
+                  <span className={s.sub}>
+                    {c.producerName}
+                    {c.fincaName ? ` · ${c.fincaName}` : ""}
+                  </span>
+                </td>
+                <td>
+                  <span className={styles.badge}>{gradoNombre(c.grado)}</span>
+                </td>
+                <td className={s.num}>
+                  <b>{kg1(c.kg)} kg</b>
+                  <span className={s.sub}>{formatCop(c.copKg)}/kg</span>
+                  <span className={s.sub}>{formatCop(c.totalCop)}</span>
+                </td>
+                <td>
+                  {c.contractId ? <Link href={`/ocp/contratos/${c.contractId}`}>{c.origen}</Link> : c.origen}
+                  <span className={s.sub}>{c.precio}</span>
+                  {c.nota && <span className={s.sub}>{c.nota}</span>}
+                </td>
+                <td>
+                  <span className={`${s.chip} ${c.destino === "selection" ? s.chipSelection : s.chipStock}`}>{DESTINO_LABEL[c.destino]}</span>
+                  <details className={s.plegable}>
+                    <summary>cambiar</summary>
+                    <div className={s.plegableCuerpo}>
+                      {noCambia ? (
+                        <p className={s.regla}>{noCambia}</p>
+                      ) : (
+                        <ActionForm action={destinarCompra.bind(null, c.id)} submitLabel={`Pasar a «${DESTINO_LABEL[otro]}»`} pendingLabel="…" buttonClassName="btn btn-sm">
+                          <input type="hidden" name="destino" value={otro} />
+                          {/* Decisión 2 (H6/H7): lo que cambia en la vitrina —con confirmación si cambia la cara de un lote que ya sale—,
+                              que no cambia si otra compra ya decide, o lo que verá el comprador. */}
+                          <p className={c.vitrinaAlCambiar.confirmar ? s.regla : s.vitrina} style={{ marginTop: 0 }}>
+                            {c.vitrinaAlCambiar.texto}
+                          </p>
+                          {c.vitrinaAlCambiar.confirmar && (
+                            <label className={s.confirma}>
+                              <input type="checkbox" name="confirma_vitrina" value="1" required /> Lo sé: confirmo el cambio en la vitrina.
+                            </label>
+                          )}
+                          {/* V5.203 (hueco H2): la marca va por LOTE — con un trato por ventana vivo, también su preventa saldría como CTCx. */}
+                          {otro === "selection" && lotesConTrato.has(c.lotId) && (
+                            <p className={s.regla}>Este lote tiene un trato por ventana vivo: en la vitrina TODO el lote —también la preventa del productor— saldría con el rótulo y la imagen de CTCx.</p>
+                          )}
+                        </ActionForm>
+                      )}
+                    </div>
+                  </details>
+                </td>
+                <td>
+                  {c.raiz ? (
+                    <>
+                      <Link href={`${STOCK_PATH}?partida=${c.raiz.id}`}>
+                        <code>{c.raiz.codigo}</code>
+                      </Link>
+                      {c.raizPorDespacho && <span className={s.sub}>por su despacho (la partida nació sin la compra)</span>}
+                      <span className={s.sub}>≈ {kg1(c.disponibleKg)} kg CPS libres</span>
+                    </>
+                  ) : (
+                    <span className={s.sub} style={{ marginTop: 0 }}>sin recibir</span>
+                  )}
+                  <span className={s.sub}>{c.ubicacion ?? "sin ubicación"}</span>
+                  <details className={s.plegable}>
+                    <summary>ubicar</summary>
+                    <div className={s.plegableCuerpo}>
+                      <ActionForm action={ubicarCompra.bind(null, c.id)} submitLabel="Guardar" pendingLabel="…" buttonClassName="btn btn-sm">
+                        <input name="ubicacion" defaultValue={c.ubicacion ?? ""} maxLength={200} placeholder="finca · Centro · bodega" aria-label="Ubicación" />
+                        {c.raiz && <p className={s.vitrina} style={{ marginTop: 0 }}>También la de su partida {c.raiz.codigo}: una sola ubicación.</p>}
+                      </ActionForm>
+                    </div>
+                  </details>
+                </td>
+                <td>
+                  {c.pasos.map((p, i) =>
+                    p.tipo === "entrar" ? (
+                      <ActionForm key={i} action={entrarCompraAlStock.bind(null, c.id)} submitLabel="Entrar al stock" pendingLabel="…" buttonClassName="btn btn-sm btn-solid" />
+                    ) : p.href ? (
+                      <Link key={i} href={p.href} className={`${s.paso} ${p.tipo === "declarar" ? s.pasoDeclarar : p.tipo === "catalogo" ? s.pasoCatalogo : ""}`}>
+                        {p.texto}
+                      </Link>
+                    ) : (
+                      <span key={i} className={s.paso}>
+                        {p.texto}
+                      </span>
+                    )
+                  )}
+                  {c.origenCrudo === "manual" && (
+                    <details className={s.plegable}>
+                      <summary>anular</summary>
+                      <div className={s.plegableCuerpo}>
+                        {c.noAnulable ? (
+                          <p className={s.regla}>{c.noAnulable}</p>
+                        ) : (
+                          <ActionForm action={anularCompra.bind(null, c.id)} submitLabel="Anular la compra" pendingLabel="Anulando…" buttonClassName="btn btn-sm">
+                            <input name="motivo" required minLength={3} maxLength={300} placeholder="Motivo (queda en el rastro)" aria-label="Motivo para anular la compra" />
+                            <p className={s.vitrina} style={{ marginTop: 0 }}>
+                              La fila no se borra: queda tachada en «Anuladas»{c.raiz ? `, y su partida ${c.raiz.codigo} se anula con ella` : ""}. El productor recibe una nota de que el registro quedó sin efecto.
+                            </p>
+                            {/* Decisión 2: anular la última compra Selection de un lote que sigue en la vitrina le cambia la cara. */}
+                            {c.vitrinaAlAnular && (
+                              <>
+                                <p className={s.regla}>{c.vitrinaAlAnular}</p>
+                                <label className={s.confirma}>
+                                  <input type="checkbox" name="confirma_vitrina" value="1" required /> Lo sé: confirmo el cambio en la vitrina.
+                                </label>
+                              </>
+                            )}
+                          </ActionForm>
+                        )}
+                      </div>
+                    </details>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }

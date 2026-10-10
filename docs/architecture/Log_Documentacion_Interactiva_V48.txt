@@ -133,4 +133,4 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
   `event-leads`. Postgres: 146 tablas base.
 - Cron nuevo `/api/cron/seguimientos-leads` (horario, vercel.json). Guardián nuevo `qa-lead-forms-check.mjs` (63).
 - DICT: entradas nuevas sugeridas para el V49: «Interfaz de Leads», «formulario de captación», «sello de tiempo».
-(commit: pendiente)
+(commit: c249d6b)

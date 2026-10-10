@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.2] — 2026-10-11 (commit pendiente)
+## [V6.2] — 2026-10-11 (commit c249d6b)
 
 - **Añadido**: **la Interfaz de Leads** (owner, noche del 2026-10-10: «una "Interfaz de Leads" como módulo de LCP · General [...] con
   "Forms" que podrán ser activadas o desactivadas para aparecer (una a la vez) en la página principal de ctcexport.com»; la primera,

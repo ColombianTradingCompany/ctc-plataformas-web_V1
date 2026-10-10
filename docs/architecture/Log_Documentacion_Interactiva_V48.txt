@@ -118,3 +118,19 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
   `perfil/` y `lotes/<id>/`); `src/lib/compras/reglas.ts`: `STAGING_ABANDONO_MS`, `abandonadasDelStaging`.
 - DICT: ninguna entrada nueva. Guardianes: `qa-triage-catalogo` 65 (+4) · `qa-stock-ctcx` 86 (+7) · `qa-compras` 195 (+5).
 (commit: 5ecabe8)
+
+## [2026-10-11] V6.2 · La Interfaz de Leads (LCP · General) y el formulario SCAJ 2026
+- Nodo `n-consoles` (LCP): módulo nuevo `/lcp/formularios` («Interfaz de Leads»): `src/app/lcp/(app)/formularios/{page.tsx,export/route.ts,tarjeta/route.ts}`,
+  `src/app/lcp/(app)/formulariosActions.ts` (7 acciones: 5 emite, 2 borrador). Rail: `consoles.ts` LCP · General.
+- Nodo de la portada (CTC Home): `src/components/ctc-home/Header.tsx` enseña la insignia del formulario activo; `src/app/page.tsx` la lee
+  con el service role (`formularioActivo`) y se cachea (`revalidate = 300`).
+- Superficie pública nueva: `/scaj2026` (+ `/baja`, `/privacidad`), `src/app/scaj2026/*`, `src/components/leadForms/LeadForm.tsx` (móvil
+  primero, ES · EN · JA, granos, foto firmada, borrador, idempotencia, honeypot + sello).
+- Módulo `src/lib/leadForms/`: `campos.ts` (PURO: tabla de campos, visibilidad, validación, CSV), `registro.ts` (los formularios y su
+  configuración), `scaj2026/textos.json` (ES · EN · JA), `correos.ts` (PURO: los dos correos), `ejemplos.ts`, `sello.ts` (HMAC),
+  `envios.ts` (Resend + Reply-To, seguimiento, barrido), `publicActions.ts` (envío, URL de subida, baja), `servidor.ts` (cargas, QR).
+- Base (migración `2026-10-11_interfaz_de_leads.sql`): tablas `lead_forms` y `event_leads` (RLS sin políticas), bucket privado
+  `event-leads`. Postgres: 146 tablas base.
+- Cron nuevo `/api/cron/seguimientos-leads` (horario, vercel.json). Guardián nuevo `qa-lead-forms-check.mjs` (63).
+- DICT: entradas nuevas sugeridas para el V49: «Interfaz de Leads», «formulario de captación», «sello de tiempo».
+(commit: pendiente)

@@ -246,6 +246,8 @@ Toda acción del servidor declara su **clase** —qué HACE—, y la clase decid
 | `marcarInteresTtContactado` | BCP · LCP · Terratalento | lo mismo |
 | `setBuzonTags` | LCP · Buzón | etiquetas internas del correo; reversible |
 | `markInboundEmailRead` | LCP · Buzón | leído / no leído; si un viewer no pudiera, abrir su propio correo fallaría en silencio |
+| `setEstadoLeadDeEvento` | LCP · Interfaz de Leads (V6.2) | la etapa de un lead de feria (nuevo · en conversación · convertido · cerrado); reversible, solo la lee ese tablero |
+| `anotarLeadDeEvento` | LCP · Interfaz de Leads (V6.2) | la nota interna y «ya respondió» / «dar de baja» a mano; reversible y sin correo |
 | `ubicarMuestra` | OCP · Gestión de Muestras | dónde queda la muestra y quién la tiene: el cuaderno interno del estante; nadie de fuera lo ve (V5.80) |
 | `anotarSalidaDeMuestra` | OCP · Gestión de Muestras | cuántos gramos salieron y por qué (cata, análisis, al Centro…); se corrige con otra anotación y no avisa a nadie (V5.80) |
 | `anotarRevisionDeAlmacenaje` | OCP · Gestión de Muestras | la revisión de almacenaje a los 90 días con el kilo de testeo: una salida más con su resultado en notas; nadie de fuera la ve (V5.88) |

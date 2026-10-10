@@ -1,0 +1,424 @@
+/* ── El formulario de leads de una feria (V6.2) · móvil primero ─────────────────────────────────────────────────────────────
+   Tokens del tema `ctc-home` (--primary navy · --accent dorado · --paper · --ink · --line) y las fuentes de la casa
+   (Fraunces para el título, Instrument Sans para el cuerpo, Spline Mono para las mayúsculas). Japonés: la pila del sistema
+   («Hiragino Sans», «Yu Gothic», «Noto Sans JP») detrás de la fuente del cuerpo. Áreas táctiles ≥ 44 px. */
+
+.pagina {
+  min-height: 100dvh;
+  background: var(--paper, #f5f6f8);
+  color: var(--ink, #1b2430);
+  font-family: var(--font-instrument-sans), "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+  padding-bottom: 32px;
+}
+
+.cabecera {
+  background: linear-gradient(160deg, var(--primary-deep, #0e2c48), var(--primary, #16436b));
+  color: #fff;
+  padding: 18px 20px 26px;
+}
+.marca {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.logo {
+  width: 150px;
+  height: auto;
+  background: #fff;
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+.idiomas {
+  display: inline-flex;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 4px;
+  margin-top: 14px;
+}
+.idioma,
+.idiomaActivo {
+  min-height: 36px;
+  min-width: 52px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+}
+.idiomaActivo {
+  background: #fff;
+  color: var(--primary, #16436b);
+}
+.feria {
+  margin: 20px 0 6px;
+  font-family: var(--font-spline-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-soft, #f2c464);
+}
+.titulo {
+  font-family: var(--font-fraunces), serif;
+  font-size: 30px;
+  line-height: 1.12;
+  margin: 0 0 10px;
+  color: #fff;
+}
+.intro {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px 12px 0;
+  max-width: 640px;
+  margin: 0 auto;
+}
+.req {
+  margin: 4px 8px 0;
+  font-size: 13px;
+  color: var(--muted, #5a6472);
+}
+.aviso {
+  max-width: 640px;
+  margin: 12px auto 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fff6e0;
+  color: #6a4a08;
+  font-size: 14px;
+}
+.tarjeta {
+  background: var(--card, #fff);
+  border: 1px solid var(--line, #dde1e7);
+  border-radius: var(--radius, 14px);
+  padding: 18px 16px 20px;
+  max-width: 640px;
+  margin: 0 auto;
+  width: calc(100% - 0px);
+}
+.form .tarjeta {
+  width: 100%;
+}
+.seccion {
+  font-family: var(--font-fraunces), serif;
+  font-size: 21px;
+  margin: 0 0 14px;
+  color: var(--primary, #16436b);
+}
+.pregunta {
+  margin: 0 0 18px;
+}
+.pregunta:last-child {
+  margin-bottom: 0;
+}
+.etiqueta {
+  margin: 0 0 8px;
+  font-size: 15.5px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.ast {
+  color: var(--red, #c4402f);
+}
+.nota {
+  font-weight: 400;
+  color: var(--muted, #5a6472);
+  font-size: 14px;
+}
+.pista {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--muted, #5a6472);
+}
+
+.input,
+.textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 16px;
+  color: var(--ink, #1b2430);
+  background: #fff;
+  border: 1.5px solid var(--line, #dde1e7);
+  border-radius: 12px;
+  outline: none;
+}
+.input:focus,
+.textarea:focus {
+  border-color: var(--primary, #16436b);
+  box-shadow: 0 0 0 3px rgba(22, 67, 107, 0.14);
+}
+.textarea {
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip,
+.chipActivo {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 46px;
+  padding: 10px 14px 10px 12px;
+  border-radius: 12px;
+  border: 1.5px solid var(--line, #dde1e7);
+  background: #fff;
+  color: var(--ink, #1b2430);
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.25;
+  text-align: left;
+  flex: 1 1 auto;
+}
+.chipActivo {
+  border-color: var(--primary, #16436b);
+  background: #eaf1f8;
+  font-weight: 600;
+}
+.radio,
+.caja {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #9aa6b2;
+  background: #fff;
+  box-sizing: border-box;
+}
+.radio {
+  border-radius: 50%;
+}
+.caja {
+  border-radius: 4px;
+}
+.chipActivo .radio {
+  border: 5.5px solid var(--primary, #16436b);
+}
+.chipActivo .caja {
+  border-color: var(--primary, #16436b);
+  background: var(--primary, #16436b) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.5l3 3 7-7' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/13px no-repeat;
+}
+
+.casilla {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 44px;
+  padding: 8px 2px;
+  font-size: 15px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.casilla input {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  margin: 2px 0 0;
+  accent-color: var(--primary, #16436b);
+}
+
+.valores {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.valor,
+.valorActivo {
+  border: 1.5px solid var(--line, #dde1e7);
+  border-radius: 12px;
+  padding: 2px 12px;
+  background: #fff;
+}
+.valorActivo {
+  border-color: var(--primary, #16436b);
+  background: #eaf1f8;
+}
+.escala {
+  padding: 2px 0 10px 34px;
+}
+.granos {
+  display: flex;
+  gap: 4px;
+}
+.grano {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  border-radius: 50%;
+}
+.grano:active {
+  background: rgba(22, 67, 107, 0.1);
+}
+.granoLleno {
+  fill: #6b3d1e;
+  stroke: #3d2210;
+}
+.granoVacio {
+  fill: #e4e7ec;
+  stroke: #b9c0c9;
+}
+.escalaRotulos {
+  display: flex;
+  justify-content: space-between;
+  width: 220px;
+  max-width: 100%;
+  font-size: 12px;
+  color: var(--muted, #5a6472);
+  margin-top: 2px;
+}
+
+.oculto {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.fotoBoton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 50px;
+  border: 1.5px dashed var(--primary, #16436b);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--primary, #16436b);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+}
+.fotoLista {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 50px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--green, #2e7d52);
+  border-radius: 12px;
+  background: #eef7f1;
+  font-size: 14px;
+}
+.fotoBotones {
+  display: inline-flex;
+  gap: 14px;
+}
+.enlaceBoton {
+  border: 0;
+  background: none;
+  padding: 6px 0;
+  color: var(--primary, #16436b);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: underline;
+}
+.enlace {
+  color: var(--primary, #16436b);
+  text-decoration: underline;
+}
+
+.error {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fdecea;
+  color: #8a2418;
+  font-size: 14.5px;
+  line-height: 1.4;
+}
+.errorCampo {
+  margin: 6px 0 0;
+  color: #8a2418;
+  font-size: 13.5px;
+}
+.enviar {
+  width: 100%;
+  min-height: 54px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--accent, #e3a32c);
+  color: #1b1405;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 6px 18px rgba(227, 163, 44, 0.32);
+}
+.enviar:disabled {
+  opacity: 0.7;
+}
+.hecho {
+  font-family: var(--font-fraunces), serif;
+  font-size: 26px;
+  margin: 0 0 10px;
+  color: var(--primary, #16436b);
+}
+.parrafo {
+  margin: 0 0 18px;
+  font-size: 15.5px;
+  line-height: 1.5;
+}
+.legal {
+  max-width: 640px;
+  margin: 22px auto 0;
+  padding: 0 16px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted, #5a6472);
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .cabecera {
+    padding: 26px 24px 32px;
+  }
+  .marca {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  .feria,
+  .titulo,
+  .intro,
+  .idiomas {
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .idiomas {
+    display: flex;
+    width: max-content;
+  }
+  .titulo {
+    font-size: 36px;
+  }
+  .chip,
+  .chipActivo {
+    flex: 0 1 auto;
+  }
+}

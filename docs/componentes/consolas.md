@@ -43,7 +43,8 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 | `/bcp/(app)/…` | Business | Ecosistema de Valor: `herramientas`, `directorio`, `coffeed`, `ctc-tech`, `varietales`, `terratalento`, `arena` (+ `[sessionId]`: sesiones de segunda apreciación, V5.77; + `temporadas`) · Configuración: `usuarios`, `socios/[nodo]`, `documentacion`, `mapa`, `consumo`, `plataformas`. `club` → 308 a `/ocp/subvenciones` (V5.77) |
 | `/ocp/(app)/…` | Operation — **el rail es el cuadro del owner (V5.63)**: Kaffetal Regal · Catálogo · Manejo de Stock Físico | `kr` (+ `kr/[id]/{dossier,kml}`, el Pasaporte de una finca) · **`asistencia`** y **`desacoplado`** (V5.75: la sesión asistida y el proveedor sin buzón, `src/lib/asistencia/`) · **`subvenciones`** (+ `campanas/[id]`, V5.77: las campañas del Club, `subvencionesActions.ts`) · **`solicitudes`**, `a-evaluar` y `en-evaluacion` (las TRES vistas de lo que fue Nominados: `nominados/CircuitoVista.tsx`; V5.80: la solicitud con factura y subvención, los Baches de Evaluación, el veredicto hasta la fase 4) · **`muestras`** (V5.80: Gestión de Muestras, 1.ª tanda) · `ofertas` («Pendiente Oferta»), `catalogo` (V5.196: los listados con sus entradas y su ancla; lo comercial), `contratos` (V5.196: el **Triage de Catálogo Activo** — `TriageBoard.tsx`, `triageActions.ts`, `src/lib/triage/{fobMinimo,servidor}.ts` —; + `lista`, `[id]`, `humedad`), `subastas`, ~~`fichas`~~ (308 a `/ocp/kr` desde la V5.97: `FichasClient.tsx` vive en `kr/`), `ctc-selection` (V5.85: «Oferta desde CTCx Selection», la disponibilidad de lo comprado en firme + el perfil único y la imagen por lote) · **`compras`** (+ `compras/mezclas`, `compras/mezclas/[id]` — V5.85/V5.87: el registro de compras en firme y las mezclas; desde la V5.195 la entrada se llama **«Adquisición de Stock Café»** y cada compra es de CTCx Selection o solo de stock; `comprasActions.ts`, `src/lib/compras/{reglas,mezclas,mezclasServidor,sampleKits,sampleKitsServidor}.ts`) · **`stock`** (+ `stock/sample-kits`, `stock/sample-kits/[id]` — V5.195: **«Stock CTCx»** en Manejo de Stock Físico, el café físico en partidas de pergamino · verde · tostado · empacado con su linaje y su cuadre, `stockActions.ts`, `src/lib/stock/{linaje,servidor}.ts`; los Sample Kits CP · Plus · Max armado → enviado · anulado son su segunda pestaña, sobre partidas; la URL de la V5.90 va con un 308) |
 | `/ecp/(app)/…` | Execution | `/ecp` (Tablero de Ejecución), `transcripciones` — y, **de `herramientas-internas`**: `direccionamiento/*`, `pvc/*`, `cotizador-{lotes,logistico,empaque}`, `anclas-mercado`, `automatizaciones` |
-| `/lcp/(app)/…` | Relationship (V5.59) | `buzon`, `leads`, `lista-espera` (`?lista=ctc-home·roast·x·directorio·herramientas·terratalento`), `crm/{caas,green,roast,x}` |
+| `/lcp/(app)/…` | Relationship (V5.59) | `buzon`, `leads`, **`formularios`** (V6.2 · Interfaz de Leads: `?form=` · `/export` CSV · `/tarjeta`), `lista-espera` (`?lista=ctc-home·roast·x·directorio·herramientas·terratalento`), `crm/{caas,green,roast,x}` |
+| `/scaj2026` · `/scaj2026/baja` · `/scaj2026/privacidad` | **el formulario de leads de SCAJ 2026** (V6.2): público, sin sesión, móvil primero, ES · EN · 日本語, `noindex`; recibe envíos solo mientras la LCP lo tenga ENCENDIDO; la cabecera de CTC Home enseña su insignia | `src/app/scaj2026/*`, `src/components/leadForms/LeadForm.tsx`, `src/lib/leadForms/*` (registro, campos, correos, envíos, sello) · cron `/api/cron/seguimientos-leads` |
 | `/bcp|/ocp|/ecp/<modulo>/[[...resto]]` | **talones 308** de las mudanzas V4.24–V5.61 (53 rutas; nueve viajes de vuelta en la V5.60; cuatro «muchas a una» en la V5.61) | fuente: `src/lib/panel/rutasMovidas.ts`; fuera de `(app)` a propósito |
 | `/socios/<slug>` · `/socios/<slug>/acceso` · `/socios/<slug>/panel` | los 5 nodos socio (landing + login + panel) | `src/lib/partners/partners.ts`; credenciales desde `/bcp/socios` |
 
@@ -97,7 +98,7 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 `panel_users` · `admin_otp_codes` · `audit_log` · `inbound_emails` · `buzon_outbound` ·
 `platform_settings` · `platform_surfaces` · `automations` · `integration_events` ·
 `work_map_proposals` · `bcp_task_state` · `partner_accounts` ·
-`leads` · `lead_replies` · `harvest_seasons` · `sondeo_batches` (los Baches de Evaluación) · `arena_inscriptions` (la solicitud) ·
+`leads` · `lead_replies` · **`lead_forms`** · **`event_leads`** (V6.2, la Interfaz de Leads; bucket privado `event-leads`) · `harvest_seasons` · `sondeo_batches` (los Baches de Evaluación) · `arena_inscriptions` (la solicitud) ·
 `muestras` · `muestra_movimientos` (V5.80) ·
 `arena_entry_codes` · `arena_sessions` · `arena_session_lots` · `arena_scores` · `lot_evaluations`
 (filas `q_grader_batch` y `bcp_arena`) · `lot_offers` (emisión) · `lot_fichas` (escáner y set) ·
@@ -182,6 +183,14 @@ ciclo; `docs/PLAN_CICLOS.md`) · **`qa-triage-catalogo-check.mjs`** (V5.196 — 
 
 ## Pendientes
 
+- **V6.2 · la Interfaz de Leads y el formulario SCAJ 2026** (owner, noche del 2026-10-10; ejecutado desde esta sesión; informe en
+  `docs/componentes/briefs/consolas-interfaz-de-leads-scaj2026.md`). El módulo `/lcp/formularios`, la insignia en la portada, `/scaj2026` en tres
+  idiomas, los correos (apagados) y el cron. **Para el owner antes del 14-oct**: aprobar los textos de los correos y encender los dos
+  interruptores en la LCP; fijar el enlace de agenda, el Reply-To, la firma y (si otro) el aviso de privacidad; revisión nativa del
+  japonés (`src/lib/leadForms/scaj2026/textos.json`); imprimir el QR; probar desde un celular real (cámara y teclado japonés). **Para
+  `plataforma` (CTC Home)**: la cabecera lee la base y `/` pasa a `revalidate = 300` (antes estática); fila en `ALINEACION` §3.
+  **Queda**: una versión japonesa de los correos (hoy el japonés recibe inglés); el nodo final debe sumar las dos tablas al conteo de
+  HANDOFF/AGENTS (146) y las entradas DICT en el V49.
 - **V6.1 · solo lo publicado es público, dos tareas del circuito y el barrido del staging** (2026-10-10, desde este componente,
   sin decisiones del owner de por medio; ver el CHANGELOG): la política de `lot_listings` y la vista `public_transparency_pricing`
   estrechadas (hallazgos (a) y (b) de la auditoría, abajo), las dos tareas derivadas que la V5.203 dejó sin hacer (saco o adelanto

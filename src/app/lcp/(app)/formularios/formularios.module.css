@@ -1,0 +1,68 @@
+/* LCP · Interfaz de Leads (V6.2) */
+.formularios { display: grid; gap: 12px; margin: 14px 0 18px; }
+.formulario { border: 1px solid var(--line, #dde1e7); border-left: 4px solid #f0708a; border-radius: 10px; padding: 14px 16px; background: var(--card, #fff); }
+.formularioElegido { box-shadow: 0 0 0 2px rgba(240, 112, 138, 0.25); }
+.formularioCabeza { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.formularioNombre { font-weight: 700; font-size: 17px; color: inherit; text-decoration: none; }
+.formularioNombre:hover { text-decoration: underline; }
+.formularioRuta { margin: 4px 0 0; font-size: 12.5px; opacity: 0.8; }
+.formularioDesc { margin: 10px 0 8px; font-size: 13.5px; line-height: 1.45; opacity: 0.9; }
+.cifras { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; margin: 6px 0 10px; }
+.cifras b { font-size: 16px; margin-right: 3px; }
+.acciones { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.enlace { font-size: 13.5px; font-weight: 600; color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.botonFuerte, .botonSuave { min-height: 34px; padding: 6px 14px; border-radius: 8px; font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+.botonFuerte { background: #f0708a; color: #1a0a0f; border: 1px solid #f0708a; }
+.botonSuave { background: transparent; color: inherit; border: 1px solid var(--line, #dde1e7); }
+.botonSuave:disabled, .botonFuerte:disabled { opacity: 0.5; cursor: default; }
+
+.dos { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(300px, 2fr); gap: 14px; margin-bottom: 18px; }
+@media (max-width: 900px) { .dos { grid-template-columns: 1fr; } }
+.panel { border: 1px solid var(--line, #dde1e7); border-radius: 10px; padding: 14px 16px 16px; background: var(--card, #fff); margin-bottom: 14px; }
+.h2 { margin: 0 0 8px; font-size: 16px; }
+.h3 { margin: 0 0 6px; font-size: 14px; }
+.p { margin: 0 0 10px; font-size: 13px; line-height: 1.5; opacity: 0.9; }
+.p code, .formularioRuta code { font-size: 12px; background: rgba(127, 127, 127, 0.12); padding: 1px 5px; border-radius: 4px; }
+.qr { width: 200px; max-width: 100%; margin: 6px 0 10px; background: #fff; padding: 6px; border-radius: 8px; border: 1px solid var(--line, #dde1e7); }
+.qr svg { width: 100%; height: auto; display: block; }
+.cuenta { font-weight: 400; opacity: 0.7; font-size: 14px; }
+
+.config { display: grid; gap: 10px; }
+.campo { display: grid; gap: 4px; font-size: 13px; }
+.campo input { min-height: 34px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line, #dde1e7); font: inherit; font-size: 13.5px; background: transparent; color: inherit; }
+.interruptor { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.45; }
+.interruptor input[type="checkbox"] { margin-top: 3px; width: 18px; height: 18px; }
+.numero { width: 58px; min-height: 28px; padding: 2px 6px; border-radius: 6px; border: 1px solid var(--line, #dde1e7); font: inherit; background: transparent; color: inherit; }
+
+.ejemplos { display: grid; gap: 14px; }
+.ejemplo { border: 1px dashed var(--line, #dde1e7); border-radius: 8px; padding: 10px 12px; }
+.asunto { margin: 8px 0 4px; font-size: 13px; }
+.correo { white-space: pre-wrap; font: 12.5px/1.5 var(--font-instrument-sans), system-ui, sans-serif; background: rgba(127, 127, 127, 0.08); padding: 10px 12px; border-radius: 8px; margin: 0; }
+
+.filtros { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 12px; }
+.filtros select, .filtros input { min-height: 34px; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--line, #dde1e7); font: inherit; font-size: 13.5px; background: transparent; color: inherit; }
+.filtros input { flex: 1 1 220px; }
+
+.lista { display: grid; gap: 8px; }
+.lead { border: 1px solid var(--line, #dde1e7); border-radius: 10px; background: var(--card, #fff); }
+.leadResumen { display: grid; grid-template-columns: 150px 1fr auto; gap: 8px 14px; align-items: center; padding: 10px 14px; cursor: pointer; list-style: none; }
+.leadResumen::-webkit-details-marker { display: none; }
+.leadTipo { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.8; }
+.leadNombre { font-size: 14px; }
+.leadMeta { font-size: 12px; opacity: 0.75; grid-column: 2; }
+.leadEstados { grid-column: 3; grid-row: 1 / span 2; display: flex; flex-direction: column; gap: 4px; align-items: flex-end; font-size: 11.5px; }
+@media (max-width: 760px) { .leadResumen { grid-template-columns: 1fr; } .leadMeta, .leadEstados { grid-column: 1; grid-row: auto; align-items: flex-start; flex-direction: row; flex-wrap: wrap; } }
+.leadCuerpo { padding: 4px 14px 14px; border-top: 1px solid var(--line, #dde1e7); display: grid; grid-template-columns: minmax(280px, 3fr) minmax(260px, 2fr); gap: 16px; }
+@media (max-width: 900px) { .leadCuerpo { grid-template-columns: 1fr; } }
+.datos { display: grid; grid-template-columns: 140px 1fr; gap: 6px 12px; margin: 10px 0 0; font-size: 13px; }
+.datos dt { font-weight: 600; opacity: 0.8; }
+.datos dd { margin: 0; line-height: 1.45; }
+.datos a { color: inherit; }
+.valor { display: inline-block; margin: 0 10px 4px 0; }
+.valor b { letter-spacing: 1px; margin-left: 4px; }
+.leadAcciones { display: grid; gap: 10px; align-content: start; margin-top: 10px; }
+.enLinea { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.enLinea select { min-height: 34px; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--line, #dde1e7); font: inherit; font-size: 13px; background: transparent; color: inherit; }
+.nota { display: grid; gap: 6px; font-size: 13px; }
+.nota textarea { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line, #dde1e7); font: inherit; font-size: 13px; background: transparent; color: inherit; resize: vertical; }
+.nota label, .mini { display: flex; gap: 8px; align-items: center; font-size: 12.5px; }

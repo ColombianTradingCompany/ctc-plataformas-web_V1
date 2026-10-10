@@ -15,6 +15,7 @@ export default function LcpHomePage() {
       modules={[
         { name: "Buzón de entrada", desc: "El correo de la red. Cada colaborador ve el dirigido a su etiqueta @ctcexport.com; responder o reenviar pide nivel admin.", built: true, href: "/lcp/buzon" },
         { name: "Leads · Recepción", desc: "Las consultas generales de «Escríbenos», con su cuenta de plataforma ya creada y el hilo de respuestas.", built: true, href: "/lcp/leads" },
+        { name: "Interfaz de Leads", desc: "Los formularios de captación de ferias y campañas (el primero: SCAJ 2026). Uno encendido a la vez sale en la portada; aquí quedan sus leads, sus correos, su seguimiento y su QR.", built: true, href: "/lcp/formularios" },
         { name: "Lista de espera", desc: "Todas las listas de la red en un sitio, con filtro: la portada, Roast, X, Directorio, Herramientas y Terratalento.", built: true, href: "/lcp/lista-espera" },
         { name: "CRM CP CaaS", desc: "El kanban de los proyectos propuestos desde la superficie CaaS.", built: true, href: "/lcp/crm/caas" },
         { name: "CRM CP Green", desc: "Los compradores de la tienda. La etapa se deduce de sus pedidos; solo se guarda cuando alguien la fija a mano.", built: true, href: "/lcp/crm/green" },

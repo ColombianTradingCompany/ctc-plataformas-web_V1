@@ -13,7 +13,11 @@ const T: Record<Lang, { write: string; idxAria: string }> = {
   de: { write: "Schreiben Sie uns", idxAria: "Seitenindex" },
 };
 
-export function Header() {
+/** V6.2 · Interfaz de Leads: el formulario de captación ACTIVO (uno a la vez, lo enciende la LCP) sale aquí, junto al logotipo,
+ *  como insignia que lleva a su página (`?source=web`, para distinguirlo de los QR impresos). Sin formulario activo no hay insignia. */
+export type FormularioEnCabecera = { etiqueta: string; href: string; nombre: string } | null;
+
+export function Header({ formulario = null }: { formulario?: FormularioEnCabecera }) {
   const lang = useLang();
   const t = T[lang];
   // El MISMO índice que la burbuja «Navegar» (./pageIndex).
@@ -63,6 +67,11 @@ export function Header() {
             preload
           />
         </div>
+        {formulario && (
+          <a className={styles.formulario} href={formulario.href} title={formulario.nombre} data-formulario={formulario.etiqueta}>
+            {formulario.etiqueta}
+          </a>
+        )}
         <button className="btn btn-sm btn-solid" onClick={() => openForm("general")}>
           {t.write}
         </button>

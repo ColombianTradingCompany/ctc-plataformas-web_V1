@@ -300,6 +300,10 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // se miran en el tablero de SU superficie (CTC Tech y Varietales, en el ECP) o en su CRM
           // (CaaS, aquí abajo) — `src/lib/panel/leadsPilares.ts` es la fuente única de ese reparto.
           { href: "/lcp/leads", label: "Leads · Recepción" },
+          // Interfaz de Leads (V6.2, owner 2026-10-10): los formularios de captación de ferias y campañas (`lead_forms`), que se
+          // encienden UNO a la vez para salir en la cabecera de CTC Home, con sus leads (`event_leads`), sus correos y su QR.
+          // El primero es SCAJ 2026. `src/lib/leadForms/` es la fuente; la página pública de cada uno vive en su ruta.
+          { href: "/lcp/formularios", label: "Interfaz de Leads" },
           // Lista de espera (← el módulo «ctc-home» del ECP): dejó de ser solo la de la portada. Reúne, con un
           // filtro, las cinco fuentes de `newsletter_subscribers` y la lista de Terratalento. Roast,
           // X, Directorio y Herramientas SIGUEN teniendo su tablero junto a lo suyo; esto es el

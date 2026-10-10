@@ -53,3 +53,14 @@
 .idxMenu .jump{color:var(--primary-deep)}
 .idxMenu .jump:hover{background:var(--primary);color:#fff}
 .idxMenu .jump:hover small,.idxMenu .jump:hover .n{color:rgba(255,255,255,.82)}
+
+/* V6.2 · Interfaz de Leads: la insignia del formulario de captación activo (p. ej. «SCAJ2026»), junto al logotipo. El mockup del
+   owner la dibuja como un recuadro con el nombre en serifa: eso es. */
+.formulario{
+  display:inline-flex;align-items:center;height:40px;padding:0 14px;margin-right:auto;
+  border:2px solid var(--ink,#1B2430);border-radius:6px;background:#fff;
+  font-family:var(--font-fraunces),serif;font-size:18px;font-weight:600;letter-spacing:.02em;color:var(--ink,#1B2430);
+  text-decoration:none;white-space:nowrap;
+}
+.formulario:hover{background:var(--accent-soft,#F2C464);border-color:var(--primary,#16436B)}
+@media (max-width:640px){.formulario{height:34px;padding:0 10px;font-size:15px}}

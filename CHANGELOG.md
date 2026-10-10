@@ -19,6 +19,45 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.2] — 2026-10-11 (commit pendiente)
+
+- **Añadido**: **la Interfaz de Leads** (owner, noche del 2026-10-10: «una "Interfaz de Leads" como módulo de LCP · General [...] con
+  "Forms" que podrán ser activadas o desactivadas para aparecer (una a la vez) en la página principal de ctcexport.com»; la primera,
+  **SCAJ 2026**, especificada campo a campo por el owner en `reference/Web_Lead_Form/`). **(1) El módulo** `/lcp/formularios`
+  (LCP · General → «Interfaz de Leads»): los formularios de captación (`lead_forms`), encender/apagar (uno a la vez; al encender uno
+  los demás se apagan), la configuración sin desplegar (enlace de agenda, aviso de privacidad, Reply-To, firma, los dos
+  interruptores de correo y los días del seguimiento), el QR para imprimir (SVG, `?source=qr-stand`), la vista previa de los correos
+  con cuatro perfiles de ejemplo, y los leads (`event_leads`) con filtros, detalle completo, foto de la tarjeta por URL firmada,
+  etapa, nota, «ya respondió», baja a mano, reenviar el correo inmediato, «enviar el seguimiento ahora» (para probarlo sin esperar
+  siete días), «enviar los pendientes» y **exportar CSV** (UTF-8 con BOM). **(2) La portada**: la cabecera de CTC Home enseña la
+  insignia del formulario activo («SCAJ2026», como el mockup del owner) con `?source=web`; `/` se cachea cinco minutos y encender o
+  apagar la revalida en el acto. **(3) El formulario público** `/scaj2026` (ES · EN · 日本語, selector propio; el idioma inicial es el
+  del navegador y, si no es uno de los tres, inglés; `noindex`): una sola página móvil primero, las preguntas cambian con el tipo de
+  participante (la tabla de la especificación), «Qué valoras» con la escala de **cinco granos de café**, foto de la tarjeta desde la
+  cámara o la galería al bucket **privado** `event-leads` (URL firmada, nombre aleatorio), teclado de correo, áreas táctiles ≥ 44
+  px, borrador en el celular que vuelve al reabrir, reintento si falla la conexión, **idempotencia** (un doble toque no crea dos
+  leads), honeypot + sello de tiempo firmado contra bots, pantalla de gracias con «Registrar a otra persona». **(4) Las preguntas de
+  la casa**, todas de un toque: grados CTCx de interés, formato de compra (fracciones 6 kg · sacos 35 kg · contenedor vía tostador
+  socio), certificaciones del mercado (JAS orgánico…), verde o tostado en Japón, nodo logístico regional (importador/distribuidor) y
+  evaluar y vender con CTCx (productor). **(5) Los correos** (`src/lib/leadForms/correos.ts`, bloques de texto, sin modelo: no
+  afirman precios, puntajes, plazos ni condiciones del Sample Pack): el inmediato abre con lo más valorado, enfoca por tipo
+  (Cherry Picked · Kaffetal Regal · prensa), responde a `wants` y añade el Master Roaster y el nodo regional; el seguimiento a los N
+  días retoma `wants` y `timing`; los dos llevan baja (`/scaj2026/baja`, id + testigo HMAC); el japonés cae a inglés hasta la
+  revisión nativa. **Nacen APAGADOS** hasta que el owner apruebe los textos. **(6) El cron** horario `/api/cron/seguimientos-leads`
+  (no manda a quien se dio de baja ni a quien ya respondió, leyendo el Buzón). **(7)** `/scaj2026/privacidad` (ES · EN · JA).
+- **Datos**: migración `2026-10-11_interfaz_de_leads` aplicada (`lead_forms` con índice único «una activa», `event_leads`, RLS sin
+  políticas en las dos, bucket privado `event-leads`, la fila `scaj2026`). **El formulario quedó ENCENDIDO** (la insignia sale en la
+  portada) y **los correos apagados**.
+- **Seguridad**: guardián nuevo `qa-lead-forms` (63: la tabla de campos con casos, los textos con las mismas claves en tres idiomas,
+  los correos que no inventan, la base, la página, la cabecera, el rail, las clases y el cron); `qa-rutas-consolas` 540, `qa-niveles`
+  37 (29 borradores: `setEstadoLeadDeEvento` y `anotarLeadDeEvento` en la lista blanca), `qa-nav` en verde.
+- **Docs**: `docs/componentes/briefs/consolas-interfaz-de-leads-scaj2026.md` (el informe para el owner: qué hay en vivo, qué le toca, los
+  textos de los correos con los cuatro ejemplos, lo decidido distinto); charter `consolas`; `ALINEACION` §3; `BCP_USER_ADMIN_PLAN`.
+- **Seguridad**: **verificado de punta a punta** — tres envíos desde el panel del navegador en tamaño móvil (tostador en japonés, productor en español, prensa en
+  inglés) guardados con todos sus campos y borrados después; el carril del correo inmediato con una cuenta de prueba; el bucket por
+  script (subida firmada anónima, sin listado ni lectura sin firma); el cron en desarrollo. **Nota**: los subagentes de la cuenta no
+  pudieron correr esta noche (límite de gasto mensual): todo se hizo en la sesión principal.
+
 ## [V6.1] — 2026-10-10 (commit 5ecabe8)
 
 - **Seguridad**: **solo lo publicado es público** (auditoría de privacidad del 2026-10-10, hallazgos (a) y (b) del charter de

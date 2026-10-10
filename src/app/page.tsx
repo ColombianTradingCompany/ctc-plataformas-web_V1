@@ -15,6 +15,12 @@ import { CosechasSection } from "@/components/ctc-home/CosechasSection";
 import { HistorySection } from "@/components/ctc-home/HistorySection";
 import { QuickMenu } from "@/components/ctc-home/QuickMenu";
 import { Footer } from "@/components/ctc-home/Footer";
+import { formularioActivo } from "@/lib/leadForms/servidor";
+import { createServiceRoleClient } from "@/lib/supabase/server";
+
+// V6.2 · Interfaz de Leads: la portada pregunta a la base qué formulario de captación está ENCENDIDO (LCP · General) para enseñar su
+// insignia en la cabecera. Se cachea cinco minutos; encender o apagar desde la LCP revalida `/` en el acto.
+export const revalidate = 300;
 
 // La casa matriz es la única superficie que hasta hoy no declaraba ni título
 // propio: heredaba el del layout raíz. Ahora firma su tarjeta como las demás.
@@ -29,7 +35,8 @@ export const generateMetadata = superficieConOverrides({
   alternateLocale: ["en_GB", "de_DE"],
 });
 
-export default function CtcHomePage() {
+export default async function CtcHomePage() {
+  const formulario = await formularioActivo(createServiceRoleClient());
   return (
     <div data-theme="ctc-home">
       {/* La casa matriz es la que DECLARA la empresa y el sitio: es la ficha a
@@ -38,7 +45,7 @@ export default function CtcHomePage() {
       <ToastProvider>
         <LangProvider storageKey="ctc-lang">
           <ContactModalProvider>
-            <Header />
+            <Header formulario={formulario} />
             <Hero />
             {/* El vistazo al Catálogo Activo (2026-08-17): lo segundo que se ve,
                 justo debajo del hero, porque es la respuesta más corta a «¿y

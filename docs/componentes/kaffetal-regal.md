@@ -152,6 +152,13 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V5.201 · el Dossier público es un documento continuo y no se imprime** (owner, 2026-10-10; ejecutado desde WRAP-COMMIT-PUSH).
+  `DossierCtcx` con `d.publico`: las hojas pasan a secciones de UNA columna (`seccionContinua`, ancla `dossier-<id>`, sin cabecera
+  ni pie por hoja), el índice de la portada enlaza, `NavegacionDelDossier` (botón fijo abajo con la lista de secciones y la que se
+  lee) y, al imprimir, solo el aviso `soloEnLinea`; `dossierPublico()` fija `puedeImprimir: false`. El Dossier del PRODUCTOR no
+  cambia (hojas A4, imprimir con contrato firmado, blindaje). Si se añade una hoja nueva, entra sola en las dos navegaciones (se
+  arman de `hojas`). También es de aquí: la landing de KR ya enseña «Click me» en su calendario del año (`HarvestCalendar`,
+  compartido con CTC y CP).
 - **V5.197 · el Perfil de taza del dossier: la telaraña CVA de 8 esquinas y la descriptiva con íconos** (owner, 2026-10-10;
   ejecutado desde WRAP-COMMIT-PUSH). La telaraña es `RadarCva` y la intensidad `BarraDeIntensidad` (`dossier/figuras.tsx`); los íconos
   de la rueda viven en `src/components/catacion/IconosDeSabor.tsx` con una tabla EXPLÍCITA por id (un punto nuevo de la rueda necesita

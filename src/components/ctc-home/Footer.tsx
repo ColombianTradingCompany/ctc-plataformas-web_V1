@@ -92,22 +92,8 @@ export function Footer() {
         </nav>
       </div>
 
-      {/* Closing mark: el logotipo completo sobre plato claro — la marca es de
-          tinta oscura y necesita fondo claro para leerse sobre el pie navy.
-          La foto del mirador que cerraba aquí SUBIÓ a su propia franja, entre
-          el calendario del año y «Quiénes somos» (2026-08-11): abajo no decía
-          nada y allí sostiene una frase. De paso se corrigió su rótulo, que la
-          llamaba atardecer cuando es un mediodía. */}
-      <div className={`wrap ${styles.signoff}`}>
-        <div className={styles.logoPlate}>
-          <Image
-            src="/images/shared/ctc-logo-full.png"
-            alt="Colombian Trading Company"
-            width={2234}
-            height={1231}
-          />
-        </div>
-      </div>
+      {/* V5.201 (owner, 2026-10-10): «Retiremos el logo al final de la página». El logotipo completo sobre plato claro que
+          cerraba el pie se fue: la marca ya está arriba (cabecera) y en la primera línea de este mismo pie. */}
 
       {/* Barra legal compartida — reemplaza la línea de copyright suelta que
           vivía aquí, y añade la insignia de versión del despliegue. */}

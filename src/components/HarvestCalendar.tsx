@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { MousePointerClick } from "lucide-react";
 import styles from "./HarvestCalendar.module.css";
 
 // ── El año del café, interactivo (2026-08-11) ────────────────────────────────
@@ -340,24 +341,27 @@ const STAGE: Record<CalLang, Record<CalCss, StageInfo>> = {
   },
 };
 
-const UI: Record<CalLang, { hint: string; close: string; when: string; pick: string }> = {
+const UI: Record<CalLang, { hint: string; close: string; when: string; pick: string; clickMe: string }> = {
   es: {
     hint: "Toca cualquier barra para ver qué pasa en esa etapa",
     close: "Cerrar",
     when: "Cuándo",
     pick: "Etapa",
+    clickMe: "Haz clic",
   },
   en: {
     hint: "Tap any bar to see what happens in that stage",
     close: "Close",
     when: "When",
     pick: "Stage",
+    clickMe: "Click me",
   },
   de: {
     hint: "Tippen Sie auf einen Balken, um die Etappe zu sehen",
     close: "Schließen",
     when: "Wann",
     pick: "Etappe",
+    clickMe: "Klick mich",
   },
 };
 
@@ -373,15 +377,39 @@ export function HarvestCalendar({
   lang?: CalLang;
 }) {
   const [sel, setSel] = useState<CalCss | null>(null);
+  /** V5.201: el aviso «Click me» se va para siempre con la primera etapa abierta (ya sabe que se puede). */
+  const [descubierto, setDescubierto] = useState(false);
   const t = UI[lang];
+  const elige = (css: CalCss | null) => {
+    setSel(css);
+    if (css) setDescubierto(true);
+  };
   const info = sel ? STAGE[lang][sel] : null;
 
+  // V5.201 (owner, 2026-10-10): «pon una señal que diga "Click Me" para que sea evidente que se puede desplegar info de los
+  // recuadros de la línea de tiempo». Cuando el año cabe entero, va en el hueco que deja la mitaca de julio a diciembre (las tres
+  // superficies arman el año con `buildBlocks`, así que ese hueco está siempre) y señala hacia las barras; cuando no cabe y el
+  // año se desliza (el móvil), ese hueco queda fuera de la vista, así que va junto a la pista de arriba y señala hacia abajo. Lo
+  // decide el ancho de ESTE bloque (consulta de contenedor), no el de la ventana. Decorativa para el lector de pantalla: la pista
+  // ya lo dice en texto.
+  const clickMe = (donde: string) =>
+    !descubierto && (
+      <span className={`${styles.clickMe} ${donde}`} aria-hidden>
+        <MousePointerClick size={16} strokeWidth={2.2} />
+        {t.clickMe}
+      </span>
+    );
+
   return (
-    <div>
-      <p className={styles.hint}>{t.hint}</p>
+    <div className={styles.calZona}>
+      <div className={styles.hintFila}>
+        <p className={styles.hint}>{t.hint}</p>
+        {clickMe(styles.clickMeFila)}
+      </div>
 
       <div className={styles.calWrap}>
         <div className={styles.cal}>
+          {clickMe(styles.clickMeHueco)}
           <div className={styles.calMonths}>
             {months.map((m) => (
               <span key={m}>{m}</span>
@@ -410,7 +438,7 @@ export function HarvestCalendar({
                       }`}
                       style={{ gridColumn: `${seg.start}/${seg.end}` }}
                       aria-pressed={sel === seg.css}
-                      onClick={() => setSel(sel === seg.css ? null : seg.css)}
+                      onClick={() => elige(sel === seg.css ? null : seg.css)}
                     >
                       {seg.text}
                     </button>
@@ -430,7 +458,7 @@ export function HarvestCalendar({
                   key={i}
                   className={`${styles.legendBtn} ${sel === l.css ? styles.legendOn : ""}`}
                   aria-pressed={sel === l.css}
-                  onClick={() => setSel(sel === l.css ? null : (l.css as CalCss))}
+                  onClick={() => elige(sel === l.css ? null : (l.css as CalCss))}
                 >
                   <i style={{ background: l.color }} />
                   {l.text}
@@ -455,7 +483,7 @@ export function HarvestCalendar({
               </p>
               <h4 className={styles.detailTitle}>{info.title}</h4>
             </div>
-            <button type="button" className={styles.detailClose} onClick={() => setSel(null)} aria-label={t.close}>
+            <button type="button" className={styles.detailClose} onClick={() => elige(null)} aria-label={t.close}>
               ×
             </button>
           </div>

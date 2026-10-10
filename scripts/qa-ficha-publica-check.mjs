@@ -92,7 +92,7 @@ const completo = {
   check("ni lo que el productor declaró (no se exhibe su diferencia con lo medido)", !json.includes("99.11") && !json.includes("999") && pub.lot.declarado.noSabe.length === 0);
   check("y sí sale lo que debe salir: finca, región, historia, foto, taza, lectura, certificado sin número, el mapa regional", ["PUBLICO_finca", "PUBLICO_municipio", "PUBLICO_departamento", "PUBLICO_historia", "PUBLICO_caracteristicas", "PUBLICO_foto_finca", "PUBLICO_mapa_regional", "PUBLICO_comentario", "PUBLICO_perfil", "PUBLICO_lectura", "PUBLICO_certificado", "PUBLICO_sello", "PUBLICO_b3", "PUBLICO_producto"].every((k) => json.includes(k)));
   check("UNA sola finca (la que se enseña), sin el código interno", pub.fincas.length === 1 && pub.fincas[0].code === "" && pub.fincas[0].id === "");
-  check("se puede imprimir y no lleva marca de agua (no hay productor que nombrar)", pub.blindaje.puedeImprimir === true && pub.blindaje.marca === "");
+  check("NO se imprime (owner, V5.201: se consulta en línea) y no lleva marca de agua (no hay productor que nombrar)", pub.blindaje.puedeImprimir === false && pub.blindaje.marca === "");
   check("el documento sabe que es público: su dirección y la vuelta a «Find my Lot»", pub.publico?.url === "/ctcx-public-catalogue/CTC-L-ABCD1234" && pub.publico.volver === "/ctcx-public-catalogue");
 }
 
@@ -139,12 +139,26 @@ const completo = {
 // ── 5. El documento en modo público ────────────────────────────────────────
 {
   const doc = lee("src/components/kaffetal-regal/dossier/DossierCtcx.tsx");
+  const nav = lee("src/components/kaffetal-regal/dossier/NavegacionDelDossier.tsx");
+  const css = lee("src/components/kaffetal-regal/dossier/dossier.module.css");
+  const textos = lee("src/components/kaffetal-regal/dossier/textos.ts");
   check("en público no van la Visa ni la Mejora (ni sus enlaces al Pasaporte y a la Visa)", doc.includes('for (const fuera of ["visa", "mejora"]) {') && doc.includes("if (pub) {"));
   const iniOrigen = doc.indexOf("const origenPublico = pub ? (");
   const bloqueOrigen = doc.slice(iniOrigen, doc.indexOf(") : null;", iniOrigen));
   check("el origen público: región, altitud y finca; sin productor, sin coordenadas, sin el mapa de los cafetales", doc.includes("pub ? origenPublico : <>") && iniOrigen > 0 && bloqueOrigen.length > 500 && !/d\.productor|finca\.lat|finca\.lng|finca\.poligono|finca\.vereda|finca\.tenencia|d\.mapaUrl/.test(bloqueOrigen));
   check("sin lo declarado frente a lo medido, sin la matriz interna y sin número de certificado", doc.includes("].filter((x) => !pub && (x.dec || x.med));") && doc.includes("{!pub && (\n            <div>\n              <div className={s.h3}>{t.respaldoTitulo}</div>") && doc.includes("{!pub && <th>{t.numero}</th>}"));
-  check("sin blindaje ni marca de agua, y con la vuelta a «Find my Lot»", doc.includes("{!pub && <Blindaje") && doc.includes("{d.blindaje.marca ? <MarcaDeAgua texto={d.blindaje.marca} /> : null}") && doc.includes("<Link href={pub.volver} className={s.barraVolver}>"));
+  // V5.201 (owner, 2026-10-10): «El Dossier que abre el carrusel NO debe tener la opción de imprimir en PDF. Es más, quiero que
+  // sea un html continuo con un botón en la parte inferior para navegar sus titulares».
+  const iniPub = doc.indexOf("  if (pub) {\n    return (\n      <div className={cx(s.lienzo, s.lienzoContinuo, display.variable)} lang={d.lang}>");
+  const ramaPublica = iniPub > 0 ? doc.slice(iniPub, doc.indexOf("\n  return (", iniPub)) : "";
+  const iniSeccion = doc.indexOf("    pub ? (");
+  const seccionPublica = iniSeccion > 0 ? doc.slice(iniSeccion, doc.indexOf("<section className={s.hoja}", iniSeccion)) : "";
+  check("sin imprimir: ni el botón ni el candado, sin blindaje ni marca de agua, y con la vuelta a «Find my Lot»", ramaPublica.length > 300 && !/<BotonImprimir|<Blindaje|<MarcaDeAgua|s\.candado/.test(ramaPublica) && ramaPublica.includes("<Link href={pub.volver} className={s.barraVolver}>") && doc.includes("{d.blindaje.marca ? <MarcaDeAgua texto={d.blindaje.marca} /> : null}"));
+  check("un documento CONTINUO: cada sección con su ancla, sin cabecera ni pie de página por hoja (la línea legal va una vez)", seccionPublica.includes("<section className={s.seccionContinua} key={id} id={ancla(id)} tabIndex={-1}") && !/MarcaDeAgua|t\.pagina|s\.cabecera\b|s\.pie\b/.test(seccionPublica) && ramaPublica.includes("<article className={s.papel}>") && ramaPublica.includes("<div className={cx(s.pie, s.pieContinuo)}>") && doc.includes("const ancla = (id: Hoja[\"id\"]) => `dossier-${id}`;"));
+  check("el índice de la portada lleva a cada sección (sin números de página)", doc.includes("<a href={`#${ancla(h.id)}`} className={s.indiceEnlace}>"));
+  check("abajo, el botón que navega sus titulares: las secciones en su orden y la que se está leyendo", ramaPublica.includes("<NavegacionDelDossier") && ramaPublica.includes("secciones={hojas.map((h, i) => ({ id: ancla(h.id),") && nav.includes("new IntersectionObserver(") && nav.includes("destino.focus({ preventScroll: true });") && nav.includes('aria-current={x.id === actual ? "true" : undefined}') && css.includes("position: fixed;") && css.includes("bottom: calc(16px + env(safe-area-inset-bottom, 0px));"));
+  check("si alguien imprime desde el navegador, sale solo el aviso de que se consulta en línea", ramaPublica.includes("<p className={s.soloImpresion}>") && css.includes(".lienzoContinuo > * { display: none !important; }") && css.includes(".lienzoContinuo > .soloImpresion { display: block !important;") && textos.includes("soloEnLinea: \"Este Dossier se consulta en línea") && textos.includes("soloEnLinea: \"This dossier is read online"));
+  check("el del productor sigue en hojas A4, con su botón de imprimir y su blindaje", doc.includes("d.blindaje.puedeImprimir ? <BotonImprimir label={t.imprimir} />") && doc.includes("<Blindaje puedeImprimir={d.blindaje.puedeImprimir} aviso={AVISO_SIN_CONTRATO[d.lang]} />") && css.includes(".hoja { margin: 0; box-shadow: none; break-after: page;"));
 }
 
 if (fallos.length) {

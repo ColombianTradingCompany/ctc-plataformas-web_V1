@@ -83,6 +83,12 @@ con cuenta QA — **hoy no corre**: las cuentas de prueba se eliminaron en la V5
 
 ## Pendientes
 
+- **V5.201 · el carrusel con el dedo y el Dossier público continuo, sin imprimir** (owner, 2026-10-10; ejecutado desde
+  WRAP-COMMIT-PUSH). La cinta (`SneakPeek.tsx`) en una pantalla táctil: tocarla la pone en manual (sigue al dedo, inercia al
+  soltar) y a los `INACTIVIDAD_MS` (20 s) vuelve a andar sola; el ratón no cambia. El Dossier público
+  (`/ctcx-public-catalogue/CTC-L-…`) es un HTML continuo con `NavegacionDelDossier` abajo y no se imprime (el componente es de
+  `kaffetal-regal`, que lo anota). Compartido: el calendario del año de la landing CP también lleva ya la señal «Click me»
+  (`HarvestCalendar`, el mismo de CTC y KR).
 - **V5.199 · «Find my Lot» por la referencia, en CTC, KR y CP** (owner, 2026-10-10; ejecutado desde WRAP-COMMIT-PUSH). El pie de
   la cinta (`SneakPeek.tsx`, `FindMyLot`) y el buscador del portal (`BuscadorDeLote.tsx`) llevan «CTC-L-» fijo; el campo lo limpia
   `cuerpoDeReferencia` y la referencia la valida `normalizaReferencia` (`lib/catalogo/codigoPublico.ts`). La página de «no

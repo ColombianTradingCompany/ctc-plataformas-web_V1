@@ -344,7 +344,8 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
   );
   const portada = lee("src/components/catalogo/CatalogoPublicoLanding.tsx");
   check("la portada la monta", portada.includes("<ProcedenciaCTCx"));
-  check("y el Dossier público del lote firma con la marca de CTCx en cada hoja", lee("src/components/kaffetal-regal/dossier/DossierCtcx.tsx").includes('src="/tools/assets/ctcx-logo.png" alt="Colombian Trading Company"'));
+  // V5.201: el Dossier público es un documento continuo (ya no hojas): la marca va en su portada.
+  check("y el Dossier público del lote firma con la marca de CTCx en su portada", lee("src/components/kaffetal-regal/dossier/DossierCtcx.tsx").includes('<img src="/tools/assets/ctcx-logo.png" alt="Colombian Trading Company" style={{ height: "11mm" }} />'));
 
   // Las fotos son del archivo de CTC y viven optimizadas. Si alguien apunta a
   // un original de `reference/`, no se despliega: esa carpeta no va al build.

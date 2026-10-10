@@ -46,6 +46,17 @@ import styles from "./SneakPeek.module.css";
 // tarjeta es mover esa misma variable. Es más código, y es el único modo de que
 // no dé el salto.
 //
+// EN UNA PANTALLA TÁCTIL, LA CINTA SE LLEVA CON EL DEDO (owner, 2026-10-10, V5.201):
+// «que siga moviéndose por defecto de izquierda a derecha, pero si se interactúa
+// con él, se transforma para moverse con el dedo de lado a lado. Después de 20
+// segundos de inactividad se vuelve a mover sola como al principio». Tocarla
+// —arrastrarla, abrir una tarjeta, pulsar una flecha— la pone en MANUAL: deja de
+// andar sola, sigue al dedo y, al soltarla con impulso, se desliza y frena. A los
+// `INACTIVIDAD_MS` sin tocarla vuelve a andar, persiguiendo su velocidad como
+// siempre (sin salto). Pasar por encima con el dedo para bajar por la página NO
+// cuenta: eso lo decide el navegador (`touch-action: pan-y`) y no llega aquí como
+// arrastre. El ratón no cambia: las flechas aceleran al pasar por encima.
+//
 // Se pide desde el navegador (`/api/catalogo/sneak-peek`) por la misma razón que
 // la cinta de mercado: así la página sigue siendo estática y un lote nuevo
 // aparece sin volver a construir el sitio. Si la petición falla, la cinta NO se
@@ -57,6 +68,14 @@ import styles from "./SneakPeek.module.css";
 // recibe el valor y ya. Es lo que lo hace montable en las siete superficies.
 
 type Variant = "home" | "kr" | "cp";
+
+/** A los cuántos milisegundos sin tocarla vuelve a andar sola una cinta que se tomó con el dedo (owner, 2026-10-10). */
+const INACTIVIDAD_MS = 20_000;
+/** Lo que tiene que correrse el dedo, en horizontal y más que en vertical, para que el toque sea un arrastre. */
+const UMBRAL_ARRASTRE_PX = 8;
+
+const movimientoReducido = () =>
+  typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const T: Record<
   SneakPeekLang,
@@ -410,6 +429,15 @@ export function SneakPeek({
   const objetivoVelRef = useRef(0);
   const destinoRef = useRef<number | null>(null);
   const alLlegarRef = useRef<(() => void) | null>(null);
+  /** El dedo (V5.201). MANUAL: alguien tocó la cinta y no ha pasado `INACTIVIDAD_MS`; no anda sola. */
+  const manualRef = useRef(false);
+  /** El toque en curso: dónde empezó, dónde va, y la velocidad del dedo (px/s) para la inercia al soltar. */
+  const arrastreRef = useRef<{ id: number; x0: number; y0: number; x: number; t: number; vel: number; movido: boolean } | null>(null);
+  /** Un arrastre que acaba ENCIMA de una tarjeta no la abre (ni sigue el enlace del Dossier): hasta aquí se tragan los clics. */
+  const sinClicHastaRef = useRef(0);
+  /** El reloj de la inactividad, y con qué se tocó la cinta la última vez (una flecha pulsada con el dedo no «pasa por encima»). */
+  const relojRef = useRef<number | undefined>(undefined);
+  const ultimoPunteroRef = useRef<string>("mouse");
 
   useEffect(() => {
     let alive = true;
@@ -455,6 +483,13 @@ export function SneakPeek({
           } else {
             posRef.current += d * Math.min(1, dt * 9);
           }
+        } else if (arrastreRef.current?.movido) {
+          // El dedo la lleva: la posición ya la movió `onPointerMove`; aquí solo se pinta.
+        } else if (manualRef.current) {
+          // Suelta tras un arrastre: sigue por inercia y frena sola. No vuelve a andar hasta que pase la inactividad.
+          velRef.current *= Math.exp(-dt * 3.2);
+          if (Math.abs(velRef.current) < 4) velRef.current = 0;
+          posRef.current += velRef.current * dt;
         } else if (!reducido) {
           velRef.current += (objetivoVelRef.current - velRef.current) * Math.min(1, dt * 5);
           posRef.current += velRef.current * dt;
@@ -519,6 +554,91 @@ export function SneakPeek({
     [volteada]
   );
 
+  // El reloj de la inactividad no sobrevive al módulo.
+  useEffect(() => {
+    const reloj = relojRef;
+    return () => window.clearTimeout(reloj.current);
+  }, []);
+
+  /** Alguien tocó la cinta: deja de andar sola hasta que pasen `INACTIVIDAD_MS` sin tocarla. */
+  const tomarElMando = () => {
+    manualRef.current = true;
+    window.clearTimeout(relojRef.current);
+  };
+  const armarReloj = () => {
+    window.clearTimeout(relojRef.current);
+    relojRef.current = window.setTimeout(() => {
+      manualRef.current = false;
+    }, INACTIVIDAD_MS);
+  };
+
+  const alApoyar = (e: React.PointerEvent<HTMLDivElement>) => {
+    ultimoPunteroRef.current = e.pointerType;
+    if (e.pointerType === "mouse" || movimientoReducido()) return;
+    arrastreRef.current = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, t: e.timeStamp, vel: 0, movido: false };
+  };
+
+  const alMover = (e: React.PointerEvent<HTMLDivElement>) => {
+    const a = arrastreRef.current;
+    if (!a || a.id !== e.pointerId) return;
+    if (!a.movido) {
+      const dx0 = e.clientX - a.x0;
+      if (Math.abs(dx0) < UMBRAL_ARRASTRE_PX || Math.abs(dx0) < Math.abs(e.clientY - a.y0)) return;
+      // Empieza el arrastre: la cinta pasa a manual, se olvida de cualquier centrado y cierra la tarjeta abierta (quien arrastra
+      // está mirando la cinta otra vez, no esa tarjeta).
+      a.movido = true;
+      tomarElMando();
+      destinoRef.current = null;
+      alLlegarRef.current = null;
+      velRef.current = 0;
+      setVolteada(null);
+    }
+    const dx = e.clientX - a.x;
+    const dt = Math.max(1, e.timeStamp - a.t) / 1000;
+    posRef.current += dx;
+    a.vel = a.vel * 0.6 + (dx / dt) * 0.4;
+    a.x = e.clientX;
+    a.t = e.timeStamp;
+  };
+
+  const alSoltar = (e: React.PointerEvent<HTMLDivElement>, cancelado: boolean) => {
+    const a = arrastreRef.current;
+    if (!a || a.id !== e.pointerId) return;
+    arrastreRef.current = null;
+    if (a.movido) {
+      // La inercia sale de la velocidad del dedo, salvo que se quedara quieto antes de levantarlo.
+      velRef.current = e.timeStamp - a.t > 90 ? 0 : Math.max(-2400, Math.min(2400, a.vel));
+      sinClicHastaRef.current = performance.now() + 400;
+      armarReloj();
+    } else if (!cancelado) {
+      // Un toque sin arrastre (abrir una tarjeta, una flecha) también es tocar la cinta.
+      tomarElMando();
+      velRef.current = 0;
+      armarReloj();
+    }
+    // `cancelado` sin arrastre = el navegador se quedó el gesto para bajar por la página: eso no es tocar la cinta.
+  };
+
+  /** En táctil una flecha no puede «pasar por encima»: al pulsarla desliza la cinta una tarjeta hacia su lado. */
+  const empujarUnaTarjeta = (lado: "izq" | "der") => {
+    const pista = pistaRef.current;
+    const tarjeta = pista?.querySelector<HTMLElement>(`.${styles.card}`);
+    if (!pista || !tarjeta) return;
+    const paso = tarjeta.offsetWidth + 18; // la tarjeta y sus dos márgenes de 9 px
+    setVolteada(null);
+    destinoRef.current = posRef.current + (lado === "der" ? paso : -paso);
+    alLlegarRef.current = null;
+  };
+
+  /** El foco solo acelera si es de TECLADO: el que deja un toque en el móvil se quedaría pegado acelerando la cinta. */
+  const focoDeTeclado = (el: HTMLElement) => {
+    try {
+      return el.matches(":focus-visible");
+    } catch {
+      return true;
+    }
+  };
+
   // Escape cierra la tarjeta abierta: si algo se despliega, tiene que poder
   // cerrarse sin buscar el sitio exacto donde volver a pulsar.
   useEffect(() => {
@@ -575,7 +695,20 @@ export function SneakPeek({
       {!data ? (
         <div className={styles.loading} aria-hidden />
       ) : (
-        <div className={styles.cinta} ref={cintaRef}>
+        <div
+          className={styles.cinta}
+          ref={cintaRef}
+          onPointerDown={alApoyar}
+          onPointerMove={alMover}
+          onPointerUp={(e) => alSoltar(e, false)}
+          onPointerCancel={(e) => alSoltar(e, true)}
+          onClickCapture={(e) => {
+            if (performance.now() < sinClicHastaRef.current) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          }}
+        >
           {/* Las dos flechas no navegan: ACELERAN el paso hacia su lado mientras
               el ratón (o el foco) está encima. Al soltar, la cinta vuelve a su
               ritmo de lectura SIN dar un salto — la velocidad se persigue, no se
@@ -587,12 +720,16 @@ export function SneakPeek({
               type="button"
               className={`${styles.flecha} ${lado === "izq" ? styles.flechaIzq : styles.flechaDer}`}
               aria-label={lado === "izq" ? t.flechaAnterior : t.flechaSiguiente}
-              onMouseEnter={() => setImpulso(lado)}
-              onMouseLeave={() => setImpulso(null)}
-              onFocus={() => setImpulso(lado)}
+              onPointerEnter={(e) => e.pointerType === "mouse" && setImpulso(lado)}
+              onPointerLeave={(e) => e.pointerType === "mouse" && setImpulso(null)}
+              onFocus={(e) => focoDeTeclado(e.currentTarget) && setImpulso(lado)}
               onBlur={() => setImpulso(null)}
               onClick={() => {
-                pistaRef.current?.scrollBy({ left: lado === "izq" ? -640 : 640, behavior: "smooth" });
+                if (movimientoReducido()) {
+                  pistaRef.current?.scrollBy({ left: lado === "izq" ? -640 : 640, behavior: "smooth" });
+                } else if (ultimoPunteroRef.current !== "mouse") {
+                  empujarUnaTarjeta(lado);
+                }
               }}
             >
               <span aria-hidden>{lado === "izq" ? "‹" : "›"}</span>

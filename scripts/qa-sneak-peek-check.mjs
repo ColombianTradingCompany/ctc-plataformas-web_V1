@@ -153,8 +153,10 @@ check("el reverso no repite el puntaje", !/styles\.scoreRow/.test(COMPONENTE));
 
 // ── 10. Las flechas de los extremos ─────────────────────────────────────────
 check("hay flecha a cada lado", COMPONENTE.includes("styles.flechaIzq") && COMPONENTE.includes("styles.flechaDer"));
-check("aceleran con el ratón Y con el foco", COMPONENTE.includes("onMouseEnter") && COMPONENTE.includes("onFocus"));
-check("y sueltan al salir", COMPONENTE.includes("onMouseLeave") && COMPONENTE.includes("onBlur"));
+// V5.201: el «pasar por encima» es SOLO del ratón, y el foco solo acelera si es de teclado: el toque de un dedo dejaba la flecha
+// «encima» o enfocada y la cinta se quedaba acelerando.
+check("aceleran con el ratón (solo el ratón) Y con el foco de teclado", COMPONENTE.includes('onPointerEnter={(e) => e.pointerType === "mouse" && setImpulso(lado)}') && COMPONENTE.includes("onFocus={(e) => focoDeTeclado(e.currentTarget) && setImpulso(lado)}") && COMPONENTE.includes('return el.matches(":focus-visible");') && !COMPONENTE.includes("onMouseEnter"));
+check("y sueltan al salir", COMPONENTE.includes('onPointerLeave={(e) => e.pointerType === "mouse" && setImpulso(null)}') && COMPONENTE.includes("onBlur={() => setImpulso(null)}"));
 check("la flecha izquierda invierte el sentido", COMPONENTE.includes('impulso === "izq"') && COMPONENTE.includes("-RAPIDO"));
 check("las flechas llevan rótulo accesible", COMPONENTE.includes("t.flechaAnterior") && COMPONENTE.includes("t.flechaSiguiente"));
 
@@ -173,6 +175,26 @@ check("y la monta ENTRE «las dos clases» y «Dónde encaja»", CAAS.indexOf("{
 check("al pulsar se centra la tarjeta antes de voltearla", COMPONENTE.includes("centrarYVoltear"));
 check("el destino se calcula con el centro de la cinta", COMPONENTE.includes("cinta.clientWidth / 2 - centroTarjeta"));
 check("se elige la copia más cercana de la tarjeta", COMPONENTE.includes("while (destino - posRef.current > w / 2)"));
+
+// ── 14. El dedo (owner, 2026-10-10, V5.201) ─────────────────────────────────
+// «En móvil, que el carrusel siga moviéndose por defecto de izquierda a derecha, pero si se interactúa con él, se transforma
+// para moverse con el dedo de lado a lado. Después de 20 segundos de inactividad se vuelve a mover solo como al principio.»
+{
+  const motor = COMPONENTE.slice(COMPONENTE.indexOf("const paso = (ahora: number) => {"), COMPONENTE.indexOf("raf = requestAnimationFrame(paso);\n    };"));
+  const iDestino = motor.indexOf("if (destinoRef.current !== null) {");
+  const iDedo = motor.indexOf("} else if (arrastreRef.current?.movido) {");
+  const iManual = motor.indexOf("} else if (manualRef.current) {");
+  const iSola = motor.indexOf("} else if (!reducido) {");
+  check("dedo · los 20 s de inactividad, en una constante", COMPONENTE.includes("const INACTIVIDAD_MS = 20_000;"));
+  check("dedo · la cinta escucha al puntero (apoyar, mover, soltar, cancelar) y se traga el clic de un arrastre", COMPONENTE.includes("onPointerDown={alApoyar}") && COMPONENTE.includes("onPointerMove={alMover}") && COMPONENTE.includes("onPointerUp={(e) => alSoltar(e, false)}") && COMPONENTE.includes("onPointerCancel={(e) => alSoltar(e, true)}") && COMPONENTE.includes("if (performance.now() < sinClicHastaRef.current) {") && COMPONENTE.includes("sinClicHastaRef.current = performance.now() + 400;"));
+  check("dedo · el ratón no arrastra (escritorio igual que antes) y con movimiento reducido manda el scroll nativo", COMPONENTE.includes('if (e.pointerType === "mouse" || movimientoReducido()) return;'));
+  check("dedo · solo es arrastre si el dedo se corre en HORIZONTAL más que en vertical", COMPONENTE.includes("if (Math.abs(dx0) < UMBRAL_ARRASTRE_PX || Math.abs(dx0) < Math.abs(e.clientY - a.y0)) return;"));
+  check("dedo · el motor: centrar, luego el dedo, luego la inercia manual y SOLO después la marcha sola", iDestino > 0 && iDedo > iDestino && iManual > iDedo && iSola > iManual && motor.includes("velRef.current *= Math.exp(-dt * 3.2);"));
+  check("dedo · a los 20 s sin tocarla vuelve a andar sola (el reloj apaga el modo manual)", COMPONENTE.includes("relojRef.current = window.setTimeout(() => {\n      manualRef.current = false;\n    }, INACTIVIDAD_MS);"));
+  check("dedo · bajar por la página pasando por la cinta NO la para (un cancelado sin arrastre no es tocarla)", COMPONENTE.includes("} else if (!cancelado) {") && /@media\(prefers-reduced-motion:no-preference\)\{\s*\.cinta\{touch-action:pan-y\}/.test(CSS));
+  check("dedo · en táctil una flecha desliza la cinta una tarjeta hacia su lado", COMPONENTE.includes('} else if (ultimoPunteroRef.current !== "mouse") {\n                  empujarUnaTarjeta(lado);') && COMPONENTE.includes('destinoRef.current = posRef.current + (lado === "der" ? paso : -paso);'));
+  check("dedo · el reloj no sobrevive al módulo", COMPONENTE.includes("return () => window.clearTimeout(reloj.current);"));
+}
 check("y se voltea solo AL LLEGAR", COMPONENTE.includes("alLlegarRef.current = () => setVolteada"));
 check("el bucle no envuelve mientras centra", COMPONENTE.includes("if (destinoRef.current === null) {"));
 check("la tarjeta abierta crece un 15 %", CSS.includes(".flipped{transform:scale(1.15)"));

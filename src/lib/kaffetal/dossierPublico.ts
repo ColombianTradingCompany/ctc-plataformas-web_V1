@@ -93,6 +93,8 @@ export function dossierPublico(d: DossierCtcxData, o: { url: string; volver: str
     catalogoUrl: d.catalogoUrl,
     qrSvg: d.qrSvg,
     generatedOn: d.generatedOn,
-    blindaje: { puedeImprimir: true, marca: "" },
+    // V5.201 (owner, 2026-10-10): el Dossier público no se imprime ni se guarda en PDF (se consulta en línea); sin marca de
+    // agua porque no hay productor que nombrar.
+    blindaje: { puedeImprimir: false, marca: "" },
   };
 }

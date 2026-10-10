@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Info } from "lucide-react";
 import { useLang, type Lang } from "@/components/lang/i18n";
 import { InfoPanel, type InfoEntry } from "@/components/InfoPanel";
 import { SellBuyCtas } from "./SellBuyCtas";
@@ -17,16 +18,34 @@ import styles from "./MomentSection.module.css";
 //     perfil) abren su ficha en frases cortas y viñetas.
 // Es el dibujo del owner: figuras del mismo tamaño y la misma familia, en fila.
 
-/** El apex de cada curva del SVG, en % del lienzo (viewBox 720×250). Se calcula
- *  a mano porque son curvas cuadráticas: apex = (P0 + 2·C + P1) / 4. Si se
- *  mueve una curva, se mueve su punto — están atados a la misma geometría. */
-const DOT_POS = [
-  { left: 13.19, top: 72.0 },
-  { left: 33.33, top: 66.0 },
-  { left: 55.56, top: 58.0 },
-  { left: 81.25, top: 48.0 },
+// V5.201 (owner, 2026-10-10): «que los títulos de cada ola sean visiblemente correspondientes a cada una, que el nombre de la
+// línea "Value of Identity" sea claramente referente a ella y además también sea clickable con una breve explicación, y que la
+// referencia al tiempo se mueva abajo a la izquierda y vaya de lado a lado».
+//   · El nombre de cada ola va PEGADO a su punto, con un hilo de su color: ya no flota a media altura (el de la 4ª quedaba junto a
+//     la flecha roja y se leía como su rótulo).
+//   · La línea de la identidad corre POR ENCIMA de los cuatro nombres y lleva su rótulo en la punta, con su muestra punteada; el
+//     rótulo es un botón que abre qué es el valor de la identidad.
+//   · El tiempo es un eje de lado a lado al pie del gráfico, con su nombre abajo a la izquierda.
+
+/** El lienzo del SVG: 720 × 290 desde la V5.201 (20 de aire arriba para el rótulo de la identidad y el eje del tiempo al pie). */
+const ANCHO = 720;
+const ALTO = 290;
+/** El apex de cada ola: apex = (P0 + 2·C + P1) / 4 de su cuadrática (base en y = 232). Si se mueve una curva, se mueve su punto
+ *  (y su nombre). La línea de la identidad está calculada para pasar por encima de los cuatro nombres aun con el lienzo en su
+ *  ancho mínimo (600 px, en el móvil), donde los nombres ocupan más del dibujo. */
+const APEX = [
+  { x: 95, y: 200 },
+  { x: 240, y: 185 },
+  { x: 400, y: 165 },
+  { x: 585, y: 140 },
 ];
+const DOT_POS = APEX.map((a) => ({ left: (a.x / ANCHO) * 100, top: (a.y / ALTO) * 100 }));
 const DOT_COLOR = ["#97A3B2", "#5E86AC", "#16436B", "#E3A32C"];
+/** El nombre de cada ola, en un tono de su color que se lee sobre blanco (el gris y el oro de las curvas son claros para texto). */
+const NAME_COLOR = ["#6B7A8B", "#4A7299", "#16436B", "#9C6F15"];
+/** La punta de la línea de la identidad: ahí va su rótulo. */
+const PUNTA = { x: 700, y: 44 };
+const ROJO = "#C4402F";
 
 /** Las cinco figuras. Mismo lienzo, mismo grosor de trazo, mismo tamaño: lo
  *  único que cambia entre ellas es el dibujo y el color. */
@@ -91,6 +110,9 @@ type Dict = {
   dotAria: string;
   axis: [string, string, string, string];
   curveLabel: string;
+  /** Qué es el valor de la identidad: lo abre el rótulo de la línea (V5.201). */
+  identity: Card;
+  curveAria: string;
   curveNames: [string, string, string, string];
   /** La ficha de cada ola, la que abre el punto sobre la curva. */
   waves: [Card, Card, Card, Card];
@@ -105,11 +127,22 @@ const T: Record<Lang, Dict> = {
     intro:
       "El café vive el mismo camino que recorrió el vino: de líquido genérico a expresión de un lugar y unas manos. Entender ese movimiento es entender dónde está el valor.",
     vt: "Valor de la identidad por kg",
-    vtTime: "tiempo →",
+    vtTime: "tiempo",
     chartAria: "Las cuatro olas del café: valor creciente de la identidad",
     dotAria: "Ver la",
     axis: ["1ª · Commodity", "2ª · Marca", "3ª · Artesanía", "4ª · Ciencia + trazabilidad"],
     curveLabel: "valor de la identidad",
+    curveAria: "Qué es el valor de la identidad",
+    identity: {
+      title: "El valor de la identidad",
+      lead: "Lo que el mercado paga, por kilo, por saber de dónde viene un café, quién lo cultivó y cómo se hizo.",
+      bullets: [
+        "En la 1ª ola casi no existe: el café es anónimo y se paga por peso.",
+        "Sube con cada ola: primero la marca, después el origen y hoy el origen con datos que lo demuestran.",
+        "En la 4ª ola la identidad verificable (finca, proceso, perfil de taza y trazabilidad EUDR) es lo que más pesa en el precio.",
+        "Es el valor que CTC hace visible y demostrable lote a lote.",
+      ],
+    },
     curveNames: ["llenar tazas", "la experiencia", "el origen", "el terruño con datos"],
     waves: [
       {
@@ -211,11 +244,22 @@ const T: Record<Lang, Dict> = {
     intro:
       "Coffee is walking the same road wine once walked: from generic liquid to the expression of a place and a pair of hands. To understand that movement is to understand where the value sits.",
     vt: "Value of identity per kg",
-    vtTime: "time →",
+    vtTime: "time",
     chartAria: "The four waves of coffee: the growing value of identity",
     dotAria: "See the",
     axis: ["1st · Commodity", "2nd · Brand", "3rd · Craft", "4th · Science + traceability"],
     curveLabel: "value of identity",
+    curveAria: "What the value of identity is",
+    identity: {
+      title: "The value of identity",
+      lead: "What the market pays, per kilo, to know where a coffee comes from, who grew it and how it was made.",
+      bullets: [
+        "In the 1st wave it barely exists: coffee is anonymous and paid by weight.",
+        "It rises with every wave: first the brand, then the origin, and today the origin with data that proves it.",
+        "In the 4th wave verifiable identity (farm, process, cup profile and EUDR traceability) weighs most in the price.",
+        "It is the value CTC makes visible and provable, lot by lot.",
+      ],
+    },
     curveNames: ["filling cups", "the experience", "the origin", "terroir with data"],
     waves: [
       {
@@ -314,11 +358,22 @@ const T: Record<Lang, Dict> = {
     intro:
       "Der Kaffee geht denselben Weg, den der Wein gegangen ist: von der generischen Flüssigkeit zum Ausdruck eines Ortes und zweier Hände. Diese Bewegung zu verstehen heißt zu verstehen, wo der Wert liegt.",
     vt: "Wert der Identität pro kg",
-    vtTime: "Zeit →",
+    vtTime: "Zeit",
     chartAria: "Die vier Wellen des Kaffees: der wachsende Wert der Identität",
     dotAria: "Mehr zur",
     axis: ["1. · Commodity", "2. · Marke", "3. · Handwerk", "4. · Wissenschaft + Rückverfolgbarkeit"],
     curveLabel: "Wert der Identität",
+    curveAria: "Was der Wert der Identität ist",
+    identity: {
+      title: "Der Wert der Identität",
+      lead: "Was der Markt pro Kilo dafür zahlt, zu wissen, woher ein Kaffee kommt, wer ihn angebaut hat und wie er entstand.",
+      bullets: [
+        "In der 1. Welle gibt es ihn kaum: Kaffee ist anonym und wird nach Gewicht bezahlt.",
+        "Er steigt mit jeder Welle: erst die Marke, dann der Ursprung und heute der Ursprung mit Daten, die ihn belegen.",
+        "In der 4. Welle wiegt die überprüfbare Identität (Finca, Prozess, Tassenprofil und EUDR-Rückverfolgbarkeit) im Preis am meisten.",
+        "Es ist der Wert, den CTC Los für Los sichtbar und belegbar macht.",
+      ],
+    },
     curveNames: ["Tassen füllen", "das Erlebnis", "der Ursprung", "Terroir mit Daten"],
     waves: [
       {
@@ -439,7 +494,6 @@ export function MomentSection() {
         <div className={styles.chartCard}>
           <div className={styles.vt}>
             <span>{t.vt}</span>
-            <b>{t.vtTime}</b>
           </div>
 
           {/* El lienzo. En pantallas estrechas NO se aplasta: se desliza en
@@ -447,63 +501,75 @@ export function MomentSection() {
               metida en 320 px deja los rótulos en 5 px, que es no tenerlos. */}
           <div className={styles.scroller}>
             <div className={styles.canvas}>
-              <svg viewBox="0 0 720 250" role="img" aria-label={t.chartAria}>
-                <line x1="14" y1="212" x2="706" y2="212" stroke="#DDE1E7" strokeWidth={1.5} />
-                <path d="M20 212 Q95 148 170 212" fill="rgba(151,163,178,.18)" stroke="#97A3B2" strokeWidth={2} />
-                <path d="M150 212 Q240 118 330 212" fill="rgba(22,67,107,.12)" stroke="#5E86AC" strokeWidth={2} />
-                <path d="M300 212 Q400 78 500 212" fill="rgba(22,67,107,.2)" stroke="#16436B" strokeWidth={2.2} />
-                <path d="M465 212 Q585 28 705 212" fill="rgba(227,163,44,.22)" stroke="#E3A32C" strokeWidth={2.6} />
-                <path d="M20 200 C 240 190, 480 130, 700 40" fill="none" stroke="#C4402F" strokeWidth={2} strokeDasharray="6 6" />
-                <path d="M700 40 l-12 -1 M700 40 l-4 11" stroke="#C4402F" strokeWidth={2} fill="none" />
-                <text x="95" y="234" textAnchor="middle" fontFamily="Spline Sans Mono,monospace" fontSize={11} fill="#5A6472">
+              <svg viewBox={`0 0 ${ANCHO} ${ALTO}`} role="img" aria-label={t.chartAria}>
+                <line x1="14" y1="232" x2="706" y2="232" stroke="#DDE1E7" strokeWidth={1.5} />
+                <path d="M20 232 Q95 168 170 232" fill="rgba(151,163,178,.18)" stroke="#97A3B2" strokeWidth={2} />
+                <path d="M150 232 Q240 138 330 232" fill="rgba(22,67,107,.12)" stroke="#5E86AC" strokeWidth={2} />
+                <path d="M300 232 Q400 98 500 232" fill="rgba(22,67,107,.2)" stroke="#16436B" strokeWidth={2.2} />
+                <path d="M465 232 Q585 48 705 232" fill="rgba(227,163,44,.22)" stroke="#E3A32C" strokeWidth={2.6} />
+                {/* La línea de la identidad corre por ENCIMA de los nombres de las olas y sube cada vez más deprisa. */}
+                <path d={`M20 126 C 240 118, 460 84, ${PUNTA.x} ${PUNTA.y}`} fill="none" stroke={ROJO} strokeWidth={2} strokeDasharray="6 6" />
+                <path d={`M${PUNTA.x} ${PUNTA.y} l-11.2 -4.2 M${PUNTA.x} ${PUNTA.y} l-9.3 7.6`} stroke={ROJO} strokeWidth={2} fill="none" />
+                <text x="95" y="254" textAnchor="middle" fontFamily="Spline Sans Mono,monospace" fontSize={11} fill="#5A6472">
                   {t.axis[0]}
                 </text>
-                <text x="240" y="234" textAnchor="middle" fontFamily="Spline Sans Mono,monospace" fontSize={11} fill="#5A6472">
+                <text x="240" y="254" textAnchor="middle" fontFamily="Spline Sans Mono,monospace" fontSize={11} fill="#5A6472">
                   {t.axis[1]}
                 </text>
-                <text x="400" y="234" textAnchor="middle" fontFamily="Spline Sans Mono,monospace" fontSize={11} fill="#16436B" fontWeight={700}>
+                <text x="400" y="254" textAnchor="middle" fontFamily="Spline Sans Mono,monospace" fontSize={11} fill="#16436B" fontWeight={700}>
                   {t.axis[2]}
                 </text>
-                <text x="585" y="234" textAnchor="middle" fontFamily="Spline Sans Mono,monospace" fontSize={11} fill="#9c6f15" fontWeight={700}>
+                <text x="585" y="254" textAnchor="middle" fontFamily="Spline Sans Mono,monospace" fontSize={11} fill="#9c6f15" fontWeight={700}>
                   {t.axis[3]}
                 </text>
-                <text x="655" y="26" textAnchor="end" fontFamily="Spline Sans Mono,monospace" fontSize={10.5} fill="#C4402F">
-                  {t.curveLabel}
-                </text>
-                <text x="95" y="160" textAnchor="middle" fontFamily="Fraunces,serif" fontSize={13} fill="#97A3B2" fontStyle="italic">
-                  {t.curveNames[0]}
-                </text>
-                <text x="240" y="132" textAnchor="middle" fontFamily="Fraunces,serif" fontSize={13} fill="#5E86AC" fontStyle="italic">
-                  {t.curveNames[1]}
-                </text>
-                <text x="400" y="94" textAnchor="middle" fontFamily="Fraunces,serif" fontSize={13} fill="#16436B" fontStyle="italic">
-                  {t.curveNames[2]}
-                </text>
-                <text x="585" y="46" textAnchor="middle" fontFamily="Fraunces,serif" fontSize={13.5} fill="#9c6f15" fontStyle="italic" fontWeight={600}>
-                  {t.curveNames[3]}
-                </text>
+                {/* El tiempo: un eje de lado a lado al pie, con su nombre abajo a la izquierda. */}
+                <g className={styles.tiempo}>
+                  <text x="14" y="282" fontFamily="Spline Sans Mono,monospace" fontSize={10.5} letterSpacing="1.2">
+                    {t.vtTime.toUpperCase()}
+                  </text>
+                  <path d="M70 278 H 704 M704 278 l-9 -4.5 M704 278 l-9 4.5" fill="none" strokeWidth={1.4} />
+                </g>
               </svg>
 
-              {/* Los puntos van en HTML, no dentro del SVG: así conservan el
-                  tamaño de toque de un botón real (44 px de área) por ancha o
-                  estrecha que quede la curva, y son enfocables con el teclado. */}
+              {/* El rótulo de la línea de la identidad, en su punta y con su muestra punteada: es un botón que explica qué es. */}
+              <button
+                type="button"
+                className={styles.identidad}
+                style={{ left: `${(PUNTA.x / ANCHO) * 100}%`, top: `${(PUNTA.y / ALTO) * 100}%` }}
+                aria-label={t.curveAria}
+                onClick={() => setOpen(asEntry("identidad", t.identity, ROJO, t.eyebrow))}
+              >
+                <svg className={styles.identidadMuestra} viewBox="0 0 30 6" aria-hidden>
+                  <path d="M1 3h28" stroke={ROJO} strokeWidth={2} strokeDasharray="5 4" />
+                </svg>
+                <span>{t.curveLabel}</span>
+                <Info size={13} strokeWidth={2.2} aria-hidden />
+              </button>
+
+              {/* Cada ola es UN botón en HTML (no dentro del SVG, para que el área de toque y el foco sean de botón de verdad):
+                  su nombre arriba, un hilo de su color y su punto numerado, que cae justo en la cima de su curva. */}
               {t.waves.map((w, i) => (
                 <button
                   key={w.title}
                   type="button"
-                  className={styles.dot}
+                  className={styles.ola}
                   style={
                     {
                       left: `${DOT_POS[i].left}%`,
                       top: `${DOT_POS[i].top}%`,
                       "--dc": DOT_COLOR[i],
+                      "--nc": NAME_COLOR[i],
                     } as React.CSSProperties
                   }
                   aria-label={`${t.dotAria} ${w.title}`}
                   title={w.title}
                   onClick={() => setOpen(asEntry(`wave-${i}`, w, DOT_COLOR[i], t.eyebrow))}
                 >
-                  <span aria-hidden>{i + 1}</span>
+                  <span className={styles.olaNombre}>{t.curveNames[i]}</span>
+                  <span className={styles.olaHilo} aria-hidden />
+                  <span className={styles.dot} aria-hidden>
+                    {i + 1}
+                  </span>
                 </button>
               ))}
             </div>

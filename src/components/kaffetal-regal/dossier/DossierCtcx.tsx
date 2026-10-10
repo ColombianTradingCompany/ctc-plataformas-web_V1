@@ -10,6 +10,11 @@
 // V5.198 (owner, 2026-10-10): el MISMO documento es el Dossier público del CTCx Public Catalogue cuando trae `d.publico`
 // (lo pone `lib/kaffetal/dossierPublico.ts`, la lista blanca): sin la Visa ni la Mejora, el origen por región y sin productor,
 // el respaldo sin la matriz interna, sin marca de agua y con la vuelta a «Find my Lot».
+// V5.201 (owner, 2026-10-10): «El Dossier que abre el carrusel NO debe tener la opción de imprimir en PDF. Es más, quiero que
+// sea un html continuo con un botón en la parte inferior para navegar sus titulares». El público ya no son hojas A4: es UNA
+// columna de papel con las secciones una tras otra (cada una con su ancla, sin cabecera ni pie de página; la línea legal va una
+// vez, al final), el índice de la portada enlaza a ellas y `NavegacionDelDossier` flota abajo. Sin botón de imprimir, y si
+// alguien imprime desde el navegador sale solo el aviso de que se consulta en línea. El del productor no cambia.
 
 import Link from "next/link";
 import { Big_Shoulders } from "next/font/google";
@@ -22,6 +27,7 @@ import { RUEDA, ZONA_LABEL, zonaDeIntensidad } from "@/lib/catacion/rueda";
 import { ICONO_DE_ACIDEZ, ICONO_DE_TEXTURA, IconoDeNota } from "@/components/catacion/IconosDeSabor";
 import { TEXTOS, type Textos } from "./textos";
 import { BotonImprimir } from "./BotonImprimir";
+import { NavegacionDelDossier } from "./NavegacionDelDossier";
 import { MarcaDeAgua } from "../blindaje/MarcaDeAgua";
 import { Blindaje } from "../blindaje/Blindaje";
 import { AVISO_SIN_CONTRATO } from "@/lib/kaffetal/blindaje";
@@ -33,6 +39,9 @@ const display = Big_Shoulders({ subsets: ["latin"], weight: ["700", "800"], vari
 type Hoja = { id: keyof Textos["secciones"] | "portada"; render: (n: number, total: number) => React.ReactNode };
 
 const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
+
+/** V5.201: el ancla de cada sección del Dossier público (la usan el índice de la portada y la navegación de abajo). */
+const ancla = (id: Hoja["id"]) => `dossier-${id}`;
 
 function Dato({ k, v, mono = false }: { k: string; v: React.ReactNode; mono?: boolean }) {
   if (v == null || v === "") return null;
@@ -115,8 +124,27 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
   const hayFisico = !!(cif && (cif.pesos || cif.mallas.length || cif.humedadVerde != null || cif.defectos.length));
 
   // ── Encabezado y pie comunes ──
-  const marco = (id: Hoja["id"], n: number, total: number, cuerpo: React.ReactNode) => (
-    <section className={s.hoja} key={id} aria-label={id === "portada" ? (pub ? t.docPublico : t.doc) : t.secciones[id]}>
+  const marco = (id: Hoja["id"], n: number, total: number, cuerpo: React.ReactNode) =>
+    pub ? (
+      // V5.201 · el Dossier público: una SECCIÓN del documento continuo. La franja de la marca va una vez, arriba de la portada;
+      // las demás abren con su número y su nombre (es lo que lista la navegación de abajo).
+      <section className={s.seccionContinua} key={id} id={ancla(id)} tabIndex={-1} aria-label={id === "portada" ? t.docPublico : t.secciones[id]}>
+        {id === "portada" ? (
+          <div className={s.franja} aria-hidden>
+            <span />
+            <span />
+            <span />
+          </div>
+        ) : (
+          <div className={s.cabezaSeccion}>
+            <span className={s.mono}>{String(n).padStart(2, "0")}</span>
+            <span>{t.secciones[id]}</span>
+          </div>
+        )}
+        <div className={s.cuerpo}>{cuerpo}</div>
+      </section>
+    ) : (
+    <section className={s.hoja} key={id} aria-label={id === "portada" ? t.doc : t.secciones[id]}>
       <div className={s.franja} aria-hidden>
         <span />
         <span />
@@ -144,7 +172,7 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
         </span>
       </div>
     </section>
-  );
+    );
 
   const hojas: Hoja[] = [];
 
@@ -238,8 +266,18 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
                   .map((h, i) => ({ h, n: i + 2 }))
                   .map(({ h, n: pag }) => (
                     <li key={h.id}>
-                      <span>{h.id === "portada" ? "" : t.secciones[h.id]}</span>
-                      <b>{String(pag).padStart(2, "0")}</b>
+                      {pub ? (
+                        // V5.201 · en el documento continuo el índice no da páginas: lleva a la sección.
+                        <a href={`#${ancla(h.id)}`} className={s.indiceEnlace}>
+                          <span>{h.id === "portada" ? "" : t.secciones[h.id]}</span>
+                          <b>{String(pag).padStart(2, "0")}</b>
+                        </a>
+                      ) : (
+                        <>
+                          <span>{h.id === "portada" ? "" : t.secciones[h.id]}</span>
+                          <b>{String(pag).padStart(2, "0")}</b>
+                        </>
+                      )}
                     </li>
                   ))}
               </ol>
@@ -1267,18 +1305,48 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
   }
   hojas.sort((a, b) => ORDEN_DE_HOJAS.indexOf(a.id) - ORDEN_DE_HOJAS.indexOf(b.id));
   const total = hojas.length;
-  return (
-    <div className={cx(s.lienzo, display.variable)} lang={d.lang}>
-      <div className={s.barra}>
-        {pub && (
+
+  // V5.201 · el Dossier público: el documento continuo, sin imprimir, con la navegación de sus secciones abajo.
+  if (pub) {
+    return (
+      <div className={cx(s.lienzo, s.lienzoContinuo, display.variable)} lang={d.lang}>
+        <div className={s.barra}>
           <Link href={pub.volver} className={s.barraVolver}>
             ← {t.volverPortal}
           </Link>
-        )}
-        <a href={`${pub ? pub.url : `/kaffetal-regal/dossier/${d.lot.id}`}?lang=${d.lang === "en" ? "es" : "en"}`}>{t.otroIdioma}</a>
+          <a href={`${pub.url}?lang=${d.lang === "en" ? "es" : "en"}`}>{t.otroIdioma}</a>
+        </div>
+        <article className={s.papel}>
+          {hojas.map((h, i) => h.render(i + 1, total))}
+          <div className={cx(s.pie, s.pieContinuo)}>
+            <span>{CTC_LEGAL_LINE}</span>
+            <span className={s.mono} translate="no">
+              {d.lot.reference}
+            </span>
+          </div>
+        </article>
+        <NavegacionDelDossier
+          secciones={hojas.map((h, i) => ({ id: ancla(h.id), numero: String(i + 1).padStart(2, "0"), titulo: h.id === "portada" ? t.portadaNav : t.secciones[h.id] }))}
+          etiqueta={t.indice}
+          aria={t.navAria}
+          cerrar={t.navCerrar}
+        />
+        {/* Lo único que sale si alguien imprime desde el navegador (la hoja de estilos esconde todo lo demás). */}
+        <p className={s.soloImpresion}>
+          {t.soloEnLinea}
+          {d.catalogoUrl ? ` ${d.catalogoUrl.replace(/^https:\/\//, "")}` : ""}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cx(s.lienzo, display.variable)} lang={d.lang}>
+      <div className={s.barra}>
+        <a href={`/kaffetal-regal/dossier/${d.lot.id}?lang=${d.lang === "en" ? "es" : "en"}`}>{t.otroIdioma}</a>
         {d.blindaje.puedeImprimir ? <BotonImprimir label={t.imprimir} /> : <span className={s.candado}>{AVISO_SIN_CONTRATO[d.lang]}</span>}
       </div>
-      {!pub && <Blindaje puedeImprimir={d.blindaje.puedeImprimir} aviso={AVISO_SIN_CONTRATO[d.lang]} />}
+      <Blindaje puedeImprimir={d.blindaje.puedeImprimir} aviso={AVISO_SIN_CONTRATO[d.lang]} />
       {hojas.map((h, i) => h.render(i + 1, total))}
     </div>
   );

@@ -19,6 +19,37 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.201] — 2026-10-10 (commit pendiente)
+
+- **Cambiado**: el **gráfico de «Contexto · Por qué ahora»** de la portada de CTC (owner, 2026-10-10). El nombre de cada ola va
+  PEGADO a su cima, en una píldora de su color unida por un hilo a su punto numerado (antes flotaban a media altura y el de la 4.ª
+  se leía como el rótulo de la flecha roja); la **línea del valor de la identidad** corre por encima de los cuatro nombres y lleva
+  su rótulo en la punta, con su muestra punteada y un ícono de información: es un botón que abre una explicación breve de qué es
+  el valor de la identidad (ES · EN · DE). El **tiempo** pasó de la esquina de arriba a un eje de lado a lado al pie del gráfico,
+  con su nombre abajo a la izquierda. La geometría está calculada para que la línea pase limpia sobre los nombres también en el
+  ancho mínimo del lienzo (600 px, el móvil), donde los nombres se achican un poco (consulta de contenedor).
+- **Cambiado**: el **carrusel del Catálogo Activo** (CTC, KR y la familia CP) en una **pantalla táctil**: sigue andando solo de
+  izquierda a derecha, pero tocarlo —arrastrarlo, abrir una tarjeta, pulsar una flecha— lo pone en manual: sigue al dedo de lado a
+  lado, se desliza con inercia al soltarlo con impulso, y a los **20 s sin tocarlo** vuelve a andar solo, sin salto. Bajar por la
+  página pasando el dedo por encima no lo detiene (`touch-action: pan-y`), un arrastre que acaba sobre una tarjeta no la abre, y en
+  táctil cada flecha desliza la cinta una tarjeta hacia su lado. Con ratón no cambia nada: las flechas aceleran al pasar por encima
+  (ahora SOLO el ratón y el foco de teclado: el toque de un dedo las dejaba «encima» y la cinta se quedaba acelerando).
+- **Cambiado**: el **Dossier público** (el que abre el carrusel, `/ctcx-public-catalogue/CTC-L-…`) **ya no se imprime ni se guarda
+  en PDF**: sin el botón, y si alguien imprime desde el navegador sale solo el aviso de que se consulta en línea, con su dirección.
+  Y es un **HTML continuo**: una sola columna de papel con las secciones una tras otra (cada una con su número, su nombre y su
+  ancla; sin cabecera ni pie por hoja; la línea legal va una vez, al final), el índice de la portada lleva a cada sección, y un
+  botón fijo abajo («Contenido · la sección en curso») abre la lista de sus titulares y lleva a cada uno. El Dossier del productor
+  sigue en hojas A4, con su botón de imprimir y su blindaje.
+- **Cambiado**: en el móvil, los bloques de **«CTC Value Ecosystem»** de la portada de CTC van de dos en dos.
+- **Añadido**: una señal **«Click me»** («Haz clic» · «Klick mich») en el calendario del año (CTC, Kaffetal Regal y Cherry Picked)
+  para que se vea que las barras se abren; late suave y se va con la primera etapa abierta. Con el año entero a la vista va en el
+  hueco de julio a diciembre de la mitaca; cuando el año se desliza (el móvil), junto a la pista de arriba, señalando hacia abajo.
+- **Retirado**: el logotipo grande sobre plato claro que cerraba el pie de la portada de CTC (la marca sigue en la cabecera, en la
+  primera línea del pie y en la barra legal).
+- **Seguridad**: `qa-sneak-peek` (+9: el dedo, la inercia, los 20 s, el gesto vertical que no la para, las flechas solo de ratón o
+  teclado), `qa-ficha-publica` (+5: el documento continuo, sin imprimir, la navegación de abajo; el del productor intacto) y
+  `qa-catalogo-publico` (la marca de CTCx en la portada del Dossier público). Probado con mutaciones: las nueve muerden.
+
 ## [V5.200] — 2026-10-10 (commit 3795a92)
 
 - **Corregido**: el **ticker de noticias de la portada de CTC** mostraba temas que no son del café (owner, 2026-10-10). La causa: tomaba

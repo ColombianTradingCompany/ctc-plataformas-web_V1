@@ -283,6 +283,12 @@
    lados sin cortar el pop de la tarjeta por arriba. El relleno vertical le da
    sitio a ese 15 %. */
 .cinta{position:relative;overflow:hidden;padding:34px 0}
+/* V5.201 (owner, 2026-10-10): en una pantalla táctil la cinta se lleva con el dedo (lo hace el componente). `pan-y` le deja al
+   navegador el desplazamiento VERTICAL de la página y le entrega al componente el horizontal. Solo con movimiento: con
+   movimiento reducido la pista es una tira con scroll nativo, y ese scroll horizontal es del navegador. */
+@media(prefers-reduced-motion:no-preference){
+  .cinta{touch-action:pan-y}
+}
 .flecha{
   position:absolute;top:0;bottom:0;z-index:3;
   width:74px;border:0;padding:0;cursor:pointer;

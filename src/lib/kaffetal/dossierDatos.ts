@@ -511,7 +511,7 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
     qrSvg,
     generatedOn: new Date().toISOString(),
     blindaje: publico
-      ? { puedeImprimir: true, marca: "" }
+      ? { puedeImprimir: false, marca: "" } // V5.201: el público no se imprime (owner); `dossierPublico()` lo vuelve a fijar
       : {
           puedeImprimir: (((firmadosRaw as { id: string }[] | null) ?? []).length) > 0,
           marca: textoDeMarca({ referencia: ctcLotReference(lot.id), productor: producer?.fullName ?? null, fecha: new Date(), lang }),

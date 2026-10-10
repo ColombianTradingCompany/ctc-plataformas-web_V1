@@ -117,4 +117,4 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - `src/app/ocp/(app)/comprasActions.ts`: `barrerStagingCtcx` al firmar una subida (borra las abandonadas de más de una hora en
   `perfil/` y `lotes/<id>/`); `src/lib/compras/reglas.ts`: `STAGING_ABANDONO_MS`, `abandonadasDelStaging`.
 - DICT: ninguna entrada nueva. Guardianes: `qa-triage-catalogo` 65 (+4) · `qa-stock-ctcx` 86 (+7) · `qa-compras` 195 (+5).
-(commit: pendiente)
+(commit: 5ecabe8)

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.1] — 2026-10-10 (commit pendiente)
+## [V6.1] — 2026-10-10 (commit 5ecabe8)
 
 - **Seguridad**: **solo lo publicado es público** (auditoría de privacidad del 2026-10-10, hallazgos (a) y (b) del charter de
   `consolas`; sin decisión del owner de por medio): la política `lot_listings_select_public` pasa de `using (true)` para todo rol a

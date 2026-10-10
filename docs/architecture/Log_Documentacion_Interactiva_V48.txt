@@ -1,0 +1,105 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V48.0(f21b327).html
+(CTC Web Platform, desde 2026-10-10 · plataforma V6.0). Cada entrada se compila
+al próximo Version Wrap (V49).
+
+Formato:
+## [YYYY-MM-DD] VN.NN · Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pendiente">)
+
+════════════════════════════════════════════════════════════════════════════════
+QUIÉN ESCRIBE AQUÍ Y QUIÉN LLAMA AL WRAP (desde 2026-09-11, ALINEACION §5)
+════════════════════════════════════════════════════════════════════════════════
+
+· EL ASIENTO lo escribe LA SESIÓN DEL COMPONENTE que despliega, en el MISMO commit
+  que sube APP_VERSION — lo exige `scripts/qa-arqlog-check.mjs` (toda versión del
+  CHANGELOG posterior a «plataforma V6.0» tiene que aparecer aquí). Se añade al
+  final; nunca se toca un asiento ajeno. `git pull` antes de escribir.
+· EL WRAP lo llama SOLO la conversación «WRAP-COMMIT-PUSH (CTC Platforms)» (grupo CTC
+  Consolas internas, vía `plataforma`; existe desde el 2026-09-19 — antes la regla
+  nombraba una «Wraps del mapa» que nunca existió). Es el NODO FINAL: antes de compilar
+  audita que el maestro y los charters estén en el mismo punto (ALINEACION §5.3). Cadencia: ≥ 5 asientos, un hito de componente cerrado
+  o antes de una versión mayor — lo primero que ocurra.
+· La línea «plataforma V6.0» de la cabecera es la referencia del guardián: el wrap
+  siguiente la reescribe con la versión sobre la que cierra.
+
+════════════════════════════════════════════════════════════════════════════════
+CÓMO SE VALIDA UN WRAP — la lista que de verdad hay que correr
+════════════════════════════════════════════════════════════════════════════════
+
+✅ LA BATERÍA ES UN ARCHIVO: `docs/architecture/validate_snapshot.mjs`. Corre en
+NODE, no en la consola del navegador. Uso, desde `ctc-platform/`:
+
+    node docs/architecture/validate_snapshot.mjs docs/architecture/<nuevo>.html --prev docs/architecture/<anterior>.html [--dump]
+
+`--prev` imprime los contadores del snapshot anterior al lado de los del nuevo;
+`--dump` lista nodos, claves de DICT, ids de escenarios y CTX. Correrlo también
+contra el snapshot ANTERIOR como control: si pasa en los dos, no es permisivo.
+
+Las NUEVE comprobaciones, y las nueve tienen que volver VACÍAS:
+  1. pasos de traza (`q.n` y `q.from`) contra los `.node[id]` reales
+  2. `DICT[k].a[]` contra las claves de DICT
+  3. `WIRES` contra los nodos reales
+  4. `CTX` — nodo real Y claves reales
+  5. `ANN` huérfanas: rutas que ya no existen en el FILETREE recién regenerado
+  6. `ANN[...].info` contra las claves de DICT
+  7. `.ibtn[data-info]` del marcado contra DICT
+  8. `.chip[data-info]` — SOLO sobre el marcado ANTERIOR a `<script>`
+  9. claves REPETIDAS en el texto de DICT/CTX (JS se queda con la última en silencio)
+
+Y los contadores tienen que subir EXACTAMENTE lo esperado
+(V32: 95→99 · V33: 99→102 · V34: 102→104 · V35: 104→107 · V36: 107→113 ·
+V37: 113→121 · V38: 121→128 · V39: 128→133 · V40: 133→136 · V41: 136→137 ·
+V42: 137→139 · V43: 139→140 · V44: 140→146 · V45: 146→148 · V46: 148→155 · V47: 155→175 · V48: 175→208).
+
+Además, después de `gen_filemap_tree.mjs`, un `node --check` del bloque `<script>`
+extraído (el validador evalúa los literales, no el resto del motor).
+
+⚠️ EL MAPA NODO→FICHAS SE LLAMA `CTX`, NO `NODEDICT` (V34). ⚠️ EL SELECTOR DE
+TRAZAS VA POR ÍNDICE (V33): la comprobación buena es
+`select.options.length === SCENARIOS.length`. ⚠️ EL DICT TIENE DOS ESTILOS DE
+ESCRITURA (V31): contar con `Object.keys(DICT).length` evaluado, nunca por regex —
+y OJO al anclar un parche: las entradas viejas van `clave: {` (con espacio) y las
+nuevas `clave:{`. ⚠️ UN BACKTICK EN UN CUERPO DE DICT ROMPE EL LITERAL ENTERO
+(V38): siempre `<code>…</code>`. ⚠️ EL SHA DEL NOMBRE ES EL DEL CONTENIDO (V35).
+⚠️ LA CADENA «Última actualización» DEBE NOMBRAR AL PROPIO SNAPSHOT (V38 olvidó la
+suya). ⚠️ UN PARCHE DE WRAP CAMBIA SUS PROPIAS ANCLAS (V40): cada replace lleva
+assert.
+
+══════════════════════════════════════════════════════════════════════════════
+LO QUE EL WRAP V48 ENSEÑÓ (léase antes del V49)
+══════════════════════════════════════════════════════════════════════════════
+
+· CIENTO DOCE ASIENTOS, CINCO VECES EL V47. Un wrap de ese tamaño no cabe en una sola cabeza: se repartió en LOTES (archivos
+  L0…L6 en el scratchpad, cada uno una función `aplicar(w)` sobre la clase `Snap` de `wrap_lib.py`), escritos en paralelo por
+  autores con PROPIEDAD EXCLUSIVA (fichas, trazas y rutas de ANN por lote) y revisados cada uno por un verificador contra el
+  código. Un lote solo podía apuntar (a[], CTX, info) a claves del V47, de L0 o suyas; los cruces entre lotes nuevos los hizo el
+  barrido final (L6). L0 (el esqueleto: nodos nuevos y sus fichas) lo escribió el nodo final ANTES de lanzar a los autores, para
+  que todos pudieran nombrarlos. `probar_lote.py` aplica L0 + el lote sobre una copia del V47 con el mapa de archivos de hoy y
+  corre la batería; `compilar_v48.py` aplica todos en orden (L0 L1 L2 L4 L5 L3 L6) en el repo.
+· DOS LOTES ANOTARON LA MISMA RUTA NUEVA (guardianes, `subvencionServidor.ts`): `wrap_lib.dueno_de_ruta` decide por prefijo y,
+  si no hay dueño, gana el primero. Para el V49: dar la lista de dueños por prefijo ANTES de lanzar.
+· EL LOTE DEL CÓDIGO EN OBRA VA AL FINAL. Los temas que la misma conversación estaba cambiando (Dossier público, Compras,
+  Triage) se escribieron después de publicar sus versiones; los demás, mientras tanto.
+· EL RENDERIZADOR TENÍA UN FALLO VISIBLE: la etiqueta de una ANN se pintaba con `a.t[1]`, y 191 ANN de un solo tag decían
+  «undefined». El barrido lo corrigió; la batería no lo ve (es presentación): mirar el mapa de archivos en el navegador.
+· LA AUDITORÍA DOCUMENTAL SE HIZO ANTES Y POR SEPARADO (commit de docs 95ef547): ALINEACION con dos contratos nuevos, los trece
+  charters, AGENTS y HANDOFF en la V6.0, los planes y los kick-offs «Objetivos V6». El wrap solo compila el mapa.
+
+══════════════════════════════════════════════════════════════════════════════
+
+Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
+
+- **Lo que V48 compiló**: V5.93–V6.0 (112 versiones). Nodos nuevos: `n-ocp` (el OCP, separado de `n-consoles`), `n-dossier` (el
+  Dossier CTCx del productor y el público) y `n-coffee-datasheet` (la Coffee Datasheet Tool del taller). Contadores: 45 nodos (+3) · 208 fichas (+33) · 82 trazas (+14, y unas 25 reescritas sobre su sucesor) · 135 wires (+27) · 42 CTX (+4) · 666 ANN (+191) · Postgres 144 tablas.
+- **Lo que viene**: los tres objetivos de `docs/PLAN_V6_OBJETIVOS.md` (landings con la narrativa vigente; Triage y Catálogo
+  Activo; el login de Cherry Picked), una conversación cada uno, con su prompt en `docs/KICKOFF.md` «Objetivos V6». Ninguna tanda
+  empieza sin las decisiones del owner de su §5.
+- **Lo que el mapa TODAVÍA no refleja, y es correcto** (no inventarlo): la limpieza de `finca_name` y `municipio` de las vistas
+  públicas (siguen a null); las plataformas de pago sin configurar; las ventas de la tienda descontando el stock (plan del
+  Triage §7); la tienda vendiendo Sample Kits; la subasta Tyrian en US$ (CN-4).
+- **Guardianes sin correr en batería**: `qa-guard-check` y `qa-checkout-check` (escriben en producción con las cuentas QA de
+  `.env.local`: a mano), `qa-tools-puente-conformance` (next dev en 3210), y los dos que gastan dinero.
+
+══════════════════════════════════════════════════════════════════════════════

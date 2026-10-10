@@ -21,6 +21,8 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ## [V6.0] — 2026-10-10 (commit 1130833)
 
+> **Wrap V48** (2026-10-10): ciclo compilado en `Documentacion_Interactiva_V48.0(f21b327).html` — 45 nodos (+3) · 208 fichas (+33) · 82 trazas (+14, y unas 25 reescritas sobre su sucesor) · 135 wires (+27) · 42 CTX (+4) · 666 ANN (+191) · Postgres 144 tablas. Ciento doce asientos (V5.93–V6.0), compilados en siete lotes con dueño exclusivo y un verificador cada uno; tres nodos nuevos (el OCP, el Dossier, la Coffee Datasheet Tool); el renderizador ya no pinta «undefined» en las ANN de un solo tag. La auditoría documental salió antes, en el commit de docs 95ef547.
+
 - **Hito**: **V6.0** — el owner cierra el sprint de desarrollo («quiero cerrar este largo sprint de desarrollo para llevar todo el
   sistema a la V6.0») y deja el terreno para tres objetivos de mejora, cada uno con su plan y su prompt de arranque:
   **(1)** las landing pages con la narrativa y los conceptos vigentes, **(2)** el Triage y el Catálogo Activo, **(3)** el login de

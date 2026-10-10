@@ -49,6 +49,10 @@ const EN = {
   pts: "pts",
   cartNote: "Spot: ships in 2–5 days from Amsterdam. Mitaca pre-orders: 30% pre-payment today (refundable), balance when the container arrives. Samples: fly October 2026.",
   kOrders: "Orders",
+estadoMuestras: (s: string) => ({ ordered: "Ordered", preparado: "Being prepared", enviado: "Shipped" } as Record<string, string>)[s] ?? s,
+  kReservas: "Lots reserved",
+  sinReservas: "No fractions reserved yet. Open a lot in the catalogue and add your fraction.",
+  verDossier: "Public dossier ↗",
   noOrders: "No orders yet.",
   kSamples: "Samples",
   reserved: "Reserved ✓",
@@ -99,6 +103,10 @@ const T: Record<Lang, typeof EN> = {
     pts: "pts",
     cartNote: "Spot: envío en 2–5 días desde Ámsterdam. Preórdenes de la mitaca: prepago 30% hoy (reembolsable), saldo al arribo del contenedor. Muestras: vuelan en octubre 2026.",
     kOrders: "Pedidos",
+  estadoMuestras: (s: string) => ({ ordered: "Pedido", preparado: "En preparación", enviado: "Enviado" } as Record<string, string>)[s] ?? s,
+    kReservas: "Lotes reservados",
+    sinReservas: "Aún no reservaste fracciones. Abre un lote en el catálogo y añade la tuya.",
+    verDossier: "Dossier público ↗",
     noOrders: "Sin pedidos todavía.",
     kSamples: "Muestras",
     reserved: "Reservado ✓",
@@ -146,6 +154,10 @@ const T: Record<Lang, typeof EN> = {
     pts: "Pkt.",
     cartNote: "Spot: Versand in 2–5 Tagen ab Amsterdam. Mitaca-Vorbestellungen: 30 % Anzahlung heute (erstattbar), Rest bei Ankunft des Containers. Muster: fliegen im Oktober 2026.",
     kOrders: "Bestellungen",
+  estadoMuestras: (s: string) => ({ ordered: "Bestellt", preparado: "In Vorbereitung", enviado: "Versandt" } as Record<string, string>)[s] ?? s,
+    kReservas: "Reservierte Lots",
+    sinReservas: "Noch keine Fraktionen reserviert. Öffne einen Lot im Katalog und füge deinen Anteil hinzu.",
+    verDossier: "Öffentliches Dossier ↗",
     noOrders: "Noch keine Bestellungen.",
     kSamples: "Muster",
     reserved: "Reserviert ✓",
@@ -180,6 +192,8 @@ export function ProfileView({
   tier,
   orders,
   samplePackOrdered,
+  samplePackStatus,
+  reservas,
   billing,
   onBack,
   onLogout,
@@ -193,6 +207,10 @@ export function ProfileView({
   tier: "verde" | "pinton" | "maduro";
   orders: OrderSummary[];
   samplePackOrdered: boolean;
+  /** V6.3: `sample_pack_orders.status` del pedido más reciente, o null. */
+  samplePackStatus: string | null;
+  /** V6.3: las fracciones reservadas, con la referencia de la vitrina y el Dossier público. */
+  reservas: { id: string; code: string; name: string; kg: number; dossierHref: string | null }[];
   billing: Billing;
   onBack: () => void;
   onLogout: () => void;
@@ -289,9 +307,31 @@ export function ProfileView({
               )}
             </div>
           </div>
+          <div className={`${styles.pfCard} ${styles.wide}`} data-reservas={reservas.length}>
+            <span className={styles.k}>{t.kReservas}</span>
+            <div className={styles.v}>{reservas.length}</div>
+            <div className={styles.pfList}>
+              {reservas.length === 0
+                ? t.sinReservas
+                : reservas.map((r) => (
+                    <span key={r.id}>
+                      <b>{r.code}</b> · {r.name} · {fmt(r.kg, lang)} kg
+                      {r.dossierHref && (
+                        <>
+                          {" · "}
+                          <a href={r.dossierHref} target="_blank" rel="noopener" style={{ color: "inherit" }}>
+                            {t.verDossier}
+                          </a>
+                        </>
+                      )}
+                      <br />
+                    </span>
+                  ))}
+            </div>
+          </div>
           <div className={styles.pfCard}>
             <span className={styles.k}>{t.kSamples}</span>
-            <div className={styles.v}>{samplePackOrdered ? t.reserved : t.notReserved}</div>
+            <div className={styles.v}>{samplePackOrdered ? (samplePackStatus ? t.estadoMuestras(samplePackStatus) : t.reserved) : t.notReserved}</div>
             <div className={styles.pfList}>
               {t.samplesFly}<br />
               {t.samplesPrio}

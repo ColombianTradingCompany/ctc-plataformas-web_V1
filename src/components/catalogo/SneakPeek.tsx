@@ -422,6 +422,7 @@ export function SneakPeek({
   variant = "home",
   onOpenLogin,
   id,
+  conSesion = false,
 }: {
   lang: SneakPeekLang;
   variant?: Variant;
@@ -429,6 +430,9 @@ export function SneakPeek({
   onOpenLogin?: () => void;
   /** Ancla de sección. En la tienda hereda `grados`, que es el sitio que ocupa. */
   id?: string;
+  /** V6.3: con sesión en la tienda, la cinta se queda (la vitrina de todos los lotes evaluados, también los «Próximamente») y
+   *  «Find my Lot» también; lo que sobra es la puerta al login, que ya se cruzó. */
+  conSesion?: boolean;
 }) {
   const t = T[lang];
   const [data, setData] = useState<SneakPeekPayload | null>(null);
@@ -777,16 +781,18 @@ export function SneakPeek({
               en otra pestaña y para que un buscador lo siga— pero el clic normal
               abre la ventana que explica dónde está el catálogo y que registrarse
               es gratis (owner, 2026-08-17). */}
-          <a
-            className={styles.cta}
-            href={CHERRY_PICKED_HREF}
-            onClick={(e) => {
-              e.preventDefault();
-              setPopup(true);
-            }}
-          >
-            {t.cta} <span aria-hidden>→</span>
-          </a>
+          {!conSesion && (
+            <a
+              className={styles.cta}
+              href={CHERRY_PICKED_HREF}
+              onClick={(e) => {
+                e.preventDefault();
+                setPopup(true);
+              }}
+            >
+              {t.cta} <span aria-hidden>→</span>
+            </a>
+          )}
           {/* Éste NO abre ventana: es una navegación de verdad, y a un sitio que no pide nada. Absoluto a la casa matriz — ver
               `PORTAL_HREF`. V5.199: con el campo de la referencia al lado (`FindMyLot`). */}
           <FindMyLot lang={lang} />

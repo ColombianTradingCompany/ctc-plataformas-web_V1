@@ -183,6 +183,10 @@ ciclo; `docs/PLAN_CICLOS.md`) · **`qa-triage-catalogo-check.mjs`** (V5.196 — 
 
 ## Pendientes
 
+- **V6.3 · el login de Cherry Picked** (owner, noche del 2026-10-10; ejecutado desde esta sesión por pedido expreso del owner, código de
+  `cherry-picked` y una línea de `plataforma` —`SellBuyCtas` manda a comprar con `?login=1`—; fila en `ALINEACION` §3). Lo cerrado y lo que
+  espera decisión están en el charter de `cherry-picked` y en `PLAN_V6_OBJETIVOS` §3. **Para este componente**: nada cambia en las consolas;
+  lo que el Triage declara (`lot_listings` publicados) es lo que la tienda pinta ahora con la referencia y el Punto de la vitrina.
 - **V6.2 · la Interfaz de Leads y el formulario SCAJ 2026** (owner, noche del 2026-10-10; ejecutado desde esta sesión; informe en
   `docs/componentes/briefs/consolas-interfaz-de-leads-scaj2026.md`). El módulo `/lcp/formularios`, la insignia en la portada, `/scaj2026` en tres
   idiomas, los correos (apagados) y el cron. **Para el owner antes del 14-oct**: aprobar los textos de los correos y encender los dos

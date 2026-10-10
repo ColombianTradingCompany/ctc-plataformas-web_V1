@@ -5,6 +5,7 @@ import Image from "next/image";
 import { InfoPanel, type InfoEntry } from "@/components/InfoPanel";
 import { SocialLinks } from "@/components/SocialLinks";
 import { FamilyHeader } from "@/components/cherry-picked/FamilyHeader";
+import { ProveedorDeCuenta, useCuenta } from "@/components/cherry-picked/sesion";
 import { SneakPeek } from "@/components/catalogo/SneakPeek";
 import { LangBubble } from "@/components/cherry-picked/LangBubble";
 import { FAMILY_LINKS, LangProvider, useLang, type Lang } from "@/components/cherry-picked/i18n";
@@ -372,6 +373,8 @@ function Banda({ img, k, t }: { img: string; k: string; t: string }) {
 function Hub() {
   const lang = useLang();
   const t = T[lang];
+  // V6.3: la cuenta es una en toda la familia; la cinta abre el login AQUÍ.
+  const { abrirLogin } = useCuenta();
   const [open, setOpen] = useState<InfoEntry | null>(null);
   const video = useRef<HTMLVideoElement>(null);
 
@@ -532,7 +535,7 @@ function Hub() {
           mercancía— y antes de la franja del paisaje, que es la que presenta el
           bloque siguiente. Sin precios: el catálogo completo está detrás del
           login. Ver docs/V5_CONSOLAS_PLAN.md §1. */}
-      <SneakPeek lang={lang} variant="cp" />
+      <SneakPeek lang={lang} variant="cp" onOpenLogin={abrirLogin} />
 
       <Banda img="/images/cherry-picked/sep-paisaje.webp" k={t.sepPaisaje.k} t={t.sepPaisaje.t} />
 
@@ -578,7 +581,9 @@ function Hub() {
 export function HubLanding() {
   return (
     <LangProvider>
-      <Hub />
+      <ProveedorDeCuenta>
+        <Hub />
+      </ProveedorDeCuenta>
     </LangProvider>
   );
 }

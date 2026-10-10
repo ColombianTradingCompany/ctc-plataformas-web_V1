@@ -9,7 +9,7 @@ import styles from "./GradosSection.module.css";
 const TAB_COLOR: Record<string, string> = { Red: "var(--t-red)", Blue: "var(--t-blue)", Gold: "var(--t-gold)" };
 
 const EN = {
-  catEyebrow: "Live lots · This season · Mitaca arriving in August",
+  catEyebrow: "Live lots · Declared from the CTCx Triage · Spot and pre-sale",
   catTitle: "The catalogue",
   catCopy: "Real lots, graded blind in the Arena, sold by the kilo. Filter by grade, open a card, reserve your fraction.",
   explainEyebrow: "How to read it · 30% refundable pre-payment",
@@ -34,12 +34,16 @@ const EN = {
   eudrP2d: ": the DDS reference number travels with every dispatch and stays visible on your invoice and on the lot's datasheet. Traceability to the plot, verifiable, without chasing anyone.",
   tabsAria: "Filter by grade",
   all: "All",
+  // V6.3: el catálogo vacío EXPLICA (antes, nada: «lo más grave» del plan).
+  vacioTitulo: "The Active Catalogue is declared lot by lot",
+  vacioCuerpo: "CTCx declares each lot from its Triage with its minimum FOB. Right now there is no lot with a price. The lots already evaluated are in the showcase above — each with its CTC-L- reference and its public Dossier — and every account is notified the moment one is declared.",
+  vacioCta: "See the showcase",
 };
 
 const T: Record<Lang, typeof EN> = {
   en: EN,
   es: {
-    catEyebrow: "Lotes en vivo · Esta temporada · Mitaca arribando en agosto",
+    catEyebrow: "Lotes en vivo · Declarados desde el Triage de CTCx · Spot y pre-venta",
     catTitle: "El catálogo",
     catCopy: "Lotes reales, calificados a ciegas en la Arena y vendidos por kilos. Filtra por grado, abre una tarjeta, reserva tu fracción.",
     explainEyebrow: "Cómo leerlo · Prepago 30% reembolsable",
@@ -64,9 +68,12 @@ const T: Record<Lang, typeof EN> = {
     eudrP2d: ": el número de referencia DDS acompaña cada despacho y queda visible en tu factura y en la ficha técnica del lote. Trazabilidad al predio, verificable, sin que tengas que perseguir a nadie.",
     tabsAria: "Filtrar por grado",
     all: "Todos",
+    vacioTitulo: "El Catálogo Activo se declara lote a lote",
+    vacioCuerpo: "CTCx declara cada lote desde su Triage con su FOB mínimo. Ahora mismo no hay ningún lote con precio. Los lotes ya evaluados están en la vitrina de arriba —cada uno con su referencia CTC-L- y su Dossier público— y toda cuenta recibe aviso en cuanto uno se declara.",
+    vacioCta: "Ver la vitrina",
   },
   de: {
-    catEyebrow: "Live-Lots · Diese Saison · Mitaca kommt im August an",
+    catEyebrow: "Live-Lots · Aus dem CTCx-Triage deklariert · Spot und Vorverkauf",
     catTitle: "Der Katalog",
     catCopy: "Echte Lots, blind in der Arena bewertet, kiloweise verkauft. Filtere nach Grad, öffne eine Karte, reserviere deinen Anteil.",
     explainEyebrow: "So liest du ihn · 30 % erstattbare Anzahlung",
@@ -91,6 +98,9 @@ const T: Record<Lang, typeof EN> = {
     eudrP2d: ": Die DDS-Referenznummer begleitet jede Lieferung und steht auf deiner Rechnung und im Datenblatt des Lots. Rückverfolgbarkeit bis zur Parzelle, überprüfbar, ohne jemandem hinterherlaufen zu müssen.",
     tabsAria: "Nach Grad filtern",
     all: "Alle",
+    vacioTitulo: "Der aktive Katalog wird Lot für Lot deklariert",
+    vacioCuerpo: "CTCx deklariert jeden Lot aus seinem Triage mit seinem Mindest-FOB. Gerade gibt es keinen Lot mit Preis. Die bereits bewerteten Lots stehen oben im Schaufenster — jeder mit seiner CTC-L-Referenz und seinem öffentlichen Dossier — und jedes Konto wird benachrichtigt, sobald einer deklariert wird.",
+    vacioCta: "Zum Schaufenster",
   },
 };
 
@@ -115,8 +125,10 @@ export function GradosSection({
 }) {
   const lang = useLang();
   const t = T[lang];
-  const preLots = lots.filter((l) => l.mode === "pre");
-  const shown = activeGrade === "all" ? preLots : preLots.filter((l) => l.grade === activeGrade);
+  // V6.3: TODO lo declarado con precio, spot y pre-venta, por grado; Black vive en su sección (antes un Black pre salía dos veces y
+  // un lote spot de otro grado no salía: `GradosSection` solo enseñaba los `pre`).
+  const catalogo = lots.filter((l) => l.grade !== "Black");
+  const shown = activeGrade === "all" ? catalogo : catalogo.filter((l) => l.grade === activeGrade);
 
   return (
     <section id="grados" className={styles.photoSection}>
@@ -132,7 +144,7 @@ export function GradosSection({
 
         <div className={styles.tabs} role="tablist" aria-label={t.tabsAria}>
           <button className={`${styles.tab} ${activeGrade === "all" ? styles.active : ""}`} role="tab" onClick={() => onSetGrade("all")}>
-            {t.all} <span className={styles.n}>{preLots.length}</span>
+            {t.all} <span className={styles.n}>{catalogo.length}</span>
           </button>
           {(["Red", "Blue", "Gold"] as Grade[]).map((g) => (
             <button
@@ -143,7 +155,7 @@ export function GradosSection({
               onClick={() => onSetGrade(g)}
             >
               <span className={styles.cdot} />
-              {g} <span className={styles.n}>{preLots.filter((l) => l.grade === g).length}</span>
+              {g} <span className={styles.n}>{catalogo.filter((l) => l.grade === g).length}</span>
             </button>
           ))}
         </div>
@@ -161,6 +173,15 @@ export function GradosSection({
             />
           ))}
         </div>
+        {catalogo.length === 0 && (
+          <div className={styles.vacio} data-catalogo="vacio">
+            <h3>{t.vacioTitulo}</h3>
+            <p>{t.vacioCuerpo}</p>
+            <a className="btn btn-sm" href="#vitrina">
+              {t.vacioCta} ↑
+            </a>
+          </div>
+        )}
 
         {/* Solid block: the grade-by-grade story + EUDR, pushed under the
             catalogue on purpose (and card-backed, since the photo wash is

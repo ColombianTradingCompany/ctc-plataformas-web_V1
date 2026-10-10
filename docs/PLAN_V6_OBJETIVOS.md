@@ -124,7 +124,7 @@ mezclas físicas).
 
 **Dueño.** `cherry-picked`. Depende de la tanda B del objetivo 2 para las reglas comerciales.
 
-**Lo más grave (2026-10-10): un comprador que inicia sesión ve el catálogo VACÍO.** Al entrar desaparecen la cinta y «Find my Lot»
+**Lo más grave (2026-10-10): un comprador que inicia sesión ve el catálogo VACÍO.** — **Cerrado en la V6.3** (2026-10-11): con sesión se conservan la cinta y «Find my Lot» y el catálogo vacío explica (`qa-cp-sesion`). Al entrar desaparecen la cinta y «Find my Lot»
 y sale `GradosSection`, que lee `lot_listings` publicados (hoy 0) sin mensaje para el vacío — contra la promesa de `CatalogoPopup`
 y contra la regla del owner de la V5.199 («Find my Lot» en CTC, KR y CP).
 
@@ -139,15 +139,19 @@ tríada ponderada del charter). (5) **Contenido con fecha vencida** (`Hero` de j
 (6) **A «Mi cuenta» le falta** el estado del pedido de muestras, la región del comprador y el enlace al Dossier de cada lote.
 (7) Código muerto (ramas sin sesión de `changeQty`, `moqAnon`).
 
-**Tandas.** **A** · entrada y continuidad (login desde la portada y Roast/X; la ventana abre el alta dentro de CP; con sesión se
-conservan la cinta y «Find my Lot»; mensaje del catálogo vacío; aviso de la regla productor/comprador antes del alta) —
+**Tandas.** **A** · ~~entrada y continuidad (login desde la portada y Roast/X; la ventana abre el alta dentro de CP; con sesión se
+conservan la cinta y «Find my Lot»; mensaje del catálogo vacío; aviso de la regla productor/comprador antes del alta)~~ **HECHA en la
+V6.3** (sin esperar las decisiones 6, 11 y 13: la 6 se respeta como lo hace la vitrina —«Próximamente»—, la 11 se ejecutó como «una
+cuenta en toda la familia, la ventana en las cuatro superficies, el aterrizaje en Green», y la 13 solo para MIRAR la tienda con la cuenta de
+auditoría en el servidor de desarrollo, sin pedidos; si el owner decide distinto, son tres líneas) —
 `qa-sneak-peek` (fija cómo pinta la tienda con sesión), `qa-catalogo-publico`, `qa-recuperacion`, `qa-nav`. **B** · la tarjeta del
-lote con lo vigente (referencia CTC-L-, Punto con su protocolo — `rotuloDelPunto` —, sello, Dossier público, foto, «kg de verde», base
-del precio, una sola lectura de datos, y SIN finca ni municipio: la regla de arriba) — `qa-sneak-peek`, `qa-ficha-publica`,
+lote con lo vigente (~~referencia CTC-L-, Punto con su protocolo~~ ✓ V6.3, sello, ~~Dossier público, foto, «kg de verde»~~ ✓ V6.3, **base
+del precio** (espera la decisión 3), **una sola lectura de datos** (hoy la tienda lee `public_lot_catalog` Y `public_lot_vitrina`; una
+sola proyección es la tanda B del objetivo 2), ~~y SIN finca ni municipio~~ ✓) — `qa-sneak-peek`, `qa-ficha-publica`,
 `qa-compras`. **C** · las reglas comerciales desde el Triage (anticipo y llegada, MOQ, Sample Kits en vez del pack de 300, envío y
 base del precio, `place_order`; depende del objetivo 2 B) — `qa-moneda`, `qa-muestras`, `qa-triage-catalogo`, `qa-checkout` (a
-mano). **D** · Mi cuenta (estado de los Sample Kits, región, reputación ponderada, la puja Tyrian y CN-4 a US$) — `qa-subastas`,
-`qa-muestras`. **Riesgo para todas:** la única cuenta de comprador de prueba es la de auditoría de la V5.98 (del nodo final); hasta que el owner decida si sirve para conducir la tienda (decisión 13), el flujo con sesión no se conduce en un navegador.
+mano). **D** · Mi cuenta (~~estado de los Sample Kits~~ ✓ V6.3 —el estado del pedido de muestras— y ~~los lotes reservados con su Dossier~~ ✓ V6.3;
+quedan la región, la reputación ponderada, la puja Tyrian y CN-4 a US$: decisión 12) — `qa-subastas`, `qa-muestras`, `qa-cp-sesion`. **Riesgo para todas:** la única cuenta de comprador de prueba es la de auditoría de la V5.98 (del nodo final); hasta que el owner decida si sirve para conducir la tienda (decisión 13), el flujo con sesión no se conduce en un navegador.
 
 ## §4 · Lo que cruza los tres
 

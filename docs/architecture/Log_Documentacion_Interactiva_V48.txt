@@ -134,3 +134,18 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - Cron nuevo `/api/cron/seguimientos-leads` (horario, vercel.json). Guardián nuevo `qa-lead-forms-check.mjs` (63).
 - DICT: entradas nuevas sugeridas para el V49: «Interfaz de Leads», «formulario de captación», «sello de tiempo».
 (commit: c249d6b)
+
+## [2026-10-11] V6.3 · El login de Cherry Picked: entrada, continuidad y el catálogo con sesión (objetivo 3 · tanda A, y B/D sin decisión)
+- Nodo de Cherry Picked (la familia): `src/components/cherry-picked/sesion.tsx` (NUEVO: `ProveedorDeCuenta` · `AccesoDeCuenta` · `useCuenta`;
+  `?login=1`, `?cuenta=1`, aterrizaje en Green), `FamilyHeader.tsx` (la cuenta en la cabecera de la portada, Roast y X), `HubLanding.tsx`,
+  `RoastLanding.tsx`, `XLanding.tsx` (envueltas; la cinta abre el login en el sitio), `LoginModal.tsx` (aviso productor/comprador, `contexto`).
+- La tienda (`CherryPickedExperience.tsx`): con sesión conserva la cinta (`<SneakPeek conSesion id="vitrina">`) y pinta la parrilla debajo;
+  lee `public_lot_vitrina` junto a `public_lot_catalog` (referencia, Punto, protocolo, foto); `?login=1` / `?cuenta=1`; reservas y estado de
+  muestras a «Mi cuenta». `GradosSection.tsx` (spot + pre por grado, sin Black; el catálogo vacío que explica), `LotCard.tsx` (reescrita:
+  referencia CTC-L-, Punto + protocolo, foto, Dossier público, «kg de verde», spot/pre-venta; sin demos), `ProfileView.tsx` (reservas con
+  Dossier; estado de muestras), `Hero.tsx` (el tablero vivo del Catálogo Activo con la ventana ISO de `trato/calendario.ts`), `data.ts` (Lot).
+- `src/components/catalogo/SneakPeek.tsx`: prop `conSesion` (oculta la puerta al login; «Find my Lot» se queda). `plataforma`:
+  `SellBuyCtas.tsx` manda a comprar con `?login=1`.
+- Wires nuevos: CTC Home → portada CP (`?login=1`) → Green (`?cuenta=1`); la tienda → `public_lot_vitrina` → Dossier público.
+- Guardián nuevo `qa-cp-sesion-check.mjs` (33); `qa-sneak-peek` con la guarda nueva. Sin cambios en la base.
+(commit: pendiente)

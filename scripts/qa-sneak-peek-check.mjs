@@ -186,7 +186,8 @@ check("la cinta ya no rellena con mock ni lleva rótulo de temporada", !LIB.incl
 // El catálogo completo solo con sesión: `loadCatalog()` no puede volver a
 // correr para un visitante anónimo.
 const efecto = TIENDA.slice(TIENDA.indexOf("supabase.auth.getSession()"), TIENDA.indexOf("onAuthStateChange"));
-const guarda = efecto.indexOf("if (!data.session?.user) return;");
+// V6.3: la guarda abre un bloque (`?login=1` abre la ventana al visitante sin sesión y RETORNA antes de cargar nada).
+const guarda = efecto.search(/if \(!data\.session\?\.user\) (?:return;|\{\s*if \(params\.get\("login"\) === "1"\) setLoginOpen\(true\);\s*return;\s*\})/);
 const carga = efecto.indexOf("loadCatalog()");
 check("el efecto de arranque tiene la guarda de sesión", guarda !== -1);
 check("`loadCatalog()` va después de la guarda, nunca antes", carga !== -1 && carga > guarda);

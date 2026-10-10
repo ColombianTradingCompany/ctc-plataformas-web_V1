@@ -4,6 +4,7 @@ import Image from "next/image";
 import { SocialLinks } from "@/components/SocialLinks";
 import { FamilyBubble } from "@/components/cherry-picked/FamilyBubble";
 import { FamilyHeader } from "@/components/cherry-picked/FamilyHeader";
+import { ProveedorDeCuenta, useCuenta } from "@/components/cherry-picked/sesion";
 import { SneakPeek } from "@/components/catalogo/SneakPeek";
 import { CUR } from "@/components/cherry-picked/data";
 import { LangBubble } from "@/components/cherry-picked/LangBubble";
@@ -207,6 +208,8 @@ const T: Record<Lang, typeof EN> = {
 function Landing() {
   const lang = useLang();
   const t = T[lang];
+  // V6.3: la cuenta es una en toda la familia; la cinta abre el login AQUÍ en vez de mandar a otra página.
+  const { abrirLogin } = useCuenta();
   return (
     <div data-theme="cherry-picked">
       <FamilyHeader active="roast" />
@@ -239,7 +242,7 @@ function Landing() {
           la X es una incorporación —no había catálogo en estas dos landings—; en
           Green sustituye a la parrilla para quien no ha entrado. Sin precios: el
           catálogo completo está detrás del login. */}
-      <SneakPeek lang={lang} variant="cp" />
+      <SneakPeek lang={lang} variant="cp" onOpenLogin={abrirLogin} />
 
       <section id="pricing">
         <div className="wrap">
@@ -378,7 +381,9 @@ function Landing() {
 export function RoastLanding() {
   return (
     <LangProvider>
-      <Landing />
+      <ProveedorDeCuenta>
+        <Landing />
+      </ProveedorDeCuenta>
     </LangProvider>
   );
 }

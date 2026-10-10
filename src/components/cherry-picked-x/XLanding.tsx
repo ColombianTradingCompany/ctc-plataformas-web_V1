@@ -4,6 +4,7 @@ import Image from "next/image";
 import { SocialLinks } from "@/components/SocialLinks";
 import { FamilyBubble } from "@/components/cherry-picked/FamilyBubble";
 import { FamilyHeader } from "@/components/cherry-picked/FamilyHeader";
+import { ProveedorDeCuenta, useCuenta } from "@/components/cherry-picked/sesion";
 import { SneakPeek } from "@/components/catalogo/SneakPeek";
 import { LangBubble } from "@/components/cherry-picked/LangBubble";
 import { NewsletterForm } from "@/components/cherry-picked/NewsletterForm";
@@ -108,6 +109,8 @@ const T: Record<Lang, typeof EN> = {
 function Landing() {
   const lang = useLang();
   const t = T[lang];
+  // V6.3: la cuenta es una en toda la familia; la cinta abre el login AQUÍ en vez de mandar a otra página.
+  const { abrirLogin } = useCuenta();
   return (
     <div data-theme="cherry-picked">
       <FamilyHeader active="x" />
@@ -152,7 +155,7 @@ function Landing() {
           que enseña aquí: la X es «la oferta completa SIN Black», así que si
           algún día la cinta se filtra por programa, este es el sitio donde el
           filtro importa (hoy enseña el catálogo entero, como las demás). */}
-      <SneakPeek lang={lang} variant="cp" />
+      <SneakPeek lang={lang} variant="cp" onOpenLogin={abrirLogin} />
 
       <section id="how">
         <div className="wrap">
@@ -212,7 +215,9 @@ function Landing() {
 export function XLanding() {
   return (
     <LangProvider>
-      <Landing />
+      <ProveedorDeCuenta>
+        <Landing />
+      </ProveedorDeCuenta>
     </LangProvider>
   );
 }

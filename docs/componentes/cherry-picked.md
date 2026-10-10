@@ -92,6 +92,15 @@ listado publicado y al 2026-10-10 hay 0, así que corre cuando el Triage declare
 
 ## Pendientes
 
+- **V6.3 · el login y lo que ve el comprador con sesión** (owner, noche del 2026-10-10; ejecutado desde `consolas` con el owner —código
+  de este componente—; `PLAN_V6_OBJETIVOS` §3 al día). Hecho: la cuenta en toda la familia (`sesion.tsx`; la cabecera de la portada, Roast y
+  X; la cinta abre el login en el sitio; `?login=1` · `?cuenta=1`; aterrizaje en Green), con sesión la cinta y «Find my Lot» se quedan y el
+  catálogo vacío explica, la tarjeta con referencia `CTC-L-` · Punto + protocolo · foto · Dossier · «kg de verde» · spot/pre-venta, «Mi
+  cuenta» con las reservas y el estado de las muestras, el hero con el estado vivo del Catálogo Activo. **Queda, con decisión del owner**:
+  el anticipo y la llegada en el carrito y en `place_order` (decisión 7), un solo MOQ (8), la base del precio (3), los Sample Kits en vez
+  del pack de 300 y la puja Tyrian (12), la región y la reputación ponderada en «Mi cuenta», una sola proyección pública (objetivo 2 B), la
+  narrativa de Green (objetivo 1 D). Guardián: `qa-cp-sesion` (33). **Para probar con sesión**: la cuenta de auditoría del comprador
+  (V5.98) sirve para mirar la tienda en el servidor de desarrollo; conducir pedidos con ella sigue siendo la decisión 13.
 - **V5.202 · la vitrina y la tienda sin datos que lleven al productor** (owner, 2026-10-10; ejecutado desde WRAP-COMMIT-PUSH). La
   cinta pinta el nombre generado, la referencia, el sello, el Punto y la región; `public_lot_catalog` (la tienda) sirve el mismo
   nombre, sin finca, municipio ni notas libres, y es de solo lectura; el pedido guarda el nombre generado; la subasta Tyrian sin

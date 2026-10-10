@@ -10,6 +10,9 @@ import styles from "./LoginModal.module.css";
 import { PasswordField } from "@/components/PasswordField";
 import { hrefRecuperar } from "@/lib/auth/puertas";
 
+// Kaffetal Regal es un subdominio en producción y una ruta en desarrollo (el mismo desdoblamiento que `PuertasDelPortal`).
+const KR_HREF = process.env.NODE_ENV === "production" ? "https://kaffetal-regal.ctcexport.com" : "/kaffetal-regal";
+
 const EN = {
   aria: "Sign in to Cherry Picked",
   welcome: "Welcome to Cherry Picked",
@@ -36,6 +39,9 @@ const EN = {
   noAccountCta: "Create one for free",
   hasAccount: "Already have an account? ",
   hasAccountCta: "Sign in here",
+  // V6.3: la regla productor/comprador, dicha ANTES de crear la cuenta (la matriz de identidad la aplica la tienda al entrar).
+  aviso: "One account for the whole Cherry Picked family. If you are a producer, your home is Kaffetal Regal: a producer's email cannot buy here.",
+  krHref: "Kaffetal Regal",
 };
 
 const T: Record<Lang, typeof EN> = {
@@ -66,6 +72,8 @@ const T: Record<Lang, typeof EN> = {
     noAccountCta: "Crea una gratis",
     hasAccount: "¿Ya tienes cuenta? ",
     hasAccountCta: "Entra aquí",
+    aviso: "Una sola cuenta para toda la familia Cherry Picked. Si eres productor, tu casa es Kaffetal Regal: el correo de un productor no puede comprar aquí.",
+    krHref: "Kaffetal Regal",
   },
   de: {
     aria: "Bei Cherry Picked anmelden",
@@ -93,10 +101,13 @@ const T: Record<Lang, typeof EN> = {
     noAccountCta: "Erstelle eins kostenlos",
     hasAccount: "Schon ein Konto? ",
     hasAccountCta: "Hier anmelden",
+    aviso: "Ein Konto für die ganze Cherry-Picked-Familie. Wenn du Produzent bist, ist Kaffetal Regal dein Zuhause: die E-Mail eines Produzenten kann hier nicht kaufen.",
+    krHref: "Kaffetal Regal",
   },
 };
 
-export function LoginModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+/** `contexto`: una línea que dice POR QUÉ se abre (p. ej. «para ver precios y reservar»); opcional. */
+export function LoginModal({ open, onClose, contexto }: { open: boolean; onClose: () => void; contexto?: string }) {
   const lang = useLang();
   const t = T[lang];
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -170,7 +181,7 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
     <Modal open={open} onClose={onClose} ariaLabel={t.aria}>
       <Image className={styles.mlogo} src="/images/shared/cherry-picked-logo.png" alt="" width={852} height={858} />
       <h3>{t.welcome}</h3>
-      <p>{t.sub}</p>
+      <p>{contexto ?? t.sub}</p>
 
       <div className={styles.tabs}>
         <button type="button" className={`${styles.tab} ${mode === "signin" ? styles.tabActive : ""}`} onClick={() => switchMode("signin")}>
@@ -181,6 +192,14 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
         </button>
       </div>
 
+      {mode === "signup" && (
+        <p className={styles.notice} data-aviso="productor-comprador">
+          {t.aviso}{" "}
+          <Link className={styles.link} href={KR_HREF}>
+            {t.krHref} ↗
+          </Link>
+        </p>
+      )}
       {mode === "signup" && (
         <div className={styles.field}>
           <label htmlFor="cp-name">{t.name}</label>

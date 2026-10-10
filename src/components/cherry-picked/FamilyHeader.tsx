@@ -5,9 +5,12 @@ import Image from "next/image";
 // one family and must read as such at a glance. Family and language switching
 // live in the floating bubble column (FamilyBubble / LangBubble), not here.
 import styles from "./Header.module.css";
+import { AccesoDeCuenta } from "./sesion";
 
 /** `hub` (2026-08-11) es la portada de la plataforma: lleva el nombre a secas,
- *  sin sufijo de programa, porque no es uno de ellos — es la casa. */
+ *  sin sufijo de programa, porque no es uno de ellos — es la casa.
+ *  V6.3 (objetivo 3 · tanda A): la cabecera lleva la cuenta («Entrar» · «Mi cuenta») en las tres superficies, como Green; exige
+ *  estar dentro de `<ProveedorDeCuenta>` (`sesion.tsx`). */
 export function FamilyHeader({ active }: { active: "roast" | "x" | "hub" }) {
   return (
     <header className={styles.header}>
@@ -24,6 +27,7 @@ export function FamilyHeader({ active }: { active: "roast" | "x" | "hub" }) {
             </span>
           </span>
         </a>
+        <AccesoDeCuenta />
       </div>
     </header>
   );

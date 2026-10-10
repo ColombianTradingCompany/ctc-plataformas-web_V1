@@ -15,7 +15,10 @@ import styles from "./SellBuyCtas.module.css";
 // gesto repetido donde hace falta.
 
 const KR_URL = "https://kaffetal-regal.ctcexport.com";
-const CP_URL = "https://cherry-picked.ctcexport.com";
+// V6.3 (objetivo 3 · tanda A, desde `consolas` con el owner): «I need great coffee → I want to buy it» abre la portada de Cherry
+// Picked CON la ventana de login (`?login=1`, `ProveedorDeCuenta` en `components/cherry-picked/sesion.tsx`): quien viene a comprar
+// entra o crea su cuenta sin buscar el botón. Sin sesión; con sesión la portada ignora el parámetro.
+const CP_URL = "https://cherry-picked.ctcexport.com/?login=1";
 
 type Pair = { ctaSell: [string, string]; ctaBuy: [string, string] };
 

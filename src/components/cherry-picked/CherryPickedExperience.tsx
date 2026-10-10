@@ -8,7 +8,12 @@ import { SneakPeek } from "@/components/catalogo/SneakPeek";
 import { DIRECTORIO_HREF } from "@/lib/directorioLink";
 import { aPerfilCtcx, rotuloCtcx, PERFIL_CTCX_SELECT, VISTA_PERFIL_CTCX, type FilaPerfilCtcx, type PerfilCtcx } from "@/lib/catalogo/perfilCtcx";
 // V5.202: un módulo SIN imports (no arrastra nada al cliente): la región y el tramo de altitud con el MISMO formato que la cinta.
-import { regionDeLaVitrina, tramoDeAltitud } from "@/lib/catalogo/vitrinaVista";
+import { COLUMNAS_VITRINA, VISTA_VITRINA, regionDeLaVitrina, tramoDeAltitud, type FilaVitrina } from "@/lib/catalogo/vitrinaVista";
+// V6.3 (objetivo 3 · tanda B, sin decisión del owner): la tarjeta habla el idioma de la vitrina — referencia CTC-L-, Punto con su
+// protocolo, foto y Dossier público — leyendo `public_lot_vitrina` junto a `public_lot_catalog` (una sola proyección pública es la
+// tanda B del objetivo 2; mientras, las dos vistas sirven la misma fila).
+import { RUTA_PORTAL, rutaDelLote } from "@/lib/catalogo/codigoPublico";
+import { origenDeSuperficie } from "@/lib/red/subdominios";
 import { createClient } from "@/lib/supabase/client";
 import { Header } from "./Header";
 import { Hero } from "./Hero";
@@ -153,6 +158,8 @@ type ListingRow = {
   total_kg: number;
   sold_kg: number;
   price_per_kg: number;
+  deposit_pct: number | string | null;
+  arrival_date: string | null;
 };
 
 type CatalogRow = {
@@ -173,7 +180,7 @@ type CatalogRow = {
 
 type TransparencyRow = { lot_listing_id: string; price_per_kg_locked: number; reference_price_snapshot: number };
 
-function listingToLot(row: ListingRow, catalog: CatalogRow | undefined, transparency: TransparencyRow | undefined, perfil: PerfilCtcx): Lot | null {
+function listingToLot(row: ListingRow, catalog: CatalogRow | undefined, transparency: TransparencyRow | undefined, perfil: PerfilCtcx, vitrina: FilaVitrina | undefined): Lot | null {
   const grade = catalog?.grade ? GRADE_DB[catalog.grade] : null;
   if (!catalog || !grade) return null;
   return {
@@ -214,6 +221,14 @@ function listingToLot(row: ListingRow, catalog: CatalogRow | undefined, transpar
     price: row.price_per_kg,
     cup: catalog.ficha_notas_cata || "—",
     transparency: transparency ? { locked: Number(transparency.price_per_kg_locked), reference: Number(transparency.reference_price_snapshot) } : undefined,
+    // V6.3: lo que la vitrina ya sabe del lote (la MISMA fila que pinta la cinta y el Dossier público).
+    referencia: vitrina?.referencia ?? null,
+    punto: vitrina?.punto != null && vitrina.punto !== "" ? Number(vitrina.punto).toFixed(2) : null,
+    protocolo: vitrina?.punto != null ? (/cva/i.test(vitrina.protocolo ?? "") ? "CVA" : "SCA") : null,
+    foto: vitrina?.tiene_foto && vitrina.referencia ? `/api/catalogo/foto/${vitrina.referencia}` : null,
+    dossierHref: vitrina?.referencia ? `${origenDeSuperficie(RUTA_PORTAL)}${rutaDelLote(vitrina.referencia)}` : null,
+    arrival: row.arrival_date,
+    depositPct: row.deposit_pct != null && Number(row.deposit_pct) > 0 ? Number(row.deposit_pct) : 30,
   };
 }
 
@@ -243,6 +258,8 @@ function Experience() {
   const [billing, setBilling] = useState<Billing>(EMPTY_BILLING);
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [samplePackOrdered, setSamplePackOrdered] = useState(false);
+  /** V6.3 (tanda D, sin decisión): el estado del pedido de muestras más reciente (`sample_pack_orders.status`), para «Mi cuenta». */
+  const [samplePackStatus, setSamplePackStatus] = useState<string | null>(null);
 
   // V5.24: la subasta Tyrian REAL (lot_auctions, vía Server Actions). La
   // vitrina se carga para todos; pujar exige sesión + nivel Pintón.
@@ -251,10 +268,10 @@ function Experience() {
   const myBids = subastas.filter((s) => s.status === "abierta").reduce((n, s) => n + s.fraccionesDetalle.filter((f) => f.miPuja != null).length, 0);
 
   const loadCatalog = useCallback(async () => {
-    const [{ data: listingRows }, { data: catalogRows }, { data: transparencyRows }, { data: zoneRows }, { data: perfilRow }] = await Promise.all([
+    const [{ data: listingRows }, { data: catalogRows }, { data: transparencyRows }, { data: zoneRows }, { data: perfilRow }, { data: vitrinaRows }] = await Promise.all([
       supabase
         .from("lot_listings")
-        .select("id, lot_id, commercial_mode, unit_kg, moq_kg, total_kg, sold_kg, price_per_kg")
+        .select("id, lot_id, commercial_mode, unit_kg, moq_kg, total_kg, sold_kg, price_per_kg, deposit_pct, arrival_date")
         .eq("status", "published"),
       // V5.202 (nodo final, 2026-10-10): con `pais` (la región «Santander, Colombia»). La migración que lo añade se puede aplicar
       // antes o después de desplegar; con la vista vieja esa columna no existe y PostgREST respondería 400 (la tienda sin lotes),
@@ -277,13 +294,16 @@ function Experience() {
       supabase.from("shipping_zones").select("code, label, rate_per_kg").order("sort_order"),
       // V5.85: el perfil ÚNICO de CTCx Selection (respuesta 7 del owner): la tarjeta lo enseña en vez de la finca.
       supabase.from(VISTA_PERFIL_CTCX).select(PERFIL_CTCX_SELECT).maybeSingle(),
+      // V6.3: la vitrina (anon la lee): referencia, Punto, protocolo, foto — por lot_id.
+      supabase.from(VISTA_VITRINA).select(COLUMNAS_VITRINA),
     ]);
+    const vitrinaByLotId = new Map(((vitrinaRows ?? []) as FilaVitrina[]).map((v) => [v.lot_id, v]));
     const perfil = aPerfilCtcx((perfilRow as FilaPerfilCtcx | null) ?? null);
     const catalogByLotId = new Map(((catalogRows ?? []) as CatalogRow[]).map((c) => [c.lot_id, c]));
     const transparencyByListingId = new Map(((transparencyRows ?? []) as TransparencyRow[]).map((t) => [t.lot_listing_id, t]));
     setLots(
       ((listingRows as ListingRow[] | null) ?? [])
-        .map((r) => listingToLot(r, catalogByLotId.get(r.lot_id), transparencyByListingId.get(r.id), perfil))
+        .map((r) => listingToLot(r, catalogByLotId.get(r.lot_id), transparencyByListingId.get(r.id), perfil, vitrinaByLotId.get(r.lot_id)))
         .filter((l): l is Lot => l !== null)
     );
     setZones(((zoneRows ?? []) as { code: string; label: string; rate_per_kg: number }[]).map((z) => ({ code: z.code, label: z.label, ratePerKg: Number(z.rate_per_kg) })));
@@ -309,7 +329,7 @@ function Experience() {
             .select("id, placed_at, total_now, points_earned, order_items(kg, lot_name)")
             .eq("buyer_id", uid)
             .order("placed_at", { ascending: false }),
-          supabase.from("sample_pack_orders").select("id").eq("buyer_id", uid).limit(1),
+          supabase.from("sample_pack_orders").select("id, status").eq("buyer_id", uid).order("created_at", { ascending: false }).limit(1),
         ]);
 
       setUserName((profile?.full_name || "").split(" ")[0]);
@@ -322,6 +342,7 @@ function Experience() {
       });
       setMyKg(Object.fromEntries((reservationRows ?? []).map((r) => [r.lot_listing_id, Number(r.kg)])));
       setSamplePackOrdered((packRows ?? []).length > 0);
+      setSamplePackStatus(((packRows ?? []) as { status?: string | null }[])[0]?.status ?? null);
       setOrders(
         ((orderRows as unknown as OrderRow[] | null) ?? []).map((o) => ({
           id: o.id,
@@ -359,15 +380,22 @@ function Experience() {
   // Ver docs/V5_CONSOLAS_PLAN.md §1 (D0.5).
   useEffect(() => {
     let active = true;
+    // V6.3 (objetivo 3 · tanda A): las dos puertas por URL. `?login=1` (CTC Home, Kaffetal Regal, la portada) abre la ventana si no
+    // hay sesión; `?cuenta=1` (la cabecera de la familia tras entrar en la portada, Roast o X) abre «Mi cuenta».
+    const params = new URLSearchParams(window.location.search);
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return;
-      if (!data.session?.user) return;
+      if (!data.session?.user) {
+        if (params.get("login") === "1") setLoginOpen(true);
+        return;
+      }
       const uid = data.session.user.id;
       gateMatriz().then((ok) => {
         if (!ok || !active) return;
         setUserId(uid);
         loadCatalog();
         loadBuyerData(uid);
+        if (params.get("cuenta") === "1") setView("profile");
       });
     });
 
@@ -410,7 +438,8 @@ function Experience() {
     const lot = lots.find((l) => l.id === id);
     if (!lot) return;
     const cur = myKg[id] ?? 0;
-    if (delta > 0 && !userId && lot.mode === "pre") {
+    // V6.3: la parrilla solo se pinta con sesión, así que esta guarda es una red de seguridad (antes distinguía spot/pre: rama muerta).
+    if (delta > 0 && !userId) {
       setLoginOpen(true);
       showToast(t.loginToReserve);
       return;
@@ -545,6 +574,9 @@ function Experience() {
               that same slot (owner, 2026-08-17): the same lots, no prices, no
               MOQ, no kilos, and a door. It inherits the `grados` anchor because
               it occupies the catalogue's place in the page and in the QuickNav. */}
+          {/* V6.3 (objetivo 3 · tanda A): con sesión, la cinta y «Find my Lot» SE QUEDAN (la vitrina de todos los lotes evaluados,
+              también los «Próximamente»), sin la puerta al login; debajo, la parrilla con precio. Antes, al entrar desaparecían. */}
+          {userId && <SneakPeek lang={lang} variant="cp" id="vitrina" conSesion />}
           {userId ? (
             <>
               <GradosSection
@@ -607,6 +639,8 @@ function Experience() {
           tier={tier}
           orders={orders}
           samplePackOrdered={samplePackOrdered}
+          samplePackStatus={samplePackStatus}
+          reservas={lots.filter((l) => (myKg[l.id] ?? 0) > 0).map((l) => ({ id: l.id, code: l.referencia ?? l.code, name: l.name, kg: myKg[l.id] ?? 0, dossierHref: l.dossierHref }))}
           billing={billing}
           onBack={() => setView("store")}
           onLogout={logout}

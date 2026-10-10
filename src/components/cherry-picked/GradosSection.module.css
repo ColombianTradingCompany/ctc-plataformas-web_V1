@@ -30,3 +30,8 @@
 .tab.active .n{background:rgba(255,255,255,.18);border-color:transparent;color:#fff}
 
 .lots{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px}
+
+/* V6.3: el catálogo vacío que explica (objetivo 3 · tanda A) */
+.vacio{background:var(--card,#fff);border:1px dashed var(--line,#cdd1c4);border-radius:14px;padding:26px 24px;margin:6px 0 26px;max-width:720px}
+.vacio h3{margin:0 0 8px;font-size:20px}
+.vacio p{margin:0 0 14px;line-height:1.55;color:var(--muted,#5a6156)}

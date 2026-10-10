@@ -19,6 +19,37 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.3] — 2026-10-11 (commit pendiente)
+
+- **Cambiado**: **el login de Cherry Picked y lo que ve el comprador con sesión** (owner, noche del 2026-10-10: «una mejora
+  sustancial a la interfaz UI/UX del login de Cherry Picked [...] que el sitio interactúe con el catálogo activo y que integre más de
+  los features que tenemos ya previstos»; objetivo 3 de `docs/PLAN_V6_OBJETIVOS.md`: la tanda A entera y lo de B y D que no espera
+  decisión del owner; ejecutado desde `consolas` con el owner, código de `cherry-picked` y una línea de `plataforma`). **(1) Entrada**:
+  la cuenta es UNA en toda la familia — la portada, Roast y X llevan «Entrar / Mi cuenta» en la cabecera y la ventana de login en el
+  sitio (`sesion.tsx`: `ProveedorDeCuenta`, `AccesoDeCuenta`, `useCuenta`); la cinta abre el login ahí mismo en vez de mandar a otra
+  página; `?login=1` abre la ventana al llegar (CTC Home «I want to buy it» lo manda así) y `?cuenta=1` abre «Mi cuenta»; un login
+  hecho fuera de Green aterriza en Green; «Crear cuenta» avisa la regla productor/comprador (y enlaza Kaffetal Regal) sin sacar al
+  comprador. **(2) Continuidad — lo más grave del plan**: con sesión la tienda ya NO se queda vacía: conserva la cinta de la vitrina y
+  «Find my Lot» (sin la puerta al login) y, debajo, la parrilla con precio; si no hay ningún lote declarado, el catálogo lo EXPLICA
+  (se declara lote a lote desde el Triage) y lleva a la vitrina. **(3) La tarjeta del lote** habla el idioma de la vitrina (la misma
+  fila de `public_lot_vitrina`): referencia `CTC-L-` en vez de «BK-XXXX», el Punto con su protocolo (CVA; SCA 2004 vale lo mismo) y
+  el estimado del productor marcado como tal, la foto del lote aprobada por CTCx, el Dossier público, «kg de verde», spot (en
+  bodega) o pre-venta con su llegada; sin finca ni municipio; sin los enlaces de demostración; spot Y pre-venta por grado, y Black
+  solo en su sección (ya no salía dos veces). **(4) Mi cuenta**: el estado del pedido de muestras (pedido · en preparación · enviado)
+  y los lotes reservados con su referencia y su Dossier. **(5) Contenido con fecha vencida**: el tablero del hero («Manifiesto · Julio
+  2026 · S1») es ahora el estado VIVO del Catálogo Activo (lotes en la vitrina, declarados con precio, la ventana ISO vigente de los
+  Ciclos, «Find my Lot»); el catálogo ya no promete «mitaca en agosto». **(6)** código muerto fuera (`moqAnon`, la rama spot/pre sin
+  sesión). **Lo que sigue esperando al owner, y sigue como estaba**: el anticipo (30 % fijo en el carrito y en `place_order`;
+  decisión 7), el MOQ del Black (350 kg; decisión 8), la base del precio (decisión 3), el pack de muestras y la puja Tyrian con
+  Pintón (decisión 12), la narrativa de Green (objetivo 1 D).
+- **Seguridad**: guardián nuevo `qa-cp-sesion` (33); `qa-sneak-peek` aprende la guarda nueva (146); `qa-subastas`, `qa-muestras`,
+  `qa-moneda`, `qa-recuperacion`, `qa-catalogo-publico`, `qa-nav`, `qa-ficha-publica` en verde.
+- **Docs**: `PLAN_V6_OBJETIVOS` §3 (lo cerrado tachado, lo que espera decisión), charters `cherry-picked` y `consolas`, `ALINEACION` §3.
+- **Seguridad**: **verificado en el servidor de desarrollo** con la cuenta de comprador de auditoría (V5.98; solo entrar, mirar y
+  salir, sin pedidos): `?login=1` abre la ventana en la portada y en la tienda, el aviso productor/comprador sale al crear cuenta,
+  con sesión se ven la cinta (lotes reales con su `CTC-L-` y su Punto), el catálogo vacío que explica y «Mi cuenta» con los lotes
+  reservados y el estado de las muestras.
+
 ## [V6.2] — 2026-10-11 (commit c249d6b)
 
 - **Añadido**: **la Interfaz de Leads** (owner, noche del 2026-10-10: «una "Interfaz de Leads" como módulo de LCP · General [...] con

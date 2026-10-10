@@ -24,6 +24,20 @@ export type Lot = {
   price: number; // EUR/kg
   cup: string; // tasting notes
   transparency?: { locked: number; reference: number }; // real producer-vs-market price, only when the listing opted in
+  // ── V6.3 (objetivo 3 · tanda B, lo que no espera decisión del owner): la tarjeta habla el idioma de la vitrina ──
+  /** La referencia pública `CTC-L-XXXXXXXX` (la que busca «Find my Lot»); null si el lote aún no está en la vitrina. */
+  referencia: string | null;
+  /** El Punto que rige el grado (dos decimales) y su protocolo (CVA, el principal; SCA 2004 vale lo mismo); null sin evaluación. */
+  punto: string | null;
+  protocolo: "CVA" | "SCA" | null;
+  /** La foto de la TARJETA de la vitrina (`/api/catalogo/foto/<referencia>`) o la imagen de CTCx Selection; null → el sello del grado. */
+  foto: string | null;
+  /** El Dossier público del lote (absoluto a la casa matriz); null sin referencia. */
+  dossierHref: string | null;
+  /** Pre-venta: cuándo llega (fecha ISO del listado) o null. */
+  arrival: string | null;
+  /** El anticipo del listado en %, informativo (el carrito y `place_order` siguen al 30 % hasta la decisión 7 del owner). */
+  depositPct: number;
 };
 
 export const GRADE_COLOR: Record<Grade, string> = {

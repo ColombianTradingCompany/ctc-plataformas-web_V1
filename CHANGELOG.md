@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.0] — 2026-10-10 (commit pendiente)
+## [V6.0] — 2026-10-10 (commit 1130833)
 
 - **Hito**: **V6.0** — el owner cierra el sprint de desarrollo («quiero cerrar este largo sprint de desarrollo para llevar todo el
   sistema a la V6.0») y deja el terreno para tres objetivos de mejora, cada uno con su plan y su prompt de arranque:

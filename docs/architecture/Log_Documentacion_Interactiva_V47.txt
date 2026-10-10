@@ -742,4 +742,4 @@ Contexto abierto al cerrar V47 (2026-09-25) — plataforma V5.92:
 
 ## [2026-10-10] V6.0 · Hito: el owner cierra el sprint y declara la V6.0; el terreno de los tres objetivos siguientes (landings, Triage y Catálogo Activo, login de Cherry Picked)
 - ANN `src/lib/version.ts`, `docs/PLAN_V6_OBJETIVOS.md`, `docs/KICKOFF.{md,html}`, `docs/componentes/build_kickoff.py`, `AGENTS.md`, `docs/HANDOFF.md`, `docs/ALINEACION.md`, charters.
-(commit: pendiente)
+(commit: 1130833)

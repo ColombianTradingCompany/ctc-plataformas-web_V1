@@ -159,4 +159,4 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
   en el asunto), `envios.ts` (html; `yaRespondio` por dirección o código), `scaj2026/textos.json` (claves del paso 2 en ES · EN · JA),
   LCP `formularios/page.tsx` (código, estado del paso 2, enlaces).
 - Dependencias: pdf-lib, @pdf-lib/fontkit. DICT: «código de registro», «paso 2 (complemento)». Guardián `qa-lead-forms` 81.
-(commit: pendiente)
+(commit: 949f15b)

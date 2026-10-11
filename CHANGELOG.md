@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.4] — 2026-10-11 (commit pendiente)
+## [V6.4] — 2026-10-11 (commit 949f15b)
 
 - **Cambiado**: **el formulario SCAJ 2026 va en DOS pasos** (owner, 2026-10-11: «solo "About you" y "What's next" aparezcan [...] las
   demás preguntas en una segunda página totalmente opcional [...] enviadas en el correo de respuesta [...] pre-filled [...] "What best

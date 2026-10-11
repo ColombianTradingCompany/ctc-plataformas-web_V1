@@ -38,7 +38,9 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
   ~5 MB) sale en japonés; sin ella, el PDF del japonés sale en inglés y un nombre en kanji se sustituye por el correo, nunca por «????».
 - **Cambiado**: la LCP enseña el código de cada lead, si el paso 2 está completo, y sus enlaces (PDF y completar); el seguimiento
   recuerda el enlace de completar solo si quedó algo sin responder.
-- **Datos**: sin migración (las columnas ya existían). Dependencias nuevas: `pdf-lib` 1.17.1 y `@pdf-lib/fontkit` 1.1.1.
+- **Datos**: sin migración (las columnas ya existían). Dependencias nuevas: `pdf-lib` 1.17.1 y `@pdf-lib/fontkit` 1.1.1. **Nota**: el
+  bump de `APP_VERSION` se quedó fuera del commit 949f15b por un `git add` incompleto y entró en el commit siguiente; la insignia dijo
+  «V6.3 · build 8653c73» unos minutos.
 - **Seguridad**: `qa-lead-forms` 81 (+18: los dos pasos, el desplegable, el complemento con testigo, el código, HTML + texto, el PDF).
   **`npm audit` ya no está en 0 por avisos publicados hoy, ajenos a este trabajo**: `npm audit fix` corrigió 16; quedan 10 (`braces`
   por `next`/`eslint-config-next`/`shadcn`/`ts-morph`) que solo se cierran con `--force` (rompe versiones): decisión del owner.

@@ -3,7 +3,8 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { ActionForm } from "@/components/panel/ActionForm";
 import shared from "@/components/panel/shared.module.css";
 import s from "./formularios.module.css";
-import { ESTADOS_DE_LEAD, ESTADO_LABEL, OPCIONES, TIPOS_DE_PARTICIPANTE, type LeadDeEvento } from "@/lib/leadForms/campos";
+import { ESTADOS_DE_LEAD, ESTADO_LABEL, OPCIONES, TIPOS_DE_PARTICIPANTE, codigoDeLead, preguntasDelPaso2, type LeadDeEvento } from "@/lib/leadForms/campos";
+import { rutaDeCompletar, rutaDelPdf } from "@/lib/leadForms/sello";
 import { configDe, FORMULARIOS, formulario, formularioActivoDe } from "@/lib/leadForms/registro";
 import { cargarFormularios, cargarLeads, contarLeads, qrSvg, urlPublicaDelFormulario } from "@/lib/leadForms/servidor";
 import { construirCorreoInmediato, construirSeguimiento } from "@/lib/leadForms/correos";
@@ -275,8 +276,9 @@ function LeadFila({ l, rotulos, ahoraMs }: { l: LeadDeEvento; rotulos: Record<st
           {l.country_city ? ` · ${l.country_city}` : ""}
         </span>
         <span className={s.leadMeta}>
-          {fecha(l.created_at)} · {l.lang.toUpperCase()}
+          <b>{codigoDeLead(l.form_key, l.id)}</b> · {fecha(l.created_at)} · {l.lang.toUpperCase()}
           {l.source ? ` · ${l.source}` : ""}
+          {preguntasDelPaso2(l).some((q) => !q.respondida) ? " · paso 2 incompleto" : " · paso 2 completo"}
         </span>
         <span className={s.leadEstados}>
           <span className={estadoClase(l.status)}>{ESTADO_LABEL[l.status as keyof typeof ESTADO_LABEL] ?? l.status}</span>
@@ -404,6 +406,16 @@ function LeadFila({ l, rotulos, ahoraMs }: { l: LeadDeEvento; rotulos: Record<st
           )}
           <dt>Consentimiento</dt>
           <dd>{fechaLarga(l.consent_at)}</dd>
+          <dt>Enlaces del lead</dt>
+          <dd>
+            <a href={rutaDelPdf(FORMULARIOS[l.form_key]?.ruta ?? "", l.id)} target="_blank" rel="noopener">
+              PDF de confirmación ↗
+            </a>
+            {" · "}
+            <a href={rutaDeCompletar(FORMULARIOS[l.form_key]?.ruta ?? "", l.id)} target="_blank" rel="noopener">
+              Completar el paso 2 (enlace del correo) ↗
+            </a>
+          </dd>
           <dt>Correo inmediato</dt>
           <dd>
             {l.email_immediate_sent_at ? `enviado ${fechaLarga(l.email_immediate_sent_at)}` : "no enviado"}

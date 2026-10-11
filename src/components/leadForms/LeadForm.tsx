@@ -3,21 +3,39 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
-import { BUCKET_LEADS, EMAIL_RE, MAX_MB_TARJETA, OPCIONES, visible, type IdiomaDeFormulario, type EnvioDeFormulario, type PreguntaCerrada } from "@/lib/leadForms/campos";
+import { BUCKET_LEADS, EMAIL_RE, MAX_MB_TARJETA, OPCIONES, TIPOS_DE_PARTICIPANTE, visible, type IdiomaDeFormulario, type EnvioDeFormulario, type PreguntaCerrada } from "@/lib/leadForms/campos";
 import type { TextosDeFormulario } from "@/lib/leadForms/registro";
-import { enviarLeadDeEvento, urlDeSubidaDeTarjeta } from "@/lib/leadForms/publicActions";
+import { completarLeadDeEvento, enviarLeadDeEvento, urlDeSubidaDeTarjeta } from "@/lib/leadForms/publicActions";
 import styles from "./LeadForm.module.css";
 
-// ── El formulario de leads de una feria (V6.2) ───────────────────────────────────────────────────────────────────────────────
+// ── El formulario de leads de una feria (V6.2 · V6.4) ───────────────────────────────────────────────────────────────────────
 // Una sola página, pensada primero para el celular (de pie, con una mano, con conexión irregular): casi todo se responde con toques,
 // áreas táctiles de 44 px, etiquetas siempre visibles, teclado de correo en el correo. El idioma inicial lo pone el servidor (el del
-// navegador; si no es uno de los tres, inglés) y se cambia arriba. Las preguntas cambian con el tipo de participante (`visible`, la
-// tabla de la especificación). «Qué valoras» es una lista de casillas; al marcar una aparece la escala de cinco GRANOS (no estrellas).
+// navegador; si no es uno de los tres, inglés) y se cambia arriba.
 //
-// Lo escrito no se pierde: cada cambio se guarda en localStorage (`lead-form:<key>`) y se recupera al volver; si el envío falla por
-// la conexión, se queda todo y se reintenta. Un doble toque en Enviar no crea dos leads: la clave de idempotencia nace con el
-// borrador y la base rechaza el segundo. Al terminar, «Registrar a otra persona» deja el formulario vacío (lo usa el owner cuando
-// llena por alguien desde su celular).
+// V6.4 (owner, 2026-10-11): DOS PASOS. El paso 1 es lo esencial —«Quién eres» (el tipo en un desplegable) y «Qué sigue»— y se GUARDA al
+// enviarlo: desde ahí nada se pierde. La pantalla de gracias ofrece el PDF de confirmación (código de registro, SCAJ 2026, la casa y
+// sus redes) y, opcional, el paso 2 («Tu operación» y «Qué valoras»), que escribe sobre el MISMO registro. Si el visitante lo deja
+// para después, esas preguntas le llegan prellenadas en el correo con un enlace firmado que abre este mismo componente en modo
+// `complemento` (`/scaj2026/completar?id&t`). «Qué valoras» sigue con su escala de cinco GRANOS (no estrellas).
+//
+// Lo escrito no se pierde: cada cambio se guarda en localStorage (`lead-form:<key>`) y se recupera al volver; si el envío falla por la
+// conexión, se queda todo y se reintenta. Un doble toque en Enviar no crea dos leads: la clave de idempotencia nace con el borrador y
+// la base rechaza el segundo. «Registrar a otra persona» deja el formulario vacío (lo usa el owner cuando llena por alguien).
+
+export type ValoresDelPaso2 = {
+  green_volume?: string | null;
+  buys_colombian?: string | null;
+  profiles?: string[] | null;
+  about?: string | null;
+  values?: Record<string, number> | null;
+  grades_interest?: string[] | null;
+  purchase_format?: string | null;
+  certifications?: string[] | null;
+  roast_in_destination?: string | null;
+  regional_node_interest?: boolean | null;
+  producer_interest?: boolean | null;
+};
 
 type Props = {
   formKey: string;
@@ -29,6 +47,10 @@ type Props = {
   source: string | null;
   privacyUrl: string;
   abierto: boolean;
+  /** V6.4 · modo COMPLEMENTO (desde el enlace del correo): solo el paso 2, prellenado, para el lead del enlace. */
+  complemento?: { leadId: string; testigo: string; participantType: string; valores: ValoresDelPaso2; codigo: string; pdfHref: string } | null;
+  /** V6.4 · el enlace del correo no valía (sin testigo o testigo ajeno). */
+  complementoInvalido?: boolean;
 };
 
 type Borrador = {
@@ -57,6 +79,8 @@ type Borrador = {
   producer_interest: boolean;
   consent: boolean;
 };
+
+type Registro = { leadId: string; testigo: string; codigo: string; pdfHref: string; completarHref: string };
 
 const uuid = (): string =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -93,6 +117,23 @@ const vacio = (lang: IdiomaDeFormulario): Borrador => ({
   consent: false,
 });
 
+/** Los valores del paso 2 que vienen del registro (modo complemento), en forma de borrador. */
+const desdeComplemento = (lang: IdiomaDeFormulario, tipo: string, v: ValoresDelPaso2): Borrador => ({
+  ...vacio(lang),
+  participant_type: tipo,
+  green_volume: v.green_volume ?? "",
+  buys_colombian: v.buys_colombian ?? "",
+  profiles: v.profiles ?? [],
+  about: v.about ?? "",
+  values: v.values ?? {},
+  grades_interest: v.grades_interest ?? [],
+  purchase_format: v.purchase_format ?? "",
+  certifications: v.certifications ?? [],
+  roast_in_destination: v.roast_in_destination ?? "",
+  regional_node_interest: v.regional_node_interest === true,
+  producer_interest: v.producer_interest === true,
+});
+
 const claveDeBorrador = (formKey: string) => `lead-form:${formKey}`;
 const tieneAlgo = (b: Borrador) => !!(b.participant_type || b.full_name || b.company || b.email || b.looking_for || b.about);
 
@@ -106,13 +147,18 @@ function Grano({ lleno }: { lleno: boolean }) {
   );
 }
 
-export function LeadForm({ formKey, textos, idiomas, idiomaInicial, sello, source, privacyUrl, abierto }: Props) {
-  const [b, setB] = useState<Borrador>(() => vacio(idiomaInicial));
-  const [listo, setListo] = useState(false);
+export function LeadForm({ formKey, textos, idiomas, idiomaInicial, sello, source, privacyUrl, abierto, complemento = null, complementoInvalido = false }: Props) {
+  const enComplemento = !!complemento;
+  const [b, setB] = useState<Borrador>(() => (complemento ? desdeComplemento(idiomaInicial, complemento.participantType, complemento.valores) : vacio(idiomaInicial)));
+  const [paso, setPaso] = useState<1 | 2>(complemento ? 2 : 1);
+  // En modo complemento no hay borrador que recuperar: nace listo.
+  const [listo, setListo] = useState(enComplemento);
   const [restaurado, setRestaurado] = useState(false);
   const [enviando, setEnviando] = useState(false);
-  const [hecho, setHecho] = useState(false);
-  const [error, setError] = useState<{ tipo: "required" | "email" | "network" | "server" | "closed"; campo?: string } | null>(null);
+  /** El registro guardado en el paso 1 (o el del enlace, en modo complemento). */
+  const [registro, setRegistro] = useState<Registro | null>(complemento ? { leadId: complemento.leadId, testigo: complemento.testigo, codigo: complemento.codigo, pdfHref: complemento.pdfHref, completarHref: "" } : null);
+  const [pantalla, setPantalla] = useState<"form" | "gracias" | "guardado">("form");
+  const [error, setError] = useState<{ tipo: "required" | "email" | "network" | "server" | "closed" | "invalid"; campo?: string } | null>(null);
   const [foto, setFoto] = useState<File | null>(null);
   const [fotoError, setFotoError] = useState<"big" | "type" | null>(null);
   const fotoRef = useRef<HTMLInputElement>(null);
@@ -120,9 +166,9 @@ export function LeadForm({ formKey, textos, idiomas, idiomaInicial, sello, sourc
   const t = textos[b.lang].ui;
   const o = textos[b.lang].options;
 
-  // El borrador: se recupera una vez y se guarda en cada cambio (sin la foto, que no cabe en localStorage).
+  // El borrador (solo en el formulario normal): se recupera una vez y se guarda en cada cambio (sin la foto, que no cabe en localStorage).
   useEffect(() => {
-    // El borrador se lee de localStorage (un sistema externo) y el estado se pone en el callback, nunca síncrono en el efecto.
+    if (enComplemento) return;
     let activo = true;
     Promise.resolve().then(() => {
       if (!activo) return;
@@ -145,15 +191,15 @@ export function LeadForm({ formKey, textos, idiomas, idiomaInicial, sello, sourc
     return () => {
       activo = false;
     };
-  }, [formKey, idiomaInicial, idiomas]);
+  }, [formKey, idiomaInicial, idiomas, enComplemento]);
   useEffect(() => {
-    if (!listo) return;
+    if (!listo || enComplemento) return;
     try {
       localStorage.setItem(claveDeBorrador(formKey), JSON.stringify(b));
     } catch {
       /* idem */
     }
-  }, [b, listo, formKey]);
+  }, [b, listo, formKey, enComplemento]);
   useEffect(() => {
     document.documentElement.lang = b.lang;
   }, [b.lang]);
@@ -209,7 +255,7 @@ export function LeadForm({ formKey, textos, idiomas, idiomaInicial, sello, sourc
     return null;
   }
 
-  function validar(): { tipo: "required" | "email"; campo: string } | null {
+  function validarPaso1(): { tipo: "required" | "email"; campo: string } | null {
     if (!b.participant_type) return { tipo: "required", campo: "participant_type" };
     if (b.participant_type === "other" && !b.participant_other.trim()) return { tipo: "required", campo: "participant_other" };
     if (!b.full_name.trim()) return { tipo: "required", campo: "full_name" };
@@ -220,9 +266,19 @@ export function LeadForm({ formKey, textos, idiomas, idiomaInicial, sello, sourc
     return null;
   }
 
-  async function enviar() {
+  const extraDelBorrador = () => ({
+    grades_interest: b.grades_interest,
+    purchase_format: b.purchase_format,
+    certifications: b.certifications,
+    roast_in_destination: b.roast_in_destination,
+    regional_node_interest: b.regional_node_interest,
+    producer_interest: b.producer_interest,
+  });
+
+  /** PASO 1: guarda el lead. */
+  async function enviarPaso1() {
     if (enviando) return;
-    const v = validar();
+    const v = validarPaso1();
     if (v) {
       setError(v);
       document.getElementById(`campo-${v.campo}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -246,23 +302,17 @@ export function LeadForm({ formKey, textos, idiomas, idiomaInicial, sello, sourc
         email: b.email,
         country_city: b.country_city,
         card_photo_path,
+        looking_for: b.looking_for,
+        timing: b.timing,
+        wants: b.wants,
+        master_roaster_interest: b.master_roaster_interest,
+        // El paso 2 aún no se ha preguntado: va vacío (si el borrador recuperado traía algo, también viaja).
         green_volume: b.green_volume,
         buys_colombian: b.buys_colombian,
         profiles: b.profiles,
         about: b.about,
         values: b.values,
-        looking_for: b.looking_for,
-        timing: b.timing,
-        wants: b.wants,
-        master_roaster_interest: b.master_roaster_interest,
-        extra: {
-          grades_interest: b.grades_interest,
-          purchase_format: b.purchase_format,
-          certifications: b.certifications,
-          roast_in_destination: b.roast_in_destination,
-          regional_node_interest: b.regional_node_interest,
-          producer_interest: b.producer_interest,
-        },
+        extra: extraDelBorrador(),
         consent: b.consent,
       };
       const r = await enviarLeadDeEvento(payload);
@@ -272,7 +322,8 @@ export function LeadForm({ formKey, textos, idiomas, idiomaInicial, sello, sourc
         } catch {
           /* idem */
         }
-        setHecho(true);
+        setRegistro({ leadId: r.leadId, testigo: r.testigo, codigo: r.codigo, pdfHref: r.pdfHref, completarHref: r.completarHref });
+        setPantalla("gracias");
         window.scrollTo({ top: 0, behavior: "smooth" });
       } else if (r.error === "cerrado") {
         setError({ tipo: "closed" });
@@ -289,12 +340,44 @@ export function LeadForm({ formKey, textos, idiomas, idiomaInicial, sello, sourc
     }
   }
 
+  /** PASO 2: completa el mismo registro. */
+  async function enviarPaso2() {
+    if (enviando || !registro) return;
+    setError(null);
+    setEnviando(true);
+    try {
+      const r = await completarLeadDeEvento({
+        formKey,
+        leadId: registro.leadId,
+        testigo: registro.testigo,
+        green_volume: b.green_volume,
+        buys_colombian: b.buys_colombian,
+        profiles: b.profiles,
+        about: b.about,
+        values: b.values,
+        extra: extraDelBorrador(),
+      });
+      if (r.ok) {
+        setPantalla("guardado");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else if (r.error === "invalido") setError({ tipo: "invalid" });
+      else if (r.error === "cerrado") setError({ tipo: "closed" });
+      else setError({ tipo: "server" });
+    } catch {
+      setError({ tipo: "network" });
+    } finally {
+      setEnviando(false);
+    }
+  }
+
   function otraPersona() {
     const lang = b.lang;
     setB(vacio(lang));
     setFoto(null);
     setFotoError(null);
-    setHecho(false);
+    setRegistro(null);
+    setPaso(1);
+    setPantalla("form");
     setRestaurado(false);
     setError(null);
     try {
@@ -318,39 +401,23 @@ export function LeadForm({ formKey, textos, idiomas, idiomaInicial, sello, sourc
         ))}
       </div>
       <p className={styles.feria}>{t.fair}</p>
-      <h1 className={styles.titulo}>{t.title}</h1>
-      <p className={styles.intro}>{t.intro}</p>
+      <h1 className={styles.titulo}>{paso === 2 && pantalla === "form" ? t.paso2_title : t.title}</h1>
+      <p className={styles.intro}>{paso === 2 && pantalla === "form" ? t.paso2_intro : t.intro}</p>
     </header>
   );
 
-  if (!abierto) {
-    return (
-      <main className={styles.pagina}>
-        {cabecera}
-        <section className={styles.tarjeta}>
-          <h2 className={styles.hecho}>{t.closed_title}</h2>
-          <p className={styles.parrafo}>{t.closed_body}</p>
-        </section>
-        <p className={styles.legal}>{t.legal}</p>
-      </main>
-    );
-  }
+  const pie = <p className={styles.legal}>{t.legal}</p>;
 
-  if (hecho) {
-    return (
-      <main className={styles.pagina}>
-        {cabecera}
-        <section className={styles.tarjeta} aria-live="polite">
-          <h2 className={styles.hecho}>{t.done_title}</h2>
-          <p className={styles.parrafo}>{t.done_body}</p>
-          <button type="button" className={styles.enviar} onClick={otraPersona}>
-            {t.done_again}
-          </button>
-        </section>
-        <p className={styles.legal}>{t.legal}</p>
-      </main>
-    );
-  }
+  const errorTexto = error && (
+    <p className={styles.error} role="alert">
+      {error.tipo === "required" && t.err_required}
+      {error.tipo === "email" && t.err_email}
+      {error.tipo === "network" && t.err_network}
+      {error.tipo === "server" && t.err_server}
+      {error.tipo === "closed" && `${t.closed_title}. ${t.closed_body}`}
+      {error.tipo === "invalid" && `${t.link_invalido_title}. ${t.link_invalido_body}`}
+    </p>
+  );
 
   // Las fichas de opciones, con el estado de ESTE borrador (el componente vive fuera del render: regla static-components).
   const chips = (grupo: PreguntaCerrada, campo: CampoDeChips, modo: "una" | "varias") => (
@@ -363,78 +430,98 @@ export function LeadForm({ formKey, textos, idiomas, idiomaInicial, sello, sourc
     />
   );
 
-  return (
-    <main className={styles.pagina}>
-      {cabecera}
-      {restaurado && <p className={styles.aviso}>{t.draft_restored}</p>}
-      <form
-        className={styles.form}
-        onSubmit={(e) => {
-          e.preventDefault();
-          void enviar();
-        }}
-        noValidate
-      >
-        <p className={styles.req}>{t.req}</p>
-
-        {/* 1 · Quién eres */}
+  // ── Pantallas que no son el formulario ──────────────────────────────────────────────────────────────────────────────────
+  if (complementoInvalido) {
+    return (
+      <main className={styles.pagina}>
+        {cabecera}
         <section className={styles.tarjeta}>
-          <h2 className={styles.seccion}>{t.s1}</h2>
-          <Pregunta id="participant_type" texto={t.q_type} obligatoria>
-            <div className={styles.chips} role="radiogroup">
-              {OPCIONES_TIPO.map((clave) => (
-                <button key={clave} type="button" role="radio" aria-checked={tipo === clave} className={tipo === clave ? styles.chipActivo : styles.chip} onClick={() => set("participant_type", clave)}>
-                  <span className={styles.radio} aria-hidden="true" />
-                  {rotulo("participant_type", clave)}
-                </button>
-              ))}
-            </div>
-            {tipo === "other" && (
-              <input id="campo-participant_other" className={styles.input} type="text" value={b.participant_other} onChange={(e) => set("participant_other", e.target.value)} placeholder={t.other_ph} maxLength={120} autoComplete="organization-title" />
-            )}
-          </Pregunta>
-          <Pregunta id="full_name" texto={t.name} obligatoria>
-            <input className={styles.input} type="text" value={b.full_name} onChange={(e) => set("full_name", e.target.value)} autoComplete="name" maxLength={160} />
-          </Pregunta>
-          <Pregunta id="company" texto={t.company} obligatoria>
-            <input className={styles.input} type="text" value={b.company} onChange={(e) => set("company", e.target.value)} autoComplete="organization" maxLength={160} />
-          </Pregunta>
-          <Pregunta id="email" texto={t.email} obligatoria>
-            <input className={styles.input} type="email" inputMode="email" value={b.email} onChange={(e) => set("email", e.target.value)} autoComplete="email" autoCapitalize="none" maxLength={254} />
-          </Pregunta>
-          <Pregunta id="country_city" texto={t.country} nota={t.optional}>
-            <input className={styles.input} type="text" value={b.country_city} onChange={(e) => set("country_city", e.target.value)} autoComplete="country-name" maxLength={160} />
-          </Pregunta>
-          <Pregunta id="card" texto={t.card} nota={t.optional}>
-            <input ref={fotoRef} type="file" accept="image/*" className={styles.oculto} onChange={(e) => elegirFoto(e.target.files?.[0] ?? null)} />
-            {foto ? (
-              <div className={styles.fotoLista}>
-                <span>📇 {t.card_ready} · {foto.name.length > 28 ? foto.name.slice(0, 26) + "…" : foto.name}</span>
-                <span className={styles.fotoBotones}>
-                  <button type="button" className={styles.enlaceBoton} onClick={() => fotoRef.current?.click()}>
-                    {t.card_change}
-                  </button>
-                  <button type="button" className={styles.enlaceBoton} onClick={() => elegirFoto(null)}>
-                    {t.card_remove}
-                  </button>
-                </span>
-              </div>
-            ) : (
-              <button type="button" className={styles.fotoBoton} onClick={() => fotoRef.current?.click()}>
-                <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
-                  <circle cx="12" cy="13" r="3.2" />
-                </svg>
-                {t.card_btn}
-              </button>
-            )}
-            {fotoError && <p className={styles.errorCampo}>{fotoError === "big" ? t.card_big : t.card_type}</p>}
-            <p className={styles.pista}>{t.card_hint}</p>
-          </Pregunta>
+          <h2 className={styles.hecho}>{t.link_invalido_title}</h2>
+          <p className={styles.parrafo}>{t.link_invalido_body}</p>
         </section>
+        {pie}
+      </main>
+    );
+  }
+  if (!abierto && !enComplemento) {
+    return (
+      <main className={styles.pagina}>
+        {cabecera}
+        <section className={styles.tarjeta}>
+          <h2 className={styles.hecho}>{t.closed_title}</h2>
+          <p className={styles.parrafo}>{t.closed_body}</p>
+        </section>
+        {pie}
+      </main>
+    );
+  }
+  if (pantalla === "gracias" && registro) {
+    return (
+      <main className={styles.pagina}>
+        {cabecera}
+        <section className={styles.tarjeta} aria-live="polite" data-pantalla="gracias">
+          <h2 className={styles.hecho}>{t.done_title}</h2>
+          <p className={styles.parrafo}>{t.done_body}</p>
+          <p className={styles.codigo}>
+            <span>{t.codigo}</span>
+            <b>{registro.codigo}</b>
+          </p>
+          <a className={styles.enviar} href={registro.pdfHref} download data-pdf="confirmacion">
+            {t.done_pdf} ↓
+          </a>
+          <div className={styles.opcional}>
+            <button type="button" className={styles.botonSuave} onClick={() => { setPaso(2); setPantalla("form"); setError(null); window.scrollTo({ top: 0 }); }} data-paso2="abrir">
+              {t.done_complete} →
+            </button>
+            <p className={styles.pista}>{t.done_complete_hint}</p>
+          </div>
+          <button type="button" className={styles.enlaceBoton} onClick={otraPersona}>
+            {t.done_again}
+          </button>
+        </section>
+        {pie}
+      </main>
+    );
+  }
+  if (pantalla === "guardado" && registro) {
+    return (
+      <main className={styles.pagina}>
+        {cabecera}
+        <section className={styles.tarjeta} aria-live="polite" data-pantalla="guardado">
+          <h2 className={styles.hecho}>{t.saved_title}</h2>
+          <p className={styles.parrafo}>{t.saved_body}</p>
+          <p className={styles.codigo}>
+            <span>{t.codigo}</span>
+            <b>{registro.codigo}</b>
+          </p>
+          <a className={styles.enviar} href={registro.pdfHref} download data-pdf="confirmacion">
+            {t.done_pdf} ↓
+          </a>
+          {!enComplemento && (
+            <button type="button" className={styles.enlaceBoton} onClick={otraPersona}>
+              {t.done_again}
+            </button>
+          )}
+        </section>
+        {pie}
+      </main>
+    );
+  }
 
-        {/* 2 · Tu operación */}
-        {tipo && (
+  // ── PASO 2 (opcional; también el modo complemento) ─────────────────────────────────────────────────────────────────────
+  if (paso === 2) {
+    return (
+      <main className={styles.pagina}>
+        {cabecera}
+        <form
+          className={styles.form}
+          onSubmit={(e) => {
+            e.preventDefault();
+            void enviarPaso2();
+          }}
+          noValidate
+          data-paso="2"
+        >
           <section className={styles.tarjeta}>
             <h2 className={styles.seccion}>{t.s2}</h2>
             {ve("green_volume") && (
@@ -497,48 +584,134 @@ export function LeadForm({ formKey, textos, idiomas, idiomaInicial, sello, sourc
               </Pregunta>
             )}
           </section>
-        )}
 
-        {/* 3 · Qué valoras */}
-        {ve("values") && (
+          {ve("values") && (
+            <section className={styles.tarjeta}>
+              <h2 className={styles.seccion}>{t.s3}</h2>
+              <Pregunta id="values" texto={t.q_values}>
+                <p className={styles.pista}>{t.values_hint}</p>
+                <div className={styles.valores}>
+                  {OPCIONES.values.map((clave) => {
+                    const marcado = clave in b.values;
+                    const granos = b.values[clave] ?? 0;
+                    return (
+                      <div key={clave} className={marcado ? styles.valorActivo : styles.valor}>
+                        <label className={styles.casilla}>
+                          <input type="checkbox" checked={marcado} onChange={() => alternarValor(clave)} />
+                          <span>{rotulo("values", clave)}</span>
+                        </label>
+                        {marcado && (
+                          <div className={styles.escala}>
+                            <div className={styles.granos} role="radiogroup" aria-label={rotulo("values", clave)}>
+                              {[1, 2, 3, 4, 5].map((n) => (
+                                <button key={n} type="button" role="radio" aria-checked={granos === n} aria-label={t.beans_aria.replace("{n}", String(n))} className={styles.grano} onClick={() => ponerGranos(clave, n)}>
+                                  <Grano lleno={n <= granos} />
+                                </button>
+                              ))}
+                            </div>
+                            <div className={styles.escalaRotulos}>
+                              <span>{t.low}</span>
+                              <span>{t.high}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </Pregunta>
+            </section>
+          )}
+
           <section className={styles.tarjeta}>
-            <h2 className={styles.seccion}>{t.s3}</h2>
-            <Pregunta id="values" texto={t.q_values}>
-              <p className={styles.pista}>{t.values_hint}</p>
-              <div className={styles.valores}>
-                {OPCIONES.values.map((clave) => {
-                  const marcado = clave in b.values;
-                  const granos = b.values[clave] ?? 0;
-                  return (
-                    <div key={clave} className={marcado ? styles.valorActivo : styles.valor}>
-                      <label className={styles.casilla}>
-                        <input type="checkbox" checked={marcado} onChange={() => alternarValor(clave)} />
-                        <span>{rotulo("values", clave)}</span>
-                      </label>
-                      {marcado && (
-                        <div className={styles.escala}>
-                          <div className={styles.granos} role="radiogroup" aria-label={rotulo("values", clave)}>
-                            {[1, 2, 3, 4, 5].map((n) => (
-                              <button key={n} type="button" role="radio" aria-checked={granos === n} aria-label={t.beans_aria.replace("{n}", String(n))} className={styles.grano} onClick={() => ponerGranos(clave, n)}>
-                                <Grano lleno={n <= granos} />
-                              </button>
-                            ))}
-                          </div>
-                          <div className={styles.escalaRotulos}>
-                            <span>{t.low}</span>
-                            <span>{t.high}</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </Pregunta>
+            {errorTexto}
+            <button type="submit" className={styles.enviar} disabled={enviando}>
+              {enviando ? t.sending : error?.tipo === "network" ? t.retry : t.guardar}
+            </button>
+            {!enComplemento && (
+              <button type="button" className={styles.enlaceBoton} onClick={() => { setPantalla("gracias"); setPaso(1); window.scrollTo({ top: 0 }); }}>
+                {t.omitir}
+              </button>
+            )}
           </section>
-        )}
+        </form>
+        {pie}
+      </main>
+    );
+  }
 
-        {/* 4 · Qué sigue */}
+  // ── PASO 1: «Quién eres» + «Qué sigue» ──────────────────────────────────────────────────────────────────────────────────
+  return (
+    <main className={styles.pagina}>
+      {cabecera}
+      {restaurado && <p className={styles.aviso}>{t.draft_restored}</p>}
+      <form
+        className={styles.form}
+        onSubmit={(e) => {
+          e.preventDefault();
+          void enviarPaso1();
+        }}
+        noValidate
+        data-paso="1"
+      >
+        <p className={styles.req}>{t.req}</p>
+
+        <section className={styles.tarjeta}>
+          <h2 className={styles.seccion}>{t.s1}</h2>
+          <Pregunta id="participant_type" texto={t.q_type} obligatoria>
+            {/* V6.4 (owner): el tipo es un desplegable, no ocho fichas. */}
+            <select className={styles.select} value={b.participant_type} onChange={(e) => set("participant_type", e.target.value)} aria-required="true">
+              <option value="">{t.select_ph}</option>
+              {TIPOS_DE_PARTICIPANTE.map((clave) => (
+                <option key={clave} value={clave}>
+                  {rotulo("participant_type", clave)}
+                </option>
+              ))}
+            </select>
+            {tipo === "other" && (
+              <input id="campo-participant_other" className={styles.input} type="text" value={b.participant_other} onChange={(e) => set("participant_other", e.target.value)} placeholder={t.other_ph} maxLength={120} autoComplete="organization-title" />
+            )}
+          </Pregunta>
+          <Pregunta id="full_name" texto={t.name} obligatoria>
+            <input className={styles.input} type="text" value={b.full_name} onChange={(e) => set("full_name", e.target.value)} autoComplete="name" maxLength={160} />
+          </Pregunta>
+          <Pregunta id="company" texto={t.company} obligatoria>
+            <input className={styles.input} type="text" value={b.company} onChange={(e) => set("company", e.target.value)} autoComplete="organization" maxLength={160} />
+          </Pregunta>
+          <Pregunta id="email" texto={t.email} obligatoria>
+            <input className={styles.input} type="email" inputMode="email" value={b.email} onChange={(e) => set("email", e.target.value)} autoComplete="email" autoCapitalize="none" maxLength={254} />
+          </Pregunta>
+          <Pregunta id="country_city" texto={t.country} nota={t.optional}>
+            <input className={styles.input} type="text" value={b.country_city} onChange={(e) => set("country_city", e.target.value)} autoComplete="country-name" maxLength={160} />
+          </Pregunta>
+          <Pregunta id="card" texto={t.card} nota={t.optional}>
+            <input ref={fotoRef} type="file" accept="image/*" className={styles.oculto} onChange={(e) => elegirFoto(e.target.files?.[0] ?? null)} />
+            {foto ? (
+              <div className={styles.fotoLista}>
+                <span>📇 {t.card_ready} · {foto.name.length > 28 ? foto.name.slice(0, 26) + "…" : foto.name}</span>
+                <span className={styles.fotoBotones}>
+                  <button type="button" className={styles.enlaceBoton} onClick={() => fotoRef.current?.click()}>
+                    {t.card_change}
+                  </button>
+                  <button type="button" className={styles.enlaceBoton} onClick={() => elegirFoto(null)}>
+                    {t.card_remove}
+                  </button>
+                </span>
+              </div>
+            ) : (
+              <button type="button" className={styles.fotoBoton} onClick={() => fotoRef.current?.click()}>
+                <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
+                  <circle cx="12" cy="13" r="3.2" />
+                </svg>
+                {t.card_btn}
+              </button>
+            )}
+            {fotoError && <p className={styles.errorCampo}>{fotoError === "big" ? t.card_big : t.card_type}</p>}
+            <p className={styles.pista}>{t.card_hint}</p>
+          </Pregunta>
+        </section>
+
         <section className={styles.tarjeta}>
           <h2 className={styles.seccion}>{t.s4}</h2>
           <Pregunta id="looking_for" texto={t.q_looking} nota={t.optional}>
@@ -577,26 +750,16 @@ export function LeadForm({ formKey, textos, idiomas, idiomaInicial, sello, sourc
           {/* Honeypot: oculto a las personas; un bot lo llena y el servidor finge éxito sin guardar nada. */}
           <input ref={hpRef} type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className={styles.oculto} defaultValue="" id="website-hp" />
 
-          {error && (
-            <p className={styles.error} role="alert">
-              {error.tipo === "required" && t.err_required}
-              {error.tipo === "email" && t.err_email}
-              {error.tipo === "network" && t.err_network}
-              {error.tipo === "server" && t.err_server}
-              {error.tipo === "closed" && `${t.closed_title}. ${t.closed_body}`}
-            </p>
-          )}
+          {errorTexto}
           <button type="submit" className={styles.enviar} disabled={enviando}>
             {enviando ? t.sending : error?.tipo === "network" ? t.retry : t.submit}
           </button>
         </section>
       </form>
-      <p className={styles.legal}>{t.legal}</p>
+      {pie}
     </main>
   );
 }
-
-const OPCIONES_TIPO = ["roaster", "importer", "cafe_horeca", "distributor", "producer", "barista", "press", "other"] as const;
 
 type CampoDeChips = "green_volume" | "buys_colombian" | "timing" | "purchase_format" | "roast_in_destination" | "profiles" | "wants" | "grades_interest" | "certifications";
 

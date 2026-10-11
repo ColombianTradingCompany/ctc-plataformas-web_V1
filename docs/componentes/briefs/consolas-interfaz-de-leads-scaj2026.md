@@ -268,6 +268,22 @@ Si no quieres recibir más correos sobre esta conversación, puedes darte de baj
   listado ni lectura sin firma, lectura firmada, borrado). **Desde un celular real te toca a ti**: la cámara y el teclado japonés no
   se pueden conducir desde aquí. Las tres filas de prueba (`source = prueba-dev`, correos `@ctc-qa-test.co`) las borré al terminar.
 
+## 6-bis · Las dos mejoras del 11 de octubre (V6.4)
+
+1. **Dos pasos.** El formulario ya muestra solo «Quién eres» (con el tipo en un desplegable) y «Qué sigue». Al enviar, el lead queda
+   guardado y la pantalla de gracias ofrece el PDF y, opcional, el paso 2 («Tu operación» y «Qué valoras»). Si lo dejan para después,
+   **el correo de respuesta lleva esas preguntas prellenadas** con lo que ya respondieron y un botón «Completar o corregir mis
+   respuestas» que abre el mismo formulario, prellenado, sobre el mismo registro. **Sobre el HTML embebido**: un formulario DENTRO de
+   un correo no es estándar (Gmail, Outlook y Apple Mail eliminan los `<form>`), así que se hizo lo que sí lo es: correo en HTML y en
+   texto, con las preguntas y sus respuestas, un enlace firmado al registro, y **el código de registro en el asunto**
+   («SCAJ2026-4A577F5B»): si responden por correo, el Buzón lo enruta al mismo lead por su dirección o por ese código.
+2. **El PDF de confirmación.** Al enviar, «Descargar mi comprobante (PDF)»: una página con la confirmación arriba (SCAJ 2026 · Tokyo
+   Big Sight, el código, fecha y hora de Japón, nombre, empresa, correo, perfil), qué sigue, CTCx en tres líneas, las plataformas y las
+   redes (Instagram, YouTube) con enlaces clicables y la línea legal. También va enlazado en el correo y en la LCP.
+   **Japonés**: el PDF necesita una fuente japonesa que no está en el repo. Si me das el OK para añadir **Noto Sans JP** (licencia
+   OFL, ~5 MB) sale en japonés; mientras tanto, quien llenó en japonés recibe el PDF en inglés (y un nombre en kanji se sustituye por
+   el correo en el documento, nunca por signos rotos).
+
 ## 7 · Pendiente
 
 - Revisión nativa del japonés (formulario) y, si la quieres, una versión japonesa de los correos.

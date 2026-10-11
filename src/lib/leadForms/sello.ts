@@ -44,6 +44,25 @@ export function testigoDeBajaValido(leadId: string, testigo: string | null | und
   return iguales(testigo, testigoDeBaja(leadId));
 }
 
+/** V6.4: el testigo de un LEAD, para volver a su registro desde el correo (completar el paso 2) y para descargar su PDF. Distinto
+ *  del de baja a propósito: quien tenga el enlace de baja no edita; quien tenga el de completar no da de baja. */
+export function testigoDeLead(leadId: string): string {
+  return firmar(`lead:${leadId.toLowerCase()}`);
+}
+export function testigoDeLeadValido(leadId: string, testigo: string | null | undefined): boolean {
+  if (!testigo || typeof testigo !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(leadId)) return false;
+  return iguales(testigo, testigoDeLead(leadId));
+}
+/** Las dos rutas RELATIVAS del lead (sirven en desarrollo y en producción; el correo las hace absolutas con `WWW_ORIGIN`). */
+export function rutaDeCompletar(rutaDelFormulario: string, leadId: string): string {
+  return `${rutaDelFormulario}/completar?id=${encodeURIComponent(leadId)}&t=${testigoDeLead(leadId)}`;
+}
+export function rutaDelPdf(rutaDelFormulario: string, leadId: string): string {
+  return `${rutaDelFormulario}/confirmacion?id=${encodeURIComponent(leadId)}&t=${testigoDeLead(leadId)}`;
+}
+export const urlDeCompletar = (rutaDelFormulario: string, leadId: string): string => `${WWW_ORIGIN}${rutaDeCompletar(rutaDelFormulario, leadId)}`;
+export const urlDelPdf = (rutaDelFormulario: string, leadId: string): string => `${WWW_ORIGIN}${rutaDelPdf(rutaDelFormulario, leadId)}`;
+
 /** La URL de baja de un lead: `<www>/<ruta del formulario>/baja?id=…&t=…`. */
 export function urlDeBaja(rutaDelFormulario: string, leadId: string): string {
   return `${WWW_ORIGIN}${rutaDelFormulario}/baja?id=${encodeURIComponent(leadId)}&t=${testigoDeBaja(leadId)}`;

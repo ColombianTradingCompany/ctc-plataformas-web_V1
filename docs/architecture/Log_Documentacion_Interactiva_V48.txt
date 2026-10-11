@@ -149,3 +149,14 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - Wires nuevos: CTC Home → portada CP (`?login=1`) → Green (`?cuenta=1`); la tienda → `public_lot_vitrina` → Dossier público.
 - Guardián nuevo `qa-cp-sesion-check.mjs` (33); `qa-sneak-peek` con la guarda nueva. Sin cambios en la base.
 (commit: 834959b)
+
+## [2026-10-11] V6.4 · SCAJ 2026 en dos pasos, el correo con las preguntas prellenadas y el PDF de confirmación
+- `src/components/leadForms/LeadForm.tsx` (reescrita): paso 1 = «Quién eres» (desplegable) + «Qué sigue», guardado al enviar; gracias con
+  código + PDF + paso 2 opcional; modo `complemento` (prellenado) para el enlace del correo. `src/app/scaj2026/completar/page.tsx` (NUEVA),
+  `src/app/scaj2026/confirmacion/route.ts` (NUEVA: el PDF), `src/lib/leadForms/pdf.ts` (NUEVO, pdf-lib + fontkit opcional para JA).
+- `campos.ts` (CAMPOS_PASO_2, codigoDeLead, preguntasDelPaso2, limpiarComplemento), `sello.ts` (testigo del lead, rutas de completar y PDF),
+  `publicActions.ts` (el envío devuelve código/testigo/rutas; `completarLeadDeEvento`), `correos.ts` (HTML + texto; bloque prellenado; código
+  en el asunto), `envios.ts` (html; `yaRespondio` por dirección o código), `scaj2026/textos.json` (claves del paso 2 en ES · EN · JA),
+  LCP `formularios/page.tsx` (código, estado del paso 2, enlaces).
+- Dependencias: pdf-lib, @pdf-lib/fontkit. DICT: «código de registro», «paso 2 (complemento)». Guardián `qa-lead-forms` 81.
+(commit: pendiente)

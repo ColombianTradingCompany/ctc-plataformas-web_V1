@@ -42,6 +42,63 @@ export type PreguntaCerrada = keyof typeof OPCIONES;
 export const CLAVES_EXTRA = ["grades_interest", "purchase_format", "certifications", "roast_in_destination", "regional_node_interest", "producer_interest"] as const;
 export type ClaveExtra = (typeof CLAVES_EXTRA)[number];
 
+/** V6.4 (owner, 2026-10-11): el formulario va en DOS pasos. El paso 1 es «Quién eres» + «Qué sigue» y se guarda al enviarlo; el paso 2
+ *  («Tu operación» + «Qué valoras») es opcional en el momento: se ofrece tras el envío, viaja prellenado en el correo de respuesta y se
+ *  completa desde un enlace firmado que vuelve al MISMO registro. Estas son las claves del paso 2 (las de `extra` incluidas). */
+export const CAMPOS_PASO_2 = ["green_volume", "buys_colombian", "profiles", "grades_interest", "purchase_format", "certifications", "roast_in_destination", "regional_node_interest", "producer_interest", "about", "values"] as const;
+export type CampoDelPaso2 = (typeof CAMPOS_PASO_2)[number];
+
+/** El código del registro que ve el visitante (en el PDF, en el asunto de los correos, en la consola): «SCAJ2026-47BABBFF». */
+export function codigoDeLead(formKey: string, id: string): string {
+  return `${formKey.toUpperCase().replace(/[^A-Z0-9]/g, "")}-${id.replace(/-/g, "").slice(0, 8).toUpperCase()}`;
+}
+
+/** Las preguntas del paso 2 que el tipo de participante VE, con si ya tienen respuesta (para el correo y para «completar»). */
+export function preguntasDelPaso2(lead: { participant_type: string; green_volume: string | null; buys_colombian: string | null; profiles: string[]; about: string | null; values_beans: Record<string, number>; extra: Record<string, unknown> }): { campo: CampoDelPaso2; respondida: boolean }[] {
+  const x = lead.extra ?? {};
+  const tiene = (campo: CampoDelPaso2): boolean => {
+    switch (campo) {
+      case "green_volume": return !!lead.green_volume;
+      case "buys_colombian": return !!lead.buys_colombian;
+      case "profiles": return lead.profiles.length > 0;
+      case "about": return !!lead.about;
+      case "values": return Object.keys(lead.values_beans ?? {}).length > 0;
+      case "grades_interest": return Array.isArray(x.grades_interest) && (x.grades_interest as unknown[]).length > 0;
+      case "purchase_format": return typeof x.purchase_format === "string" && !!x.purchase_format;
+      case "certifications": return Array.isArray(x.certifications) && (x.certifications as unknown[]).length > 0;
+      case "roast_in_destination": return typeof x.roast_in_destination === "string" && !!x.roast_in_destination;
+      case "regional_node_interest": return x.regional_node_interest === true;
+      case "producer_interest": return x.producer_interest === true;
+    }
+  };
+  return CAMPOS_PASO_2.filter((c) => visible(c, lead.participant_type)).map((campo) => ({ campo, respondida: tiene(campo) }));
+}
+
+/** Lo que manda el paso 2 (desde la pantalla de gracias o desde el enlace del correo): solo sus campos, para el lead `leadId`. */
+export type ComplementoDeFormulario = {
+  formKey: string;
+  leadId: string;
+  testigo: string;
+  green_volume?: string | null;
+  buys_colombian?: string | null;
+  profiles?: string[] | null;
+  about?: string | null;
+  values?: Record<string, number> | null;
+  extra?: Partial<Record<ClaveExtra, unknown>> | null;
+};
+
+/** PURO: las columnas del paso 2, limpias y solo las visibles para el tipo (lo invisible se guarda vacío). */
+export function limpiarComplemento(raw: Omit<ComplementoDeFormulario, "formKey" | "leadId" | "testigo">, tipo: string): Pick<LeadLimpio, "green_volume" | "buys_colombian" | "profiles" | "about" | "values_beans" | "extra"> {
+  return {
+    green_volume: visible("green_volume", tipo) ? opcion(raw.green_volume, "green_volume") : null,
+    buys_colombian: visible("buys_colombian", tipo) ? opcion(raw.buys_colombian, "buys_colombian") : null,
+    profiles: visible("profiles", tipo) ? opciones(raw.profiles, "profiles") : [],
+    about: visible("about", tipo) ? parrafo(raw.about, 2000) : null,
+    values_beans: visible("values", tipo) ? limpiarValores(raw.values) : {},
+    extra: limpiarExtra(raw.extra, tipo),
+  };
+}
+
 /** A quién se le muestra cada campo condicionado (un campo que no está aquí se muestra siempre). La tabla de la especificación
  *  más las preguntas de la casa: el nodo logístico regional es para quien importa o distribuye (Regional Operation Enablement,
  *  `PVC_BCP_PLAN` §12); evaluar y vender con CTCx, para el productor; verde o tostado, para quien no tuesta (cafetería, distribuidor). */

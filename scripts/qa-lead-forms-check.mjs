@@ -12,15 +12,18 @@
 //   (4) la base: RLS sin políticas en las dos tablas, un solo formulario activo, bucket privado, idempotencia única;
 //   (5) la página pública (honeypot, sello, idempotencia, borrador, teclado de correo, áreas táctiles, «Registrar a otra persona»),
 //       la cabecera de CTC Home (la insignia solo con formulario activo), el rail de la LCP, la lista blanca de borradores, el cron;
-//   (6) la configuración: los dos interruptores de correo NACEN apagados.
+//   (6) la configuración: los dos interruptores de correo NACEN apagados;
+//   (7) V6.4 (owner, 2026-10-11): el formulario en DOS pasos (el tipo en un desplegable; el paso 2 opcional, prellenado en el correo y
+//       completable desde un enlace firmado que vuelve al MISMO registro), el código del registro en el asunto, el correo en HTML y texto,
+//       y el PDF de confirmación con la casa y sus redes.
 
 import { existsSync, readFileSync } from "node:fs";
 import {
-  COLUMNAS_CSV, COMPRADORES, IDIOMAS, OPCIONES, TIPOS_DE_PARTICIPANTE, VISIBILIDAD, csvDeLeads, esComprador, idiomaInicial, limpiarValores,
-  validarEnvio, valoresPrincipales, venceElSeguimiento, visible,
+  CAMPOS_PASO_2, COLUMNAS_CSV, COMPRADORES, IDIOMAS, OPCIONES, TIPOS_DE_PARTICIPANTE, VISIBILIDAD, codigoDeLead, csvDeLeads, esComprador, idiomaInicial,
+  limpiarComplemento, limpiarValores, preguntasDelPaso2, validarEnvio, valoresPrincipales, venceElSeguimiento, visible,
 } from "../src/lib/leadForms/campos.ts";
 import { CONFIG_POR_DEFECTO, FORMULARIOS, configDe, formulario, formularioActivoDe } from "../src/lib/leadForms/registro.ts";
-import { construirCorreoInmediato, construirSeguimiento, idiomaDelCorreo } from "../src/lib/leadForms/correos.ts";
+import { construirCorreoInmediato, construirSeguimiento, idiomaDelCorreo, preguntasPrellenadas } from "../src/lib/leadForms/correos.ts";
 import { leadsDeEjemplo } from "../src/lib/leadForms/ejemplos.ts";
 
 let ok = 0;
@@ -77,7 +80,7 @@ const existe = (r) => existsSync(new URL(`../${r}`, import.meta.url));
 // ── 3. Los correos ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 {
   const config = { ...CONFIG_POR_DEFECTO, firma: "Owner · CEO", reply_to: "info@ctcexport.com" };
-  const enlaces = { baja: "https://www.ctcexport.com/scaj2026/baja?id=X&t=Y", cherryPicked: "https://cherry-picked.ctcexport.com", kaffetalRegal: "https://kaffetal-regal.ctcexport.com", catalogo: "https://www.ctcexport.com/ctcx-public-catalogue" };
+  const enlaces = { baja: "https://www.ctcexport.com/scaj2026/baja?id=X&t=Y", completar: "https://www.ctcexport.com/scaj2026/completar?id=X&t=Z", pdf: "https://www.ctcexport.com/scaj2026/confirmacion?id=X&t=Z", cherryPicked: "https://cherry-picked.ctcexport.com", kaffetalRegal: "https://kaffetal-regal.ctcexport.com", catalogo: "https://www.ctcexport.com/ctcx-public-catalogue" };
   const ej = leadsDeEjemplo("scaj2026");
   check("3 · cuatro perfiles de ejemplo: tostador JA, importador EN, productor ES, prensa ES", ej.length === 4 && ej.map((e) => `${e.lead.participant_type}:${e.lead.lang}`).join() === "roaster:ja,importer:en,producer:es,press:es");
   const [tostador, importador, productor, prensa] = ej.map((e) => e.lead);
@@ -92,7 +95,9 @@ const existe = (r) => existsSync(new URL(`../${r}`, import.meta.url));
   check("3 · el seguimiento retoma wants y timing con un paso concreto", s2.lang === "en" && s2.text.includes("A week ago") && s2.text.includes("video call") && s2.text.includes("exploring") && construirSeguimiento(tostador, config, enlaces).text.includes("coming months") && construirSeguimiento(productor, config, enlaces).text.includes("respóndeme"));
   // NO INVENTAR: ni dinero, ni puntajes, ni plazos de envío, ni condiciones del Sample Pack.
   const todos = ej.flatMap((e) => [construirCorreoInmediato(e.lead, config, enlaces).text, construirSeguimiento(e.lead, config, enlaces).text]);
-  const prohibido = /(US\$|USD|€|EUR|\$\s?\d|\d+\s?(puntos|points|pts)|\bSCA\s?\d{2}|\bCVA\s?\d{2}|\d+\s?(días hábiles|business days|weeks of transit|semanas de tránsito)|gratis|free of charge|descuento|discount|precio de|price of)/i;
+  const prohibido = /(US\$|USD|€|EUR|\$\s?\d|\d+\s?(puntos|points|pts)|\bSCA\s?\d{2}|\bCVA\s?\d{2}|\d+\s?(días hábiles|business days|weeks of transit|semanas de tránsito)|gratis|free of charge|descuento|discount|precio de|price of)/i;
+  const todosHtml = ej.flatMap((e) => [construirCorreoInmediato(e.lead, config, enlaces).html, construirSeguimiento(e.lead, config, enlaces).html]);
+  check("3 · tampoco el HTML inventa", todosHtml.every((t) => !prohibido.test(t.replace(/<[^>]+>/g, " "))), todosHtml.map((t) => t.replace(/<[^>]+>/g, " ").match(prohibido)?.[0]).filter(Boolean).join(" · "));
   check("3 · los correos NO inventan: sin cifras de dinero, puntajes, plazos de envío, descuentos ni condiciones del Sample Pack", todos.every((t) => !prohibido.test(t)), todos.map((t) => t.match(prohibido)?.[0]).filter(Boolean).join(" · "));
   check("3 · nada público lleva al productor: los correos no nombran fincas ni municipios de lotes", todos.every((t) => !/Finca [A-Z]|municipio|vereda/.test(t.replace(/Finca El Mirador/g, ""))));
 }
@@ -116,9 +121,9 @@ const existe = (r) => existsSync(new URL(`../${r}`, import.meta.url));
 {
   const form = lee("src/components/leadForms/LeadForm.tsx");
   const accion = lee("src/lib/leadForms/publicActions.ts");
-  check("5 · honeypot: campo oculto que viaja en el envío y el servidor finge éxito sin guardar", form.includes('name="website"') && form.includes("website: hpRef.current?.value") && accion.includes("if (payload?.website && String(payload.website).trim() !== \"\") return { ok: true, leadId: \"\", repetido: false };"));
+  check("5 · honeypot: campo oculto que viaja en el envío y el servidor finge éxito sin guardar", form.includes('name="website"') && form.includes("website: hpRef.current?.value") && accion.includes("if (payload?.website && String(payload.website).trim() !== \"\") return { ok: true, leadId: \"\", repetido: false, codigo: \"\", testigo: \"\", pdfHref: \"\", completarHref: \"\" };"));
   check("5 · sello de tiempo anti-bot: emitido al pintar, exigido al enviar (3 s a 24 h)", lee("src/app/scaj2026/page.tsx").includes("sello={selloDeTiempo()}") && accion.includes("if (!selloValido(payload.sello))") && /const MIN_MS = 3_000;\s*const MAX_MS = 24 \* 60 \* 60 \* 1000;/.test(lee("src/lib/leadForms/sello.ts")));
-  check("5 · idempotencia: un uuid por borrador; la base rechaza el doble (23505) y se responde con el lead que ya existe", form.includes("idempotencyKey: uuid()") && accion.includes('if (error.code === "23505")') && accion.includes("repetido: true"));
+  check("5 · idempotencia: un uuid por borrador; la base rechaza el doble (23505) y se responde con el lead que ya existe", form.includes("idempotencyKey: uuid()") && accion.includes('if (error.code === "23505")') && accion.includes("resultadoDe(def, (previo as { id: string }).id, true)"));
   check("5 · el borrador no se pierde: localStorage por formulario, recuperado al volver y borrado al enviar", form.includes("localStorage.setItem(claveDeBorrador(formKey)") && form.includes("localStorage.getItem(claveDeBorrador(formKey))") && form.includes("localStorage.removeItem(claveDeBorrador(formKey))"));
   check("5 · si falla la conexión, lo escrito sigue y se ofrece reintentar", form.includes('setError({ tipo: "network" })') && form.includes("t.retry"));
   check("5 · teclado de correo, áreas táctiles ≥ 44 px, selector ES · EN · 日本語, foto desde cámara o galería", form.includes('type="email" inputMode="email"') && /min-height: 4[4-9]px|min-height: 5\dpx/.test(lee("src/components/leadForms/LeadForm.module.css")) && form.includes('"日本語"') && form.includes('accept="image/*"') && !form.includes("capture="));
@@ -141,6 +146,41 @@ const existe = (r) => existsSync(new URL(`../${r}`, import.meta.url));
   check("5 · el export CSV y la foto de la tarjeta piden sesión de la LCP", lee("src/app/lcp/(app)/formularios/export/route.ts").includes('await requireConsoleAccess("lcp");') && lee("src/app/lcp/(app)/formularios/tarjeta/route.ts").includes('await requireConsoleAccess("lcp");'));
   check("5 · la LCP enseña los cuatro ejemplos de correo con los constructores reales", lee("src/app/lcp/(app)/formularios/page.tsx").includes("leadsDeEjemplo(def.key)") && lee("src/app/lcp/(app)/formularios/page.tsx").includes("construirCorreoInmediato(lead, config, enlaces(lead.id))"));
   check("5 · el registro conoce todo formulario con página: /scaj2026", Object.values(FORMULARIOS).every((d) => existe(`src/app${d.ruta}/page.tsx`)));
+}
+
+// ── 7. V6.4: dos pasos, el desplegable, el paso 2 que vuelve al mismo registro, el código, HTML + texto, el PDF ───────────
+{
+  const form = lee("src/components/leadForms/LeadForm.tsx");
+  const accion = lee("src/lib/leadForms/publicActions.ts");
+  const correos = lee("src/lib/leadForms/correos.ts");
+  const envios = lee("src/lib/leadForms/envios.ts");
+  check("7 · el paso 2 son «Tu operación» y «Qué valoras» (las claves del paso 2, visibles por tipo)", CAMPOS_PASO_2.join() === "green_volume,buys_colombian,profiles,grades_interest,purchase_format,certifications,roast_in_destination,regional_node_interest,producer_interest,about,values" && preguntasDelPaso2({ participant_type: "roaster", green_volume: "5_20t", buys_colombian: null, profiles: [], about: null, values_beans: {}, extra: {} }).map((q) => `${q.campo}:${q.respondida ? 1 : 0}`).join() === "green_volume:1,buys_colombian:0,profiles:0,grades_interest:0,purchase_format:0,certifications:0,values:0" && preguntasDelPaso2({ participant_type: "press", green_volume: null, buys_colombian: null, profiles: [], about: "x", values_beans: {}, extra: {} }).map((q) => q.campo).join() === "about");
+  check("7 · el tipo de participante es un DESPLEGABLE y el paso 1 es «Quién eres» + «Qué sigue»", form.includes('<select className={styles.select} value={b.participant_type}') && form.includes('data-paso="1"') && form.includes('data-paso="2"') && /data-paso="1"[\s\S]*?<h2 className=\{styles\.seccion\}>\{t\.s1\}<\/h2>[\s\S]*?<h2 className=\{styles\.seccion\}>\{t\.s4\}<\/h2>/.test(form) && !/data-paso="1"[\s\S]*?\{t\.s2\}/.test(form.slice(form.indexOf('data-paso="1"'))));
+  check("7 · el paso 1 GUARDA el lead; la pantalla de gracias ofrece el PDF, el paso 2 opcional y «otra persona»", form.includes("const r = await enviarLeadDeEvento(payload);") && form.includes('data-pantalla="gracias"') && form.includes('data-pdf="confirmacion"') && form.includes('data-paso2="abrir"') && form.includes("t.done_again"));
+  check("7 · el paso 2 escribe sobre el MISMO registro (leadId + testigo), también desde el enlace del correo (modo complemento, prellenado)", form.includes("await completarLeadDeEvento({") && form.includes("leadId: registro.leadId,") && form.includes("testigo: registro.testigo,") && form.includes("complemento?: { leadId: string; testigo: string; participantType: string; valores: ValoresDelPaso2;") && form.includes("desdeComplemento(idiomaInicial, complemento.participantType, complemento.valores)") && existe("src/app/scaj2026/completar/page.tsx"));
+  check("7 · completarLeadDeEvento: testigo firmado, solo columnas del paso 2, `extra` se fusiona, el tipo manda la visibilidad", accion.includes("export async function completarLeadDeEvento(") && accion.includes("if (!testigoDeLeadValido(String(payload.leadId ?? \"\"), payload.testigo)) return { ok: false, error: \"invalido\" };") && accion.includes("limpiarComplemento(payload, lead.participant_type)") && accion.includes("extra: { ...(lead.extra ?? {}), ...limpio.extra }"));
+  const comp = limpiarComplemento({ green_volume: "5_20t", about: "no va", values: { price: 3 }, extra: { producer_interest: true, grades_interest: ["gold"] } }, "roaster");
+  check("7 · limpiarComplemento respeta la visibilidad del tipo (tostador: sin `about` ni `producer_interest`)", comp.green_volume === "5_20t" && comp.about === null && comp.values_beans.price === 3 && comp.extra.producer_interest === undefined && comp.extra.grades_interest.join() === "gold");
+  check("7 · el código del registro: FORMULARIO-8HEX, estable", codigoDeLead("scaj2026", "4a577f5b-2038-4265-b546-d98106af02f3") === "SCAJ2026-4A577F5B");
+  check("7 · el envío devuelve el código, el testigo y las rutas del PDF y de completar (relativas)", accion.includes("codigo: codigoDeLead(def.key, leadId),") && accion.includes("testigo: testigoDeLead(leadId),") && accion.includes("pdfHref: rutaDelPdf(def.ruta, leadId),") && accion.includes("completarHref: rutaDeCompletar(def.ruta, leadId),"));
+  check("7 · el testigo del lead es distinto del de baja (quien edita no da de baja y al revés)", lee("src/lib/leadForms/sello.ts").includes("firmar(`lead:${leadId.toLowerCase()}`)") && lee("src/lib/leadForms/sello.ts").includes("firmar(`baja:${leadId.toLowerCase()}`)"));
+  // Los correos.
+  const config = { ...CONFIG_POR_DEFECTO, firma: "Owner · CEO" };
+  const enlaces = { baja: "https://www.ctcexport.com/scaj2026/baja?id=X&t=Y", completar: "https://www.ctcexport.com/scaj2026/completar?id=X&t=Z", pdf: "https://www.ctcexport.com/scaj2026/confirmacion?id=X&t=Z", cherryPicked: "https://cherry-picked.ctcexport.com", kaffetalRegal: "https://kaffetal-regal.ctcexport.com", catalogo: "https://www.ctcexport.com/ctcx-public-catalogue" };
+  const [tostador] = leadsDeEjemplo("scaj2026").map((e) => e.lead);
+  const parcial = { ...tostador, lang: "es", buys_colombian: null, profiles: ["washed"], values_beans: { traceability: 5 }, extra: { grades_interest: ["gold"] } };
+  const i = construirCorreoInmediato(parcial, config, enlaces);
+  const pre = preguntasPrellenadas(parcial, "es");
+  check("7 · el correo inmediato lleva las preguntas del paso 2 PRELLENADAS (lo respondido con su respuesta, lo vacío marcado) y el botón que vuelve al registro", pre.some((q) => q.campo === "green_volume" && q.respuesta === "5–20 t") && pre.some((q) => q.campo === "buys_colombian" && q.respuesta === null) && pre.some((q) => q.campo === "values" && /Trazabilidad.*5 de 5 granos/.test(q.respuesta ?? "")) && i.text.includes("— Tu perfil (opcional) —") && i.text.includes("→ 5–20 t") && i.text.includes("→ (sin responder)") && i.text.includes(enlaces.completar) && i.html.includes("Completar o corregir mis respuestas") && i.html.includes(`href="${enlaces.completar.replace(/&/g, "&amp;")}"`));
+  check("7 · el correo sale en HTML y en texto, con charset, el código en el asunto y el PDF enlazado; una respuesta se enruta por correo O por código", i.html.startsWith("<!doctype html>") && i.html.includes('<meta charset="utf-8">') && i.subject.endsWith(" · SCAJ2026-11111111") && i.text.includes(enlaces.pdf) && i.html.includes(`href="${enlaces.pdf.replace(/&/g, "&amp;")}"`) && envios.includes("html: correo.html") && envios.includes("subject.ilike.%${codigo}%"));
+  check("7 · si no quedó nada por responder, el bloque no sale; el seguimiento recuerda el enlace solo si queda algo", preguntasPrellenadas({ ...tostador, lang: "es", participant_type: "press", about: "x" }, "es").length === 1 && !construirSeguimiento({ ...tostador, lang: "es", participant_type: "press", about: "x" }, config, enlaces).text.includes(enlaces.completar) && construirSeguimiento(parcial, config, enlaces).text.includes(enlaces.completar));
+  // El PDF.
+  const pdf = lee("src/lib/leadForms/pdf.ts");
+  check("7 · el PDF: arriba la confirmación (SCAJ 2026, código, fecha de Japón, nombre, empresa, correo), luego qué sigue, CTCx, plataformas y redes con enlace clicable, línea legal", pdf.includes("export async function pdfDeConfirmacion(") && pdf.includes('timeZone: "Asia/Tokyo"') && pdf.includes("codigoDeLead(opts.formKey, lead.id)") && pdf.includes("INSTAGRAM_URL") && pdf.includes("YOUTUBE_URL") && pdf.includes("CTC_LEGAL_LINE") && pdf.includes('Subtype: "Link"') && (pdf.match(/titulo: "/g) ?? []).length === 3);
+  check("7 · la ruta del PDF exige el testigo del lead (404 sin él) y entrega un adjunto", lee("src/app/scaj2026/confirmacion/route.ts").includes("if (!testigoDeLeadValido(id, t)) return NextResponse.json({ ok: false }, { status: 404 });") && lee("src/app/scaj2026/confirmacion/route.ts").includes('"content-disposition": `attachment; filename="${pdf.nombreDeArchivo}"`'));
+  check("7 · sin fuente japonesa, el PDF del japonés sale en inglés y nunca dibuja «????»; con `public/fonts/NotoSansJP-Regular.otf` sale en japonés", pdf.includes('if (lang === "ja" && hayFuenteJaponesa())') && pdf.includes('if (lang === "ja") lang = "en";') && pdf.includes("const seguro = (s: string): string =>"));
+  check("7 · la LCP enseña el código y los enlaces del lead (PDF y completar)", lee("src/app/lcp/(app)/formularios/page.tsx").includes("codigoDeLead(l.form_key, l.id)") && lee("src/app/lcp/(app)/formularios/page.tsx").includes("rutaDelPdf(FORMULARIOS[l.form_key]?.ruta") && lee("src/app/lcp/(app)/formularios/page.tsx").includes("rutaDeCompletar(FORMULARIOS[l.form_key]?.ruta"));
+  check("7 · pdf-lib y fontkit están en package.json", /"pdf-lib": "\^1\.17/.test(lee("package.json")) && /"@pdf-lib\/fontkit": "\^1\.1/.test(lee("package.json")));
 }
 
 if (fallos.length) {

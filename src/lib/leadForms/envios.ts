@@ -6,7 +6,8 @@ import { origenDeSuperficie, WWW_ORIGIN } from "@/lib/red/subdominios";
 import type { LeadDeEvento } from "./campos";
 import { construirCorreoInmediato, construirSeguimiento, type Correo, type EnlacesDeCorreo, type LeadParaCorreo } from "./correos";
 import { configDe, formulario, type ConfigDeFormulario, type FormularioDeLaBase } from "./registro";
-import { urlDeBaja } from "./sello";
+import { urlDeBaja, urlDeCompletar, urlDelPdf } from "./sello";
+import { codigoDeLead } from "./campos";
 
 // ── Interfaz de Leads · los ENVÍOS (V6.2) — solo servidor ─────────────────────────────────────────────────────────────────────
 // Lo que toca la red: mandar el correo inmediato y el seguimiento (Resend, el remitente verificado `EMAIL_FROM`, Reply-To a lo que
@@ -30,7 +31,8 @@ export async function mandarCorreo(to: string, correo: Correo, replyTo: string):
   }
   try {
     const resend = new Resend(apiKey);
-    const { error } = await resend.emails.send({ from: FROM, to, replyTo, subject: correo.subject, text: correo.text });
+    // V6.4: HTML y texto a la vez (el cliente de correo elige; el texto es la versión que se responde debajo de cada pregunta).
+    const { error } = await resend.emails.send({ from: FROM, to, replyTo, subject: correo.subject, text: correo.text, html: correo.html });
     if (error) return { ok: false, error: error.message };
     return { ok: true };
   } catch (err) {
@@ -41,6 +43,8 @@ export async function mandarCorreo(to: string, correo: Correo, replyTo: string):
 export function enlacesDeCorreo(rutaDelFormulario: string, leadId: string): EnlacesDeCorreo {
   return {
     baja: urlDeBaja(rutaDelFormulario, leadId),
+    completar: urlDeCompletar(rutaDelFormulario, leadId),
+    pdf: urlDelPdf(rutaDelFormulario, leadId),
     cherryPicked: origenDeSuperficie("/cherry-picked"),
     kaffetalRegal: origenDeSuperficie("/kaffetal-regal"),
     catalogo: `${WWW_ORIGIN}/ctcx-public-catalogue`,
@@ -85,13 +89,15 @@ export async function enviarCorreoInmediato(service: SupabaseClient, leadId: str
 }
 
 /** ¿El lead ya nos respondió? Un correo entrante del Buzón desde su dirección, después del correo inmediato (o del envío). */
-export async function yaRespondio(service: SupabaseClient, lead: Pick<LeadDeEvento, "email" | "email_immediate_sent_at" | "created_at" | "replied_at">): Promise<boolean> {
+export async function yaRespondio(service: SupabaseClient, lead: Pick<LeadDeEvento, "id" | "form_key" | "email" | "email_immediate_sent_at" | "created_at" | "replied_at">): Promise<boolean> {
   if (lead.replied_at) return true;
   const desde = lead.email_immediate_sent_at ?? lead.created_at;
+  // V6.4: por la dirección O por el código del registro en el asunto (el correo sale con el código; una respuesta lo conserva).
+  const codigo = codigoDeLead(lead.form_key, lead.id);
   const { data } = await service
     .from("inbound_emails")
     .select("id")
-    .ilike("from_email", `%${lead.email.toLowerCase()}%`)
+    .or(`from_email.ilike.%${lead.email.toLowerCase()}%,subject.ilike.%${codigo}%`)
     .gt("received_at", desde)
     .limit(1);
   return !!(data && data.length);

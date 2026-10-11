@@ -183,6 +183,12 @@ ciclo; `docs/PLAN_CICLOS.md`) · **`qa-triage-catalogo-check.mjs`** (V5.196 — 
 
 ## Pendientes
 
+- **V6.4 · SCAJ 2026 en dos pasos, el correo prellenado y el PDF de confirmación** (owner, 2026-10-11). Hecho (ver el CHANGELOG): paso 1
+  esencial con el tipo en desplegable y guardado inmediato; gracias con código, PDF y paso 2 opcional sobre el mismo registro; el correo
+  en HTML + texto con las preguntas prellenadas y el enlace firmado `/scaj2026/completar`; el código en el asunto para enrutar las
+  respuestas. **Para el owner**: (a) si quiere el PDF en japonés, dar el OK para añadir `public/fonts/NotoSansJP-Regular.otf` (OFL,
+  ~5 MB) — sin ella sale en inglés; (b) `npm audit` tiene 10 avisos nuevos de hoy (`braces` vía `next`/`shadcn`), ajenos a este trabajo,
+  que solo cierra un `--force`; (c) lo demás de la V6.2 sigue: aprobar los correos y encender los interruptores, agenda, Reply-To, firma.
 - **V6.3 · el login de Cherry Picked** (owner, noche del 2026-10-10; ejecutado desde esta sesión por pedido expreso del owner, código de
   `cherry-picked` y una línea de `plataforma` —`SellBuyCtas` manda a comprar con `?login=1`—; fila en `ALINEACION` §3). Lo cerrado y lo que
   espera decisión están en el charter de `cherry-picked` y en `PLAN_V6_OBJETIVOS` §3. **Para este componente**: nada cambia en las consolas;

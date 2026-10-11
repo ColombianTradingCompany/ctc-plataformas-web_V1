@@ -422,3 +422,72 @@
     flex: 0 1 auto;
   }
 }
+
+/* V6.4: dos pasos — el desplegable del tipo, el código del registro, el bloque opcional del paso 2 */
+.select {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 40px 10px 14px;
+  font: inherit;
+  font-size: 16px;
+  color: var(--ink, #1b2430);
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5 7.5l5 5 5-5' fill='none' stroke='%2316436B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") right 12px center/18px no-repeat;
+  border: 1.5px solid var(--line, #dde1e7);
+  border-radius: 12px;
+  appearance: none;
+  -webkit-appearance: none;
+  margin-bottom: 8px;
+}
+.select:focus {
+  outline: none;
+  border-color: var(--primary, #16436b);
+  box-shadow: 0 0 0 3px rgba(22, 67, 107, 0.14);
+}
+.codigo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #eaf1f8;
+  border: 1px solid #cfdcea;
+}
+.codigo span {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted, #5a6472);
+}
+.codigo b {
+  font-family: var(--font-spline-mono), monospace;
+  font-size: 20px;
+  letter-spacing: 0.06em;
+  color: var(--primary, #16436b);
+}
+.enviar:link,
+.enviar:visited {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: #1b1405;
+}
+.opcional {
+  margin: 18px 0 6px;
+  padding: 14px;
+  border: 1.5px dashed var(--line, #dde1e7);
+  border-radius: 12px;
+}
+.botonSuave {
+  width: 100%;
+  min-height: 48px;
+  border: 1.5px solid var(--primary, #16436b);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--primary, #16436b);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}

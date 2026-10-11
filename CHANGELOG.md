@@ -19,6 +19,33 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.4] — 2026-10-11 (commit pendiente)
+
+- **Cambiado**: **el formulario SCAJ 2026 va en DOS pasos** (owner, 2026-10-11: «solo "About you" y "What's next" aparezcan [...] las
+  demás preguntas en una segunda página totalmente opcional [...] enviadas en el correo de respuesta [...] pre-filled [...] "What best
+  describes you?" en un drop down»). El paso 1 es «Quién eres» (el tipo en un **desplegable**) y «Qué sigue», y **se guarda al
+  enviarlo**; la pantalla de gracias enseña el **código de registro** («SCAJ2026-4A577F5B»), el **PDF de confirmación** y, opcional,
+  el paso 2 («Tu operación» y «Qué valoras»), que escribe sobre el MISMO registro (`completarLeadDeEvento`, con el testigo del lead).
+  **El correo de respuesta** sale ahora en **HTML y texto** con las preguntas del paso 2 **prellenadas** (lo respondido en negrita, lo
+  vacío marcado), un botón «Completar o corregir mis respuestas» que abre `/scaj2026/completar?id&t` (el mismo formulario en modo
+  complemento, prellenado) y el **código en el asunto**: una respuesta por correo se enruta al mismo registro por la dirección o por
+  el código (`yaRespondio`). Un formulario DENTRO del correo no es estándar (Gmail, Outlook y Apple Mail quitan los `<form>`): por eso
+  enlace firmado + texto respondible debajo de cada pregunta.
+- **Añadido**: **el PDF de confirmación** (`/scaj2026/confirmacion?id&t`, `src/lib/leadForms/pdf.ts`, pdf-lib): una página A4 con la
+  confirmación arriba (SCAJ 2026 · Tokyo Big Sight, el código, fecha y hora de Japón, nombre, empresa, correo, perfil), qué sigue, CTCx
+  en tres líneas, las plataformas y las redes con enlaces clicables y la línea legal. Descargable desde la pantalla de gracias, desde el
+  correo y desde la LCP; 404 sin testigo. **Japonés**: con `public/fonts/NotoSansJP-Regular.otf` (OFL; el owner decide incorporarla,
+  ~5 MB) sale en japonés; sin ella, el PDF del japonés sale en inglés y un nombre en kanji se sustituye por el correo, nunca por «????».
+- **Cambiado**: la LCP enseña el código de cada lead, si el paso 2 está completo, y sus enlaces (PDF y completar); el seguimiento
+  recuerda el enlace de completar solo si quedó algo sin responder.
+- **Datos**: sin migración (las columnas ya existían). Dependencias nuevas: `pdf-lib` 1.17.1 y `@pdf-lib/fontkit` 1.1.1.
+- **Seguridad**: `qa-lead-forms` 81 (+18: los dos pasos, el desplegable, el complemento con testigo, el código, HTML + texto, el PDF).
+  **`npm audit` ya no está en 0 por avisos publicados hoy, ajenos a este trabajo**: `npm audit fix` corrigió 16; quedan 10 (`braces`
+  por `next`/`eslint-config-next`/`shadcn`/`ts-morph`) que solo se cierran con `--force` (rompe versiones): decisión del owner.
+- **Seguridad**: **verificado en el servidor de desarrollo**: paso 1 con el desplegable → gracias con código y PDF (descargado por
+  curl: una página, texto correcto, hora de Japón; 404 sin testigo) → paso 2 guardado sobre el mismo registro (SQL) → el enlace de
+  completar prellenado y el enlace inválido rechazado; el correo HTML renderizado con las preguntas prellenadas. Fila de prueba borrada.
+
 ## [V6.3] — 2026-10-11 (commit 834959b)
 
 - **Cambiado**: **el login de Cherry Picked y lo que ve el comprador con sesión** (owner, noche del 2026-10-10: «una mejora

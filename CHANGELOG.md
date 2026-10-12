@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.5] — 2026-10-12 (commit pendiente)
+## [V6.5] — 2026-10-12 (commit 82ad7da)
 
 - **Cambiado**: **la respuesta automática sale SIEMPRE y lleva el PDF de confirmación ADJUNTO** (owner, 2026-10-12: «asegúrate que
   cuando se haga el submission haya una respuesta automática con la información y el PDF»). Los dos interruptores de la Interfaz de

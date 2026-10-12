@@ -174,4 +174,4 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
   `completar/page.tsx`, `confirmacion/route.ts`, LCP `formularios/page.tsx` + `formulariosActions.ts` (la copia del seguimiento).
 - Datos: acta `docs/migraciones/2026-10-12_leads_correos_encendidos.sql` (corrida). DICT: «necesidad de volumen», «lote que llamó la
   atención», «copia del seguimiento». Guardián `qa-lead-forms` 96.
-(commit: pendiente)
+(commit: 82ad7da)

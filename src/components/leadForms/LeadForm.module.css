@@ -491,3 +491,130 @@
   font-weight: 700;
   margin-bottom: 8px;
 }
+
+/* V6.5: tomar la foto o elegirla, el dial de volumen, los lotes de la vitrina */
+.fotoBotonesDos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+@media (max-width: 380px) {
+  .fotoBotonesDos {
+    grid-template-columns: 1fr;
+  }
+}
+.dial {
+  margin-top: 12px;
+  padding: 12px 14px 8px;
+  border: 1.5px solid var(--line, #dde1e7);
+  border-radius: 12px;
+  background: #fff;
+}
+.dialCabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--muted, #5a6472);
+}
+.dialCabecera b {
+  font-size: 18px;
+  color: var(--primary, #16436b);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.rango {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 44px;
+  margin: 6px 0 2px;
+  background: transparent;
+  cursor: pointer;
+}
+.rango::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 4px;
+  background: #dde1e7;
+}
+.rango::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 30px;
+  height: 30px;
+  margin-top: -11px;
+  border-radius: 50%;
+  background: var(--primary, #16436b);
+  border: 3px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+}
+.rango::-moz-range-track {
+  height: 8px;
+  border-radius: 4px;
+  background: #dde1e7;
+}
+.rango::-moz-range-thumb {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--primary, #16436b);
+  border: 3px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+}
+.rango:focus-visible {
+  outline: 3px solid rgba(22, 67, 107, 0.3);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+.dialRotulos {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted, #5a6472);
+}
+.lotes {
+  display: grid;
+  gap: 8px;
+}
+.lote,
+.loteActivo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1.5px solid var(--line, #dde1e7);
+  background: #fff;
+  color: var(--ink, #1b2430);
+  font: inherit;
+  text-align: left;
+}
+.loteActivo {
+  border-color: var(--primary, #16436b);
+  background: #eaf1f8;
+}
+.loteActivo .caja {
+  border-color: var(--primary, #16436b);
+  background: var(--primary, #16436b) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.5l3 3 7-7' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/13px no-repeat;
+}
+.loteTexto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.loteNombre {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.loteActivo .loteNombre {
+  color: var(--primary, #16436b);
+}
+.loteRef {
+  font-family: var(--font-spline-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--muted, #5a6472);
+}

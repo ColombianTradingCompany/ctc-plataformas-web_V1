@@ -42,9 +42,9 @@ export function formulario(key: string | null | undefined): DefinicionDeFormular
 
 /** Lo que el owner configura desde la LCP sin desplegar (jsonb `lead_forms.config`), con sus valores por defecto. */
 export type ConfigDeFormulario = {
-  /** ¿Sale el correo inmediato al guardar el lead? Nace apagado: el owner aprueba los textos y lo enciende. */
+  /** ¿Sale el correo inmediato al guardar el lead (con el PDF de confirmación adjunto)? Nace ENCENDIDO desde la V6.5 (owner). */
   correo_inmediato: boolean;
-  /** ¿Sale el seguimiento a los `seguimiento_dias`? Nace apagado. */
+  /** ¿Sale el seguimiento a los `seguimiento_dias` (con copia a `copia_seguimiento`)? Nace ENCENDIDO desde la V6.5. */
   seguimiento: boolean;
   seguimiento_dias: number;
   /** Mientras el japonés de los correos no tenga revisión nativa, quien llenó en japonés recibe el correo en inglés. */
@@ -57,17 +57,22 @@ export type ConfigDeFormulario = {
   reply_to: string;
   /** Quién firma (nombre y cargo); vacío: firma la casa. */
   firma: string;
+  /** V6.5 (owner): el seguimiento sale con copia (CC) a esta dirección; vacío: sin copia. */
+  copia_seguimiento: string;
 };
 
+// V6.5 (owner, 2026-10-12: «asegúrate que cuando se haga el submission haya una respuesta automática con la información y el PDF»):
+// los dos interruptores nacen ENCENDIDOS; la LCP los apaga si hace falta.
 export const CONFIG_POR_DEFECTO: ConfigDeFormulario = {
-  correo_inmediato: false,
-  seguimiento: false,
+  correo_inmediato: true,
+  seguimiento: true,
   seguimiento_dias: 7,
   ja_correo_en: true,
   agenda_url: "",
   privacy_url: "",
   reply_to: "info@ctcexport.com",
   firma: "",
+  copia_seguimiento: "ctcexportmain@gmail.com",
 };
 
 const esUrl = (s: string) => /^(https?:\/\/[^\s]+|\/[^\s]*)$/.test(s);
@@ -78,15 +83,18 @@ export function configDe(raw: unknown): ConfigDeFormulario {
   const agenda = typeof r.agenda_url === "string" ? r.agenda_url.trim() : "";
   const privacy = typeof r.privacy_url === "string" ? r.privacy_url.trim() : "";
   const replyTo = typeof r.reply_to === "string" ? r.reply_to.trim() : "";
+  const copia = typeof r.copia_seguimiento === "string" ? r.copia_seguimiento.trim() : CONFIG_POR_DEFECTO.copia_seguimiento;
   return {
-    correo_inmediato: r.correo_inmediato === true,
-    seguimiento: r.seguimiento === true,
+    // Ausentes → encendidos (V6.5); presentes → booleanos estrictos (una cadena "true" no enciende nada).
+    correo_inmediato: r.correo_inmediato === undefined ? CONFIG_POR_DEFECTO.correo_inmediato : r.correo_inmediato === true,
+    seguimiento: r.seguimiento === undefined ? CONFIG_POR_DEFECTO.seguimiento : r.seguimiento === true,
     seguimiento_dias: Number.isFinite(dias) && dias >= 1 && dias <= 60 ? Math.round(dias) : CONFIG_POR_DEFECTO.seguimiento_dias,
     ja_correo_en: r.ja_correo_en !== false,
     agenda_url: esUrl(agenda) ? agenda : "",
     privacy_url: esUrl(privacy) ? privacy : "",
     reply_to: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(replyTo) ? replyTo : CONFIG_POR_DEFECTO.reply_to,
     firma: typeof r.firma === "string" ? r.firma.trim().slice(0, 120) : "",
+    copia_seguimiento: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(copia) ? copia : "",
   };
 }
 

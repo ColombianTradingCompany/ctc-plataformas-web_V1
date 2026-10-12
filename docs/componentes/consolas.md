@@ -183,6 +183,13 @@ ciclo; `docs/PLAN_CICLOS.md`) · **`qa-triage-catalogo-check.mjs`** (V5.196 — 
 
 ## Pendientes
 
+- **V6.5 · SCAJ 2026: las siete mejoras del owner del 2026-10-12** (ver el CHANGELOG). Hecho: la respuesta automática sale siempre
+  con el PDF ADJUNTO (interruptores encendidos en código y en la base; el barrido manda los pendientes), el seguimiento con copia a
+  `ctcexportmain@gmail.com` (configurable en la LCP), el PDF con «Tus respuestas» y «Qué sigue» a la medida, «Tomar una foto» con la
+  cámara, la cookie que vuelve a la confirmación al recargar, la necesidad de volumen (periodo + dial de kilos), «¿qué lote te llamó la
+  atención?» (los lotes de la vitrina) y «LCL batch» / «otro». **Para el owner**: (a) los tres registros de prueba del 12-oct ya
+  recibieron su correo con el PDF; el seguimiento les sale el 19-oct con copia; (b) siguen (a) y (b) de la V6.4: Noto Sans JP para el
+  PDF en japonés y los 10 avisos de `npm audit`; (c) agenda, Reply-To y firma en la LCP.
 - **V6.4 · SCAJ 2026 en dos pasos, el correo prellenado y el PDF de confirmación** (owner, 2026-10-11). Hecho (ver el CHANGELOG): paso 1
   esencial con el tipo en desplegable y guardado inmediato; gracias con código, PDF y paso 2 opcional sobre el mismo registro; el correo
   en HTML + texto con las preguntas prellenadas y el enlace firmado `/scaj2026/completar`; el código en el asunto para enrutar las

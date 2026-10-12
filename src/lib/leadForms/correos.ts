@@ -16,8 +16,12 @@
 // condiciones del Sample Pack. Solo afirma lo que esté publicado en mi sitio». Por eso son BLOQUES de texto, no un modelo. El guardián
 // `qa-lead-forms-check` falla si asoma una cifra de dinero, un puntaje o un plazo.
 // Idiomas: ES y EN. Quien llenó en japonés recibe el correo en INGLÉS hasta que un hablante nativo revise una versión japonesa.
+//
+// V6.5 (owner, 2026-10-12): el correo inmediato responde también a lo nuevo del paso 1 —la necesidad de volumen (periodo y kilos),
+// los lotes de la vitrina que llamaron la atención (por su nombre público y su referencia), el lote LCL y «otro»— y el PDF de
+// confirmación va ADJUNTO (lo adjunta `envios.ts`); el seguimiento sale con copia a la casa.
 
-import { codigoDeLead, esComprador, preguntasDelPaso2, valoresPrincipales, type CampoDelPaso2, type IdiomaDeFormulario, type LeadLimpio } from "./campos";
+import { codigoDeLead, esComprador, preguntasDelPaso2, valoresPrincipales, type CampoDelPaso2, type IdiomaDeFormulario, type LeadLimpio, type LoteParaElegir } from "./campos";
 import { formulario, type ConfigDeFormulario, type TextosDeIdioma } from "./registro";
 import { CTC_RAZON } from "@/lib/legal";
 
@@ -35,6 +39,41 @@ export type EnlacesDeCorreo = {
   kaffetalRegal: string;
   catalogo: string;
 };
+
+/** V6.5: lo que el constructor necesita además del lead (los lotes marcados, con su nombre público de hoy). */
+export type ExtrasDeCorreo = { lotes?: LoteParaElegir[] };
+
+const PERIODO: Record<IdiomaDeCorreo, Record<string, string>> = {
+  es: { monthly: "al mes", bimonthly: "cada dos meses", quarterly: "por trimestre", semester: "por semestre", yearly: "al año" },
+  en: { monthly: "per month", bimonthly: "every two months", quarterly: "per quarter", semester: "every six months", yearly: "per year" },
+};
+const PERIODO_SOLO: Record<IdiomaDeCorreo, Record<string, string>> = {
+  es: { monthly: "mensual", bimonthly: "bimestral", quarterly: "trimestral", semester: "semestral", yearly: "anual" },
+  en: { monthly: "monthly", bimonthly: "bi-monthly", quarterly: "quarterly", semester: "every six months", yearly: "yearly" },
+};
+
+/** La frase de la necesidad de volumen estimada (kilos por periodo), o null si no la dio. */
+export function fraseDeVolumen(extra: Record<string, unknown> | null | undefined, lang: IdiomaDeCorreo): string | null {
+  const x = extra ?? {};
+  const kg = typeof x.volume_kg === "number" && Number.isFinite(x.volume_kg) ? x.volume_kg : null;
+  const periodo = typeof x.volume_period === "string" && PERIODO[lang][x.volume_period] ? x.volume_period : null;
+  if (!kg && !periodo) return null;
+  const es = lang === "es";
+  const cifra = kg ? `${kg.toLocaleString(es ? "es-CO" : "en-US")} kg` : null;
+  const cuanto = cifra && periodo ? `${cifra} ${PERIODO[lang][periodo]}` : cifra ? (es ? `unos ${cifra}` : `about ${cifra}`) : es ? `una compra ${PERIODO_SOLO[lang][periodo!]}` : `a ${PERIODO_SOLO[lang][periodo!]} purchase`;
+  return es
+    ? `Nos indicaste una necesidad estimada de ${cuanto}: con eso dimensionamos qué lotes y qué formato te convienen (sacos, pallet, carga consolidada o contenedor).`
+    : `You indicated an estimated need of ${cuanto}: with that we size which lots and which format suit you (bags, pallet, consolidated shipment or container).`;
+}
+
+/** Los lotes marcados, por su nombre público y su referencia (sin nombre si ya salieron de la vitrina). */
+function listaDeLotes(extra: Record<string, unknown> | null | undefined, lotes: LoteParaElegir[] | undefined): string[] {
+  const refs = Array.isArray(extra?.lots_of_interest) ? (extra!.lots_of_interest as string[]) : [];
+  return refs.map((code) => {
+    const lote = lotes?.find((q) => q.code === code);
+    return lote?.name ? `${lote.name} (${code})` : code;
+  });
+}
 
 /** El idioma en que sale el correo: el del formulario, salvo el japonés, que cae a inglés mientras no haya versión revisada. */
 export function idiomaDelCorreo(lang: IdiomaDeFormulario, config: Pick<ConfigDeFormulario, "ja_correo_en">): IdiomaDeCorreo {
@@ -181,7 +220,7 @@ function html(lead: LeadParaCorreo, lang: IdiomaDeCorreo, parrafos: string[], en
 }
 
 /** El correo INMEDIATO: sale apenas se guarda el lead. */
-export function construirCorreoInmediato(lead: LeadParaCorreo, config: ConfigDeFormulario, enlaces: EnlacesDeCorreo): Correo {
+export function construirCorreoInmediato(lead: LeadParaCorreo, config: ConfigDeFormulario, enlaces: EnlacesDeCorreo, extras: ExtrasDeCorreo = {}): Correo {
   const lang = idiomaDelCorreo(lead.lang, config);
   const es = lang === "es";
   const nombre = primerNombre(lead.full_name);
@@ -256,6 +295,16 @@ export function construirCorreoInmediato(lead: LeadParaCorreo, config: ConfigDeF
           : `For the video call, reply with two time slots that suit you (Japan time) and we will confirm one.`
     );
   }
+  if (wants.has("lcl_batch")) {
+    p.push(
+      es
+        ? `Pediste un lote LCL (carga consolidada): cuéntanos tu puerto o ciudad de destino y los kilos que necesitas en la primera entrega, y te explicamos cómo se consolida.`
+        : `You asked for an LCL batch (consolidated shipment): tell us your destination port or city and the kilos you need in the first delivery, and we will explain how it is consolidated.`
+    );
+  }
+  if (wants.has("other") && typeof extra.wants_other === "string" && extra.wants_other.trim()) {
+    p.push(es ? `También nos pediste: «${extra.wants_other.trim()}». Lo tenemos presente.` : `You also asked for: “${extra.wants_other.trim()}”. We have it in mind.`);
+  }
   if (lead.master_roaster_interest) {
     p.push(
       es
@@ -272,6 +321,16 @@ export function construirCorreoInmediato(lead: LeadParaCorreo, config: ConfigDeF
   }
   if (lead.looking_for) {
     p.push(es ? `Lo que buscas ahora, en tus palabras: «${lead.looking_for}». Lo tenemos presente.` : `What you are looking for right now, in your words: “${lead.looking_for}”. We have it in mind.`);
+  }
+  const volumen = fraseDeVolumen(extra, lang);
+  if (volumen) p.push(volumen);
+  const lotes = listaDeLotes(extra, extras.lotes);
+  if (lotes.length) {
+    p.push(
+      es
+        ? `${lotes.length === 1 ? "El lote que te llamó la atención" : "Los lotes que te llamaron la atención"}: ${lista(lotes, lang)}. Cada uno tiene su Dossier público en Find my Lot, por su referencia: ${enlaces.catalogo}`
+        : `${lotes.length === 1 ? "The lot that caught your eye" : "The lots that caught your eye"}: ${lista(lotes, lang)}. Each one has its public Dossier in Find my Lot, by its reference: ${enlaces.catalogo}`
+    );
   }
 
   const codigo = codigoDeLead(lead.form_key, lead.id);
@@ -324,6 +383,9 @@ export function construirSeguimiento(lead: LeadParaCorreo, config: ConfigDeFormu
     p.push(es ? `Nos dijiste que estás explorando, sin prisa. Si te sirve, te mandamos material sobre cómo trabajamos cada lote; solo responde a este correo.` : `You told us you are exploring, no rush. If it helps, we can send you material on how we work each lot; just reply to this email.`);
   } else if (!wants.size) {
     p.push(es ? `Si hay algo en lo que te podamos ayudar —un café que buscas, una pregunta sobre cómo trabajamos—, respóndeme a este correo.` : `If there is anything we can help with — a coffee you are looking for, a question about how we work — just reply to this email.`);
+  }
+  if (listaDeLotes(lead.extra, undefined).length) {
+    p.push(es ? `Si quieres retomar alguno de los lotes que marcaste, dime cuál (su referencia CTC-L-) y te mando su Dossier.` : `If you would like to pick up any of the lots you marked, tell me which one (its CTC-L- reference) and I will send you its Dossier.`);
   }
   // El paso 2 sigue abierto si quedó algo sin responder.
   const pendientes = preguntasDelPaso2(lead).some((q) => !q.respondida);

@@ -1,5 +1,5 @@
 {
-  "_nota": "V6.2 · Textos del formulario SCAJ 2026 en ES · EN · JA, tal cual los entregó el owner (reference/Web_Lead_Form/prompt-formulario-leads-scaj2026.md) más las preguntas adicionales de la casa (claves grades_interest, purchase_format, certifications, roast_in_destination, regional_node_interest, producer_interest). El japonés espera la revisión de un hablante nativo: se corrige AQUÍ, sin tocar código. Las claves de las opciones son los valores que se guardan. V6.4: el formulario va en dos pasos (claves select_ph, done_pdf, done_complete, paso2_*, guardar, saved_*, omitir, codigo, link_invalido_*).",
+  "_nota": "V6.2 · Textos del formulario SCAJ 2026 en ES · EN · JA, tal cual los entregó el owner (reference/Web_Lead_Form/prompt-formulario-leads-scaj2026.md) más las preguntas adicionales de la casa (claves grades_interest, purchase_format, certifications, roast_in_destination, regional_node_interest, producer_interest). El japonés espera la revisión de un hablante nativo: se corrige AQUÍ, sin tocar código. Las claves de las opciones son los valores que se guardan. V6.4: el formulario va en dos pasos (claves select_ph, done_pdf, done_complete, paso2_*, guardar, saved_*, omitir, codigo, link_invalido_*). V6.5: necesidad de volumen (volume_period · volume_kg), el lote que llamó la atención (lots_of_interest), «LCL batch» y «Otro» en wants (wants_other), tomar foto con la cámara.",
   "es": {
     "ui": {
       "lang": "Español",
@@ -83,7 +83,18 @@
       "omitir": "Ahora no",
       "codigo": "Código de registro",
       "link_invalido_title": "Este enlace no es válido",
-      "link_invalido_body": "Pide uno nuevo respondiendo al correo que te enviamos, o escríbenos a info@ctcexport.com."
+      "link_invalido_body": "Pide uno nuevo respondiendo al correo que te enviamos, o escríbenos a info@ctcexport.com.",
+      "q_volume_need": "¿Cuál es tu necesidad de volumen estimada?",
+      "volume_period_hint": "¿Cada cuánto?",
+      "volume_kg_label": "Cantidad por periodo",
+      "volume_unset": "Desliza para indicar los kilos",
+      "kg": "kg",
+      "q_lots": "¿Qué lote te llamó la atención?",
+      "lots_hint": "Los que están en nuestra vitrina y en redes; puedes marcar varios.",
+      "lots_none": "Hoy no hay lotes en la vitrina.",
+      "wants_other_ph": "¿Qué más te gustaría recibir?",
+      "card_take": "Tomar una foto",
+      "card_choose": "Elegir de la galería"
     },
     "options": {
       "participant_type": {
@@ -160,7 +171,16 @@
       "wants": {
         "sample_pack": "Sample Pack (muestras)",
         "lot_list": "Catálogo de lotes",
-        "video_call": "Una videollamada"
+        "video_call": "Una videollamada",
+        "lcl_batch": "Un lote LCL (carga consolidada)",
+        "other": "Otro"
+      },
+      "volume_period": {
+        "monthly": "Mensual",
+        "bimonthly": "Bimestral",
+        "quarterly": "Trimestral",
+        "semester": "Semestral",
+        "yearly": "Anual"
       }
     }
   },
@@ -247,7 +267,18 @@
       "omitir": "Not now",
       "codigo": "Registration code",
       "link_invalido_title": "This link is not valid",
-      "link_invalido_body": "Ask for a new one by replying to the email we sent you, or write to info@ctcexport.com."
+      "link_invalido_body": "Ask for a new one by replying to the email we sent you, or write to info@ctcexport.com.",
+      "q_volume_need": "What is your estimated volume need?",
+      "volume_period_hint": "How often?",
+      "volume_kg_label": "Quantity per period",
+      "volume_unset": "Slide to set the kilos",
+      "kg": "kg",
+      "q_lots": "Which lot caught your eye?",
+      "lots_hint": "The ones in our showcase and on social media; you can pick several.",
+      "lots_none": "No lots in the showcase today.",
+      "wants_other_ph": "What else would you like to receive?",
+      "card_take": "Take a photo",
+      "card_choose": "Choose from gallery"
     },
     "options": {
       "participant_type": {
@@ -324,7 +355,16 @@
       "wants": {
         "sample_pack": "Sample Pack",
         "lot_list": "Lot catalogue",
-        "video_call": "A video call"
+        "video_call": "A video call",
+        "lcl_batch": "An LCL batch (consolidated shipment)",
+        "other": "Other"
+      },
+      "volume_period": {
+        "monthly": "Monthly",
+        "bimonthly": "Bi-monthly",
+        "quarterly": "Quarterly",
+        "semester": "Every six months",
+        "yearly": "Yearly"
       }
     }
   },
@@ -411,7 +451,18 @@
       "omitir": "今はしない",
       "codigo": "登録コード",
       "link_invalido_title": "このリンクは無効です",
-      "link_invalido_body": "お送りしたメールに返信して新しいリンクをお求めいただくか、info@ctcexport.com までご連絡ください。"
+      "link_invalido_body": "お送りしたメールに返信して新しいリンクをお求めいただくか、info@ctcexport.com までご連絡ください。",
+      "q_volume_need": "想定される必要量を教えてください",
+      "volume_period_hint": "頻度",
+      "volume_kg_label": "期間あたりの数量",
+      "volume_unset": "スライドしてキロ数を指定",
+      "kg": "kg",
+      "q_lots": "気になったロットはどれですか",
+      "lots_hint": "ショーケースやSNSで紹介しているロットです。複数選択可。",
+      "lots_none": "現在ショーケースにロットはありません。",
+      "wants_other_ph": "他にご希望の内容があればご記入ください",
+      "card_take": "写真を撮る",
+      "card_choose": "ギャラリーから選ぶ"
     },
     "options": {
       "participant_type": {
@@ -488,7 +539,16 @@
       "wants": {
         "sample_pack": "サンプルパック",
         "lot_list": "ロットカタログ",
-        "video_call": "オンライン面談"
+        "video_call": "オンライン面談",
+        "lcl_batch": "LCL(混載)でのロット",
+        "other": "その他"
+      },
+      "volume_period": {
+        "monthly": "毎月",
+        "bimonthly": "隔月",
+        "quarterly": "四半期ごと",
+        "semester": "半年ごと",
+        "yearly": "年1回"
       }
     }
   }

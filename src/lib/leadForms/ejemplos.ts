@@ -46,9 +46,10 @@ export function leadsDeEjemplo(formKey: string): { titulo: string; lead: LeadPar
         values_beans: { traceability: 5, cup_quality: 5, consistency: 4, price: 2 },
         looking_for: "Washed lots for filter, 5 to 10 bags",
         timing: "lt_3m",
-        wants: ["sample_pack", "lot_list"],
+        wants: ["sample_pack", "lot_list", "lcl_batch", "other"],
         master_roaster_interest: true,
-        extra: { grades_interest: ["blue", "gold"], purchase_format: "bags", certifications: ["jas_organic"] },
+        // V6.5: la necesidad de volumen, un lote de la vitrina (referencia inventada) y «otro».
+        extra: { grades_interest: ["blue", "gold"], purchase_format: "bags", certifications: ["jas_organic"], volume_period: "monthly", volume_kg: 600, lots_of_interest: ["CTC-L-7K3M9P2Q"], wants_other: "the roasting notes of the samples" },
       },
     },
     {

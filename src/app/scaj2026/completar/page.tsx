@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
-import { LeadForm, type ValoresDelPaso2 } from "@/components/leadForms/LeadForm";
-import { codigoDeLead, idiomaInicial, type IdiomaDeFormulario, type LeadDeEvento } from "@/lib/leadForms/campos";
+import { LeadForm } from "@/components/leadForms/LeadForm";
+import { codigoDeLead, idiomaInicial, valoresDelPaso2De, type IdiomaDeFormulario, type LeadDeEvento } from "@/lib/leadForms/campos";
 import { configDe, formulario, type FormularioDeLaBase } from "@/lib/leadForms/registro";
 import { cargarLead } from "@/lib/leadForms/servidor";
 import { rutaDelPdf, testigoDeLeadValido } from "@/lib/leadForms/sello";
@@ -37,20 +37,7 @@ export default async function CompletarPage({ searchParams }: { searchParams: Pr
   if (!lead || lead.form_key !== def.key) {
     return <LeadForm {...base} idiomaInicial={idiomaInicial(h.get("accept-language"))} privacyUrl={privacyUrl} complementoInvalido />;
   }
-  const x = (lead.extra ?? {}) as Record<string, unknown>;
-  const valores: ValoresDelPaso2 = {
-    green_volume: lead.green_volume,
-    buys_colombian: lead.buys_colombian,
-    profiles: lead.profiles,
-    about: lead.about,
-    values: lead.values_beans,
-    grades_interest: Array.isArray(x.grades_interest) ? (x.grades_interest as string[]) : null,
-    purchase_format: typeof x.purchase_format === "string" ? x.purchase_format : null,
-    certifications: Array.isArray(x.certifications) ? (x.certifications as string[]) : null,
-    roast_in_destination: typeof x.roast_in_destination === "string" ? x.roast_in_destination : null,
-    regional_node_interest: x.regional_node_interest === true,
-    producer_interest: x.producer_interest === true,
-  };
+  const valores = valoresDelPaso2De(lead);
   const idioma: IdiomaDeFormulario = lang === "es" || lang === "en" || lang === "ja" ? lang : lead.lang;
   return (
     <LeadForm

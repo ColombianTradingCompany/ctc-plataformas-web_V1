@@ -19,6 +19,43 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.5] — 2026-10-12 (commit pendiente)
+
+- **Cambiado**: **la respuesta automática sale SIEMPRE y lleva el PDF de confirmación ADJUNTO** (owner, 2026-10-12: «asegúrate que
+  cuando se haga el submission haya una respuesta automática con la información y el PDF»). Los dos interruptores de la Interfaz de
+  Leads nacen ENCENDIDOS (`CONFIG_POR_DEFECTO`; una configuración sin la clave cuenta como encendida; presente, solo `true` enciende; la
+  LCP los apaga), el correo inmediato adjunta el PDF (`attachments` de Resend; si el PDF fallara, el correo sale igual con su enlace y
+  el fallo queda escrito en la fila) y **el seguimiento a los siete días sale con copia (CC) a `copia_seguimiento`**
+  (`ctcexportmain@gmail.com`; campo nuevo en la LCP, validado). El barrido horario (`/api/cron/seguimientos-leads`) manda también los
+  **inmediatos pendientes** de los últimos 14 días (los que llegaron con el interruptor apagado o cuyo envío falló), nunca a quien se
+  dio de baja. **Datos**: acta `docs/migraciones/2026-10-12_leads_correos_encendidos.sql` (corrida en producción el 2026-10-12: los
+  dos interruptores encendidos y la copia); los tres registros de prueba del owner recibieron su correo con el PDF en ese barrido.
+- **Cambiado**: **el PDF de confirmación dice lo que la persona marcó** (owner: «más información relevante a los datos seleccionados»):
+  la sección «Tus respuestas» (lo que buscas, cuándo, qué quieres recibir —con «otro»—, la necesidad de volumen, los lotes que llamaron
+  la atención por su nombre público y su referencia, el Master Roaster y, si ya está, el paso 2) y «Qué sigue» a la medida (Sample
+  Pack, lista de lotes, videollamada, lote LCL, «otro», los lotes, el volumen); una página o dos, con número de página; los rótulos
+  salen de `textos.json` en el idioma del PDF. Sin cifras de dinero, puntajes ni plazos (la misma regla dura de los correos).
+- **Añadido**: en «Qué sigue», **la necesidad de volumen estimada** (fichas Mensual · Bimestral · Trimestral · Semestral · Anual y un
+  **dial de 100 a 10.000 kg** en pasos de 100; solo a quien compra; `extra.volume_period` · `extra.volume_kg`), **«¿Qué lote te llamó
+  la atención?»** (uno o varios de los lotes de la vitrina —los de las redes—, leídos de la MISMA cinta pública, `getSneakPeekPayload`,
+  por su referencia CTC-L- y su nombre GENERADO, nunca la finca; `extra.lots_of_interest`; `src/lib/leadForms/vitrina.ts`) y, en «¿Qué
+  te gustaría recibir?», **«Un lote LCL (carga consolidada)»** y **«Otro»** con texto (`extra.wants_other`, solo si «otro» está
+  marcado). El correo inmediato responde a cada una (kilos y periodo; los lotes por su nombre público y su referencia; LCL; «otro») y
+  el seguimiento recuerda los lotes; el CSV lleva las cuatro columnas nuevas. Textos en ES · EN · JA.
+- **Añadido**: **la foto de la tarjeta se toma con la cámara** («Tomar una foto»: un segundo selector con `capture="environment"`, el
+  navegador pide el permiso al tocar) o se elige de la galería («Elegir de la galería»); el mismo archivo se puede volver a elegir.
+- **Añadido**: **al recargar, la página vuelve a la confirmación** (owner: «si se envió, los cookies lleven a la pantalla de
+  confirmación»): el envío deja una cookie httpOnly `ctc-lead-scaj2026` (`<id>.<testigo>`, solo la ruta `/scaj2026`, 30 días); la
+  página valida el testigo (HMAC), carga el registro y abre en la pantalla de gracias con su código, su PDF y el paso 2 prellenado;
+  «Registrar a otra persona» la borra (`olvidarRegistroDeEvento`). Sin testigo válido no se enseña nada. Mientras se está en la
+  pantalla de gracias no se deja un borrador en localStorage.
+- **Seguridad**: `qa-lead-forms` 96 (+15: el bloque 8 de la V6.5; los interruptores encendidos y estrictos; la cámara). Nada público
+  lleva al productor: los lotes salen de la lista blanca de la vitrina. **Verificado en el servidor de desarrollo** (móvil): el paso 1
+  como tostador con el dial en 2.500 kg por trimestre, dos lotes, LCL y «otro» → la fila con ese `extra` exacto; el PDF (dos páginas,
+  «Your answers» y «What's next» a la medida, enlaces, número de página) descargado con el testigo; recargar → la pantalla de gracias
+  con el código (la cookie); «Registrar a otra persona» → el formulario vacío; el barrido corrido contra la base mandó los tres
+  inmediatos pendientes del owner con el PDF adjunto (0 errores) y omitió la cuenta de prueba; la fila de prueba borrada.
+
 ## [V6.4] — 2026-10-11 (commit 949f15b)
 
 - **Cambiado**: **el formulario SCAJ 2026 va en DOS pasos** (owner, 2026-10-11: «solo "About you" y "What's next" aparezcan [...] las

@@ -30,7 +30,10 @@ export const OPCIONES = {
   profiles: ["washed", "natural", "honey", "experimental", "rare_varieties", "decaf"],
   values: ["traceability", "cup_quality", "direct_relationship", "consistency", "small_lots", "sustainability", "price", "origin_story"],
   timing: ["lt_3m", "3_6m", "exploring"],
-  wants: ["sample_pack", "lot_list", "video_call"],
+  // V6.5 (owner): «LCL batch» y «Otro» (con texto libre en `extra.wants_other`).
+  wants: ["sample_pack", "lot_list", "video_call", "lcl_batch", "other"],
+  // V6.5 (owner): la necesidad de volumen estimada — el periodo (una opción) y los kg por periodo (un dial de 100 a 10.000).
+  volume_period: ["monthly", "bimonthly", "quarterly", "semester", "yearly"],
   // Las preguntas de la casa (V6.2): grados CTCx, formato de compra, certificaciones del mercado, verde o tostado en destino.
   grades_interest: ["black", "red", "blue", "gold", "tyrian"],
   purchase_format: ["fractions", "bags", "container", "undecided"],
@@ -39,7 +42,14 @@ export const OPCIONES = {
 } as const;
 export type PreguntaCerrada = keyof typeof OPCIONES;
 
-export const CLAVES_EXTRA = ["grades_interest", "purchase_format", "certifications", "roast_in_destination", "regional_node_interest", "producer_interest"] as const;
+export const CLAVES_EXTRA = ["grades_interest", "purchase_format", "certifications", "roast_in_destination", "regional_node_interest", "producer_interest", "volume_period", "volume_kg", "lots_of_interest", "wants_other"] as const;
+
+/** V6.5: el dial de volumen, en kg por periodo. */
+export const VOLUMEN_KG_MIN = 100;
+export const VOLUMEN_KG_MAX = 10000;
+export const VOLUMEN_KG_PASO = 100;
+/** V6.5: una referencia pública de lote («CTC-L-» + 8 caracteres del alfabeto del portal). */
+export const REFERENCIA_RE = /^CTC-L-[0-9A-HJKMNP-TV-Z]{8}$/;
 export type ClaveExtra = (typeof CLAVES_EXTRA)[number];
 
 /** V6.4 (owner, 2026-10-11): el formulario va en DOS pasos. El paso 1 es «Quién eres» + «Qué sigue» y se guarda al enviarlo; el paso 2
@@ -117,6 +127,9 @@ export const VISIBILIDAD: Record<string, (tipo: string) => boolean> = {
   values: (t) => t !== "producer" && t !== "press",
   timing: esComprador,
   master_roaster_interest: (t) => t === "roaster",
+  // V6.5: la necesidad de volumen es de quien compra; el lote que llamó la atención y «otro» de «qué quieres recibir», de todos.
+  volume_period: esComprador,
+  volume_kg: esComprador,
 };
 export function visible(campo: string, tipo: string): boolean {
   const regla = VISIBILIDAD[campo];
@@ -219,7 +232,7 @@ export function limpiarValores(v: unknown): Record<string, number> {
 }
 
 /** Las preguntas de la casa, limpias y solo las visibles para el tipo. */
-export function limpiarExtra(v: unknown, tipo: string): Record<string, unknown> {
+export function limpiarExtra(v: unknown, tipo: string, wants: readonly string[] = []): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   const raw = (v && typeof v === "object" && !Array.isArray(v) ? v : {}) as Record<string, unknown>;
   if (visible("grades_interest", tipo)) {
@@ -240,6 +253,21 @@ export function limpiarExtra(v: unknown, tipo: string): Record<string, unknown> 
   }
   if (visible("regional_node_interest", tipo) && raw.regional_node_interest === true) out.regional_node_interest = true;
   if (visible("producer_interest", tipo) && raw.producer_interest === true) out.producer_interest = true;
+  // V6.5 · las preguntas nuevas de «Qué sigue» (paso 1).
+  if (visible("volume_period", tipo)) {
+    const per = opcion(raw.volume_period, "volume_period");
+    if (per) out.volume_period = per;
+    const kg = Number(raw.volume_kg);
+    if (Number.isFinite(kg) && kg >= VOLUMEN_KG_MIN) out.volume_kg = Math.min(VOLUMEN_KG_MAX, Math.round(kg / VOLUMEN_KG_PASO) * VOLUMEN_KG_PASO);
+  }
+  if (Array.isArray(raw.lots_of_interest)) {
+    const lotes = [...new Set(raw.lots_of_interest.filter((x): x is string => typeof x === "string").map((x) => x.trim().toUpperCase()).filter((x) => REFERENCIA_RE.test(x)))].slice(0, 12);
+    if (lotes.length) out.lots_of_interest = lotes;
+  }
+  if (wants.includes("other")) {
+    const otro = texto(raw.wants_other, 200);
+    if (otro) out.wants_other = otro;
+  }
   return out;
 }
 
@@ -288,7 +316,7 @@ export function validarEnvio(raw: EnvioDeFormulario): Validacion {
     timing: visible("timing", tipo) ? opcion(raw.timing, "timing") : null,
     wants: opciones(raw.wants, "wants"),
     master_roaster_interest: visible("master_roaster_interest", tipo) && raw.master_roaster_interest === true,
-    extra: limpiarExtra(raw.extra, tipo),
+    extra: limpiarExtra(raw.extra, tipo, opciones(raw.wants, "wants")),
     consent: true,
   };
   return { ok: true, lead };
@@ -352,6 +380,7 @@ export const COLUMNAS_CSV = [
   "created_at", "status", "lang", "source", "participant_type", "participant_other", "full_name", "company", "email", "country_city",
   "green_volume", "buys_colombian", "profiles", "about", "values", "looking_for", "timing", "wants", "master_roaster_interest",
   "grades_interest", "purchase_format", "certifications", "roast_in_destination", "regional_node_interest", "producer_interest",
+  "volume_period", "volume_kg", "lots_of_interest", "wants_other",
   "card_photo", "consent_at", "email_immediate_sent_at", "email_immediate_error", "followup_due_at", "followup_sent_at", "followup_error",
   "replied_at", "unsubscribed_at", "notes", "id",
 ] as const;
@@ -371,6 +400,7 @@ export function csvDeLeads(filas: readonly LeadDeEvento[]): string {
         f.green_volume, f.buys_colombian, f.profiles, f.about, f.values_beans, f.looking_for, f.timing, f.wants, f.master_roaster_interest,
         x.grades_interest ?? null, x.purchase_format ?? null, x.certifications ?? null, x.roast_in_destination ?? null,
         x.regional_node_interest === true, x.producer_interest === true,
+        x.volume_period ?? null, x.volume_kg ?? null, x.lots_of_interest ?? null, x.wants_other ?? null,
         f.card_photo_path ? "sí" : "", f.consent_at, f.email_immediate_sent_at, f.email_immediate_error, f.followup_due_at, f.followup_sent_at,
         f.followup_error, f.replied_at, f.unsubscribed_at, f.notes, f.id,
       ]
@@ -380,3 +410,43 @@ export function csvDeLeads(filas: readonly LeadDeEvento[]): string {
   }
   return "﻿" + lineas.join("\r\n") + "\r\n";
 }
+
+// ── V6.5 (owner, 2026-10-12) ─────────────────────────────────────────────────────────────────────────────────────────────────
+/** Un lote de la vitrina tal como lo ofrece el formulario («¿qué lote te llamó la atención?»): la referencia pública, el nombre
+ *  GENERADO por la vista (nunca la finca) y el grado. Los carga `vitrina.ts` (servidor) de la misma cinta pública. */
+export type LoteParaElegir = { code: string; name: string; grade: string };
+
+/** Los valores del paso 2 de un lead, en la forma que prellena el formulario (modo complemento y la vuelta por la cookie). */
+export type ValoresDelPaso2 = {
+  green_volume?: string | null;
+  buys_colombian?: string | null;
+  profiles?: string[] | null;
+  about?: string | null;
+  values?: Record<string, number> | null;
+  grades_interest?: string[] | null;
+  purchase_format?: string | null;
+  certifications?: string[] | null;
+  roast_in_destination?: string | null;
+  regional_node_interest?: boolean | null;
+  producer_interest?: boolean | null;
+};
+export function valoresDelPaso2De(lead: Pick<LeadDeEvento, "green_volume" | "buys_colombian" | "profiles" | "about" | "values_beans" | "extra">): ValoresDelPaso2 {
+  const x = (lead.extra ?? {}) as Record<string, unknown>;
+  return {
+    green_volume: lead.green_volume,
+    buys_colombian: lead.buys_colombian,
+    profiles: lead.profiles,
+    about: lead.about,
+    values: lead.values_beans,
+    grades_interest: Array.isArray(x.grades_interest) ? (x.grades_interest as string[]) : null,
+    purchase_format: typeof x.purchase_format === "string" ? x.purchase_format : null,
+    certifications: Array.isArray(x.certifications) ? (x.certifications as string[]) : null,
+    roast_in_destination: typeof x.roast_in_destination === "string" ? x.roast_in_destination : null,
+    regional_node_interest: x.regional_node_interest === true,
+    producer_interest: x.producer_interest === true,
+  };
+}
+
+/** La cookie que recuerda el registro en el navegador (`<id>.<testigo>`, httpOnly, solo para la ruta del formulario): al recargar,
+ *  la página vuelve a la pantalla de confirmación en vez de al principio (owner, 2026-10-12). */
+export const nombreDeCookieDeRegistro = (formKey: string): string => `ctc-lead-${formKey}`;

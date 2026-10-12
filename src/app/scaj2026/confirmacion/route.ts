@@ -4,9 +4,10 @@ import { configDe, formulario, type FormularioDeLaBase } from "@/lib/leadForms/r
 import { cargarLead } from "@/lib/leadForms/servidor";
 import { testigoDeLeadValido } from "@/lib/leadForms/sello";
 import { pdfDeConfirmacion } from "@/lib/leadForms/pdf";
+import { lotesDeInteres } from "@/lib/leadForms/vitrina";
 
 // ── /scaj2026/confirmacion · el PDF de confirmación del registro (V6.4) ──────────────────────────────────────────────────────
-// `?id=<lead>&t=<testigo>` → el PDF (A4, una página) con la confirmación arriba (SCAJ 2026, el código del registro, fecha y hora de
+// `?id=<lead>&t=<testigo>` → el PDF (A4, una página o dos; V6.5: con «Tus respuestas» y «Qué sigue» a la medida) con la confirmación arriba (SCAJ 2026, el código del registro, fecha y hora de
 // Japón, nombre, empresa, correo), qué sigue, CTCx en pocas líneas, las plataformas y las redes con enlaces clicables, y la línea
 // legal. Se descarga desde la pantalla de gracias, desde el correo y desde la consola. Sin testigo válido, 404 (no se confirma ni que
 // el lead exista). `Content-Disposition: attachment` para que el celular lo guarde en vez de abrirlo en la pestaña.
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
   const { data } = await service.from("lead_forms").select("config").eq("key", def.key).maybeSingle();
   const config = configDe((data as Pick<FormularioDeLaBase, "config"> | null)?.config);
   try {
-    const pdf = await pdfDeConfirmacion(lead, { formKey: def.key, ruta: def.ruta, privacyUrl: config.privacy_url || `${def.ruta}/privacidad` });
+    const pdf = await pdfDeConfirmacion(lead, { formKey: def.key, ruta: def.ruta, privacyUrl: config.privacy_url || `${def.ruta}/privacidad`, lotes: await lotesDeInteres(lead) });
     return new NextResponse(Buffer.from(pdf.bytes), {
       status: 200,
       headers: {

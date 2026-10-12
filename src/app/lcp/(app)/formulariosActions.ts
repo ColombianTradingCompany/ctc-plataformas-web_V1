@@ -72,7 +72,9 @@ export async function guardarConfigDeFormulario(formData: FormData): Promise<Act
     privacy_url: s("privacy_url"),
     reply_to: s("reply_to") || actual.reply_to,
     firma: s("firma"),
+    copia_seguimiento: s("copia_seguimiento"),
   });
+  if (s("copia_seguimiento") && !nueva.copia_seguimiento) return { ok: false, error: "La copia del seguimiento no es un correo válido." };
   if (s("agenda_url") && !nueva.agenda_url) return { ok: false, error: "El enlace de agenda no es una URL válida (https://…)." };
   if (s("privacy_url") && !nueva.privacy_url) return { ok: false, error: "El aviso de privacidad no es una URL válida (https://… o /ruta)." };
   if (s("reply_to") && nueva.reply_to !== s("reply_to")) return { ok: false, error: "El correo de respuesta no tiene un formato válido." };

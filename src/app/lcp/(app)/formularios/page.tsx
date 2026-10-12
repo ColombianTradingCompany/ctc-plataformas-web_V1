@@ -152,19 +152,23 @@ export default async function InterfazDeLeadsPage({ searchParams }: { searchPara
               <span>Firma (nombre y cargo; vacío: firma la casa)</span>
               <input name="firma" defaultValue={config.firma} placeholder="Nombre Apellido · Cargo" />
             </label>
+            <label className={s.campo}>
+              <span>Copia (CC) del seguimiento a la casa (vacío: sin copia)</span>
+              <input name="copia_seguimiento" defaultValue={config.copia_seguimiento} placeholder="ctcexportmain@gmail.com" />
+            </label>
             <label className={s.interruptor}>
               <input type="checkbox" name="correo_inmediato" defaultChecked={config.correo_inmediato} />
               <span>
-                <b>Correo inmediato</b> al guardar cada lead. Nace apagado: revisa los textos (vista previa) y enciéndelo. Los leads que lleguen apagado se mandan luego con «Enviar
-                los pendientes».
+                <b>Correo inmediato</b> al guardar cada lead, con el PDF de confirmación adjunto. Nace encendido (V6.5); apágalo si quieres revisar los textos antes (vista previa). Los
+                leads que lleguen apagado (o cuyo envío falle) se mandan luego con «Enviar los pendientes» o en el barrido horario.
               </span>
             </label>
             <label className={s.interruptor}>
               <input type="checkbox" name="seguimiento" defaultChecked={config.seguimiento} />
               <span>
                 <b>Seguimiento</b> a los{" "}
-                <input type="number" name="seguimiento_dias" min={1} max={60} defaultValue={config.seguimiento_dias} className={s.numero} /> días (cron horario; no si se dio de baja ni
-                si ya respondió al primero).
+                <input type="number" name="seguimiento_dias" min={1} max={60} defaultValue={config.seguimiento_dias} className={s.numero} /> días (cron horario; con copia a la dirección de
+                arriba; no si se dio de baja ni si ya respondió al primero).
               </span>
             </label>
             <label className={s.interruptor}>

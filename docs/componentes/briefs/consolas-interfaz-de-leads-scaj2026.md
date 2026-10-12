@@ -284,6 +284,28 @@ Si no quieres recibir más correos sobre esta conversación, puedes darte de baj
    OFL, ~5 MB) sale en japonés; mientras tanto, quien llenó en japonés recibe el PDF en inglés (y un nombre en kanji se sustituye por
    el correo en el documento, nunca por signos rotos).
 
+## 6-ter · Las siete mejoras del 12 de octubre (V6.5)
+
+1. **La respuesta automática con el PDF.** El correo no llegó porque los dos interruptores de correo nacieron APAGADOS en la V6.2
+   (esperaban tu aprobación de los textos). Desde la V6.5 nacen **encendidos** (en el código y en la base) y el correo inmediato
+   lleva el **PDF de confirmación adjunto**. El barrido horario manda además los inmediatos que quedaron pendientes: tus tres registros
+   de prueba (dos con tu cuenta personal, uno con la de la casa) ya lo recibieron. **El seguimiento** a los siete días sale **con copia
+   (CC) a ctcexportmain@gmail.com** (el campo «Copia del seguimiento» de la LCP; vacío = sin copia).
+2. **El PDF con tus datos.** Después de la confirmación va «Tus respuestas» (lo que buscas, cuándo, qué quieres recibir, la necesidad
+   de volumen, los lotes que marcaste, el Master Roaster y, si ya lo dio, el paso 2) y «Qué sigue» cambia según lo marcado (Sample
+   Pack, lista de lotes, videollamada, lote LCL, «otro», los lotes, el volumen). Puede ocupar dos páginas (numeradas).
+3. **La foto con la cámara.** Dos botones: «Tomar una foto» (abre la cámara trasera y el navegador pide el permiso al tocar; en
+   producción es HTTPS, que es lo que la cámara exige) y «Elegir de la galería».
+4. **Recargar vuelve a la confirmación.** Al enviar, el navegador guarda una cookie firmada (solo para `/scaj2026`, 30 días); al
+   recargar, la página abre en la pantalla de gracias con el código, el PDF y el paso 2 prellenado. «Registrar a otra persona» la
+   borra y deja el formulario vacío.
+5. **La necesidad de volumen** (en «Qué sigue», solo a quien compra): el periodo en fichas —Mensual · Bimestral · Trimestral ·
+   Semestral · Anual— y los kilos en un **dial de 100 a 10.000 kg** (pasos de 100). El correo lo retoma («2.500 kg por trimestre»).
+6. **«¿Qué lote te llamó la atención?»**: los seis lotes de la vitrina (los mismos de las redes), por su nombre público y su
+   referencia CTC-L-, uno o varios. El correo los nombra y remite a «Find my Lot»; el PDF los lista. Nunca aparece la finca.
+7. **«¿Qué te gustaría recibir?»** suma **«Un lote LCL (carga consolidada)»** y **«Otro»** (abre un campo de texto). El correo
+   responde a los dos.
+
 ## 7 · Pendiente
 
 - Revisión nativa del japonés (formulario) y, si la quieres, una versión japonesa de los correos.

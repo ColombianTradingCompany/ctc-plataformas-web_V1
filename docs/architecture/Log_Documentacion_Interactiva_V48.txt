@@ -160,3 +160,18 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
   LCP `formularios/page.tsx` (código, estado del paso 2, enlaces).
 - Dependencias: pdf-lib, @pdf-lib/fontkit. DICT: «código de registro», «paso 2 (complemento)». Guardián `qa-lead-forms` 81.
 (commit: 949f15b)
+
+## [2026-10-12] V6.5 · SCAJ 2026: respuesta automática con el PDF adjunto, PDF a la medida, cámara, cookie, volumen, lotes, LCL y «otro»
+- `src/lib/leadForms/envios.ts` (`mandarCorreo` con `cc` y `adjuntos`; el inmediato adjunta `pdfDeConfirmacion`; el seguimiento con copia;
+  `correrSeguimientos` manda los inmediatos pendientes de 14 días), `registro.ts` (los interruptores nacen encendidos, estrictos;
+  `copia_seguimiento`), `pdf.ts` (reescrito: lienzo con páginas, «Tus respuestas», «Qué sigue» a la medida, número de página),
+  `correos.ts` (`fraseDeVolumen`, lotes por nombre público, LCL, «otro»; `ExtrasDeCorreo`), `campos.ts` (`volume_period` · `volume_kg` ·
+  `lots_of_interest` · `wants_other`, `VOLUMEN_KG_*`, `REFERENCIA_RE`, `LoteParaElegir`, `ValoresDelPaso2` + `valoresDelPaso2De`,
+  `nombreDeCookieDeRegistro`), `vitrina.ts` (NUEVO: `lotesParaElegir`, `lotesDeInteres` sobre `getSneakPeekPayload`), `publicActions.ts`
+  (la cookie del registro; `olvidarRegistroDeEvento`), `scaj2026/textos.json` (ES · EN · JA), `ejemplos.ts`.
+- `src/components/leadForms/LeadForm.tsx` (dial de kilos + fichas del periodo, los lotes de la vitrina, «otro» con texto, «Tomar una foto» con
+  `capture`, `registroPrevio`), `LeadForm.module.css`, `src/app/scaj2026/page.tsx` (la cookie → `registroPrevio`; los lotes),
+  `completar/page.tsx`, `confirmacion/route.ts`, LCP `formularios/page.tsx` + `formulariosActions.ts` (la copia del seguimiento).
+- Datos: acta `docs/migraciones/2026-10-12_leads_correos_encendidos.sql` (corrida). DICT: «necesidad de volumen», «lote que llamó la
+  atención», «copia del seguimiento». Guardián `qa-lead-forms` 96.
+(commit: pendiente)

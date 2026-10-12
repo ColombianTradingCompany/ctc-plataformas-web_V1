@@ -1,9 +1,9 @@
 "use server";
 
 import { randomUUID } from "crypto";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { BUCKET_LEADS, codigoDeLead, limpiarComplemento, validarEnvio, venceElSeguimiento, type ComplementoDeFormulario, type EnvioDeFormulario } from "./campos";
+import { BUCKET_LEADS, codigoDeLead, limpiarComplemento, nombreDeCookieDeRegistro, validarEnvio, venceElSeguimiento, type ComplementoDeFormulario, type EnvioDeFormulario } from "./campos";
 import { configDe, formulario, formularioActivoDe, type FormularioDeLaBase } from "./registro";
 import { enviarCorreoInmediato } from "./envios";
 import { rutaDeCompletar, rutaDelPdf, selloValido, testigoDeBajaValido, testigoDeLead, testigoDeLeadValido } from "./sello";
@@ -35,6 +35,32 @@ const resultadoDe = (def: { key: string; ruta: string }, leadId: string, repetid
   pdfHref: rutaDelPdf(def.ruta, leadId),
   completarHref: rutaDeCompletar(def.ruta, leadId),
 });
+
+/** V6.5 (owner, 2026-10-12: «cuando se recarga la página se vuelve al principio; quiero que si se envió, los cookies lleven a la
+ *  pantalla de confirmación»). Una cookie httpOnly, solo para la ruta del formulario, 30 días, con el id del lead y su testigo: la
+ *  página la valida (HMAC) y pinta la pantalla de gracias con su código y su PDF. «Registrar a otra persona» la borra. */
+const DIAS_DE_COOKIE = 30;
+const opcionesDeCookie = (ruta: string, maxAge: number) => ({ httpOnly: true, sameSite: "lax" as const, secure: process.env.NODE_ENV === "production", path: ruta, maxAge });
+
+async function recordarRegistro(def: { key: string; ruta: string }, leadId: string): Promise<void> {
+  try {
+    (await cookies()).set(nombreDeCookieDeRegistro(def.key), `${leadId}.${testigoDeLead(leadId)}`, opcionesDeCookie(def.ruta, DIAS_DE_COOKIE * 24 * 60 * 60));
+  } catch (e) {
+    console.error("[leads-evento] cookie", (e as Error).message);
+  }
+}
+
+/** «Registrar a otra persona»: olvida el registro en este navegador (la cookie). */
+export async function olvidarRegistroDeEvento(formKey: string): Promise<{ ok: boolean }> {
+  try {
+    const def = formulario(formKey);
+    if (!def) return { ok: false };
+    (await cookies()).set(nombreDeCookieDeRegistro(def.key), "", opcionesDeCookie(def.ruta, 0));
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
 
 async function formularioAbierto(service: ReturnType<typeof createServiceRoleClient>, formKey: string) {
   const { data } = await service.from("lead_forms").select("*").eq("key", formKey).maybeSingle();
@@ -80,15 +106,19 @@ export async function enviarLeadDeEvento(payload: EnvioDeFormulario): Promise<Re
       // 23505 = ya existe un lead con esa idempotency_key: es el MISMO envío (doble toque o reintento). Se responde con él.
       if (error.code === "23505") {
         const { data: previo } = await service.from("event_leads").select("id").eq("idempotency_key", v.lead.idempotency_key).maybeSingle();
-        if (previo) return resultadoDe(def, (previo as { id: string }).id, true);
+        if (previo) {
+          await recordarRegistro(def, (previo as { id: string }).id);
+          return resultadoDe(def, (previo as { id: string }).id, true);
+        }
       }
       console.error("[leads-evento] insert", error.message);
       return { ok: false, error: "base" };
     }
     if (!creado) return { ok: false, error: "base" };
     const leadId = (creado as { id: string }).id;
+    await recordarRegistro(def, leadId);
 
-    // El correo inmediato, si el owner lo encendió. Su resultado queda en la fila; el lead ya está guardado pase lo que pase.
+    // El correo inmediato, si el owner lo encendió (desde la V6.5 nace encendido y lleva el PDF adjunto). Su resultado queda en la fila; el lead ya está guardado pase lo que pase.
     if (config.correo_inmediato) await enviarCorreoInmediato(service, leadId);
     return resultadoDe(def, leadId, false);
   } catch (e) {

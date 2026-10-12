@@ -8,31 +8,50 @@ import { construirCorreoInmediato, construirSeguimiento, type Correo, type Enlac
 import { configDe, formulario, type ConfigDeFormulario, type FormularioDeLaBase } from "./registro";
 import { urlDeBaja, urlDeCompletar, urlDelPdf } from "./sello";
 import { codigoDeLead } from "./campos";
+import { pdfDeConfirmacion } from "./pdf";
+import { lotesDeInteres } from "./vitrina";
 
 // ── Interfaz de Leads · los ENVÍOS (V6.2) — solo servidor ─────────────────────────────────────────────────────────────────────
 // Lo que toca la red: mandar el correo inmediato y el seguimiento (Resend, el remitente verificado `EMAIL_FROM`, Reply-To a lo que
 // diga la configuración del formulario), dejar en la fila cuándo salió cada uno o qué falló (NUNCA se traga un fallo: la consola lo
 // enseña y lo reintenta), y el barrido del cron que manda los seguimientos vencidos. Los textos son de `correos.ts` (puro).
 //
-// Dos interruptores en `lead_forms.config` (`correo_inmediato`, `seguimiento`) nacen APAGADOS: el owner aprueba los textos y los
-// enciende desde la LCP. Mientras tanto, cada lead queda con su `followup_due_at` (el seguimiento no vence hasta siete días después).
+// Dos interruptores en `lead_forms.config` (`correo_inmediato`, `seguimiento`). Nacieron apagados (V6.2) hasta que el owner aprobara
+// los textos; desde la V6.5 (owner, 2026-10-12: «asegúrate que cuando se haga el submission haya una respuesta automática con la
+// información y el PDF») nacen ENCENDIDOS: el correo inmediato sale al guardar con el PDF de confirmación ADJUNTO, y el seguimiento
+// (a los `seguimiento_dias`) sale con COPIA (CC) a `copia_seguimiento` (ctcexportmain@gmail.com) para que la casa lo vea. El barrido
+// horario también manda los inmediatos que quedaron pendientes (los que llegaron con el interruptor apagado o cuyo envío falló).
 
 const FROM = process.env.EMAIL_FROM || "Colombian Trading Company <onboarding@resend.dev>";
 
 export type ResultadoDeEnvio = { ok: true; omitido?: string } | { ok: false; error: string };
+/** V6.5: la copia (CC) y los adjuntos de un envío. */
+export type ExtrasDeEnvio = { cc?: string; adjuntos?: { filename: string; content: Buffer }[] };
 
 /** El remitente único de la Interfaz de Leads: nunca lanza; salta las cuentas de prueba; sin clave, escribe al log (desarrollo). */
-export async function mandarCorreo(to: string, correo: Correo, replyTo: string): Promise<ResultadoDeEnvio> {
+export async function mandarCorreo(to: string, correo: Correo, replyTo: string, extras: ExtrasDeEnvio = {}): Promise<ResultadoDeEnvio> {
   if (esCorreoDePrueba(to)) return { ok: true, omitido: "cuenta de prueba" };
   const apiKey = process.env.RESEND_API_KEY;
+  const adjuntos = extras.adjuntos?.length ? extras.adjuntos : undefined;
   if (!apiKey) {
-    console.log(`[leads-evento · sin RESEND_API_KEY] to=${to} replyTo=${replyTo} subject="${correo.subject}"\n${correo.text}`);
+    const detalle = `${extras.cc ? ` cc=${extras.cc}` : ""}${adjuntos ? ` adjuntos=${adjuntos.map((a) => `${a.filename} (${a.content.length} B)`).join(", ")}` : ""}`;
+    console.log(`[leads-evento · sin RESEND_API_KEY] to=${to} replyTo=${replyTo}${detalle} subject="${correo.subject}"\n${correo.text}`);
     return { ok: true, omitido: "sin RESEND_API_KEY (desarrollo)" };
   }
   try {
     const resend = new Resend(apiKey);
     // V6.4: HTML y texto a la vez (el cliente de correo elige; el texto es la versión que se responde debajo de cada pregunta).
-    const { error } = await resend.emails.send({ from: FROM, to, replyTo, subject: correo.subject, text: correo.text, html: correo.html });
+    // V6.5: la copia (el seguimiento, a la casa) y los adjuntos (el PDF de confirmación en el inmediato).
+    const { error } = await resend.emails.send({
+      from: FROM,
+      to,
+      replyTo,
+      subject: correo.subject,
+      text: correo.text,
+      html: correo.html,
+      ...(extras.cc ? { cc: extras.cc } : {}),
+      ...(adjuntos ? { attachments: adjuntos } : {}),
+    });
     if (error) return { ok: false, error: error.message };
     return { ok: true };
   } catch (err) {
@@ -79,11 +98,23 @@ export async function enviarCorreoInmediato(service: SupabaseClient, leadId: str
   if ("error" in c) return { ok: false, error: c.error };
   if (c.lead.unsubscribed_at) return { ok: false, error: "El lead se dio de baja: no se le escribe." };
   if (c.lead.email_immediate_sent_at && !opts.forzar) return { ok: true, omitido: "ya enviado" };
-  const correo = construirCorreoInmediato(c.lead as LeadParaCorreo, c.config, enlacesDeCorreo(c.ruta, c.lead.id));
-  const r = await mandarCorreo(c.lead.email, correo, c.config.reply_to);
+  const lotes = await lotesDeInteres(c.lead);
+  const correo = construirCorreoInmediato(c.lead as LeadParaCorreo, c.config, enlacesDeCorreo(c.ruta, c.lead.id), { lotes });
+  // V6.5 (owner): el PDF de confirmación va ADJUNTO. Si no se pudiera generar, el correo sale igual (lleva el enlace al PDF) y el
+  // fallo queda escrito en la fila: la consola lo enseña.
+  let adjuntos: ExtrasDeEnvio["adjuntos"];
+  let avisoPdf: string | null = null;
+  try {
+    const pdf = await pdfDeConfirmacion(c.lead, { formKey: c.lead.form_key, ruta: c.ruta, privacyUrl: c.config.privacy_url || `${c.ruta}/privacidad`, lotes });
+    adjuntos = [{ filename: pdf.nombreDeArchivo, content: Buffer.from(pdf.bytes) }];
+  } catch (e) {
+    avisoPdf = `Enviado sin el PDF adjunto: ${(e as Error).message}`;
+    console.error("[leads-evento] pdf adjunto", (e as Error).message);
+  }
+  const r = await mandarCorreo(c.lead.email, correo, c.config.reply_to, { adjuntos });
   await service
     .from("event_leads")
-    .update(r.ok ? { email_immediate_sent_at: new Date().toISOString(), email_immediate_error: null, updated_at: new Date().toISOString() } : { email_immediate_error: r.error, updated_at: new Date().toISOString() })
+    .update(r.ok ? { email_immediate_sent_at: new Date().toISOString(), email_immediate_error: avisoPdf, updated_at: new Date().toISOString() } : { email_immediate_error: r.error, updated_at: new Date().toISOString() })
     .eq("id", leadId);
   return r;
 }
@@ -115,7 +146,8 @@ export async function enviarSeguimiento(service: SupabaseClient, leadId: string,
     return { ok: true, omitido: "ya respondió al primer correo" };
   }
   const correo = construirSeguimiento(c.lead as LeadParaCorreo, c.config, enlacesDeCorreo(c.ruta, c.lead.id));
-  const r = await mandarCorreo(c.lead.email, correo, c.config.reply_to);
+  // V6.5 (owner): el seguimiento sale con copia a la casa (`copia_seguimiento`; vacío: sin copia).
+  const r = await mandarCorreo(c.lead.email, correo, c.config.reply_to, c.config.copia_seguimiento ? { cc: c.config.copia_seguimiento } : {});
   await service
     .from("event_leads")
     .update(r.ok ? { followup_sent_at: new Date().toISOString(), followup_error: null, updated_at: new Date().toISOString() } : { followup_error: r.error, updated_at: new Date().toISOString() })
@@ -123,12 +155,16 @@ export async function enviarSeguimiento(service: SupabaseClient, leadId: string,
   return r;
 }
 
-export type BarridoDeSeguimientos = { formularios: number; vencidos: number; enviados: number; omitidos: number; errores: string[] };
+export type BarridoDeSeguimientos = { formularios: number; vencidos: number; enviados: number; omitidos: number; inmediatosPendientes: number; inmediatosEnviados: number; errores: string[] };
+
+/** Cuántos días atrás mira el barrido al recoger inmediatos pendientes (un lead más viejo no recibe un «hoy mismo» a destiempo). */
+const DIAS_DE_INMEDIATOS_PENDIENTES = 14;
 
 /** El barrido del cron: por cada formulario con el seguimiento ENCENDIDO, los leads cuyo seguimiento venció y no ha salido. Idempotente:
- *  cada envío mueve `followup_sent_at`, así que correrlo dos veces en la misma hora no manda dos correos. */
+ *  cada envío mueve `followup_sent_at`, así que correrlo dos veces en la misma hora no manda dos correos. V6.5: con el correo inmediato
+ *  encendido, manda antes los inmediatos que quedaron pendientes (cada envío mueve `email_immediate_sent_at`). */
 export async function correrSeguimientos(service: SupabaseClient, ahoraIso = new Date().toISOString()): Promise<BarridoDeSeguimientos> {
-  const out: BarridoDeSeguimientos = { formularios: 0, vencidos: 0, enviados: 0, omitidos: 0, errores: [] };
+  const out: BarridoDeSeguimientos = { formularios: 0, vencidos: 0, enviados: 0, omitidos: 0, inmediatosPendientes: 0, inmediatosEnviados: 0, errores: [] };
   const { data: formularios, error } = await service.from("lead_forms").select("*");
   if (error) {
     out.errores.push(`lead_forms: ${error.message}`);
@@ -136,8 +172,28 @@ export async function correrSeguimientos(service: SupabaseClient, ahoraIso = new
   }
   for (const f of (formularios as FormularioDeLaBase[] | null) ?? []) {
     const config = configDe(f.config);
-    if (!config.seguimiento) continue;
+    if (!config.seguimiento && !config.correo_inmediato) continue;
     out.formularios += 1;
+    if (config.correo_inmediato) {
+      const desde = new Date(Date.parse(ahoraIso) - DIAS_DE_INMEDIATOS_PENDIENTES * 24 * 60 * 60 * 1000).toISOString();
+      const { data: pendientes, error: e3 } = await service
+        .from("event_leads")
+        .select("id")
+        .eq("form_key", f.key)
+        .is("email_immediate_sent_at", null)
+        .is("unsubscribed_at", null)
+        .gte("created_at", desde)
+        .order("created_at", { ascending: true })
+        .limit(100);
+      if (e3) out.errores.push(`${f.key} inmediatos: ${e3.message}`);
+      for (const pendiente of (pendientes as { id: string }[] | null) ?? []) {
+        out.inmediatosPendientes += 1;
+        const r = await enviarCorreoInmediato(service, pendiente.id);
+        if (!r.ok) out.errores.push(`${pendiente.id} inmediato: ${r.error}`);
+        else if (!r.omitido) out.inmediatosEnviados += 1;
+      }
+    }
+    if (!config.seguimiento) continue;
     const { data: vencidos, error: e2 } = await service
       .from("event_leads")
       .select("id")

@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
-import { BUCKET_LEADS, EMAIL_RE, MAX_MB_TARJETA, OPCIONES, TIPOS_DE_PARTICIPANTE, visible, type IdiomaDeFormulario, type EnvioDeFormulario, type PreguntaCerrada } from "@/lib/leadForms/campos";
+import { BUCKET_LEADS, EMAIL_RE, MAX_MB_TARJETA, OPCIONES, TIPOS_DE_PARTICIPANTE, VOLUMEN_KG_MAX, VOLUMEN_KG_MIN, VOLUMEN_KG_PASO, visible, type IdiomaDeFormulario, type EnvioDeFormulario, type LoteParaElegir, type PreguntaCerrada, type ValoresDelPaso2 } from "@/lib/leadForms/campos";
 import type { TextosDeFormulario } from "@/lib/leadForms/registro";
-import { completarLeadDeEvento, enviarLeadDeEvento, urlDeSubidaDeTarjeta } from "@/lib/leadForms/publicActions";
+import { completarLeadDeEvento, enviarLeadDeEvento, olvidarRegistroDeEvento, urlDeSubidaDeTarjeta } from "@/lib/leadForms/publicActions";
 import styles from "./LeadForm.module.css";
 
 // ── El formulario de leads de una feria (V6.2 · V6.4) ───────────────────────────────────────────────────────────────────────
@@ -22,20 +22,16 @@ import styles from "./LeadForm.module.css";
 // Lo escrito no se pierde: cada cambio se guarda en localStorage (`lead-form:<key>`) y se recupera al volver; si el envío falla por la
 // conexión, se queda todo y se reintenta. Un doble toque en Enviar no crea dos leads: la clave de idempotencia nace con el borrador y
 // la base rechaza el segundo. «Registrar a otra persona» deja el formulario vacío (lo usa el owner cuando llena por alguien).
+//
+// V6.5 (owner, 2026-10-12): en «Qué sigue» entran la necesidad de volumen estimada (el periodo en fichas y los kilos en un DIAL de 100 a
+// 10.000), «¿qué lote te llamó la atención?» (los lotes de la vitrina, varios), y en «qué quieres recibir» el lote LCL y «otro» (con
+// texto). La foto de la tarjeta se TOMA con la cámara (el navegador pide el permiso al tocar) o se elige de la galería. Y al recargar,
+// si ya se envió, la cookie del registro abre en la pantalla de confirmación (`registroPrevio`, validado por la página).
 
-export type ValoresDelPaso2 = {
-  green_volume?: string | null;
-  buys_colombian?: string | null;
-  profiles?: string[] | null;
-  about?: string | null;
-  values?: Record<string, number> | null;
-  grades_interest?: string[] | null;
-  purchase_format?: string | null;
-  certifications?: string[] | null;
-  roast_in_destination?: string | null;
-  regional_node_interest?: boolean | null;
-  producer_interest?: boolean | null;
-};
+export type { ValoresDelPaso2 } from "@/lib/leadForms/campos";
+
+/** V6.5 · el registro que recuerda la cookie (la página lo valida con el testigo y lo carga): la pantalla de confirmación al recargar. */
+export type RegistroPrevio = { leadId: string; testigo: string; codigo: string; pdfHref: string; completarHref: string; participantType: string; lang: IdiomaDeFormulario; valores: ValoresDelPaso2 };
 
 type Props = {
   formKey: string;
@@ -51,6 +47,10 @@ type Props = {
   complemento?: { leadId: string; testigo: string; participantType: string; valores: ValoresDelPaso2; codigo: string; pdfHref: string } | null;
   /** V6.4 · el enlace del correo no valía (sin testigo o testigo ajeno). */
   complementoInvalido?: boolean;
+  /** V6.5 · los lotes de la vitrina para «¿qué lote te llamó la atención?» (vacío: la pregunta dice que hoy no hay). */
+  lotes?: LoteParaElegir[];
+  /** V6.5 · el registro que recuerda la cookie: la página abre en la pantalla de confirmación. */
+  registroPrevio?: RegistroPrevio | null;
 };
 
 type Borrador = {
@@ -77,6 +77,11 @@ type Borrador = {
   roast_in_destination: string;
   regional_node_interest: boolean;
   producer_interest: boolean;
+  // V6.5
+  volume_period: string;
+  volume_kg: number | null;
+  lots_of_interest: string[];
+  wants_other: string;
   consent: boolean;
 };
 
@@ -114,6 +119,10 @@ const vacio = (lang: IdiomaDeFormulario): Borrador => ({
   roast_in_destination: "",
   regional_node_interest: false,
   producer_interest: false,
+  volume_period: "",
+  volume_kg: null,
+  lots_of_interest: [],
+  wants_other: "",
   consent: false,
 });
 
@@ -135,6 +144,7 @@ const desdeComplemento = (lang: IdiomaDeFormulario, tipo: string, v: ValoresDelP
 });
 
 const claveDeBorrador = (formKey: string) => `lead-form:${formKey}`;
+const formatoKg = (n: number, lang: IdiomaDeFormulario): string => n.toLocaleString(lang === "es" ? "es-CO" : lang === "ja" ? "ja-JP" : "en-US");
 const tieneAlgo = (b: Borrador) => !!(b.participant_type || b.full_name || b.company || b.email || b.looking_for || b.about);
 
 /** El grano de café: una elipse con su hendidura (no una estrella). */
@@ -147,28 +157,42 @@ function Grano({ lleno }: { lleno: boolean }) {
   );
 }
 
-export function LeadForm({ formKey, textos, idiomas, idiomaInicial, sello, source, privacyUrl, abierto, complemento = null, complementoInvalido = false }: Props) {
+export function LeadForm({ formKey, textos, idiomas, idiomaInicial, sello, source, privacyUrl, abierto, complemento = null, complementoInvalido = false, lotes = [], registroPrevio = null }: Props) {
   const enComplemento = !!complemento;
-  const [b, setB] = useState<Borrador>(() => (complemento ? desdeComplemento(idiomaInicial, complemento.participantType, complemento.valores) : vacio(idiomaInicial)));
+  // V6.5: el registro que recuerda la cookie (solo en el formulario normal): la página abre en la pantalla de gracias, con el tipo y
+  // el paso 2 del registro ya en el borrador por si quiere completarlo.
+  const previo = !enComplemento && registroPrevio ? registroPrevio : null;
+  const conPrevio = !!previo;
+  const [b, setB] = useState<Borrador>(() =>
+    complemento ? desdeComplemento(idiomaInicial, complemento.participantType, complemento.valores) : previo ? desdeComplemento(previo.lang, previo.participantType, previo.valores) : vacio(idiomaInicial)
+  );
   const [paso, setPaso] = useState<1 | 2>(complemento ? 2 : 1);
-  // En modo complemento no hay borrador que recuperar: nace listo.
-  const [listo, setListo] = useState(enComplemento);
+  // En modo complemento (o con registro previo) no hay borrador que recuperar: nace listo.
+  const [listo, setListo] = useState(enComplemento || conPrevio);
   const [restaurado, setRestaurado] = useState(false);
   const [enviando, setEnviando] = useState(false);
   /** El registro guardado en el paso 1 (o el del enlace, en modo complemento). */
-  const [registro, setRegistro] = useState<Registro | null>(complemento ? { leadId: complemento.leadId, testigo: complemento.testigo, codigo: complemento.codigo, pdfHref: complemento.pdfHref, completarHref: "" } : null);
-  const [pantalla, setPantalla] = useState<"form" | "gracias" | "guardado">("form");
+  const [registro, setRegistro] = useState<Registro | null>(
+    complemento
+      ? { leadId: complemento.leadId, testigo: complemento.testigo, codigo: complemento.codigo, pdfHref: complemento.pdfHref, completarHref: "" }
+      : previo
+        ? { leadId: previo.leadId, testigo: previo.testigo, codigo: previo.codigo, pdfHref: previo.pdfHref, completarHref: previo.completarHref }
+        : null
+  );
+  const [pantalla, setPantalla] = useState<"form" | "gracias" | "guardado">(previo ? "gracias" : "form");
   const [error, setError] = useState<{ tipo: "required" | "email" | "network" | "server" | "closed" | "invalid"; campo?: string } | null>(null);
   const [foto, setFoto] = useState<File | null>(null);
   const [fotoError, setFotoError] = useState<"big" | "type" | null>(null);
   const fotoRef = useRef<HTMLInputElement>(null);
+  /** V6.5: el segundo selector, con `capture`, abre la cámara directamente. */
+  const camaraRef = useRef<HTMLInputElement>(null);
   const hpRef = useRef<HTMLInputElement>(null);
   const t = textos[b.lang].ui;
   const o = textos[b.lang].options;
 
   // El borrador (solo en el formulario normal): se recupera una vez y se guarda en cada cambio (sin la foto, que no cabe en localStorage).
   useEffect(() => {
-    if (enComplemento) return;
+    if (enComplemento || conPrevio) return;
     let activo = true;
     Promise.resolve().then(() => {
       if (!activo) return;
@@ -191,21 +215,22 @@ export function LeadForm({ formKey, textos, idiomas, idiomaInicial, sello, sourc
     return () => {
       activo = false;
     };
-  }, [formKey, idiomaInicial, idiomas, enComplemento]);
+  }, [formKey, idiomaInicial, idiomas, enComplemento, conPrevio]);
   useEffect(() => {
-    if (!listo || enComplemento) return;
+    // Solo mientras se llena: la pantalla de gracias no deja un borrador atrás.
+    if (!listo || enComplemento || pantalla !== "form") return;
     try {
       localStorage.setItem(claveDeBorrador(formKey), JSON.stringify(b));
     } catch {
       /* idem */
     }
-  }, [b, listo, formKey, enComplemento]);
+  }, [b, listo, formKey, enComplemento, pantalla]);
   useEffect(() => {
     document.documentElement.lang = b.lang;
   }, [b.lang]);
 
   const set = useCallback(<K extends keyof Borrador>(k: K, v: Borrador[K]) => setB((prev) => ({ ...prev, [k]: v })), []);
-  const alternar = (k: "profiles" | "wants" | "grades_interest" | "certifications", valor: string) =>
+  const alternar = (k: "profiles" | "wants" | "grades_interest" | "certifications" | "lots_of_interest", valor: string) =>
     setB((prev) => ({ ...prev, [k]: prev[k].includes(valor) ? prev[k].filter((x) => x !== valor) : [...prev[k], valor] }));
   const alternarValor = (clave: string) =>
     setB((prev) => {
@@ -273,6 +298,11 @@ export function LeadForm({ formKey, textos, idiomas, idiomaInicial, sello, sourc
     roast_in_destination: b.roast_in_destination,
     regional_node_interest: b.regional_node_interest,
     producer_interest: b.producer_interest,
+    // V6.5 · las preguntas nuevas de «Qué sigue» (el servidor las limpia: periodo conocido, kilos en el dial, referencias CTC-L-, «otro» solo con «otro»).
+    volume_period: b.volume_period,
+    volume_kg: b.volume_kg,
+    lots_of_interest: b.lots_of_interest,
+    wants_other: b.wants_other,
   });
 
   /** PASO 1: guarda el lead. */
@@ -385,6 +415,8 @@ export function LeadForm({ formKey, textos, idiomas, idiomaInicial, sello, sourc
     } catch {
       /* idem */
     }
+    // V6.5: olvida el registro en este navegador (la cookie), para que recargar no vuelva al anterior.
+    void olvidarRegistroDeEvento(formKey).catch(() => undefined);
     window.scrollTo({ top: 0 });
   }
 
@@ -685,7 +717,28 @@ export function LeadForm({ formKey, textos, idiomas, idiomaInicial, sello, sourc
             <input className={styles.input} type="text" value={b.country_city} onChange={(e) => set("country_city", e.target.value)} autoComplete="country-name" maxLength={160} />
           </Pregunta>
           <Pregunta id="card" texto={t.card} nota={t.optional}>
-            <input ref={fotoRef} type="file" accept="image/*" className={styles.oculto} onChange={(e) => elegirFoto(e.target.files?.[0] ?? null)} />
+            <input
+              ref={fotoRef}
+              type="file"
+              accept="image/*"
+              className={styles.oculto}
+              onChange={(e) => {
+                elegirFoto(e.target.files?.[0] ?? null);
+                e.target.value = "";
+              }}
+            />
+            {/* V6.5 (owner): tomar la foto directamente — `capture` abre la cámara trasera y el navegador pide el permiso al tocar. */}
+            <input
+              ref={camaraRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className={styles.oculto}
+              onChange={(e) => {
+                elegirFoto(e.target.files?.[0] ?? null);
+                e.target.value = "";
+              }}
+            />
             {foto ? (
               <div className={styles.fotoLista}>
                 <span>📇 {t.card_ready} · {foto.name.length > 28 ? foto.name.slice(0, 26) + "…" : foto.name}</span>
@@ -699,13 +752,23 @@ export function LeadForm({ formKey, textos, idiomas, idiomaInicial, sello, sourc
                 </span>
               </div>
             ) : (
-              <button type="button" className={styles.fotoBoton} onClick={() => fotoRef.current?.click()}>
-                <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
-                  <circle cx="12" cy="13" r="3.2" />
-                </svg>
-                {t.card_btn}
-              </button>
+              <div className={styles.fotoBotonesDos}>
+                <button type="button" className={styles.fotoBoton} onClick={() => camaraRef.current?.click()} data-foto="camara">
+                  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
+                    <circle cx="12" cy="13" r="3.2" />
+                  </svg>
+                  {t.card_take}
+                </button>
+                <button type="button" className={styles.fotoBoton} onClick={() => fotoRef.current?.click()} data-foto="galeria">
+                  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3.5" y="5" width="17" height="14" rx="2" />
+                    <path d="M3.5 16l5-5 4 4 3-3 5 5" />
+                    <circle cx="15.5" cy="9" r="1.5" />
+                  </svg>
+                  {t.card_choose}
+                </button>
+              </div>
             )}
             {fotoError && <p className={styles.errorCampo}>{fotoError === "big" ? t.card_big : t.card_type}</p>}
             <p className={styles.pista}>{t.card_hint}</p>
@@ -722,8 +785,68 @@ export function LeadForm({ formKey, textos, idiomas, idiomaInicial, sello, sourc
               {chips("timing", "timing", "una")}
             </Pregunta>
           )}
+          {ve("volume_period") && (
+            <Pregunta id="volume_need" texto={t.q_volume_need} nota={t.optional}>
+              {/* V6.5 (owner): el periodo en fichas y los kilos en un dial de 100 a 10.000. */}
+              <p className={styles.pista}>{t.volume_period_hint}</p>
+              {chips("volume_period", "volume_period", "una")}
+              <div className={styles.dial} data-dial="volumen">
+                <div className={styles.dialCabecera}>
+                  <span>{t.volume_kg_label}</span>
+                  <b aria-live="polite">{b.volume_kg === null ? t.volume_unset : `${formatoKg(b.volume_kg, b.lang)} ${t.kg}`}</b>
+                </div>
+                <input
+                  type="range"
+                  className={styles.rango}
+                  min={VOLUMEN_KG_MIN}
+                  max={VOLUMEN_KG_MAX}
+                  step={VOLUMEN_KG_PASO}
+                  value={b.volume_kg ?? VOLUMEN_KG_MIN}
+                  onChange={(e) => set("volume_kg", Number(e.target.value))}
+                  aria-label={t.volume_kg_label}
+                  aria-valuetext={`${formatoKg(b.volume_kg ?? VOLUMEN_KG_MIN, b.lang)} ${t.kg}`}
+                />
+                <div className={styles.dialRotulos}>
+                  <span>
+                    {formatoKg(VOLUMEN_KG_MIN, b.lang)} {t.kg}
+                  </span>
+                  <span>
+                    {formatoKg(VOLUMEN_KG_MAX, b.lang)} {t.kg}
+                  </span>
+                </div>
+              </div>
+            </Pregunta>
+          )}
+          <Pregunta id="lots_of_interest" texto={t.q_lots} nota={t.multi}>
+            {/* V6.5 (owner): los lotes de la vitrina (los de las redes), por su nombre público y su referencia; uno o varios. */}
+            <p className={styles.pista}>{t.lots_hint}</p>
+            {lotes.length ? (
+              <div className={styles.lotes} role="group" aria-label={t.q_lots} data-lotes={lotes.length}>
+                {lotes.map((l) => {
+                  const marcado = b.lots_of_interest.includes(l.code);
+                  return (
+                    <button key={l.code} type="button" role="checkbox" aria-checked={marcado} className={marcado ? styles.loteActivo : styles.lote} onClick={() => alternar("lots_of_interest", l.code)}>
+                      <span className={styles.caja} aria-hidden="true" />
+                      <span className={styles.loteTexto}>
+                        <span className={styles.loteNombre}>{l.name || l.code}</span>
+                        <span className={styles.loteRef}>
+                          {l.code}
+                          {l.grade ? ` · CTCx ${l.grade.charAt(0).toUpperCase()}${l.grade.slice(1)}` : ""}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className={styles.pista}>{t.lots_none}</p>
+            )}
+          </Pregunta>
           <Pregunta id="wants" texto={t.q_wants} nota={t.multi}>
             {chips("wants", "wants", "varias")}
+            {b.wants.includes("other") && (
+              <input id="campo-wants_other" className={styles.input} type="text" value={b.wants_other} onChange={(e) => set("wants_other", e.target.value)} placeholder={t.wants_other_ph} maxLength={200} data-wants="otro" />
+            )}
           </Pregunta>
           {ve("master_roaster_interest") && (
             <Pregunta id="master_roaster_interest" texto={t.q_mr}>
@@ -761,7 +884,7 @@ export function LeadForm({ formKey, textos, idiomas, idiomaInicial, sello, sourc
   );
 }
 
-type CampoDeChips = "green_volume" | "buys_colombian" | "timing" | "purchase_format" | "roast_in_destination" | "profiles" | "wants" | "grades_interest" | "certifications";
+type CampoDeChips = "green_volume" | "buys_colombian" | "timing" | "purchase_format" | "roast_in_destination" | "volume_period" | "profiles" | "wants" | "grades_interest" | "certifications";
 
 /** Las fichas de una pregunta cerrada: radio (una) o casillas (varias), con área táctil de 46 px. */
 function Chips({ grupo, modo, seleccion, rotulo, onElegir }: { grupo: PreguntaCerrada; modo: "una" | "varias"; seleccion: string | string[]; rotulo: (grupo: string, clave: string) => string; onElegir: (clave: string) => void }) {

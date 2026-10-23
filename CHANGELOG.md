@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.6] — 2026-10-23 (commit pendiente)
+## [V6.6] — 2026-10-23 (commit 5527465)
 
 - **Cambiado**: **la CTCx Coffee Datasheet Tool ES la planilla del Centro de Calidad** (owner, 2026-10-23: «it does not look at all like the
   interface in the Centro de Calidad, it MUST be the SAME»). La herramienta del taller deja de ser un HTML autocontenido y pasa a ser una

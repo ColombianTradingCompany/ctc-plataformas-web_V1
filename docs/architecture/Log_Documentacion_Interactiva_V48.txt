@@ -189,4 +189,4 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
   `qa-centro-calidad` (importa de `fisico.ts`), `qa-taller` 69, `qa-tools-seo-espejo` (rutas de Next), `qa-tools-puente-conformance` (sonda),
   `build-tool-shots` (ruta nueva). DICT: «Información comercial (datasheet)», «UID de la ficha», «página de paso».
 - Datos (tras el deploy): `tool_versions` #2 (`repo`, `/tools/coffee-datasheet/app`), `tools.version_publicada` = 2, `meta_description`.
-(commit: pendiente)
+(commit: 5527465)

@@ -27,7 +27,7 @@ const HERRAMIENTAS = {
   "cool-pdf": "/tools/cool-pdf/cool-pdf.html",
   catacion: "/tools/catacion/rueda-del-cafe-v23.html",
   "green-datasheet": "/tools/green-datasheet/green-coffee-datasheet.html",
-  "coffee-datasheet": "/tools/coffee-datasheet/ctcx-coffee-datasheet-tool.html",
+  "coffee-datasheet": "/tools/coffee-datasheet/app", // V6.6: página de Next, habla el puente desde React (usePuente)
   qr: "/tools/qr/generador-qr.html",
   "formula-calidad": "/tools/formula-calidad/formula-calidad.html",
   "viaje-cafe": "/tools/viaje-cafe/viaje-cafe.html",
@@ -82,19 +82,25 @@ const SONDA = {
       return marco.evaluate(() => { const t = document.getElementById("app").textContent; return t.includes("QA-PUENTE-77") && !t.includes("HEREDADO"); });
     },
   },
-  // CTCx Coffee Datasheet Tool (V5.132): el trabajo es el estado entero —método, sesión y lotes—. La sonda elige CVA,
-  // califica una sección afectiva y nombra el lote; exige que las tres cosas lleguen al estado y vuelvan a la pantalla.
+  // CTCx Coffee Datasheet Tool (V6.6): la planilla del Centro de Calidad en React, con el puente hablado desde `usePuente`.
+  // El trabajo es el estado entero (sesión, lotes con su planilla, extrínseca y comercial). La sonda nombra el lote, llena una
+  // sección CVA de la planilla y el puerto FOB de la comercial; exige que lleguen al estado y vuelvan a la pantalla.
   "coffee-datasheet": {
     actuar: async (marco) => {
-      await marco.locator('[data-a="metodo"][data-v="cva"]').click();
-      await marco.locator('[data-a="aff"][data-v="flavor"][data-i="8"]').click();
-      await marco.locator('[data-k="nombre"]').fill("QA-PUENTE-77");
+      await marco.locator("[data-prueba=nombre]").waitFor({ timeout: 60000 });
+      await marco.locator("[data-prueba=nombre]").fill("QA-PUENTE-77");
+      await marco.locator('input[type=number][step="0.25"][min="1"][max="9"]').nth(2).fill("8");
+      await marco.locator('input[aria-label="fob_puerto"]').fill("Buenaventura");
     },
-    capturado: (estado) => !!estado && estado.metodo === "cva" && estado.lotes?.[0]?.cva_flavor === "8" && estado.lotes[0].nombre === "QA-PUENTE-77",
-    restaurado: async (marco) =>
-      (await marco.locator("#cinta .sello").innerText()).trim() === "CVA" &&
-      (await marco.locator('[data-k="nombre"]').inputValue()) === "QA-PUENTE-77" &&
-      (await marco.locator('[data-a="aff"][data-v="flavor"][data-i="8"]').getAttribute("aria-pressed")) === "true",
+    capturado: (estado) => !!estado && estado.lotes?.[0]?.nombre === "QA-PUENTE-77" && estado.lotes[0].planilla?.cva_flavor === "8" && estado.lotes[0].com?.fob_puerto === "Buenaventura",
+    restaurado: async (marco) => {
+      await marco.locator("[data-prueba=nombre]").waitFor({ timeout: 60000 });
+      return (
+        (await marco.locator("[data-prueba=nombre]").inputValue()) === "QA-PUENTE-77" &&
+        (await marco.locator('input[type=number][step="0.25"][min="1"][max="9"]').nth(2).inputValue()) === "8" &&
+        (await marco.locator('input[aria-label="fob_puerto"]').inputValue()) === "Buenaventura"
+      );
+    },
   },
   agtron: {
     actuar: async (marco) => {
@@ -138,7 +144,10 @@ const navegador = await chromium.launch();
 const pagina = await navegador.newPage({ viewport: { width: 1200, height: 820 } });
 const filas = [];
 
+// `node scripts/qa-tools-puente-conformance.mjs <id>` prueba UNA herramienta (V6.6); sin argumento, todas.
+const SOLO = process.argv[2];
 for (const [id, ruta] of Object.entries(HERRAMIENTAS)) {
+  if (SOLO && id !== SOLO) continue;
   // `error`: una sonda que revienta no aprueba en silencio (V5.149 — antes una excepción solo dejaba la nota).
   const fila = { id, ready: false, campos: 0, captura: "—", restaura: "—", nota: "", error: false };
   try {

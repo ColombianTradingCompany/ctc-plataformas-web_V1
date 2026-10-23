@@ -19,6 +19,39 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.6] — 2026-10-23 (commit pendiente)
+
+- **Cambiado**: **la CTCx Coffee Datasheet Tool ES la planilla del Centro de Calidad** (owner, 2026-10-23: «it does not look at all like the
+  interface in the Centro de Calidad, it MUST be the SAME»). La herramienta del taller deja de ser un HTML autocontenido y pasa a ser una
+  página de Next (`/tools/coffee-datasheet/app`, `src/components/tools/datasheet/`) que renderiza `LabEvalEditor` —el mismo componente
+  del Centro de Calidad, el OCP y la Arena— con `ocultaGrado`, y le suma con sus mismos estilos lo que la planilla no tiene porque el
+  Q-Grader cata a ciegas: **B1 · Variedades y básicos** (humedad, densidad, aw y factor son los `b3_*` de la planilla: un dato, un sitio),
+  la **Caracterización extrínseca** (SCA 105, las 28 casillas oficiales) y la parte nueva. «Parts to fill in» se conserva (cinco píldoras).
+  El HTML viejo queda como página de paso (meta refresh + canonical) para los enlaces y el buscador; la V1 vive en git.
+- **Añadido**: **Información comercial** por lote (owner): pergamino y verde disponibles (kg), precio al productor (farm gate), FOB con su
+  puerto, CIP o DDP con su región, empaque, norma de calidad (UGQ…), condiciones y **«válido hasta»** (la ficha avisa en rojo si venció).
+  Tres conceptos nuevos en las «i» (`c_que`, `c_precios`, `c_validez`) más `b1_que` y `uid`.
+- **Añadido**: **la ficha impresa con la marca de la casa** (`FichaImpresa.tsx`): marca de agua «CTCx», cabecera negra con el loro, UID en
+  dorado, banda del método, firma y fecha, y el pie con el sitio web, `info@ctcexport.com`, la línea legal y «© año Colombian Trading
+  Company · Todos los derechos reservados». `legal.ts` gana `CTC_WEB` y `CTC_TELEFONOS` (vacía: el owner no ha entregado los números; el
+  pie omite la línea; nunca un número inventado).
+- **Cambiado**: **el UID del lote es único de verdad** (owner: «not just the date»): `CDT-XXXX-XXXX` con el alfabeto Crockford de la casa
+  (`codigoPublico.ts`), acuñado con `crypto.getRandomValues`, distinto de los de la evaluación, no editable; duplicar un lote acuña otro;
+  un archivo con UIDs repetidos o inválidos los reacuña al cargarse.
+- **Cambiado**: **el puente de la concha se habla desde React** (`usePuente.ts`: mismo protocolo que `ctc-bridge.js`; `ready` al montar y
+  al «hola», `init` normalizado, `estado` + `resumen` con debounce de 900 ms solo tras el `init`, solo al `parent`, mismo origen;
+  `localStorage` solo fuera de la concha). **Los trabajos guardados con la V1 se abren** (`normalizar`: lote plano → planilla; listas de la
+  rueda fundidas, `fis_color` c1..c8 → claves de `fisico.ts`, `ext.tipo` → B1, `ext.precio` → comercial).
+- **Cambiado**: **`planillaInfo.ts` es la fuente de las «i»** (ES · EN), escrita a mano; ya no se genera del HTML.
+- **Retirado**: `scripts/build-coffee-datasheet.mjs` y `scripts/build-planilla-info.mjs` (la herramienta importa `rueda.ts`, `fichaData.ts`,
+  `fisico.ts`: no hay bloque generado que vigilar). El alemán de la V1 no volvió (la planilla es ES · EN). La exportación CSV/HTML de la V1
+  (quedan el `.json` y la ficha imprimible).
+- **Docs**: ficha `docs/componentes/herramientas-cafe/coffee-datasheet/README.md` reescrita (V6.6); charter y recuento de
+  `herramientas-cafe` al día; `HERRAMIENTAS_TALLER.md` gana el patrón «una herramienta que ES una pantalla de la plataforma». Guardianes:
+  `qa-coffee-datasheet` 61 (reescrito), `qa-centro-calidad` 313, `qa-taller` 69; `qa-tools-seo-espejo` aprende a leer una ruta de Next;
+  `qa-tools-puente-conformance` con la sonda nueva y un filtro por herramienta (`node scripts/qa-tools-puente-conformance.mjs <id>`). **Datos** (tras el deploy): `tool_versions` #2 de `coffee-datasheet`
+  (`origen repo`, `src_publico = /tools/coffee-datasheet/app`), `tools.version_publicada` y `meta_description`.
+
 ## [V6.5] — 2026-10-12 (commit 82ad7da)
 
 - **Cambiado**: **la respuesta automática sale SIEMPRE y lleva el PDF de confirmación ADJUNTO** (owner, 2026-10-12: «asegúrate que

@@ -86,6 +86,16 @@ const porId = new Map(versiones.map((v) => [v.id, v]));
 
 /** Lo que de verdad se descarga el buscador: el `<head>` del archivo servido. */
 function delArchivo(src) {
+  // V6.6: una versión `repo` puede ser una RUTA de Next (sin .html, p. ej. `/tools/coffee-datasheet/app`). Entonces lo que
+  // Google descarga lo pintan `src/app<ruta>/page.tsx` (title · description) y el layout raíz (`lang`); la descripción vive
+  // en `components/tools/datasheet/meta.ts` junto a la página. Se leen esos archivos.
+  if (!/\.html?$/i.test(src)) {
+    const pagina = readFileSync(new URL(`src/app${src}/page.tsx`, raiz), "utf8");
+    const meta = readFileSync(new URL("src/components/tools/datasheet/meta.ts", raiz), "utf8");
+    const d = meta.match(/export const DESCRIPCION =\s*"([^"]+)"/);
+    const l = readFileSync(new URL("src/app/layout.tsx", raiz), "utf8").match(/<html\s[^>]*lang="([a-z-]+)"/);
+    return { desc: pagina.includes("description: DESCRIPCION") ? (d?.[1]?.trim() ?? null) : null, lang: l?.[1]?.slice(0, 2) ?? null, robots: /robots:\s*\{[^}]*index:\s*false/.test(pagina) ? "noindex" : "" };
+  }
   // `src_publico` es una ruta pública tipo `/tools/x.html`; el archivo está en
   // `public/`. Se lee tal cual, sin tocar el cuerpo.
   const html = readFileSync(new URL("public" + src, raiz), "utf8");

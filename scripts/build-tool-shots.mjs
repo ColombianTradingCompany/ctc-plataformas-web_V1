@@ -34,7 +34,7 @@ const HERRAMIENTAS = {
   "cool-pdf": "/tools/cool-pdf/cool-pdf.html",
   catacion: "/tools/catacion/rueda-del-cafe-v23.html", // V23 del owner (V5.7) — la captura sigue al publicado
   "green-datasheet": "/tools/green-datasheet/green-coffee-datasheet.html",
-  "coffee-datasheet": "/tools/coffee-datasheet/ctcx-coffee-datasheet-tool.html?lang=es", // V5.132 — abre en la elección de método; ?lang=es porque sin él sigue al navegador (y el de la captura habla inglés)
+  "coffee-datasheet": "/tools/coffee-datasheet/app?lang=es", // V6.6 — la planilla del Centro de Calidad en el taller (página de Next bajo /tools)
   qr: "/tools/qr/generador-qr.html",
   "formula-calidad": "/tools/formula-calidad/formula-calidad.html",
   "viaje-cafe": "/tools/viaje-cafe/viaje-cafe.html",

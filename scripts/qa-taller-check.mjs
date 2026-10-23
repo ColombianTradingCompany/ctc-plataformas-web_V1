@@ -94,9 +94,20 @@ for (const f of [
   "green-datasheet/green-coffee-datasheet", "qr/generador-qr", "formula-calidad/formula-calidad",
   "viaje-cafe/viaje-cafe",
   "catacion/rueda-del-cafe-v23", "mapa-variedades/mapa-variedades", // V5.7: la V23 del owner y la herramienta nueva
-  "coffee-datasheet/ctcx-coffee-datasheet-tool", // V5.132: SCA 2004 · CVA, con esquema propio (CTC.usarEstado)
 ]) {
   check(`${f} incluye el puente`, lee(`public/tools/${f}.html`).includes('src="/tools/ctc-bridge.js"'));
+}
+
+// V6.6: la Coffee Datasheet Tool es una página de Next (la planilla del Centro de Calidad en el taller) y habla el puente desde
+// React: el mismo protocolo que ctc-bridge.js, con las mismas reglas (solo el parent, ready/hola/init/estado, nada de localStorage
+// dentro de la concha). Su HTML en public/ es solo la página de paso a la ruta.
+{
+  const puenteReact = lee("src/components/tools/datasheet/usePuente.ts");
+  check("coffee-datasheet: el puente React se anuncia y responde al hola", puenteReact.includes('{ ctc: "ready", v: 1 }') && puenteReact.includes('d.ctc === "hola"'));
+  check("coffee-datasheet: solo obedece init de SU parent, y manda el estado al origen que mandó el init", puenteReact.includes("e.source !== window.parent") && puenteReact.includes('e.origin.startsWith("https://") || e.origin.startsWith("http://") ? e.origin : "*"') && puenteReact.includes("}, origenDeLaConcha.current);"));
+  check("coffee-datasheet: dentro de la concha jamás usa localStorage", puenteReact.includes("if (enConcha()) return null;") && !puenteReact.includes("localStorage.setItem(CLAVE_BORRADOR, JSON.stringify(estado));\n      }\n      if"));
+  const paso = lee("public/tools/coffee-datasheet/ctcx-coffee-datasheet-tool.html");
+  check("coffee-datasheet: el HTML viejo es una página de paso a la ruta nueva", paso.includes('url=/tools/coffee-datasheet/app') && paso.includes('rel="canonical" href="/tools/coffee-datasheet/app"') && !paso.includes("ctc-bridge.js"));
 }
 
 // ── 6b. La segunda pasada del owner: barra, salida y pantalla completa ──────

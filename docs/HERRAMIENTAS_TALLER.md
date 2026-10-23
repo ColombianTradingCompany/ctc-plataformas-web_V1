@@ -82,7 +82,16 @@ conformidad se comprueba con `scripts/qa-tools-puente-conformance.mjs`
 (playwright, contra el dev server): ready / captura / restauración por
 herramienta.
 
-## Una herramienta que usa lo que ya tiene dueño (V5.132)
+## Una herramienta que ES una pantalla de la plataforma (V6.6)
+
+Cuando el owner pide que una herramienta del taller sea «la misma» que una pantalla de una consola (la Coffee Datasheet Tool y la
+planilla del Centro de Calidad), la respuesta no es copiar: es una **página de Next bajo `/tools`** (fuera del proxy, abre en los 19
+hosts y dentro de la concha) que renderiza el MISMO componente. `tool_versions.src_publico` apunta a la ruta (`origen repo`); el HTML
+viejo de `public/tools/<id>/` se queda como página de paso (meta refresh + canonical) para los enlaces viejos; el puente se habla desde
+React (`src/components/tools/datasheet/usePuente.ts`, el mismo protocolo que `ctc-bridge.js`). Lo que cambie en la pantalla de la
+consola cambia en el taller, sin segundo código.
+
+## Una herramienta que usa lo que ya tiene dueño (V5.132 · el ejemplo pasó a la V6.6)
 
 Un HTML autocontenido no puede importar nada del repo, pero tampoco debe traer una **copia** de algo que ya vive en
 otra parte (la rueda de sabores, los municipios, una fórmula). El patrón, estrenado por `coffee-datasheet`:
@@ -93,7 +102,8 @@ otra parte (la rueda de sabores, los municipios, una fórmula). El patrón, estr
   plataforma; el guardián lo ejecuta en Node y lo compara con el código real (`qa-coffee-datasheet-check.mjs`).
 
 Así la herramienta sigue abriendo suelta y sin internet, y si la fuente cambia sin regenerar, falla un guardián en
-vez de separarse en silencio.
+vez de separarse en silencio. (La Coffee Datasheet Tool estrenó el patrón y lo dejó en la V6.6 al volverse una página de Next; sigue
+valiendo para un HTML autocontenido que deba vivir suelto.)
 
 ## Las capturas del carrusel
 

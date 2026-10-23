@@ -27,7 +27,7 @@
 | id | Nombre | Estado | Nivel | Idioma | Superficies | Memoria | Trabajos |
 |---|---|---|---|---|---|---|---|
 | [`catacion`](catacion/README.md) | Rueda del Café (rueda de catación / rueda del sabor) | Viva | default | es | KR | sí (puente) | 4 |
-| [`coffee-datasheet`](coffee-datasheet/README.md) | **CTCx Coffee Datasheet Tool** (evaluación SCA 2004 o CVA) | Viva · **nueva** (V5.132): combina `catacion` + `green-datasheet` | default | es (+ en, de) | KR · web · DC | sí (esquema propio) | 0 |
+| [`coffee-datasheet`](coffee-datasheet/README.md) | **CTCx Coffee Datasheet Tool** (la planilla del Centro de Calidad, más B1 · extrínseca · comercial) | Viva · **V6.6**: página de Next `/tools/coffee-datasheet/app` (nació en la V5.132 combinando `catacion` + `green-datasheet`) | default | es · en | KR · web · DC | sí (esquema propio) | 0 |
 | [`defectos-cafe`](defectos-cafe/README.md) | Defectos del Café | Viva | default | es | web | **no** | 0 |
 | [`agtron`](agtron/README.md) | Disco Agtron (Agtron Dial) | Viva · **V8** (V5.93) | default | en (+ es, de) | KR · CP · web | sí (esquema propio) | 1 |
 | [`green-datasheet`](green-datasheet/README.md) | Ficha de café verde (Green Coffee Datasheet) | Viva | default | es | KR | sí (puente) | 0 |
@@ -48,7 +48,7 @@
 Datos de la base leídos el 2026-09-21 (`tools`, `tool_versions`, `tool_sessions`). «Superficies» son las
 columnas de reparto (`kr`·`cp`·`web`·`dc`); el Taller lista TODO el catálogo compartible sin mirar `web`.
 Las 14 vivas y la archivada son `clase: compartible`. En `public/tools/` quedan **15 carpetas** (la archivada ya no tiene archivo); ninguna es interna.
-`coffee-datasheet` se dio de alta el 2026-10-01 (V5.132); `gulliver`, el 2026-10-04 (V5.149) — 16 carpetas en `public/tools/`.
+`coffee-datasheet` se dio de alta el 2026-10-01 (V5.132) y desde la V6.6 (2026-10-23) es una RUTA de Next (su carpeta solo tiene la página de paso); `gulliver`, el 2026-10-04 (V5.149) — 16 carpetas en `public/tools/`.
 
 ## Las herramientas como interfaz de otras partes
 
@@ -58,7 +58,7 @@ va a usar. **Tres ya se reutilizan hoy, y dos de ellas como COPIA** — que es j
 | Herramienta | Quién la usa hoy | Cómo | Candidata a |
 |---|---|---|---|
 | **Rueda del Café** (`catacion`) | Sneak Peek del catálogo (cherry-picked) | Extracto SVG generado con la **V10**, mientras la publicada es la V23 | **Centro de Calidad** (EVA: perfil sensorial del Q-Grader sobre la rueda) · ficha del lote · CTCx Public Catalogue |
-| **Rueda del Café** (`catacion`) y Ficha de KR (`fichaData.ts`) | **`coffee-datasheet`** (V5.132) | **Generado, no copiado**: `scripts/build-coffee-datasheet.mjs` escribe la rueda, los municipios y las variedades dentro del HTML; `qa-coffee-datasheet` falla si se despegan | — |
+| **Planilla del Centro de Calidad** (`LabEvalEditor`, `socios`/`consolas`), Rueda (`rueda.ts`) y Ficha de KR (`fichaData.ts`) | **`coffee-datasheet`** (V6.6) | **La misma implementación**: la herramienta renderiza el componente e importa los catálogos (hasta la V6.5, `build-coffee-datasheet.mjs` escribía la rueda, los municipios y las variedades dentro del HTML; `qa-coffee-datasheet` falla si se despegan | — |
 | `coffee-datasheet` | — (sus fórmulas se comparan con las de la planilla del Centro de Calidad) | Paridad por guardián contra `labEvaluation.ts` | **Transcribir FT2** / llevar un lote a `lot_evaluations` (`CTC.emitir`; el estado ya usa los nombres de `LabEvaluation`) |
 | `costo-empaque` | — (el cotizador de empaque del ECP la embebía tal cual hasta la V5.194; lo reemplazó «Empacado hasta FOB», que no la usa) | — | Master Roaster / Papagayo Beans® |
 | `mermas-ctc` | Cotizador de lotes (herramientas-internas) | **Copia** en `public/ocp-apps/cotizador-lotes.html` (Mermas V15) | Ficha de KR (factor × almendra), Modelo de Procesamiento |

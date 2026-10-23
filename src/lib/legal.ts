@@ -12,6 +12,11 @@ export const NIT = "NIT 901.483.425-7";
 export const CTC_RAZON = "Colombian Trading Company";
 export const CTC_SEDE = "Piedecuesta, Santander, Colombia";
 export const CTC_EMAIL = "info@ctcexport.com";
+/** El sitio web, como se imprime en un documento (sin protocolo). */
+export const CTC_WEB = "www.ctcexport.com";
+/** Los teléfonos de la casa, como se imprimen. V6.6 (owner, 2026-10-23): la Coffee Datasheet Tool los pide en su pie; el
+ *  owner todavía no los entregó, así que la lista nace VACÍA y el pie omite la línea hasta que estén. Nunca un número inventado. */
+export const CTC_TELEFONOS: readonly string[] = [];
 
 /** La línea legal completa de los documentos imprimibles. */
 export const CTC_LEGAL_LINE = `${CTC_RAZON} · ${NIT} · ${CTC_SEDE} · ${CTC_EMAIL}`;

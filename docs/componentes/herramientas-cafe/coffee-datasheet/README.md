@@ -1,173 +1,107 @@
-# `coffee-datasheet` · CTCx Coffee Datasheet Tool (evaluación SCA 2004 o CVA)
+# `coffee-datasheet` · CTCx Coffee Datasheet Tool (la planilla del Centro de Calidad, en el taller)
 
 > Ficha de la herramienta dentro del componente `herramientas-cafe`. Se lee DESPUÉS del charter
-> (`docs/componentes/herramientas-cafe.md`) y del recuento (`../README.md`). Nació en la V5.132 (2026-10-01).
-> Esta carpeta es el sitio para los briefs y notas de la conversación de esta herramienta.
+> (`docs/componentes/herramientas-cafe.md`) y del recuento (`../README.md`). Nació en la V5.132 (2026-10-01) como un HTML
+> autocontenido; desde la **V6.6 (2026-10-23)** es la MISMA planilla del Centro de Calidad, en React.
 
 | | |
 |---|---|
-| Estado | Viva (V5.132; mismos campos que la planilla + B1 desde la V5.137) |
+| Estado | Viva (V6.6) |
 | Nivel | default |
-| Idioma | es (+ en, de en la propia herramienta) |
+| Idioma | es · en (los de la planilla; el alemán de la V1 se quedó en el historial) |
 | Superficies (`tools.kr/cp/web/dc`) | KR · web · DC |
-| Memoria | sí (esquema propio, `CTC.usarEstado`) |
-| Guardián | `scripts/qa-coffee-datasheet-check.mjs` (1.300) |
+| Memoria | sí (esquema propio, hablado desde React: `usePuente.ts`) |
+| Dónde vive | `src/components/tools/datasheet/` + `src/app/tools/coffee-datasheet/app/page.tsx` → URL `/tools/coffee-datasheet/app` |
+| Guardián | `scripts/qa-coffee-datasheet-check.mjs` (61) · sonda en `qa-tools-puente-conformance` (`node scripts/qa-tools-puente-conformance.mjs coffee-datasheet` prueba solo esta) |
 
-## Qué es
+## V6.6 · «It MUST be the SAME» (owner, 2026-10-23)
 
-El encargo del owner (2026-10-01): **combinar la Rueda de Catación y la Ficha de café verde en una herramienta NUEVA**
-para hacer una evaluación completa **SCA o CVA** —asistida con botones «i»— de **uno o varios lotes**, llenando una o
-varias de sus tres partes: **Perfil de Sabores · Granulometría · Caracterización Extrínseca**. Y una condición: «es
-FUNDAMENTAL hacer esta distinción y lograr que el usuario identifique fácilmente cuál está haciendo, adaptando las
-casillas al método seleccionado».
+El owner, con la herramienta abierta en el taller: «It does not look at all like the interface in the Centro de Calidad, it MUST
+be the SAME, adding to it the option to include the Extrinsic Characterization (I do like the "Parts to fill in")». Más tres
+encargos: una parte nueva de **Información Comercial**, la **marca de la casa** en la ficha (marca de agua, títulos, web, correo,
+teléfonos, reserva de derechos) y un **UID único de verdad**, no la fecha.
 
-- **SCA 2004** = el protocolo de catación clásico de la SCA: diez atributos, un puntaje de 0 a 100. *Estándar heredado*:
-  los estándares SCA 102, 103 y 104 (2024) lo reemplazan expresamente.
-- **CVA** = Coffee Value Assessment (SCA 102–105): cuatro evaluaciones separadas —física, descriptiva, afectiva,
-  extrínseca—; solo la afectiva da puntaje.
+La V5.137 había leído «la misma herramienta» como *los mismos campos* y dejó abierto si debía ser *una sola implementación*. La V6.6 lo
+cierra: **una sola implementación**. La herramienta del taller RENDERIZA `LabEvalEditor` —el componente que usan el Centro de Calidad,
+el OCP («Hacer revisión», el informe) y la Arena— con `ocultaGrado` (una autoevaluación no otorga grado) y le suma, con los mismos
+estilos (`estilos.ts` copia los de la planilla), lo que la planilla no tiene porque el Q-Grader cata a ciegas:
 
-Los dos números **no son intercambiables**, y la herramienta está hecha alrededor de eso.
-
-## Cómo se distinguen los métodos (lo que no se puede romper)
-
-1. **Primero se elige.** Sin método no hay formulario: la primera pantalla son dos tarjetas (SCA 2004 · CVA) con lo
-   que hace cada uno y el aviso de que un 84 de uno no es un 84 del otro.
-2. **La cinta fija.** Bajo la barra, siempre a la vista: azul marino con «SCA 2004» o dorada con «CVA», con el botón
-   «Cambiar método». Todo el acento de la pantalla (`body[data-m]`) cambia con ella.
-3. **Las casillas son otras.** SCA 2004: siete deslizadores de 6,00 a 10,00 (paso 0,25), tres atributos por taza de 0 a
-   10 (paso 0,25: 2 puntos por taza que cumple) y las cinco tazas con su defecto leve/grave y su tipo. CVA: cada sección en
-   **dos columnas que no se copian** —descriptiva (intensidad 0–15, casillas CATA y tipo de acidez, SCA 103) y afectiva
-   (impresión de calidad 1–9 en cuartos de punto, SCA 104)— y las cinco tazas con su tipo de defecto.
-4. **Cada casilla cita su estándar** y la ficha impresa, el HTML exportado y el nombre del archivo llevan el método.
-5. **Los datos de taza no se cruzan**: cada lote guarda `sca_*` y `cva_*` por separado. Cambiar de método no borra nada
-   y no convierte nada. La muestra, los defectos físicos y lo extrínseco sí se comparten; las mallas van por método (las
-   14 del formato CVA o la agrupación comercial de Colombia).
-
-## Las cuatro partes, por método
-
-**B1 · Variedades y caracterización básica** (V5.137) es igual en los dos métodos: especie, variedades con su proporción, tipo de
-proceso, humedad, densidad, actividad de agua y el factor de rendimiento (solo lectura). **No tiene campos propios**: escribe en los
-de Granulometría y Extrínseca (`ext.variedades`, `ext.especie`, `ext.tipo`, `fis_humedad`…), así que lo que se llena en una parte
-aparece en la otra. Existe porque la planilla del Centro de Calidad son B2 y B3 —el Q-Grader cata a ciegas, sin variedad— y el owner
-pidió que esta herramienta fuera «la misma, agregándole B1».
-
-| Parte | SCA 2004 | CVA |
+| Parte | Qué es | Dónde escribe |
 |---|---|---|
-| **Perfil de sabores** | Formulario 2004 + rueda libre (notas de taza) | Descriptiva (SCA 103) + afectiva (SCA 104), en combinado; la rueda marca la casilla CATA de su categoría (hasta 5 en nariz y 5 en boca) y guarda el descriptor |
-| **Granulometría** | Defectos sobre 350 g con equivalencias, quakers y la **referencia** de clasificación SCA de café verde; mallas en agrupación Colombia | El formato de Evaluación Física del CVA (alfa V1, mayo de 2025): color, 16 defectos con equivalencia, humedad, mallas 10 a 23. Registra; no imprime grado |
-| **Extrínseca** | El protocolo 2004 **no tiene** parte extrínseca: se llena como ficha del lote, con los mismos campos | El formato extrínseco (SCA 105): cinco categorías, la casilla oficial de cada atributo se enciende cuando hay información |
+| **B1 · Variedades y básicos** | variedades con proporción (la especie se deriva), proceso base y especial | `lote.b1`; humedad, densidad, aw y factor reportado son los `b3_*` de la planilla (un dato, un sitio) |
+| **B2 · Perfil de taza** y **B3 · Caracterización física** | la planilla, tal cual | `lote.planilla: LabEvaluation` |
+| **Caracterización extrínseca** | el formato SCA 105: cinco categorías con su casilla oficial encendida cuando hay dato | `lote.ext`; variedad, proceso, precio al productor y cantidades se ENSEÑAN desde B1 y la comercial |
+| **Información comercial** | pergamino y verde disponibles (kg); farm gate, FOB (puerto), CIP o DDP (región); empaque; norma de calidad (UGQ…); condiciones; **válido hasta** | `lote.com`; la ficha avisa en rojo si venció |
 
-Aparte de los dos métodos, y rotulado como tal: el **factor de rendimiento** (pergamino → verde, práctica colombiana) y
-los datos de la ficha CTCx (proveedor, identificación tributaria, código de lote, partida arancelaria, densidad).
+«Parts to fill in» se conserva: cinco píldoras que apagan y encienden partes sin borrar nada (siempre queda una). Una evaluación =
+sesión (evaluador, SCA ID, fecha, lugar, objetivo) + uno o varios lotes (hasta 12; SCA 102 recomienda 6); cada lote lleva las cuatro
+cosas de la tabla. La hoja es UNA, de arriba abajo, como la planilla; la **ficha impresa** (`FichaImpresa.tsx`) sale por lote o de todos.
 
-## Dónde vive
+**La marca de la casa** en la ficha: la marca de agua «CTCx» del Dossier EUDR, la cabecera negra con el loro, el UID en dorado, la
+banda del método, la firma y la fecha, y el pie con el sitio web (`CTC_WEB`), el correo, los teléfonos (`CTC_TELEFONOS`), la línea
+legal y «© año Colombian Trading Company · Todos los derechos reservados». Todo sale de `src/lib/legal.ts`.
 
-**Servida** (`public/tools/coffee-datasheet/`, URL `/tools/coffee-datasheet/ctcx-coffee-datasheet-tool.html`):
-- `ctcx-coffee-datasheet-tool.html` — autocontenida (sin CDN), ES · EN · DE (`?lang=` o el idioma del navegador).
+**El UID**: `CDT-XXXX-XXXX`, el alfabeto Crockford de la casa (`codigoPublico.ts`, el mismo del código público del lote), acuñado con
+`crypto.getRandomValues` al crear el lote, distinto de los que ya hay en la evaluación, no editable; 32⁸ ≈ 1,1 billones. Duplicar un lote
+acuña otro. Un archivo con UIDs repetidos o inválidos los reacuña al cargarse.
 
-**Fuentes del owner** (`C:\dev\ctc-platforms\reference\html_tools\`, fuera de git):
-- `CTCx Coffee Datasheet Tool\` — los PDF de la SCA que el owner entregó: estándares 103 (descriptiva), 104 (afectiva),
-  105 (extrínseca), los formatos CVA en español y el resumen sobre la licencia de evaluador. El 102 (preparación) se leyó
-  de `sca.coffee/value-assessment`. La carpeta conserva el nombre que le puso el owner (la convención sería `coffee-datasheet\`).
-- Las dos herramientas de origen: `catacion\rueda_del_cafe_V23.html` y `green-datasheet\V5_CTC_Green_Coffee_Datasheet.html`.
+### Lo que cambió de sitio
 
-## Qué tomó de cada una, y qué dejó
+- El HTML autocontenido (`public/tools/coffee-datasheet/ctcx-coffee-datasheet-tool.html`, 310 KB) es ahora una **página de paso** de
+  1 KB a la ruta (meta refresh + canonical, mismo título y descripción): los enlaces viejos, la URL plana (308) y el buscador siguen
+  llegando. La V1 completa está en git (`git show bdec167:public/tools/coffee-datasheet/ctcx-coffee-datasheet-tool.html`).
+- `tool_versions`: versión **2** (`origen repo`, `src_publico = /tools/coffee-datasheet/app`), publicada con la ruta ya en vivo. Es la
+  primera versión `repo` que es una ruta de Next y no un archivo: `qa-tools-seo-espejo` aprendió a leer `src/app<ruta>/page.tsx` +
+  `meta.ts`; `srcDeVersion` ya devolvía `src_publico` tal cual.
+- **`planillaInfo.ts` es LA FUENTE de las «i»** (ES · EN), ya no se genera del HTML: `build-planilla-info.mjs` se retiró. Ganó cinco
+  conceptos (`b1_que`, `uid`, `c_que`, `c_precios`, `c_validez`). Un texto de «i» se cambia ahí, y lo ven la planilla y la herramienta.
+- `build-coffee-datasheet.mjs` se retiró: la rueda, los municipios, las variedades y las partidas se **importan** (`rueda.ts`,
+  `fichaData.ts`); no hay bloque generado que vigilar. `qa-centro-calidad` comparaba el catálogo del HTML con `fisico.ts`; ahora
+  comprueba que la herramienta importe esa única lista.
+- El puente se habla desde React (`usePuente.ts`): mismo protocolo que `ctc-bridge.js` (`ready` al montar y al «hola», `init` → se
+  normaliza, `estado` + `resumen` con debounce de 900 ms, solo tras el `init`, solo al `parent`, al mismo origen). Fuera de la concha el
+  borrador vive en `localStorage` (`…-borrador-v2`); dentro, jamás.
+- **Trabajos guardados con la V1** se abren: `normalizar` reconoce un lote plano (`sca_*`/`cva_*`/`fis_*`/`ext`) y lo vuelve una planilla
+  (listas de la rueda fundidas, `rueda_detalle` sin prefijos `nariz:`/`boca:`, `fis_color` c1..c8 → claves de `fisico.ts`, `ext.tipo` → B1,
+  `ext.precio` → comercial). El owner tenía «Test 1» guardado.
 
-| De | Se trajo | Se dejó (y por qué) |
-|---|---|---|
-| **Rueda del Café V23** | La taxonomía completa (9 → 22 → 85, ES · EN · DE, descripciones), la geometría de tres anillos y banda, el buscador, las rondas de varios lotes, la evaluación afectiva con su fórmula, los tres idiomas | Girar y la lupa (hay vista de lista y buscador); la **intensidad por nota** (volvió en la V5.137 por decisión del owner, ver abajo; el SCA 103 califica la intensidad total de la sección, no la de cada descriptor — era el desvío de la V23); los 5 por defecto de la afectiva (una sección sin calificar no puntúa); el PDF oficial embebido en base64 (340 KB) y las librerías de CDN; la firma dibujada (queda la línea de firma) |
-| **Ficha de café verde V5** | El radar vivo con el puntaje, la granulometría con barras, el factor de rendimiento, los extrínsecos, la ficha imprimible y exportable, los botones «i» | La tabla SCA de 0 a 10 sin dominio (aceptaba un 3 o un 9,9; ahora es el formulario 2004 de verdad); el CSV campo-valor (ahora: archivo `.json` que se vuelve a cargar y CSV resumen por lote); los catálogos copiados a mano |
+### Lo que se perdió a propósito, y lo que no se trajo
 
-**Redundancias arregladas**: una sola rueda, un solo juego de extrínsecos (el del SCA 105, que absorbe la «Identidad &
-Comercio» de la ficha vieja), una sola definición de cada fórmula.
-
-## Fuentes únicas (nada se copia a mano)
-
-`scripts/build-coffee-datasheet.mjs` GENERA los catálogos entre las marcas `/*<CATALOGOS-GENERADOS>*/` del HTML:
-
-- la **rueda** ← `public/tools/catacion/rueda-del-cafe-v23.html` (la misma fuente de `src/lib/catacion/ruedaDatos.ts`);
-- **departamentos/municipios, variedades y partidas arancelarias** ← `src/components/kaffetal-regal/ficha/fichaData.ts`.
-
-Y el **núcleo** (`/*<NUCLEO-PURO>*/`: `calcCva`, `calcSca2004`, tazas, defectos, mallas, factor) usa los nombres de campo
-de la planilla (`sca_*`, `cva_*`, `cva_tazas`, `mesh_*`, `fa_*`); el guardián lo ejecuta en Node y lo compara con
-`computeCva` / `computeSca2004` / `computeFactor` de la plataforma sobre 1.200 planillas generadas. **Si la planilla del
-Centro de Calidad cambia una regla, el guardián de esta herramienta falla** hasta que se iguale.
-
-**Al cambiar una fuente**: `node --experimental-strip-types scripts/build-coffee-datasheet.mjs` y correr el guardián.
-**Al publicar otra versión de la Rueda**: cambiar `RUEDA_FUENTE` en ese script (y `HERRAMIENTA` en `build-rueda-datos.mjs`).
-
-## Como interfaz en otras partes de la plataforma
-
-**Hoy:** ninguna la consume. Ella consume la Rueda (`catacion`) y la Ficha de KR (`fichaData.ts`).
-
-**Previsto / candidato:**
-- **Transcribir FT2** y caracterizar varios lotes desde CTCx (el pendiente del folio 11): el estado del lote ya usa los
-  nombres de la planilla, así que un `CTC.emitir("evaluacion.lista", lote)` hacia `lot_evaluations` es el paso corto.
-- Kaffetal Regal: que el productor traiga su autoevaluación a la Ficha Técnica.
+- **El alemán**: la planilla es ES · EN; la herramienta también. Los textos DE de la V1 están en git.
+- **La elección de método en la primera pantalla y la cinta fija**: la planilla ya separa los protocolos con su conmutador de vista
+  (CVA principal · SCA 2004 equivalente · ambas) y el Punto dice con cuál se cató; la ficha lleva el método en su banda. Lo que el
+  owner no quiere mezclar sigue sin mezclarse —la equivalencia es una transformación visible, no una mezcla—.
+- La exportación CSV y HTML de la V1 (quedan el archivo `.json` que se vuelve a cargar y la ficha imprimible).
 
 ## Abierto
 
-- **Decisión del owner — las dos herramientas de origen siguen vivas** (`catacion`, `green-datasheet`): combinar no fue
-  retirar. La Rueda V23 además es la FUENTE de la taxonomía (no se puede borrar sin mover la fuente). Opciones: dejarlas,
-  o archivar `green-datasheet` (su trabajo lo hace entera la nueva) y dejar la Rueda como herramienta de exploración.
-- **Revisión por un Q Grader**, antes de enseñarla fuera: (a) la regla de conteo de casillas CATA (esta herramienta
-  cuenta la más específica: «Bayas» trae «Afrutado» sin contar dos; el estándar dice «hasta cinco» sin precisarlo);
-  (b) los **defectos completos solo enteros** (7 partidos a 5:1 = 1); (c) la referencia de clasificación de café verde
-  (especialidad 0 primarios y ≤ 5 · premium ≤ 8 · exchange 9–23 · por debajo 24–86 · fuera de grado > 86; quakers 0 / ≤ 3)
-  y las referencias de humedad (10–12 %) y actividad de agua (< 0,70), que no están en los PDF entregados: se escribieron
-  de la clasificación clásica de la SCA y la pantalla las presenta como **referencia**; (d) el mapa rueda → casilla CATA
-  (22 subcategorías de la rueda del taller contra 24 casillas del formato).
-- **Dos lecturas del mismo total SCA** (anotado, no armonizado — ALINEACION §4.1): la Ficha de Kaffetal Regal rotula el
-  puntaje con `scaClassFor` (Comercial · Especial · Especialidad · Alta Especialidad · Rareza); esta herramienta usa la
-  escala del protocolo 2004 (muy bueno 80–84,99 · excelente 85–89,99 · sobresaliente 90+). No enseña Grados CTC a
-  propósito: el grado lo otorga el Centro de Calidad, no una autoevaluación.
-- **Alemán e inglés** los escribió la IA (385 textos, 49 botones «i»): falta la revisión de un hablante nativo.
-- **Mallas por método**: la agrupación de Colombia y las 14 del CVA se guardan aparte; no se convierten una en otra.
-- **Homologación CVA → SCA**: la plataforma la tiene (`homologacion.ts`); la herramienta NO la enseña, para no sugerir que
-  los puntajes se convierten. Si el owner la quiere aquí, sale de esa fuente.
-- La partida arancelaria y el linaje de las variedades salen de `fichaData.ts` en español; en EN/DE se ven en español.
-- La captura del carrusel es la pantalla de elección de método.
+- **Teléfonos de la casa**: el owner pidió que la ficha los lleve; no están en ningún archivo del repo ni de `reference/`. `CTC_TELEFONOS`
+  (`legal.ts`) nace vacía y el pie omite la línea hasta que el owner los entregue. **Nunca un número inventado.**
+- **Decisión del owner — las dos herramientas de origen siguen vivas** (`catacion`, `green-datasheet`). La Rueda V23 es la FUENTE de la
+  taxonomía (`build-rueda-datos.mjs`, `build-variedades-datos.mjs` leen de ella): no se borra sin mover la fuente.
+- **Revisión por un Q Grader** de lo que la planilla hereda de la V1 y el estándar no fija (defectos completos solo enteros; la
+  referencia de clasificación de café verde ya no se enseña aquí: la planilla no la tiene).
+- **La ficha impresa es HTML → PDF del navegador**; si el owner quiere un PDF servido (como el de SCAJ), es `pdf-lib` y otra tanda.
+- **Enviar la evaluación a la plataforma** (`CTC.emitir` → `lot_evaluations`, transcribir FT2): el estado ya ES una `LabEvaluation`;
+  falta el canal y la decisión de quién puede.
 
 ## Kick-off de su conversación
 
 El del charter (`docs/componentes/herramientas-cafe.md` § Kick-off) con `<id>` = `coffee-datasheet` y:
 
 ```
-Hoy: <la tarea> — lee antes docs/componentes/herramientas-cafe/coffee-datasheet/README.md.
+Hoy: <la tarea> — lee antes docs/componentes/herramientas-cafe/coffee-datasheet/README.md y src/components/tools/datasheet/.
 ```
 
-## V5.137 · la misma herramienta que la planilla del Centro de Calidad, más B1 (owner, 2026-10-01)
+## Historia (V5.132 → V5.189, el HTML autocontenido)
 
-«Actualiza también los campos de la Coffee Datasheet Tool del taller. Básicamente, este tiene que ser la misma herramienta,
-agregándole B1.» Se leyó así: **los mismos campos, no un solo código** — la herramienta sigue siendo un HTML autocontenido (método
-elegido primero, varios lotes, extrínseca, exportar, ES · EN · DE) y la planilla sigue siendo `LabEvalEditor`; lo que se igualó es
-QUÉ se registra y con qué dominios, y un guardián lo compara. Si el owner quiere una sola implementación (la planilla dentro del
-taller, o la herramienta dentro de la consola), es otra decisión y otro lote.
-
-| Campo | En la planilla (`labEvaluation.ts` · `rueda.ts` · `fisico.ts`) | En la herramienta (estado del lote) |
-|---|---|---|
-| Uniformidad · Taza limpia · Dulzor | número de 0 a 10 al 0,25 | `sca_uniformity` · `sca_clean_cup` · `sca_sweetness` (antes `sca_cups`, cinco casillas) |
-| Taint y fault | `sca_tazas` (5 × estado + tipo); los contadores se derivan | `sca_tazas`, igual; `sca_taint_cups`/`sca_fault_cups` derivados (`sincScaTazas`) |
-| CVA afectiva | 1–9 al 0,25 (`CVA.pasoSeccion`) | nueve botones + casilla fina `cva_<sección>` |
-| Tipo de acidez | `acidez_tipo` (seca · dulce) | `cva_acidez` (lista de una) |
-| Texturas en boca | `boca_texturas`, tope 2 | `cva_boca`, tope 2 (ya estaba) |
-| Etapas, intensidad y comentario por nota | `rueda_detalle[id] = { etapas, intensidad, nota }` (V5.140: UNA O VARIAS de las 4 etapas, en el orden de la cata y nunca vacía; 0–15 al 0,5; comentario de una línea, 240; nace «sabor · 10») | `rueda_detalle`, igual; clave = id de la nota en SCA, `nariz:<id>` · `boca:<id>` en CVA (ahí las etapas son las dos de su lado) |
-| Defectos físicos y color | `defectos_detalle`, `fa_color` | `fis_def`, `fis_color` (ya estaban; de aquí salieron) |
-| Radar | centro en 0 | centro en 0 |
-
-**Esto revierte una decisión de la V5.132**: la herramienta había dejado fuera la «intensidad por nota» de la Rueda V23 (el SCA 103
-califica la intensidad de la sección, no la de cada descriptor). El owner la pidió en la planilla (V5.133) y, con «la misma
-herramienta», también aquí. No entra en ningún puntaje: documenta la taza. En CVA la etapa sale de dónde se marcó la nota (nariz:
-fragancia o aroma; boca: sabor o residual).
-
-**Archivos anteriores**: `normLote` convierte `sca_cups` a puntos (2 por taza marcada) y reparte los contadores viejos en tazas.
-**Sondeo del puente**: los nueve botones `data-a="aff"` siguen (los usa `qa-tools-puente-conformance`).
-
-## V5.135 · CERRADO en la V5.137 (venía de `consolas`, 2026-10-01)
-
-El owner cambió los dominios de la planilla del Centro de Calidad: **el CVA admite cuartos de punto** (1–9 al 0,25) y **Uniformidad,
-Taza limpia y Dulzor del SCA 2004 van de 0 a 10 al 0,25**, tecleados como los demás. Para que «una fórmula, no dos» siguiera en
-verde, `consolas` cambió SOLO el núcleo de esta herramienta (`calcCva` y `calcSca2004`, dos líneas marcadas `V5.135`). **Falta aquí**:
-que los campos de pantalla de la herramienta acepten esos valores (hoy siguen ofreciendo enteros y pares) y que sus textos de ayuda
-lo digan. La planilla ganó además lo que esta herramienta ya tenía —defectos físicos con su detalle, color del grano, texturas en
-boca—, con las mismas claves (`src/lib/catacion/fisico.ts`; `qa-centro-calidad` las compara contra este HTML).
+- **V5.132** (2026-10-01): nace combinando la Rueda del Café V23 y la Ficha de café verde: método elegido primero (SCA 2004 · CVA) con
+  cinta fija, varios lotes, tres partes, 49 «i» que citan su estándar (SCA 102–105, protocolo 2004), ES · EN · DE, catálogos GENERADOS
+  de sus fuentes, fórmulas comparadas con la planilla sobre 1.200 planillas.
+- **V5.135–V5.137**: los dominios de la planilla (CVA en cuartos, tres por taza 0–10) y «la misma herramienta, agregándole B1» leído
+  como los mismos campos (taint/fault taza a taza, tipo de acidez, etapa e intensidad por nota, B1).
+- **V5.140–V5.156**: varias etapas por nota con comentario; tazas usadas 1–5; INFO como fuente de las «i» de la planilla; factor, aw y
+  densidad reportados; «i» por defecto físico; la broca de primera.
+- **V5.189**: el CVA es el protocolo principal y el SCA 2004 vale lo mismo (equivalencia); dos ayudas reescritas.
+- Las fuentes del owner (PDF SCA 103, 104, 105, formatos CVA en español, resumen de la licencia de evaluador) siguen en
+  `C:\dev\ctc-platforms\reference\html_tools\CTCx Coffee Datasheet Tool\`.

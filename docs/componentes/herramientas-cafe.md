@@ -28,7 +28,7 @@ cuenta de KR, CP o Directorio), el **Taller** (Cover Flow en dos estantes: abier
 |---|---|---|---|---|---|
 | `agtron` | Disco Agtron | default | en (+ es, de en la propia herramienta, V5.93) | sí (esquema propio, V5.93) | `agtron-dial.html` (**V8**; fuente `reference/html_tools/agtron/agtron_dial_metre-V8.html`) |
 | `catacion` | Rueda de catación (rueda del sabor) | default | es | sí | `rueda-catacion.html` (+ `rueda-del-cafe-v23.html`) |
-| `coffee-datasheet` | **CTCx Coffee Datasheet Tool** (evaluación SCA 2004 o CVA) | default | es (+ en, de en la propia herramienta) | sí (esquema propio) | `ctcx-coffee-datasheet-tool.html` (V5.132: nace de combinar `catacion` y `green-datasheet`; catálogos GENERADOS con `scripts/build-coffee-datasheet.mjs`) |
+| `coffee-datasheet` | **CTCx Coffee Datasheet Tool** (la planilla del Centro de Calidad, más B1 · extrínseca · comercial) | default | es · en | sí (esquema propio, React) | **ruta de Next** `/tools/coffee-datasheet/app` (`src/components/tools/datasheet/`, V6.6); `ctcx-coffee-datasheet-tool.html` es solo la página de paso (V5.132: nace de combinar `catacion` y `green-datasheet`; catálogos GENERADOS con `scripts/build-coffee-datasheet.mjs`) |
 | `cogs-verde` | Calculadora CoGS · Café verde | **plus** | es | sí | `cogs-cafe-verde.html` (copia **V19** en `public/ocp-apps/`) |
 | `cool-pdf` | Cool PDF · dale cuerpo a un PDF | default | en | sí | `cool-pdf.html` |
 | `costo-empaque` | Costo de empaque por kilo | default | es | sí | `costo-empaque.html` (referencia viva del puente) |
@@ -83,7 +83,10 @@ SUPERFICIE, no de una consola — gotcha 12) · `/tools/<id>/*.html` y `/tools/h
   `BarraHerramienta`, `TallerBarra`, `ObtenerPlus`, `SolicitarHerramienta`, `ToolIcons`, `CapturaMiniatura`.
 - `src/components/services/{HerramientasLanding,CarruselHerramientas}.tsx`; `scripts/build-tool-shots.mjs`
   (capturas con Playwright, comiteadas; V5.132: `node scripts/build-tool-shots.mjs <id>` captura solo esa), `scripts/vendor-tool-assets.mjs` (fuentes/CDN a local — offline).
-- **CTCx Coffee Datasheet Tool** (V5.132) · **guía: `docs/componentes/herramientas-cafe/coffee-datasheet/README.md`** · un solo HTML con cinco
+- **CTCx Coffee Datasheet Tool** (V6.6) · **guía: `docs/componentes/herramientas-cafe/coffee-datasheet/README.md`** · desde la V6.6 es
+  `src/components/tools/datasheet/` (`DatasheetTool` renderiza `LabEvalEditor` + `BloqueB1` · `BloqueExtrinseca` · `BloqueComercial` ·
+  `FichaImpresa`; `estado.ts` puro; `usePuente.ts` habla el puente desde React) servida por `src/app/tools/coffee-datasheet/app/page.tsx`.
+  Hasta la V6.5 era un solo HTML con cinco
   bloques marcados: catálogos GENERADOS (`scripts/build-coffee-datasheet.mjs`), textos `TX` (ES · EN · DE), botones «i» `INFO`, **núcleo puro**
   (`/*<NUCLEO-PURO>*/`: las fórmulas, con los nombres de campo de `src/lib/arena/labEvaluation.ts`) y la lógica de pantalla.
 
@@ -105,7 +108,7 @@ once vectores de ataque) · `qa-tools-puente-conformance.mjs` (15/15; las de esq
 V5.149: una sonda que revienta ya no aprueba en silencio) · `qa-tools-seo-check.mjs` (273, recorre las carpetas) ·
 `qa-gulliver-check.mjs` (63, puro: el evento en un solo bloque, la trampa del `localStorage` ejecutada en Node, descargos y NIT) ·
 `qa-tools-seo-espejo.mjs` (98, toca la base: columna = archivo; `noindex` en archivadas y en `FUERA_DEL_INDICE`) ·
-`qa-coffee-datasheet-check.mjs` (1.340, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`: catálogos generados al día,
+`qa-coffee-datasheet-check.mjs` (61 desde la V6.6, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`: la herramienta renderiza la planilla del Centro y no copia fórmulas, las partes propias no duplican datos, el UID es único, la marca de la casa en la ficha, V1 → V2; hasta la V6.5 eran 1.340 sobre el HTML: catálogos generados al día,
 **paridad de las fórmulas SCA 2004 y CVA con la planilla de la plataforma** sobre 1.200 planillas, los dos métodos sin mezclar, tres idiomas
 completos, sin CDN) ·
 `qa-cromatografia-check.mjs` (294, puro) · `qa-cromatografia-modelo.mjs` (manual, gasta: estabilidad del modelo; acepta
@@ -138,6 +141,13 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 
 ## Pendientes
 
+- **V6.6 · la Coffee Datasheet Tool ES la planilla del Centro de Calidad, más B1, extrínseca y comercial** (owner, 2026-10-23: «it MUST
+  be the SAME»; ficha `herramientas-cafe/coffee-datasheet/README.md`). Hecho: `DatasheetTool` (React) renderiza `LabEvalEditor` con las
+  partes propias, UID `CDT-XXXX-XXXX`, ficha impresa con la marca de la casa, puente desde React, trabajos de la V1 migrados; el HTML es
+  página de paso; `planillaInfo.ts` es la fuente de las «i». Cierra lo abierto de la V5.137 (una sola implementación). Abierto, **del owner**:
+  (a) **los teléfonos de la casa** para el pie (`CTC_TELEFONOS` en `legal.ts`, hoy vacía: no se inventa un número); (b) `catacion` y
+  `green-datasheet` siguen vivas (la Rueda es la fuente de la taxonomía); (c) el alemán de la V1 no volvió (la planilla es ES · EN).
+
 - **V6 · objetivo 1, tanda E: la marca en Herramientas del Café** (owner, 2026-10-10, al declarar la V6.0;
   `docs/PLAN_V6_OBJETIVOS.md` §1, dueño de la tanda `plataforma`): la landing (`HerramientasLanding.tsx`)
   pasa a la marca **CTCx** según la decisión 1 del owner. Sigue abierta, de este charter, la decisión sobre `catacion` y
@@ -160,7 +170,8 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
   factor reportado (`fa_factor_reportado`), tazas del CVA 1–5 (`cva_num_tazas`) y SCA 1–5** (owner, 2026-10-05; ejecutado
   desde `consolas`). El catálogo INFO es ahora la FUENTE de las «i» de la planilla de la plataforma
   (`scripts/build-planilla-info.mjs` → `src/lib/arena/planillaInfo.ts`; `qa-coffee-datasheet` exige que esté al día). Regla:
-  un texto de «i» se cambia en la herramienta y se regenera, nunca en el `.ts`.
+  un texto de «i» se cambia en la herramienta y se regenera, nunca en el `.ts`. **V6.6: al revés** — el HTML se retiró, `planillaInfo.ts` es
+  la fuente escrita a mano (ES · EN) y la herramienta React lee de ahí; el generador se borró.
 - **V5.149 · Gulliver · 7 días a Tokio** (owner, 2026-10-04: «sí a todo» al brief `briefs/herramientas-cafe-gulliver.md`; ficha
   `herramientas-cafe/gulliver/README.md`). Hecho: herramienta NUEVA, Plus, japonés de bolsillo para SCAJ 2026; V1.1 sobre la V1.0 del
   owner con memoria de esquema propio (y la trampa del `localStorage` cerrada), el evento en un bloque, los descargos de la casa (pie
@@ -181,8 +192,7 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
   conversación de `consolas`). Hecho: mismos campos que la planilla del Centro de Calidad —tres atributos por taza como número, taint y
   fault taza a taza con su tipo, CVA en cuartos de punto, tipo de acidez, etapa e intensidad por nota, radar con centro en 0— y la
   parte nueva **B1 · Variedades y caracterización básica**. `qa-coffee-datasheet` (sección 8) compara las dos. Cierra el pendiente de
-  la V5.135. Abierto, **con decisión del owner**: si «la misma herramienta» debe llegar a UNA sola implementación (hoy son dos códigos
-  con los mismos campos); y volver a tomar la captura de la herramienta (`build-tool-shots`) y correr a mano `qa-tools-puente-conformance`.
+  la V5.135. Lo que quedó abierto —si «la misma herramienta» debía llegar a UNA sola implementación— lo cerró la V6.6: sí.
 - **V5.132 · CTCx Coffee Datasheet Tool** (owner, 2026-10-01; ficha `herramientas-cafe/coffee-datasheet/README.md`). Hecho: herramienta
   NUEVA que combina la Rueda del Café y la Ficha de café verde para evaluar **uno o varios lotes** con **SCA 2004 o CVA** —el método se
   elige primero y manda en toda la pantalla (cinta fija, casillas, ficha, archivo)—, en tres partes que se pueden apagar: Perfil de

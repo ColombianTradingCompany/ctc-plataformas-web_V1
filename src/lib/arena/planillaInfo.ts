@@ -1,6 +1,9 @@
-// GENERADO por scripts/build-planilla-info.mjs a partir del catálogo INFO de la Coffee Datasheet Tool — NO editar a mano.
-// V5.153 (owner, 2026-10-05): los botones «i» de la planilla de evaluación explican cada concepto con las MISMAS palabras que
-// la herramienta (ES · EN), con la norma que lo respalda. Para cambiar un texto, cámbielo en la herramienta y regenere.
+// ── Los botones «i» de la planilla de evaluación y de la Coffee Datasheet Tool — LA FUENTE (V5.153 → V6.6) ──────────────
+// V5.153 (owner, 2026-10-05): «incluye "i" en todos los conceptos» — un concepto se explica en un solo sitio, con la norma que
+// lo respalda. Hasta la V6.5 este archivo se GENERABA del catálogo INFO del HTML autocontenido de la herramienta
+// (`build-planilla-info.mjs`); desde la V6.6 la herramienta ES la planilla (`components/tools/datasheet/`) y este archivo es la
+// única fuente, escrita a mano, ES · EN. (Las versiones en alemán de la V5.132 se quedaron en el historial de git.)
+// Fuentes: SCA Standards 102-2024, 103-2024, 104-2024, 105-2025, los formatos CVA (sca.coffee/value-assessment) y el protocolo 2004.
 
 import type { IdiomaDePlanilla } from "./planillaI18n";
 
@@ -78,7 +81,12 @@ export type ClaveDeInfo =
   | "e_proceso"
   | "e_comercio"
   | "e_certs"
-  | "e_otro";
+  | "e_otro"
+  | "b1_que"
+  | "uid"
+  | "c_que"
+  | "c_precios"
+  | "c_validez";
 
 export type InfoDePlanilla = { titulo: string; texto: string; std: string };
 
@@ -448,6 +456,31 @@ export const INFO_PLANILLA: Record<IdiomaDePlanilla, Record<ClaveDeInfo, InfoDeP
       "titulo": "Certificaciones",
       "texto": "Casillas del formato: 4C, comercio justo, orgánico, Rainforest Alliance, inocuidad alimentaria y «otra».\nComo descriptores libres caben otros esquemas de tercera parte (Bird Friendly, Regenerative Organic), verificaciones de empresa (Nespresso AAA, C.A.F.E. Practices) e indicaciones geográficas (Café de Colombia). El EUDR no es una certificación sino un requisito legal de la Unión Europea; se anota aquí porque el comprador europeo lo pide.\nAñade número de certificado, vigencia y enlace de verificación.",
       "std": "SCA 105-2025 · 5.6"
+    },
+    "b1_que": {
+      "titulo": "B1 · Variedades y caracterización básica",
+      "texto": "Lo que la planilla del Centro de Calidad no pide porque el Q-Grader cata a ciegas: las variedades con su proporción (la especie se deriva de ellas), el proceso base y el especial. Humedad, densidad, actividad de agua y factor reportado son los mismos campos de B3: un dato, un sitio.\nEs el B1 de la Ficha Técnica de Kaffetal Regal.",
+      "std": "Ficha Técnica CTCx · B1"
+    },
+    "uid": {
+      "titulo": "UID de la ficha",
+      "texto": "Identificador único de esta ficha: CDT, cuatro y cuatro caracteres del alfabeto Crockford (sin I, L, O ni U, que se confunden al leer). Se acuña al crear el lote con azar criptográfico; 32⁸ ≈ 1,1 billones de combinaciones. No es la fecha ni el número de muestra: no se repite, no se edita y viaja con el archivo guardado.",
+      "std": "CTCx · codigoPublico.ts (mismo alfabeto que el código público del lote)"
+    },
+    "c_que": {
+      "titulo": "Información comercial",
+      "texto": "Lo que el vendedor declara: cuánto café hay (pergamino y verde, en kilos), a qué precio y en qué condiciones. No es parte de ningún formato SCA: es la hoja comercial de CTCx. Se imprime en la ficha con su fecha de validez; después de esa fecha la ficha lo dice.",
+      "std": "CTCx · ficha comercial"
+    },
+    "c_precios": {
+      "titulo": "Precios: farm gate, FOB, CIP o DDP",
+      "texto": "Farm gate: lo que recibe el productor por el café, en la unidad en que se compra (en Colombia, pesos por carga de 125 kg de pergamino). FOB: el café puesto a bordo en el puerto de salida (Buenaventura, Cartagena, Santa Marta…), normalmente en US$ por libra o por kilo. CIP o DDP: el café entregado en destino —CIP con transporte y seguro pagados hasta el lugar convenido; DDP con derechos e impuestos de importación pagados—, por eso lleva la región o el destino. Escribe cada precio con su unidad; la herramienta no convierte monedas.",
+      "std": "Incoterms 2020 · SCA 105 · 5.5"
+    },
+    "c_validez": {
+      "titulo": "Válido hasta",
+      "texto": "La fecha hasta la que valen las cantidades, los precios y las condiciones de esta ficha. Un precio sin fecha no es una oferta: el mercado se mueve. Pasada la fecha, la ficha impresa lo advierte en rojo.",
+      "std": "CTCx · ficha comercial"
     },
     "e_otro": {
       "titulo": "Otro",
@@ -820,6 +853,31 @@ export const INFO_PLANILLA: Record<IdiomaDePlanilla, Record<ClaveDeInfo, InfoDeP
       "titulo": "Certifications",
       "texto": "Boxes on the form: 4C, fair trade, organic, Rainforest Alliance, food safety and “other”.\nAs free descriptors you can add other third-party schemes (Bird Friendly, Regenerative Organic), company verification schemes (Nespresso AAA, C.A.F.E. Practices) and geographical indications (Café de Colombia). The EUDR is not a certification but a legal requirement of the European Union; it is noted here because European buyers ask for it.\nAdd certificate number, validity dates and verification link.",
       "std": "SCA 105-2025 · 5.6"
+    },
+    "b1_que": {
+      "titulo": "B1 · Varieties and basic characterisation",
+      "texto": "What the Quality Centre's scoresheet does not ask because the Q-Grader cups blind: the varieties with their share (the species is derived from them), the base process and the special process. Moisture, density, water activity and reported factor are the same B3 fields: one piece of data, one place.\nIt is B1 of the Kaffetal Regal Technical Sheet.",
+      "std": "CTCx Technical Sheet · B1"
+    },
+    "uid": {
+      "titulo": "Datasheet UID",
+      "texto": "Unique identifier of this datasheet: CDT, four and four characters of the Crockford alphabet (no I, L, O or U, which get confused when read). Minted when the lot is created with cryptographic randomness; 32⁸ ≈ 1.1 trillion combinations. It is neither the date nor the sample number: it never repeats, cannot be edited and travels with the saved file.",
+      "std": "CTCx · codigoPublico.ts (same alphabet as the lot's public code)"
+    },
+    "c_que": {
+      "titulo": "Commercial information",
+      "texto": "What the seller declares: how much coffee there is (parchment and green, in kilos), at what price and under which conditions. It is not part of any SCA form: it is CTCx's commercial sheet. It prints on the datasheet with its validity date; after that date the datasheet says so.",
+      "std": "CTCx · commercial sheet"
+    },
+    "c_precios": {
+      "titulo": "Prices: farm gate, FOB, CIP or DDP",
+      "texto": "Farm gate: what the producer receives for the coffee, in the unit it is bought in (in Colombia, pesos per 125 kg carga of parchment). FOB: the coffee on board at the port of departure (Buenaventura, Cartagena, Santa Marta…), usually in US$ per pound or per kilo. CIP or DDP: the coffee delivered at destination — CIP with carriage and insurance paid to the agreed place; DDP with import duties and taxes paid — which is why it carries the region or destination. Write each price with its unit; the tool does not convert currencies.",
+      "std": "Incoterms 2020 · SCA 105 · 5.5"
+    },
+    "c_validez": {
+      "titulo": "Valid until",
+      "texto": "The date until which the quantities, prices and conditions of this datasheet hold. A price without a date is not an offer: the market moves. Past the date, the printed datasheet warns in red.",
+      "std": "CTCx · commercial sheet"
     },
     "e_otro": {
       "titulo": "Other",

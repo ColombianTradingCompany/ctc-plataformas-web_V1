@@ -175,3 +175,18 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - Datos: acta `docs/migraciones/2026-10-12_leads_correos_encendidos.sql` (corrida). DICT: «necesidad de volumen», «lote que llamó la
   atención», «copia del seguimiento». Guardián `qa-lead-forms` 96.
 (commit: 82ad7da)
+
+## [2026-10-23] V6.6 · La CTCx Coffee Datasheet Tool ES la planilla del Centro de Calidad (más B1 · extrínseca · comercial)
+- Herramientas del Café: la herramienta deja el HTML autocontenido y se vuelve una página de Next (`src/app/tools/coffee-datasheet/app/page.tsx`,
+  `src/components/tools/datasheet/`: `DatasheetTool` renderiza `LabEvalEditor` con `ocultaGrado` + `BloqueB1` · `BloqueExtrinseca` ·
+  `BloqueComercial` · `FichaImpresa`; `estado.ts` puro con `normalizar` (V1 → V2) y `nuevoUid` (`CDT-XXXX-XXXX`, Crockford + CSPRNG);
+  `usePuente.ts` habla el puente desde React; `textos.ts`, `estilos.ts`, `meta.ts`). El HTML de `public/tools/coffee-datasheet/` es página de paso.
+- Nodo nuevo del mapa en Herramientas: «Coffee Datasheet = la planilla del Centro en el taller» (una sola implementación; lo que cambie en la
+  pantalla de la consola cambia en el taller). Cambio de arquitectura: primera versión `repo` de `tool_versions` que es una RUTA y no un archivo.
+- `src/lib/legal.ts` (`CTC_WEB`, `CTC_TELEFONOS` vacía hasta que el owner entregue los números), `src/lib/arena/planillaInfo.ts` (fuente a mano
+  de las «i», ES · EN; +`b1_que`, `uid`, `c_que`, `c_precios`, `c_validez`), `src/lib/tools/carpetas.ts` (comentario).
+- Retirados `scripts/build-coffee-datasheet.mjs` y `scripts/build-planilla-info.mjs`. Guardianes: `qa-coffee-datasheet` 61 (reescrito),
+  `qa-centro-calidad` (importa de `fisico.ts`), `qa-taller` 69, `qa-tools-seo-espejo` (rutas de Next), `qa-tools-puente-conformance` (sonda),
+  `build-tool-shots` (ruta nueva). DICT: «Información comercial (datasheet)», «UID de la ficha», «página de paso».
+- Datos (tras el deploy): `tool_versions` #2 (`repo`, `/tools/coffee-datasheet/app`), `tools.version_publicada` = 2, `meta_description`.
+(commit: pendiente)

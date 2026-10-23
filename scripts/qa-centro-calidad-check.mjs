@@ -362,7 +362,8 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   const editor = lee("src/components/bcp/LabEvalEditor.tsx");
   const piezas = lee("src/components/bcp/PlanillaPiezas.tsx");
   const fisicoTs = lee("src/lib/catacion/fisico.ts");
-  const datasheet = lee("public/tools/coffee-datasheet/ctcx-coffee-datasheet-tool.html");
+  // V6.6: la Coffee Datasheet Tool es la planilla en React e IMPORTA fisico.ts: ya no hay un segundo catálogo que comparar, solo el import.
+  const datasheet = lee("src/components/tools/datasheet/FichaImpresa.tsx");
   const F = await import("../src/lib/catacion/fisico.ts");
 
   // (a) los tres atributos por taza, como los demás.
@@ -379,14 +380,14 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("el editor: cinco tazas con limpia · taint · fault, el tipo de defecto del CVA, y una «i» para cada uno", editor.includes("value.sca_tazas.map((x, i) => (") && editor.includes("<Info texto={t.infoTaint} />") && editor.includes("<Info texto={t.infoFault} />") && (editor.match(/CVA_DEFECTOS\.map\(\(\[id\]\) => \(/g) ?? []).length === 2 && editor.includes('sca_taint_cups: n.taint ? String(n.taint) : ""') && !editor.includes('numInput("sca_taint_cups"'));
   // (e) B3: el detalle de los defectos y el color.
   check("16 defectos físicos: 6 de categoría 1 y 10 de categoría 2, con su equivalencia", F.DEFECTOS_FISICOS.length === 16 && F.DEFECTOS_FISICOS.filter((d) => d.cat === 1).length === 6 && F.DEFECTOS_FISICOS.filter((d) => d.cat === 2).length === 10);
-  check("son los de la CTCx Coffee Datasheet Tool: mismas claves, categorías, equivalencias y rótulos ES/EN", F.DEFECTOS_FISICOS.every((d) => datasheet.includes(`["${d.key}",${d.cat},${d.granos}]`) && datasheet.includes(`df_${d.key}:["${d.es}","${d.en}"`)), F.DEFECTOS_FISICOS.filter((d) => !(datasheet.includes(`["${d.key}",${d.cat},${d.granos}]`) && datasheet.includes(`df_${d.key}:["${d.es}","${d.en}"`))).map((d) => d.key).join(", "));
+  check("son los de la CTCx Coffee Datasheet Tool: la herramienta IMPORTA la lista de fisico.ts (una sola, sin copia)", datasheet.includes("DEFECTOS_FISICOS") && datasheet.includes('from "@/lib/catacion/fisico"') && F.DEFECTOS_FISICOS.every((d) => d.key && d.es && d.en && [1, 3, 5, 10].includes(d.granos)));
   const cuenta = F.calcDefectos({ negro: "2", insecto_grave: "9", negro_parcial: "7", insecto_leve: "25", inventado: "9" });
   check("granos → defectos completos (solo enteros), por categoría", cuenta.cat1 === 3 && cuenta.cat2 === 4 && cuenta.total === 7 && cuenta.filas.insecto_grave.completos === 1 && cuenta.filas.negro_parcial.completos === 2 && cuenta.granos === 43);
-  check("ocho colores del grano verde, los de la herramienta", F.COLORES_DEL_VERDE.length === 8 && F.COLORES_DEL_VERDE.every((c, i) => datasheet.includes(`col${i + 1}:["${c.es}","${c.en}"`)));
+  check("ocho colores del grano verde, los mismos en la herramienta (COLORES_DEL_VERDE importado)", F.COLORES_DEL_VERDE.length === 8 && datasheet.includes("COLORES_DEL_VERDE") && F.COLORES_DEL_VERDE.every((c) => c.key && c.es && c.en));
   check("el editor: la (R) de «Registrar detalle» en cada defecto, la tabla del detalle y el selector de color; los gramos siguen", (editor.match(/setDetalleAbierto\(detalleAbierto === cat \? null : cat\)/g) ?? []).length === 1 && editor.includes("DEFECTOS_FISICOS.filter((d) => d.cat === detalleAbierto)") && editor.includes("COLORES_DEL_VERDE.map((o) => (") && editor.includes('numInput(cat === 1 ? "fa_primary_defect" : "fa_secondary_defect")'));
   check("el detalle NO entra en el factor: la aritmética sigue con los gramos", !/defectos_detalle|fa_color/.test(lee("src/components/kaffetal-regal/ficha/fichaCalculations.ts")));
   // (f) acidez y sensación en boca.
-  check("sensación en boca: cinco texturas, hasta dos; acidez: dos tipos, uno", F.TEXTURAS_EN_BOCA.length === 5 && F.MAX_TEXTURAS === 2 && F.TIPOS_DE_ACIDEZ.length === 2 && JSON.stringify(F.normalizaTexturas(["metallic", "rough", "oily", "x"])) === JSON.stringify(["rough", "oily"]) && F.TEXTURAS_EN_BOCA.every((o) => datasheet.includes(`b_${o.key}:["${o.es}","${o.en}"`)));
+  check("sensación en boca: cinco texturas, hasta dos; acidez: dos tipos, uno", F.TEXTURAS_EN_BOCA.length === 5 && F.MAX_TEXTURAS === 2 && F.TIPOS_DE_ACIDEZ.length === 2 && JSON.stringify(F.normalizaTexturas(["metallic", "rough", "oily", "x"])) === JSON.stringify(["rough", "oily"]) && F.TEXTURAS_EN_BOCA.every((o) => o.key && o.es && o.en) && datasheet.includes("TEXTURAS_EN_BOCA"));
   check("el editor las ofrece con su intensidad 0–15, y no entran en el puntaje", editor.includes('intensidadDe("acidez_intensidad")') && editor.includes('intensidadDe("boca_intensidad")') && editor.includes("TIPOS_DE_ACIDEZ.map((o) => (") && editor.includes("value.boca_texturas.length >= MAX_TEXTURAS") && !/acidez_|boca_/.test(lee("src/lib/arena/punto.ts") + lee("src/lib/arena/equivalencia.ts")));
   const llena = toLabEvaluation({ fa_color: "verde", defectos_detalle: { negro: "2", x: "1", agrio: "0" }, acidez_tipo: "dulce", boca_texturas: ["smooth", "oily", "rough"], acidez_intensidad: "9" });
   check("la planilla normaliza lo nuevo y una vacía sigue sin datos", llena.fa_color === "verde" && JSON.stringify(llena.defectos_detalle) === JSON.stringify({ negro: "2" }) && llena.boca_texturas.length === 2 && toLabEvaluation({ fa_color: "morado", acidez_tipo: "x" }).fa_color === "" && labEvaluationHasData(toLabEvaluation({})) === false && labEvaluationHasData(toLabEvaluation({ fa_color: "verde" })) === true && labEvaluationHasData(toLabEvaluation({ sca_tazas: [{ estado: "taint" }] })) === true);
@@ -605,9 +606,9 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   // V5.156 (owner): «las "i" debían estar para cada tipo de defecto, en frente de ellos, no doble» — una por defecto en el detalle.
   check("defectos: una «i» en frente de CADA defecto del detalle (def_<clave>, en el catálogo, ES/EN), y ninguna doble junto a la R", editor.includes('{d[lang]} {info(`def_${d.key}` as ClaveDeInfo)}') && !editor.includes('{info("f_registro")}') && (await import("../src/lib/catacion/fisico.ts")).DEFECTOS_FISICOS.every((d) => INFO_PLANILLA.es[`def_${d.key}`]?.texto.length > 40 && INFO_PLANILLA.en[`def_${d.key}`]?.titulo));
   const F = await import("../src/lib/catacion/fisico.ts");
-  const datasheet = lee("public/tools/coffee-datasheet/ctcx-coffee-datasheet-tool.html");
+  const datasheet = lee("src/components/tools/datasheet/FichaImpresa.tsx"); // V6.6: la herramienta importa fisico.ts
   const primarios = F.DEFECTOS_FISICOS.filter((d) => d.cat === 1);
-  check("la broca va de primera en los primarios, con su nombre, en la plataforma y en la herramienta", primarios[0].key === "insecto_grave" && primarios[0].es === "Daño por insecto grave (Broca)" && /borer/.test(primarios[0].en) && datasheet.includes('["insecto_grave",1,5],["negro",1,1]') && datasheet.includes('df_insecto_grave:["Daño por insecto grave (Broca)"'));
+  check("la broca va de primera en los primarios, con su nombre, en la plataforma y en la herramienta (que importa la misma lista)", primarios[0].key === "insecto_grave" && primarios[0].es === "Daño por insecto grave (Broca)" && /borer/.test(primarios[0].en) && datasheet.includes("DEFECTOS_FISICOS"));
 }
 
 // ── V5.155 (owner, 2026-10-06) · el OCP abre el informe del Centro (solo lectura) antes de decidir; el Centro tiene dos

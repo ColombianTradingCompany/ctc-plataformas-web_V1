@@ -91,6 +91,10 @@ estructurada «Grados de Calidad CTC» de Notion ya dice lo mismo que `definicio
 (80·82·84·86·88); solo la prosa de la página sigue vieja y la reescribe la Secretaría.
 Los umbrales de arriba (80/84/86/88/91) son los del pitch, no los de la base.
 
+**Corrección 2026-10-23** (unificación, `UNIFICACION_ALINEACION.md` D-010 f): desde la V5.160 el grado ya no es un
+umbral SCA sino una banda de **Puntos CTC** (SCA × Tríada; `definicion.ts` sobre `src/lib/pvc/escala.ts`). La base de
+Notion (80·82·84·86·88) y su prosa están las dos desactualizadas y se corrigen desde el código.
+
 Hoy coinciden. En cuanto uno se mueva y el otro no, habrá dos verdades y ninguna
 forma de saber cuál rige. **Decisión pendiente del owner**: el canónico debería
 ser la plataforma (es quien los otorga) y Notion debería mostrar el espejo. Lo

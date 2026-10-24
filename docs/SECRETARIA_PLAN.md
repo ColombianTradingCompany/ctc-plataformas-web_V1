@@ -73,7 +73,9 @@ componente `directorio`), «Muestras para Evaluacion de Lotes» (Conceptos Funda
   publicadas por la plataforma CTC. Los eventos los crea y los borra un escenario de Make»*.
 - **Drive**: la estructura de §1.1. Las carpetas AUX de cada directorio espejan las bases de Notion
   (Proveedores · Clientes · Partners); las páginas de Notion guardan la URL en `Supplier/Customer/
-  Partner Folder`.
+  Partner Folder`. **Corrección 2026-10-23** (unificación, D-012): no es así — las AUX de Proveedores y Clientes están
+  vacías, solo 2 de 203 registros de directorio tienen carpeta propia, y 421 de los 483 enlaces de Drive guardados en Notion
+  están muertos (las carpetas por registro que creaba AppSheet ya no existen). La regla del registro se reconstruye, no se repara.
 - **Contacts**: **no existe conector** en Claude Code ni en el registro MCP (los resultados son
   Apollo, Lusha, Brevo…). Make tiene módulos de Google Contacts, pero la cuenta de CTC **no tiene esa
   conexión creada** (solo Google, Gmail, Notion Public, Canva, ClickUp, OpenAI).
@@ -114,6 +116,9 @@ Los tres primeros están registrados en `automations` (ECP · Automatizaciones) 
    está **desactualizado es la prosa** de la página (Black 80+ · Red 84+ · Blue 85+ · Gold 87+ ·
    Tyrian 89+) y la nota de `INTEGRACIONES_PLAN.md` §1 (80/84/86/88/91). Primera tarea de la Secretaría:
    reescribir esa prosa desde la base. El conflicto que sigue abierto es el del **PVC** (ALINEACION §1).
+   **Corrección 2026-10-23** (unificación, D-010 f): esto dejó de ser cierto en la V5.160 — el grado es una banda de Puntos CTC
+   (SCA × Tríada, `definicion.ts` sobre `src/lib/pvc/escala.ts`), así que la base de Notion con 80·82·84·86·88 también está vieja.
+   Base y prosa se reescriben **desde el código**; nunca se «armoniza» el código hacia Notion.
 2. **Cero enlaces hoy entre Notion y la plataforma** fuera de cotizaciones: ninguna proveedora, finca
    o ficha de Notion lleva `ctc_id`. Coincidencias probables por nombre (a confirmar por el owner):
    «Doña Hortencia» ↔ productor «Hortencia PALMAS»; «Hacienda Calapo» ↔ la cuenta «Finca calapo»;

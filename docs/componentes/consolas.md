@@ -183,6 +183,18 @@ ciclo; `docs/PLAN_CICLOS.md`) · **`qa-triage-catalogo-check.mjs`** (V5.196 — 
 
 ## Pendientes
 
+- **2026-10-23 · el seguimiento SCAJ 2026, PAUSADO** (owner, desde la sesión de unificación; acta
+  `docs/migraciones/2026-10-23_scaj_seguimiento_pausado.sql`, decisión D-008 en `docs/UNIFICACION_ALINEACION.md`). `yaRespondio`
+  (`src/lib/leadForms/envios.ts`) busca la respuesta del comprador SOLO en `inbound_emails`, y el Buzón no se sincroniza desde el
+  2026-07-16 (info@ reenvía a Gmail desde el 22-oct): el seguimiento saldría aunque el comprador ya hubiera contestado. Solo se apagó
+  `seguimiento`; el correo inmediato sigue. **Para este componente**: que la comprobación lea las respuestas donde llegan hoy (Gmail) o
+  quede atada a la decisión del Buzón (Ronda 5 de la unificación, pregunta 5.5) antes de volver a encender el interruptor.
+  Decidido después (2026-10-23): vuelve solo tras la comprobación horaria de Gmail (D-014 6.6) y con la copia de la casa en **Cco**
+  (D-013 5.5); es la parte P24 del plan de unificación.
+- **2026-10-23 · el Buzón, congelado** (D-013 5.4): su contraseña salió de Vercel (sin sincronización que borre en Hostinger). Hasta que
+  la P18 lo vuelva historia de solo lectura en código, **nadie pulsa sus botones de sincronizar ni repone la contraseña**.
+- **2026-10-23 · `MAKE_WEBHOOK_URL` sigue sin valor** hasta la P1 (endurecer el despachador: solo códigos de error, nunca texto libre);
+  nadie la pone a mano. El secreto de entrada se rotó (D-015).
 - **V6.5 · SCAJ 2026: las siete mejoras del owner del 2026-10-12** (ver el CHANGELOG). Hecho: la respuesta automática sale siempre
   con el PDF ADJUNTO (interruptores encendidos en código y en la base; el barrido manda los pendientes), el seguimiento con copia a
   `ctcexportmain@gmail.com` (configurable en la LCP), el PDF con «Tus respuestas» y «Qué sigue» a la medida, «Tomar una foto» con la

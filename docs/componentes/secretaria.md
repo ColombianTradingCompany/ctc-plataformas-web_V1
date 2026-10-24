@@ -84,6 +84,16 @@ de Notion con `ctc_id` huérfano. En Notion no hay guardián: la disciplina es e
 - **Presupuesto**: SQL sobre data sources para leer; escritura página a página; corridas de más de
   100 páginas se anuncian antes (el agente de Notion agotó un mes de tokens en una corrida, 11.07).
 - **Cada corrida deja una fila en la bitácora** (`SECRETARIA_PLAN.md` §6).
+- **Unificación del ecosistema (2026-10, D-001…D-017 en `docs/UNIFICACION_ALINEACION.md`; plan `docs/PLAN_UNIFICACION.md`).** Mientras dure, estas reglas mandan sobre las de arriba:
+  - (a) **Objetos vacíos de Notion**: lo contado vacío justo antes va a la papelera en UN lote aprobado por el owner; «nunca borra páginas» sigue valiendo para todo lo que tenga contenido (se archiva, no se borra).
+  - (b) **Credenciales**: D-004/D-016 anulan «nunca toca credenciales» solo para la limpieza única, ya hecha el 2026-10-24 (cada valor se cambió por «→ NordPass»); la rotación es del owner.
+  - (c) **`LCP`** entra al select `CTC`; un comprador no es un lead.
+  - (d) **Registro del sistema**: cada fila tiene un dueño; una pieza nueva nace con su fila en el mismo cambio, y la fila lleva ubicaciones, nunca valores.
+  - (e) **Orden**: credenciales → núcleo de Ejecución → resto de Notion → Drive → Gmail; el briefing diario solo en la Ronda 6. La campaña SCAJ 2026 tiene vía rápida (D-017) sin desordenar lo demás.
+  - (f) **Grados**: Notion se corrige desde `definicion.ts`, nunca al revés (D-010 f).
+  - **Drive (D-011/D-012)**: el material de visitas y eventos queda en el repositorio de contenido crudo y la ficha enlaza; solo se borran copias exactas probadas por checksum, en lotes ≤ 50 aprobados y nunca antes del briefing; las carpetas vacías se aparcan; los metadatos masivos salen de un Apps Script de solo lectura; mover dentro o fuera de una carpeta compartida pide el OK del owner.
+  - **F1 (D-014 6.4)**: el espejo es UN trabajo diario de la plataforma con su propia llave de Notion, limitada a las bases espejadas; las líneas de la espina y de F1 dejan de nombrar ramas de Make.
+  - **Correo (D-013)**: Notion guarda el enlace y la obligación, nunca el texto del mensaje.
 
 ## Lo que las consolas gobiernan de este componente
 
@@ -100,9 +110,17 @@ de Notion con `ctc_id` huérfano. En Notion no hay guardián: la disciplina es e
   Fichas y Clientes; limpiar la relación duplicada «Lista de Proveedores 1» y el data source vacío de
   Proveedores; proponer las coincidencias (Doña Hortencia ↔ Hortencia PALMAS · Hacienda Calapo ↔ «Finca
   calapo» · La Pradera y La Fortaleza sin cuenta · La Ceiba fuera de la Lista de Fincas); reescribir la
-  prosa de «Grados de Calidad CTC» desde su base (la base ya coincide con `definicion.ts`; la prosa no).
-- **Dos contraseñas en claro** en títulos de páginas de Objetivos y Tareas (cuentas de KR): sacarlas y
-  rotarlas — **owner**; la Secretaría solo señala.
+  prosa de «Grados de Calidad CTC» desde su base (~~la base ya coincide con `definicion.ts`; la prosa no~~ — **corregido 2026-10-23**:
+  desde la V5.160 el grado es una banda de **Puntos CTC** (SCA × Tríada; Black 1000–1399 … Tyrian 2001–2500, `definicion.ts` sobre
+  `src/lib/pvc/escala.ts`), así que la base de Notion con umbrales SCA 80·82·84·86·88 está **desactualizada** igual que la prosa: ambas se
+  reescriben desde el código, nunca al revés — D-010 (f) en `docs/UNIFICACION_ALINEACION.md`).
+- ~~**Dos contraseñas en claro** en títulos de páginas de Objetivos y Tareas (cuentas de KR): sacarlas y
+  rotarlas — **owner**; la Secretaría solo señala.~~ **Hecho 2026-10-24** (D-016): títulos rehechos sin la clave, con todo el resto de
+  credenciales de Notion; queda la rotación — **owner**.
+- **Tablero de la campaña SCAJ 2026 (D-017, 2026-10-24)**: página de campaña en Notion con Leads y Envíos, dos escenarios de Make (enviar
+  lo que el owner aprueba · detectar respuestas) y la etiqueta de campaña en Gmail. Lo lleva la conversación de este componente; su
+  traspaso con ids vive fuera del repo (`reference/SCAJ26 - Marketing Campaign/HANDOFF_TABLERO_SCAJ_2026-10-24.md`). Al cerrar la
+  ventana de venta (16-nov) se apagan los dos escenarios; la misma comprobación de respuestas es la base del P24.
 - **Google Contacts**: no hay conector en Claude ni conexión en Make — **owner** crea la conexión (o
   elige Apps Script); después F2.
 - **F1** con dueño `consolas`: `notion_espejos`, seis eventos nuevos, manejadores `<entidad>.espejada`,

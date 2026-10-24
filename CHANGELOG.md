@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.7] — 2026-10-24 (commit pendiente)
+## [V6.7] — 2026-10-24 (commit ea954dd)
 
 - **Añadido**: **los teléfonos de la casa en el pie de la ficha de la Coffee Datasheet Tool** (owner, 2026-10-24: «+57 315 2948371 and
   +49 176 42020 585 — add them to the footer»). Viven en `CTC_TELEFONOS` (`src/lib/legal.ts`), que nació vacía en la V6.6; el pie los

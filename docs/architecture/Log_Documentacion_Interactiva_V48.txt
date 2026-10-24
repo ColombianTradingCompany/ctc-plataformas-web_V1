@@ -194,4 +194,4 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 ## [2026-10-24] V6.7 · Los teléfonos de la casa en el pie de la Coffee Datasheet Tool
 - `src/lib/legal.ts`: `CTC_TELEFONOS` deja de estar vacía (Colombia y Alemania, entregados por el owner); `FichaImpresa.tsx` ya los imprimía
   cuando los hubiera. Sin cambio de nodo ni de DICT.
-(commit: pendiente)
+(commit: ea954dd)

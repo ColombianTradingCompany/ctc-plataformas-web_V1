@@ -19,6 +19,12 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.7] — 2026-10-24 (commit pendiente)
+
+- **Añadido**: **los teléfonos de la casa en el pie de la ficha de la Coffee Datasheet Tool** (owner, 2026-10-24: «+57 315 2948371 and
+  +49 176 42020 585 — add them to the footer»). Viven en `CTC_TELEFONOS` (`src/lib/legal.ts`), que nació vacía en la V6.6; el pie los
+  imprime junto al sitio web y al correo. Cierra el pendiente (a) de la V6.6 en el charter de `herramientas-cafe`.
+
 ## [V6.6] — 2026-10-23 (commit 5527465)
 
 - **Cambiado**: **la CTCx Coffee Datasheet Tool ES la planilla del Centro de Calidad** (owner, 2026-10-23: «it does not look at all like the

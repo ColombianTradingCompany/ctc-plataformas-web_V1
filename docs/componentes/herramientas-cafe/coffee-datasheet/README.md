@@ -38,8 +38,9 @@ sesión (evaluador, SCA ID, fecha, lugar, objetivo) + uno o varios lotes (hasta 
 cosas de la tabla. La hoja es UNA, de arriba abajo, como la planilla; la **ficha impresa** (`FichaImpresa.tsx`) sale por lote o de todos.
 
 **La marca de la casa** en la ficha: la marca de agua «CTCx» del Dossier EUDR, la cabecera negra con el loro, el UID en dorado, la
-banda del método, la firma y la fecha, y el pie con el sitio web (`CTC_WEB`), el correo, los teléfonos (`CTC_TELEFONOS`), la línea
-legal y «© año Colombian Trading Company · Todos los derechos reservados». Todo sale de `src/lib/legal.ts`.
+banda del método, la firma y la fecha, y el pie con el sitio web (`CTC_WEB`), el correo, los teléfonos (`CTC_TELEFONOS`: Colombia y
+Alemania, entregados por el owner el 2026-10-24, V6.7), la línea legal y «© año Colombian Trading Company · Todos los derechos
+reservados». Todo sale de `src/lib/legal.ts`; un número se cambia solo ahí.
 
 **El UID**: `CDT-XXXX-XXXX`, el alfabeto Crockford de la casa (`codigoPublico.ts`, el mismo del código público del lote), acuñado con
 `crypto.getRandomValues` al crear el lote, distinto de los que ya hay en la evaluación, no editable; 32⁸ ≈ 1,1 billones. Duplicar un lote
@@ -75,8 +76,6 @@ acuña otro. Un archivo con UIDs repetidos o inválidos los reacuña al cargarse
 
 ## Abierto
 
-- **Teléfonos de la casa**: el owner pidió que la ficha los lleve; no están en ningún archivo del repo ni de `reference/`. `CTC_TELEFONOS`
-  (`legal.ts`) nace vacía y el pie omite la línea hasta que el owner los entregue. **Nunca un número inventado.**
 - **Decisión del owner — las dos herramientas de origen siguen vivas** (`catacion`, `green-datasheet`). La Rueda V23 es la FUENTE de la
   taxonomía (`build-rueda-datos.mjs`, `build-variedades-datos.mjs` leen de ella): no se borra sin mover la fuente.
 - **Revisión por un Q Grader** de lo que la planilla hereda de la V1 y el estándar no fija (defectos completos solo enteros; la

@@ -190,3 +190,8 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
   `build-tool-shots` (ruta nueva). DICT: «Información comercial (datasheet)», «UID de la ficha», «página de paso».
 - Datos (tras el deploy): `tool_versions` #2 (`repo`, `/tools/coffee-datasheet/app`), `tools.version_publicada` = 2, `meta_description`.
 (commit: 5527465)
+
+## [2026-10-24] V6.7 · Los teléfonos de la casa en el pie de la Coffee Datasheet Tool
+- `src/lib/legal.ts`: `CTC_TELEFONOS` deja de estar vacía (Colombia y Alemania, entregados por el owner); `FichaImpresa.tsx` ya los imprimía
+  cuando los hubiera. Sin cambio de nodo ni de DICT.
+(commit: pendiente)

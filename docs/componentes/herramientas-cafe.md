@@ -145,7 +145,7 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
   be the SAME»; ficha `herramientas-cafe/coffee-datasheet/README.md`). Hecho: `DatasheetTool` (React) renderiza `LabEvalEditor` con las
   partes propias, UID `CDT-XXXX-XXXX`, ficha impresa con la marca de la casa, puente desde React, trabajos de la V1 migrados; el HTML es
   página de paso; `planillaInfo.ts` es la fuente de las «i». Cierra lo abierto de la V5.137 (una sola implementación). Abierto, **del owner**:
-  (a) **los teléfonos de la casa** para el pie (`CTC_TELEFONOS` en `legal.ts`, hoy vacía: no se inventa un número); (b) `catacion` y
+  ~~(a) los teléfonos de la casa para el pie~~ (entregados el 2026-10-24, V6.7: `CTC_TELEFONOS` en `legal.ts`); (b) `catacion` y
   `green-datasheet` siguen vivas (la Rueda es la fuente de la taxonomía); (c) el alemán de la V1 no volvió (la planilla es ES · EN).
 
 - **V6 · objetivo 1, tanda E: la marca en Herramientas del Café** (owner, 2026-10-10, al declarar la V6.0;

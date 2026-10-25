@@ -2702,7 +2702,7 @@ Runbook: diseno_ronda6_briefing.md §E.7.
 |---|---|---|
 | P0 | Done (2 owner items open) | 2026-10-24: docs commit live; containment, rotation and Make proof done; open: the packaging folder to «Restricted» and the mailbox list |
 | P1 | Done (first real event still to watch) | 2026-10-25: V6.8 + V6.9 live; key auth on the router hook; two pings sent with nothing written; immediate send plus the dispatcher every 10 minutes |
-| P2 | Released, first runs being checked | 2026-10-25: migration `latidos` applied (22 trigger tests, 0 failures, nothing persisted); V6.10 pushed; 14 seed rows after the live check |
+| P2 | Done (daily and weekly first runs still to check) | 2026-10-25: migration `latidos` applied (22 trigger tests, 0 failures, nothing persisted); V6.10 (67b30cf) live; unauthenticated probe 401 with no row; 14 seed rows (4 → 18); first dispatcher and hourly runs closed `ok`; board 0 «Atrasada» / 0 «Falló». Open: the 5 daily crons and the Monday job on 2026-10-26, the Thursday job on 2026-10-29 |
 | P3 | Done, waiting for the owner's acceptance | 2026-10-24: 0 writes; ledger 24 of 25 resolved (1 not found); 65 meeting notes read; 5 new credential locations for P4; 18 design corrections proposed |
 | P4 | Partly done | 2026-10-24: every credential value out of Notion (D-016); rotation chains and backups B0/B1 open |
 | P5 | Not started | |

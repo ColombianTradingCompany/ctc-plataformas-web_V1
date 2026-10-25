@@ -225,4 +225,4 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
   nodo «Automatizaciones» (ECP): la salud de cada cron. DICT: «latido», «Atrasada (cron)», «clave de una automatización».
 - Datos: migración `latidos` (acta `docs/migraciones/2026-10-25_latidos.sql`): tabla + guardia, `automations.clave`, `automations_touch`
   enmendada; 14 filas semilla tras el push. Guardián nuevo `qa-registro-crons`.
-(commit: pendiente)
+(commit: 67b30cf)

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.10] — 2026-10-25 (commit pendiente)
+## [V6.10] — 2026-10-25 (commit 67b30cf)
 
 - **Añadido**: **la salud de los crons** (B6.0, parte P2 del plan de unificación; owner, 2026-10-25: «apply the migration as written with
   no branch, release V6.10 with its §3 row, insert the 14 seed rows after the push»). Nueva bitácora `latidos`: UNA fila por corrida de

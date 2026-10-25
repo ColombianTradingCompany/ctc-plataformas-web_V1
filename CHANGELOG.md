@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.8] — 2026-10-25 (commit pendiente)
+## [V6.8] — 2026-10-25 (commit a8c8430)
 
 - **Seguridad**: **en `integration_events.ultimo_error` solo entran CÓDIGOS** (S0, parte P1 del plan de unificación, owner 2026-10-25).
   Un valor secreto mal puesto en `MAKE_WEBHOOK_URL` acabó dentro del mensaje de una excepción, el despachador lo guardó y el tablero de

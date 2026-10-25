@@ -205,4 +205,4 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - Cambio de nodo «Espina de integración»: el contrato del error (códigos, nunca texto) y la autenticación del webhook de salida (clave de API de
   Make en `x-make-apikey`, en vez de `x-ctc-secret`). DICT: «código de error de la espina», «clave de API del webhook».
 - Datos: acta `docs/migraciones/2026-10-25_integration_events_s0_descartados.sql` (3 filas → `descartado`). Guardián `qa-integraciones-check` 87.
-(commit: pendiente)
+(commit: a8c8430)

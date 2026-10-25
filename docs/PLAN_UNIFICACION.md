@@ -2700,11 +2700,11 @@ Runbook: diseno_ronda6_briefing.md §E.7.
 
 | Part | State | Note |
 |---|---|---|
-| P0 | Not started | |
-| P1 | Not started | |
+| P0 | Done (2 owner items open) | 2026-10-24: docs commit live; containment, rotation and Make proof done; open: the packaging folder to «Restricted» and the mailbox list |
+| P1 | Shipped as V6.8, owner steps open | 2026-10-25: the 3 old rows discarded first; release live; open: the owner's Vercel and Make steps and the first ping |
 | P2 | Not started | |
-| P3 | Not started | |
-| P4 | Not started | |
+| P3 | Done, waiting for the owner's acceptance | 2026-10-24: 0 writes; ledger 24 of 25 resolved (1 not found); 65 meeting notes read; 5 new credential locations for P4; 18 design corrections proposed |
+| P4 | Partly done | 2026-10-24: every credential value out of Notion (D-016); rotation chains and backups B0/B1 open |
 | P5 | Not started | |
 | P6 | Not started | |
 | P7 | Not started | |
@@ -2713,7 +2713,7 @@ Runbook: diseno_ronda6_briefing.md §E.7.
 | P10 | Not started | |
 | P11 | Not started | |
 | P12 | Not started | |
-| P13 | Not started | |
+| P13 | Step 0a started | 2026-10-24: «before» permission reads saved locally; storage band below 80 % |
 | P14 | Not started | |
 | P15 | Not started | |
 | P16 | Not started | |

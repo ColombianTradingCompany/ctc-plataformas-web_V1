@@ -215,3 +215,14 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - Cambio de nodo «Espina de integración»: el camino normal es el envío inmediato acotado; la red de seguridad, el despachador cada 10
   minutos (antes, diario). Sin entrada nueva de DICT. Guardián `qa-integraciones-check` 93.
 (commit: 58365e1)
+
+## [2026-10-25] V6.10 · La salud de los crons: la bitácora `latidos` y la columna «Salud» de Automatizaciones (B6.0)
+- Nuevos `src/lib/integraciones/latido.ts` (`conLatido`: abre una fila `en_curso` tras la comprobación de `CRON_SECRET`, corre el trabajo,
+  lee una copia de la respuesta y la cierra con estado y números; falla abierto, techo 3 s) y `src/lib/integraciones/registroCrons.ts` (las
+  14 filas semilla, el lector de horarios y la regla `saludDeCron`). Los 8 crons de `vercel.json` envueltos sin cambiar lo que hacen.
+  `AutomatizacionesBoard.tsx`, `actions.ts` (`listUltimosLatidos`, candados de las filas de cron), `types.ts` (`clave`, `UltimoLatido`).
+- Nodo nuevo «Bitácora de latidos» (tabla `latidos`, service-role únicamente, 400 días) colgado de la «Espina de integración»; cambio de
+  nodo «Automatizaciones» (ECP): la salud de cada cron. DICT: «latido», «Atrasada (cron)», «clave de una automatización».
+- Datos: migración `latidos` (acta `docs/migraciones/2026-10-25_latidos.sql`): tabla + guardia, `automations.clave`, `automations_touch`
+  enmendada; 14 filas semilla tras el push. Guardián nuevo `qa-registro-crons`.
+(commit: pendiente)

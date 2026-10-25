@@ -120,9 +120,9 @@ src/
       inbound-email/route.ts                        inbound-mail webhook (Svix-verified) → inbound_emails → BCP Buzón
       home/ticker/route.ts                          public market ticker feed for CTC Home (see lib/market/ticker.ts)
       kaffetal-regal/next-step/route.ts             Anthropic advisor endpoint
-      cron/{market-anchors,renovaciones,vigilancia-pvc,agente-pvc,integraciones,courier-combustible,recordatorios}/
-                                                    los 7 crons de vercel.json (CRON_SECRET; renovaciones V5.176, vigilancia-pvc
-                                                    V5.178, agente-pvc V5.179)
+      cron/{market-anchors,renovaciones,vigilancia-pvc,agente-pvc,integraciones,courier-combustible,recordatorios,seguimientos-leads}/
+                                                    los 8 crons de vercel.json (CRON_SECRET; renovaciones V5.176, vigilancia-pvc
+                                                    V5.178, agente-pvc V5.179); desde la V6.10 cada uno envuelto en conLatido()
   components/
     ctc-home/, kaffetal-regal/, cherry-picked/       one folder per platform
     coffeed/                                         CoffeedConsole (ECP: entregas+muro) + StudioConsole (taller) + CanonView (las dos) + CoffeedWall (muro público KR/CP/DC) + StudioAppShell
@@ -169,6 +169,8 @@ Three, each for a different trust level — know which one a piece of code shoul
 3. `createServiceRoleClient()` — bypasses RLS entirely. **Server-only, never import from a client component.** Reserved for audited admin mutations (BCP approvals/publishing) and system-computed fields a normal user JWT isn't allowed to touch (e.g. the AI-advice cache columns on `lots`, written even when the lot is past the stage a producer's own JWT can modify).
 
 ## Database (project `sjznkzvefqfcysczllli`)
+
+- **Cron health ledger (V6.10, B6.0 — `docs/PLAN_UNIFICACION.md` P2)**: `latidos` (**service-role-only**, no grants for anon/authenticated) — one row per run of a job (today the 8 Vercel crons via `conLatido()`, later Make jobs and the briefing): born `en_curso`, closed once to `ok`/`parcial`/`fallido` with `fin`, then frozen by the guard trigger; numbers-only `conteos`, a code-only `codigo_error`; deletes only past 400 days (the dispatcher's 11:30 UTC run purges). `automations.clave` (unique, immutable): a cron's route or a `familia:trabajo` label; `automations_touch` admits an `activa` row without a Make scenario only for a cron row. Seed rows come from `src/lib/integraciones/registroCrons.ts`; guardian `qa-registro-crons`.
 
 Full table list, RLS policies, and triggers were audited 2026-07-10 (see Audit Findings below); the schema is otherwise stable. Domains:
 

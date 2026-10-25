@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fetchFncPrice } from "@/lib/anclas/fnc";
+import { conLatido } from "@/lib/integraciones/latido";
 
 // ── Cron diario · el precio de la FNC ────────────────────────────────────────
 // Lo dispara Vercel Cron (ver vercel.json, 11:10 UTC ≈ 06:10 en Colombia, ya
@@ -30,30 +31,33 @@ export async function GET(request: Request) {
     }
   }
 
-  try {
-    const reading = await fetchFncPrice(AbortSignal.timeout(25_000));
-    if (!reading) {
-      // No se anota nada: una lectura que no se reconoce no es un precio.
-      return NextResponse.json({ ok: false, skipped: "sin precio reconocible" }, { status: 200 });
+  // El latido (B6.0): la fila de `latidos` se abre aquí, DESPUÉS del secreto; el trabajo no cambia.
+  return conLatido("/api/cron/market-anchors", async () => {
+    try {
+      const reading = await fetchFncPrice(AbortSignal.timeout(25_000));
+      if (!reading) {
+        // No se anota nada: una lectura que no se reconoce no es un precio.
+        return NextResponse.json({ ok: false, skipped: "sin precio reconocible" }, { status: 200 });
+      }
+
+      const service = createServiceRoleClient();
+      const { error } = await service.from("market_anchors").upsert(
+        {
+          kind: "fnc_carga",
+          as_of: reading.asOf,
+          value: reading.value,
+          unit: "COP/carga",
+          source: "fnc",
+          source_url: reading.sourceUrl,
+          automatic: true,
+        },
+        { onConflict: "kind,as_of" }
+      );
+      if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+
+      return NextResponse.json({ ok: true, asOf: reading.asOf, value: reading.value });
+    } catch (e) {
+      return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
     }
-
-    const service = createServiceRoleClient();
-    const { error } = await service.from("market_anchors").upsert(
-      {
-        kind: "fnc_carga",
-        as_of: reading.asOf,
-        value: reading.value,
-        unit: "COP/carga",
-        source: "fnc",
-        source_url: reading.sourceUrl,
-        automatic: true,
-      },
-      { onConflict: "kind,as_of" }
-    );
-    if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-
-    return NextResponse.json({ ok: true, asOf: reading.asOf, value: reading.value });
-  } catch (e) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
-  }
+  });
 }

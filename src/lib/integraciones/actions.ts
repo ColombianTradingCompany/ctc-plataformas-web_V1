@@ -17,7 +17,8 @@
 import { revalidatePath } from "next/cache";
 import { requireConsoleWrite } from "@/lib/panel/requireConsoleWrite";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import type { Automation, AutomationResult, IntegrationEvent } from "./types";
+import type { Automation, AutomationResult, IntegrationEvent, UltimoLatido } from "./types";
+import { CRONS } from "./registroCrons";
 import { errorParaMostrar } from "./errores";
 import { emitEvent } from "./emit";
 import type { PanelConsoleKey } from "@/lib/panel/consoles";
@@ -28,7 +29,7 @@ const CONSOLA: PanelConsoleKey = "ecp";
 const NO_AUTH: AutomationResult = { ok: false, error: "No se pudo ejecutar: o tu sesión del BCP ya no está activa (vuelve a iniciar sesión), o tu nivel en el BCP es de lectura y borradores y esta acción emite, publica, cobra, notifica o borra." };
 
 type Row = {
-  id: string; nombre: string; make_scenario_id: string | number | null; proposito: string;
+  id: string; nombre: string; make_scenario_id: string | number | null; proposito: string; clave: string | null;
   dominio: string; disparador: string; sistemas: string[] | null; criticidad: string; etapa: string;
   notas: string | null; ultima_corrida: string | null; errores_recientes: number; ops_mes: number | null;
   sincronizado_at: string | null; created_at: string; updated_at: string;
@@ -39,6 +40,7 @@ const toAutomation = (r: Row): Automation => ({
   nombre: r.nombre,
   makeScenarioId: r.make_scenario_id === null ? null : Number(r.make_scenario_id),
   proposito: r.proposito,
+  clave: r.clave,
   dominio: r.dominio as Automation["dominio"],
   disparador: r.disparador,
   sistemas: r.sistemas ?? [],
@@ -81,6 +83,28 @@ export async function listRecentEvents(limit = 30): Promise<IntegrationEvent[] |
   return ((data ?? []) as unknown as IntegrationEvent[]).map((e) => ({ ...e, ultimo_error: errorParaMostrar(e.ultimo_error) }));
 }
 
+/** El último latido FINAL de cada cron de `vercel.json` (B6.0): una consulta pequeña por clave, en vez de
+ *  traer días de latidos (el despachador escribe 144 al día). Es lectura: la ve cualquier nivel. */
+export async function listUltimosLatidos(): Promise<UltimoLatido[] | null> {
+  const who = await requireConsoleWrite(CONSOLA, "lectura");
+  if (!who) return null;
+  const service = createServiceRoleClient();
+  const filas = await Promise.all(
+    CRONS.map(async (c) => {
+      const { data } = await service
+        .from("latidos")
+        .select("clave, inicio, fin, estado, codigo_error")
+        .eq("clave", c.clave)
+        .neq("estado", "en_curso")
+        .order("inicio", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return (data as UltimoLatido | null) ?? null;
+    })
+  );
+  return filas.filter((f): f is UltimoLatido => f !== null);
+}
+
 export async function saveAutomation(input: {
   id?: string;
   nombre: string;
@@ -101,6 +125,20 @@ export async function saveAutomation(input: {
   if (!input.proposito.trim()) return { ok: false, error: "Escribe el propósito: una frase que diga por qué existe." };
 
   const service = createServiceRoleClient();
+  // Las filas de cron las siembra `registroCrons.ts` y solo una tanda con versión las cambia: ni se crean
+  // aquí ni se les cambia el disparador o la etapa (un cron se para con un deploy, no con este formulario).
+  if (!input.id && input.disparador === "cron") {
+    return { ok: false, error: "Las filas de cron no se crean aquí: nacen con su cron, en la misma tanda que lo añade a vercel.json." };
+  }
+  if (input.id) {
+    const { data: actual } = await service.from("automations").select("disparador, etapa").eq("id", input.id).maybeSingle();
+    if (actual?.disparador === "cron" && (input.disparador !== "cron" || input.etapa !== actual.etapa)) {
+      return { ok: false, error: "Esta fila es un cron de la plataforma: su disparador y su etapa no se cambian desde aquí." };
+    }
+    if (actual && actual.disparador !== "cron" && input.disparador === "cron") {
+      return { ok: false, error: "«cron» queda reservado a las filas que siembra la plataforma." };
+    }
+  }
   const row = {
     nombre: input.nombre.trim(),
     proposito: input.proposito.trim(),
@@ -127,6 +165,10 @@ export async function deleteAutomation(id: string): Promise<AutomationResult> {
   const who = await requireConsoleWrite(CONSOLA);
   if (!who) return NO_AUTH;
   const service = createServiceRoleClient();
+  const { data: fila } = await service.from("automations").select("disparador").eq("id", id).maybeSingle();
+  if (fila?.disparador === "cron") {
+    return { ok: false, error: "Esta fila es un cron de la plataforma: sale del registro solo cuando su cron sale de vercel.json." };
+  }
   const { error } = await service.from("automations").delete().eq("id", id);
   if (error) return { ok: false, error: error.message };
   revalidatePath("/ecp/automatizaciones");

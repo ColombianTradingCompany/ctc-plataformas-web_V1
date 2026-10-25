@@ -8,8 +8,12 @@ export type Automation = {
   makeScenarioId: number | null;
   /** Una frase: por qué existe. */
   proposito: string;
-  dominio: Dominio;
+  /** Desde el P2 (B6.0): la ruta de un cron (`/api/cron/…`) o una etiqueta estable de un trabajo propuesto.
+   *  Inmutable una vez puesta; las filas de cron solo las siembra `registroCrons.ts`. */
+  clave: string | null;
+  /** 'webhook' · 'calendario' · 'watch' · 'manual' · 'cron' (solo las filas sembradas). */
   disparador: string;
+  dominio: Dominio;
   sistemas: string[];
   criticidad: Criticidad;
   etapa: Etapa;
@@ -36,3 +40,12 @@ export type IntegrationEvent = {
 };
 
 export type AutomationResult = { ok: true } | { ok: false; error: string };
+
+/** El último latido FINAL de un cron (B6.0): solo metadatos de la corrida, nunca contenido. */
+export type UltimoLatido = {
+  clave: string;
+  inicio: string;
+  fin: string | null;
+  estado: "ok" | "parcial" | "fallido";
+  codigo_error: string | null;
+};

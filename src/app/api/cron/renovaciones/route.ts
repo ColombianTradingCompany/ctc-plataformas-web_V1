@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { hoyEnColombia } from "@/lib/pvc/servicio";
 import { correrRenovaciones } from "@/lib/trato/renovaciones";
+import { conLatido } from "@/lib/integraciones/latido";
 
 // ── Cron diario · las ventanas de Cherry Picked (V5.176 · docs/PLAN_CICLOS.md §5) ─────────────────────────────────────────────────
 // Reemplaza `/api/cron/redeclaraciones` (la redeclaración de la V5.171, que ningún contrato usó). Lo dispara Vercel Cron cada día a
@@ -20,10 +21,13 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: "No autorizado" }, { status: 401 });
     }
   }
-  try {
-    const r = await correrRenovaciones(createServiceRoleClient(), hoyEnColombia());
-    return NextResponse.json(r, { status: r.errores.length ? 207 : 200 });
-  } catch (e) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
-  }
+  // El latido (B6.0): la fila de `latidos` se abre aquí, DESPUÉS del secreto; el trabajo no cambia.
+  return conLatido("/api/cron/renovaciones", async () => {
+    try {
+      const r = await correrRenovaciones(createServiceRoleClient(), hoyEnColombia());
+      return NextResponse.json(r, { status: r.errores.length ? 207 : 200 });
+    } catch (e) {
+      return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
+    }
+  });
 }

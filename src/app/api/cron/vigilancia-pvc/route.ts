@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { hoyEnColombia } from "@/lib/pvc/servicio";
 import { correrVigilancia } from "@/lib/pvc/vigilancia";
+import { conLatido } from "@/lib/integraciones/latido";
 
 // ── Cron diario · la vigilancia de la corrección del PVC (V5.178 · docs/PLAN_CICLOS.md §6) ─────────────────────────────────────────
 // Corre a las 11:25 UTC (vercel.json), después de que `/api/cron/market-anchors` (11:10) guarde la lectura FNC del día: mide el
@@ -20,10 +21,13 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: "No autorizado" }, { status: 401 });
     }
   }
-  try {
-    const r = await correrVigilancia(createServiceRoleClient(), hoyEnColombia());
-    return NextResponse.json(r, { status: r.errores.length ? 207 : 200 });
-  } catch (e) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
-  }
+  // El latido (B6.0): la fila de `latidos` se abre aquí, DESPUÉS del secreto; el trabajo no cambia.
+  return conLatido("/api/cron/vigilancia-pvc", async () => {
+    try {
+      const r = await correrVigilancia(createServiceRoleClient(), hoyEnColombia());
+      return NextResponse.json(r, { status: r.errores.length ? 207 : 200 });
+    } catch (e) {
+      return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
+    }
+  });
 }

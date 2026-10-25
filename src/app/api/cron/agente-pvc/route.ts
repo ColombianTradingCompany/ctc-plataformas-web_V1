@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { hoyEnColombia } from "@/lib/pvc/servicio";
 import { correrAgente } from "@/lib/pvc/agente";
+import { conLatido } from "@/lib/integraciones/latido";
 
 // ── Cron diario · el agente de la edición siguiente del PVC (V5.179 · docs/PLAN_CICLOS.md §6) ─────────────────────────────────────
 // 11:40 UTC (vercel.json), después de la lectura FNC (11:10) y de la vigilancia (11:25). Desde la semana 1 del ciclo 2 deja el
@@ -20,9 +21,12 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: "No autorizado" }, { status: 401 });
     }
   }
-  try {
-    return NextResponse.json(await correrAgente(createServiceRoleClient(), hoyEnColombia()));
-  } catch (e) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
-  }
+  // El latido (B6.0): la fila de `latidos` se abre aquí, DESPUÉS del secreto; el trabajo no cambia.
+  return conLatido("/api/cron/agente-pvc", async () => {
+    try {
+      return NextResponse.json(await correrAgente(createServiceRoleClient(), hoyEnColombia()));
+    } catch (e) {
+      return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
+    }
+  });
 }

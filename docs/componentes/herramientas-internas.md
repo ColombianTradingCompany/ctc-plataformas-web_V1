@@ -117,6 +117,11 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
 
 ## Pendientes
 
+- **2026-10-25 · V6.10: la salud de los crons llega a este componente** (B6.0, la tanda es de `consolas`; ALINEACION §3). El tablero
+  Automatizaciones (`AutomatizacionesBoard.tsx`) gana la columna «Salud» y bloquea las filas de cron; los cuatro crons de aquí
+  (market-anchors, vigilancia-pvc, agente-pvc, courier-combustible) van envueltos en `conLatido()` tras su `CRON_SECRET`, sin cambiar lo
+  que hacen. **Para este componente**: un cron nuevo de un modelo lleva su envoltura y su fila en `src/lib/integraciones/registroCrons.ts`
+  en la misma tanda (`qa-registro-crons`). Lo siguiente en ese tablero es la P25 (B6.1) del plan de unificación.
 - **V6 · lo que los objetivos de `docs/PLAN_V6_OBJETIVOS.md` le piden a este componente** (owner, 2026-10-10, al declarar la V6.0;
   anotado por el nodo final). **Objetivo 2, tanda A** (dueño `consolas`): la referencia de Empacado hasta FOB con **flete real** —la
   única vigente, `EF-2026-001`, se llama «REF 1 TEST»— y el **N2 del PVC** contra el que el Triage compara el ancla de cada trato.

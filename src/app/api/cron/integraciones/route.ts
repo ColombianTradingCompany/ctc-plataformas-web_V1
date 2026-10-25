@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { dispatchPending } from "@/lib/integraciones/dispatch";
 import { limpiarError } from "@/lib/integraciones/errores";
 import { barrerCertificadosVencidos } from "@/lib/directorio/sweep";
+import { conLatido } from "@/lib/integraciones/latido";
 
 // ── Cron · vaciar la cola de eventos salientes ───────────────────────────────
 // Mismo gate que /api/cron/market-anchors: CRON_SECRET, y 503 si falta.
@@ -15,6 +16,9 @@ import { barrerCertificadosVencidos } from "@/lib/directorio/sweep";
 //
 // Lo que responde es un código (`url_ausente`, `excepcion:…`), nunca el texto de
 // una excepción: S0, `src/lib/integraciones/errores.ts`.
+//
+// El latido (B6.0): cada corrida deja su fila en `latidos`; la vuelta diaria
+// purga además los latidos de más de 400 días.
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -27,21 +31,23 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: "No autorizado" }, { status: 401 });
     }
   }
-  try {
-    const dispatched = await dispatchPending();
-    // Best-effort: un fallo del barrido no debe tumbar el vaciado de la cola.
-    const ahora = new Date();
-    const vueltaDiaria = ahora.getUTCHours() === 11 && ahora.getUTCMinutes() >= 30 && ahora.getUTCMinutes() < 40;
-    let directorio = { retirados: 0 };
-    if (vueltaDiaria) {
-      try {
-        directorio = await barrerCertificadosVencidos();
-      } catch {
-        /* se reintenta mañana */
+  const ahora = new Date();
+  const vueltaDiaria = ahora.getUTCHours() === 11 && ahora.getUTCMinutes() >= 30 && ahora.getUTCMinutes() < 40;
+  return conLatido("/api/cron/integraciones", async () => {
+    try {
+      const dispatched = await dispatchPending();
+      // Best-effort: un fallo del barrido no debe tumbar el vaciado de la cola.
+      let directorio = { retirados: 0 };
+      if (vueltaDiaria) {
+        try {
+          directorio = await barrerCertificadosVencidos();
+        } catch {
+          /* se reintenta mañana */
+        }
       }
+      return NextResponse.json({ ok: true, ...dispatched, directorio });
+    } catch (e) {
+      return NextResponse.json({ ok: false, error: limpiarError(e) }, { status: 500 });
     }
-    return NextResponse.json({ ok: true, ...dispatched, directorio });
-  } catch (e) {
-    return NextResponse.json({ ok: false, error: limpiarError(e) }, { status: 500 });
-  }
+  }, { purgar: vueltaDiaria });
 }

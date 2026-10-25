@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { correrRecordatorios } from "@/lib/registro/certificados";
 import { correrRecordatoriosDeMora } from "@/lib/trato/moraRecordatorios";
 import { correrBarridoDeInactividad } from "@/lib/inactividad/barrido";
+import { conLatido } from "@/lib/integraciones/latido";
 
 // ── Cron semanal · los recordatorios (V5.78 certificaciones · V5.86 mora · V5.103 inactividad; fila «Recordatorios» del §4 del plan) ──
 // Lo dispara Vercel Cron los lunes 12:00 UTC (vercel.json). Recuerda TRES cosas, y solo tres (riesgo del §7 del plan: correos
@@ -28,14 +29,17 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: "No autorizado" }, { status: 401 });
     }
   }
-  try {
-    const service = createServiceRoleClient();
-    const certificaciones = await correrRecordatorios(service);
-    const mora = await correrRecordatoriosDeMora(service);
-    const inactividad = await correrBarridoDeInactividad(service);
-    const errores = [...certificaciones.errores, ...mora.errores, ...inactividad.errores];
-    return NextResponse.json({ ok: true, certificaciones, mora, inactividad, errores }, { status: errores.length ? 207 : 200 });
-  } catch (e) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
-  }
+  // El latido (B6.0): la fila de `latidos` se abre aquí, DESPUÉS del secreto; el trabajo no cambia.
+  return conLatido("/api/cron/recordatorios", async () => {
+    try {
+      const service = createServiceRoleClient();
+      const certificaciones = await correrRecordatorios(service);
+      const mora = await correrRecordatoriosDeMora(service);
+      const inactividad = await correrBarridoDeInactividad(service);
+      const errores = [...certificaciones.errores, ...mora.errores, ...inactividad.errores];
+      return NextResponse.json({ ok: true, certificaciones, mora, inactividad, errores }, { status: errores.length ? 207 : 200 });
+    } catch (e) {
+      return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
+    }
+  });
 }

@@ -19,6 +19,26 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.10] — 2026-10-25 (commit pendiente)
+
+- **Añadido**: **la salud de los crons** (B6.0, parte P2 del plan de unificación; owner, 2026-10-25: «apply the migration as written with
+  no branch, release V6.10 with its §3 row, insert the 14 seed rows after the push»). Nueva bitácora `latidos`: UNA fila por corrida de
+  un trabajo, que nace `en_curso`, se cierra una sola vez en `ok` · `parcial` · `fallido` con su `fin` y queda congelada; solo metadatos y
+  números (`conteos` solo admite números, `codigo_error` sin «@» y ≤ 120). `conLatido()` (`src/lib/integraciones/latido.ts`) envuelve los
+  8 crons de `vercel.json` DESPUÉS de su comprobación de `CRON_SECRET` (un 401 o un 503 no escriben nada) y no cambia qué hacen, qué
+  responden ni cuándo corren; falla abierto (techo de 3 s por escritura). La vuelta de las 11:30 UTC del despachador purga los latidos de
+  más de 400 días.
+- **Añadido**: **ECP › Automatizaciones gana la columna «Salud»** para las filas de cron: «Atrasada» si una corrida esperada no cerró a
+  tiempo (30 min de gracia; 15 para lo que corre cada hora o más seguido), «Falló» si la última falló, «Parcial», «Sin corrida aún», «Al
+  día». Las cifras de arriba separan Make de la plataforma y cuentan los crons con alerta. Las filas de cron no se crean, no se borran ni
+  cambian de disparador o etapa desde el tablero (un cron se para con un deploy). Nueva acción de lectura `listUltimosLatidos()`.
+- **Datos**: migración `latidos` (acta `docs/migraciones/2026-10-25_latidos.sql`, aplicada sin rama; 22 pruebas del guardia, 0 fallos,
+  nada persistió): la tabla con su guardia (RLS sin políticas y sin permisos para anon/authenticated), `automations.clave` (única,
+  inmutable) y `automations_touch` enmendada (una fila `activa` sin escenario de Make solo si es un cron con su ruta como clave). Las 14
+  filas semilla (8 crons `activa`, 6 trabajos `propuesta`) salen de `src/lib/integraciones/registroCrons.ts` y entran tras el push.
+- **Docs**: guardián nuevo `qa-registro-crons` (cada cron de `vercel.json` envuelto con su ruta y con su fila del MISMO horario; tres
+  accesorios rotos en la autoprueba; parte viva de solo lectura). **Todo cron nuevo lleva su envoltura y su fila en la misma tanda.**
+
 ## [V6.9] — 2026-10-25 (commit 58365e1)
 
 - **Corregido**: **el envío inmediato de la espina de integración** (owner, 2026-10-25: «ship V6.9 — the immediate-send fix and the

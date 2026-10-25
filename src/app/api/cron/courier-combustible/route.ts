@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { actualizarCombustible } from "@/lib/courier/eia";
+import { conLatido } from "@/lib/integraciones/latido";
 
 // ── Cron semanal · el recargo de combustible de FedEx ────────────────────────────────────────────────
 // Lo dispara Vercel Cron los jueves 13:30 UTC (vercel.json): la EIA publica los miércoles el precio de la
@@ -22,10 +23,13 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: "No autorizado" }, { status: 401 });
     }
   }
-  try {
-    const r = await actualizarCombustible(createServiceRoleClient(), AbortSignal.timeout(25_000));
-    return NextResponse.json(r, { status: r.ok ? 200 : 502 });
-  } catch (e) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
-  }
+  // El latido (B6.0): la fila de `latidos` se abre aquí, DESPUÉS del secreto; el trabajo no cambia.
+  return conLatido("/api/cron/courier-combustible", async () => {
+    try {
+      const r = await actualizarCombustible(createServiceRoleClient(), AbortSignal.timeout(25_000));
+      return NextResponse.json(r, { status: r.ok ? 200 : 502 });
+    } catch (e) {
+      return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
+    }
+  });
 }

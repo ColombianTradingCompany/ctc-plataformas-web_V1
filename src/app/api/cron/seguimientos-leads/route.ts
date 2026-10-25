@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { correrSeguimientos } from "@/lib/leadForms/envios";
+import { conLatido } from "@/lib/integraciones/latido";
 
 // ── Cron horario · los seguimientos de la Interfaz de Leads (V6.2) ──────────────────────────────────────────────────────────
 // Lo dispara Vercel Cron cada hora (vercel.json, minuto 5). Manda el seguimiento de cada lead de feria cuyo `followup_due_at` ya
@@ -20,10 +21,13 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: "No autorizado" }, { status: 401 });
     }
   }
-  try {
-    const barrido = await correrSeguimientos(createServiceRoleClient());
-    return NextResponse.json({ ok: true, ...barrido }, { status: barrido.errores.length ? 207 : 200 });
-  } catch (e) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
-  }
+  // El latido (B6.0): la fila de `latidos` se abre aquí, DESPUÉS del secreto; el trabajo no cambia.
+  return conLatido("/api/cron/seguimientos-leads", async () => {
+    try {
+      const barrido = await correrSeguimientos(createServiceRoleClient());
+      return NextResponse.json({ ok: true, ...barrido }, { status: barrido.errores.length ? 207 : 200 });
+    } catch (e) {
+      return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
+    }
+  });
 }

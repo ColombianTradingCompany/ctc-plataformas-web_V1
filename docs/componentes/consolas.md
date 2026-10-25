@@ -96,7 +96,7 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 ## Tablas que posee (escritura service-role desde aquí)
 
 `panel_users` · `admin_otp_codes` · `audit_log` · `inbound_emails` · `buzon_outbound` ·
-`platform_settings` · `platform_surfaces` · `automations` · `integration_events` ·
+`platform_settings` · `platform_surfaces` · `automations` (+ `clave`, V6.10) · `integration_events` · **`latidos`** (V6.10, B6.0: una fila por corrida de cada cron; service-role únicamente, 400 días) ·
 `work_map_proposals` · `bcp_task_state` · `partner_accounts` ·
 `leads` · `lead_replies` · **`lead_forms`** · **`event_leads`** (V6.2, la Interfaz de Leads; bucket privado `event-leads`) · `harvest_seasons` · `sondeo_batches` (los Baches de Evaluación) · `arena_inscriptions` (la solicitud) ·
 `muestras` · `muestra_movimientos` (V5.80) ·
@@ -114,6 +114,7 @@ owner desde `declararRuptura` · `descongelarCuenta`, V5.84), `buyer_profiles`,
 
 ## Guardianes
 
+`qa-registro-crons.mjs` (V6.10: cada cron de `vercel.json` envuelto en `conLatido` con su ruta y con su fila de `registroCrons.ts` del MISMO horario; autoprueba con tres accesorios rotos; `--vivo` de solo lectura) ·
 `qa-rutas-consolas.mjs` (514 a la V5.92 — rail, talones, sin rutas viejas, compuerta de SU consola en `src/app` Y, desde la V5.56, en `src/lib`: (f-bis)) ·
 `qa-nav-check.mjs` · `qa-crm-interes-check.mjs` · `qa-crm-green-check.mjs` · `qa-boards-check.mjs` (desde la V5.101 también que `/ocp/kr`
 filtre por el estado del productor DE LA FUENTE y pinte su correo) · `qa-docs-check.mjs` ·
@@ -193,6 +194,12 @@ ciclo; `docs/PLAN_CICLOS.md`) · **`qa-triage-catalogo-check.mjs`** (V5.196 — 
   (D-013 5.5); es la parte P24 del plan de unificación.
 - **2026-10-23 · el Buzón, congelado** (D-013 5.4): su contraseña salió de Vercel (sin sincronización que borre en Hostinger). Hasta que
   la P18 lo vuelva historia de solo lectura en código, **nadie pulsa sus botones de sincronizar ni repone la contraseña**.
+- **2026-10-25 · V6.10: la salud de los crons (B6.0, P2 de la unificación).** Los 8 crons dejan un latido por corrida en `latidos` y
+  ECP › Automatizaciones pinta «Atrasada» / «Falló» en sus filas (`registroCrons.ts` es la única fuente de las filas y de sus horarios).
+  **Regla nueva: todo cron nuevo lleva su `conLatido` y su fila `activa` en la misma tanda que lo añade a `vercel.json`, o
+  `qa-registro-crons` falla.** Abierto: (1) la primera corrida de los dos crons semanales (recordatorios, lunes 12:00 UTC;
+  courier-combustible, jueves 13:30 UTC) se comprueba por SQL cuando llegue; (2) lo siguiente es la P25 (B6.1: `salud` cada 30 min,
+  avisos, la ruta de latidos de Make y del briefing), que amplía el guardia de `latidos` en su propia migración.
 - **2026-10-25 · V6.8–V6.9: la espina endurecida y viva (P1 de la unificación).** `ultimo_error` solo guarda códigos, la url del
   webhook se valida antes del `fetch`, sin `MAKE_WEBHOOK_SECRET` en producción no sale nada y el secreto viaja en `x-make-apikey`
   (clave de API activa en el webhook del router, «Get request headers» apagado). Desde la V6.9 cada evento sale en seguida (esperado,

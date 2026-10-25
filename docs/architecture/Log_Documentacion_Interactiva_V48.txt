@@ -195,3 +195,14 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - `src/lib/legal.ts`: `CTC_TELEFONOS` deja de estar vacía (Colombia y Alemania, entregados por el owner); `FichaImpresa.tsx` ya los imprimía
   cuando los hubiera. Sin cambio de nodo ni de DICT.
 (commit: ea954dd)
+
+## [2026-10-25] V6.8 · S0: en `ultimo_error` solo códigos; el despachador valida el webhook y firma con `x-make-apikey`
+- Espina de integración (P1 del plan de unificación): nuevo `src/lib/integraciones/errores.ts` (lista cerrada de códigos, `validarWebhook`,
+  `limpiarError`, `errorParaMostrar`). `dispatch.ts`: url validada antes del `fetch`, sin secreto en producción no despacha, cabecera
+  `x-make-apikey`, dependencias inyectables. `aplicar.ts` y `/api/integraciones/[canal]`: se guarda el código, el `detalle` solo viaja en la
+  respuesta. `emit.ts` y el cron: solo códigos en consola y en el 500. `actions.ts`: `listRecentEvents` filtra lo que no sea código,
+  `retryFailedEvents` solo salientes, `emitPing` por `emitEvent`. `AutomatizacionesBoard.tsx`: cadencia real (en seguida + barrido 11:35 UTC).
+- Cambio de nodo «Espina de integración»: el contrato del error (códigos, nunca texto) y la autenticación del webhook de salida (clave de API de
+  Make en `x-make-apikey`, en vez de `x-ctc-secret`). DICT: «código de error de la espina», «clave de API del webhook».
+- Datos: acta `docs/migraciones/2026-10-25_integration_events_s0_descartados.sql` (3 filas → `descartado`). Guardián `qa-integraciones-check` 87.
+(commit: pendiente)

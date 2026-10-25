@@ -16,6 +16,10 @@ import { aplicarEntrante } from "@/lib/integraciones/aplicar";
 // primero y a propósito — si el manejador falla, la fila sigue ahí con el
 // motivo escrito, y se puede ver qué mandó Make sin tener que pedírselo.
 //
+// El motivo que se GUARDA es un código (`resultado.codigo`, lista cerrada de
+// `errores.ts`); el `detalle` legible vuelve solo en la respuesta a Make. Nada
+// que traiga el evento termina en `ultimo_error` (S0).
+//
 // La ruta no decide nada por sí misma: qué puede tocar un evento entrante vive
 // en `aplicar.ts`, como lista blanca. Aquí no se añaden casos.
 
@@ -79,7 +83,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ canal: str
     .select("id")
     .single();
 
-  if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ ok: false, error: "error_bd" }, { status: 500 });
 
   // Ya está registrado; a partir de aquí nada puede perder el evento. Se aplica
   // en la misma petición para que Make reciba en la respuesta si su llamada
@@ -91,10 +95,12 @@ export async function POST(request: Request, ctx: { params: Promise<{ canal: str
     .update({
       estado: resultado.estado,
       aplicado_at: new Date().toISOString(),
-      ultimo_error: resultado.estado === "fallido" ? resultado.detalle : null,
+      ultimo_error: resultado.estado === "fallido" ? resultado.codigo : null,
     })
     .eq("id", data.id);
 
+  // `detalle` en la respuesta es deliberado: Make lo necesita para saber qué
+  // falló. Es la única salida del texto; el guardián lo admite solo aquí.
   return NextResponse.json(
     { ok: resultado.estado !== "fallido", id: data.id, estado: resultado.estado, detalle: resultado.detalle },
     { status: resultado.estado === "fallido" ? 422 : 200 }

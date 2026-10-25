@@ -55,7 +55,8 @@ y esa tabla pasa a ser de este componente.
 
 ## Guardianes
 
-`qa-espejo-notion.mjs` (F2, cotizaciones) y `qa-integraciones-check.mjs` (dominios = enum). Propio,
+`qa-espejo-notion.mjs` (F2, cotizaciones) y `qa-integraciones-check.mjs` (dominios = enum; y desde la V6.8, S0: en `ultimo_error`
+solo códigos de `errores.ts`, comprobado contra el despachador y los manejadores reales con un canario de 64 hex). Propio,
 pendiente: **`espejo-reporte.mjs`** — solo lectura; imprime filas de la plataforma sin espejo y páginas
 de Notion con `ctc_id` huérfano. En Notion no hay guardián: la disciplina es el §Reglas.
 

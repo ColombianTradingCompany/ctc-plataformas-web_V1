@@ -1,14 +1,19 @@
 import { NextResponse } from "next/server";
 import { dispatchPending } from "@/lib/integraciones/dispatch";
+import { limpiarError } from "@/lib/integraciones/errores";
 import { barrerCertificadosVencidos } from "@/lib/directorio/sweep";
 
 // ── Cron · vaciar la cola de eventos salientes ───────────────────────────────
 // Mismo gate que /api/cron/market-anchors: CRON_SECRET, y 503 si falta.
-// Corre cada 15 minutos; los eventos no son urgentes por diseño — si algo tiene
-// que ser inmediato, no debería pasar por esta cola.
+// Corre una vez al día (11:35 UTC, vercel.json) y es la RED DE SEGURIDAD: el
+// camino normal es `emitEvent`, que despacha en seguida con `after()`. Aquí
+// solo llega lo que quedó pendiente porque Make no respondió en su momento.
 //
-// De paso barre los soportes de certificación rechazados y vencidos (10 días):
-// se cuelga aquí para no añadir un tercer cron (límite del plan Hobby).
+// De paso barre los soportes de certificación rechazados y vencidos (10 días),
+// para no añadir otro cron por una tarea de una línea.
+//
+// Lo que responde es un código (`url_ausente`, `excepcion:…`), nunca el texto de
+// una excepción: S0, `src/lib/integraciones/errores.ts`.
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -32,6 +37,6 @@ export async function GET(request: Request) {
     }
     return NextResponse.json({ ok: true, ...dispatched, directorio });
   } catch (e) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
+    return NextResponse.json({ ok: false, error: limpiarError(e) }, { status: 500 });
   }
 }

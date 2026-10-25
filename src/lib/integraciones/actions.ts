@@ -18,6 +18,8 @@ import { revalidatePath } from "next/cache";
 import { requireConsoleWrite } from "@/lib/panel/requireConsoleWrite";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import type { Automation, AutomationResult, IntegrationEvent } from "./types";
+import { errorParaMostrar } from "./errores";
+import { emitEvent } from "./emit";
 import type { PanelConsoleKey } from "@/lib/panel/consoles";
 
 /** La consola donde vive este módulo. UNA vez, y `qa-rutas-consolas` (f-bis) la contrasta con el rail. */
@@ -64,7 +66,9 @@ export async function listAutomations(): Promise<Automation[] | null> {
   return ((data ?? []) as Row[]).map(toAutomation);
 }
 
-/** Los últimos eventos de la espina — para ver si la cola respira. */
+/** Los últimos eventos de la espina — para ver si la cola respira. `ultimo_error`
+ *  pasa por `errorParaMostrar`: lo que no sea un código de la lista cerrada se
+ *  ve como «texto retirado» y nunca llega al navegador (S0). */
 export async function listRecentEvents(limit = 30): Promise<IntegrationEvent[] | null> {
   const who = await requireConsoleWrite(CONSOLA, "lectura");
   if (!who) return null;
@@ -74,7 +78,7 @@ export async function listRecentEvents(limit = 30): Promise<IntegrationEvent[] |
     .select("id, dominio, tipo, estado, intentos, ultimo_error, destino, created_at, dispatched_at")
     .order("created_at", { ascending: false })
     .limit(limit);
-  return (data ?? []) as unknown as IntegrationEvent[];
+  return ((data ?? []) as unknown as IntegrationEvent[]).map((e) => ({ ...e, ultimo_error: errorParaMostrar(e.ultimo_error) }));
 }
 
 export async function saveAutomation(input: {
@@ -129,7 +133,9 @@ export async function deleteAutomation(id: string): Promise<AutomationResult> {
   return { ok: true };
 }
 
-/** Reintentar los eventos que se rindieron, tras arreglar lo que fallaba. */
+/** Reintentar los eventos SALIENTES que se rindieron, tras arreglar lo que fallaba.
+ *  Solo `destino is null`: un entrante fallido no se reencola, porque el despachador
+ *  nunca lo recoge y se quedaba `pendiente` para siempre. */
 export async function retryFailedEvents(): Promise<AutomationResult> {
   const who = await requireConsoleWrite(CONSOLA);
   if (!who) return NO_AUTH;
@@ -137,23 +143,21 @@ export async function retryFailedEvents(): Promise<AutomationResult> {
   const { error } = await service
     .from("integration_events")
     .update({ estado: "pendiente", intentos: 0, ultimo_error: null })
-    .eq("estado", "fallido");
+    .eq("estado", "fallido")
+    .is("destino", null);
   if (error) return { ok: false, error: error.message };
   revalidatePath("/ecp/automatizaciones");
   return { ok: true };
 }
 
-/** Emitir un ping por la espina — la prueba de vida de F1. */
+/** Emitir un ping por la espina — la prueba de vida de F1. Va por `emitEvent`
+ *  como cualquier evento: sale en seguida (`after()`), y si Make no responde lo
+ *  recoge el barrido diario. El payload es solo la hora. */
 export async function emitPing(): Promise<AutomationResult> {
   const who = await requireConsoleWrite(CONSOLA);
   if (!who) return NO_AUTH;
-  const service = createServiceRoleClient();
-  const { error } = await service.from("integration_events").insert({
-    dominio: "it_plataforma",
-    tipo: "prueba.ping",
-    payload: { emitidoPor: who.userId, at: new Date().toISOString() },
-  });
-  if (error) return { ok: false, error: error.message };
+  const guardado = await emitEvent({ dominio: "it_plataforma", tipo: "prueba.ping", payload: { at: new Date().toISOString() } });
+  if (!guardado) return { ok: false, error: "No se pudo guardar el ping (error_bd)." };
   revalidatePath("/ecp/automatizaciones");
   return { ok: true };
 }

@@ -19,6 +19,29 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.8] — 2026-10-25 (commit pendiente)
+
+- **Seguridad**: **en `integration_events.ultimo_error` solo entran CÓDIGOS** (S0, parte P1 del plan de unificación, owner 2026-10-25).
+  Un valor secreto mal puesto en `MAKE_WEBHOOK_URL` acabó dentro del mensaje de una excepción, el despachador lo guardó y el tablero de
+  Automatizaciones lo enseñó entero. Nuevo `src/lib/integraciones/errores.ts` (puro): la lista cerrada `CODIGOS` (`url_ausente`,
+  `url_invalida`, `secreto_ausente`, `http_<3 dígitos>`, `timeout`, `red`, `excepcion[:Clase]`, `falta_campo`, `ref_no_reconocido`,
+  `nota_demasiado_larga`, `url_no_https`, `error_bd`), `esCodigo` (lista exacta, nunca una clase de caracteres), `validarWebhook`,
+  `limpiarError` (nunca lee `.message`) y `errorParaMostrar`.
+- **Seguridad**: **el despachador** (`dispatch.ts`) valida la url ANTES de cualquier `fetch` (https y un host de make.com; si no, cuenta
+  como intento fallido sin llamar), **no despacha sin `MAKE_WEBHOOK_SECRET` en producción** (`secreto_ausente`, filas intactas) y manda el
+  secreto en la cabecera de clave de API de Make (`x-make-apikey`) en vez de `x-ctc-secret`. Cliente, `fetch` y variables se inyectan para el
+  guardián.
+- **Cambiado**: **la puerta de entrada** (`/api/integraciones/[canal]`) guarda `resultado.codigo`; el `detalle` legible vuelve solo en la
+  respuesta a Make (sus escenarios se comportan igual). `aplicar.ts`: cada fallo lleva su código. El cron responde códigos.
+- **Cambiado**: **el tablero ECP › Automatizaciones**: la columna Error solo muestra códigos («texto retirado» para lo demás, filtrado en el
+  servidor); «Reintentar fallidos» solo reencola salientes (un entrante reencolado se quedaba `pendiente` para siempre); «Emitir ping de
+  prueba» va por `emitEvent` (sale en seguida, payload solo la hora) y el texto dice la cadencia real: en seguida, con un barrido diario de
+  red de seguridad a las 11:35 UTC. `emitEvent` devuelve si la fila quedó guardada.
+- **Datos**: acta `docs/migraciones/2026-10-25_integration_events_s0_descartados.sql` (corrida antes del deploy): las 3 filas salientes de la
+  clave retirada pasan a `descartado` con `ultimo_error` NULL, para que nunca vuelvan a la cola.
+- **Docs**: guardián `qa-integraciones-check` 87 (corre el despachador y los manejadores reales contra dobles con un «canario» de 64 hex:
+  ningún campo guardado ni línea de consola lo lleva; y lee el código fuente). Su cabecera pasa a usar `ts-resolve`.
+
 ## [V6.7] — 2026-10-24 (commit ea954dd)
 
 - **Añadido**: **los teléfonos de la casa en el pie de la ficha de la Coffee Datasheet Tool** (owner, 2026-10-24: «+57 315 2948371 and

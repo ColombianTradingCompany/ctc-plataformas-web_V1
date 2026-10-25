@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.9] — 2026-10-25 (commit pendiente)
+## [V6.9] — 2026-10-25 (commit 58365e1)
 
 - **Corregido**: **el envío inmediato de la espina de integración** (owner, 2026-10-25: «ship V6.9 — the immediate-send fix and the
   dispatcher every 10 minutes as the backup»). La prueba de vida de la V6.8 enseñó que un evento emitido desde un botón de la consola

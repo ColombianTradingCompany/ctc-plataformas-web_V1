@@ -214,4 +214,4 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
   `AutomatizacionesBoard.tsx` y `actions.ts`: textos de la cadencia nueva.
 - Cambio de nodo «Espina de integración»: el camino normal es el envío inmediato acotado; la red de seguridad, el despachador cada 10
   minutos (antes, diario). Sin entrada nueva de DICT. Guardián `qa-integraciones-check` 93.
-(commit: pendiente)
+(commit: 58365e1)

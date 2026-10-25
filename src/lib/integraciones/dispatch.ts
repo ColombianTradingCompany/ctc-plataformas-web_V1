@@ -4,8 +4,9 @@ import { codigoHttp, limpiarError, validarWebhook, type CodigoSalida } from "./e
 
 // ── Integraciones · el despachador ───────────────────────────────────────────
 // Toma los eventos pendientes y los manda a Make por un webhook. Lo llaman
-// `emitEvent` (en seguida, con `after()`) y el cron diario de las 11:35 UTC
-// (`/api/cron/integraciones`, la red de seguridad), no una Server Action.
+// `emitEvent` (en seguida, SOLO la fila recién creada y con techo de 3 s) y el
+// cron cada 10 minutos (`/api/cron/integraciones`, la red de seguridad: todo lo
+// pendiente), no una Server Action.
 //
 // Tres decisiones deliberadas:
 //
@@ -39,6 +40,10 @@ export type DispatchDeps = {
   url?: string;
   secret?: string;
   produccion?: boolean;
+  /** Solo esta fila (el despacho inmediato de `emitEvent`); sin él, todo lo pendiente. */
+  soloId?: string;
+  /** Techo de cada llamada a Make. 15 s para el cron; `emitEvent` usa 3 s. */
+  timeoutMs?: number;
 };
 
 export async function dispatchPending(deps: DispatchDeps = {}): Promise<DispatchResult> {
@@ -48,7 +53,7 @@ export async function dispatchPending(deps: DispatchDeps = {}): Promise<Dispatch
   const doFetch = deps.fetchImpl ?? fetch;
   const service = deps.client ?? createServiceRoleClient();
 
-  const { data: rows } = await service
+  let consulta = service
     .from("integration_events")
     .select("id, dominio, tipo, payload, intentos")
     .eq("estado", "pendiente")
@@ -57,9 +62,9 @@ export async function dispatchPending(deps: DispatchDeps = {}): Promise<Dispatch
     // nos manda se le devuelve en el siguiente barrido y queda un bucle.
     // (Cazado en la prueba de vida de F1, no en la lectura del código.)
     .is("destino", null)
-    .lt("intentos", MAX_INTENTOS)
-    .order("created_at")
-    .limit(LOTE);
+    .lt("intentos", MAX_INTENTOS);
+  if (deps.soloId) consulta = consulta.eq("id", deps.soloId);
+  const { data: rows } = await consulta.order("created_at").limit(LOTE);
 
   const pendientes = rows?.length ?? 0;
   const webhook = validarWebhook(url);
@@ -88,7 +93,7 @@ export async function dispatchPending(deps: DispatchDeps = {}): Promise<Dispatch
             ...(secret ? { "x-make-apikey": secret } : {}),
           },
           body: JSON.stringify({ id: ev.id, dominio: ev.dominio, tipo: ev.tipo, payload: ev.payload }),
-          signal: AbortSignal.timeout(15_000),
+          signal: AbortSignal.timeout(deps.timeoutMs ?? 15_000),
         });
         if (res.ok) {
           await service.from("integration_events").update({ estado: "enviado", destino: "make", ultimo_error: null }).eq("id", ev.id);

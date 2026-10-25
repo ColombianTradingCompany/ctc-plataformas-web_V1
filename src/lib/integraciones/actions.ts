@@ -151,8 +151,8 @@ export async function retryFailedEvents(): Promise<AutomationResult> {
 }
 
 /** Emitir un ping por la espina — la prueba de vida de F1. Va por `emitEvent`
- *  como cualquier evento: sale en seguida (`after()`), y si Make no responde lo
- *  recoge el barrido diario. El payload es solo la hora. */
+ *  como cualquier evento: sale en seguida (techo de 3 s), y si Make no responde
+ *  lo recoge el despachador cada 10 minutos. El payload es solo la hora. */
 export async function emitPing(): Promise<AutomationResult> {
   const who = await requireConsoleWrite(CONSOLA);
   if (!who) return NO_AUTH;

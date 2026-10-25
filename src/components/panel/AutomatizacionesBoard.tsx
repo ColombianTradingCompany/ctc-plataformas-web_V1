@@ -172,7 +172,7 @@ export function AutomatizacionesBoard() {
         <div className={styles.sectionHead}>
           <strong>Espina de integración</strong>
           <span className={styles.actions}>
-            <button className="btn btn-sm" type="button" disabled={busy} onClick={() => run(emitPing, "Ping emitido: sale en seguida; si Make no responde, el barrido diario lo reintenta.")}>
+            <button className="btn btn-sm" type="button" disabled={busy} onClick={() => run(emitPing, "Ping emitido: sale en seguida; si Make no responde, el despachador lo reintenta en 10 minutos.")}>
               Emitir ping de prueba
             </button>
             {fallidos > 0 && (
@@ -183,9 +183,10 @@ export function AutomatizacionesBoard() {
           </span>
         </div>
         <p className={styles.meta}>
-          Las Server Actions no llaman webhooks: dejan una fila aquí y siguen. La fila sale en seguida, al terminar la
-          respuesta; lo que no pudo salir lo recoge un barrido diario a las 11:35 UTC, que reintenta hasta 5 veces y luego
-          se rinde — un webhook mal configurado no puede quemar el presupuesto de Make. La columna Error solo muestra códigos.
+          Las Server Actions no llaman webhooks por su cuenta: dejan una fila aquí y el despachador la intenta enviar en
+          seguida (con un techo de 3 s). Lo que no pudo salir lo recoge el despachador cada 10 minutos, que reintenta hasta
+          5 veces y luego se rinde — un webhook mal configurado no puede quemar el presupuesto de Make. La columna Error solo
+          muestra códigos.
         </p>
 
         {events.length === 0 ? (

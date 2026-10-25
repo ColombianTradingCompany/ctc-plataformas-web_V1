@@ -30,7 +30,7 @@ apoya (gris «En revisión» → azul «Verificado por CTC» → gris «No acept
   (medidor de completitud), `PanelHerramientas`, `BancoCertificaciones`, `SelectorEspecialidades`, `Modal`, `data.ts`.
 - `src/lib/directorio/` — `actions.ts` (`cargarDirectorio`, inscripción, mensajes, muro, documentos; `sanitizeDoc`
   hace nacer `pendiente` todo documento ligado a una certificación), `sweep.ts` (`barrerCertificadosVencidos`,
-  colgado del cron diario de integraciones — sin cron nuevo), `perfilPrint.ts`, `types.ts`; `src/lib/directorioLink.ts`.
+  colgado del cron de integraciones, que corre cada 10 minutos desde la V6.9 pero solo barre en la vuelta de las 11:30 UTC — sin cron nuevo), `perfilPrint.ts`, `types.ts`; `src/lib/directorioLink.ts`.
 - `src/app/bcp/(app)/directorio/` + `src/app/bcp/(app)/directorioActions.ts` (`aprobarCertificado` / `rechazarCertificado`: mensaje
   de CTC al hilo del usuario, `audit_log`, `remover_despues_de = now()+10d`).
 - Docs: `docs/DIRECTORIO_DOMAIN_SETUP.md` (subdominio: código listo, paso externo Vercel + Hostinger).

@@ -206,3 +206,12 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
   Make en `x-make-apikey`, en vez de `x-ctc-secret`). DICT: «código de error de la espina», «clave de API del webhook».
 - Datos: acta `docs/migraciones/2026-10-25_integration_events_s0_descartados.sql` (3 filas → `descartado`). Guardián `qa-integraciones-check` 87.
 (commit: a8c8430)
+
+## [2026-10-25] V6.9 · La espina envía en seguida (esperado y acotado) y el despachador corre cada 10 minutos
+- `src/lib/integraciones/emit.ts`: `emitEvent` inserta y ESPERA el despacho de su propia fila (`dispatchPending({ soloId, timeoutMs: 3_000 })`),
+  sin `after()` (que desde un botón de la consola no despachaba: prueba de vida de la V6.8). `dispatch.ts`: opciones `soloId` y `timeoutMs`.
+- `vercel.json`: `/api/cron/integraciones` pasa a `*/10 * * * *`; la ruta solo barre el Directorio en la vuelta de las 11:30 UTC.
+  `AutomatizacionesBoard.tsx` y `actions.ts`: textos de la cadencia nueva.
+- Cambio de nodo «Espina de integración»: el camino normal es el envío inmediato acotado; la red de seguridad, el despachador cada 10
+  minutos (antes, diario). Sin entrada nueva de DICT. Guardián `qa-integraciones-check` 93.
+(commit: pendiente)

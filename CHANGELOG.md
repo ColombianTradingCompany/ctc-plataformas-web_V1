@@ -19,6 +19,19 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.9] — 2026-10-25 (commit pendiente)
+
+- **Corregido**: **el envío inmediato de la espina de integración** (owner, 2026-10-25: «ship V6.9 — the immediate-send fix and the
+  dispatcher every 10 minutes as the backup»). La prueba de vida de la V6.8 enseñó que un evento emitido desde un botón de la consola
+  (el ping) quedaba `pendiente` sin intento ni error: el despacho con `after()` no ocurría, y solo salió cuando corrió el cron. Ahora
+  `emitEvent` inserta la fila y ESPERA su envío, acotado: solo esa fila (`soloId`) y con un techo de 3 s por llamada (`timeoutMs`), así que
+  un Make lento le suma como mucho eso a la acción. `emitEvent` ya no usa `after()`.
+- **Cambiado**: **el despachador corre cada 10 minutos** (`vercel.json`: `*/10 * * * *`, antes `35 11 * * *`; el plan es Pro) como red de
+  seguridad de todo lo pendiente, con los mismos 5 reintentos con techo. El barrido de certificaciones del Directorio colgado de ese cron
+  sigue siendo diario (la vuelta de las 11:30 UTC). El tablero de Automatizaciones dice la cadencia nueva.
+- **Docs**: guardián `qa-integraciones-check` 93 (`soloId` manda solo su fila; `emitEvent` espera con techo y sin `after()`; el cron cada
+  10 minutos; el barrido diario).
+
 ## [V6.8] — 2026-10-25 (commit a8c8430)
 
 - **Seguridad**: **en `integration_events.ultimo_error` solo entran CÓDIGOS** (S0, parte P1 del plan de unificación, owner 2026-10-25).

@@ -193,11 +193,11 @@ ciclo; `docs/PLAN_CICLOS.md`) · **`qa-triage-catalogo-check.mjs`** (V5.196 — 
   (D-013 5.5); es la parte P24 del plan de unificación.
 - **2026-10-23 · el Buzón, congelado** (D-013 5.4): su contraseña salió de Vercel (sin sincronización que borre en Hostinger). Hasta que
   la P18 lo vuelva historia de solo lectura en código, **nadie pulsa sus botones de sincronizar ni repone la contraseña**.
-- **2026-10-25 · V6.8: el despachador endurecido (P1 de la unificación).** `ultimo_error` solo guarda códigos, la url del webhook se
-  valida antes del `fetch`, sin `MAKE_WEBHOOK_SECRET` en producción no sale nada y el secreto viaja en `x-make-apikey`. **Owner**:
-  activar la clave de API en el webhook del escenario «CTC · Eventos de la plataforma», poner `MAKE_WEBHOOK_URL` y
-  `MAKE_WEBHOOK_SECRET` SOLO en Production (sensibles), redesplegar y emitir el ping. Nadie más las pone. El secreto de entrada se
-  rotó (D-015).
+- **2026-10-25 · V6.8–V6.9: la espina endurecida y viva (P1 de la unificación).** `ultimo_error` solo guarda códigos, la url del
+  webhook se valida antes del `fetch`, sin `MAKE_WEBHOOK_SECRET` en producción no sale nada y el secreto viaja en `x-make-apikey`
+  (clave de API activa en el webhook del router, «Get request headers» apagado). Desde la V6.9 cada evento sale en seguida (esperado,
+  techo 3 s) y el despachador recoge lo pendiente cada 10 minutos. Variables solo en Production; nadie las cambia sin pasar por el
+  owner. Prueba de vida 2026-10-25: dos pings enviados, Make sin escribir nada.
 - **V6.5 · SCAJ 2026: las siete mejoras del owner del 2026-10-12** (ver el CHANGELOG). Hecho: la respuesta automática sale siempre
   con el PDF ADJUNTO (interruptores encendidos en código y en la base; el barrido manda los pendientes), el seguimiento con copia a
   `ctcexportmain@gmail.com` (configurable en la LCP), el PDF con «Tus respuestas» y «Qué sigue» a la medida, «Tomar una foto» con la

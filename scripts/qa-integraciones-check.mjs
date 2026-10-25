@@ -85,9 +85,10 @@ function cliente(filas) {
     from() {
       return {
         select() {
+          let soloId = null;
           const q = {
-            eq: () => q, is: () => q, lt: () => q, order: () => q,
-            limit: async () => ({ data: filas.filter(f => f.estado === "pendiente" && !f.destino && f.intentos < 5).map(f => ({ ...f })) }),
+            eq: (col, val) => { if (col === "id") soloId = val; return q; }, is: () => q, lt: () => q, order: () => q,
+            limit: async () => ({ data: filas.filter(f => f.estado === "pendiente" && !f.destino && f.intentos < 5 && (!soloId || f.id === soloId)).map(f => ({ ...f })) }),
           };
           return q;
         },
@@ -143,6 +144,17 @@ await caso("timeout", { respuesta: () => { const e = new Error(`timeout ${CANARI
 await caso("error de red con canario", { respuesta: () => { throw new TypeError(`fetch failed ${CANARIO}`); } }, { error: "red" });
 await caso("excepción cuyo name lleva el canario", { respuesta: () => { const e = new Error("x"); e.name = CANARIO; throw e; } }, { error: "excepcion" });
 
+// V6.9 · el despacho inmediato de emitEvent manda SOLO su fila; el resto espera al cron.
+{
+  llamadas = [];
+  const c = cliente([{ ...fila(0), id: "ev-vieja" }, { ...fila(0), id: "ev-nueva" }]);
+  const r = await dispatchPending({ client: c, url: HOOK, secret: SECRETO, produccion: true, soloId: "ev-nueva", timeoutMs: 3000, fetchImpl: fetchCon(() => ({ ok: true, status: 200 })) });
+  const [vieja, nueva] = c.filas;
+  check("despacho · soloId manda solo esa fila", r.enviados === 1 && llamadas.length === 1 && nueva.estado === "enviado" && vieja.estado === "pendiente" && vieja.intentos === 0,
+    JSON.stringify({ enviados: r.enviados, llamadas: llamadas.length, vieja: vieja.estado, nueva: nueva.estado }));
+  check("despacho · soloId lleva su propia señal de techo", llamadas[0]?.init?.signal instanceof AbortSignal);
+}
+
 // ── S0 · los manejadores de entrada reales ──────────────────────────────────
 const refMala = await aplicarEntrante("jornada.agendada", { ref: `otra:${CANARIO}`, calendar_event_id: "e1" });
 check("entrada · ref no reconocido → código", refMala.estado === "fallido" && refMala.codigo === "ref_no_reconocido", JSON.stringify(refMala));
@@ -189,6 +201,16 @@ const despacho = readFileSync(join(RAIZ, "src/lib/integraciones/dispatch.ts"), "
 check("fuente · el despachador usa x-make-apikey y no x-ctc-secret", despacho.includes("x-make-apikey") && !despacho.includes("x-ctc-secret"));
 const tablero = readFileSync(join(RAIZ, "src/components/panel/AutomatizacionesBoard.tsx"), "utf8");
 check("fuente · sin textos viejos de cadencia", ![...archivos.map(a => readFileSync(a, "utf8")), tablero].some(t => /hobby|cada 15 min/i.test(t)));
+
+// V6.9 · el envío inmediato ya no depende de after(): se espera, acotado, y el cron cada 10 min es la red.
+const emite = readFileSync(join(RAIZ, "src/lib/integraciones/emit.ts"), "utf8");
+check("fuente · emitEvent espera el despacho de SU fila con techo de 3 s", /await dispatchPending\(\{ soloId: id, timeoutMs: 3_000 \}\)/.test(emite));
+check("fuente · emitEvent ya no usa after()", !/after\(/.test(emite.replace(/^\s*\/\/.*$/gm, "")));
+const vercel = JSON.parse(readFileSync(join(RAIZ, "vercel.json"), "utf8"));
+const cronInt = vercel.crons.find(c => c.path === "/api/cron/integraciones");
+check("vercel.json · el despachador corre cada 10 minutos", cronInt?.schedule === "*/10 * * * *", cronInt?.schedule);
+const rutaCron = readFileSync(join(RAIZ, "src/app/api/cron/integraciones/route.ts"), "utf8");
+check("cron · el barrido del directorio sigue siendo diario (vuelta de las 11:30 UTC)", /vueltaDiaria/.test(rutaCron) && /getUTCHours\(\) === 11/.test(rutaCron) && /if \(vueltaDiaria\)/.test(rutaCron));
 
 console.log(`\nIntegraciones · ${pass}/${pass + fails.length} comprobaciones`);
 if (fails.length) { console.log("\nFALLAN:"); for (const f of fails) console.log("  ·", f); process.exit(1); }

@@ -5,12 +5,13 @@ import { barrerCertificadosVencidos } from "@/lib/directorio/sweep";
 
 // ── Cron · vaciar la cola de eventos salientes ───────────────────────────────
 // Mismo gate que /api/cron/market-anchors: CRON_SECRET, y 503 si falta.
-// Corre una vez al día (11:35 UTC, vercel.json) y es la RED DE SEGURIDAD: el
-// camino normal es `emitEvent`, que despacha en seguida con `after()`. Aquí
-// solo llega lo que quedó pendiente porque Make no respondió en su momento.
+// Corre cada 10 minutos (vercel.json, desde la V6.9) y es la RED DE SEGURIDAD:
+// el camino normal es `emitEvent`, que intenta enviar la fila en seguida con un
+// techo de 3 s. Aquí llega lo que quedó pendiente porque Make no respondió.
 //
-// De paso barre los soportes de certificación rechazados y vencidos (10 días),
-// para no añadir otro cron por una tarea de una línea.
+// De paso, UNA vez al día (la vuelta que cae entre las 11:30 y las 11:39 UTC,
+// la hora de siempre) barre los soportes de certificación rechazados y vencidos
+// (10 días): esa tarea no necesita la nueva frecuencia.
 //
 // Lo que responde es un código (`url_ausente`, `excepcion:…`), nunca el texto de
 // una excepción: S0, `src/lib/integraciones/errores.ts`.
@@ -29,11 +30,15 @@ export async function GET(request: Request) {
   try {
     const dispatched = await dispatchPending();
     // Best-effort: un fallo del barrido no debe tumbar el vaciado de la cola.
+    const ahora = new Date();
+    const vueltaDiaria = ahora.getUTCHours() === 11 && ahora.getUTCMinutes() >= 30 && ahora.getUTCMinutes() < 40;
     let directorio = { retirados: 0 };
-    try {
-      directorio = await barrerCertificadosVencidos();
-    } catch {
-      /* se reintenta en la próxima corrida */
+    if (vueltaDiaria) {
+      try {
+        directorio = await barrerCertificadosVencidos();
+      } catch {
+        /* se reintenta mañana */
+      }
     }
     return NextResponse.json({ ok: true, ...dispatched, directorio });
   } catch (e) {

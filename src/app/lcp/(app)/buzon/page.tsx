@@ -1,16 +1,14 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireConsoleAccess } from "@/lib/panel/requireConsoleAccess";
-import { BuzonSyncBar } from "./BuzonSyncBar";
 import { BuzonMail, type InboundRow } from "./BuzonMail";
 import shared from "@/components/panel/shared.module.css";
 
-// Batched imports + IMAP round-trips need headroom on serverless.
+// Kept at 60 s only for a P19 «fallback 1» import run (its own micro-release); a read-only page doesn't need it.
 export const maxDuration = 60;
 
-// ECP · Buzón — the platform's mail client over the virtual inbox (2026-07-21:
-// movido a ECP; el buzón es material de dirección, no operación diaria). Owners
-// see the whole network inbox; a collaborator sees only mail addressed to their
-// own @ctcexport.com label (the catch-all preserves To:).
+// LCP · Buzón — read-only HISTORY of the domain's mail, frozen on 2026-07-16 (D-013 5.4 · unificación P18): no sync, no
+// replies or forwards, no remote archive or delete; new mail is read and answered in Gmail. Owners see the whole archive; a
+// collaborator sees only mail addressed to their own @ctcexport.com label (the catch-all preserved To:).
 export default async function BcpBuzonPage() {
   const identity = await requireConsoleAccess("lcp");
   const service = createServiceRoleClient();
@@ -35,11 +33,9 @@ export default async function BcpBuzonPage() {
       <h1 className={shared.title}>Buzón de entrada</h1>
       <p className={shared.subtitle}>
         {myAddress
-          ? `Tu correo — solo lo dirigido a ${myAddress}. Responde, reenvía, etiqueta o archiva: todo se refleja en el buzón real.`
-          : "Todo el correo a cualquier dirección @ctcexport.com. Responder, reenviar, etiquetar, archivar y eliminar se reflejan en el buzón de Hostinger; el archivo permanente vive aquí."}
+          ? `Historial de solo lectura de lo dirigido a ${myAddress}, congelado el 2026-07-16.`
+          : "Historial de solo lectura, congelado el 2026-07-16. El correo nuevo del dominio se lee en Gmail."}
       </p>
-
-      <BuzonSyncBar />
 
       <BuzonMail emails={emails} myAddress={myAddress} />
     </div>

@@ -36,6 +36,7 @@ export function buildPanelInviteEmail(
     .map((k) => `  · ${CONSOLES[k].code} — ${CONSOLES[k].name} (${consoles[k]})`)
     .join("\n");
 
+  // Filtro de Gmail F01: este asunto lo reconoce un filtro del buzón principal. Cambiarlo obliga a cambiar el filtro (unificación P18).
   const subject = "Tu acceso a la CTC Web Platform";
   const text = [
     `Hola${displayName ? ` ${displayName}` : ""},`,
@@ -61,6 +62,7 @@ export function buildPanelResetEmail(
   tempPassword: string,
   deliveryEmail: string | null
 ): { subject: string; text: string } {
+  // Filtro de Gmail F01: este asunto lo reconoce un filtro del buzón principal. Cambiarlo obliga a cambiar el filtro (unificación P18).
   const subject = "Restablecimiento de tu contraseña · CTC Web Platform";
   const text = [
     `Hola${displayName ? ` ${displayName}` : ""},`,

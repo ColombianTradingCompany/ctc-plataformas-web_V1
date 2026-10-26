@@ -3,9 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permisoDeEscritura, requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
-import { moveRemoteMessage, sendBuzonMail } from "@/lib/buzon/mailClient";
 
 export type BuzonActionResult = { ok: true } | { ok: false; error: string };
+
+// ── El Buzón es HISTORIAL DE SOLO LECTURA (D-013 5.4 · unificación P18) ──────────────────────────────────────────────────
+// Congelado el 2026-07-16: el correo nuevo del dominio se lee y se contesta en Gmail (con su «Enviar como»). En P18 se
+// retiraron de este archivo responder/reenviar (`sendBuzonReply`, borrado: una Server Action borrada no tiene endpoint) y el
+// movimiento remoto de archivar/eliminar; «Sincronizar» se niega aquí dentro, no solo en la pantalla, porque una Server Action
+// se puede llamar directamente. Lo que queda: listar, abrir, etiquetar, leído/no leído y los adjuntos.
+// Si P19 necesita su única importación (fallback 1), su propia micro-release aprobada pone este interruptor en false, la corre
+// y lo devuelve a true. No se exporta: un archivo «use server» solo exporta funciones async.
+const BUZON_CONGELADO = true;
 
 // Identity for Buzón permissions: owners act on ANY mail; a collaborator only on
 // mail addressed to their own @ctcexport.com label (same rule as the list view).
@@ -46,68 +54,13 @@ async function loadIfAllowed(id: string) {
   return { identity, row };
 }
 
-function quoteOriginal(row: MailRow): string {
-  const date = new Date(row.received_at).toLocaleString("es-CO", { dateStyle: "medium", timeStyle: "short" });
-  const quoted = (row.text_body ?? "").split("\n").map((l) => `> ${l}`).join("\n");
-  return `El ${date}, ${row.from_email ?? "(remitente desconocido)"} escribió:\n${quoted}`;
-}
-
-export async function sendBuzonReply(
-  inboundId: string,
-  input: { mode: "reply" | "forward"; to: string; subject: string; body: string }
-): Promise<BuzonActionResult> {
-  // Responder o reenviar un correo NOTIFICA a alguien de fuera: nivel admin de la LCP (V5.58; la consola, V5.59).
-  const permiso = await permisoDeEscritura("lcp", "emite");
-  if (!permiso.ok) return { ok: false as const, error: permiso.error };
-  const { identity, row } = await loadIfAllowed(inboundId);
-
-  const to = input.to.trim();
-  const subject = input.subject.trim();
-  const body = input.body.trim();
-  if (!to || !to.includes("@")) return { ok: false, error: "Destinatario inválido." };
-  if (!subject) return { ok: false, error: "El asunto es obligatorio." };
-  if (!body) return { ok: false, error: "Escribe el mensaje." };
-
-  // Send AS the collaborator's own label when it lives on the domain; else info@.
-  const fromEmail = identity.email.endsWith("@ctcexport.com") ? identity.email : "info@ctcexport.com";
-  const text = `${body}\n\n———\n${quoteOriginal(row)}`;
-
-  const res = await sendBuzonMail({
-    fromName: identity.displayName,
-    fromEmail,
-    to,
-    subject,
-    text,
-    inReplyTo: input.mode === "reply" ? row.message_id : null,
-  });
-
-  await identity.service.from("buzon_outbound").insert({
-    in_reply_to: row.id,
-    mode: input.mode,
-    from_email: fromEmail,
-    to_email: to,
-    subject,
-    text_body: text,
-    sent_by: identity.userId,
-    send_ok: res.ok,
-    send_error: res.ok ? null : res.error,
-  });
-  if (!res.ok) return { ok: false, error: res.error };
-
-  if (input.mode === "reply") {
-    await identity.service.from("inbound_emails").update({ replied_at: new Date().toISOString() }).eq("id", row.id);
-  }
-  revalidatePath("/lcp/buzon");
-  return { ok: true };
-}
-
+// P18: ninguna pantalla la llama ya (los botones Archivar y Eliminar se retiraron). Se conserva porque las pestañas Archivados
+// y Papelera siguen mostrando los estados ya puestos y es la única vía para corregir uno a mano. Solo cambia la base de datos:
+// el movimiento remoto en Hostinger se retiró con `mailClient.ts`. Sigue siendo `emite` (admin), como antes.
 export async function setBuzonStatus(id: string, status: "archived" | "deleted"): Promise<BuzonActionResult> {
-  // Archivar o borrar mueve el mensaje también en el buzón REMOTO (Hostinger): no es un borrador.
   const permiso = await permisoDeEscritura("lcp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
-  const { identity, row } = await loadIfAllowed(id);
-  // Reflect to Hostinger first (best-effort — a retention-cleaned message just isn't there).
-  if (row.message_id) await moveRemoteMessage(row.message_id, status === "deleted" ? "trash" : "archive");
+  const { identity } = await loadIfAllowed(id);
   await identity.service.from("inbound_emails").update({ status }).eq("id", id);
   revalidatePath("/lcp/buzon");
   return { ok: true };
@@ -136,6 +89,7 @@ export async function getBuzonAttachmentUrls(id: string): Promise<{ filename: st
 }
 
 export async function syncBuzonNow() {
+  if (BUZON_CONGELADO) return { ok: false as const, error: "Buzón congelado (Ronda 5)" };
   const permiso = await permisoDeEscritura("lcp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const { syncBuzon } = await import("@/lib/buzon/syncBuzon");

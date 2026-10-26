@@ -120,6 +120,7 @@ export function buildWelcomeEmail(lead: LeadEmailInput): { subject: string; text
         ? `Tu cuenta de ${platform.name} quedó creada con tu acceso de Google: puedes entrar cuando quieras en ${platform.url}.`
         : `Vinculamos tu solicitud a tu cuenta existente de la plataforma (${platform.url}).`;
 
+  // Filtro de Gmail F02: este asunto lo reconoce un filtro del buzón principal. Cambiarlo obliga a cambiar el filtro (unificación P18).
   const subject = `Recibimos tu solicitud · ${PILLAR_LABEL[lead.pillar] ?? "CTC"} · Colombian Trading Company`;
   // The conversation so far is just the lead's own request -- echo it so the
   // thread reads consistently from the very first email.

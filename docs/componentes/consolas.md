@@ -28,7 +28,8 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
   De este componente siguen siendo el rail, los permisos y las rutas donde ese grupo vive. El rail **no promete lo que no
   hay** (D9): «Seguimiento de Temas» y «Plataformas de Pagos» entran cuando tengan módulo, con su brief.
 - **LCP · Lead Control Panel — *Relationship*** (V5.59): **todo lo que entra de fuera y a quién se le responde**.
-  «LCP · General»: **Buzón de entrada**, **Leads · Recepción** (el pilar `general`) y **Lista de espera** — que dejó de
+  «LCP · General»: **Buzón de entrada** (desde P18 de la unificación, **historial de solo lectura** congelado el 2026-07-16: lista,
+  abre, etiqueta, leído/no leído y adjuntos; el correo nuevo se lleva en Gmail), **Leads · Recepción** (el pilar `general`) y **Lista de espera** — que dejó de
   ser solo la de la portada: reúne con un filtro las cinco fuentes de `newsletter_subscribers` y la lista de Terratalento.
   «LCP · CRM»: los cuatro **CRM de Cherry Picked** (CaaS, Green, Roast, X). No decide precios ni mueve lotes. Color: el
   carmesí corporativo aclarado (`#F0708A`) — el plan proponía un azul acero, que en el conmutador no se distinguía del OCP.
@@ -135,7 +136,11 @@ el rail en el orden de la respuesta 7; el lado de KR) · **`qa-muestras-check.mj
 y nunca negativo, recibo = filas + marca o nada, toda muestra de un lote, la alerta de 90 días sin campo aparte, acciones en la lista
 blanca) · `qa-circuito-check.mjs` (41 — la tabla de verdad del circuito desde las notas y el folio, TOTAL y MONÓTONO; con
 «solicitada» y «evaluado») · **`qa-centro-calidad-check.mjs`** (65, V5.81 — el Centro de Calidad: anonimato, módulo por credencial,
-registrar ≠ confirmar, CVA, rueda; charter `socios`, guardián de `consolas` porque vigila el circuito) · **`qa-trato-check.mjs`** (35, V5.82 —
+registrar ≠ confirmar, CVA, rueda; charter `socios`, guardián de `consolas` porque vigila el circuito; desde P18 ya no exige el avance de
+«responder» en el Buzón) · **`qa-buzon-solo-lectura-check.mjs`** (27, unificación P18 — el Buzón como historial de solo lectura: ninguna
+llamada IMAP que escriba, imapflow en un solo archivo y abierto en solo lectura, `syncBuzonNow` se niega en su primera sentencia, sin
+responder/reenviar ni escritura en `buzon_outbound`, `setBuzonStatus` solo en la base, y las 9 notas de los filtros F01/F02 de Gmail
+sobre los asuntos de los correos de la plataforma) · **`qa-trato-check.mjs`** (35, V5.82 —
 cada cifra de `terminos.ts` contra el §0/§6 del plan; rechazo gratis; re-evaluación; «sin oferta»; los laterales del circuito) ·
 **`qa-pvc-precio.mjs`** (52, V5.82 — la escalera publicada grado por grado, `RANGOS` = `definicion.ts`, nadie lee `rango`, las
 ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-internas`) · **`qa-compras-check.mjs`** (96, V5.85 · mezclas V5.87 · Sample Kits V5.90 · composición V5.91 — lo disponible derivado y nunca negativo, `ctc_selection` desde `compras` sin Tyrian y con la finca anulada en SQL, el precio cita el PVC, la compra nace del pago de una oferta de compra en firme, el CRM sin escritor, el perfil único y la imagen por lote, la vitrina con el perfil, el circuito y la barra con la misma regla, decisión 7) · `qa-ofertas-check.mjs` (37). Los siete `qa-pvc-*`, `qa-grados`, `qa-definicion`,
@@ -192,8 +197,11 @@ ciclo; `docs/PLAN_CICLOS.md`) · **`qa-triage-catalogo-check.mjs`** (V5.196 — 
   quede atada a la decisión del Buzón (Ronda 5 de la unificación, pregunta 5.5) antes de volver a encender el interruptor.
   Decidido después (2026-10-23): vuelve solo tras la comprobación horaria de Gmail (D-014 6.6) y con la copia de la casa en **Cco**
   (D-013 5.5); es la parte P24 del plan de unificación.
-- **2026-10-23 · el Buzón, congelado** (D-013 5.4): su contraseña salió de Vercel (sin sincronización que borre en Hostinger). Hasta que
-  la P18 lo vuelva historia de solo lectura en código, **nadie pulsa sus botones de sincronizar ni repone la contraseña**.
+- ~~**2026-10-23 · el Buzón, congelado** (D-013 5.4): su contraseña salió de Vercel (sin sincronización que borre en Hostinger). Hasta que
+  la P18 lo vuelva historia de solo lectura en código, **nadie pulsa sus botones de sincronizar ni repone la contraseña**.~~
+  **Hecho en P18 (2026-10-26):** el Buzón es historial de solo lectura en código — sin la retención que borraba, sin mover en remoto,
+  sin responder ni reenviar, «Sincronizar» se niega en la acción (`BUZON_CONGELADO`) y su botón se retiró; lo vigila
+  `qa-buzon-solo-lectura-check`. **Sigue la regla: la contraseña IMAP no vuelve a Vercel** (solo P19 «fallback 1», con su aprobación).
 - **2026-10-25 · V6.10: la salud de los crons (B6.0, P2 de la unificación).** Los 8 crons dejan un latido por corrida en `latidos` y
   ECP › Automatizaciones pinta «Atrasada» / «Falló» en sus filas (`registroCrons.ts` es la única fuente de las filas y de sus horarios).
   **Regla nueva: todo cron nuevo lleva su `conLatido` y su fila `activa` en la misma tanda que lo añade a `vercel.json`, o

@@ -19,6 +19,26 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.13] — 2026-10-26 (commit pendiente)
+
+- **Seguridad**: **el Buzón de la LCP es historial de solo lectura** (unificación P18, D-013 5.4; owner 2026-10-26): ningún camino del
+  código puede ya borrar, mover, marcar ni escribir correo en Hostinger. Se retiró la «limpieza de retención» de la sincronización (borraba
+  de Hostinger el correo archivado con más de 30 días, hasta 200 por corrida), y `syncBuzon.ts` abre el buzón en solo lectura (EXAMINE).
+  Llamadas IMAP que escriben en `src/`: 4 → 0; archivos que importan `imapflow`: 2 → 1.
+- **Retirado**: `src/lib/buzon/mailClient.ts` (archivar/eliminar en remoto, crear carpetas, copiar en Enviados, enviar respuestas) y
+  `BuzonSyncBar.tsx`; la Server Action `sendBuzonReply` (borrada: sin endpoint) y su escritura en `buzon_outbound` (1 → 0); los botones
+  Sincronizar, Responder, Reenviar, Archivar y Eliminar y el redactor; el avance `responderBuzon`. Las respuestas del dominio salen de
+  Gmail con su «Enviar como».
+- **Cambiado**: «Sincronizar» se niega dentro de la acción (`BUZON_CONGELADO`, primera sentencia de `syncBuzonNow`); `setBuzonStatus`
+  solo cambia la base. El Buzón conserva listar, abrir, etiquetar, leído/no leído y adjuntos; subtítulo «Historial de solo lectura,
+  congelado el 2026-07-16». Datos intactos: 306 correos, 0 salientes. `BUZON_IMAP_PASSWORD` sigue fuera de Vercel y no vuelve.
+- **Añadido**: guardián `qa-buzon-solo-lectura-check` (27 comprobaciones; probado contra el código anterior: 12 fallos). Notas «Filtro
+  de Gmail F01/F02» sobre los 9 asuntos de correo de la plataforma que reconocen los filtros del buzón principal.
+- **Docs**: `INBOUND_EMAIL_SETUP.md` reescrito; `HANDOFF.md`, `BCP_USER_ADMIN_PLAN.md`, la carta de `consolas`; notas en la ruta del
+  webhook dormido (503 sin su secreto) y en `yaRespondio` (la tabla está congelada; la señal viva es el «Ya respondió»). Compuerta: `tsc`
+  limpio, `eslint src` 8 avisos, `npm run build` exit 0, qa-buzon-solo-lectura 27, qa-centro-calidad 313, qa-lead-forms 96,
+  qa-rutas-consolas 540, qa-niveles 37, qa-encoding 0.
+
 ## [V6.12] — 2026-10-26 (commit 541d518)
 
 - **Seguridad**: **`npm audit` de 10 a 0** (4 moderadas, 5 altas, 1 crítica, todas de avisos publicados después de la V6.10 sobre

@@ -34,6 +34,7 @@ export async function sendOtpEmail(code: string, recipient?: string | null): Pro
       // Resend account owner's inbox -- which is exactly this OTP's recipient.
       from: process.env.EMAIL_FROM || "CTC Business Control Panel <onboarding@resend.dev>",
       to,
+      // Filtro de Gmail F01: este asunto lo reconoce un filtro del buzón principal. Cambiarlo obliga a cambiar el filtro (unificación P18).
       subject: "Tu código de confirmación · CTC BCP",
       text: `Código de confirmación: ${code}\n\nVálido por 10 minutos. Si no intentaste iniciar sesión en el Business Control Panel, ignora este mensaje.`,
     });

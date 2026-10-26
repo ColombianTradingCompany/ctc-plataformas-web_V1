@@ -72,7 +72,6 @@ export const AVANCE = {
   invitarUsuario: { clave: "invitar-usuario", etiqueta: "Creando el acceso y enviando la invitación", tipicoMs: 6000 },
   reenviarUsuario: { clave: "reenviar-usuario", etiqueta: "Reenviando la invitación por correo", tipicoMs: 5000 },
   restablecer: { clave: "restablecer", etiqueta: "Restableciendo la contraseña y enviándola por correo", tipicoMs: 5000 },
-  responderBuzon: { clave: "responder-buzon", etiqueta: "Enviando la respuesta (y archivando la copia)", tipicoMs: 5000 },
   redactarIa: { clave: "redactar-contexto", etiqueta: "Redactando el campo con IA", tipicoMs: 15000 },
   reenviarLlamado: { clave: "reenviar-llamado", etiqueta: "Reenviando la notificación del llamado", tipicoMs: 5000 },
   // V5.191: «Hacer revisión» de una referencia del productor (OCP · vista del lote).

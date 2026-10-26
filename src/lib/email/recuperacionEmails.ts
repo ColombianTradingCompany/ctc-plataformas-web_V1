@@ -69,6 +69,7 @@ export function construirCorreoRecuperacion(opciones: {
     SIGN
   );
 
+  // Filtro de Gmail F01: este asunto lo reconoce un filtro del buzón principal. Cambiarlo obliga a cambiar el filtro (unificación P18).
   return { subject: `Recupera tu acceso a ${sitio}`, text: lineas.join("\n") };
 }
 

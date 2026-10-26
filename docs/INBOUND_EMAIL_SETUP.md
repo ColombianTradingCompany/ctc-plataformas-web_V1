@@ -1,49 +1,48 @@
 # Buzón de entrada · arquitectura del correo entrante
 
-Estado: **OPERATIVO (2026-07-16), vía IMAP.** La ruta activa es la opción A+pull:
-catch-all de Hostinger → buzón real `info@` → sincronización IMAP → `inbound_emails`
-→ BCP · Buzón. El webhook de Resend Inbound (abajo) queda construido pero dormante —
-es la mejora futura si algún día se quiere push en tiempo real (Resend Pro, US$20/mes).
+Estado: **CONGELADO — historial de solo lectura** (D-013 5.4 · unificación P18, 2026-10-26).
+El Buzón de la LCP guarda el correo del dominio del 2025-03 al **2026-07-16** (306 correos,
+con sus adjuntos en Storage). No sincroniza, no responde, no reenvía y no archiva ni borra
+nada en Hostinger. **El correo nuevo del dominio se lee y se contesta en Gmail** (la cuenta
+principal, con su «Enviar como» para la dirección del dominio).
 
-## La ruta activa (costo: $0)
+## Cómo llega hoy el correo del dominio
 
 ```
-alguien escribe a CUALQUIER dirección @ctcexport.com (gvg@, socios@, la que sea)
-  → catch-all de Hostinger (configurado 2026-07-16) → buzón info@ctcexport.com
-  → "Sincronizar buzón" en /bcp/buzon → src/lib/buzon/syncBuzon.ts (IMAP)
-  → inbound_emails (+ adjuntos a Storage) → BCP · Buzón de entrada
+alguien escribe a CUALQUIER dirección @ctcexport.com
+  → catch-all de Hostinger → buzón info@ctcexport.com («guardar copias» activo)
+  → reenvío → Gmail principal (donde se lee, se etiqueta y se contesta)
 ```
 
-Configuración ya hecha:
-- **Hostinger**: catch-all `*@ctcexport.com → info@ctcexport.com` (activo).
-- **Env vars** (Vercel Production+Preview y `.env.local`): `BUZON_IMAP_HOST`
-  (`imap.hostinger.com`), `BUZON_IMAP_USER` (`info@ctcexport.com`),
-  `BUZON_IMAP_PASSWORD` (Sensitive). Si la contraseña del buzón se cambia en
-  Hostinger, hay que actualizarla en ambos lados.
+## El historial (lo que conserva el Buzón)
 
-## Políticas del sync (src/lib/buzon/syncBuzon.ts)
+- `inbound_emails`: 306 filas (2025-03 → 2026-07-16); adjuntos en `kaffetal-media/buzon/…`
+  (295 archivos). `buzon_outbound`: 0 filas; la tabla se conserva vacía.
+- `/lcp/buzon` lista, abre, etiqueta, marca leído / no leído y sirve los adjuntos. Nada más:
+  «Sincronizar», Responder, Reenviar, Archivar y Eliminar se retiraron en P18.
+- Una copia de respaldo cifrada vive fuera del repo (unificación P17).
 
-1. **Nunca se pierde correo**: un mensaje solo se borra de Hostinger si su fila
-   archivada está confirmada en Postgres Y tiene más de 30 días (RETENTION_DAYS).
-   El historial previo al sistema (no archivado) jamás se toca.
-2. **Lectura no destructiva**: el sync no marca como leído — el uso humano de
-   info@ por webmail sigue intacto.
-3. **Idempotente**: dedupe por message-id (índice único parcial); re-sincronizar
-   no duplica.
-4. **Acotado**: cada corrida escanea TODOS los sobres (barato) pero importa máx.
-   25 mensajes completos y devuelve `remaining`; el botón "Sincronizar" repite en
-   bucle hasta importar el buzón entero (histórico incluido) — cada corrida cabe
-   en una invocación serverless. Los **adjuntos** se suben a Storage (`kaffetal-media/buzon/...`),
-   así sobreviven a la limpieza del buzón remoto; el visor sigue mostrando solo
-   texto plano (el HTML se archiva pero nunca se renderiza).
+## Por qué el código de sincronización sigue en el repo
 
-Con esto, el buzón gratuito de 1 GB nunca se llena: es un búfer, no un archivo.
-El archivo permanente es Supabase.
+`src/lib/buzon/syncBuzon.ts` abre el buzón en **solo lectura** (EXAMINE: el servidor rechaza
+cualquier escritura) y ya no tiene la «limpieza de retención», que borraba de Hostinger el
+correo archivado con más de 30 días (retirada en P18). Solo lo llama `syncBuzonNow`, que se
+niega mientras `BUZON_CONGELADO = true` (`src/app/lcp/(app)/buzonActions.ts`).
 
-## Mejora futura · Resend Inbound (dormante)
+Existe por un único caso: si P19 necesitara su importación de respaldo («fallback 1»), una
+micro-release aprobada por el owner apaga el interruptor, restaura un disparador y la
+contraseña, corre una sola vez y lo deshace todo.
 
-`POST /api/inbound-email` (firma Svix, `RESEND_INBOUND_WEBHOOK_SECRET`) sigue
-desplegado. Para activar push en tiempo real algún día: Resend Pro → dominio
-`inbox.ctcexport.com` + su MX en Hostinger → webhook → cambiar el catch-all hacia
-`todo@inbox.ctcexport.com`. Nada de código nuevo — ambas rutas alimentan la misma
-tabla y el mismo Buzón.
+Variables: `BUZON_IMAP_HOST` y `BUZON_IMAP_USER` siguen en Vercel y no hacen nada sin la
+contraseña. `BUZON_IMAP_PASSWORD` se quitó de Vercel y de `.env.local` el 2026-10-23 y **no
+se vuelve a poner** (solo P19 fallback 1, con su propia aprobación).
+
+El guardián `scripts/qa-buzon-solo-lectura-check.mjs` falla si vuelve cualquier llamada que
+escriba en el buzón remoto o cualquier envío desde el Buzón.
+
+## El webhook dormido (Resend Inbound)
+
+`POST /api/inbound-email` (firma Svix) sigue desplegado y explica en su propio archivo por qué
+está dormido. Sin `RESEND_INBOUND_WEBHOOK_SECRET` —no está en ningún entorno de Vercel—
+producción responde **503 «Webhook not configured.»** y no escribe nada. Poner el secreto
+reabriría las escrituras en `inbound_emails`: necesita antes una decisión del owner.

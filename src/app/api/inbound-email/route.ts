@@ -4,6 +4,11 @@ import type { NextRequest } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
 // ── Inbound email webhook ────────────────────────────────────────────────────
+// DORMANT (documented and kept on purpose — unificación P18, D-013 5.4): the Buzón is read-only history,
+// frozen on 2026-07-16, and new mail is handled in Gmail. Without RESEND_INBOUND_WEBHOOK_SECRET (unset in
+// every Vercel environment) production answers 503 «Webhook not configured.» and writes nothing. Setting
+// the secret would reopen writes to `inbound_emails`: that needs an owner decision first.
+//
 // Receives "email received" webhook events (Resend Inbound, Svix-signed) and
 // stores them in `inbound_emails` (service-role-only), surfaced in BCP → Buzón.
 // Delivery path: Hostinger forwarder → inbound subdomain MX → Resend Inbound →

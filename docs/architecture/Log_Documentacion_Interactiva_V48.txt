@@ -241,3 +241,17 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - ANN `AGENTS.md`, `docs/HANDOFF.md`: Next.js 16.4.
 - Doc impact when wrapped: el nodo de la pila (stack) dice Next.js 16.4. Sin nodo nuevo ni entrada de DICT.
 (commit: 541d518)
+
+## [2026-10-26] V6.13 · El Buzón, historial de solo lectura (unificación P18)
+- DEL `src/lib/buzon/mailClient.ts` (moveRemoteMessage, findSpecialUse/mailboxCreate, appendToSent, sendBuzonMail) y
+  `src/app/lcp/(app)/buzon/BuzonSyncBar.tsx`. ANN `src/lib/buzon/syncBuzon.ts`: sin el paso 3 de retención (messageDelete), lock
+  `readOnly: true`, cabecera nueva. ANN `src/app/lcp/(app)/buzonActions.ts`: `BUZON_CONGELADO`, `sendBuzonReply` borrada, `setBuzonStatus`
+  solo base. ANN `BuzonMail.tsx`, `page.tsx`, `buzon.module.css`, `lcp/(app)/page.tsx`, `ProgresoDeAccion.tsx` (sin `responderBuzon`).
+- ANN notas: ruta `api/inbound-email` (dormida, 503), `leadForms/envios.ts` (`yaRespondio`), `cron/seguimientos-leads`, `leadForms/correos.ts`,
+  y los 9 asuntos F01/F02 (`sendOtpEmail`, `recuperacionEmails`, `panelEmails` ×2, `partnerEmails` ×2, `leadEmails`, `correos` ×2).
+- ADD `scripts/qa-buzon-solo-lectura-check.mjs`; ANN `qa-centro-calidad-check.mjs`, `qa-lead-forms-check.mjs`. Docs: `INBOUND_EMAIL_SETUP.md`,
+  `HANDOFF.md`, `BCP_USER_ADMIN_PLAN.md`, `docs/componentes/consolas.md`.
+- Doc impact when wrapped: cambio de nodo «Buzón» (LCP): historial congelado el 2026-07-16, solo lectura; el flujo «sincronizar → archivar
+  en Hostinger» y «responder desde el Buzón» desaparecen del mapa; el correo nuevo vive en Gmail. El webhook Resend Inbound queda como nodo
+  dormido. Sin entrada nueva de DICT.
+(commit: pendiente)

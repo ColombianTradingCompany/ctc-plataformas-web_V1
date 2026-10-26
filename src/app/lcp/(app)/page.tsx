@@ -13,7 +13,7 @@ export default function LcpHomePage() {
       accent={c.accent}
       intro="La consola de la relación: lo que entra de fuera —un correo, un formulario, alguien que pide que se le avise— y a quién se le ha respondido ya. No decide precios ni mueve lotes; lleva la cuenta de con quién está hablando la casa."
       modules={[
-        { name: "Buzón de entrada", desc: "El correo de la red. Cada colaborador ve el dirigido a su etiqueta @ctcexport.com; responder o reenviar pide nivel admin.", built: true, href: "/lcp/buzon" },
+        { name: "Buzón de entrada", desc: "Historial de solo lectura del correo de la red, congelado el 2026-07-16. Cada colaborador ve lo dirigido a su etiqueta @ctcexport.com; el correo nuevo se lee en Gmail.", built: true, href: "/lcp/buzon" },
         { name: "Leads · Recepción", desc: "Las consultas generales de «Escríbenos», con su cuenta de plataforma ya creada y el hilo de respuestas.", built: true, href: "/lcp/leads" },
         { name: "Interfaz de Leads", desc: "Los formularios de captación de ferias y campañas (el primero: SCAJ 2026). Uno encendido a la vez sale en la portada; aquí quedan sus leads, sus correos, su seguimiento y su QR.", built: true, href: "/lcp/formularios" },
         { name: "Lista de espera", desc: "Todas las listas de la red en un sitio, con filtro: la portada, Roast, X, Directorio, Herramientas y Terratalento.", built: true, href: "/lcp/lista-espera" },

@@ -32,10 +32,10 @@ Estado por pieza:
 - **Endurecimiento del write path (2026-07-15)** — **CONSTRUIDO.** Los 9 `requireAdmin()`
   por archivo delegan en `src/lib/panel/requireActiveAdmin.ts` (rol + `panel_users.status`):
   suspender revoca Server Actions al instante, no solo la navegación.
-- **Correo entrante (Buzón)** — **CÓDIGO CONSTRUIDO (2026-07-15); ruta externa pendiente.**
-  Webhook `POST /api/inbound-email` (firma Svix) → `inbound_emails` → BCP · Buzón. La
-  entrega real (reenviador Hostinger → MX del subdominio `inbox.` → Resend Inbound) la
-  configura el owner siguiendo `docs/INBOUND_EMAIL_SETUP.md`.
+- **Correo entrante (Buzón)** — **CONGELADO: historial de solo lectura** (D-013 5.4 · unificación P18,
+  2026-10-26). `inbound_emails` guarda el correo del dominio hasta el 2026-07-16 y la LCP · Buzón solo
+  lo lista, abre, etiqueta y marca leído; el correo nuevo se lleva en Gmail. El webhook
+  `POST /api/inbound-email` queda dormido (503 sin su secreto). Ver `docs/INBOUND_EMAIL_SETUP.md`.
 - **Tier de partners — LO ESENCIAL CONSTRUIDO (2026-07-15).** `profiles.role='partner'` +
   tabla `partner_accounts` (service-role-only; `node_type` ∈ los 5 nodos, org/contacto,
   invited/active/suspended). Los 5 "pares" (landing + login) viven en `/socios/<nodo>`
@@ -263,8 +263,9 @@ Toda acción del servidor declara su **clase** —qué HACE—, y la clase decid
 **Lo que parece un borrador y NO lo es** (para que nadie lo «arregle»): `logProducerComm` —la nota sobre un productor—
 **la ve el productor** en su panel; `guardarContexto` es la doctrina que lee la redacción asistida; `recordAnchor` alimenta
 la lectura de mercado del PVC; `redactarContexto`, `scanFichaSoportes` y todo el Estudio de Coffeed **gastan** en IA;
-`createTranscript`/`sendTranscriptToCloud` abren un trabajo que cuesta; **responder o reenviar un correo del Buzón
-notifica a alguien de fuera**, y archivarlo lo mueve también en el buzón remoto; y borrar nunca es un borrador.
+`createTranscript`/`sendTranscriptToCloud` abren un trabajo que cuesta; `setBuzonStatus` (archivar o enviar a la
+papelera un correo del Buzón) sigue siendo `emite` aunque desde P18 solo cambia la base y ninguna pantalla lo llama —
+responder, reenviar y el movimiento remoto se retiraron—; y borrar nunca es un borrador.
 
 **Cómo se entera un viewer.** El rail de la consola dice «Lectura y borradores» bajo su nombre, y la acción responde con
 un mensaje que explica qué pasó y a quién pedírselo — **sin tumbar la página**: `permisoDeEscritura` LANZA solo cuando no

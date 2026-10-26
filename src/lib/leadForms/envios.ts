@@ -119,7 +119,11 @@ export async function enviarCorreoInmediato(service: SupabaseClient, leadId: str
   return r;
 }
 
-/** ¿El lead ya nos respondió? Un correo entrante del Buzón desde su dirección, después del correo inmediato (o del envío). */
+/** ¿El lead ya nos respondió? Un correo entrante del Buzón desde su dirección, después del correo inmediato (o del envío).
+ *  OJO (unificación P18): `inbound_emails` está CONGELADA desde el 2026-07-16 (D-013 5.4: el Buzón es historial de solo
+ *  lectura), así que la consulta solo ve correo anterior a esa fecha. La señal viva hoy es `replied_at`, el «Ya respondió»
+ *  que marca el owner; la comprobación horaria de respuestas en Gmail (D-014 6.6, P24) añadirá `respondio_at`. Los
+ *  seguimientos siguen en pausa (D-008). La consulta se queda porque `qa-lead-forms-check` (check 5) la exige. */
 export async function yaRespondio(service: SupabaseClient, lead: Pick<LeadDeEvento, "id" | "form_key" | "email" | "email_immediate_sent_at" | "created_at" | "replied_at">): Promise<boolean> {
   if (lead.replied_at) return true;
   const desde = lead.email_immediate_sent_at ?? lead.created_at;

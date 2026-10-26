@@ -19,6 +19,7 @@ export function buildPartnerInviteEmail(
   deliveryEmail?: string | null
 ): { subject: string; text: string } {
   const p = PARTNERS[node];
+  // Filtro de Gmail F02: este asunto lo reconoce un filtro del buzón principal. Cambiarlo obliga a cambiar el filtro (unificación P18).
   const subject = `Tu credencial de socio · ${p.name} · Red CTC`;
   const text = [
     `Hola${contactName ? ` ${contactName}` : ""},`,
@@ -53,6 +54,7 @@ export function buildPartnerResetEmail(
   deliveryEmail?: string | null
 ): { subject: string; text: string } {
   const p = PARTNERS[node];
+  // Filtro de Gmail F01: este asunto lo reconoce un filtro del buzón principal. Cambiarlo obliga a cambiar el filtro (unificación P18).
   const subject = `Restablecimiento de contraseña · ${p.name} · Red CTC`;
   const text = [
     `Hola${contactName ? ` ${contactName}` : ""},`,

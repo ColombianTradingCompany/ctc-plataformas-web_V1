@@ -6,21 +6,27 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 // ── Buzón IMAP sync ──────────────────────────────────────────────────────────
 // The virtual-inbox pipeline, option A+pull (2026-07-16): Hostinger's catch-all
 // delivers every @ctcexport.com address into the real info@ mailbox; this module
-// pulls that mailbox over IMAP into `inbound_emails` (the same table the Resend
-// webhook feeds), uploading attachments to Storage so nothing depends on the
-// 1 GB mailbox. Policies, in order of importance:
-//   1. NEVER lose mail — a message is only ever deleted from Hostinger after its
-//      archived row is confirmed in Postgres (and only past the retention window).
+// pulled that mailbox over IMAP into `inbound_emails` (the same table the Resend
+// webhook feeds), uploading attachments to Storage.
+//
+// FROZEN since 2026-07-16 (D-013 5.4, unificación P18): the Buzón is read-only
+// history and Gmail is the only place where mail is handled. This file is kept,
+// not deleted, because P19 «fallback 1» may need ONE owner-approved import-only
+// run (its own micro-release turns off the `BUZON_CONGELADO` guard in
+// buzonActions.ts, restores a trigger and the password, runs once, undoes all
+// three). Its only caller, `syncBuzonNow`, returns before reaching it while the
+// guard is on. Policies, in order of importance:
+//   1. NEVER touch mail at Hostinger — the mailbox is opened READ-ONLY (EXAMINE),
+//      so the server itself refuses writes; the retention step that deleted
+//      archived mail was removed in P18 and no delete/move/flag call exists.
 //   2. Non-destructive reads — fetches don't mark messages as read; human use of
 //      info@ via webmail keeps working untouched.
 //   3. Idempotent — dedupe by RFC message-id (unique index inbound_emails_message_id_uidx);
 //      re-running a sync can't duplicate rows.
 //   4. Bounded — each run scans ALL envelopes (cheap) but imports at most
-//      MAX_PER_RUN full messages, returning `remaining` so the client loops
-//      until the whole mailbox (history included) is archived. Retention
-//      cleanup only ever touches mail that has been archived.
+//      MAX_PER_RUN full messages, returning `remaining` so a caller can loop
+//      until the whole mailbox is archived.
 
-const RETENTION_DAYS = 30; // archived mail older than this is removed from Hostinger
 const MAX_PER_RUN = 25; // bounded so each run fits a serverless invocation; the client loops until remaining=0
 const STORAGE_BUCKET = "kaffetal-media";
 
@@ -28,7 +34,6 @@ export type BuzonSyncResult = {
   ok: boolean;
   stored: number;
   skipped: number;
-  cleaned: number;
   /** Messages still in the mailbox and not yet archived — the client re-runs while > 0. */
   remaining: number;
   error?: string;
@@ -79,7 +84,7 @@ export async function syncBuzon(): Promise<BuzonSyncResult> {
   const user = process.env.BUZON_IMAP_USER;
   const pass = process.env.BUZON_IMAP_PASSWORD;
   if (!host || !user || !pass) {
-    return { ok: false, stored: 0, skipped: 0, cleaned: 0, remaining: 0, error: "Faltan las variables BUZON_IMAP_* en el entorno." };
+    return { ok: false, stored: 0, skipped: 0, remaining: 0, error: "Faltan las variables BUZON_IMAP_* en el entorno." };
   }
 
   const service = createServiceRoleClient();
@@ -87,12 +92,12 @@ export async function syncBuzon(): Promise<BuzonSyncResult> {
 
   let stored = 0,
     skipped = 0,
-    cleaned = 0,
     remaining = 0;
 
   try {
     await client.connect();
-    const lock = await client.getMailboxLock("INBOX");
+    // READ-ONLY (P18): the lock opens INBOX with EXAMINE, so the server refuses any write in this session.
+    const lock = await client.getMailboxLock("INBOX", { readOnly: true });
     try {
       // ── 1. Full-mailbox scan: envelopes only (cheap), find what's missing ─
       // This covers both backfill (pre-existing history) and new mail in one
@@ -130,14 +135,13 @@ export async function syncBuzon(): Promise<BuzonSyncResult> {
           continue;
         }
 
-        // Attachments → Storage (they must survive mailbox cleanup).
-        // Regla #1 del módulo: NUNCA perder correo. Antes (auditoría 2026-08-13,
+        // Attachments → Storage (the archive must not depend on the mailbox).
+        // Regla del módulo: NUNCA perder correo. Antes (auditoría 2026-08-13,
         // EST-2) un upload fallido se ignoraba en silencio y el correo se
         // insertaba igual; como el dedupe es por message_id NUNCA se reintentaba,
-        // y la retención de 30 días borraba el original de Hostinger — una factura
-        // PDF podía desaparecer sin rastro. Ahora, si algún adjunto falla al subir,
-        // NO se inserta el mensaje: sin fila, el próximo run (idempotente) lo
-        // reintenta entero. Perder el cuerpo Y el adjunto es peor que reintentar.
+        // y la retención de 30 días (retirada en P18) borraba el original de
+        // Hostinger. Si algún adjunto falla al subir, NO se inserta el mensaje:
+        // sin fila, el próximo run (idempotente) lo reintenta entero.
         const attachmentsMeta: { filename: string; content_type: string | null; size: number | null; storage_path: string }[] = [];
         const folder = `buzon/${randomUUID()}`;
         let attachmentFailed = false;
@@ -180,38 +184,17 @@ export async function syncBuzon(): Promise<BuzonSyncResult> {
           stored++;
         }
       }
-
-      // ── 3. Retention cleanup: delete from Hostinger ONLY what is archived
-      //       and older than RETENTION_DAYS. Unarchived history is never touched.
-      const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 3600 * 1000);
-      const oldUids = ((await client.search({ before: cutoff }, { uid: true })) || []).slice(-200);
-      if (oldUids.length) {
-        const candidates: { uid: number; messageId: string }[] = [];
-        for await (const m of client.fetch(oldUids.join(","), { envelope: true }, { uid: true })) {
-          if (m.envelope?.messageId) candidates.push({ uid: m.uid, messageId: m.envelope.messageId });
-        }
-        if (candidates.length) {
-          const { data: archivedRows } = await service
-            .from("inbound_emails")
-            .select("message_id")
-            .in("message_id", candidates.map((c) => c.messageId));
-          const archived = new Set((archivedRows ?? []).map((r) => r.message_id));
-          const deletable = candidates.filter((c) => archived.has(c.messageId)).map((c) => c.uid);
-          if (deletable.length) {
-            await client.messageDelete(deletable.join(","), { uid: true });
-            cleaned = deletable.length;
-          }
-        }
-      }
+      // (P18: the former step 3, «retention cleanup», deleted archived mail at
+      // Hostinger. It was removed; this module never deletes, moves or flags.)
     } finally {
       lock.release();
     }
     await client.logout();
-    return { ok: true, stored, skipped, cleaned, remaining };
+    return { ok: true, stored, skipped, remaining };
   } catch (err) {
     try {
       await client.logout();
     } catch {}
-    return { ok: false, stored, skipped, cleaned, remaining, error: err instanceof Error ? err.message : "Fallo desconocido en la sincronización." };
+    return { ok: false, stored, skipped, remaining, error: err instanceof Error ? err.message : "Fallo desconocido en la sincronización." };
   }
 }

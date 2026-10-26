@@ -9,7 +9,8 @@
 // es estándar (Gmail, Outlook y Apple Mail quitan los <form>), así que se hace lo que sí lo es: el correo sale en HTML y en texto,
 // con las preguntas del paso 2 y la respuesta que ya dio cada una (prellenadas; las vacías, marcadas), un botón «Completar o corregir
 // mis respuestas» que vuelve al MISMO registro con un enlace firmado, y el CÓDIGO del registro en el asunto: una respuesta por correo
-// llega al Buzón con ese código y se enruta al mismo lead (`yaRespondio` lo busca por correo y por código). El PDF de confirmación
+// se enruta al mismo lead por ese código (`yaRespondio` lo busca por correo y por código; el Buzón está congelado desde el
+// 2026-07-16, así que la señal viva es el «Ya respondió» del owner hasta la comprobación en Gmail de P24). El PDF de confirmación
 // también va enlazado.
 //
 // REGLA DURA (owner): «el correo no puede inventar nada: ni precios, ni disponibilidad, ni puntajes, ni plazos de envío, ni
@@ -338,6 +339,7 @@ export function construirCorreoInmediato(lead: LeadParaCorreo, config: ConfigDeF
   const textoFinal = [...p, ...(perfilTexto ? [perfilTexto] : []), `${UI[lang].pdf}: ${enlaces.pdf}`, firma(config, lang), bajaLinea(enlaces.baja, lang)].join("\n\n");
   return {
     lang,
+    // Filtro de Gmail F02: este asunto lo reconoce un filtro del buzón principal. Cambiarlo obliga a cambiar el filtro (unificación P18).
     subject: es ? `${nombre}, gracias por pasar por el stand de CTC en SCAJ 2026 · ${codigo}` : `${nombre}, thank you for stopping by the CTC stand at SCAJ 2026 · ${codigo}`,
     text: textoFinal,
     html: html(lead, lang, p, enlaces, config, true),
@@ -396,6 +398,7 @@ export function construirSeguimiento(lead: LeadParaCorreo, config: ConfigDeFormu
   const codigo = codigoDeLead(lead.form_key, lead.id);
   return {
     lang,
+    // Filtro de Gmail F02: este asunto lo reconoce un filtro del buzón principal. Cambiarlo obliga a cambiar el filtro (unificación P18).
     subject: es ? `${nombre}, ¿seguimos? · CTC después de SCAJ 2026 · ${codigo}` : `${nombre}, shall we continue? · CTC after SCAJ 2026 · ${codigo}`,
     text: [...p, firma(config, lang), bajaLinea(enlaces.baja, lang)].join("\n\n"),
     html: html(lead, lang, p, enlaces, config, false),

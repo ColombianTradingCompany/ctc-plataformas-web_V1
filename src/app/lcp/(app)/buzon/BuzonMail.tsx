@@ -1,15 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { AVANCE, ProgresoDeAccion, useAvance, type Progreso } from "@/components/panel/ProgresoDeAccion";
 import { useRouter } from "next/navigation";
-import {
-  sendBuzonReply,
-  setBuzonStatus,
-  setBuzonTags,
-  getBuzonAttachmentUrls,
-  markInboundEmailRead,
-} from "../buzonActions";
+import { setBuzonTags, getBuzonAttachmentUrls, markInboundEmailRead } from "../buzonActions";
 import shared from "@/components/panel/shared.module.css";
 import styles from "./buzon.module.css";
 
@@ -33,22 +26,14 @@ const TABS = [
   { key: "deleted", label: "Papelera" },
 ] as const;
 
-type Composer = { mode: "reply" | "forward"; to: string; subject: string; body: string };
-
-// Sender extraction for the reply prefill: '"Name" <a@b>' → a@b.
-function bareAddress(v: string | null): string {
-  if (!v) return "";
-  const m = v.match(/<([^>]+)>/);
-  return (m ? m[1] : v).trim();
-}
-
+// Historial de solo lectura (D-013 5.4 · unificación P18): aquí se lista, se abre, se etiqueta, se marca leído/no leído y se ven
+// los adjuntos. Responder, Reenviar, Archivar y Eliminar se retiraron — el correo se contesta en Gmail.
 export function BuzonMail({ emails, myAddress }: { emails: InboundRow[]; myAddress: string | null }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [tab, setTab] = useState<(typeof TABS)[number]["key"]>("inbox");
   const [openId, setOpenId] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [composer, setComposer] = useState<Composer | null>(null);
   const [tagsDraft, setTagsDraft] = useState<string>("");
   const [tagsEditing, setTagsEditing] = useState(false);
   const [attachments, setAttachments] = useState<{ filename: string; url: string }[] | null>(null);
@@ -71,14 +56,12 @@ export function BuzonMail({ emails, myAddress }: { emails: InboundRow[]; myAddre
     setTagFilter((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
   }
 
-  // V5.164 (owner): enviar una respuesta enseña su avance.
-  const { enCurso, conAvance } = useAvance();
-  function act(fn: () => Promise<{ ok: boolean; error?: string }>, okText: string, onOk?: () => void, progreso?: Progreso) {
+  function act(fn: () => Promise<{ ok: boolean; error?: string }>, okText: string, onOk?: () => void) {
     setMsg(null);
     startTransition(async () => {
       let res: { ok: boolean; error?: string };
       try {
-        res = await conAvance(fn, progreso);
+        res = await fn();
       } catch {
         res = { ok: false, error: "La acción no respondió. Revise su conexión y vuelva a intentarlo." };
       }
@@ -95,20 +78,9 @@ export function BuzonMail({ emails, myAddress }: { emails: InboundRow[]; myAddre
   function open(e: InboundRow) {
     const next = openId === e.id ? null : e.id;
     setOpenId(next);
-    setComposer(null);
     setTagsEditing(false);
     setAttachments(null);
     if (next && !e.read_at) act(() => markInboundEmailRead(e.id, true), "");
-  }
-
-  function startComposer(e: InboundRow, mode: "reply" | "forward") {
-    const subj = e.subject ?? "(sin asunto)";
-    setComposer({
-      mode,
-      to: mode === "reply" ? bareAddress(e.from_email) : "",
-      subject: mode === "reply" ? (subj.startsWith("Re:") ? subj : `Re: ${subj}`) : subj.startsWith("Fwd:") ? subj : `Fwd: ${subj}`,
-      body: "",
-    });
   }
 
   return (
@@ -146,7 +118,6 @@ export function BuzonMail({ emails, myAddress }: { emails: InboundRow[]; myAddre
         )}
       </div>
 
-      <ProgresoDeAccion enCurso={enCurso} />
       {msg && msg.text && <p className={msg.ok ? styles.syncOk : styles.syncErr} style={{ marginBottom: 12 }}>{msg.text}</p>}
 
       {!list.length && (
@@ -154,7 +125,7 @@ export function BuzonMail({ emails, myAddress }: { emails: InboundRow[]; myAddre
           {tab === "inbox"
             ? myAddress
               ? "Aún no hay correos dirigidos a tu dirección."
-              : "Bandeja vacía. Pulsa “Sincronizar buzón” por si hay correo nuevo."
+              : "Bandeja vacía."
             : "Nada por aquí."}
         </p>
       )}
@@ -199,21 +170,9 @@ export function BuzonMail({ emails, myAddress }: { emails: InboundRow[]; myAddre
                 )}
 
                 <div className={styles.actionsRow}>
-                  <button className="btn btn-sm" onClick={() => startComposer(e, "reply")}>Responder</button>
-                  <button className="btn btn-sm" onClick={() => startComposer(e, "forward")}>Reenviar</button>
                   {!tagsEditing ? (
                     <button className="btn btn-sm" onClick={() => { setTagsEditing(true); setTagsDraft(e.tags.join(", ")); }}>Etiquetas</button>
                   ) : null}
-                  {e.status === "inbox" && (
-                    <button className="btn btn-sm" disabled={pending} onClick={() => act(() => setBuzonStatus(e.id, "archived"), "Archivado (también en Hostinger).", () => setOpenId(null))}>
-                      Archivar
-                    </button>
-                  )}
-                  {e.status !== "deleted" && (
-                    <button className="btn btn-sm" disabled={pending} onClick={() => act(() => setBuzonStatus(e.id, "deleted"), "Movido a la papelera (también en Hostinger).", () => setOpenId(null))}>
-                      Eliminar
-                    </button>
-                  )}
                   <button className="btn btn-sm" disabled={pending} onClick={() => act(() => markInboundEmailRead(e.id, !e.read_at), e.read_at ? "Marcado como no leído." : "Marcado como leído.")}>
                     {e.read_at ? "Marcar no leído" : "Marcar leído"}
                   </button>
@@ -227,39 +186,10 @@ export function BuzonMail({ emails, myAddress }: { emails: InboundRow[]; myAddre
                       placeholder="etiquetas separadas por coma (ej: gvg, socios, urgente)"
                       aria-label="Etiquetas"
                     />
-                    <button className="btn btn-sm" disabled={pending} onClick={() => act(() => setBuzonTags(e.id, tagsDraft.split(",")), "Etiquetas guardadas.", () => setTagsEditing(false), AVANCE.responderBuzon)}>
+                    <button className="btn btn-sm" disabled={pending} onClick={() => act(() => setBuzonTags(e.id, tagsDraft.split(",")), "Etiquetas guardadas.", () => setTagsEditing(false))}>
                       Guardar
                     </button>
                     <button className="btn btn-sm" type="button" onClick={() => setTagsEditing(false)}>Cancelar</button>
-                  </div>
-                )}
-
-                {composer && (
-                  <div className={styles.composer}>
-                    <div className={styles.composerRow}>
-                      <label>Para</label>
-                      <input value={composer.to} onChange={(ev) => setComposer({ ...composer, to: ev.target.value })} type="email" />
-                    </div>
-                    <div className={styles.composerRow}>
-                      <label>Asunto</label>
-                      <input value={composer.subject} onChange={(ev) => setComposer({ ...composer, subject: ev.target.value })} />
-                    </div>
-                    <textarea
-                      rows={6}
-                      value={composer.body}
-                      onChange={(ev) => setComposer({ ...composer, body: ev.target.value })}
-                      placeholder={composer.mode === "reply" ? "Tu respuesta (el original queda citado debajo)…" : "Mensaje para el reenvío (el original queda citado debajo)…"}
-                    />
-                    <div className={styles.actionsRow}>
-                      <button
-                        className="btn btn-solid btn-sm"
-                        disabled={pending || !composer.to || !composer.body}
-                        onClick={() => act(() => sendBuzonReply(e.id, composer), "Enviado (copia en el buzón real).", () => setComposer(null))}
-                      >
-                        {pending ? "Enviando…" : composer.mode === "reply" ? "Enviar respuesta" : "Reenviar"}
-                      </button>
-                      <button className="btn btn-sm" type="button" onClick={() => setComposer(null)}>Cancelar</button>
-                    </div>
                   </div>
                 )}
               </div>

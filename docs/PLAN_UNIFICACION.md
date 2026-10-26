@@ -2731,7 +2731,7 @@ Time-bound items found by the dry runs: Gmail's Trash holds about 17 conversatio
 | P14 | Not started | |
 | P15 | Not started | |
 | P16 | Not started | |
-| P17 | Approved 2026-10-26; early Trash pass under way | 2026-10-26: 0 writes in the dry run; inbox 754 threads (446 unread), Spam 32, Trash 52; copies to stay as local encrypted archives (P17b uploads them later). Approved the same day with the dependency changes in «Parallel order (D-023)». Trash listed: 28 conversations proposed for restore, 24 to leave; waiting for the owner's marks |
+| P17 | Approved 2026-10-26; Trash pass done, Spam and the copies open | 2026-10-26: 0 writes in the dry run; inbox 754 threads (446 unread), Spam 32, Trash 52; copies to stay as local encrypted archives (P17b uploads them later). Approved the same day with the dependency changes in «Parallel order (D-023)». Trash pass: the owner approved 28 of the 52 conversations for restore; all 28 restored (they return archived under their own labels), Trash re-listed at 24. By the owner's choice the restores ran before the mailbox snapshot (J1); the local Trash list keeps every restored conversation's labels, so the undo map is complete. Open: Spam (owner), Takeout, J1, filter exports, the local copies |
 | P18 | Not started | |
 | P19 | Not started | |
 | P20 | Not started | |

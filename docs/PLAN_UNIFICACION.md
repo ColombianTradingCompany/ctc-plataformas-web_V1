@@ -960,7 +960,7 @@ There are 11 Vercel crons in all. From 2027-03-28 the owner's opening falls at 0
 **Owner approves** · Pages and script; storage branch, any 2 TB plan (own purchase); match list; S0 as RB8 baseline.
 **Rollback** · Re-share from «before» reads (no notify); revoke script access; archive pages in 9.3. Notices cannot be unsent.
 **Checks**
-- Accounting folders: accounting accounts only; no `inheritedPermissionsDisabled`.
+- Accounting folders: the editors the owner confirmed on 2026-10-26 (D-022), unchanged; no `inheritedPermissionsDisabled`.
 - Consent = two permissions; Triggers = 0; Sheet unshared.
 - S0 end row matches; each diff vs Phase 0 is a ledger row.
 - «Enlaces Drive retirados» ≥ 483 values (or gaps explained).
@@ -2104,9 +2104,9 @@ Every action only the owner can take, by part. Claude prepares each one and chec
 - [ ] Approve the 3 registry rows and both doc commits
 
 ### P13 · Drive Step 0 and RB0 dry run
-- [ ] Step 0a (right after P0): re-read storage in Google One, pick the branch, decide any 2 TB plan (own purchase)
-- [ ] Step 0a: remove every non-accounting account from the accounting invoices folder, and only the direct ones on its month subfolder, never using «limit access»
-- [ ] Step 0a: name or remove the unknown «Recursos de venta» writer
+- [x] Step 0a (right after P0): re-read storage in Google One, pick the branch, decide any 2 TB plan (own purchase) (2026-10-24: 3.4 % of 5 TB, normal branch, no purchase)
+- [x] Step 0a: remove every non-accounting account from the accounting invoices folder, and only the direct ones on its month subfolder, never using «limit access» (2026-10-26, D-022: every editor confirmed by the owner, none removed)
+- [x] Step 0a: name or remove the unknown «Recursos de venta» writer (2026-10-26, D-022: confirmed as an editor who stays)
 - [ ] Give the step-1 go-ahead on the Notion pages, registry row and script code and manifest
 - [ ] Remove the guest's inherited access on the restricted Bitácora sub-page
 - [ ] Step 0b: re-read storage and state % and branch
@@ -2715,7 +2715,7 @@ Runbook: diseno_ronda6_briefing.md §E.7.
 | P10 | Not started | |
 | P11 | Not started | |
 | P12 | Not started | |
-| P13 | Step 0a started | 2026-10-24: «before» permission reads saved locally; storage band below 80 %. 2026-10-26: the two writers left as they are for now (D-021) |
+| P13 | Step 0a done | 2026-10-24: «before» permission reads saved locally; storage band below 80 %. 2026-10-26 (D-022): the owner confirmed every editor of the accounting and sales-resources folders; nothing removed; «after» read = «before» |
 | P14 | Not started | |
 | P15 | Not started | |
 | P16 | Not started | |

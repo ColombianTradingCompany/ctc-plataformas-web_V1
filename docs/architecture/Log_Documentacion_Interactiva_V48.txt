@@ -254,4 +254,4 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - Doc impact when wrapped: cambio de nodo «Buzón» (LCP): historial congelado el 2026-07-16, solo lectura; el flujo «sincronizar → archivar
   en Hostinger» y «responder desde el Buzón» desaparecen del mapa; el correo nuevo vive en Gmail. El webhook Resend Inbound queda como nodo
   dormido. Sin entrada nueva de DICT.
-(commit: pendiente)
+(commit: f80d43e)

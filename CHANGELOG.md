@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.13] — 2026-10-26 (commit pendiente)
+## [V6.13] — 2026-10-26 (commit f80d43e)
 
 - **Seguridad**: **el Buzón de la LCP es historial de solo lectura** (unificación P18, D-013 5.4; owner 2026-10-26): ningún camino del
   código puede ya borrar, mover, marcar ni escribir correo en Hostinger. Se retiró la «limpieza de retención» de la sincronización (borraba

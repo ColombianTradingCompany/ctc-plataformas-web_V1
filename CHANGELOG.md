@@ -19,6 +19,25 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.11] — 2026-10-26 (commit pendiente)
+
+- **Añadido**: **Calculadora logística de café** (`calculadora-logistica`, default), herramienta NUEVA del taller (owner, 2026-10-26:
+  «load this up on to the Herramientas catalogue»): peso, CBM y estiba de una carga de café, vista 3D con una persona de 1,80 m para
+  dar escala y PDF de una página. ES · EN. Superficies KR · CP · web. Nace de un artefacto del owner trabajado en la misma
+  conversación (V1 → V4; fuentes en `reference/html_tools/calculadora-logistica/`, ficha `herramientas-cafe/calculadora-logistica/`).
+- **Añadido**: **modo pallet** — cinco tamaños ISO (EUR/EPAL, EUR 2/ISO, GMA 48×40 in, Asia T11, Australia); la capa se arma con el
+  patrón que más cajas mete (rejilla, dos bloques con giro de 90° o molinete; probado en 2.160 combinaciones sin solapes ni vuelo); se
+  apila hasta 2,2 m con el pallet o hasta el **tope de peso por pallet** (1.000 kg por omisión), y lo que sobra va a otro pallet al lado.
+  El CBM paletizado se muestra aparte del de las cajas.
+- **Añadido**: memoria con **esquema propio** (la carga entera más el peso objetivo aplicado) y resumen en el Home Menu; sonda nueva en
+  `qa-tools-puente-conformance`. three.js r128 y OrbitControls vendorizados en `public/tools/assets/` (jsPDF ya estaba).
+- **Corregido** (sobre la V1 del owner, antes del alta): el PDF no salía — dos elementos con `id="qr"` (el `<symbol>` del sprite y la
+  imagen), así que jsPDF recibía `undefined` y fallaba en silencio; ahora un fallo se avisa. El peso objetivo ya no arma una fila
+  larga: busca el bloque más cúbico sin quedar por debajo del objetivo.
+- **Datos** (tras el deploy): alta de `calculadora-logistica` en `tools` + `tool_versions` (origen `repo`) + `version_publicada`.
+- **Docs**: charter `herramientas-cafe` (inventario y Pendientes), recuento `herramientas-cafe/README.md`, ficha nueva; captura
+  `public/images/herramientas/shots/calculadora-logistica.jpg`; icono propio en `ToolIcons.tsx`.
+
 ## [V6.10] — 2026-10-25 (commit 67b30cf)
 
 - **Añadido**: **la salud de los crons** (B6.0, parte P2 del plan de unificación; owner, 2026-10-25: «apply the migration as written with

@@ -22,7 +22,7 @@
   `PVC_Tablero_de_Control_CTC_V1.html` (`herramientas-internas`; lo cita `docs/PVC_BCP_PLAN.md`) y
   `CTCx VL1 - Herramienta de Guion.html` (`consolas`). Moverlos es de sus sesiones.
 
-## El recuento — 17 en la base + 1 candidata
+## El recuento — 18 en la base + 1 candidata
 
 | id | Nombre | Estado | Nivel | Idioma | Superficies | Memoria | Trabajos |
 |---|---|---|---|---|---|---|---|
@@ -42,13 +42,14 @@
 | [`cool-pdf`](cool-pdf/README.md) | Cool PDF · dale cuerpo a un PDF | Viva | default | en | KR · web | sí (puente) | 0 |
 | [`cromatografia-suelo`](cromatografia-suelo/README.md) | Lector de Cromatografía de Suelo | Viva · primera con servidor | **plus** | es (+ en, de) | KR · web · DC | sí (esquema propio) | 0 |
 | [`gulliver`](gulliver/README.md) | **Gulliver · 7 días a Tokio** (japonés de bolsillo para SCAJ 2026) | Viva · **nueva** (V5.149) | **plus** | es | KR · web · DC | sí (esquema propio) | 0 |
+| [`calculadora-logistica`](calculadora-logistica/README.md) | **Calculadora logística de café** (peso, CBM y estiba en pallets estándar) | Viva · **nueva** (V6.11, V4) | default | es · en | KR · CP · web | sí (esquema propio) | 0 |
 | [`mermas-detallada`](mermas-detallada/README.md) | Reporte de proceso de café | **Archivada · archivo borrado** (2026-09-22, V5.67) — 308 a `mermas-ctc` | — | es | ninguna | no | 0 |
 | [`atlas-cafetero`](_candidatas/atlas-cafetero/README.md) | Atlas cafetero de Colombia | **Candidata** (sin registrar) | — | es | — | — | — |
 
 Datos de la base leídos el 2026-09-21 (`tools`, `tool_versions`, `tool_sessions`). «Superficies» son las
 columnas de reparto (`kr`·`cp`·`web`·`dc`); el Taller lista TODO el catálogo compartible sin mirar `web`.
 Las 14 vivas y la archivada son `clase: compartible`. En `public/tools/` quedan **15 carpetas** (la archivada ya no tiene archivo); ninguna es interna.
-`coffee-datasheet` se dio de alta el 2026-10-01 (V5.132) y desde la V6.6 (2026-10-23) es una RUTA de Next (su carpeta solo tiene la página de paso); `gulliver`, el 2026-10-04 (V5.149) — 16 carpetas en `public/tools/`.
+`coffee-datasheet` se dio de alta el 2026-10-01 (V5.132) y desde la V6.6 (2026-10-23) es una RUTA de Next (su carpeta solo tiene la página de paso); `gulliver`, el 2026-10-04 (V5.149) — 16 carpetas en `public/tools/`; `calculadora-logistica`, el 2026-10-26 (V6.11) — 17 carpetas.
 
 ## Las herramientas como interfaz de otras partes
 

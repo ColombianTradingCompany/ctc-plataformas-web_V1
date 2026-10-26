@@ -29,6 +29,9 @@ export type CarpetaHerramienta = {
 
 export const CARPETAS_HERRAMIENTAS: CarpetaHerramienta[] = [
   { id: "agtron", archivos: ["agtron-dial.html"] },
+  // V6.11 (2026-10-26): peso, CBM y estiba en pallets estándar (hasta 2,2 m o el tope de peso), vista 3D con
+  // persona de 1,80 m y PDF. ES · EN; memoria con esquema propio. Fuentes en reference/html_tools/calculadora-logistica/.
+  { id: "calculadora-logistica", archivos: ["calculadora-logistica-cafe.html"] },
   // Dos versiones: la V23 del owner es la publicada (tool_versions #2); la V10
   // (`rueda-catacion.html`, #1) sigue viva porque `scripts/build-ruedas-mock.mjs`
   // dibuja con ella el extracto de rueda del reverso del Sneak Peek.

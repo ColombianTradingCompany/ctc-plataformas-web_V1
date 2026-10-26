@@ -22,6 +22,7 @@ const HERRAMIENTAS = {
   "mermas-rapida": "/tools/mermas-rapida/mermas-rapida.html",
   "mermas-ctc": "/tools/mermas-ctc/mermas-ctc.html",
   agtron: "/tools/agtron/agtron-dial.html",
+  "calculadora-logistica": "/tools/calculadora-logistica/calculadora-logistica-cafe.html",
   "cogs-verde": "/tools/cogs-verde/cogs-cafe-verde.html",
   "costo-empaque": "/tools/costo-empaque/costo-empaque.html",
   "cool-pdf": "/tools/cool-pdf/cool-pdf.html",
@@ -101,6 +102,23 @@ const SONDA = {
         (await marco.locator('input[aria-label="fob_puerto"]').inputValue()) === "Buenaventura"
       );
     },
+  },
+  // Calculadora logística (V6.11): el trabajo es la carga entera (medidas, densidad, estiba, pallet y peso objetivo APLICADO,
+  // que no vive en ningún campo). La sonda cambia el largo, enciende el pallet Asia T11 y calcula 2.000 kg; exige que vuelvan.
+  "calculadora-logistica": {
+    actuar: async (marco) => {
+      await marco.locator("#dim-l").fill("50");
+      await marco.locator("#pal-toggle").check();
+      await marco.locator("#pal-size").selectOption("3");
+      await marco.locator("#aim").fill("2000");
+      await marco.locator("button[onclick='applyAim()']").click();
+    },
+    capturado: (estado) => !!estado && estado.v === 1 && estado.l === "50" && estado.pal === true && estado.palSize === "3" && estado.aimOn === 2000,
+    restaurado: async (marco) =>
+      (await marco.locator("#dim-l").inputValue()) === "50" &&
+      (await marco.locator("#pal-toggle").isChecked()) &&
+      (await marco.locator("#pal-size").inputValue()) === "3" &&
+      /2[.,]000/.test(await marco.locator("#aim-note").innerText()),
   },
   agtron: {
     actuar: async (marco) => {

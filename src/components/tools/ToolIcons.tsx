@@ -105,6 +105,15 @@ export const TOOL_ICON: Record<ToolId, React.ReactNode> = {
       <path d="M9.3 8.3v6M14.7 8.3v6" />
     </LineIcon>
   ),
+  // Calculadora logística: cajas estibadas sobre un pallet — la carga que la herramienta pesa y mide.
+  "calculadora-logistica": (
+    <LineIcon>
+      <rect x="4" y="11.5" width="7.5" height="6.5" rx="0.8" />
+      <rect x="12.5" y="11.5" width="7.5" height="6.5" rx="0.8" />
+      <rect x="8" y="4.5" width="8" height="7" rx="0.8" />
+      <path d="M3 18h18M5 18v2.5M12 18v2.5M19 18v2.5" />
+    </LineIcon>
+  ),
   // Fórmula de calidad: un matraz de laboratorio — la "fórmula" que define la calidad.
   "formula-calidad": (
     <LineIcon>

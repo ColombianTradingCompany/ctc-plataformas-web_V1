@@ -27,6 +27,7 @@ cuenta de KR, CP o Directorio), el **Taller** (Cover Flow en dos estantes: abier
 | id | Nombre | Nivel | Idioma | Memoria | Archivo en `public/tools/<id>/` |
 |---|---|---|---|---|---|
 | `agtron` | Disco Agtron | default | en (+ es, de en la propia herramienta, V5.93) | sí (esquema propio, V5.93) | `agtron-dial.html` (**V8**; fuente `reference/html_tools/agtron/agtron_dial_metre-V8.html`) |
+| `calculadora-logistica` | **Calculadora logística de café** (peso, CBM y estiba en pallets estándar, vista 3D, PDF) | default | es · en | sí (esquema propio) | `calculadora-logistica-cafe.html` (**V4**, V6.11; fuentes `reference/html_tools/calculadora-logistica/`) |
 | `catacion` | Rueda de catación (rueda del sabor) | default | es | sí | `rueda-catacion.html` (+ `rueda-del-cafe-v23.html`) |
 | `coffee-datasheet` | **CTCx Coffee Datasheet Tool** (la planilla del Centro de Calidad, más B1 · extrínseca · comercial) | default | es · en | sí (esquema propio, React) | **ruta de Next** `/tools/coffee-datasheet/app` (`src/components/tools/datasheet/`, V6.6); `ctcx-coffee-datasheet-tool.html` es solo la página de paso (V5.132: nace de combinar `catacion` y `green-datasheet`; catálogos GENERADOS con `scripts/build-coffee-datasheet.mjs`) |
 | `cogs-verde` | Calculadora CoGS · Café verde | **plus** | es | sí | `cogs-cafe-verde.html` (copia **V19** en `public/ocp-apps/`) |
@@ -140,6 +141,14 @@ completos, sin CDN) ·
 cualquiera de esos campos se ve en las tres superficies al instante — sin desplegar.
 
 ## Pendientes
+
+- **V6.11 · Calculadora logística de café** (owner, 2026-10-26: «load this up on to the Herramientas catalogue»; ficha
+  `herramientas-cafe/calculadora-logistica/README.md`). Hecho: herramienta NUEVA desde un artefacto del owner, trabajada en la misma
+  conversación (V1 → V4): PDF arreglado (`id="qr"` duplicado), peso objetivo con bloque cúbico, persona de 1,80 m en la vista 3D, modo
+  pallet con cinco tamaños ISO, capa optimizada (rejilla, dos bloques o molinete), hasta 2,2 m o el tope de peso por pallet y pallets al
+  lado; memoria con esquema propio, three.js y OrbitControls vendorizados, captura, sonda en la conformidad del puente; alta en `tools`
+  por SQL con el archivo desplegado. Abierto, **del owner**: (a) nivel y superficies puestos por omisión (default · KR · CP · web);
+  (b) la tara del pallet no se suma al peso.
 
 - **V6.6 · la Coffee Datasheet Tool ES la planilla del Centro de Calidad, más B1, extrínseca y comercial** (owner, 2026-10-23: «it MUST
   be the SAME»; ficha `herramientas-cafe/coffee-datasheet/README.md`). Hecho: `DatasheetTool` (React) renderiza `LabEvalEditor` con las

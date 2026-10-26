@@ -226,3 +226,11 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - Datos: migración `latidos` (acta `docs/migraciones/2026-10-25_latidos.sql`): tabla + guardia, `automations.clave`, `automations_touch`
   enmendada; 14 filas semilla tras el push. Guardián nuevo `qa-registro-crons`.
 (commit: 67b30cf)
+
+## [2026-10-26] V6.11 · Herramientas del Café — Calculadora logística de café (nueva, default)
+- ADD `public/tools/calculadora-logistica/calculadora-logistica-cafe.html` (V4: peso, CBM y estiba; modo pallet con cinco tamaños ISO, capa optimizada, 2,2 m o tope de peso por pallet y pallets al lado; vista 3D con persona de 1,80 m; PDF; `CTC.usarEstado`/`usarResumen`; `?lang=`).
+- ADD `public/tools/assets/{r128-three.min.js,controls-OrbitControls.js}` (vendorizadas), `public/images/herramientas/shots/calculadora-logistica.jpg`, `docs/componentes/herramientas-cafe/calculadora-logistica/README.md`.
+- ANN `src/lib/tools/carpetas.ts`, `src/components/tools/ToolIcons.tsx`, `scripts/build-tool-shots.mjs`, `scripts/qa-tools-puente-conformance.mjs` (sonda), `docs/componentes/herramientas-cafe.md`, `docs/componentes/herramientas-cafe/README.md`.
+- DATOS `tools` (id `calculadora-logistica`, default, kr·cp·web, `soporta_memoria`) + `tool_versions` (repo) + `version_publicada`.
+- Doc impact when wrapped: nodo de Herramientas del Café (18 en la base); primera herramienta del taller con 3D (three.js vendorizado). Sin entrada nueva de DICT.
+(commit: pendiente)

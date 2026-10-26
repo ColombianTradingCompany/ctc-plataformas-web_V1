@@ -29,6 +29,7 @@ const HERRAMIENTAS = {
   "mermas-rapida": "/tools/mermas-rapida/mermas-rapida.html",
   "mermas-ctc": "/tools/mermas-ctc/mermas-ctc.html",
   agtron: "/tools/agtron/agtron-dial.html",
+  "calculadora-logistica": "/tools/calculadora-logistica/calculadora-logistica-cafe.html?lang=es", // V6.11 — ?lang=es: el Chrome del script es en-US
   "cogs-verde": "/tools/cogs-verde/cogs-cafe-verde.html",
   "costo-empaque": "/tools/costo-empaque/costo-empaque.html",
   "cool-pdf": "/tools/cool-pdf/cool-pdf.html",

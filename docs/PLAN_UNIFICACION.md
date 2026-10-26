@@ -2707,7 +2707,7 @@ Runbook: diseno_ronda6_briefing.md §E.7.
 | P2 | Done (Thursday's first courier run still to check) | 2026-10-25: migration `latidos` applied (22 trigger tests, 0 failures, nothing persisted); V6.10 (67b30cf) live; unauthenticated probe 401 with no row; 14 seed rows (4 → 18); first dispatcher and hourly runs closed `ok`; board 0 «Atrasada» / 0 «Falló». 2026-10-26: the 5 daily crons and the Monday job closed `ok` at their first fire (139 runs, 0 failures). Open: the Thursday job on 2026-10-29 |
 | P3 | Done, accepted by the owner 2026-10-26 | 2026-10-24: 0 writes; ledger 24 of 25 resolved (1 not found); 65 meeting notes read; 5 new credential locations for P4; 18 design corrections proposed |
 | P4 | Narrowed by the owner, B0 and B1 left | 2026-10-24: every credential value Claude could reach out of Notion (D-016). 2026-10-26 (D-021): the EUDR line removed by the owner; the other spots kept; rotations moved to P37 |
-| P5 | Dry run done, waiting for the go-ahead and backup B0 | 2026-10-26: 0 writes; 16 pages, 5 databases, 9 counterparts (0 name clashes), 34 views and 5 of 7 seed tasks still true; one owner decision on the triage link field |
+| P5 | Session 1 done; waiting for the owner's Notion steps | 2026-10-26: backup B0 encrypted and checked; the ten hubs, 6 fixed pages, 5 databases, 9 link fields on existing databases (all empty), 34 views and 5 seed tasks created; banner on the Email Secretary; the database rename test passed (title, icon set, icon cleared). Open: the owner's UI list, then the automation test |
 | P6 | Not started | |
 | P7 | Not started | |
 | P8 | Not started | |

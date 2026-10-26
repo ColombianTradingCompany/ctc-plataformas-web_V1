@@ -1974,6 +1974,7 @@ Every action only the owner can take, by part. Claude prepares each one and chec
 - [x] Accept the H0 report as complete, which releases P4 (~5–10 min) (2026-10-26)
 
 ### P4 · Credentials out of Notion (H1) and backups (H2)
+> 2026-10-26 (D-021): the owner removed the EUDR «Credenciales» line, kept the other Notion spots as they are, and moved the vault and every rotation chain to P37. What is left in P4: B0 (owner) and B1 (Claude).
 - [ ] Approve chains A–E, the vault change and which flagged lines join the rotation list
 - [ ] Approve Claude's two title updates, the G.6 minimisation deletions, the Chain E window and who is told, the production redeploy, and B1/B0 location and encryption
 - [ ] Vault: set a new master password, issue a new recovery code (kept offline) and backup codes, then delete the old ones from Notion
@@ -2435,6 +2436,7 @@ Every action only the owner can take, by part. Claude prepares each one and chec
 - [ ] After Claude confirms the import verification, note the POP entry's non-secret settings, delete it in Gmail settings and keep a screenshot outside the repo
 
 ### P37 · Monitoring, documentation and handover
+- [ ] Rotation chains moved here from P4 (D-021): the vault, chains A–F and the login hint (G.6), in P4's order (chain E last, Make reconnected at once)
 - [ ] Give go-ahead (a)–(e) on the dry run: routines and settings, batch A, move list, retention dates
 - [ ] Create the weekly and monthly recurring Tarea templates in the Notion UI (~15 min)
 - [ ] Read hPanel (save copies ON, quota), run the Drive is:unorganized search, read the Make 2FA setting
@@ -2704,7 +2706,7 @@ Runbook: diseno_ronda6_briefing.md §E.7.
 | P1 | Done (first real event still to watch) | 2026-10-25: V6.8 + V6.9 live; key auth on the router hook; two pings sent with nothing written; immediate send plus the dispatcher every 10 minutes |
 | P2 | Done (daily and weekly first runs still to check) | 2026-10-25: migration `latidos` applied (22 trigger tests, 0 failures, nothing persisted); V6.10 (67b30cf) live; unauthenticated probe 401 with no row; 14 seed rows (4 → 18); first dispatcher and hourly runs closed `ok`; board 0 «Atrasada» / 0 «Falló». Open: the 5 daily crons and the Monday job on 2026-10-26, the Thursday job on 2026-10-29 |
 | P3 | Done, accepted by the owner 2026-10-26 | 2026-10-24: 0 writes; ledger 24 of 25 resolved (1 not found); 65 meeting notes read; 5 new credential locations for P4; 18 design corrections proposed |
-| P4 | Partly done | 2026-10-24: every credential value out of Notion (D-016); rotation chains and backups B0/B1 open |
+| P4 | Narrowed by the owner, B0 and B1 left | 2026-10-24: every credential value Claude could reach out of Notion (D-016). 2026-10-26 (D-021): the EUDR line removed by the owner; the other spots kept; rotations moved to P37 |
 | P5 | Not started | |
 | P6 | Not started | |
 | P7 | Not started | |
@@ -2713,7 +2715,7 @@ Runbook: diseno_ronda6_briefing.md §E.7.
 | P10 | Not started | |
 | P11 | Not started | |
 | P12 | Not started | |
-| P13 | Step 0a started | 2026-10-24: «before» permission reads saved locally; storage band below 80 % |
+| P13 | Step 0a started | 2026-10-24: «before» permission reads saved locally; storage band below 80 %. 2026-10-26: the two writers left as they are for now (D-021) |
 | P14 | Not started | |
 | P15 | Not started | |
 | P16 | Not started | |

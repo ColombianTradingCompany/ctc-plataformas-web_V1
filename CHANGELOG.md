@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.12] — 2026-10-26 (commit pendiente)
+## [V6.12] — 2026-10-26 (commit 541d518)
 
 - **Seguridad**: **`npm audit` de 10 a 0** (4 moderadas, 5 altas, 1 crítica, todas de avisos publicados después de la V6.10 sobre
   dependencias que ya estaban; la V6.11 no tocó ninguna). `npm audit fix` sin `--force` cerró nueve: `zod` 4.4.3 y 3.25.76 → 4.6.7

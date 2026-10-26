@@ -240,4 +240,4 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - ANN `package-lock.json` (`npm audit fix`, sin `--force`): `zod` → 4.6.7 (también la copia de `shadcn`/`@shadcn/registry`), `shadcn` 4.22.1, `@shadcn/registry` 0.2.0, `undici` 7.30.1, `nodemailer` 10.2.1, `mailparser` 3.12.4, `body-parser` 2.4.0, `fast-uri` 3.1.9, `ip-address` 10.7.5.
 - ANN `AGENTS.md`, `docs/HANDOFF.md`: Next.js 16.4.
 - Doc impact when wrapped: el nodo de la pila (stack) dice Next.js 16.4. Sin nodo nuevo ni entrada de DICT.
-(commit: pendiente)
+(commit: 541d518)

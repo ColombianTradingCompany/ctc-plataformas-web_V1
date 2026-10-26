@@ -2698,6 +2698,18 @@ Runbook: diseno_ronda6_briefing.md §E.7.
   - the Supabase branch used to rehearse the enum split holds only seeded non-sensitive rows and is deleted the same day.
 - **Backups:** the encrypted workspace export and the per-step snapshots are deleted on schedule, 30 days after the last Notion batch (H17 exit check), because they hold personal data.
 
+## Parallel order (D-023, 2026-10-26)
+
+The owner chose to run three tracks side by side. The read-only dry runs of P13 and P17 (2026-10-26) checked every dependency; these are the changes. Each part still needs its own go-ahead, and each change below is part of that go-ahead.
+
+| Track | Order | Dependency changes |
+|---|---|---|
+| Notion | P5 → P6 → P7 → P8 → P9 → P10 → P11 → P12 | None. P6 needs a decision first: two meeting transcripts kept by D-021 break H8's «guard 0» precondition. |
+| Drive | P13 → P14 → P15 → P16 | **P13** depends on P5 (hubs and Bitácora exist) and P0, not on P11 or H16 (H16 only trashes empty objects). Its permission reads, inventory CSV and access list stay local until P8 invites the guest; its registry row becomes a Bitácora line now and a row in P11's seed. Its link scan becomes the link audit P8 was going to run. **P14** uses the hub titles from P5; its «Raíz de Drive» rows go to the Bitácora, and P11 seeds them. Folders that take a record title or a project name move in P15 (which already waits for P10). P15 and P16 keep their dependencies. |
+| Gmail | P17 → P18 → P19 → P20 → P21 → P22 | **P17** depends on P0 only: the copies stay as encrypted local archives next to backup B0, and their upload to Drive becomes **P17b** (after P14). Its registry row waits for P11's seed. **P18** unchanged. **P19** accepts the local archive and queues its registry rows for P11; project labels beyond the fair campaign wait for P7's objective names. **P20** still needs P11 (label name↔ID table, «Área» on the 0–9 names, the rewritten Email Secretary), so the inbox clean-up (P21–P22) stays behind the Notion track unless the owner chooses to run the review list and the sweep before P20. |
+
+Time-bound items found by the dry runs: Gmail's Trash holds about 17 conversations worth keeping (dated 7–20 October; the first could be purged around 6 November); six former Drive root files are no longer visible to the hub (if they are in Drive's Trash, they purge around 22 November).
+
 ## Status
 
 | Part | State | Note |
@@ -2715,11 +2727,11 @@ Runbook: diseno_ronda6_briefing.md §E.7.
 | P10 | Not started | |
 | P11 | Not started | |
 | P12 | Not started | |
-| P13 | Step 0a done | 2026-10-24: «before» permission reads saved locally; storage band below 80 %. 2026-10-26 (D-022): the owner confirmed every editor of the accounting and sales-resources folders; nothing removed; «after» read = «before» |
+| P13 | Step 0a done; dry run done, waiting for the go-ahead | 2026-10-24: «before» permission reads saved locally; storage band below 80 %. 2026-10-26 (D-022): the owner confirmed every editor of the accounting and sales-resources folders; nothing removed; «after» read = «before» |
 | P14 | Not started | |
 | P15 | Not started | |
 | P16 | Not started | |
-| P17 | Not started | |
+| P17 | Dry run done, waiting for the go-ahead | 2026-10-26: 0 writes; inbox 754 threads (446 unread), Spam 32, Trash 52; copies to stay as local encrypted archives (P17b uploads them later) |
 | P18 | Not started | |
 | P19 | Not started | |
 | P20 | Not started | |

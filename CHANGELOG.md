@@ -19,6 +19,21 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.12] — 2026-10-26 (commit pendiente)
+
+- **Seguridad**: **`npm audit` de 10 a 0** (4 moderadas, 5 altas, 1 crítica, todas de avisos publicados después de la V6.10 sobre
+  dependencias que ya estaban; la V6.11 no tocó ninguna). `npm audit fix` sin `--force` cerró nueve: `zod` 4.4.3 y 3.25.76 → 4.6.7
+  (GHSA-mrhx-c7xc-m3w5, también la copia anidada de `shadcn` / `@shadcn/registry`: `shadcn` 4.21.4 → 4.22.1, `@shadcn/registry`
+  0.1.3 → 0.2.0), `undici` 7.30.0 → 7.30.1, `nodemailer` 10.1.0 → 10.2.1 y `mailparser` 3.9.38 → 3.12.4 (el Buzón: `simpleParser`
+  probado con remitente, destinatarios con coma y asunto codificado), `body-parser` 2.3.0 → 2.4.0, `fast-uri` 3.1.8 → 3.1.9,
+  `ip-address` 10.7.3 → 10.7.5. Solo `package-lock.json`.
+- **Seguridad**: **`next` 16.3.0 → 16.4.3** (y `eslint-config-next` a la par), la crítica: trece avisos sobre 16.0.0–16.4.0, entre
+  ellos RCE sin autenticar en servidores Windows, en la optimización de imágenes (AVIF, SVG), en `next/og` y en `use cache`. El pin
+  exacto de `package.json` dejaba fuera la corrección y `npm audit fix` pedía `--force`; no es un mayor: la 16.3.8 (último parche de la
+  16.3) conserva tres avisos y la 16.4.1+ ninguno. La 16.4 solo añade (`navigation` y `prefetch` estables, ESLint 10 admitido).
+- **Docs**: `AGENTS.md` y `docs/HANDOFF.md` dicen Next.js 16.4. Compuerta: `tsc` limpio, `eslint src` 8 avisos (la línea base),
+  `npm run build` exit 0.
+
 ## [V6.11] — 2026-10-26 (commit 25d019f)
 
 - **Añadido**: **Calculadora logística de café** (`calculadora-logistica`, default), herramienta NUEVA del taller (owner, 2026-10-26:

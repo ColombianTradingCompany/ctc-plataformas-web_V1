@@ -48,7 +48,7 @@ The subdomain→path rewrite lives in `src/proxy.ts` (see Gotchas below for why 
 
 ## Stack
 
-- Next.js 16.3 (App Router, Turbopack) + TypeScript + React 19. **This Next.js version has real API differences from training-data Next.js** — see `AGENTS.md`, e.g. `middleware.ts` → `proxy.ts`. Before writing Next.js-version-sensitive code, check `node_modules/next/dist/docs/`.
+- Next.js 16.4 (App Router, Turbopack) + TypeScript + React 19. **This Next.js version has real API differences from training-data Next.js** — see `AGENTS.md`, e.g. `middleware.ts` → `proxy.ts`. Before writing Next.js-version-sensitive code, check `node_modules/next/dist/docs/`.
 - Supabase (Postgres 17 + Auth + RLS + Storage) — project ref **`sjznkzvefqfcysczllli`** ("ctc-platform"), region `eu-central-1`. **This is the only real project — see Gotchas.**
 - Vercel for hosting. GitHub for source.
 - Anthropic API (raw `fetch`, not the SDK) behind the house cost ledger (`src/lib/ai/consumo.ts`): the Ficha advisor, the visual scanner (V5.23), Coffeed/Redacción, Arena mejoras; Gemini for images/video.

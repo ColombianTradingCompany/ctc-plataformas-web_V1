@@ -2727,11 +2727,11 @@ Time-bound items found by the dry runs: Gmail's Trash holds about 17 conversatio
 | P10 | Not started | |
 | P11 | Not started | |
 | P12 | Not started | |
-| P13 | Step 0a done; dry run done, waiting for the go-ahead | 2026-10-24: «before» permission reads saved locally; storage band below 80 %. 2026-10-26 (D-022): the owner confirmed every editor of the accounting and sales-resources folders; nothing removed; «after» read = «before» |
+| P13 | Approved 2026-10-26; waiting for the owner's Step 0b list | 2026-10-24: «before» permission reads saved locally; storage band below 80 %. 2026-10-26 (D-022): the owner confirmed every editor of the accounting and sales-resources folders; nothing removed; «after» read = «before». Same day: dry run done and approved with the dependency changes in «Parallel order (D-023)» |
 | P14 | Not started | |
 | P15 | Not started | |
 | P16 | Not started | |
-| P17 | Dry run done, waiting for the go-ahead | 2026-10-26: 0 writes; inbox 754 threads (446 unread), Spam 32, Trash 52; copies to stay as local encrypted archives (P17b uploads them later) |
+| P17 | Approved 2026-10-26; early Trash pass under way | 2026-10-26: 0 writes in the dry run; inbox 754 threads (446 unread), Spam 32, Trash 52; copies to stay as local encrypted archives (P17b uploads them later). Approved the same day with the dependency changes in «Parallel order (D-023)». Trash listed: 28 conversations proposed for restore, 24 to leave; waiting for the owner's marks |
 | P18 | Not started | |
 | P19 | Not started | |
 | P20 | Not started | |

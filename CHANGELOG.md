@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.11] — 2026-10-26 (commit pendiente)
+## [V6.11] — 2026-10-26 (commit 25d019f)
 
 - **Añadido**: **Calculadora logística de café** (`calculadora-logistica`, default), herramienta NUEVA del taller (owner, 2026-10-26:
   «load this up on to the Herramientas catalogue»): peso, CBM y estiba de una carga de café, vista 3D con una persona de 1,80 m para

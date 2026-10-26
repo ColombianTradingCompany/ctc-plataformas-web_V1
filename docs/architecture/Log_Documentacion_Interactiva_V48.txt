@@ -233,4 +233,4 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - ANN `src/lib/tools/carpetas.ts`, `src/components/tools/ToolIcons.tsx`, `scripts/build-tool-shots.mjs`, `scripts/qa-tools-puente-conformance.mjs` (sonda), `docs/componentes/herramientas-cafe.md`, `docs/componentes/herramientas-cafe/README.md`.
 - DATOS `tools` (id `calculadora-logistica`, default, kr·cp·web, `soporta_memoria`) + `tool_versions` (repo) + `version_publicada`.
 - Doc impact when wrapped: nodo de Herramientas del Café (18 en la base); primera herramienta del taller con 3D (three.js vendorizado). Sin entrada nueva de DICT.
-(commit: pendiente)
+(commit: 25d019f)

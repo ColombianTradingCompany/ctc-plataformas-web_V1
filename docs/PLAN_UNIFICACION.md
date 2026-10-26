@@ -1962,8 +1962,8 @@ Every action only the owner can take, by part. Claude prepares each one and chec
 - [ ] With Claude, watch the first real outbound event end to end (may stay open past the session)
 
 ### P2 · B6.0 · cron health ledger
-- [ ] Go-ahead on the dry-run report: the migration as written with no branch, the 14 seed rows after the push, the release with its §3 row, and the wraps in other components' routes
-- [ ] Glance at ECP › Automatizaciones: 8 cron rows with no «Atrasada» or «Falló», the other 10 rows with no health state, no «Borrar» on cron rows
+- [x] Go-ahead on the dry-run report: the migration as written with no branch, the 14 seed rows after the push, the release with its §3 row, and the wraps in other components' routes (2026-10-25)
+- [x] Glance at ECP › Automatizaciones: 8 cron rows with no «Atrasada» or «Falló», the other 10 rows with no health state, no «Borrar» on cron rows (2026-10-26)
 - [ ] Only if a rollback is needed: trigger the Vercel instant rollback in the dashboard (or tell Claude to do it)
 
 ### P3 · Notion H0 · read-only dry run
@@ -1971,7 +1971,7 @@ Every action only the owner can take, by part. Claude prepares each one and chec
 - [ ] In the Notion UI, check ••• → Connections on «Cotizaciones CTC» and «Recursos de Contenido»: is Make listed? (information only, ~3 min)
 - [ ] Search the Notion Trash with the step-4 words and the checklist service names; list trashed credential pages in the local checklist only, restoring or deleting nothing (~10 min)
 - [ ] Spot-check 3 credential checklist lines (during acceptance)
-- [ ] Accept the H0 report as complete, which releases P4 (~5–10 min)
+- [x] Accept the H0 report as complete, which releases P4 (~5–10 min) (2026-10-26)
 
 ### P4 · Credentials out of Notion (H1) and backups (H2)
 - [ ] Approve chains A–E, the vault change and which flagged lines join the rotation list
@@ -2703,7 +2703,7 @@ Runbook: diseno_ronda6_briefing.md §E.7.
 | P0 | Done (2 owner items open) | 2026-10-24: docs commit live; containment, rotation and Make proof done; open: the packaging folder to «Restricted» and the mailbox list |
 | P1 | Done (first real event still to watch) | 2026-10-25: V6.8 + V6.9 live; key auth on the router hook; two pings sent with nothing written; immediate send plus the dispatcher every 10 minutes |
 | P2 | Done (daily and weekly first runs still to check) | 2026-10-25: migration `latidos` applied (22 trigger tests, 0 failures, nothing persisted); V6.10 (67b30cf) live; unauthenticated probe 401 with no row; 14 seed rows (4 → 18); first dispatcher and hourly runs closed `ok`; board 0 «Atrasada» / 0 «Falló». Open: the 5 daily crons and the Monday job on 2026-10-26, the Thursday job on 2026-10-29 |
-| P3 | Done, waiting for the owner's acceptance | 2026-10-24: 0 writes; ledger 24 of 25 resolved (1 not found); 65 meeting notes read; 5 new credential locations for P4; 18 design corrections proposed |
+| P3 | Done, accepted by the owner 2026-10-26 | 2026-10-24: 0 writes; ledger 24 of 25 resolved (1 not found); 65 meeting notes read; 5 new credential locations for P4; 18 design corrections proposed |
 | P4 | Partly done | 2026-10-24: every credential value out of Notion (D-016); rotation chains and backups B0/B1 open |
 | P5 | Not started | |
 | P6 | Not started | |

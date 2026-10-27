@@ -2768,7 +2768,7 @@ Time-bound items found by the dry runs: Gmail's Trash holds about 17 conversatio
 
 | Part | State | Note |
 |---|---|---|
-| P0 | Done (2 owner items open) | 2026-10-24: docs commit live; containment, rotation and Make proof done; open: the packaging folder to «Restricted» and the mailbox list |
+| P0 | Done (1 owner item open) | 2026-10-24: docs commit live; containment, rotation and Make proof done; open: the mailbox list. The packaging folder went «Restricted» on 2026-10-27 (P13 Step 0b) |
 | P1 | Done (first real event still to watch) | 2026-10-25: V6.8 + V6.9 live; key auth on the router hook; two pings sent with nothing written; immediate send plus the dispatcher every 10 minutes |
 | P2 | Done (Thursday's first courier run still to check) | 2026-10-25: migration `latidos` applied (22 trigger tests, 0 failures, nothing persisted); V6.10 (67b30cf) live; unauthenticated probe 401 with no row; 14 seed rows (4 → 18); first dispatcher and hourly runs closed `ok`; board 0 «Atrasada» / 0 «Falló». 2026-10-26: the 5 daily crons and the Monday job closed `ok` at their first fire (139 runs, 0 failures). Open: the Thursday job on 2026-10-29 |
 | P3 | Done, accepted by the owner 2026-10-26 | 2026-10-24: 0 writes; ledger 24 of 25 resolved (1 not found); 65 meeting notes read; 5 new credential locations for P4; 18 design corrections proposed |
@@ -2781,7 +2781,7 @@ Time-bound items found by the dry runs: Gmail's Trash holds about 17 conversatio
 | P10 | Not started | |
 | P11 | Not started | |
 | P12 | Not started | |
-| P13 | Approved 2026-10-26; waiting for the owner's Step 0b list | 2026-10-24: «before» permission reads saved locally; storage band below 80 %. 2026-10-26 (D-022): the owner confirmed every editor of the accounting and sales-resources folders; nothing removed; «after» read = «before». Same day: dry run done and approved with the dependency changes in «Parallel order (D-023)» |
+| P13 | Done 2026-10-27 (D-030) | 2026-10-24: «before» permission reads saved locally; storage band below 80 %. 2026-10-26 (D-022): the owner confirmed every editor of the accounting and sales-resources folders; nothing removed; «after» read = «before». Same day: dry run done and approved with the dependency changes in «Parallel order (D-023)». 2026-10-27, Step 0b (owner): storage about 3 %; 2 links open to anyone closed; no AppSheet app and no script trigger in use; 8 parentless items; 17 of 17 test links «does not exist»; the inventory script ran once (2,320 items, end row matches, 2 read scopes, no trigger, owner-only Sheet), approved as the RB8 baseline. RB0 (Claude): the inventory reconciles exactly with Phase 0 (2,031 files, 268 folders); 506 Drive values in Notion, 427 dead, 0 pointing into the Trash, all saved in the Bitácora before any change; 3 access-change lines for later batches; Make uses no Drive module; match list confirmed by the owner (36 matches, 15 shoot pairings, 23–26 title-only pages to create in P15–P16). Claude's Drive writes: 0. Next: P14 |
 | P14 | Not started | |
 | P15 | Not started | |
 | P16 | Not started | |

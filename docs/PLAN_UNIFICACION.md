@@ -96,7 +96,7 @@ Each part section below lists only what is specific to that part.
 
 ### Platform releases and other repos
 
-- **Platform releases** (C2): P1, P2, P18, P20, P24, P25, P26, P27, P28.
+- **Platform releases** (C2): P1, P2, P18, P20, P23b, P24, P25, P26, P27, P28.
 - **P0** is a docs-only commit.
 - **P29** lives in the separate private repo `ctc-briefing`. Its gate is its own fixture tests plus owner-reviewed merges.
 
@@ -128,6 +128,7 @@ Each part section below lists only what is specific to that part.
 | P21 | Rules before AI · review list, protected list, filter import (J6–J8) | Gmail, Notion, Make (read-only), Platform (read-only), Repo docs | P20, P19, P17, P0 | — | 2 sessions · ~55 owner min + ~1 h quiet window |
 | P22 | Backlog sweep, classifier back, mailbox settings (J9, J10, J12) | Gmail (hub), Gmail (marketing mailbox), Make, Notion, Repo docs (counts only) | P21 | — | 1 Claude session (~3-4 h) + 5 short daily watch reports + half a session for optional pass 7 · ~2 h owner in all · ~8-10 working days elapsed |
 | P23 | Buzón and Hostinger-window review in Notion (J11) | Notion, Google Drive, Supabase (read-only), Gmail (read-only), Repo docs | P22, P16 | — | 1–2 sessions · ~55 owner min |
+| P23b | Buzón retired from the platform (option 2: only the encrypted P17 archive stays) | Platform (consolas · LCP Buzón), Supabase (tables and Storage; the drop is run by the owner), Vercel, Notion, Google Drive (read-only) | P23, P24, P17b | yes | 1 Claude session (~2–3 h incl. gate) · ~25 owner min |
 | P24 | Fair follow-up reply check and Cc→Bcc | Platform (repo + Supabase), Make, Gmail, Vercel, Notion | P2, P11, P20, P22 | yes | Claude 1 session + 5 × ~10 min compared days + ~2.5 h resume sitting · owner ~60 min |
 | P25 | B6.1 · Job health, latido and notices | Supabase, Platform code, Vercel, Resend, Notion | P2, P23, P1 | yes | 1–2 Claude sessions · ~40 owner min |
 | P26 | Pending-work route for the briefing | Platform, Supabase, Vercel, Notion | P25, P2 | yes | 1 Claude session (2 if a rule changes after the dry run) · ~15 owner min (+5 if the secret must be created) |
@@ -1120,7 +1121,7 @@ There are 11 Vercel crons in all. From 2027-03-28 the owner's opening falls at 0
 
 **Goal** Remove every platform path that could delete, move, flag or write domain mail, and retire Buzón replies: the LCP Buzón becomes read-only history frozen on 2026-07-16 (D-013 5.4).
 
-**Scope** In: sync retention-delete, remote Archivar/Eliminar moves, replies/forwards, «Sincronizar» (refused in the action), F01/F02 comments on 9 template subjects, `yaRespondio` and webhook notes, stale docs. Out: import (P19), Gmail filters (P19–P21), reply check (P24), dropping tables or the webhook.
+**Scope** In: sync retention-delete, remote Archivar/Eliminar moves, replies/forwards, «Sincronizar» (refused in the action), F01/F02 comments on 9 template subjects, `yaRespondio` and webhook notes, stale docs. Out: import (P19), Gmail filters (P19–P21), reply check (P24), dropping tables or the webhook (P23b).
 
 **Changes per system**
 - Platform: delete `mailClient.ts`, `BuzonSyncBar.tsx`, `sendBuzonReply`; freeze guard atop `syncBuzonNow`; read-only lock; new guardian `qa-buzon-solo-lectura-check.mjs`.
@@ -1307,7 +1308,7 @@ There are 11 Vercel crons in all. From 2027-03-28 the owner's opening falls at 0
 
 ### P23 · Buzón and Hostinger-window review in Notion (J11)
 
-**Goal** One owner review of the domain mailbox's history: the frozen Buzón table (306 rows) and the Hostinger window from P19. Obligations become Tareas, history a link line on its record, key attachments Drive copies. Links only, never message text; nothing deleted.
+**Goal** One owner review of the domain mailbox's history: the frozen Buzón table (306 rows) and the Hostinger window from P19. Obligations become Tareas, history a link line on its record, key attachments Drive copies. Links only, never message text; nothing deleted here (the platform copy is removed afterwards, in P23b).
 
 **Scope** In: 85 person, institution and regulatory Buzón rows; P19's person/institution window threads; e-invoice, contract and quote copies. Out: spam, bulk mail, window e-invoices (P22), threads already in the inbox, platform data (D-002).
 
@@ -1348,6 +1349,51 @@ There are 11 Vercel crons in all. From 2027-03-28 the owner's opening falls at 0
 **Depends on** P22, P16. Closes before P36.
 
 **Runbook** _unificacion_local/runbooks/P23.md — local, not in the repo
+
+### P23b · Buzón retired from the platform (option 2)
+
+**Goal** Owner decision 2026-10-27 (D-027): once P23 has drawn out of the Buzón everything that still matters, the platform copy goes: the LCP screen, its code, the dormant webhook, the two tables and the 295 stored attachments. What remains is the encrypted P17 archive (tables and attachments, local and in Drive after P17b) and the attachment copies P23 placed in Drive. About 230 of the 306 messages then exist only in that archive.
+
+**Scope** In: the LCP «Buzón de entrada» screen, rail entry and home card; `buzonActions.ts`; `src/lib/buzon/`; the dormant route `/api/inbound-email`; the old `/ecp/buzon` stub; `imapflow` and `mailparser` if nothing else imports them; the work-map entries; the guardians that name the Buzón; tables `inbound_emails` and `buzon_outbound`; the Buzón folder of the media bucket; the Notion links into the Buzón written in P23. Out: the encrypted archive (never deleted here); the domain mailbox at Hostinger; Gmail; the Drive copies made in P23.
+
+**Changes per system**
+- Platform: the files above deleted; the `/ecp/buzon` stub sent to the LCP home; the read-only guardian of P18 becomes a «Buzón retired» check; the other guardians that name the Buzón updated; docs (`INBOUND_EMAIL_SETUP.md` retired, the `consolas` charter, `HANDOFF.md`).
+- Supabase: one migration drops both tables, with an acta in its header (counts, archive checksum, date of the go-ahead); the 295 objects removed. The owner runs both: permanent deletion is theirs.
+- Vercel: one deploy; the two inert mailbox address names removed by the owner.
+- Notion: from P23's write log, every link into the Buzón («Enlace de origen» on Tareas, «Correo histórico» lines, the archived review page) rewritten to the plain reference «Archivo P17 · ‹row key›»; registry row → «Retirada»; Bitácora line.
+- Drive: read-only checksum of the P17b copy.
+
+**Steps**
+1. Claude: preconditions — P23 and P24 closed (`yaRespondio` no longer reads the table); P19's fallback 1 no longer needed; the P17b copy's checksum equals the local archive's; open Tareas born from Buzón rows counted.
+2. Owner: run the archive test (~5 min). Claude matches its manifest to the live data: 306 rows, 0 outbound, 295 files by size and checksum.
+3. Claude: the two tables' full definition (columns, keys, indexes, policies, triggers) read and saved next to the archive, since the repo does not hold it; diff, gate, Notion rewrite list, the drop SQL (for `docs/migraciones/`) and the object list (none run); dry-run report.
+4. Owner: go-ahead 1.
+5. Claude: release; verify live; Notion rewrite (batches ≤50).
+6. Owner: go-ahead 2, carried out by the owner: the drop SQL in the Supabase SQL editor, the Buzón folder emptied in Storage, the two env names removed (~10 min).
+7. Claude: verify; plan, log, charter; registry row once approved.
+
+**Backup** The encrypted P17 archive (both copies, checked in step 2); the tables' definition saved in step 3; pre-change sha and production deployment id; P23's write log.
+
+**Dry run shows** Diff by file; table references in `src/` → 0; `imapflow`/`mailparser` importers → 0; archive vs live match; links to rewrite by type; open Buzón Tareas; the drop SQL; object count and total size; gate.
+
+**Owner approves** Go-ahead 1: the diff, the push and the Notion rewrite. Go-ahead 2: the drop and the file deletion, which the owner runs. An open Tarea that still needs its message is closed first, or the owner accepts that it loses its reader.
+
+**Rollback** Before step 6: `git revert` as its own release; Notion links put back from the log. After step 6: only from the encrypted archive (tables re-created from the saved definition and refilled from the export, files uploaded again). There is no other copy.
+
+**Checks**
+- 0 references to either table outside the new guardian and the drop migration.
+- `/lcp/buzon` and `/api/inbound-email` → 404; `/ecp/buzon` → LCP home; no Buzón rail entry.
+- tsc, eslint (≤ 8), build and guardians pass; `npm audit` 0.
+- Notion: 0 links into the Buzón left; every rewrite matches the log.
+- After step 6: both tables gone; 0 objects in the Buzón folder; both archive checksums unchanged.
+
+**Release** Next minor: bump + CHANGELOG + architecture-log asiento + ALINEACION §3 line (consolas, leads); guardians; `curl -L` badge, both domains.
+
+**Estimate** 1 session (~2–3 h incl. gate) · ~25 owner min.
+
+**Depends on** P23, P24, P17b (P19 through P23). Closes before P36.
+
+**Runbook** _unificacion_local/runbooks/P23b.md — local, not in the repo
 
 ### P24 · Fair follow-up reply check and Cc→Bcc
 
@@ -2261,6 +2307,14 @@ Every action only the owner can take, by part. Claude prepares each one and chec
 - [ ] Run inventario() again after the copies (~5 min)
 - [ ] On rollback, approve any move of copies out of Contabilidad
 
+### P23b · Buzón retired from the platform (option 2)
+- [ ] Run the archive test when asked; you type the archive's credential (~5 min)
+- [ ] For each open Tarea that still needs its Buzón message: close it first, or accept that it loses its reader
+- [ ] Go-ahead 1: approve the diff, the push and the Notion link rewrite
+- [ ] Go-ahead 2: run the drop SQL in the Supabase SQL editor and empty the Buzón folder in Storage (~10 min); after this only the archive can bring it back
+- [ ] Remove the two inert mailbox address names from Vercel (~2 min)
+- [ ] Approve the registry row change to «Retirada»
+
 ### P24 · Fair follow-up reply check and Cc→Bcc
 - [ ] Register a positive test case on the paused fair form with a personal address, note it in LCP as «prueba P24», and reply to its confirmation (3 min)
 - [ ] Go 1: approve migration, platform release, log-only Make scenario and comparison routine (10 min)
@@ -2738,6 +2792,7 @@ Time-bound items found by the dry runs: Gmail's Trash holds about 17 conversatio
 | P21 | Not started | |
 | P22 | Not started | |
 | P23 | Not started | |
+| P23b | Not started (added 2026-10-27, D-027) | The owner chose option 2: keep only the encrypted P17 archive and remove the platform copy, after P23 and P24 |
 | P24 | Not started | |
 | P25 | Not started | |
 | P26 | Not started | |

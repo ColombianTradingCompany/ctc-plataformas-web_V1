@@ -2764,6 +2764,40 @@ The owner chose to run three tracks side by side. The read-only dry runs of P13 
 
 Time-bound items found by the dry runs: Gmail's Trash holds about 17 conversations worth keeping (dated 7–20 October; the first could be purged around 6 November); six former Drive root files are no longer visible to the hub (if they are in Drive's Trash, they purge around 22 November).
 
+## Two lanes and the finish line (D-032, 2026-10-28)
+
+The SCAJ 2026 email campaign (D-017) becomes its own lane, run by «Secretaría CTC» sessions, while the restructuring continues. Both lanes work on the same Notion, Gmail, Drive and Make at the same time, so each object has one owner and a short list of things is frozen while the campaign runs. The detailed contract and a shared board, both with ids, are kept outside the repo next to the campaign handoff; both lanes read them at the start of every session.
+
+| Lane | Sessions | Owns |
+|---|---|---|
+| **R · Restructuring** | the unification sessions (Notion track, Drive track, Gmail track) | the hubs, the task system (Objetivos, Hitos, Tareas, Reuniones, Briefings), the directories, the Eventos database's structure, the Gmail label taxonomy, every Gmail filter, the classifier, the Drive structure, the registry, platform code |
+| **C · SCAJ 2026 campaign** | «Secretaría CTC» sessions: planning, creating, executing and following up the campaign | the campaign page and everything inside it (the Leads and Envíos databases and any new campaign database), the campaign's Make scenarios, the campaign label as applied to campaign threads, one campaign subfolder inside the SCAJ project folder in Drive |
+
+**Rules both lanes keep**
+- Neither lane renames, moves, deletes, reshapes or switches off the other lane's objects. Requests go through the board.
+- **Frozen until the owner closes the campaign:** the campaign databases' ids, property names and option names (the sender and the reply tracker read them by name); the Gmail label ids; the hub mailbox and the domain send-as identity; the Make Gmail and Notion connections; the fair follow-up pause (D-008). **No change of the main Google sign-in before the campaign closes**, because it stops both campaign scenarios and the classifier.
+- The campaign uses the shared system instead of parallel copies: its tasks go into Tareas under the project «2026 · SCAJ Tokio»; its meetings into Reuniones (D-031); a lead that becomes a customer, ally or supplier gets a page in the right directory (D-030); its files go into its Drive subfolder and are referenced by id, never by path. Status lives in Notion: campaign threads carry only the campaign label, and no new Gmail labels are made.
+- **The board:** the restructuring posts every batch that touches a shared surface at least 24 hours ahead (Notion moves and renames, Drive moves of the SCAJ project folder, label renames, filter re-imports and inbox clean-ups, the sweep and the classifier, any Make change or credential rotation) and confirms afterwards that both campaign scenarios ran with no new error. The campaign posts every planned wave and every new database, scenario or folder. A scheduled wave beats a batch; ties go to the owner.
+
+**Changes to the parts**
+
+| Part | Change |
+|---|---|
+| P9 | The campaign subtree moves only with its Evento, after Make's access to the destination is granted and checked; both campaign scenarios are checked after the move. |
+| P10 | The property standard skips the campaign databases while the campaign runs (they are normalised after it closes). |
+| P11 | The registry seed includes the campaign's scenarios and databases, owner lane C. |
+| P14, P15 | The SCAJ project folder moves and is renamed by id in announced windows; no campaign uploads into moving folders during those windows. |
+| P20 | Label renames keep ids and are announced; the campaign label is not renamed. |
+| P21 | The campaign label and the replies to the domain address join the protected list; the campaign's imported filters are carried over unchanged; the inbox clean-up never removes a campaign thread. |
+| P22 | The backlog sweep and the classifier skip campaign threads. |
+| P24 | Moves to the campaign's close: the reply check that gates the platform's fair follow-ups, and Cc→Bcc, run with the campaign's opt-out list. |
+| P37 | The credential rotations wait for the campaign's close (or Make is reconnected within the same hour). |
+
+**The finish line.** «Restructuring done» means P6 to P11 (Notion), P14 to P16 (Drive), P20 to P22 (Gmail), P17b, and the sign-off and handover (P36, P37). That is about 11 owner hours. With the three tracks side by side it is a target of about four weeks (late November); the Gmail track starts after P11 because the label renames need the final Notion names. Moved out of the finish line, each with its own go-ahead later:
+- **Project 2 · daily briefing** (P12, P25 to P33, about 11 owner hours over 4 to 5 weeks), after the finish line;
+- **Project 3 · archive and deletions** (P23, P23b, P34, P35, about 2 owner hours, mostly 30-day waits), optional and undated;
+- **P24** with the campaign's close (above).
+
 ## Status
 
 | Part | State | Note |
@@ -2774,7 +2808,7 @@ Time-bound items found by the dry runs: Gmail's Trash holds about 17 conversatio
 | P3 | Done, accepted by the owner 2026-10-26 | 2026-10-24: 0 writes; ledger 24 of 25 resolved (1 not found); 65 meeting notes read; 5 new credential locations for P4; 18 design corrections proposed |
 | P4 | Narrowed by the owner, B0 and B1 left | 2026-10-24: every credential value Claude could reach out of Notion (D-016). 2026-10-26 (D-021): the EUDR line removed by the owner; the other spots kept; rotations moved to P37 |
 | P5 | Done 2026-10-26 | 2026-10-26: backup B0 encrypted and checked; the ten hubs, 6 fixed pages, 5 databases, 9 link fields on existing databases (all empty), 34 views and 5 seed tasks created; banner on the Email Secretary; the database rename test passed (title, icon set, icon cleared). Open: the owner's UI list, then the automation test. Later the same day: the teamspace is renamed «CTC»; Dependencies and Sub-items are on and their pairs renamed; all 6 single-link limits, «Creada por» and Progreso are set; the three deadline views filter on a new «Plazo» formula (Notion's view settings cannot filter on the end of a date range). Make's access to the quotes database is still inherited from its parent page, not granted directly. Then the owner's automations, templates, buttons and timeline display, and the automation test: all five automations pass (one cleared nothing and set today's date instead; fixed and re-tested), and the automations also fire on the agent's own edits. Test rows are in Notion's Trash. Making Make's access direct moves to P9's move gate |
-| P6 | In progress: H7 done 2026-10-27; H8 waits for the credential guard | 2026-10-27: dry run with 0 writes (14 milestone rows; 9 blocking links exist, not 13; 66 meeting notes). The owner answered the milestone pass and approved both go-aheads; the new project Objetivo was created and the 14 rows moved into Hitos (same pages, one test row first), with 12 blocking links and the old source left empty. The meetings part (H8) waits until the last 4 credential traces in meeting-note transcripts are removed by the owner |
+| P6 | In progress: H7 done 2026-10-27; H8 running 2026-10-28 (guard: 2 of 3 pages at 0, the third accepted by the owner until its sign-in is changed; D-031) | 2026-10-27: dry run with 0 writes (14 milestone rows; 9 blocking links exist, not 13; 66 meeting notes). The owner answered the milestone pass and approved both go-aheads; the new project Objetivo was created and the 14 rows moved into Hitos (same pages, one test row first), with 12 blocking links and the old source left empty. On 2026-10-28 the owner cleared the traces on 2 of the 3 pages and accepted the third in writing until its sign-in is changed; H8 then started with the owner's answers |
 | P7 | Not started | |
 | P8 | Not started | |
 | P9 | Not started | |

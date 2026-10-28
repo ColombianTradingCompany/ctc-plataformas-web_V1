@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "command": "if [ \"$CLAUDE_CODE_REMOTE\" = \"true\" ]; then bash \"$CLAUDE_PROJECT_DIR/scripts/cloud-session-start.sh\"; fi",
+            "timeout": 600
+          }
+        ]
+      }
+    ]
+  }
+}

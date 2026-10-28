@@ -25,11 +25,12 @@ cat <<EOF
 CTC cloud session. Dependencies: $deps.
 - This VM has no .env.local: no Supabase service-role key and no API keys. Code that needs them
   cannot run here; say so instead of faking a result, and never ask for a secret in the chat.
-- Network is «Trusted» (npm, GitHub, Google Fonts). Production Supabase and ctcexport.com are not
-  reachable, so the qa-* guardians that read the database or write to production stay for local runs.
+- Network is «Limited» to the package managers (npm) plus GitHub. Production Supabase and
+  ctcexport.com are not reachable, so the qa-* guardians that read the database or write to
+  production stay for local runs.
 - The gate here: npx tsc --noEmit, npx eslint src (baseline 8 warnings), and the offline qa-*
-  guardians the batch touches. npm run build may fail for lack of env vars; the Vercel preview
-  that every pushed branch gets is the build proof.
+  guardians the batch touches. npm run build may fail for lack of env vars or of Google Fonts
+  (next/font); the Vercel preview that every pushed branch gets is the build proof.
 - Work on your own branch and open a PR. Never push to main: every push to main deploys production.
 - Don't bump APP_VERSION or add the arqlog asiento here: the number is taken when the PR lands on
   main, so a local session may claim it first. Put the CHANGELOG bullets in the PR description.

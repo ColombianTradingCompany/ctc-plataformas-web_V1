@@ -2788,7 +2788,7 @@ The SCAJ 2026 email campaign (D-017) becomes its own lane, run by «Secretaría 
 | P11 | The registry seed includes the campaign's scenarios and databases, owner lane C. |
 | P14, P15 | The SCAJ project folder moves and is renamed by id in announced windows; no campaign uploads into moving folders during those windows. |
 | P20 | Label renames keep ids and are announced; the campaign label is not renamed. |
-| P21 | The campaign label and the replies to the domain address join the protected list; the campaign's imported filters are carried over unchanged; the inbox clean-up never removes a campaign thread. |
+| P21 | The campaign label and the replies to the domain address join the protected list; the campaign's imported filters are replaced only by entries that keep every possible lead reply in the inbox; the inbox clean-up never removes a campaign thread. |
 | P22 | The backlog sweep and the classifier skip campaign threads. |
 | P24 | Moves to the campaign's close: the reply check that gates the platform's fair follow-ups, and Cc→Bcc, run with the campaign's opt-out list. |
 | P37 | The credential rotations wait for the campaign's close (or Make is reconnected within the same hour). |

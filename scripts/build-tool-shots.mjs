@@ -43,6 +43,7 @@ const HERRAMIENTAS = {
   "defectos-cafe": "/tools/defectos-cafe/defectos-cafe.html",
   "cromatografia-suelo": "/tools/cromatografia-suelo/cromatografia-suelo.html",
   gulliver: "/tools/gulliver/gulliver-7-dias-a-tokio.html", // V5.149 — con un avance de ejemplo (PREPARAR): sin él sale la bienvenida
+  incoterms: "/tools/incoterms/incoterms-navigator.html?lang=es#fob", // V6.14 — ?lang=es: el Chrome del script es en-US; #fob: la parada de referencia del café
 };
 
 /** Herramientas que se capturan con un estado de ejemplo: se escribe en su localStorage y se recarga.

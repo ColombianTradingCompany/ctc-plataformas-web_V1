@@ -47,6 +47,10 @@ export const CARPETAS_HERRAMIENTAS: CarpetaHerramienta[] = [
   { id: "defectos-cafe", archivos: ["defectos-cafe.html"] },
   { id: "formula-calidad", archivos: ["formula-calidad.html"] },
   { id: "green-datasheet", archivos: ["green-coffee-datasheet.html"] },
+  // V6.14 (2026-10-29): Navegador de Incoterms® 2020, mar y aire lado a lado, EN · ES · JA · DE, hoja de dos
+  // páginas imprimible. Sin memoria (el estado es solo regla · idioma · destino). La FUENTE vive en el repo de la
+  // campaña SCAJ 2026 (`entregables/incoterms-navigator/`, `build.py` arma esta copia con las fuentes locales).
+  { id: "incoterms", archivos: ["incoterms-navigator.html"] },
   // V5.149 (2026-10-04): japonés de bolsillo para SCAJ 2026. Plus, memoria con esquema propio; el
   // evento vive en UN bloque del HTML (`/*<EVENTO>*/`) — lo vigila scripts/qa-gulliver-check.mjs.
   { id: "gulliver", archivos: ["gulliver-7-dias-a-tokio.html"] },

@@ -105,6 +105,17 @@ export const TOOL_ICON: Record<ToolId, React.ReactNode> = {
       <path d="M9.3 8.3v6M14.7 8.3v6" />
     </LineIcon>
   ),
+  // Incoterms: el recorrido de un embarque — bodega a la izquierda, puerta a la derecha — con el rombo del
+  // punto donde pasa el riesgo, que es lo que la herramienta enseña a leer.
+  incoterms: (
+    <LineIcon>
+      <path d="M3 17V9.5l3-2 3 2V17" />
+      <path d="M15 17V8h6v9M17.5 11h1M17.5 14h1" />
+      <path d="M3 17h18" />
+      <path d="M9 13h6" />
+      <path d="M12 10.5 14.5 13 12 15.5 9.5 13Z" fill="currentColor" stroke="none" />
+    </LineIcon>
+  ),
   // Calculadora logística: cajas estibadas sobre un pallet — la carga que la herramienta pesa y mide.
   "calculadora-logistica": (
     <LineIcon>

@@ -19,6 +19,31 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.14] — 2026-10-29 (commit pendiente)
+
+- **Añadido**: **Navegador de Incoterms® 2020, mar y aire** (`incoterms`, default), herramienta NUEVA del taller (owner, 2026-10-29, desde la
+  conversación de la campaña SCAJ 2026: «Add the tool to the Herramientas»): los once Incoterms® 2020 con la regla marítima y su equivalente
+  aéreo lado a lado. Un deslizador de nueve paradas (EXW → DDP; en FAS y FOB el carril aéreo dice «sin equivalente, use FCA» y explica por qué
+  «FOB aeropuerto» no existe); por carril, el diagrama del recorrido (morado paga el vendedor, dorado paga el comprador, rombo rojo pasa el
+  riesgo), la tira de los 13 rubros de costo, los sellos de despacho y los datos clave. **Ocho pestañas que siguen al deslizador**: resumen ·
+  quién hace qué (A1–A10 / B1–B10) · quién paga (13 rubros con notas) · riesgo y seguro (ICC (A) vs (C)) · documentos · trampas · **destino**
+  (EE. UU. · UE/Alemania · Japón · Reino Unido · otro: aranceles 0901.11/0901.21, IVA o consumo, trámites, puertas de entrada) · las 11 reglas
+  (escalera de obligación + matriz clásica). Glosario en diálogo; la regla viaja en el hash (`#fob`).
+- **Añadido**: **cuatro idiomas** en la propia herramienta (EN · ES · JA · DE; `?lang=` manda, luego la preferencia guardada, luego el navegador)
+  y **«Imprimir hoja de dos páginas»**: resumen imprimible A4 de la selección (regla, pareja mar/aire, destino, idioma) con redacción sugerida
+  para el contrato, la línea legal de la casa y «Copiar como texto».
+- **Añadido**: carpeta `incoterms` en `carpetas.ts` (18 carpetas), icono propio en `ToolIcons.tsx`, entrada y captura del carrusel
+  (`build-tool-shots.mjs`, `shots/incoterms.jpg`). Sin CDN: Anton e Inter de `/tools/assets/fonts/`; el loro y el QR de ctcexport.com en
+  base64. Sin memoria (el estado es regla · idioma · destino).
+- **Datos** (tras el deploy): alta de `incoterms` en `tools` + `tool_versions` (origen `repo`) + `version_publicada` con el acta
+  `docs/migraciones/2026-10-29_tools_incoterms.sql`.
+- **Docs**: ficha `herramientas-cafe/incoterms/README.md` (la FUENTE vive en el repo privado de la campaña SCAJ 2026,
+  `entregables/incoterms-navigator/`, `build.py` → `dist/`: excepción declarada al patrón `reference/html_tools/`), charter (inventario y
+  Pendientes) y recuento. Compuerta: `tsc` limpio, `eslint src` 8 avisos (la línea base), qa-tools-carpetas 205, qa-tools-seo 305
+  (19 herramientas), qa-encoding 0, qa-arqlog 13/13; `npm run build` **no se pudo completar en el contenedor de la sesión** (sin
+  `.env.local`, la exportación estática falla al crear el cliente de Supabase en `/cherry-picked-green`, ajeno a esta tanda): queda por
+  correrlo en local o lo verifica el deploy de Vercel al mezclar la rama.
+
 ## [V6.13] — 2026-10-26 (commit f80d43e)
 
 - **Seguridad**: **el Buzón de la LCP es historial de solo lectura** (unificación P18, D-013 5.4; owner 2026-10-26): ningún camino del

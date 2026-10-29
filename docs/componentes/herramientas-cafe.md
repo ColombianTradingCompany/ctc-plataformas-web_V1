@@ -43,6 +43,7 @@ cuenta de KR, CP o Directorio), el **Taller** (Cover Flow en dos estantes: abier
 | `viaje-cafe` | El viaje del café | default | es | sí | `viaje-cafe.html` |
 | `mermas-detallada` | Reporte de proceso de café | — | es | no | **archivada** (2026-08-15) y **archivo borrado** (owner, 2026-09-22, V5.67): sus dos URLs van con 308 a `mermas-ctc`; la fila de `tools` se queda como registro; la fuente, en `reference/html_tools/mermas-detallada/` |
 | `cromatografia-suelo` | Lector de Cromatografía de Suelo | **plus** | es (+ en, de en la propia herramienta, V5.39) | sí (esquema propio) | `cromatografia-suelo.html` (V5.32–V5.41) · primera con servidor: `api/herramientas/cromatografia` (+ `/fincas`, `/estado`) · brief en `briefs/` |
+| `incoterms` | **Navegador de Incoterms® 2020** (mar y aire lado a lado, destinos US · UE · JP · UK, hoja de dos páginas imprimible) | default | en · es · ja · de (en la propia herramienta) | **no** | `incoterms-navigator.html` (**V1**, V6.14; **fuente en el repo de la campaña SCAJ 2026**, `entregables/incoterms-navigator/` → `build.py`; alta en `tools` pendiente del deploy) |
 | `gulliver` | **Gulliver · 7 días a Tokio** (japonés de bolsillo para SCAJ 2026) | **plus** | es | sí (esquema propio; en un marco no toca `localStorage`) | `gulliver-7-dias-a-tokio.html` (**V1.1**, V5.149; brief aprobado 2026-10-04 en `briefs/`, ficha `herramientas-cafe/gulliver/`; fuentes `reference/html_tools/gulliver/`) |
 
 Candidata sin registrar: **Atlas cafetero de Colombia** (ficha en `herramientas-cafe/_candidatas/atlas-cafetero/`).
@@ -141,6 +142,15 @@ completos, sin CDN) ·
 cualquiera de esos campos se ve en las tres superficies al instante — sin desplegar.
 
 ## Pendientes
+
+- **V6.14 · Navegador de Incoterms® 2020 (mar y aire)** (owner, 2026-10-29, desde la conversación de la campaña SCAJ 2026: «Add the tool to
+  the Herramientas»; ficha `herramientas-cafe/incoterms/README.md`). Hecho: herramienta NUEVA, default, EN · ES · JA · DE; deslizador de nueve
+  paradas con la regla marítima y su equivalente aéreo lado a lado, ocho pestañas que lo siguen (obligaciones A/B, 13 rubros de costo, riesgo y
+  seguro, documentos, trampas, destino US · UE · JP · UK, las 11 reglas con escalera), glosario y hoja de dos páginas imprimible; sin memoria;
+  `<head>` de la casa; icono propio; carpeta en `carpetas.ts`. **La FUENTE vive en el repo privado de la campaña** (`entregables/incoterms-navigator/`,
+  `build.py` → `dist/`), no en `reference/html_tools/`: excepción declarada en la ficha. Abierto: (a) **alta en `tools` tras el deploy** con el acta
+  `docs/migraciones/2026-10-29_tools_incoterms.sql`; (b) nivel y superficies por omisión, **del owner**; (c) revisión nativa del japonés y el alemán;
+  (d) tres datos aduaneros por confirmar (fito Japón, SGP Japón, anexo 301 EE. UU.); (e) la captura del carrusel si no salió en la tanda.
 
 - **V6.11 · Calculadora logística de café** (owner, 2026-10-26: «load this up on to the Herramientas catalogue»; ficha
   `herramientas-cafe/calculadora-logistica/README.md`). Hecho: herramienta NUEVA desde un artefacto del owner, trabajada en la misma

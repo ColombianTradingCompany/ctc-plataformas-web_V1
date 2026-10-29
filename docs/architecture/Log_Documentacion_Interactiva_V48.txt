@@ -255,3 +255,11 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
   en Hostinger» y «responder desde el Buzón» desaparecen del mapa; el correo nuevo vive en Gmail. El webhook Resend Inbound queda como nodo
   dormido. Sin entrada nueva de DICT.
 (commit: f80d43e)
+
+## [2026-10-29] V6.14 · Herramientas del Café — Navegador de Incoterms® 2020, mar y aire (nueva, default)
+- ADD `public/tools/incoterms/incoterms-navigator.html` (V1: deslizador de nueve paradas EXW→DDP con la regla marítima y su equivalente aéreo lado a lado; ocho pestañas que siguen al deslizador —resumen, quién hace qué (A1–A10/B1–B10), quién paga (13 rubros con notas), riesgo y seguro (ICC A/C), documentos, trampas, destino (US · UE · JP · UK · otro), las 11 reglas con escalera de obligación y matriz—; EN · ES · JA · DE (`?lang=`, navegador, `localStorage`); hoja de dos páginas imprimible con redacción sugerida y línea legal; glosario; `#<regla>` en el hash; sin CDN (Anton e Inter de `assets/fonts/`); sin memoria).
+- ADD `docs/componentes/herramientas-cafe/incoterms/README.md` (ficha), `docs/migraciones/2026-10-29_tools_incoterms.sql` (acta del alta, se corre tras el deploy).
+- ANN `src/lib/tools/carpetas.ts` (carpeta `incoterms`), `src/components/tools/ToolIcons.tsx` (icono propio), `scripts/build-tool-shots.mjs`, `docs/componentes/herramientas-cafe.md` (inventario y Pendientes), `docs/componentes/herramientas-cafe/README.md` (recuento: 18 carpetas).
+- DATOS (tras el deploy) `tools` (id `incoterms`, default, kr·cp·web, sin memoria) + `tool_versions` (repo) + `version_publicada`.
+- Doc impact when wrapped: nodo de Herramientas del Café (19 en la base tras el alta); primera herramienta cuya FUENTE vive en otro repo de la casa (campaña SCAJ 2026, privado) y se compila con `build.py` en dos sabores (artefacto y plataforma). Sin entrada nueva de DICT.
+(commit: pendiente)

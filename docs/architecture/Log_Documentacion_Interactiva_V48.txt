@@ -262,4 +262,4 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - ANN `src/lib/tools/carpetas.ts` (carpeta `incoterms`), `src/components/tools/ToolIcons.tsx` (icono propio), `scripts/build-tool-shots.mjs`, `docs/componentes/herramientas-cafe.md` (inventario y Pendientes), `docs/componentes/herramientas-cafe/README.md` (recuento: 18 carpetas).
 - DATOS (tras el deploy) `tools` (id `incoterms`, default, kr·cp·web, sin memoria) + `tool_versions` (repo) + `version_publicada`.
 - Doc impact when wrapped: nodo de Herramientas del Café (19 en la base tras el alta); primera herramienta cuya FUENTE vive en otro repo de la casa (campaña SCAJ 2026, privado) y se compila con `build.py` en dos sabores (artefacto y plataforma). Sin entrada nueva de DICT.
-(commit: pendiente)
+(commit: 04c2c78)

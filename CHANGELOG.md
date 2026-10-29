@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.14] — 2026-10-29 (commit pendiente)
+## [V6.14] — 2026-10-29 (commit 04c2c78)
 
 - **Añadido**: **Navegador de Incoterms® 2020, mar y aire** (`incoterms`, default), herramienta NUEVA del taller (owner, 2026-10-29, desde la
   conversación de la campaña SCAJ 2026: «Add the tool to the Herramientas»): los once Incoterms® 2020 con la regla marítima y su equivalente
@@ -40,9 +40,9 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 - **Docs**: ficha `herramientas-cafe/incoterms/README.md` (la FUENTE vive en el repo privado de la campaña SCAJ 2026,
   `entregables/incoterms-navigator/`, `build.py` → `dist/`: excepción declarada al patrón `reference/html_tools/`), charter (inventario y
   Pendientes) y recuento. Compuerta: `tsc` limpio, `eslint src` 8 avisos (la línea base), qa-tools-carpetas 205, qa-tools-seo 305
-  (19 herramientas), qa-encoding 0, qa-arqlog 13/13; `npm run build` **no se pudo completar en el contenedor de la sesión** (sin
-  `.env.local`, la exportación estática falla al crear el cliente de Supabase en `/cherry-picked-green`, ajeno a esta tanda): queda por
-  correrlo en local o lo verifica el deploy de Vercel al mezclar la rama.
+  (19 herramientas), qa-encoding 0, qa-arqlog 14/14, qa-changelog OK, `npm run build` exit 0 (en el contenedor de la sesión, sin
+  `.env.local`, hubo que dar llaves de Supabase de relleno por variable de entorno: sin ellas la exportación estática falla al crear el
+  cliente en `/cherry-picked-green`, ajeno a esta tanda).
 
 ## [V6.13] — 2026-10-26 (commit f80d43e)
 

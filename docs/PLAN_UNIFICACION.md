@@ -2798,6 +2798,8 @@ The SCAJ 2026 email campaign (D-017) becomes its own lane, run by «Secretaría 
 - **Project 3 · archive and deletions** (P23, P23b, P34, P35, about 2 owner hours, mostly 30-day waits), optional and undated;
 - **P24** with the campaign's close (above).
 
+D-033 (2026-10-29): P12's two answers that P15 and P16 needed were taken early (the EUDR certificate stays a link; «Adjunto» uploads stay in Notion), so the Drive track does not wait for the briefing project.
+
 ## Status
 
 | Part | State | Note |

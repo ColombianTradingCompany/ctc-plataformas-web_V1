@@ -269,4 +269,4 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - ANN `public/images/herramientas/shots/incoterms.jpg` (captura regenerada), `src/lib/version.ts`, `docs/componentes/herramientas-cafe/incoterms/README.md` (ficha V2), `docs/componentes/herramientas-cafe.md` (inventario: Plus, V2; Pendientes), `docs/componentes/herramientas-cafe/README.md` (recuento).
 - DATOS `tools.tier` = `plus` para `incoterms` (SQL, 2026-10-29); el alta de la V6.14 quedó ejecutada tras el deploy 93a3aad (fila `tools` + `tool_versions` nº 1 + `version_publicada`).
 - Doc impact when wrapped: nodo de Herramientas del Café (19 en la base; `incoterms` Plus); primera cartografía del taller (contornos Natural Earth compilados a SVG en el repo fuente, `tools/make_maps.py`). Sin entrada nueva de DICT.
-(commit: pendiente)
+(commit: 9117738)

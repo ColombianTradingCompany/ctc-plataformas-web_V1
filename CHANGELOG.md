@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.15] — 2026-10-30 (commit pendiente)
+## [V6.15] — 2026-10-30 (commit 9117738)
 
 - **Añadido**: **Navegador de Incoterms® 2020 · V2** (`incoterms`, ahora **Plus**; owner, 2026-10-29: «make it Plus», selector de destino,
   reglas por destino y mapa de puertos). **Selector de mercado de destino** arriba de la página: Estados Unidos · Unión Europea (con los 27

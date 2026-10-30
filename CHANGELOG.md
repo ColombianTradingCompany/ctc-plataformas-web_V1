@@ -19,6 +19,29 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.15] — 2026-10-30 (commit 9117738)
+
+- **Añadido**: **Navegador de Incoterms® 2020 · V2** (`incoterms`, ahora **Plus**; owner, 2026-10-29: «make it Plus», selector de destino,
+  reglas por destino y mapa de puertos). **Selector de mercado de destino** arriba de la página: Estados Unidos · Unión Europea (con los 27
+  códigos de miembros) · Japón · China · Corea del Sur · Canadá · Australia · Emiratos Árabes Unidos · otro; gobierna Documentos, Destino,
+  las dos pestañas nuevas y la hoja de dos páginas.
+- **Añadido**: pestaña **«Reglas de importación»** por destino (aduana y entrada, inocuidad, sanidad vegetal, etiquetado y normas, aranceles e
+  impuestos, acuerdos y preferencias, cuidado con) con los organismos oficiales enlazados (aduana, arancel, inocuidad, sanidad vegetal, normas,
+  promoción comercial, gremio cafetero, presencia colombiana). Investigación del 2026-10-29: GACC 248/249/280 y Anuncio 219/2025 (China), TLC
+  Corea–Colombia y exención de IVA al verde, CARM/SFCR/AIRS (Canadá), BICON e IFIS (Australia), arancel CCG, MOCCAE y Dubai Municipality (EAU),
+  IVA por Estado miembro y Kaffeesteuer (UE), Sección 301 (EE. UU.). Sin precios internos.
+- **Añadido**: pestaña **«Puertos y aeropuertos»**: mapa SVG del mercado (contornos Natural Earth 1:50m generados por `tools/make_maps.py` en
+  el repo fuente, vecinos tenues) con puertos y aeropuertos numerados; cada marcador abre un panel con el volumen 2024 (TEU o toneladas,
+  redondeado), la relevancia cafetera, el tránsito típico desde Colombia, la web de la autoridad y los contactos de comercio y aranceles del
+  mercado. 61 puertas de entrada en ocho mercados.
+- **Cambiado**: las pestañas ya no se desplazan: se envuelven en filas (la última quedaba cortada); diez pestañas. El archivo pasa de ~456 KB a
+  ~706 KB (cuatro paquetes de destino y los mapas); sigue sin CDN y sin memoria.
+- **Datos**: `tools.tier` de `incoterms` a **`plus`** por SQL (owner, 2026-10-29). El alta de la V6.14 se ejecutó tras el deploy (93a3aad): fila
+  `tools` + `tool_versions` nº 1 + `version_publicada`.
+- **Docs**: ficha, charter (inventario y Pendientes) y recuento al día («alta hecha», Plus, V2); captura del carrusel regenerada. Compuerta:
+  `tsc` limpio, `eslint src` 8 avisos (la línea base), `npm run build` exit 0 (llaves de Supabase de relleno en el contenedor), qa-tools-carpetas
+  205, qa-tools-seo 305 (19 herramientas), qa-encoding 0, qa-arqlog y qa-changelog OK.
+
 ## [V6.14] — 2026-10-29 (commit 04c2c78)
 
 - **Añadido**: **Navegador de Incoterms® 2020, mar y aire** (`incoterms`, default), herramienta NUEVA del taller (owner, 2026-10-29, desde la

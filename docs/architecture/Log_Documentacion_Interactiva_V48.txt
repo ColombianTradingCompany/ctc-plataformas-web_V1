@@ -263,3 +263,10 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - DATOS (tras el deploy) `tools` (id `incoterms`, default, kr·cp·web, sin memoria) + `tool_versions` (repo) + `version_publicada`.
 - Doc impact when wrapped: nodo de Herramientas del Café (19 en la base tras el alta); primera herramienta cuya FUENTE vive en otro repo de la casa (campaña SCAJ 2026, privado) y se compila con `build.py` en dos sabores (artefacto y plataforma). Sin entrada nueva de DICT.
 (commit: 04c2c78)
+
+## [2026-10-30] V6.15 · Herramientas del Café — Navegador de Incoterms® 2020 V2: destino mundial, reglas de importación y puertos (Plus)
+- ANN `public/tools/incoterms/incoterms-navigator.html` (V2: selector de mercado de destino arriba —US · UE (27 códigos) · JP · CN · KR · CA · AU · AE · otro— que gobierna Documentos, Destino, las pestañas nuevas y la hoja; pestaña «Reglas de importación» (siete grupos por mercado y los organismos oficiales enlazados); pestaña «Puertos y aeropuertos» (mapa SVG Natural Earth 1:50m con 61 puertas numeradas, panel con volumen 2024, relevancia cafetera, tránsito desde Colombia y contactos); pestañas en filas; EN · ES · JA · DE; ~706 KB; sin CDN ni memoria).
+- ANN `public/images/herramientas/shots/incoterms.jpg` (captura regenerada), `src/lib/version.ts`, `docs/componentes/herramientas-cafe/incoterms/README.md` (ficha V2), `docs/componentes/herramientas-cafe.md` (inventario: Plus, V2; Pendientes), `docs/componentes/herramientas-cafe/README.md` (recuento).
+- DATOS `tools.tier` = `plus` para `incoterms` (SQL, 2026-10-29); el alta de la V6.14 quedó ejecutada tras el deploy 93a3aad (fila `tools` + `tool_versions` nº 1 + `version_publicada`).
+- Doc impact when wrapped: nodo de Herramientas del Café (19 en la base; `incoterms` Plus); primera cartografía del taller (contornos Natural Earth compilados a SVG en el repo fuente, `tools/make_maps.py`). Sin entrada nueva de DICT.
+(commit: 9117738)

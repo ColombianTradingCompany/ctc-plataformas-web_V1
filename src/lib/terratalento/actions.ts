@@ -521,7 +521,7 @@ export async function crearJornadaRecolecta(input: JornadaInput): Promise<Action
   // CTC, no parte del trato con el productor.
   const donde = [finca.name, finca.municipio, finca.departamento].filter(Boolean).join(", ");
   await emitEvent({
-    dominio: "origen_suministro",
+    dominio: "origen",
     tipo: "jornada.creada",
     payload: {
       ref: `recolecta:${creada.id}`,
@@ -559,7 +559,7 @@ export async function cerrarJornadaRecolecta(jornadaId: string, cancelar = false
   const fila = filas?.[0];
   if (fila?.calendar_event_id) {
     await emitEvent({
-      dominio: "origen_suministro",
+      dominio: "origen",
       tipo: cancelar ? "jornada.cancelada" : "jornada.cerrada",
       payload: {
         ref: `recolecta:${fila.id}`,

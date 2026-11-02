@@ -17,9 +17,14 @@
 //    cada entrada, y se exige que el canario no aparezca en ningún campo
 //    guardado ni en ninguna línea de consola.
 //
-// El enum de Postgres se pasa por argumento para no necesitar credenciales:
-//   node ... qa-integraciones-check.mjs "admin_estrategia,origen_suministro,..."
+// El enum de Postgres se pasa por argumento para no necesitar credenciales
+// (el de producción: `select string_agg(enumlabel, ',' order by enumsortorder)
+//  from pg_enum where enumtypid = 'public.integration_domain'::regtype`):
+//   node ... qa-integraciones-check.mjs "direccion,origen,operacion_logistica,..."
 // Sin argumento, comprueba la coherencia interna y los casos de S0.
+//
+// P20 (2026-11): el vocabulario es el «Mapa CTC» 0–9 (D-007). Cada `gmail` no
+// vacío es EXACTAMENTE `n · label` («·» U+00B7, NFC) y solo 7 y 9 van vacíos.
 
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
@@ -33,11 +38,16 @@ const fails = [];
 const check = (name, cond, detail = "") => { if (cond) pass++; else fails.push(`${name}${detail ? ` — ${detail}` : ""}`); };
 
 // ── Coherencia interna ──────────────────────────────────────────────────────
-check("hay 7 dominios", DOMINIOS.length === 7, `son ${DOMINIOS.length}`);
+check("hay 10 dominios", DOMINIOS.length === 10, `son ${DOMINIOS.length}`);
 check("los ids son únicos", new Set(DOMINIOS.map(d => d.id)).size === DOMINIOS.length);
-check("los números 0-6 no se repiten", new Set(DOMINIOS.map(d => d.n)).size === DOMINIOS.length);
+check("van numerados 0-9, en orden", DOMINIOS.map(d => d.n).join("") === "0123456789", DOMINIOS.map(d => d.n).join(""));
 check("cada dominio tiene etiqueta", DOMINIOS.every(d => DOMINIO_LABEL[d.id]?.length > 0));
-check("cada dominio declara su etiqueta de Gmail", DOMINIOS.every(d => typeof d.gmail === "string" && d.gmail.length > 0));
+check("las etiquetas están en NFC", DOMINIOS.every(d => d.label === d.label.normalize("NFC")));
+check("cada dominio declara su etiqueta de Gmail (texto, vacío solo en 7 y 9)",
+  DOMINIOS.every(d => typeof d.gmail === "string" && (d.gmail.length === 0) === (d.n === "7" || d.n === "9")),
+  DOMINIOS.filter(d => d.gmail.length === 0).map(d => d.n).join(","));
+const gmailMal = DOMINIOS.filter(d => d.gmail.length > 0 && d.gmail !== `${d.n} · ${d.label}`.normalize("NFC"));
+check("cada etiqueta de Gmail es EXACTAMENTE `n · label` (U+00B7, NFC)", gmailMal.length === 0, gmailMal.map(d => d.gmail).join(" | "));
 check("toda criticidad explica qué pasa si se cae", CRITICIDADES.every(c => CRITICIDAD_HINT[c]?.length > 10));
 check("el ciclo de vida empieza en propuesta y acaba en deprecada",
   ETAPAS[0] === "propuesta" && ETAPAS[ETAPAS.length - 1] === "deprecada", ETAPAS.join("→"));
@@ -99,7 +109,7 @@ function cliente(filas) {
     },
   };
 }
-const fila = (intentos = 0) => ({ id: "ev-1", dominio: "it_plataforma", tipo: "prueba.ping", payload: { at: "t" }, intentos, estado: "pendiente", destino: null, ultimo_error: null });
+const fila = (intentos = 0) => ({ id: "ev-1", dominio: "plataformas_it", tipo: "prueba.ping", payload: { at: "t" }, intentos, estado: "pendiente", destino: null, ultimo_error: null });
 let llamadas = [];
 const fetchCon = (fn) => async (url, init) => { llamadas.push({ url, init }); return fn(); };
 const HOOK = "https://hook.eu2.make.com/abcdef";

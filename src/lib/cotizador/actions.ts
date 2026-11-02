@@ -233,7 +233,7 @@ export async function issueQuote(id: string): Promise<QuoteResult> {
   // Notion o Make están caídos la cotización ya está emitida igual.
   if (data) {
     await emitEvent({
-      dominio: "ventas_marketing",
+      dominio: "comercial",
       tipo: "cotizacion.emitida",
       payload: {
         // El código es el `ctc_id` del espejo: único, estable y legible en

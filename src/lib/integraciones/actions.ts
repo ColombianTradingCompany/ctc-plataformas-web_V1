@@ -19,6 +19,7 @@ import { requireConsoleWrite } from "@/lib/panel/requireConsoleWrite";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import type { Automation, AutomationResult, IntegrationEvent, UltimoLatido } from "./types";
 import { CRONS } from "./registroCrons";
+import { DOMINIOS } from "./dominios";
 import { errorParaMostrar } from "./errores";
 import { emitEvent } from "./emit";
 import type { PanelConsoleKey } from "@/lib/panel/consoles";
@@ -123,6 +124,8 @@ export async function saveAutomation(input: {
   // La regla del registro: si no se puede escribir para qué existe, no se
   // debería construir.
   if (!input.proposito.trim()) return { ok: false, error: "Escribe el propósito: una frase que diga por qué existe." };
+  // `dominio` llega como string: tsc no puede vigilarlo, y un valor fuera del enum solo fallaría en Postgres (P20).
+  if (!DOMINIOS.some((d) => d.id === input.dominio)) return { ok: false, error: "Elige un dominio del Mapa CTC (0–9)." };
 
   const service = createServiceRoleClient();
   // Las filas de cron las siembra `registroCrons.ts` y solo una tanda con versión las cambia: ni se crean
@@ -198,7 +201,7 @@ export async function retryFailedEvents(): Promise<AutomationResult> {
 export async function emitPing(): Promise<AutomationResult> {
   const who = await requireConsoleWrite(CONSOLA);
   if (!who) return NO_AUTH;
-  const guardado = await emitEvent({ dominio: "it_plataforma", tipo: "prueba.ping", payload: { at: new Date().toISOString() } });
+  const guardado = await emitEvent({ dominio: "plataformas_it", tipo: "prueba.ping", payload: { at: new Date().toISOString() } });
   if (!guardado) return { ok: false, error: "No se pudo guardar el ping (error_bd)." };
   revalidatePath("/ecp/automatizaciones");
   return { ok: true };

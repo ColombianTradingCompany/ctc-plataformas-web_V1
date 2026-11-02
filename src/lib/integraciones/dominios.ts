@@ -1,20 +1,30 @@
-// ── Integraciones · el vocabulario compartido ────────────────────────────────
-// NO se inventó una taxonomía: esta es la que el negocio YA usa. Las etiquetas
-// de Gmail (`0. ADMIN Y ESTRATEGIA`, `1. ORIGEN Y SUMINISTRO`, …) y los espacios del
-// Notion de CTC son la misma lista. Todo lo que cruce sistemas —un evento, un
-// escenario de Make, un correo clasificado, una página espejada— se etiqueta
-// con ESTO, para que las tres herramientas hablen el mismo idioma.
+// ── Integraciones · el vocabulario compartido: el «Mapa CTC» 0–9 (D-007) ─────
+// La columna vertebral de la casa (D-007, `docs/UNIFICACION_ALINEACION.md` 2.1):
+// los hubs de Notion y Drive, las etiquetas de Gmail, el «Área» de Notion y este
+// enum son la MISMA lista. Todo lo que cruce sistemas —un evento, un escenario
+// de Make, un correo clasificado, una página espejada— se etiqueta con ESTO,
+// para que las herramientas hablen el mismo idioma.
 //
-// Si algún día cambia, cambia aquí y en el enum `integration_domain` de Postgres.
+// `gmail` es el nombre EXACTO de la etiqueta (`n · label`, «·» U+00B7, NFC): los
+// hubs 0–6 y `8 · Ejecución`; 7 y 9 no tienen etiqueta de Gmail. Gmail la
+// direcciona por id; aquí solo se nombra, y `qa-integraciones-check` exige la forma.
+//
+// P20 (2026-11): el enum `integration_domain` se PARTIÓ —no se renombró— desde los
+// siete valores viejos; el reparto y su vuelta, en
+// `docs/migraciones/2026-11-02_dominios_hub.sql`. Si algún día cambia, cambia aquí,
+// en el enum de Postgres y en las cadenas de Make, en la misma tanda.
 
 export const DOMINIOS = [
-  { id: "admin_estrategia",      n: "0", label: "Admin y Estrategia",       gmail: "0. ADMIN Y ESTRATEGIA" },
-  { id: "origen_suministro",     n: "1", label: "Origen y Suministro",      gmail: "1. ORIGEN Y SUMINISTRO" },
-  { id: "transito_importacion",  n: "2", label: "Tránsito e Importación",   gmail: "2. TRÁNSITO E IMPORTACIÓN" },
-  { id: "tostadores_inventario", n: "3", label: "Tostadores e Inventario",  gmail: "3. TOSTADORES E INVENTARIO" },
-  { id: "ventas_marketing",      n: "4", label: "Ventas y Marketing",       gmail: "4. VENTAS Y MARKETING" },
-  { id: "it_plataforma",         n: "5", label: "IT y Plataforma",          gmail: "5.IT" },
-  { id: "investigacion",         n: "6", label: "Investigación y Desarrollo", gmail: "6.INVESTIGACION Y DESARROLLO" },
+  { id: "direccion",           n: "0", label: "Dirección",             gmail: "0 · Dirección" },
+  { id: "origen",              n: "1", label: "Origen",                gmail: "1 · Origen" },
+  { id: "operacion_logistica", n: "2", label: "Operación y Logística", gmail: "2 · Operación y Logística" },
+  { id: "comercial",           n: "3", label: "Comercial",             gmail: "3 · Comercial" },
+  { id: "marca_contenido",     n: "4", label: "Marca y Contenido",     gmail: "4 · Marca y Contenido" },
+  { id: "plataformas_it",      n: "5", label: "Plataformas e IT",      gmail: "5 · Plataformas e IT" },
+  { id: "conocimiento",        n: "6", label: "Conocimiento",          gmail: "6 · Conocimiento" },
+  { id: "directorios",         n: "7", label: "Directorios",           gmail: "" },
+  { id: "ejecucion",           n: "8", label: "Ejecución",             gmail: "8 · Ejecución" },
+  { id: "archivo",             n: "9", label: "Archivo",               gmail: "" },
 ] as const;
 
 export type Dominio = (typeof DOMINIOS)[number]["id"];

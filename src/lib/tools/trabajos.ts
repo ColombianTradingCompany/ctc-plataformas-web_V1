@@ -208,7 +208,7 @@ export async function emitirDesdeHerramienta(
 
   const tipo = `herramienta.${toolId}.${String(evento).trim().slice(0, 60) || "evento"}`;
   await emitEvent({
-    dominio: "it_plataforma",
+    dominio: "conocimiento",
     tipo,
     payload: { herramienta: toolId, usuario: r.user.id, ...payload },
   });

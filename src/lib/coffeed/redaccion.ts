@@ -398,11 +398,11 @@ export async function generarPost(noticiaId: string, opts: GenerarOpts = {}): Pr
     .update({ estado: "elegida", deliverable_id: (entrega as { id: string }).id })
     .eq("id", noticiaId);
 
-  // 4. El ecosistema se entera (Make): dominio de contenido/venta. `emitEvent`
+  // 4. El ecosistema se entera (Make): dominio de marca y contenido (hub 4). `emitEvent`
   // nunca lanza; `after` para no sumarle su latencia a la respuesta.
   after(async () => {
     await emitEvent({
-      dominio: "ventas_marketing",
+      dominio: "marca_contenido",
       tipo: "coffeed.redaccion.post_creado",
       payload: { deliverableId: (entrega as { id: string }).id, titulo, outlet, url: noticia.url, conPortada: Boolean(imagenPath) },
     });

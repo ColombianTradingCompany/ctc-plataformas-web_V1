@@ -29,8 +29,8 @@ check(
 check("el estado tiene techo de tamaño", trabajos.includes("MAX_ESTADO_BYTES"));
 check("hay techo de trabajos por herramienta", trabajos.includes("MAX_TRABAJOS_POR_HERRAMIENTA"));
 check(
-  "los eventos de herramienta salen por el dominio de plataforma",
-  trabajos.includes('dominio: "it_plataforma"')
+  "los eventos de herramienta salen por el dominio de conocimiento (hub 6, P20)",
+  trabajos.includes('dominio: "conocimiento"')
 );
 check(
   "una herramienta sin puente no ofrece trabajos",

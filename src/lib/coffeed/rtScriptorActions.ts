@@ -765,8 +765,9 @@ export async function renderTake(input: {
     // La entrega a Canva (vía Make) solo tiene sentido si hay fotografías: un
     // tablero de marca con dibujos de palo no es una pieza, es un storyboard.
     if (quiereImagen && frames.some((f) => f.real)) {
+      // Dominio de marca y contenido (hub 4): es una pieza de marca, no una venta.
       await emitEvent({
-        dominio: "ventas_marketing",
+        dominio: "marca_contenido",
         tipo: "rts.tablero",
         payload: {
           jobId,

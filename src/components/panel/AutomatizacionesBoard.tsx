@@ -27,7 +27,7 @@ import table from "@/components/cotizador/quotesTable.module.css";
 
 const VACIA = {
   id: undefined as string | undefined,
-  nombre: "", proposito: "", dominio: "it_plataforma", disparador: "webhook",
+  nombre: "", proposito: "", dominio: "plataformas_it", disparador: "webhook",
   sistemas: [] as string[], criticidad: "experimental", etapa: "propuesta",
   makeScenarioId: "" as string, notas: "",
 };

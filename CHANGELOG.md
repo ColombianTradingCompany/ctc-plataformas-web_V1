@@ -19,6 +19,29 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.15] — 2026-11-02 (commit pendiente)
+
+- **Cambiado**: **los dominios de la espina de integración son el Mapa CTC 0–9** (unificación P20, D-007; owner 2026-11-02). El enum
+  `integration_domain` se PARTE, no se renombra: de 7 valores a 10 —`direccion`, `origen`, `operacion_logistica`, `comercial`,
+  `marca_contenido`, `plataformas_it`, `conocimiento`, `directorios`, `ejecucion`, `archivo`—, los mismos hubs que Notion, Drive y las
+  etiquetas de Gmail. `dominios.ts` lleva los 10 con su número, su nombre y su etiqueta de Gmail (`n · nombre`; vacía en 7 y 9).
+- **Cambiado**: 33 literales en 11 archivos: la cotización emitida sale por `comercial`; Redacción de Coffeed y RT-Scriptor por
+  `marca_contenido`; las jornadas de Terratalento por `origen`; los eventos de las herramientas (`CTC.emitir`) por `conocimiento`; el ping y
+  el valor por defecto del tablero de Automatizaciones por `plataformas_it`; las 14 filas del registro de crons, con su nuevo dominio.
+- **Añadido**: `saveAutomation` comprueba el dominio contra la lista antes de escribir (llega como texto y el compilador no puede vigilarlo).
+- **Datos** (tras el deploy, en la misma ventana): migración `docs/migraciones/2026-11-02_dominios_hub.sql` — instantánea de las 44 filas
+  (26 eventos, 18 automatizaciones) con su valor viejo, tipo nuevo y conversión de las dos columnas en una transacción; reparto previsto:
+  eventos comercial 16, marca_contenido 2, conocimiento 1, plataformas_it 4, origen 3; automatizaciones direccion 5, plataformas_it 4,
+  origen 2, operacion_logistica 1, comercial 5, marca_contenido 1. Ensayada en una rama de Supabase (subida, bajada exacta y subida otra
+  vez), borrada el mismo día. Con su vuelta atrás.
+- **Cambiado**: guardianes — `qa-integraciones-check` exige 10 dominios numerados 0–9 y que cada etiqueta de Gmail sea exactamente
+  `n · nombre` (U+00B7, NFC); `qa-taller-check` espera los eventos de herramienta en `conocimiento`.
+- **Docs**: `HERRAMIENTAS_TALLER.md`, `MAKE_RTS_CANVA.md`, el bloque de la taxonomía de `INTEGRACIONES_PLAN.md` y el párrafo de Gmail de
+  `SECRETARIA_PLAN.md` (sin los nombres de las subetiquetas retiradas). Los escenarios de Make cambian en la misma ventana:
+  «Notion · Nota comercial → CTC» manda `comercial` una vez al día; «CTC · Eventos de la plataforma» manda `comercial` y `origen` y
+  devuelve a la plataforma cada tipo que no tiene ruta (`evento.sin_ruta`, sin el contenido del evento). El clasificador de Gmail queda
+  pausado hasta P22.
+
 ## [V6.14] — 2026-10-29 (commit 04c2c78)
 
 - **Añadido**: **Navegador de Incoterms® 2020, mar y aire** (`incoterms`, default), herramienta NUEVA del taller (owner, 2026-10-29, desde la

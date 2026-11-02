@@ -263,3 +263,13 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - DATOS (tras el deploy) `tools` (id `incoterms`, default, kr·cp·web, sin memoria) + `tool_versions` (repo) + `version_publicada`.
 - Doc impact when wrapped: nodo de Herramientas del Café (19 en la base tras el alta); primera herramienta cuya FUENTE vive en otro repo de la casa (campaña SCAJ 2026, privado) y se compila con `build.py` en dos sabores (artefacto y plataforma). Sin entrada nueva de DICT.
 (commit: 04c2c78)
+
+## [2026-11-02] V6.15 · Los dominios de la espina son el Mapa CTC 0–9 (unificación P20, D-007)
+- ANN `src/lib/integraciones/dominios.ts`: 10 dominios (`direccion` … `archivo`, n 0–9) con su nombre y su etiqueta de Gmail (`n · nombre`, vacía en 7 y 9); cabecera que cita D-007. La puerta `api/integraciones/[canal]` ya deriva `validos` de `DOMINIOS` (sin cambio).
+- ANN literales (33 en 11 archivos): `registroCrons.ts` (14), `cotizador/actions.ts` → `comercial`, `coffeed/redaccion.ts` y `coffeed/rtScriptorActions.ts` → `marca_contenido`, `terratalento/actions.ts` (×2) → `origen`, `tools/trabajos.ts` → `conocimiento`, `integraciones/actions.ts` (ping) y `AutomatizacionesBoard.tsx` (por defecto) → `plataformas_it`; `saveAutomation` valida el dominio contra `DOMINIOS`.
+- ANN `scripts/qa-integraciones-check.mjs` (10 dominios 0–9; etiqueta de Gmail = `n · nombre`, U+00B7, NFC; solo 7 y 9 vacías) y `scripts/qa-taller-check.mjs` (`conocimiento`).
+- ADD `docs/migraciones/2026-11-02_dominios_hub.sql`: up (tabla instantánea del reparto, RLS sin políticas; tipo viejo renombrado, tipo nuevo, dos `ALTER COLUMN … USING CASE`, tipo viejo borrado) y down (valor viejo exacto desde la instantánea; regla inversa para lo nacido después; para en directorios/ejecucion/archivo). Ensayada en rama de Supabase el 2026-11-02 (borrada el mismo día).
+- ANN docs: `HERRAMIENTAS_TALLER.md`, `MAKE_RTS_CANVA.md`, `INTEGRACIONES_PLAN.md` (taxonomía), `SECRETARIA_PLAN.md` §1.2.
+- DATOS (tras el deploy, misma ventana): la migración sobre `integration_events` (26) y `automations` (18).
+- Doc impact when wrapped: el nodo de la espina de integración y el de Automatizaciones dicen «dominio = Mapa CTC 0–9» (10 valores, los hubs de Notion, Drive y Gmail); las aristas a Make muestran la ruta de vuelta `evento.sin_ruta` de «CTC · Eventos de la plataforma». Entrada de DICT: «Mapa CTC» (los 10 hubs, D-007).
+(commit: pendiente)

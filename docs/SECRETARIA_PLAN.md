@@ -63,11 +63,11 @@ componente `directorio`), «Muestras para Evaluacion de Lotes» (Conceptos Funda
 
 ### 1.2 Google
 
-- **Gmail** (809 en bandeja): las etiquetas `0. ADMIN Y ESTRATEGIA` … `6.INVESTIGACION Y DESARROLLO` son
-  exactamente `DOMINIOS` (`src/lib/integraciones/dominios.ts`) y las pone el escenario de Make
-  «Gmail · Clasificar por dominio» (2.881 corridas, 1 error). Subetiquetas: `/FACTURAS`, `/FEDEX`,
-  `/DHL`, `/CHAMPION LOGISTICA`, `/Cotizaciones JIACUI`, `5.IT/GAppScripts` (1.123 mensajes de
-  scripts). El Buzón del ECP sigue leyendo por IMAP (`mailbox_messages`).
+- **Gmail** (809 en bandeja): desde P20 (V6.15) las etiquetas son los hubs del Mapa CTC, `0 · Dirección` …
+  `6 · Conocimiento` y `8 · Ejecución`, exactamente el `gmail` de `DOMINIOS` (`src/lib/integraciones/dominios.ts`;
+  renombradas en su sitio, las mismas etiquetas de antes), más `Contabilidad`, `Revisar` y las de estado.
+  Las subetiquetas por empresa se retiraron: ese vínculo vive en Notion. Las pone el escenario de Make
+  «Gmail · Clasificar por dominio» (pausado hasta P22). El Buzón del ECP sigue leyendo por IMAP (`mailbox_messages`).
 - **Calendar**: `ctcexportmain@gmail.com`, `GVB` (America/Bogota), `GVG` (Europe/Berlin), `Pico&Placa`,
   y **«CTC · Operación»** — descrito en su propia descripción como *«Jornadas de Arena y de Recolecta,
   publicadas por la plataforma CTC. Los eventos los crea y los borra un escenario de Make»*.
@@ -133,7 +133,7 @@ Los tres primeros están registrados en `automations` (ECP · Automatizaciones) 
    Ecosistema de Valor, CommaaS, Terratalento). Es el lugar natural para reflejar versión viva y charter.
 5. **Google Contacts no tiene camino directo**: ni conector en Claude ni conexión en Make. El único
    bus posible es Make con una conexión nueva (owner) — o Google Apps Script, que ya se usa
-   (`5.IT/GAppScripts`).
+   (sus avisos de fallo llevan la etiqueta `Alerta` desde P20).
 6. Las bases de Notion tienen **dos relaciones duplicadas** Contactos ↔ Proveedores («Lista de
    Proveedores» y «Lista de Proveedores 1») y un data source vacío «New data source» en Proveedores:
    higiene previa al espejo.

@@ -57,7 +57,7 @@ nueva por `tipo`):
 ```json
 {
   "tipo": "rts.tablero",
-  "dominio": "ventas_marketing",
+  "dominio": "marca_contenido",
   "payload": {
     "jobId": "uuid del revelado",
     "projectId": "uuid",
@@ -93,7 +93,7 @@ Authorization: Bearer {{var.organization.CTC_SECRET}}
 ```json
 {
   "tipo": "rts.tablero",
-  "dominio": "ventas_marketing",
+  "dominio": "marca_contenido",
   "payload": { "jobId": "el mismo", "canva_url": "https://www.canva.com/design/…", "design_id": "DA…" }
 }
 ```

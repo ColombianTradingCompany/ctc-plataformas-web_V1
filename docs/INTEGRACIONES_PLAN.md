@@ -19,14 +19,21 @@ sistemas con acceso real, no de oídas.
 Las etiquetas de Gmail y los espacios de Notion son **la misma taxonomía**:
 
 ```
-0. ADMIN Y ESTRATEGIA        ↔ Administración y Estrategia
-1. ORIGEN Y SUMINISTRO       ↔ (cadena: fincas, productores, Arena)
-2. TRÁNSITO E IMPORTACIÓN    ↔ (logística: FEDEX · DHL · CHAMPION)
-3. TOSTADORES E INVENTARIO   ↔ (Master Roaster, catálogo)
-4. VENTAS Y MARKETING        ↔ Go To Market
-5. IT                        ↔ Herramientas / CTC Tech
-6. INVESTIGACIÓN Y DESARROLLO ↔ I+D
+0 · Dirección              ↔ antes 0. ADMIN Y ESTRATEGIA
+1 · Origen                 ↔ antes 1. ORIGEN Y SUMINISTRO
+2 · Operación y Logística  ↔ antes 2. TRÁNSITO E IMPORTACIÓN + 3. TOSTADORES E INVENTARIO
+3 · Comercial              ↔ antes 4. VENTAS Y MARKETING (la venta)
+4 · Marca y Contenido      ↔ antes 4. VENTAS Y MARKETING (la marca y el contenido)
+5 · Plataformas e IT       ↔ antes 5. IT
+6 · Conocimiento           ↔ antes 6. INVESTIGACIÓN Y DESARROLLO
+7 · Directorios            ↔ (Notion y Drive; sin etiqueta de Gmail)
+8 · Ejecución              ↔ (proyectos activos)
+9 · Archivo                ↔ (Notion y Drive; sin etiqueta de Gmail)
 ```
+
+Desde la V6.15 (P20 de la unificación, D-007) la lista es el **Mapa CTC 0–9**: los siete valores de
+2026-08 se partieron en diez, y el enum, el código, las etiquetas de Gmail y las cadenas de Make cambiaron
+en la misma ventana (`docs/migraciones/2026-11-02_dominios_hub.sql`).
 
 Eso no se inventa: es el vocabulario con el que ya se opera. **Debe ser el enum
 compartido** de toda la integración — el campo por el que se enruta un correo, se

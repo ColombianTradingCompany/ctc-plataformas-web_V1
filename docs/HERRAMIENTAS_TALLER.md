@@ -42,7 +42,7 @@ La vigila `scripts/qa-herramientas-acceso-check.mjs`.
   un trabajo a medias.
 - `emitirDesdeHerramienta()` es el canal hacia el ecosistema: convierte
   `CTC.emitir(evento, payload)` en una fila de `integration_events`
-  (`dominio: it_plataforma`, `tipo: herramienta.<id>.<evento>`) — el mismo
+  (`dominio: conocimiento` —hub 6 del Mapa CTC desde la V6.15—, `tipo: herramienta.<id>.<evento>`) — el mismo
   camino que ya recorren las cotizaciones hacia Make/Notion.
 
 ## El puente (`public/tools/ctc-bridge.js`) — cómo se vuelve «con memoria» una herramienta

@@ -2802,6 +2802,8 @@ D-034 (2026-10-29): a standing go-ahead per part (Claude still stops for access 
 
 D-035 (2026-10-29): a four-day plan, everything in place Mon 2 Nov. Notion, Drive and Gmail run side by side with no gaps; the last dry runs run together on 29 Oct. Fri 30 Oct: P7 executes, P8 runs whole. Sat 31 Oct: P14 RB2 and RB3, P9 whole, P10 session 1. Sun 1 Nov: P15 RB5 (incl. the SCAJ folder rename), P10 session 2, P11, P16, P17b, P20 at night. Mon 2 Nov: P21, P22, P15 RB6. Only Gmail, Make and the campaign's own pages and databases keep off the campaign's wave days. Gmail's watch week (3 to 6 Nov) runs in the background. P36 and P37 are narrowed to what P6 to P22 built (the briefing, P24 and the deletions close in their own projects); sign-off target Fri 6 Nov.
 
+D-036 (2026-11-02): the campaign and the restructuring run at the same time. Nothing ran on 31 Oct and 1 Nov; the weekend batches run from Mon 2 Nov, each as soon as the previous one is verified. A send no longer blocks a whole day: the owner says when a send starts and ends, and only inside that window Gmail, Make and the campaign's own pages and databases are left alone. The campaign pages move before the first send. In use about Wed 4 Nov.
+
 D-033 (2026-10-29): P12's two answers that P15 and P16 needed were taken early (the EUDR certificate stays a link; «Adjunto» uploads stay in Notion), so the Drive track does not wait for the briefing project.
 
 ## Status

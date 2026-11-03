@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.15] — 2026-11-02 (commit pendiente)
+## [V6.15] — 2026-11-02 (commit 3d14e08)
 
 - **Cambiado**: **los dominios de la espina de integración son el Mapa CTC 0–9** (unificación P20, D-007; owner 2026-11-02). El enum
   `integration_domain` se PARTE, no se renombra: de 7 valores a 10 —`direccion`, `origen`, `operacion_logistica`, `comercial`,

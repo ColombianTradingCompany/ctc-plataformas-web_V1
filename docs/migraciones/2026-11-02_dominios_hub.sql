@@ -201,3 +201,8 @@ alter table public.dominio_split_snapshot_20261102 rename to dominio_split_snaps
 
 -- Tras el down: el enum vuelve a los 7 valores en su orden; cada fila de la instantánea tiene su dominio_antiguo
 -- (select … from public.dominio_split_snapshot_20261102_revertida s join … where s.dominio_antiguo <> t.dominio::text → 0 filas).
+
+-- Reparto real (producción, 2026-11-03 08:21:18 UTC; código V6.15 · build 3d14e08 en vivo desde 08:21:16):
+--   integration_events (26): comercial 16 · marca_contenido 2 · plataformas_it 4 · conocimiento 1 · origen 3
+--   automations (18):        direccion 5 · plataformas_it 4 · origen 2 · operacion_logistica 1 · comercial 5 · marca_contenido 1
+--   = el reparto previsto. Instantánea 44 filas (26 + 18). 0 filas nuevas entre el push y la migración; 0 `fallido`.

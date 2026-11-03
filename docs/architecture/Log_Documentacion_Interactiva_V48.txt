@@ -282,4 +282,4 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 ## [2026-11-03] V6.17 · Automatizaciones: el alta y la edición se abren en una ventana
 - ANN `src/components/panel/AutomatizacionesBoard.tsx`: el formulario de alta/edición va dentro de un `role="dialog"` fijo (mismo patrón que `pvc/ParametrosBoard.tsx`), con Esc para cerrar y sin cierre por clic fuera; acciones abajo a la derecha.
 - Doc impact when wrapped: ninguno en el mapa (solo presentación del formulario).
-(commit: pendiente)
+(commit: dfe824a)

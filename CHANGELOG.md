@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.17] — 2026-11-03 (commit pendiente)
+## [V6.17] — 2026-11-03 (commit dfe824a)
 
 - **Cambiado**: ECP › Automatizaciones: «Registrar automatización» y «Editar» abren el formulario en una **ventana encima del tablero**
   en vez de al fondo de la página, donde el owner no lo veía (2026-11-03; la regla de la casa de los hilos en ventana). Se cierra con

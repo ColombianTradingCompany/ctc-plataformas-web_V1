@@ -19,6 +19,12 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.17] — 2026-11-03 (commit pendiente)
+
+- **Cambiado**: ECP › Automatizaciones: «Registrar automatización» y «Editar» abren el formulario en una **ventana encima del tablero**
+  en vez de al fondo de la página, donde el owner no lo veía (2026-11-03; la regla de la casa de los hilos en ventana). Se cierra con
+  «Cancelar» o Esc; un clic fuera no la cierra, para no perder un formulario a medio llenar. Guardar y Cancelar quedan abajo a la derecha.
+
 ## [V6.16] — 2026-11-03 (commit 6faee87)
 
 - **Corregido**: ECP › Automatizaciones, formulario «Editar automatización»: los nombres de «Sistemas que toca» (plataforma, notion, gmail…)

@@ -278,3 +278,8 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - FIX `src/components/panel/AutomatizacionesBoard.tsx`: la etiqueta de cada sistema deja la clase `taskCheck` (caja de 22 px del tic de las tareas, en `shared.module.css`) y pasa a una etiqueta en línea (casilla + nombre, sin cortes). Nada más cambia; `PanelTasks.tsx` sigue usando `taskCheck` para su tic, que es para lo que existe.
 - Doc impact when wrapped: ninguno en el mapa (solo presentación del formulario).
 (commit: 6faee87)
+
+## [2026-11-03] V6.17 · Automatizaciones: el alta y la edición se abren en una ventana
+- ANN `src/components/panel/AutomatizacionesBoard.tsx`: el formulario de alta/edición va dentro de un `role="dialog"` fijo (mismo patrón que `pvc/ParametrosBoard.tsx`), con Esc para cerrar y sin cierre por clic fuera; acciones abajo a la derecha.
+- Doc impact when wrapped: ninguno en el mapa (solo presentación del formulario).
+(commit: pendiente)

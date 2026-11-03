@@ -54,6 +54,14 @@ export function AutomatizacionesBoard() {
   const [msg, setMsg] = useState("");
   const [error, setError] = useState("");
 
+  // Esc cierra la ventana de alta / edición. Un clic fuera NO la cierra: perdería un formulario a medio llenar.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
   const refresh = useCallback(async () => {
     const [a, e, l] = await Promise.all([listAutomations(), listRecentEvents(), listUltimosLatidos()]);
     setRows(a ?? []);
@@ -269,98 +277,101 @@ export function AutomatizacionesBoard() {
       {msg && <p className={styles.meta}>{msg}</p>}
       {error && <p className={styles.warn}>{error}</p>}
 
-      {/* ── Alta / edición ── */}
+      {/* ── Alta / edición: en una ventana encima del tablero (el owner no la veía al fondo de la página, 2026-11-03) ── */}
       {open && (
-        <div className={styles.card}>
-          <div className={styles.sectionHead}>
-            <strong>{form.id ? "Editar automatización" : "Registrar automatización"}</strong>
-          </div>
-          <form
-            className={styles.formGrid}
-            onSubmit={async (e) => {
-              e.preventDefault();
-              const ok = await run(
-                () => saveAutomation({
-                  id: form.id, nombre: form.nombre, proposito: form.proposito, dominio: form.dominio,
-                  disparador: form.disparador, sistemas: form.sistemas, criticidad: form.criticidad,
-                  etapa: form.etapa, makeScenarioId: form.makeScenarioId ? Number(form.makeScenarioId) : null,
-                  notas: form.notas,
-                }),
-                form.id ? "Actualizada." : "Registrada."
-              );
-              void ok;
-              setOpen(false);
-            }}
-          >
-            <div className={styles.field} style={{ minWidth: 200 }}>
-              <label htmlFor="a-nom">Nombre</label>
-              <input id="a-nom" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required />
+        <div role="dialog" aria-modal="true" aria-labelledby="a-form-titulo"
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }}>
+          <div className={styles.card} onClick={(ev) => ev.stopPropagation()} style={{ maxWidth: 920, width: "100%", maxHeight: "88vh", overflow: "auto", margin: 0 }}>
+            <div className={styles.sectionHead}>
+              <strong id="a-form-titulo">{form.id ? "Editar automatización" : "Registrar automatización"}</strong>
             </div>
-            <div className={styles.field} style={{ flex: 1, minWidth: 300 }}>
-              <label htmlFor="a-pro">Propósito · una frase</label>
-              <input id="a-pro" value={form.proposito} placeholder="Ej: publica en Instagram lo que el ECP da por bueno en Coffeed"
-                onChange={(e) => setForm({ ...form, proposito: e.target.value })} required />
-            </div>
-            <div className={styles.field} style={{ minWidth: 190 }}>
-              <label htmlFor="a-dom">Dominio</label>
-              <select id="a-dom" value={form.dominio} onChange={(e) => setForm({ ...form, dominio: e.target.value })}>
-                {DOMINIOS.map((d) => <option key={d.id} value={d.id}>{d.n} · {d.label}</option>)}
-              </select>
-            </div>
-            <div className={styles.field} style={{ minWidth: 150 }}>
-              <label htmlFor="a-dis">Disparador</label>
-              <select id="a-dis" value={form.disparador} disabled={esCron(form)}
-                onChange={(e) => setForm({ ...form, disparador: e.target.value })}>
-                {(esCron(form) ? ["cron"] : ["webhook", "calendario", "watch", "manual"]).map((d) => <option key={d} value={d}>{d}</option>)}
-              </select>
-            </div>
-            <div className={styles.field} style={{ minWidth: 160 }}>
-              <label htmlFor="a-cri">Criticidad</label>
-              <select id="a-cri" value={form.criticidad} onChange={(e) => setForm({ ...form, criticidad: e.target.value })}>
-                {CRITICIDADES.map((c) => <option key={c} value={c}>{CRITICIDAD_LABEL[c]}</option>)}
-              </select>
-              <span className={styles.meta}>{CRITICIDAD_HINT[form.criticidad as keyof typeof CRITICIDAD_HINT]}</span>
-            </div>
-            <div className={styles.field} style={{ minWidth: 140 }}>
-              <label htmlFor="a-eta">Etapa</label>
-              <select id="a-eta" value={form.etapa} disabled={esCron(form)} onChange={(e) => setForm({ ...form, etapa: e.target.value })}>
-                {ETAPAS.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-            <div className={styles.field} style={{ minWidth: 160 }}>
-              <label htmlFor="a-make">Escenario de Make (id)</label>
-              <input id="a-make" inputMode="numeric" value={form.makeScenarioId} placeholder="vacío si aún no existe"
-                onChange={(e) => setForm({ ...form, makeScenarioId: e.target.value })} />
-            </div>
-            <div className={styles.field} style={{ flex: 1, minWidth: 260 }}>
-              <label>Sistemas que toca</label>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {SISTEMAS.map((s) => (
-                  <label key={s} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, whiteSpace: "nowrap", cursor: "pointer" }}>
-                    <input type="checkbox" checked={form.sistemas.includes(s)}
-                      onChange={(e) => setForm({
-                        ...form,
-                        sistemas: e.target.checked ? [...form.sistemas, s] : form.sistemas.filter((x) => x !== s),
-                      })} />
-                    {s}
-                  </label>
-                ))}
+            <form
+              className={styles.formGrid}
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const ok = await run(
+                  () => saveAutomation({
+                    id: form.id, nombre: form.nombre, proposito: form.proposito, dominio: form.dominio,
+                    disparador: form.disparador, sistemas: form.sistemas, criticidad: form.criticidad,
+                    etapa: form.etapa, makeScenarioId: form.makeScenarioId ? Number(form.makeScenarioId) : null,
+                    notas: form.notas,
+                  }),
+                  form.id ? "Actualizada." : "Registrada."
+                );
+                void ok;
+                setOpen(false);
+              }}
+            >
+              <div className={styles.field} style={{ minWidth: 200 }}>
+                <label htmlFor="a-nom">Nombre</label>
+                <input id="a-nom" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required />
               </div>
-            </div>
-            <div className={styles.field} style={{ flex: 1, minWidth: 260 }}>
-              <label htmlFor="a-not">Notas</label>
-              <input id="a-not" value={form.notas} onChange={(e) => setForm({ ...form, notas: e.target.value })} />
-            </div>
-            <div className={styles.actions}>
-              <button className="btn btn-sm btn-solid" type="submit" disabled={busy}>Guardar</button>
-              <button className="btn btn-sm" type="button" onClick={() => setOpen(false)}>Cancelar</button>
-            </div>
-          </form>
-          <p className={styles.meta}>
-            Marcar <b>activa</b> o <b>pausada</b> exige el id del escenario en Make — el registro no puede afirmar que
-            algo está corriendo si no existe donde corre. Las filas de <b>cron</b> son de la plataforma: su disparador, su
-            etapa y su clave no se cambian aquí (un cron se para con un deploy).
-          </p>
+              <div className={styles.field} style={{ flex: 1, minWidth: 300 }}>
+                <label htmlFor="a-pro">Propósito · una frase</label>
+                <input id="a-pro" value={form.proposito} placeholder="Ej: publica en Instagram lo que el ECP da por bueno en Coffeed"
+                  onChange={(e) => setForm({ ...form, proposito: e.target.value })} required />
+              </div>
+              <div className={styles.field} style={{ minWidth: 190 }}>
+                <label htmlFor="a-dom">Dominio</label>
+                <select id="a-dom" value={form.dominio} onChange={(e) => setForm({ ...form, dominio: e.target.value })}>
+                  {DOMINIOS.map((d) => <option key={d.id} value={d.id}>{d.n} · {d.label}</option>)}
+                </select>
+              </div>
+              <div className={styles.field} style={{ minWidth: 150 }}>
+                <label htmlFor="a-dis">Disparador</label>
+                <select id="a-dis" value={form.disparador} disabled={esCron(form)}
+                  onChange={(e) => setForm({ ...form, disparador: e.target.value })}>
+                  {(esCron(form) ? ["cron"] : ["webhook", "calendario", "watch", "manual"]).map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+              <div className={styles.field} style={{ minWidth: 160 }}>
+                <label htmlFor="a-cri">Criticidad</label>
+                <select id="a-cri" value={form.criticidad} onChange={(e) => setForm({ ...form, criticidad: e.target.value })}>
+                  {CRITICIDADES.map((c) => <option key={c} value={c}>{CRITICIDAD_LABEL[c]}</option>)}
+                </select>
+                <span className={styles.meta}>{CRITICIDAD_HINT[form.criticidad as keyof typeof CRITICIDAD_HINT]}</span>
+              </div>
+              <div className={styles.field} style={{ minWidth: 140 }}>
+                <label htmlFor="a-eta">Etapa</label>
+                <select id="a-eta" value={form.etapa} disabled={esCron(form)} onChange={(e) => setForm({ ...form, etapa: e.target.value })}>
+                  {ETAPAS.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div className={styles.field} style={{ minWidth: 160 }}>
+                <label htmlFor="a-make">Escenario de Make (id)</label>
+                <input id="a-make" inputMode="numeric" value={form.makeScenarioId} placeholder="vacío si aún no existe"
+                  onChange={(e) => setForm({ ...form, makeScenarioId: e.target.value })} />
+              </div>
+              <div className={styles.field} style={{ flex: 1, minWidth: 260 }}>
+                <label>Sistemas que toca</label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {SISTEMAS.map((s) => (
+                    <label key={s} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, whiteSpace: "nowrap", cursor: "pointer" }}>
+                      <input type="checkbox" checked={form.sistemas.includes(s)}
+                        onChange={(e) => setForm({
+                          ...form,
+                          sistemas: e.target.checked ? [...form.sistemas, s] : form.sistemas.filter((x) => x !== s),
+                        })} />
+                      {s}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className={styles.field} style={{ flex: 1, minWidth: 260 }}>
+                <label htmlFor="a-not">Notas</label>
+                <input id="a-not" value={form.notas} onChange={(e) => setForm({ ...form, notas: e.target.value })} />
+              </div>
+              <div className={styles.actions} style={{ width: "100%", justifyContent: "flex-end" }}>
+                <button className="btn btn-sm btn-solid" type="submit" disabled={busy}>Guardar</button>
+                <button className="btn btn-sm" type="button" onClick={() => setOpen(false)}>Cancelar</button>
+              </div>
+            </form>
+            <p className={styles.meta}>
+              Marcar <b>activa</b> o <b>pausada</b> exige el id del escenario en Make — el registro no puede afirmar que
+              algo está corriendo si no existe donde corre. Las filas de <b>cron</b> son de la plataforma: su disparador, su
+              etapa y su clave no se cambian aquí (un cron se para con un deploy).
+            </p>
+          </div>
         </div>
       )}
     </>

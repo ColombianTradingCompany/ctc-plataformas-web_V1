@@ -273,3 +273,8 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - DATOS (tras el deploy, misma ventana): la migración sobre `integration_events` (26) y `automations` (18).
 - Doc impact when wrapped: el nodo de la espina de integración y el de Automatizaciones dicen «dominio = Mapa CTC 0–9» (10 valores, los hubs de Notion, Drive y Gmail); las aristas a Make muestran la ruta de vuelta `evento.sin_ruta` de «CTC · Eventos de la plataforma». Entrada de DICT: «Mapa CTC» (los 10 hubs, D-007).
 (commit: 3d14e08)
+
+## [2026-11-03] V6.16 · Automatizaciones: las casillas de «Sistemas que toca» se leen
+- FIX `src/components/panel/AutomatizacionesBoard.tsx`: la etiqueta de cada sistema deja la clase `taskCheck` (caja de 22 px del tic de las tareas, en `shared.module.css`) y pasa a una etiqueta en línea (casilla + nombre, sin cortes). Nada más cambia; `PanelTasks.tsx` sigue usando `taskCheck` para su tic, que es para lo que existe.
+- Doc impact when wrapped: ninguno en el mapa (solo presentación del formulario).
+(commit: pendiente)

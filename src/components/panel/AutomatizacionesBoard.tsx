@@ -336,7 +336,7 @@ export function AutomatizacionesBoard() {
               <label>Sistemas que toca</label>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {SISTEMAS.map((s) => (
-                  <label key={s} className={styles.taskCheck}>
+                  <label key={s} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, whiteSpace: "nowrap", cursor: "pointer" }}>
                     <input type="checkbox" checked={form.sistemas.includes(s)}
                       onChange={(e) => setForm({
                         ...form,

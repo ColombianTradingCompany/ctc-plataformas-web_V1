@@ -277,4 +277,4 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 ## [2026-11-03] V6.16 · Automatizaciones: las casillas de «Sistemas que toca» se leen
 - FIX `src/components/panel/AutomatizacionesBoard.tsx`: la etiqueta de cada sistema deja la clase `taskCheck` (caja de 22 px del tic de las tareas, en `shared.module.css`) y pasa a una etiqueta en línea (casilla + nombre, sin cortes). Nada más cambia; `PanelTasks.tsx` sigue usando `taskCheck` para su tic, que es para lo que existe.
 - Doc impact when wrapped: ninguno en el mapa (solo presentación del formulario).
-(commit: pendiente)
+(commit: 6faee87)

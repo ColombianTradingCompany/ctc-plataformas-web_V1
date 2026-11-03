@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.16] — 2026-11-03 (commit pendiente)
+## [V6.16] — 2026-11-03 (commit 6faee87)
 
 - **Corregido**: ECP › Automatizaciones, formulario «Editar automatización»: los nombres de «Sistemas que toca» (plataforma, notion, gmail…)
   se montaban unos sobre otros y no se podían leer. Cada casilla usaba la clase `taskCheck` del tablero de tareas, una caja de 22 px pensada

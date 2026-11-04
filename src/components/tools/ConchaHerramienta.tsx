@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { NOMBRE_SUPERFICIE, vueltaSegura, type SuperficieHerramientas } from "@/lib/tools/volverSeguro";
 import { MOTIVO_COPY, type Veredicto } from "@/lib/tools/accesoHerramienta";
+import type { PrefillHerramienta } from "@/lib/tools/entrada";
 import { SolicitarHerramienta } from "./SolicitarHerramienta";
 import { SesionHerramienta } from "./SesionHerramienta";
 import styles from "./ConchaHerramienta.module.css";
@@ -35,6 +36,9 @@ export function ConchaHerramienta({
   toolId,
   soportaMemoria = false,
   guia = null,
+  trabajoInicial = null,
+  prefill = null,
+  avisoEntrada = null,
   pantallaCompleta = false,
 }: {
   superficie: SuperficieHerramientas;
@@ -50,6 +54,12 @@ export function ConchaHerramienta({
   soportaMemoria?: boolean;
   /** Qué es y cómo funciona — el acordeón del Home Menu (V5.7). */
   guia?: string | null;
+  /** TAR-121: el trabajo que pide la URL (`?trabajo=`). La propiedad la comprueba `abrirTrabajo`, no esto. */
+  trabajoInicial?: string | null;
+  /** TAR-121: el prellenado de un trabajo nuevo (`?finca=` / `?lote=`), ya resuelto contra la cuenta en el servidor. */
+  prefill?: PrefillHerramienta | null;
+  /** TAR-121: lo que no se pudo usar del enlace, dicho a la persona en el Home Menu. */
+  avisoEntrada?: string | null;
   /** Pantalla completa (segunda pasada del owner, 2026-08-19): la concha llena
    *  el alto de la ventana, la cabecera se aprieta y el marco se queda con
    *  todo lo demás — «the working space is very reduced». */
@@ -82,7 +92,18 @@ export function ConchaHerramienta({
 
       {veredicto.abre ? (
         soportaMemoria ? (
-          <SesionHerramienta toolId={toolId} nombre={nombre} src={src} guia={guia ?? descripcion} />
+          <SesionHerramienta
+            // TAR-121: otra entrada (otro trabajo u otro prellenado en la URL) es otra sesión: sin la key, una navegación
+            // que solo cambia los parámetros dejaría montado el menú con el nombre y los avisos del enlace anterior.
+            key={`${toolId}|${trabajoInicial ?? ""}|${prefill ? JSON.stringify(prefill) : ""}|${avisoEntrada ?? ""}`}
+            toolId={toolId}
+            nombre={nombre}
+            src={src}
+            guia={guia ?? descripcion}
+            trabajoInicial={trabajoInicial}
+            prefill={prefill}
+            avisoEntrada={avisoEntrada}
+          />
         ) : (
           <iframe className={styles.marco} src={src} title={`Herramienta: ${nombre}`} loading="lazy" />
         )

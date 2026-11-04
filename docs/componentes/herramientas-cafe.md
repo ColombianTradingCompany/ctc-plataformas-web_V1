@@ -60,6 +60,10 @@ sin id todavía, en `_candidatas\<nombre>\`.
 SUPERFICIE, no de una consola — gotcha 12) · `/tools/<id>/*.html` y `/tools/h/[slug]` (fuera del matcher del proxy; las `/tools/<archivo>.html` planas son 308) ·
 `/bcp/herramientas` (administración).
 
+**TAR-121 · el taller como entrada de módulo**: `/herramientas/taller/<slug>` acepta `?trabajo=<uuid>` (abre un trabajo guardado
+de la cuenta), `?finca=<uuid | CTC-F-…>` y `?lote=<uuid | CTC-L-…>` (prellenan un trabajo NUEVO con un registro de la cuenta) y
+`?volver=` (lista blanca). Contrato en `src/lib/tools/entrada.ts`; qué prellena cada herramienta, en `carpetas.ts` (`entrada`).
+
 ## Mapa de código
 
 - `public/tools/<id>/*.html` (vendorizadas; solo se toca el `<head>` para SEO; carpetas en **`src/lib/tools/carpetas.ts`**,
@@ -80,7 +84,10 @@ SUPERFICIE, no de una consola — gotcha 12) · `/tools/<id>/*.html` y `/tools/h
   por persona y herramienta; `tools_plus_grants` = comodín heredado, `quienDependeDelComodin()`), `trabajos.ts`
   (`tool_sessions`, 200 KB/estado, 40/herramienta, dueño en cada verbo), `taller.ts`, `unaHerramienta.ts`,
   `solicitudes.ts` (`tool_access_requests`, «pedir no es poder»), `solicitarPlus.ts`, `volverSeguro.ts`
-  (**vuelta segura = seguridad**, lista blanca por superficie), `toolAccess.ts`.
+  (**vuelta segura = seguridad**, lista blanca por superficie), `toolAccess.ts`. **TAR-121**: `entrada.ts` (PURO: lee y valida
+  `?trabajo=` · `?finca=` · `?lote=` · `?volver=`, arma el prellenado con el contrato de `carpetas.ts` y escribe la URL de entrada,
+  `urlDeHerramienta`) y `entradaServidor.ts` (solo servidor, NO server action: resuelve la finca o el lote filtrando `producer_id`
+  por la cuenta en la consulta; «no existe» y «no es suyo» dan el mismo aviso).
 - `src/components/tools/` — `CoverFlow`, `ConchaHerramienta`, `SesionHerramienta` (Home Menu de trabajos),
   `BarraHerramienta`, `TallerBarra`, `ObtenerPlus`, `SolicitarHerramienta`, `ToolIcons`, `CapturaMiniatura`.
 - `src/components/services/{HerramientasLanding,CarruselHerramientas}.tsx`; `scripts/build-tool-shots.mjs`
@@ -105,7 +112,9 @@ SUPERFICIE, no de una consola — gotcha 12) · `/tools/<id>/*.html` y `/tools/h
 ## Guardianes
 
 `qa-tools-carpetas.mjs` (185, `node --experimental-strip-types`: carpeta ↔ lista ↔ disco ↔ 308, y nadie escribe una ruta plana) ·
-`qa-taller-check.mjs` (66) · `qa-herramientas-acceso-check.mjs` (31) · `qa-concha-herramientas-check.mjs` (42,
+`qa-taller-check.mjs` (69) · `qa-taller-entrada-check.mjs` (104, TAR-121, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`:
+la entrada de módulo — parámetros, la vuelta con sus ataques (incluidos `..` y `%2e%2e`), el prellenado de mínimo privilegio, cada
+selector del contrato existe en el archivo de su herramienta, y el filtro por dueño en la consulta) · `qa-herramientas-acceso-check.mjs` (31) · `qa-concha-herramientas-check.mjs` (44,
 once vectores de ataque) · `qa-tools-puente-conformance.mjs` (15/15; las de esquema propio —`agtron`, `coffee-datasheet`, `gulliver`— con sonda;
 V5.149: una sonda que revienta ya no aprueba en silencio) · `qa-tools-seo-check.mjs` (273, recorre las carpetas) ·
 `qa-gulliver-check.mjs` (63, puro: el evento en un solo bloque, la trampa del `localStorage` ejecutada en Node, descargos y NIT) ·
@@ -142,6 +151,18 @@ completos, sin CDN) ·
 cualquiera de esos campos se ve en las tres superficies al instante — sin desplegar.
 
 ## Pendientes
+
+- **TAR-121 · la herramienta del taller como MÓDULO** (2026-11-04, sesión nocturna en la nube; PR abierto, sin versión hasta que aterrice
+  en `main`). Hecho: `?trabajo=` abre un trabajo guardado de la cuenta (por `abrirTrabajo`, que filtra `user_id`; uno ajeno o borrado cae al
+  menú con el mismo aviso); `?finca=` / `?lote=` se resuelven contra la cuenta en el servidor y prellenan un trabajo NUEVO o «Abrir sin
+  guardar» (nunca uno guardado; nunca crean filas al abrir el enlace: el menú propone el nombre y la persona da el clic); `?volver=` se lee
+  con el mismo contrato para la cinta y la concha (lista blanca de la superficie, sin segmentos `.`/`..`). El puente lleva un mensaje nuevo,
+  `{ctc:"prefill", campos, registro}`, y `CTC.usarPrefill`. Primera herramienta con contrato: `mermas-ctc` (las notas del reporte). Abierto:
+  (a) el contrato completo, herramienta por herramienta, en la sección «El contrato de URL del taller» (siguiente PR); (b) prellenado de
+  `coffee-datasheet`, `cromatografia-suelo` y `green-datasheet`; (c) **la puerta no vuelve a la herramienta**: quien llega sin sesión entra y
+  cae en el taller, no en la herramienta con sus parámetros (`/herramientas/acceso` aún no lee un `?siguiente=`); (d) solo cuentas de
+  **productor** prellenan (las fincas y los lotes son suyos); un comprador de CP o un experto del DC abren la herramienta vacía — decidir con el
+  owner si un comprador debe prellenar con un lote que compró; (e) KR y CP siguen leyendo solo `?volver=` en sus rutas de herramienta.
 
 - **V6.14 · Navegador de Incoterms® 2020 (mar y aire)** (owner, 2026-10-29, desde la conversación de la campaña SCAJ 2026: «Add the tool to
   the Herramientas»; ficha `herramientas-cafe/incoterms/README.md`). Hecho: herramienta NUEVA, default, EN · ES · JA · DE; deslizador de nueve

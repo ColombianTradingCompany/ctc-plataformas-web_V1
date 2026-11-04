@@ -74,6 +74,14 @@ herramienta va a evolucionar, que use `CTC.usarEstado` con su propio esquema.
 
 Referencia viva: `costo-empaque` (el puente al pie de su HTML).
 
+**TAR-121 (2026-11-04) · el prellenado**: cuando el taller se abre con `?finca=` o `?lote=` (resueltos contra la cuenta en el
+servidor, `src/lib/tools/entradaServidor.ts`), la concha manda después del `init` de un trabajo NUEVO —o a la sesión «Abrir sin
+guardar»— `{ctc:"prefill", campos, registro}`. `campos` = `[{sel, valor}]`, los selectores que la herramienta declaró en
+`src/lib/tools/carpetas.ts` (`entrada`; solo `#id` o `[data-field="x"]`): el puente pone el valor y dispara `input`/`change` como una
+persona, y reintenta unos segundos lo que aún no existe (una lista que llega del servidor). `registro` (`{finca, lote}`) solo va a
+las herramientas que lo piden con `propio: true`, y lo reciben con `CTC.usarPrefill(fn)`. Un trabajo GUARDADO nunca recibe prellenado.
+Si hay trabajo abierto, el autoguardado de siempre recoge los campos prellenados; en la sesión suelta el puente sigue inerte.
+
 **V5.7**: el puente además manda un `resumen` con cada estado (por defecto los
 primeros campos con valor; `CTC.usarResumen(fn)` para darlo mejor) — es la línea
 que el Home Menu lista bajo el nombre del trabajo. El menú también enseña la

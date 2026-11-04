@@ -45,22 +45,36 @@ export const NOMBRE_SUPERFICIE: Record<SuperficieHerramientas, string> = {
  * Cualquier otra cosa devuelve el inicio de la superficie. Nunca `null`: el
  * botón de volver SIEMPRE tiene destino, porque una concha sin salida es
  * justo lo que el owner pidió evitar.
+ *
+ * `alternativa` (TAR-121): el destino cuando no hay vuelta fiable, si no es el
+ * inicio — el taller vuelve a su rejilla (`/herramientas/taller`), no a la
+ * landing. Tiene que ser ella misma una ruta de la superficie: si no lo es,
+ * manda el inicio.
  */
-export function vueltaSegura(volver: string | null | undefined, superficie: SuperficieHerramientas): string {
+export function vueltaSegura(
+  volver: string | null | undefined,
+  superficie: SuperficieHerramientas,
+  alternativa?: string
+): string {
   const inicio = INICIO[superficie];
-  if (!volver) return inicio;
+  const porDefecto = alternativa && alternativa !== inicio && dentroDeSuperficie(alternativa, inicio) ? alternativa : inicio;
+  if (!volver) return porDefecto;
 
   const v = volver.trim();
-  if (!v.startsWith("/")) return inicio; // absoluta, esquema raro, o relativa suelta
-  if (v.startsWith("//")) return inicio; // `//otro-host` es absoluta para el navegador
-  if (/[\\\n\r\t]/.test(v)) return inicio;
-  if (v.includes("://")) return inicio;
+  return dentroDeSuperficie(v, inicio) ? v : porDefecto;
+}
+
+function dentroDeSuperficie(v: string, inicio: string): boolean {
+  if (!v.startsWith("/")) return false; // absoluta, esquema raro, o relativa suelta
+  if (v.startsWith("//")) return false; // `//otro-host` es absoluta para el navegador
+  if (/[\\\n\r\t]/.test(v)) return false;
+  if (v.includes("://")) return false;
+  // Ni `.` ni `..` como segmento (tampoco escritos `%2e`): el navegador los resuelve y la ruta saldría de la superficie.
+  if (/(^|\/)(\.|%2e){1,2}(\/|\?|#|$)/i.test(v)) return false;
 
   // Frontera de SEGMENTO, no prefijo de cadena: `/kaffetal-regal-falso` no
   // puede colarse por empezar igual. Misma lección que el proxy y el rail.
-  if (v !== inicio && !v.startsWith(inicio + "/") && !v.startsWith(inicio + "?")) return inicio;
-
-  return v;
+  return v === inicio || v.startsWith(inicio + "/") || v.startsWith(inicio + "?");
 }
 
 /** La ruta de una herramienta dentro de su superficie. */

@@ -23,7 +23,7 @@ en el orden en que se apoyan uno en otro. Dos todavía no tienen módulo propio 
 | 2 | **Misión y Visión** | el porqué y el hacia dónde | `/ecp/direccionamiento/mision-vision` | **pestaña vacía a propósito** (lo dice en voz alta) |
 | 3 | **Modelo Económico** — *PVC & Grados de Calidad* | cuánto vale una carga, qué grado lleva un café y qué paga cada grado | `/ecp/pvc` · `pvc/{lectura,grados,tablero,parametros,dossier}` · `pvc/tablero/embed[/publicar]` · `GET /api/pvc/current` · **la definición oficial de grados**: `/ecp/direccionamiento/grados` + `src/lib/grados/definicion.ts` · **Mercado Global** (`/ecp/direccionamiento/mercado-global`, vacía: será el «Marco de mercado» del plan §11) · **Anclas de mercado** (`/ecp/anclas-mercado`) · **Cotizador de lotes** (`/ecp/cotizador-lotes`) | vivo; fase 2 decidida y sin construir |
 | 4 | **Modelo de Procesamiento** | qué le pasa al café desde la finca: de CPS a verde, empacado y embalado — rendimientos, mermas, empaque, costo por etapa | **sin módulo propio.** Piezas: `src/lib/pvc/lectura.ts` (`CARGA_KG_CPS`, `EMPAQUES`, `embudoDeCarga`, los MOQ de compra y los tipos de mezcla —Single Origin · Regional Blend, owner 2026-09-25—) · **Empacado hasta FOB** (`/ecp/cotizador-empaque`, V5.194: cinco modos de empaque, paletizado, flete a puerto y trámites FOB por kg de verde; sus referencias congeladas anclarán el FOB mínimo del Triage de Catálogo Activo) · la Base física de `escala.ts` | **Empacado hasta FOB vivo (V5.194)**; lo demás del modelo (trilla, mermas, procesamiento), en scoping: brief del 2026-09-19 (`briefs/herramientas-internas-modelo-de-produccion.md`) |
-| 5 | **Modelo de Logística** | qué cuesta después del FOB: estimaciones y cotizaciones según **volumen y región** | **sin módulo propio.** Piezas: **Cotizador logístico** (`/ecp/cotizador-logistico` + `public/ocp-apps/cotizador-logistico.html`) · `src/lib/pvc/canales.ts` (programas × tramos de incoterm) · los escalones de flete del motor (`n3`, aéreo) | **en scoping**: brief escrito el 2026-09-19 (`briefs/herramientas-internas-modelo-logistico.md`), espera al owner; el plan §12.10 ya lista lo que falta |
+| 5 | **Modelo de Logística** | qué cuesta después del FOB: estimaciones y cotizaciones según **volumen y región** | **sin módulo propio.** Piezas: **Cotizador logístico** (`/ecp/cotizador-logistico` + `private/ocp-apps/cotizador-logistico.html`, servida en `/ocp-apps/…` solo con sesión desde TAR-119) · `src/lib/pvc/canales.ts` (programas × tramos de incoterm) · los escalones de flete del motor (`n3`, aéreo) | **en scoping**: brief escrito el 2026-09-19 (`briefs/herramientas-internas-modelo-logistico.md`), espera al owner; el plan §12.10 ya lista lo que falta |
 | 5·a | **Cotizador Courier (FedEx)** — modalidad courier del Modelo de Logística | cuánto le cobra FedEx a CTCx por un envío de café (verde o tostado, < 100 kg): tarifa de lista de la guía vigente − descuentos del acuerdo firmado el 2026-09-22 + combustible de la semana | `/ecp/cotizador-courier` · `src/lib/courier/{calculo,actions,types}.ts` · `CourierBoard.tsx` · tablas `courier_*` (service-role-only) · insumos FUERA del repo en `apps-internas/courier-fedex/` (guía pública + acuerdo transcrito) · `scripts/seed-courier.mjs`. ⚠️ El acuerdo es **confidencial** (cláusula 6) y el repo es público: **ninguna cifra ni número de cuenta entra al repo**, solo a la base | **vivo — ciclo 1 CERRADO (V5.68 → V5.73, 2026-09-23)**: exportación de paquetes y carga, combustible automático (cron EIA), cotizaciones que se guardan, reabren, editan (nota) y borran, y **enlace con LCP · CRM CP CaaS** (una cotización → un item CaaS; un item → varias). Brief: `briefs/herramientas-internas-cotizador-courier.md` |
 
 **Lo que salió de este charter el 2026-09-19** y ahora es de `consolas` (ECP · Caja de herramientas): el **Transcriptor**
@@ -37,7 +37,8 @@ en el orden en que se apoyan uno en otro. Dos todavía no tienen módulo propio 
 
 `/ecp/direccionamiento` · `/ecp/direccionamiento/{grados,mision-vision,mercado-global}` · `/ecp/pvc` ·
 `/ecp/pvc/{lectura,grados,tablero,parametros,dossier}` · `/ecp/pvc/tablero/embed[/publicar]` · `/api/pvc/current` ·
-`/ecp/cotizador-{lotes,logistico}[/id]` · `/ecp/cotizador-empaque` (Empacado hasta FOB; desde la V5.194 sus sub-rutas viejas
+`/ecp/cotizador-{lotes,logistico}[/id]` · `/ocp-apps/cotizador-{lotes,logistico}.html` (las calculadoras que esos dos embeben;
+desde TAR-119 viven en `private/ocp-apps/` y las sirve `src/app/ocp-apps/[archivo]/route.ts` solo con la consola del cotizador) · `/ecp/cotizador-empaque` (Empacado hasta FOB; desde la V5.194 sus sub-rutas viejas
 —el detalle `[id]` y `evaluacion`— van con un 308 a la herramienta) · `/ecp/cotizador-courier` · `/ecp/anclas-mercado`.
 
 Hay **dos pantallas de grados**, y desde la V5.56 no se llaman igual: `/ecp/direccionamiento/grados` es «Grados de Calidad ·
@@ -64,7 +65,8 @@ viene). Se funden con la fase 2. La pestaña vacía «Modelo Económico» de Dir
 - **Procesamiento y Logística**: `src/lib/cotizador/{actions,types}.ts` (12 compuertas desde la V5.194, más 4 en `anclas/actions.ts`: cada módulo declara su consola UNA
   vez —`const CONSOLA = "ecp"`— y `qa-rutas-consolas` (f-bis) la contrasta con el rail; las rutas salen de `QUOTE_BASE_PATH`
   y `ANCLAS_PATH`), `src/components/cotizador/` (con `QuoteDetail.tsx`, que antes vivía en la carpeta de rutas). Dos cotizadores:
-  lotes y logístico (el de empaque salió en la V5.194).
+  lotes y logístico (el de empaque salió en la V5.194). Sus calculadoras: `private/ocp-apps/` + `src/lib/cotizador/apps.ts` (lista
+  blanca) + `src/app/ocp-apps/[archivo]/route.ts` (TAR-119).
 - **Producción · Empacado hasta FOB** (V5.194): `src/lib/produccion/empaqueFob.ts` (PURO: modos, salidas, valores por defecto con
   su fuente, `calcularEmpaqueFob`, `ESTIMADOS_DEL_PVC`), `referencias.ts` (`cargarReferenciasEmpaque`, sin compuerta: la reusará el
   Triage), `actions.ts` (`guardarReferenciaEmpaque` · `retirarReferenciaEmpaque`, nivel emite, `CONSOLA = "ecp"`),
@@ -84,7 +86,7 @@ Solo lee: `lots`, `lot_offers`, `purchase_contracts`, `lot_listings` (para saber
 `qa-pvc-vigencia.mjs` (28) · `qa-pvc-lectura.mjs` (60 — el MOQ de compra y los tipos de mezcla, en el código Y en el plan §14.8) ·
 `qa-pvc-escala.mjs` (68 — incluye la Base física) · `qa-pvc-canales.mjs` (57) · `qa-pvc-compromiso.mjs` (31) ·
 `qa-grados-check.mjs` (48 — el contrato de grados) · `qa-definicion-check.mjs` · `qa-direccionamiento-check.mjs` ·
-`qa-anclas-check.mjs` · `qa-courier-check.mjs` (51 — el cálculo contra un acuerdo FICTICIO, la fuga cero por hash, el combustible derivado contra el historial de FedEx, el combustible provisional y el límite de paquete por medidas). `qa-empaque-fob-check.mjs` (47 — Empacado hasta FOB: el cálculo contra cuatro casos hechos a mano, que la máquina no vuelva, que el servidor recalcule y emita, la compuerta de la tabla). Y de la casa, porque el grupo vive en el rail del ECP: `qa-rutas-consolas.mjs`.
+`qa-anclas-check.mjs` · `qa-cotizador-apps-check.mjs` (40 — TAR-119: ninguna copia en `public/`, la puerta antes del disco, la consola leída del rail, la carpeta trazada) · `qa-courier-check.mjs` (51 — el cálculo contra un acuerdo FICTICIO, la fuga cero por hash, el combustible derivado contra el historial de FedEx, el combustible provisional y el límite de paquete por medidas). `qa-empaque-fob-check.mjs` (47 — Empacado hasta FOB: el cálculo contra cuatro casos hechos a mano, que la máquina no vuelva, que el servidor recalcule y emita, la compuerta de la tabla). Y de la casa, porque el grupo vive en el rail del ECP: `qa-rutas-consolas.mjs`.
 
 ## Reglas propias
 
@@ -117,6 +119,11 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
 
 ## Pendientes
 
+- **2026-11-05 · TAR-119 · las calculadoras de los cotizadores, solo con sesión** (sesión nocturna en la nube; sin versión hasta
+  que aterrice en `main`). `public/ocp-apps/*.html` → `private/ocp-apps/` (mismo contenido) y una ruta las sirve en la misma URL
+  tras `requireConsoleAccess` de la consola del rail. **Pendiente**: comprobar en el preview de Vercel que el iframe de
+  `/ecp/cotizador-lotes/<id>` y `/ecp/cotizador-logistico/<id>` carga con sesión, y que `/ocp-apps/cotizador-lotes.html` sin
+  sesión va al login (el VM de la nube no llega a producción). Retirar las apps sigue siendo decisión del owner.
 - **2026-10-25 · V6.10: la salud de los crons llega a este componente** (B6.0, la tanda es de `consolas`; ALINEACION §3). El tablero
   Automatizaciones (`AutomatizacionesBoard.tsx`) gana la columna «Salud» y bloquea las filas de cron; los cuatro crons de aquí
   (market-anchors, vigilancia-pvc, agente-pvc, courier-combustible) van envueltos en `conLatido()` tras su `CRON_SECRET`, sin cambiar lo

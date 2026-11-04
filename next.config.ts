@@ -44,6 +44,10 @@ const nextConfig: NextConfig = {
     "/bcp/pvc/dossier": ["./docs/pvc/**"],
     "/bcp/pvc/dossier/[version]/[file]": ["./docs/pvc/**"],
     "/bcp/pvc/tablero/embed": ["./docs/pvc/tablero/**"],
+    // TAR-119: las dos calculadoras de los cotizadores (Mermas V15, CoGS V19) ya no están en public/: las sirve
+    // `src/app/ocp-apps/[archivo]/route.ts` desde private/ocp-apps/, detrás de la sesión de consola. Sin esta línea
+    // la carpeta no viajaría en la función y el iframe de AppFrame saldría vacío en producción.
+    "/ocp-apps/[archivo]": ["./private/ocp-apps/**"],
     // NOTA histórica: las herramientas "internas" (leídas del disco y luego
     // embebidas) ya no existen — desde 2026-07-24 TODAS las herramientas viven
     // en public/tools/ y se sirven estáticas, así que no hay nada que trazar.

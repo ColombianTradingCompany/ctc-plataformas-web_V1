@@ -7,7 +7,7 @@
 // exportación. El resultado es el costo hasta FOB por kg de verde, en COP y en US$ a la TRM, con cada línea a la vista. No hay
 // máquina ni amortización: la productividad del empaque es la de la gente (kg por jornal).
 //
-// LOS VALORES POR DEFECTO tienen fuente y se ajustan en pantalla: el cotizador logístico de CTCx (`public/ocp-apps/
+// LOS VALORES POR DEFECTO tienen fuente y se ajustan en pantalla: el cotizador logístico de CTCx (`private/ocp-apps/
 // cotizador-logistico.html`, 2026-08, embarque de 500 kg): bolsa al vacío $5.000, caja de 12 kg $7.000 y de 24 kg $10.000, etiqueta
 // $300, tarjeta de humedad $750, jornal $170.000 con 4 jornales al vacío y 1 en sacos; saco de yute $12.000 y forro GrainPro $10.000;
 // estiba ISPM-15 $55.000 hasta 1.100 kg; flete interno $420.000 por embarque; agencia de aduanas $300.000, certificados (OIC, VUCE,

@@ -41,8 +41,9 @@ en el orden en que se apoyan uno en otro. Dos todavía no tienen módulo propio 
 —el detalle `[id]` y `evaluacion`— van con un 308 a la herramienta) · `/ecp/cotizador-courier` · `/ecp/anclas-mercado`.
 
 Hay **dos pantallas de grados**, y desde la V5.56 no se llaman igual: `/ecp/direccionamiento/grados` es «Grados de Calidad ·
-definición vigente» (LA que leen todas las superficies) y `/ecp/pvc/grados` es «Escala de puntos · en validación» (la que
-viene). Se funden con la fase 2. La pestaña vacía «Modelo Económico» de Direccionamiento se retiró (308 → `/ecp/pvc`).
+definición vigente» (LA que leen todas las superficies) y `/ecp/pvc/grados` es «Escala de puntos · calculadora» (la misma
+escala, que gobierna desde la V5.160, con su calculadora y lo que vale cada grado en la edición vigente; hasta TAR-124 su pestaña
+seguía diciendo «en validación»). La pestaña vacía «Modelo Económico» de Direccionamiento se retiró (308 → `/ecp/pvc`).
 
 ## Mapa de código
 

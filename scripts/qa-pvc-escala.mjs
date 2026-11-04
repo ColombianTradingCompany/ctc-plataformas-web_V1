@@ -14,10 +14,11 @@
 //   · Las tres puertas (sin especialidad, el umbral 80–82, Tyrian con SCA ≥ 89
 //     Y surplus) son las que impiden que el origen compre una banda.
 //
-// ⚠️ Esta escala NO gobierna: la fuente única de grados sigue siendo
-// `src/lib/grados/definicion.ts` (contrato de ALINEACION §1), y `qa-grados-check`
-// la vigila aparte. Este guardián cuida el modelo que espera validación, y de
-// paso que la pantalla siga diciendo que no gobierna.
+// Desde la V5.160 esta escala GOBIERNA: la fuente única de grados,
+// `src/lib/grados/definicion.ts` (contrato de ALINEACION §1), lee de aquí sus
+// bandas, y `qa-grados-check` la vigila aparte. Este guardián cuida el modelo, y
+// de paso que la pantalla y su pestaña no vuelvan a decir que espera validación
+// (TAR-124: la pestaña siguió diciendo «en validación» medio año después).
 
 import { readFileSync } from "node:fs";
 import {
@@ -154,12 +155,16 @@ check("ninguna variedad está en dos niveles", (() => {
   return new Set(todas).size === todas.length;
 })());
 
-// ── 11 · la pantalla dice que esto NO gobierna ────────────────────────────
+// ── 11 · la pantalla y su pestaña dicen que esto gobierna (V5.160) ───────
 const board = lee("src/components/panel/pvc/EscalaBoard.tsx");
 check("EscalaBoard dice que gobierna desde la V5.160 (ya no avisa lo contrario)", /gobierna desde la V5\.160/i.test(board) && !/todavía no gobierna/i.test(board));
 check("EscalaBoard remite a definicion.ts", board.includes("definicion.ts"));
 check("EscalaBoard enlaza la escala vigente", board.includes("/ecp/direccionamiento/grados"));
-check("la pestaña Grados está en el tab strip", lee("src/components/panel/pvc/PvcTabs.tsx").includes("/ecp/pvc/grados"));
+const pvcTabs = lee("src/components/panel/pvc/PvcTabs.tsx");
+check("la pestaña Grados está en el tab strip", pvcTabs.includes("/ecp/pvc/grados"));
+// TAR-124: el rótulo de la pestaña no promete una validación que terminó en la V5.160.
+check("la pestaña de la escala no dice «en validación»", /href: "\/ecp\/pvc\/grados", label: "Escala de puntos[^"]*"/.test(pvcTabs) && !/label: "[^"]*en validación[^"]*"/.test(pvcTabs));
+check("EscalaBoard ya no se presenta como «la escala que viene» ni pide validarla", !/La escala que viene/.test(board) && !/Sirve para <strong>validarla<\/strong>/.test(board));
 // La escala nombra a definicion.ts en su comentario a propósito (para decir
 // quién manda de verdad); lo que no debe hacer es IMPORTARLO: son dos escalas
 // distintas y mezclarlas es cómo nacería la tercera verdad.

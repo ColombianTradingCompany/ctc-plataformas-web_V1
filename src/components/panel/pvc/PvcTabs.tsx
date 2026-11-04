@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "@/components/panel/shared.module.css";
 
-// ── BCP · Modelo Económico · las caras del módulo ────────────────────────────
+// ── ECP · Modelo Económico · las caras del módulo ────────────────────────────
 // Lectura (qué significa hoy el precio que rige), Ediciones (lo publicado y su
 // historial), Tablero (el modelo con diales), Parámetros (las versiones del
 // método) y Dossier (los PDF por versión).
@@ -17,9 +17,11 @@ const TABS = [
   { href: "/ecp/pvc/lectura", label: "Lectura" },
   { href: "/ecp/pvc", label: "Ediciones", exact: true },
   // «Escala de puntos», no «Grados»: LA definición vigente de los grados —la que leen todas las
-  // superficies— es la pestaña de Direccionamiento (`definicion.ts`). Esto es la escala que viene
-  // («El Punto y la Tríada»), exhibida y sin gobernar nada hasta que el owner la valide (V5.56).
-  { href: "/ecp/pvc/grados", label: "Escala de puntos · en validación" },
+  // superficies— es la pestaña de Direccionamiento (`/ecp/direccionamiento/grados`, `definicion.ts`).
+  // Esta es la misma escala («El Punto y la Tríada», `escala.ts`) con su calculadora y lo que vale
+  // cada grado en la edición vigente. Gobierna desde la V5.160: `definicion.ts` lee de ella sus bandas.
+  // (De la V5.56 a la V5.160 se llamó «Escala de puntos · en validación», cuando aún no gobernaba.)
+  { href: "/ecp/pvc/grados", label: "Escala de puntos · calculadora" },
   { href: "/ecp/pvc/tablero", label: "Tablero" },
   { href: "/ecp/pvc/parametros", label: "Parámetros del modelo" },
   { href: "/ecp/pvc/dossier", label: "Dossier" },

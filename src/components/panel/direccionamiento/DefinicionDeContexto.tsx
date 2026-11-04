@@ -68,10 +68,11 @@ export default function DefinicionDeContexto({ adapter, aiComplete, memory, init
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ultimo = useRef<string>(JSON.stringify(inicial));
 
+  // Devuelve si lo que hay en pantalla quedó guardado (TAR-122: exportar lo pregunta antes de descargar).
   const guarda = useCallback(
-    async (siguiente: Record<string, string>) => {
+    async (siguiente: Record<string, string>): Promise<boolean> => {
       const serie = JSON.stringify(siguiente);
-      if (serie === ultimo.current) return;
+      if (serie === ultimo.current) return true;
       setEstado("guardando");
       try {
         await adapter.save("record", {
@@ -81,8 +82,10 @@ export default function DefinicionDeContexto({ adapter, aiComplete, memory, init
         });
         ultimo.current = serie;
         setEstado("guardado");
+        return true;
       } catch {
         setEstado("error");
+        return false;
       }
     },
     [adapter]
@@ -123,6 +126,42 @@ export default function DefinicionDeContexto({ adapter, aiComplete, memory, init
       if (texto) escribe(clave, texto.trim());
     } finally {
       setRedactando(null);
+    }
+  };
+
+  // TAR-122 · Exportar como Markdown. La descarga la sirve `/ecp/direccionamiento/exportar` (lectura de consola) con la ficha
+  // GUARDADA; por eso antes se guarda lo que haya en pantalla sin esperar al autoguardado. Si no se puede guardar (un viewer
+  // escribiendo, la red), se exporta igual lo guardado y se dice en voz alta qué quedó fuera. Se pide con `fetch` y no con un
+  // enlace para poder decir el error: con la sesión vencida la ruta redirige al login y lo que vuelve es HTML, no Markdown.
+  const [exportando, setExportando] = useState(false);
+  const [avisoExport, setAvisoExport] = useState<string | null>(null);
+  const exportar = async () => {
+    setExportando(true);
+    setAvisoExport(null);
+    const avisos: string[] = [];
+    try {
+      if (timer.current) clearTimeout(timer.current);
+      const guardado = await guarda(values);
+      if (!guardado) avisos.push("No se pudo guardar lo último que escribió: el archivo lleva la versión guardada antes.");
+      const r = await fetch("/ecp/direccionamiento/exportar", { cache: "no-store" });
+      if (!r.ok || !(r.headers.get("content-type") ?? "").startsWith("text/markdown")) {
+        avisos.push("No se pudo exportar: puede que la sesión haya vencido. Recargue la página y vuelva a intentarlo.");
+        return;
+      }
+      const nombre = /filename="([^"]+)"/.exec(r.headers.get("content-disposition") ?? "")?.[1] ?? "ctcx-definicion-de-contexto.md";
+      const url = URL.createObjectURL(await r.blob());
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = nombre;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      avisos.push("No se pudo exportar: revise la conexión y vuelva a intentarlo.");
+    } finally {
+      setAvisoExport(avisos.length ? avisos.join(" ") : null);
+      setExportando(false);
     }
   };
 
@@ -218,6 +257,17 @@ export default function DefinicionDeContexto({ adapter, aiComplete, memory, init
           })}
         </section>
       ))}
+
+      <div className={styles.exportar}>
+        <p className={styles.campoHelp}>
+          La ficha guardada de las cuatro unidades, con los generales y los Grados de Calidad, en un archivo .md para subirlo como
+          conocimiento a un proyecto de Claude.
+        </p>
+        {avisoExport && <p className={styles.avisoExport}>{avisoExport}</p>}
+        <button type="button" className="btn btn-sm" onClick={() => void exportar()} disabled={exportando}>
+          {exportando ? "Preparando…" : "Exportar como Markdown"}
+        </button>
+      </div>
     </div>
   );
 }

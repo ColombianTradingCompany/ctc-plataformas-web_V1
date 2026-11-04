@@ -19,7 +19,7 @@ en el orden en que se apoyan uno en otro. Dos todavía no tienen módulo propio 
 
 | # | Modelo | Qué responde | Dónde vive HOY | Estado |
 |---|---|---|---|---|
-| 1 | **Definición de Contexto** | qué dice la casa y con qué cifras: la ficha viva de realineación de GTM y comunicación (CTCx · KR · CP), con redacción asistida | `/ecp/direccionamiento` (pestaña 1) · `DefinicionDeContexto.tsx`, `DireccionamientoClient.tsx` · `src/lib/direccionamiento/{definicion,memoria}.ts` · tabla `direccionamiento_context` | vivo (V4.32) |
+| 1 | **Definición de Contexto** | qué dice la casa y con qué cifras: la ficha viva de realineación de GTM y comunicación (CTCx · KR · CP), con redacción asistida | `/ecp/direccionamiento` (pestaña 1) · `DefinicionDeContexto.tsx`, `DireccionamientoClient.tsx` · `src/lib/direccionamiento/{definicion,memoria,markdown}.ts` · tabla `direccionamiento_context` · **se exporta como Markdown** (`/ecp/direccionamiento/exportar`, TAR-122) | vivo (V4.32) |
 | 2 | **Misión y Visión** | el porqué y el hacia dónde | `/ecp/direccionamiento/mision-vision` | **pestaña vacía a propósito** (lo dice en voz alta) |
 | 3 | **Modelo Económico** — *PVC & Grados de Calidad* | cuánto vale una carga, qué grado lleva un café y qué paga cada grado | `/ecp/pvc` · `pvc/{lectura,grados,tablero,parametros,dossier}` · `pvc/tablero/embed[/publicar]` · `GET /api/pvc/current` · **la definición oficial de grados**: `/ecp/direccionamiento/grados` + `src/lib/grados/definicion.ts` · **Mercado Global** (`/ecp/direccionamiento/mercado-global`, vacía: será el «Marco de mercado» del plan §11) · **Anclas de mercado** (`/ecp/anclas-mercado`) · **Cotizador de lotes** (`/ecp/cotizador-lotes`) | vivo; fase 2 decidida y sin construir |
 | 4 | **Modelo de Procesamiento** | qué le pasa al café desde la finca: de CPS a verde, empacado y embalado — rendimientos, mermas, empaque, costo por etapa | **sin módulo propio.** Piezas: `src/lib/pvc/lectura.ts` (`CARGA_KG_CPS`, `EMPAQUES`, `embudoDeCarga`, los MOQ de compra y los tipos de mezcla —Single Origin · Regional Blend, owner 2026-09-25—) · **Empacado hasta FOB** (`/ecp/cotizador-empaque`, V5.194: cinco modos de empaque, paletizado, flete a puerto y trámites FOB por kg de verde; sus referencias congeladas anclarán el FOB mínimo del Triage de Catálogo Activo) · la Base física de `escala.ts` | **Empacado hasta FOB vivo (V5.194)**; lo demás del modelo (trilla, mermas, procesamiento), en scoping: brief del 2026-09-19 (`briefs/herramientas-internas-modelo-de-produccion.md`) |
@@ -35,7 +35,8 @@ en el orden en que se apoyan uno en otro. Dos todavía no tienen módulo propio 
 **Todas dentro de la consola ECP desde la V5.60** (la V5.56 había llevado al BCP los tres cotizadores y las anclas; volvieron)
 (`docs/MUDANZA_HERRAMIENTAS_INTERNAS_PLAN.md`; las URLs viejas del ECP y del OCP siguen vivas como 308):
 
-`/ecp/direccionamiento` · `/ecp/direccionamiento/{grados,mision-vision,mercado-global}` · `/ecp/pvc` ·
+`/ecp/direccionamiento` · `/ecp/direccionamiento/{grados,mision-vision,mercado-global}` · `/ecp/direccionamiento/exportar[?unidad=]`
+(descarga `.md`, TAR-122) · `/ecp/pvc` ·
 `/ecp/pvc/{lectura,grados,tablero,parametros,dossier}` · `/ecp/pvc/tablero/embed[/publicar]` · `/api/pvc/current` ·
 `/ecp/cotizador-{lotes,logistico}[/id]` · `/ecp/cotizador-empaque` (Empacado hasta FOB; desde la V5.194 sus sub-rutas viejas
 —el detalle `[id]` y `evaluacion`— van con un 308 a la herramienta) · `/ecp/cotizador-courier` · `/ecp/anclas-mercado`.
@@ -48,6 +49,8 @@ viene). Se funden con la fase 2. La pestaña vacía «Modelo Económico» de Dir
 
 - **Definición de Contexto**: `src/lib/direccionamiento/{definicion,memoria}.ts`,
   `src/components/panel/direccionamiento/{DefinicionDeContexto,DireccionamientoClient,DireccionamientoTabs}.tsx`.
+  **Exportar como Markdown** (TAR-122): `src/lib/direccionamiento/markdown.ts` (PURO: `contextoComoMarkdown`, `unidadValida`,
+  `nombreDeArchivo`) + `src/app/ecp/(app)/direccionamiento/exportar/route.ts` (GET, `requireConsoleAccess("ecp")`: lectura).
   (`PlataformasBoard.tsx` vive en esa carpeta pero es **Manejo de Plataformas**, del ECP: charter `consolas`.)
 - **Modelo Económico** — `src/lib/pvc/`: `motor.ts` (port del Python; **`paridad.json` es el contrato entre los cuatro
   motores** — Python de referencia en `C:\dev\ctc-platforms\apps-internas\PVC - Modelo\v2.0`, Excel, `motor.ts` y el JS del
@@ -83,7 +86,7 @@ Solo lee: `lots`, `lot_offers`, `purchase_contracts`, `lot_listings` (para saber
 `qa-pvc-motor.mjs` (49 — paridad con Python, tolerancia 1e-4) · `qa-pvc-tablero.mjs` (44 — marcadores `@@MODELO`) ·
 `qa-pvc-vigencia.mjs` (28) · `qa-pvc-lectura.mjs` (60 — el MOQ de compra y los tipos de mezcla, en el código Y en el plan §14.8) ·
 `qa-pvc-escala.mjs` (68 — incluye la Base física) · `qa-pvc-canales.mjs` (57) · `qa-pvc-compromiso.mjs` (31) ·
-`qa-grados-check.mjs` (48 — el contrato de grados) · `qa-definicion-check.mjs` · `qa-direccionamiento-check.mjs` ·
+`qa-grados-check.mjs` (48 — el contrato de grados) · `qa-definicion-check.mjs` (54 — las claves y, desde TAR-122, la exportación a Markdown) · `qa-direccionamiento-check.mjs` ·
 `qa-anclas-check.mjs` · `qa-courier-check.mjs` (51 — el cálculo contra un acuerdo FICTICIO, la fuga cero por hash, el combustible derivado contra el historial de FedEx, el combustible provisional y el límite de paquete por medidas). `qa-empaque-fob-check.mjs` (47 — Empacado hasta FOB: el cálculo contra cuatro casos hechos a mano, que la máquina no vuelva, que el servidor recalcule y emita, la compuerta de la tabla). Y de la casa, porque el grupo vive en el rail del ECP: `qa-rutas-consolas.mjs`.
 
 ## Reglas propias
@@ -117,6 +120,12 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
 
 ## Pendientes
 
+- **2026-11-05 · TAR-122 · Exportar la Definición de Contexto como Markdown** (sesión nocturna en la nube; sin versión hasta que
+  aterrice en `main`). Botón «Exportar como Markdown» abajo a la derecha de la pestaña 1: guarda lo que haya en pantalla y descarga
+  la ficha GUARDADA de `/ecp/direccionamiento/exportar` — generales, las cuatro unidades en el orden de `definicion.ts`, «(sin responder)»
+  en lo vacío, y la memoria del sistema (los Grados) al final; sin quién editó. `?unidad=ctcx|kr|chp|ecosistema` (lista blanca; lo demás,
+  400) exporta una sola unidad: es la entrada de módulo para CTCx OS y para subir a cada proyecto de Claude solo lo suyo. Pendiente:
+  verificarlo el owner en la consola (OTP) y decidir si la exportación deja rastro en `audit_log` (hoy no: es lectura).
 - **2026-10-25 · V6.10: la salud de los crons llega a este componente** (B6.0, la tanda es de `consolas`; ALINEACION §3). El tablero
   Automatizaciones (`AutomatizacionesBoard.tsx`) gana la columna «Salud» y bloquea las filas de cron; los cuatro crons de aquí
   (market-anchors, vigilancia-pvc, agente-pvc, courier-combustible) van envueltos en `conLatido()` tras su `CRON_SECRET`, sin cambiar lo

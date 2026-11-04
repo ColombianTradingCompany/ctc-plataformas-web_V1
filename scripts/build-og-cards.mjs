@@ -2,8 +2,21 @@
 // Genera `public/images/og/*.jpg`: la imagen que WhatsApp, LinkedIn y Slack
 // enseñan cuando alguien pega el enlace de una superficie. Se ejecuta A MANO
 // (`node scripts/build-og-cards.mjs`) y el resultado se comitea — NO corre en
-// el build: los logotipos de origen viven fuera del repo, en
-// `reference_logos/`, y Vercel no los tiene.
+// el build: los logotipos de origen viven fuera del repo, en `reference/logos/`
+// (carpeta HERMANA del repo), y Vercel no los tiene.
+//
+// DÓNDE BUSCA LOS LOGOTIPOS (TAR-123), en este orden:
+//   1. `--logos <carpeta>` (o `--logos=<carpeta>`) en la línea de comandos;
+//   2. la variable de entorno `CTC_LOGOS_DIR`;
+//   3. por omisión, `../reference/logos` junto al repo (antes era
+//      `../reference_logos`; la carpeta se movió y el script se quedó buscando
+//      en la vieja).
+// Una ruta relativa de 1 o 2 se lee desde la carpeta donde se lanza el comando.
+// La carpeta tiene que quedar FUERA del repo: el repo es público y los
+// originales de marca no se comitean (lo que se comitea son las tarjetas).
+// Si falta la carpeta o alguno de los diecinueve archivos, el script lo dice
+// ANTES de escribir nada — una corrida a medias dejaría tarjetas nuevas y
+// viejas mezcladas.
 //
 // POR QUÉ ES UN SCRIPT Y NO CINCO MINUTOS EN UN EDITOR DE IMAGEN: son
 // diecinueve tarjetas. Cuando el owner cambie un logotipo —ya pasó con el de
@@ -12,7 +25,7 @@
 //
 // EL DISEÑO, Y POR QUÉ ES ASÍ: fondo degradado con el color de la superficie +
 // una placa BLANCA con el logotipo dentro. La placa no es decorativa: casi
-// todos los logotipos de `reference_logos/` vienen en RGB opaco sobre blanco
+// todos los logotipos de `reference/logos/` vienen en RGB opaco sobre blanco
 // (sin alfa), así que sobre un fondo oscuro se verían como un recorte
 // rectangular. Puestos sobre su propia placa, el blanco del archivo y el blanco
 // de la placa son el mismo blanco y el recorte desaparece.
@@ -24,14 +37,68 @@
 
 import sharp from "sharp";
 import { mkdir } from "node:fs/promises";
+import { existsSync, statSync } from "node:fs";
 
 import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
-// Los logos viven FUERA del repo (carpeta de referencia del workspace, hermana de
-// ctc-platform/). Ruta relativa a este script, nunca absoluta: el workspace se mudó
-// de OneDrive a C:\dev el 2026-08-17 y una ruta fija habría quedado muerta.
-const LOGOS = resolve(dirname(fileURLToPath(import.meta.url)), "../../reference_logos");
-const OUT = "public/images/og";
+import { dirname, relative, resolve, isAbsolute, sep } from "node:path";
+
+/** La raíz del repo, sacada de dónde vive este script (no del directorio desde
+ *  el que se lanza): así `public/images/og` es siempre la del repo. */
+const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const OUT = resolve(REPO, "public/images/og");
+
+const USO = `Uso: node scripts/build-og-cards.mjs [--logos <carpeta>]
+
+Genera las tarjetas Open Graph (public/images/og/*.jpg) a partir de los
+logotipos de marca, que viven FUERA del repo.
+
+  --logos <carpeta>   carpeta con los PNG de los logotipos
+  CTC_LOGOS_DIR       lo mismo, como variable de entorno (el flag manda)
+  por omisión         ../reference/logos (carpeta hermana del repo)`;
+
+/** Lee `--logos` de la línea de comandos. Devuelve undefined si no está. */
+function logosDeLaLineaDeComandos(argv) {
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === "--help" || a === "-h") {
+      console.log(USO);
+      process.exit(0);
+    }
+    if (a === "--logos") {
+      const v = argv[i + 1];
+      if (!v || v.startsWith("--")) fallar("`--logos` necesita una carpeta: `--logos <carpeta>`.", { conUso: true });
+      return v;
+    }
+    if (a.startsWith("--logos=")) {
+      const v = a.slice("--logos=".length);
+      if (!v) fallar("`--logos=` necesita una carpeta: `--logos=<carpeta>`.", { conUso: true });
+      return v;
+    }
+    fallar(`Argumento desconocido: ${a}`, { conUso: true });
+  }
+  return undefined;
+}
+
+/** Corta con un mensaje claro y código 1. `conUso` añade la ayuda de la línea
+ *  de comandos (solo tiene sentido cuando el error es de argumentos). */
+function fallar(mensaje, { conUso = false } = {}) {
+  console.error(`\n✖ build-og-cards: ${mensaje}\n${conUso ? `\n${USO}\n` : ""}`);
+  process.exit(1);
+}
+
+/** La carpeta de los logotipos y de dónde salió (para que el error lo diga). */
+function carpetaDeLogos() {
+  const flag = logosDeLaLineaDeComandos(process.argv.slice(2));
+  if (flag) return { ruta: resolve(process.cwd(), flag), origen: "el argumento --logos" };
+  const env = process.env.CTC_LOGOS_DIR?.trim();
+  if (env) return { ruta: resolve(process.cwd(), env), origen: "la variable CTC_LOGOS_DIR" };
+  return {
+    ruta: resolve(REPO, "../reference/logos"),
+    origen: "la ruta por omisión, ../reference/logos junto al repo",
+  };
+}
+
+const { ruta: LOGOS, origen: ORIGEN_LOGOS } = carpetaDeLogos();
 
 const W = 1200;
 const H = 630;
@@ -148,6 +215,45 @@ function lienzo(t, placa) {
         font-family="Georgia, 'Times New Roman', serif" font-size="27"
         letter-spacing="7" fill="${t.acc}">ctcexport.com</text>
 </svg>`);
+}
+
+// ── Antes de escribir nada: ¿están la carpeta y los diecinueve logotipos? ────
+{
+  const comoArreglarlo =
+    "Cómo arreglarlo:\n" +
+    "  · pon la carpeta de logotipos en `reference/logos/`, JUNTO al repo (no dentro), o\n" +
+    "  · indica dónde está: `node scripts/build-og-cards.mjs --logos <carpeta>`\n" +
+    "    (o la variable de entorno CTC_LOGOS_DIR=<carpeta>).\n" +
+    "Los logotipos no están en el repo a propósito: este script se corre en el equipo\n" +
+    "que los tiene, y lo que se comitea son las tarjetas de public/images/og/.";
+
+  if (!existsSync(LOGOS)) {
+    fallar(
+      `no encuentro la carpeta de logotipos.\n` +
+        `  Buscada en: ${LOGOS}\n  (la indicó ${ORIGEN_LOGOS})\n\n${comoArreglarlo}`,
+    );
+  }
+  if (!statSync(LOGOS).isDirectory()) {
+    fallar(`${LOGOS} existe pero no es una carpeta.\n  (la indicó ${ORIGEN_LOGOS})\n\n${comoArreglarlo}`);
+  }
+  const dentro = relative(REPO, LOGOS);
+  const fuera = dentro === ".." || dentro.startsWith(`..${sep}`) || isAbsolute(dentro);
+  if (!fuera) {
+    fallar(
+      `la carpeta de logotipos está DENTRO del repo (${dentro || "."}).\n` +
+        `  El repo es público: los originales de marca viven fuera y no se comitean.\n` +
+        `  Muévela junto al repo (reference/logos/) o pásala con --logos.`,
+    );
+  }
+  const faltan = [...new Set(TARJETAS.map((c) => c.logo))].filter((f) => !existsSync(resolve(LOGOS, f)));
+  if (faltan.length) {
+    fallar(
+      `en ${LOGOS} faltan ${faltan.length} de los ${new Set(TARJETAS.map((c) => c.logo)).size} logotipos:\n` +
+        faltan.map((f) => `    · ${f}`).join("\n") +
+        `\n  (la carpeta la indicó ${ORIGEN_LOGOS})\n` +
+        `  No se ha escrito ninguna tarjeta. Si un logotipo cambió de nombre, corrige su fila en TARJETAS.`,
+    );
+  }
 }
 
 await mkdir(OUT, { recursive: true });

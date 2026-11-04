@@ -60,6 +60,72 @@ sin id todavía, en `_candidatas\<nombre>\`.
 SUPERFICIE, no de una consola — gotcha 12) · `/tools/<id>/*.html` y `/tools/h/[slug]` (fuera del matcher del proxy; las `/tools/<archivo>.html` planas son 308) ·
 `/bcp/herramientas` (administración).
 
+## El contrato de URL del taller (TAR-121)
+
+Cada herramienta del taller es un **módulo** que se abre desde fuera —un tablero, un evento del calendario, el móvil, un
+asistente— ya puesto en su trabajo o prellenado con lo que la persona tiene en su cuenta. La dirección es
+
+```
+https://herramientas.ctcexport.com/taller/<id>?<parámetros>
+```
+
+(desde otro host de la red, la misma ruta con su base: `/herramientas/taller/<id>?…`). **Fuente en el código**: los parámetros los lee
+`leerEntrada()` y las URLs las escribe `urlDeHerramienta()`, las dos en `src/lib/tools/entrada.ts`; qué prellena cada herramienta lo
+declara su fila de `CARPETAS_HERRAMIENTAS` (`src/lib/tools/carpetas.ts`, clave `entrada`). Esta tabla es su espejo: si cambia uno,
+cambia el otro, y `qa-taller-entrada-check` comprueba que cada campo declarado exista en el archivo de su herramienta.
+
+### Los parámetros
+
+| Parámetro | Forma | Qué hace | Para quién | Si no vale |
+|---|---|---|---|---|
+| `volver` | ruta relativa que empieza por `/herramientas` | destino del botón «Volver» de la cinta | todos | `/herramientas/taller` (la rejilla) |
+| `trabajo` | el id de un trabajo guardado (uuid de `tool_sessions`) | abre ESE trabajo, tal como se dejó | el dueño del trabajo, en una herramienta con memoria que su cuenta abre | el Home Menu, con un aviso; ajeno y borrado dan el mismo |
+| `finca` | `CTC-F-XXXXXXXX` (la referencia de KR) o su uuid | prellena un trabajo NUEVO (o «Abrir sin guardar») con esa finca | el productor dueño de la finca | la herramienta abre vacía, con un aviso |
+| `lote` | `CTC-L-XXXXXXXX` (la referencia de KR) o su uuid | prellena un trabajo nuevo con el lote **y su finca** | el productor dueño del lote | ídem |
+
+Reglas que no cambian con la herramienta:
+
+- **Manda el trabajo.** Con `trabajo` y `lote` juntos se abre el trabajo como se dejó; un trabajo guardado nunca se prellena.
+- **Abrir no crea.** El enlace no crea trabajos: el Home Menu propone el nombre (el del lote o la finca) y la persona da UN clic
+  («Crear y abrir»). Abrir un trabajo guardado solo sella su `abierto_at`, como siempre lo hizo el menú; el autoguardado empieza con el
+  primer cambio de la persona (o con el prellenado de un trabajo nuevo).
+- **La URL no es un oráculo.** «No existe» y «no es suyo» dan el mismo aviso; ningún aviso repite el id.
+- **Sin sesión**, la concha ofrece «Entrar»; la puerta (`/herramientas/acceso`) todavía no devuelve a la herramienta con sus
+  parámetros (Pendientes, TAR-121 (c)).
+- **Nivel**: *default* = cualquier cuenta de Kaffetal Regal, Cherry Picked o el Directorio del Café; *plus* = permiso por persona desde
+  BCP · Herramientas. El nivel vive en la base (`tools.tier`) y se cambia sin desplegar: la columna de abajo es la del 2026-11-04.
+- Solo una cuenta de **productor** tiene fincas y lotes: un comprador o un experto abre la herramienta sin prellenar.
+
+### Herramienta por herramienta
+
+| Herramienta | `id` | Nivel | Parámetros | Qué prellenan `?finca=` / `?lote=` | Ejemplo |
+|---|---|---|---|---|---|
+| Calculadora de mermas · Detallada | `mermas-ctc` | default | `volver` · `trabajo` · `finca` · `lote` | «Notas para el reporte»: la línea del lote (referencia · nombre · variedad · proceso · finca) o la de la finca (nombre · municipio, departamento · altitud) | `/taller/mermas-ctc?lote=CTC-L-XXXXXXXX` |
+| CTCx Coffee Datasheet Tool | `coffee-datasheet` | default | `volver` · `trabajo` · `finca` · `lote` | El lote en curso: nombre; Caracterización Extrínseca: país, región, municipio, finca, altitud; B1: variedad y proceso. Solo lo que esté vacío *(llega con el PR de prellenado de las más usadas; hasta entonces, el nombre del trabajo)* | `/taller/coffee-datasheet?lote=CTC-L-XXXXXXXX` |
+| Lector de Cromatografía de Suelo | `cromatografia-suelo` | **plus** | `volver` · `trabajo` · `finca` · `lote` | «Su finca» (y con ella departamento, municipio y altitud, como si la persona la eligiera); variedad del lote *(ídem)* | `/taller/cromatografia-suelo?finca=CTC-F-XXXXXXXX` |
+| Ficha de café verde | `green-datasheet` | default | `volver` · `trabajo` · `finca` · `lote` | Nombre del producto (el del lote), finca, departamento, municipio y altitud (msnm) *(ídem)* | `/taller/green-datasheet?lote=CTC-L-XXXXXXXX` |
+| Disco Agtron | `agtron` | default | `volver` · `trabajo` · `finca` · `lote` | El nombre del trabajo nuevo | `/taller/agtron?trabajo=<id del trabajo>` |
+| Calculadora logística de café | `calculadora-logistica` | default | ídem | El nombre del trabajo nuevo | `/taller/calculadora-logistica?lote=CTC-L-XXXXXXXX` |
+| Rueda del Café | `catacion` | default | ídem | El nombre del trabajo nuevo | `/taller/catacion?lote=CTC-L-XXXXXXXX` |
+| Calculadora CoGS · Café verde | `cogs-verde` | **plus** | ídem | El nombre del trabajo nuevo | `/taller/cogs-verde?lote=CTC-L-XXXXXXXX` |
+| Cool PDF | `cool-pdf` | default | ídem | El nombre del trabajo nuevo | `/taller/cool-pdf?trabajo=<id del trabajo>` |
+| Costo de empaque por kilo | `costo-empaque` | default | ídem | El nombre del trabajo nuevo | `/taller/costo-empaque?lote=CTC-L-XXXXXXXX` |
+| La fórmula de calidad del café | `formula-calidad` | default | ídem | El nombre del trabajo nuevo | `/taller/formula-calidad` |
+| Gulliver · 7 días a Tokio | `gulliver` | **plus** | ídem | El nombre del trabajo nuevo | `/taller/gulliver?trabajo=<id del trabajo>` |
+| Coffee Varieties Map | `mapa-variedades` | default | ídem | El nombre del trabajo nuevo | `/taller/mapa-variedades?lote=CTC-L-XXXXXXXX` |
+| Calculadora de mermas · Rápida | `mermas-rapida` | default | ídem | El nombre del trabajo nuevo | `/taller/mermas-rapida?lote=CTC-L-XXXXXXXX` |
+| Generador de códigos QR | `qr` | default | ídem | El nombre del trabajo nuevo | `/taller/qr?lote=CTC-L-XXXXXXXX` |
+| El viaje del café | `viaje-cafe` | default | ídem | El nombre del trabajo nuevo | `/taller/viaje-cafe` |
+| Defectos del Café | `defectos-cafe` | default | `volver` | — (sin memoria: ni trabajos ni prellenado) | `/taller/defectos-cafe?volver=/herramientas/taller` |
+| Navegador de Incoterms® 2020 | `incoterms` | default *(propuesto; alta en `tools` pendiente del deploy)* | `volver` | — (sin memoria) | `/taller/incoterms` |
+
+`mermas-detallada` está archivada (308 a `mermas-ctc`). Una herramienta nueva entra en esta tabla con su alta: si guarda trabajo,
+acepta `trabajo` sin declarar nada; si tiene campos de finca o de lote, se declara su `entrada` en `carpetas.ts` y se añade aquí.
+
+**Para quien construye los enlaces** (el tablero de CTCx OS, un asistente): la URL se escribe con `urlDeHerramienta(id, { trabajo,
+finca, lote, volver })`, nunca a mano; los ids de los trabajos de una persona solo los conoce hoy su propio Home Menu (no hay todavía
+una lectura de «mis trabajos» para fuera del taller).
+
 ## Mapa de código
 
 - `public/tools/<id>/*.html` (vendorizadas; solo se toca el `<head>` para SEO; carpetas en **`src/lib/tools/carpetas.ts`**,

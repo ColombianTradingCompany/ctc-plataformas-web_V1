@@ -89,14 +89,15 @@ check("el taller manda a la puerta sin sesión", taller.includes('redirect("/her
 const acceso = lee("src/app/herramientas/acceso/page.tsx");
 check(
   "el redirect de acceso vive FUERA del try (NEXT_REDIRECT se lanza)",
-  acceso.includes("conSesion") && acceso.includes('if (conSesion) redirect("/herramientas/taller")')
+  acceso.includes("conSesion") && acceso.includes("if (conSesion) redirect(siguiente)")
 );
 
 // ── 4b. El camino Google: callback propio, sin promover a nadie ─────────────
 const callback = lee("src/app/herramientas/auth/callback/route.ts");
 check("el callback canjea el código por la sesión", callback.includes("exchangeCodeForSession"));
 check("y NO promueve roles (entrar por Herramientas solo identifica)", !callback.includes("promoteFreshBuyer"));
-check("sin código o con error, de vuelta a la puerta", (callback.match(/herramientas\/acceso/g) ?? []).length >= 2);
+// TAR-121: la puerta se nombra con `rutaDeAcceso(destino)`, que conserva el destino para el siguiente intento.
+check("sin código o con error, de vuelta a la puerta", (callback.match(/responder\(`\$\{origin\}\$\{rutaDeAcceso\(destino\)\}`\)/g) ?? []).length >= 2);
 const accesoTaller = lee("src/app/herramientas/acceso/AccesoTaller.tsx");
 check("el botón de Google apunta al callback de ESTA superficie", accesoTaller.includes("/herramientas/auth/callback"));
 

@@ -245,6 +245,36 @@ export function camposDe(contrato: EntradaHerramienta, registro: RegistroPrefill
   return campos;
 }
 
+// ── La puerta que devuelve a la herramienta (`?siguiente=`) ──────────────────────────────────────────────────────────
+// Quien llega a un enlace de módulo SIN sesión ve «Entrar»; tras entrar, debe caer en la MISMA herramienta con sus
+// parámetros, no en la rejilla. La puerta (`/herramientas/acceso`) lee `?siguiente=` y lo acepta solo si es una ruta del
+// taller: misma lista blanca que la vuelta (`vueltaSegura`) y, además, dentro de `/herramientas/taller`. Todo lo demás
+// cae al taller: un `siguiente` libre sería un redirect abierto DESPUÉS de un login, el sitio exacto donde la gente
+// confía en lo que ve.
+
+/** La puerta del taller. */
+export const PUERTA_TALLER = "/herramientas/acceso";
+/** La cookie que lleva el `siguiente` a través del camino de Google (vuelve al callback sin parámetros propios). */
+export const COOKIE_SIGUIENTE = "ctc-herramientas-siguiente";
+
+/** `siguiente` saneado, o `null` si no es una ruta del taller. */
+export function siguienteSeguro(v: string | null | undefined): string | null {
+  if (typeof v !== "string") return null;
+  const t = v.trim();
+  if (!t || t.length > 600) return null;
+  // Solo ASCII imprimible sin espacios: lo que escriben `urlDeHerramienta` y `rutaDeAcceso`. Un carácter de control o no-ASCII
+  // llegaría crudo a la cabecera Location de `redirect()` y Node la rechaza (un 500 en la puerta).
+  if (!/^[\x21-\x7e]+$/.test(t)) return null;
+  if (vueltaSegura(t, "herramientas", VUELTA_TALLER) !== t) return null;
+  return t === VUELTA_TALLER || t.startsWith(VUELTA_TALLER + "/") || t.startsWith(VUELTA_TALLER + "?") ? t : null;
+}
+
+/** El enlace «Entrar» de una herramienta: la puerta, con la herramienta como destino. */
+export function rutaDeAcceso(siguiente: string): string {
+  const s = siguienteSeguro(siguiente);
+  return s && s !== VUELTA_TALLER ? `${PUERTA_TALLER}?siguiente=${encodeURIComponent(s)}` : PUERTA_TALLER;
+}
+
 /**
  * La URL de entrada de una herramienta del taller, relativa al host de Herramientas (`herramientas.ctcexport.com`). Para
  * quien construye enlaces (el tablero, un asistente, una notificación): mismo contrato que lee `leerEntrada`.

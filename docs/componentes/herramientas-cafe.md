@@ -63,6 +63,7 @@ SUPERFICIE, no de una consola — gotcha 12) · `/tools/<id>/*.html` y `/tools/h
 **TAR-121 · el taller como entrada de módulo**: `/herramientas/taller/<slug>` acepta `?trabajo=<uuid>` (abre un trabajo guardado
 de la cuenta), `?finca=<uuid | CTC-F-…>` y `?lote=<uuid | CTC-L-…>` (prellenan un trabajo NUEVO con un registro de la cuenta) y
 `?volver=` (lista blanca). Contrato en `src/lib/tools/entrada.ts`; qué prellena cada herramienta, en `carpetas.ts` (`entrada`).
+La puerta `/herramientas/acceso` acepta `?siguiente=` (solo rutas de `/herramientas/taller`): quien llega sin sesión vuelve a la herramienta.
 
 ## Mapa de código
 
@@ -112,7 +113,7 @@ de la cuenta), `?finca=<uuid | CTC-F-…>` y `?lote=<uuid | CTC-L-…>` (prellen
 ## Guardianes
 
 `qa-tools-carpetas.mjs` (185, `node --experimental-strip-types`: carpeta ↔ lista ↔ disco ↔ 308, y nadie escribe una ruta plana) ·
-`qa-taller-check.mjs` (69) · `qa-taller-entrada-check.mjs` (167, TAR-121, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`:
+`qa-taller-check.mjs` (69) · `qa-taller-entrada-check.mjs` (214, TAR-121, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`:
 la entrada de módulo — parámetros, la vuelta con sus ataques (incluidos `..` y `%2e%2e`), el prellenado de mínimo privilegio, cada
 selector del contrato existe en el archivo de su herramienta, y el filtro por dueño en la consulta) · `qa-herramientas-acceso-check.mjs` (31) · `qa-concha-herramientas-check.mjs` (44,
 once vectores de ataque) · `qa-tools-puente-conformance.mjs` (15/15; las de esquema propio —`agtron`, `coffee-datasheet`, `gulliver`— con sonda;
@@ -162,8 +163,12 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
   (a) el contrato completo, herramienta por herramienta, en la sección «El contrato de URL del taller» (siguiente PR); ~~(b) prellenado de
   `coffee-datasheet`, `cromatografia-suelo` y `green-datasheet`~~ (hecho en el PR apilado de prellenado: la Datasheet por su puente React
   con `conPrefill`, solo donde esté vacío; Cromatografía elige «Su finca» cuando llega su lista; Green Datasheet llena producto, finca,
-  departamento, municipio y altitud — departamento y municipio solo si el nombre coincide con su lista); (c) **la puerta no vuelve a la herramienta**: quien llega sin sesión entra y
-  cae en el taller, no en la herramienta con sus parámetros (`/herramientas/acceso` aún no lee un `?siguiente=`); (d) solo cuentas de
+  departamento, municipio y altitud — departamento y municipio solo si el nombre coincide con su lista); ~~(c) **la puerta no vuelve a la herramienta**~~ (hecho en el PR apilado de la puerta:
+  «Entrar» lleva a `/herramientas/acceso?siguiente=<la herramienta con sus parámetros>`; la puerta, con o sin sesión, y tras la contraseña,
+  vuelve ahí; por Google el destino viaja en una cookie corta, `ctc-herramientas-siguiente`, que el callback valida OTRA vez (sin decodificarla dos
+  veces: Next ya lo hace) y borra en toda respuesta; si Google falla o se cancela, vuelve a la puerta con el destino; el formulario borra la
+  cookie de un intento abandonado.
+  `siguienteSeguro()` solo deja pasar rutas de `/herramientas/taller`); (d) solo cuentas de
   **productor** prellenan (las fincas y los lotes son suyos); un comprador de CP o un experto del DC abren la herramienta vacía — decidir con el
   owner si un comprador debe prellenar con un lote que compró; (e) KR y CP siguen leyendo solo `?volver=` en sus rutas de herramienta.
 
@@ -337,7 +342,10 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 - **Fuera de este componente, visto al vendorizar**: `rueda-del-cafe-v23.html` y `cogs-cafe-verde.html` siguen
   cargando fuentes o librerías de CDN (no funcionan sin internet). `vendor-tool-assets.mjs` las reescribe; se
   deshizo aquí para no tocar herramientas de otras conversaciones.
-- **Google OAuth en la puerta** del taller (`auth/callback` propio + allowlist de Supabase) — cuando el owner lo pida.
+- ~~**Google OAuth en la puerta** del taller~~ — **ya está en el código** desde la A8b (`conGoogle` en `AccesoTaller.tsx` y
+  `/herramientas/auth/callback`; visto el 2026-11-04 al hacer que la puerta vuelva a la herramienta). Queda, del owner, confirmar que
+  `https://herramientas.ctcexport.com/herramientas/auth/callback` está en la lista de Redirect URLs de Supabase (si falta, Google
+  devuelve a la portada CON sesión: degradado, no roto).
 - **Migrar el comodín `tools_plus_grants`** a permisos por persona (`quienDependeDelComodin()` es la lista) y retirar la tabla.
 - **Defectos del Café**: `soporta_memoria=false` (¿línea del puente?); fotogramas de tostado y conmutador de
   fondo abiertos (memoria `defectos-cafe-tool`).

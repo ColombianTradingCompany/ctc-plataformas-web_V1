@@ -85,8 +85,9 @@ Reglas que no cambian con la herramienta:
   («Crear y abrir»). Abrir un trabajo guardado solo sella su `abierto_at`, como siempre lo hizo el menú; el autoguardado empieza con el
   primer cambio de la persona (o con el prellenado de un trabajo nuevo).
 - **La URL no es un oráculo.** «No existe» y «no es suyo» dan el mismo aviso; ningún aviso repite el id.
-- **Sin sesión**, la concha ofrece «Entrar»; la puerta (`/herramientas/acceso`) todavía no devuelve a la herramienta con sus
-  parámetros (Pendientes, TAR-121 (c)).
+- **Sin sesión**, la concha ofrece «Entrar», que lleva a la puerta con la herramienta como destino
+  (`/herramientas/acceso?siguiente=…`): con contraseña, por Google o si ya había sesión, se vuelve a la herramienta con sus
+  parámetros *(llega con ColombianTradingCompany/ctc-plataformas-web_V1#45; hasta entonces, la puerta lleva al taller)*.
 - **Nivel**: *default* = cualquier cuenta de Kaffetal Regal, Cherry Picked o el Directorio del Café; *plus* = permiso por persona desde
   BCP · Herramientas. El nivel vive en la base (`tools.tier`) y se cambia sin desplegar: la columna de abajo es la del 2026-11-04.
 - Solo una cuenta de **productor** tiene fincas y lotes: un comprador o un experto abre la herramienta sin prellenar.
@@ -118,8 +119,10 @@ Reglas que no cambian con la herramienta:
 acepta `trabajo` sin declarar nada; si tiene campos de finca o de lote, se declara su `entrada` en `carpetas.ts` y se añade aquí.
 
 **Para quien construye los enlaces** (el tablero de CTCx OS, un asistente): la URL se escribe con `urlDeHerramienta(id, { trabajo,
-finca, lote, volver })`, nunca a mano; los ids de los trabajos de una persona solo los conoce hoy su propio Home Menu (no hay todavía
-una lectura de «mis trabajos» para fuera del taller).
+finca, lote, volver })` (relativa) o `urlPublicaDeHerramienta(…)` (absoluta y canónica, para compartir fuera del sitio), nunca a mano.
+Los ids de los trabajos de una persona los conoce su Home Menu, que ofrece en cada trabajo **«Copiar enlace»** (el enlace directo
+`…/taller/<id>?trabajo=<uuid>`, que solo abre la cuenta dueña) *(los dos llegan con ColombianTradingCompany/ctc-plataformas-web_V1#46)*;
+no hay todavía una lectura de «mis trabajos» para fuera del taller.
 
 ## Superficies y rutas
 

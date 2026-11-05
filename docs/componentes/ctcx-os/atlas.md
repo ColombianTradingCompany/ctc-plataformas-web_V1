@@ -297,7 +297,7 @@ Son las superficies que traen gente a la red antes de que exista un lote: las la
 - El formulario de `/ctc-tech` y `/varietales` es el ContactModal del componente ctc-home. Con sesión, `submitLeadAuthed` llega a los pilares tech y varietales desde el panel de Kaffetal Regal (`src/components/kaffetal-regal/panel/EcosistemaTab.tsx`, grupo kaffetal-regal) y cae en los mismos CRM del BCP.
 - El barrido diario de soportes rechazados y vencidos del Directorio (`barrerCertificadosVencidos`) corre dentro de `/api/cron/integraciones`, que es de otro grupo. La mitad perezosa corre en `cargarDirectorio`.
 - Los tableros `/bcp/ctc-tech`, `/bcp/varietales`, `/bcp/terratalento`, `/bcp/directorio`, `/lcp/formularios` y `/lcp/lista-espera` pueden repetirse en el grupo de consolas.
-- Terratalento está congelado (el owner no quiere construir nada ahí en unos seis meses) y solo existe en español. Es mal candidato para los primeros módulos del juego.
+- Terratalento está congelado (el owner no quiere construir nada ahí en unos seis meses) y solo existe en español (el pie común sí se traduce). Es mal candidato para los primeros módulos del juego.
 - Vocabulario: el «sello azul» del Directorio es una certificación aprobada (`directorio_documents.verificacion='aprobado'`), no un Sello de un nodo de la Red de Socios.
 - Orden sugerido para el juego: primero la Cuenta de feria (`event_leads`: `volume_kg`, `volume_period`, `lots_of_interest`, `status`), que alimenta Ventas; después el embudo de leads Tech y Varietales. El resto son Personajes sin cifras de café ni de dinero.
 

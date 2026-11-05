@@ -45,8 +45,8 @@ export const LangContext = createContext<{ lang: Lang; setLang: (l: Lang) => voi
  *  server needs one root layout per language family — a bigger change that
  *  is the owner's call.
  *
- *  `null` leaves the attribute alone: a surface whose text is Spanish only
- *  (it mounts the provider but translates nothing) keeps the layout's "es"
+ *  `null` leaves the attribute alone: a surface whose page text is Spanish
+ *  only (at most its shared footer translates) keeps the layout's "es"
  *  even when the visitor picked EN or DE elsewhere on the network. */
 export function useHtmlLang(lang: Lang | null) {
   useEffect(() => {
@@ -69,7 +69,8 @@ export function LangProvider({
   children: ReactNode;
   storageKey: string;
   defaultLang?: Lang;
-  /** false on a surface that only has Spanish text: the provider still runs
+  /** false on a surface whose page text is Spanish only (the shared footer
+   *  still translates): the provider still runs
    *  (its children read the language), but `<html lang>` stays as the layout
    *  wrote it, because the page itself does not change language. */
   declaraHtml?: boolean;

@@ -113,13 +113,19 @@ try {
 
   await abrir(MERMAS);
   await enviar({ ctc: "init", nombre: "x", estado: {} });
+  // `#notes, #qtyIn` alcanzaría `#qtyIn` (va antes en el documento) si el puente perdiera su lista blanca
+  // (`SELECTOR_SIMPLE`): el campo numérico tiene que quedar como estaba.
+  const qtyAntes = await valor("#qtyIn");
   await enviar({
     ctc: "prefill",
     campos: [{ sel: "body *", valor: "x" }, { sel: "#notes, #qtyIn", valor: "x" }, { sel: "img[src=x]", valor: "x" }, { sel: "#notes", valor: "<img src=x onerror=alert(1)>" }],
     registro: null,
   });
   await espera(1200);
-  check("selectores hostiles ignorados y el valor entra como texto", (await valor("#notes")) === "<img src=x onerror=alert(1)>" && (await marco().$$("img[src=x]")).length === 0);
+  check(
+    "selectores hostiles ignorados y el valor entra como texto",
+    (await valor("#notes")) === "<img src=x onerror=alert(1)>" && (await marco().$$("img[src=x]")).length === 0 && (await valor("#qtyIn")) === qtyAntes,
+  );
 
   await abrir(MERMAS);
   await marco().evaluate(() => window.postMessage({ ctc: "prefill", campos: [{ sel: "#notes", valor: "intruso" }] }, "*"));

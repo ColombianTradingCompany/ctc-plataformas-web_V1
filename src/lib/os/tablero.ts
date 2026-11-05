@@ -2,7 +2,7 @@ import { ACCIONES, ENTIDADES } from "./hechosCatalogo";
 import { FUENTES, PIEZAS, type CodigoDeLectura, type Lectura, type Medida, type NotaDeMedida, type PiezaId, type Rotulo } from "./fuentes";
 import { DOMINIOS, ETAPAS, type Dominio, type Etapa } from "@/lib/integraciones/dominios";
 import { TIPOS_DE_TAREA, tipoDeLaTarea, type TareaDeConsola, type TipoDeTarea } from "@/lib/panel/tareas";
-import type { Salud } from "@/lib/integraciones/registroCrons";
+import { CRONS, saludDeCron, type LatidoFinal, type Salud } from "@/lib/integraciones/registroCrons";
 import type { DatosDeLaFranja } from "@/lib/stock/franja";
 
 // ── CTCx OS · el tablero (V6.19, F2) · PURO ──────────────────────────────────
@@ -99,6 +99,58 @@ const ORDEN_DE_SALUD: readonly Salud[] = ["fallo", "atrasada", "parcial", "sin_c
 export function peorSalud(s: readonly Salud[]): Salud | null {
   for (const x of ORDEN_DE_SALUD) if (s.includes(x)) return x;
   return null;
+}
+
+/** Una fila del registro `automations`, con SOLO lo que la salud necesita (ni propósito, ni notas, ni escenario). */
+export type FilaDeAutomatizacion = { clave: string | null; dominio: string; etapa: string; disparador: string; created_at: string };
+/** El último latido TERMINADO de un cron (la misma consulta que `listUltimosLatidos`, sin la compuerta del ECP). */
+export type UltimoLatidoFinal = LatidoFinal & { clave: string };
+
+const HORARIO_DE_CRON = new Map(CRONS.map((c) => [c.clave, c.horario ?? ""]));
+const ES_DOMINIO = new Set<string>(DOMINIOS.map((d) => d.id));
+const ES_ETAPA = new Set<string>(ETAPAS);
+
+/**
+ * La salud de cada cron, con la MISMA regla que el tablero de Automatizaciones (`AutomatizacionesBoard`, crítica 7):
+ * solo las filas `activa` de disparador `cron`, con clave y con horario en `CRONS`; `saludDeCron` desde la fecha en que
+ * se creó la fila. El guardián (`qa-os-check` T) vigila que el filtro del tablero siga siendo éste: si cambia allí,
+ * falla aquí, hasta que se extraiga a `registroCrons.ts` (pendiente con su dueña, `consolas`).
+ */
+export function saludDeLosCrons(filas: readonly FilaDeAutomatizacion[], latidos: readonly UltimoLatidoFinal[], ahora: Date): CronConSalud[] {
+  const ultimoDe = new Map(latidos.map((l) => [l.clave, l]));
+  const out: CronConSalud[] = [];
+  for (const a of filas) {
+    const horario = a.clave ? HORARIO_DE_CRON.get(a.clave) : undefined;
+    if (a.etapa !== "activa" || a.disparador !== "cron" || !a.clave || !horario) continue;
+    if (!ES_DOMINIO.has(a.dominio)) continue;
+    out.push({ clave: a.clave, dominio: a.dominio as Dominio, salud: saludDeCron(horario, new Date(a.created_at), ultimoDe.get(a.clave) ?? null, ahora) });
+  }
+  return out;
+}
+
+/** Cuántas automatizaciones hay por hub y etapa (todas las filas del registro, sin conciliar con Make: crítica 25). */
+export function automatizacionesPorHub(filas: readonly Pick<FilaDeAutomatizacion, "dominio" | "etapa">[]): SaludDelSistema["automatizaciones"] {
+  const out: SaludDelSistema["automatizaciones"] = {};
+  for (const a of filas) {
+    if (!ES_DOMINIO.has(a.dominio) || !ES_ETAPA.has(a.etapa)) continue;
+    const d = a.dominio as Dominio;
+    const e = a.etapa as Etapa;
+    const porEtapa = (out[d] ??= {});
+    porEtapa[e] = (porEtapa[e] ?? 0) + 1;
+  }
+  return out;
+}
+
+/** La cola de la espina por hub: cuántos eventos esperan y cuántos fallaron. */
+export function colaPorHub(eventos: readonly { dominio: string; estado: string }[]): SaludDelSistema["cola"] {
+  const out: SaludDelSistema["cola"] = {};
+  for (const ev of eventos) {
+    if (!ES_DOMINIO.has(ev.dominio)) continue;
+    const c = (out[ev.dominio as Dominio] ??= { pendientes: 0, fallidos: 0 });
+    if (ev.estado === "pendiente") c.pendientes++;
+    else if (ev.estado === "fallido") c.fallidos++;
+  }
+  return out;
 }
 
 // ── Piezas → hub ─────────────────────────────────────────────────────────────

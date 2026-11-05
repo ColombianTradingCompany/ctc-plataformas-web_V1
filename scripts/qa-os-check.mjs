@@ -48,13 +48,14 @@ import { FUENTES, PIEZAS, enlaceVisible, consolaDelEnlace } from "../src/lib/os/
 import { MODULOS_OS, CLAVE_MODULOS_OS, MOTIVO_SIN_LECTURA, parsearModulos, modulosSinLectura } from "../src/lib/os/modulos.ts";
 import {
   hubDeTarea, hubDeTipo, hubDePieza, hubsConTareas, tareasPorHub, esTareaVencida, peorSalud,
-  armarTablero, piezasMuertas, PIEZAS_POR_HUB,
+  armarTablero, piezasMuertas, PIEZAS_POR_HUB, saludDeLosCrons, automatizacionesPorHub, colaPorHub,
 } from "../src/lib/os/tablero.ts";
 import { FORMAS, TOKENS_DE_ARTE, VIEWBOX, HX, edificioArte, sueloArte, arbolesArte, matasArte, granosArte, iso } from "../src/lib/os/haciendaArte.ts";
 import { CONSOLES, CONSOLE_ORDER } from "../src/lib/panel/consoles.ts";
 import { TIPOS_DE_TAREA } from "../src/lib/panel/tareas.ts";
 import { DOMINIOS, ETAPAS } from "../src/lib/integraciones/dominios.ts";
 import { ACCIONES } from "../src/lib/os/hechosCatalogo.ts";
+import { CRONS } from "../src/lib/integraciones/registroCrons.ts";
 
 const RAIZ = fileURLToPath(new URL("..", import.meta.url));
 let pass = 0;
@@ -84,7 +85,6 @@ for (const r of RAICES) {
 
 /** Lo que llega en pasos posteriores de F2. Si el archivo YA existe, la entrada falla: quítela y su regla corre. */
 const PENDIENTES = [
-  { archivo: "src/lib/os/interruptores.ts", paso: 7, reglas: "H2: cada layout de módulo llama a moduloEncendido(«clave»)" },
   { archivo: "src/components/os/identidad/os-tokens.css", paso: 8, reglas: "D4: cada --os-* se define una vez, de tokens de la casa, y se usa" },
   { archivo: "src/components/os/identidad/SelloGrado.tsx", paso: 8, reglas: "D5: el sello lee GRADOS/GRADO_POR_ID" },
   { archivo: "src/components/os/Cifra.tsx", paso: 9, reglas: "C6: «Sin datos» y «EJEMPLO», medida obligatoria" },
@@ -319,13 +319,18 @@ check("A6 · el cliente de service role (comprobado en cada archivo)", true);
 const TABLAS_DE_HECHOS = ["audit_log", "integration_events", "latidos", "profiles", "panel_users", "partner_accounts", "buyer_profiles", "orders", "lot_reservations"];
 const TABLAS_PROHIBIDAS = /^(?:courier_\w+|admin_otp_codes|leads|producer_comm_log|triage_catalogo)$/;
 const TABLAS_DE_FUENTES = [...new Set(Object.values(FUENTES).map((f) => f.fuente).filter((s) => !s.startsWith("archivo:")).map((s) => s.split(".")[0]))];
-const TABLAS_PERMITIDAS = new Set([...TABLAS_DE_FUENTES, ...TABLAS_DE_HECHOS, "platform_settings"]);
+/** Tablas que el OS solo CUENTA (`head: true`) para saber si una función reusada llegó al tope de filas (crítica 9). */
+const TABLAS_DE_CONTROL = ["stock_partidas"];
+const TABLAS_PERMITIDAS = new Set([...TABLAS_DE_FUENTES, ...TABLAS_DE_HECHOS, ...TABLAS_DE_CONTROL, "platform_settings"]);
 function problemasDeTablas(limpio) {
   const p = [];
   for (const m of limpio.matchAll(/\.from\(\s*["']([a-z_0-9]+)["']\s*\)/g)) {
     const t = m[1];
     if (TABLAS_PROHIBIDAS.test(t)) p.push(`tabla prohibida «${t}»`);
     else if (!TABLAS_PERMITIDAS.has(t)) p.push(`tabla no declarada en FUENTES «${t}»`);
+    if (TABLAS_DE_CONTROL.includes(t) && !/^\s*\.select\(\s*["']id["']\s*,\s*\{\s*count:\s*["']exact["']\s*,\s*head:\s*true\s*\}\s*\)/.test(limpio.slice(m.index + m[0].length))) {
+      p.push(`«${t}» solo se cuenta (select("id", { count: "exact", head: true }))`);
+    }
     if (t === "platform_settings" && !/^\s*\.select\([^)]*\)\s*\.eq\(\s*["']key["']\s*,\s*CLAVE_MODULOS_OS\s*\)/.test(limpio.slice(m.index + m[0].length))) {
       p.push("platform_settings solo se lee con .eq(\"key\", CLAVE_MODULOS_OS)");
     }
@@ -335,9 +340,55 @@ function problemasDeTablas(limpio) {
 check("autoprueba · A9b salta con una tabla no declarada", problemasDeTablas('service.from("quotes").select("total")').length > 0);
 check("autoprueba · A9b salta con una tabla prohibida", problemasDeTablas('service.from("leads").select("id")').some((x) => x.includes("prohibida")));
 check("autoprueba · A9b salta con platform_settings por otra llave", problemasDeTablas('service.from("platform_settings").select("value").eq("key", "triage_catalogo")').length > 0);
+check("autoprueba · A9b salta con una tabla de control leída en filas", problemasDeTablas('service.from("stock_partidas").select("codigo")').length > 0);
+check("autoprueba · A9b calla con una tabla de control contada", problemasDeTablas('service.from("stock_partidas").select("id", { count: "exact", head: true })').length === 0);
 check("autoprueba · A9b calla con lo declarado", problemasDeTablas('service.from("lots").select("stage"); service.from("platform_settings").select("value").eq("key", CLAVE_MODULOS_OS).maybeSingle()').length === 0);
 for (const a of codigo.filter((x) => x.ruta.startsWith("src/lib/os/"))) for (const p of problemasDeTablas(a.limpio)) check(`A9 · ${p}`, false, a.ruta);
 check("A9 · src/lib/os lee solo tablas declaradas", true);
+
+/** A11: los selects escritos en src/lib/os no piden datos de personas ni textos libres (las funciones reusadas los leen y el OS no los pinta). */
+const COLUMNAS_PROHIBIDAS = /\b(?:full_name|nombre|name|email|phone|telefono|note|notes|nota|notas|proposito|ultimo_error|codigo_error|destino|payload|aviso_error|inputs|outputs|pvc_cop)\b/;
+function columnasMalas(limpio) {
+  const p = [];
+  for (const m of limpio.matchAll(/\.select\(\s*["'`]([^"'`]*)["'`]/g)) {
+    const h = COLUMNAS_PROHIBIDAS.exec(m[1]);
+    if (h) p.push(`select con «${h[0]}»: ${m[1].slice(0, 60)}`);
+  }
+  return p;
+}
+check("autoprueba · A11 salta con un nombre", columnasMalas('service.from("profiles").select("id, full_name")').length === 1);
+check("autoprueba · A11 calla con conteos y estados", columnasMalas('service.from("lots").select("id", { count: "exact", head: true }); service.from("latidos").select("clave, inicio, fin, estado")').length === 0);
+for (const a of codigo.filter((x) => x.ruta.startsWith("src/lib/os/") && !x.hechos)) for (const p of columnasMalas(a.limpio)) check(`A11 · ${p}`, false, a.ruta);
+check("A11 · src/lib/os no pide nombres, notas, errores ni salidas del PVC", true);
+
+/**
+ * A12 (crítica 9): una lectura de los lectores nunca se corta en silencio en las 1000 filas de la API: o cuenta
+ * (`count: "exact"`, y así sabe si llegó todo) o pide UNA fila (`.maybeSingle()`).
+ */
+function lecturasSinTope(limpio) {
+  const p = [];
+  for (const m of limpio.matchAll(/\.select\(/g)) {
+    const resto = limpio.slice(m.index);
+    let prof = 0, fin = 0;
+    for (let i = 0; i < resto.length; i++) {
+      if (resto[i] === "(") prof++;
+      else if (resto[i] === ")" && --prof === 0) { fin = i + 1; break; }
+    }
+    const args = resto.slice(0, fin);
+    const siguiente = resto.indexOf(".from(", 1);
+    const cadena = resto.slice(0, siguiente < 0 ? 400 : Math.min(siguiente, 400));
+    if (!/count:\s*["']exact["']/.test(args) && !/\.maybeSingle\(\)/.test(cadena)) p.push({ pos: m.index, v: args.slice(0, 60) });
+  }
+  return p;
+}
+check("autoprueba · A12 salta con filas sin contar", lecturasSinTope('service.from("lots").select("stage")').length === 1);
+check("autoprueba · A12 calla con count exacto o una fila", lecturasSinTope('service.from("lots").select("stage", { count: "exact" }); service.from("x").select("value").eq("key", k).maybeSingle()').length === 0);
+for (const r of ["src/lib/os/lectura.ts", "src/lib/os/interruptores.ts", "src/lib/os/tableroServidor.ts"]) {
+  const a = codigo.find((x) => x.ruta === r);
+  check(`A12 · ${r} existe`, !!a);
+  if (a) for (const x of lecturasSinTope(a.limpio)) check("A12 · ninguna lectura cortada en silencio en el tope de filas", false, `${r}:${lineaDe(a.limpio, x.pos)} ${x.v}`);
+}
+check("A12 · los lectores cuentan o piden una fila", true);
 
 /**
  * A10 (crítica 8): los módulos de la plataforma que también ESCRIBEN se importan solo por sus funciones de lectura.
@@ -359,6 +410,7 @@ const IMPORTS_PERMITIDOS = {
   "@/lib/integraciones/dominios": "*",
   "@/lib/integraciones/registroCrons": "*",
   "@/lib/stock/franja": "*",
+  "@/lib/ocp/etapas": "*",
   "@/lib/grados/definicion": "*",
 };
 const COMPONENTES_PERMITIDOS = [/^@\/components\/os\//, /^@\/components\/panel\/PanelShell$/, /^@\/components\/panel\/[\w]+\.module\.css$/];
@@ -676,6 +728,13 @@ for (const m of MODULOS_OS) {
     const lay = existe(`${DIR_MODULOS}/${m.clave}/layout.tsx`) ? quitarComentarios(leer(`${DIR_MODULOS}/${m.clave}/layout.tsx`)) : "";
     check(`H2 · «${m.clave}»: su layout llama a moduloEncendido("${m.clave}")`, lay.includes(`moduloEncendido("${m.clave}")`));
   }
+  // H2b: la página corre EN PARALELO con su layout; si lee datos, mira el interruptor ella también.
+  {
+    const pag = existe(`${DIR_MODULOS}/${m.clave}/page.tsx`) ? quitarComentarios(leer(`${DIR_MODULOS}/${m.clave}/page.tsx`)) : "";
+    if (/@\/lib\/os\/(?:tableroServidor|lectura|hechos)\b|leerTablero|leerHechos/.test(pag)) {
+      check(`H2b · «${m.clave}»: su página lee datos y llama antes a moduloEncendido("${m.clave}")`, pag.includes(`moduloEncendido("${m.clave}")`));
+    }
+  }
   if (m.soloOwner) {
     check(`H3 · «${m.clave}» es del owner: su enlace es ownerOnly`, !!enlace && (enlace.ownerOnly || enlace.grupoOwner));
     const lay = [`${DIR_MODULOS}/${m.clave}/layout.tsx`, `${DIR_MODULOS}/${m.clave}/page.tsx`].filter(existe).map((r) => quitarComentarios(leer(r))).join("\n");
@@ -876,6 +935,56 @@ check("T · todo falla → ninguna cifra es cero: todas «Sin datos»", todasLas
 check("T · todo falla → ninguna salud inventada", tm.taller.crons.filas === null && Object.values(tm.edificios).every((e) => e.salud.valor === null));
 const unaMal = armarTablero({ ...todoBien, stock: no("lectura_stock", ["franja_en_stock"]) });
 check("T · una lectura fallida apaga SOLO sus piezas", unaMal.avisos.length === 1 && unaMal.almacen.franja.every((m) => m.valor === null) && unaMal.edificios.operacion_logistica.abiertas.valor === 2);
+
+// La salud de los crons: la regla del tablero de Automatizaciones (crítica 7)
+{
+  const tablero = quitarComentarios(leer("src/components/panel/AutomatizacionesBoard.tsx"));
+  check("T · paridad: el tablero de Automatizaciones sigue filtrando como saludDeLosCrons (activa, cron, clave, horario de CRONS)",
+    /const HORARIO = new Map\(CRONS\.map\(\(c\) => \[c\.clave, c\.horario \?\? ""\]\)\)/.test(tablero)
+    && /const esCron = \(a: \{ disparador: string \}\) => a\.disparador === "cron"/.test(tablero)
+    && /if \(a\.etapa !== "activa" \|\| !esCron\(a\) \|\| !a\.clave \|\| !horario\) continue;/.test(tablero)
+    && /saludDeCron\(horario, new Date\(a\.createdAt\), ultimoDe\.get\(a\.clave\) \?\? null, ahora\)/.test(tablero),
+    "si el tablero cambió su regla, cámbiela en tablero.ts (o extráigala a registroCrons.ts con su línea en ALINEACION §3)");
+  const diario = CRONS.find((c) => c.horario && !c.horario.startsWith("*"));
+  const AHORA = new Date("2026-11-05T18:00:00.000Z");
+  const creada = "2026-01-01T00:00:00.000Z";
+  const filas = [
+    { clave: diario.clave, dominio: diario.dominio, etapa: "activa", disparador: "cron", created_at: creada },
+    { clave: "/api/cron/no-registrado", dominio: "origen", etapa: "activa", disparador: "cron", created_at: creada },
+    { clave: "make:ejemplo", dominio: "comercial", etapa: "activa", disparador: "calendario", created_at: creada },
+    { clave: null, dominio: "comercial", etapa: "propuesta", disparador: "webhook", created_at: creada },
+    { clave: CRONS[1].clave, dominio: CRONS[1].dominio, etapa: "pausada", disparador: "cron", created_at: creada },
+  ];
+  const sinLatido = saludDeLosCrons(filas, [], AHORA);
+  check("T · saludDeLosCrons: solo la fila activa de cron con horario en CRONS", sinLatido.length === 1 && sinLatido[0].clave === diario.clave && sinLatido[0].dominio === diario.dominio);
+  check("T · saludDeLosCrons: sin latido desde hace meses = atrasada", sinLatido[0]?.salud === "atrasada");
+  const conFallo = saludDeLosCrons(filas, [{ clave: diario.clave, inicio: AHORA.toISOString(), fin: AHORA.toISOString(), estado: "fallido", codigo_error: null }], AHORA);
+  check("T · saludDeLosCrons: el último latido fallido = fallo", conFallo[0]?.salud === "fallo");
+  const recien = saludDeLosCrons([{ ...filas[0], created_at: AHORA.toISOString() }], [], AHORA);
+  check("T · saludDeLosCrons: una fila recién creada sin corrida = sin corrida aún", recien[0]?.salud === "sin_corrida");
+  const porHub = automatizacionesPorHub([
+    { dominio: "comercial", etapa: "activa" }, { dominio: "comercial", etapa: "propuesta" }, { dominio: "comercial", etapa: "activa" },
+    { dominio: "origen", etapa: "pausada" }, { dominio: "inventado", etapa: "activa" }, { dominio: "origen", etapa: "inventada" },
+  ]);
+  check("T · automatizacionesPorHub cuenta por hub y etapa e ignora lo que no conoce",
+    JSON.stringify(porHub) === JSON.stringify({ comercial: { activa: 2, propuesta: 1 }, origen: { pausada: 1 } }), JSON.stringify(porHub));
+  const cola = colaPorHub([{ dominio: "comercial", estado: "pendiente" }, { dominio: "comercial", estado: "fallido" }, { dominio: "comercial", estado: "pendiente" }, { dominio: "inventado", estado: "fallido" }]);
+  check("T · colaPorHub cuenta pendientes y fallidos por hub", cola.comercial?.pendientes === 2 && cola.comercial?.fallidos === 1 && Object.keys(cola).length === 1);
+}
+
+// Los lectores: la forma que la plataforma no puede romper en silencio
+{
+  const lec = quitarComentarios(leer("src/lib/os/lectura.ts"));
+  check("T · los vencidos salen de las tareas despacho:vencido:* (= pendientesDelCircuito().sacosVencidos, crítica 6)",
+    /startsWith\("despacho:vencido:"\)/.test(lec) && /pendientesDelCircuito\(service, hoyEnColombia\(\)\)\.then\(\(p\) => p\.sacosVencidos\.length\)/.test(lec));
+  check("T · la franja reusa cargarCircuitoDelStock", /cargarCircuitoDelStock\(service\)/.test(lec));
+  const carga = quitarComentarios(leer("src/lib/panel/tareasCarga.ts"));
+  check("T · paridad: cada saco vencido sigue siendo UNA tarea despacho:vencido:<id> en cargarTareas",
+    /for \(const d of circuito\.sacosVencidos\)\s*\{\s*pon\(\{\s*key: `despacho:vencido:\$\{d\.id\}`/.test(carga));
+  const srv = quitarComentarios(leer("src/lib/os/tableroServidor.ts"));
+  check("T · leerTablero pasa los vencidos de las tareas a los tratos (sin cargar el stock otra vez)", /leerTratos\(service, t\.ok \? \{ sacosVencidos: t\.valor\.sacosVencidos \} : \{\}\)/.test(srv));
+  check("T · leerTablero arma con armarTablero y su lectura va en un try", /armarTablero\(lecturas\)/.test(srv) && /catch\s*\{/.test(srv));
+}
 
 // El interruptor por módulo
 const porDefecto = parsearModulos(null);

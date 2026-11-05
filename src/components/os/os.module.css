@@ -1,0 +1,176 @@
+/* ── CTCx OS · la maqueta de las pantallas (V6.19, F2) ─────────────────────────
+   HUD, Inicio, Hacienda, Almacén y Taller, sobre los tokens de la casa y los `--os-*` de
+   `identidad/os-tokens.css` (nada más: qa-os-check D2/D3). Se escribe para el teléfono
+   primero (375 px, sin desplazamiento horizontal de la página) y crece al escritorio.
+   Objetivos táctiles de 44 px; transiciones de 200 ms o menos; nada en bucle; sin modo noche;
+   sin utilidades de Tailwind. Las fuentes: Fraunces en títulos, Instrument Sans en el texto,
+   Spline Sans Mono en etiquetas y cifras (tabulares). */
+
+/* ── Lo común ──────────────────────────────────────────────────────────────── */
+.eyebrow{font-family:var(--font-spline-mono),monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.titulo{font-family:var(--font-fraunces),serif;font-weight:700;font-size:26px;line-height:1.15;color:var(--primary-deep);margin:0 0 8px}
+.texto{font-size:14px;color:var(--muted);max-width:68ch;margin:0 0 4px}
+.encabezado{margin:20px 0 18px}
+/* `globals.css` da a todo <section> 78 px de relleno y una raya arriba (las landings): en el OS no. */
+.seccion{margin:0 0 28px;min-width:0;padding:0;border-top:0}
+.seccionTitulo{font-family:var(--font-fraunces),serif;font-weight:700;font-size:18px;color:var(--primary-deep);margin:0 0 4px}
+.seccionNota{font-size:12.5px;color:var(--muted);margin:0 0 12px;max-width:72ch}
+.acciones{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;align-items:center;margin-top:16px}
+.vista{min-width:0;max-width:1180px}
+
+.badge{display:inline-flex;align-items:center;min-height:22px;font-family:var(--font-spline-mono),monospace;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 9px;border-radius:999px;background:var(--line);color:var(--ink);white-space:nowrap}
+.badgeBien{background:color-mix(in srgb, var(--green) 16%, var(--card));color:color-mix(in srgb, var(--green) 72%, var(--ink))}
+.badgeAviso{background:var(--accent);color:var(--ink)}
+.badgeNeutro{background:var(--line);color:var(--ink)}
+.badgeMal{background:color-mix(in srgb, var(--red) 14%, var(--card));color:color-mix(in srgb, var(--red) 78%, var(--ink))}
+
+/* ── La cifra ──────────────────────────────────────────────────────────────── */
+.cifra{display:inline-flex;flex-direction:column;gap:3px;min-width:0;max-width:100%}
+.cifraFila{display:inline-flex;align-items:center;flex-wrap:wrap;gap:6px}
+.cifraValor{font-family:var(--font-spline-mono),monospace;font-variant-numeric:tabular-nums;font-weight:600;color:inherit}
+.cifraUnidad{font-size:.78em;font-weight:500;opacity:.8}
+.cifraGrande .cifraValor{font-family:var(--font-fraunces),serif;font-weight:800;font-size:28px;line-height:1.05;color:var(--ink)}
+.rotulo{font-family:var(--font-spline-mono),monospace;font-weight:600;letter-spacing:.04em}
+.sinDatos{display:inline-flex;align-items:center;font-family:var(--font-spline-mono),monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border:1px dashed currentColor;border-radius:999px;padding:1px 8px;white-space:nowrap}
+.ejemplo{font-family:var(--font-spline-mono),monospace;font-size:9.5px;font-weight:700;letter-spacing:.1em;background:var(--accent);color:var(--ink);border-radius:4px;padding:1px 5px}
+.abrir{font-size:12.5px;font-weight:600;color:var(--primary);text-decoration:underline;text-underline-offset:2px}
+.fuente{display:block;font-family:var(--font-spline-mono),monospace;font-size:10.5px;line-height:1.45;color:var(--muted);overflow-wrap:anywhere;font-weight:400;letter-spacing:0;text-transform:none}
+.fuenteNota{color:color-mix(in srgb, var(--red) 70%, var(--ink))}
+.fuenteAbrir{color:var(--primary);font-weight:600}
+@media (pointer:coarse){
+  .abrir,.fuenteAbrir{display:inline-flex;align-items:center;min-height:44px;padding:0 6px}
+}
+
+/* ── El HUD: la barra del turno, en el morado de la casa ───────────────────── */
+/* En el teléfono el HUD mide casi un tercio de pantalla: ahí se desplaza con la página; desde 760 px se queda pegado
+   (bajo la barra superior del panel hasta 1024 px, arriba del todo desde ahí). */
+.hud{position:static;z-index:50;display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;
+  background:var(--primary);color:var(--card);border-radius:var(--radius);padding:10px 14px;margin:0 0 6px}
+@media (min-width:760px){.hud{position:sticky;top:52px}}
+@media (min-width:1024px){.hud{top:0}}
+.hudCabeza{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;min-width:0}
+.hudMarca{font-family:var(--font-fraunces),serif;font-weight:800;font-size:19px;letter-spacing:.01em;white-space:nowrap}
+.hudMarcaOs{font-family:var(--font-spline-mono),monospace;font-size:11px;font-weight:600;letter-spacing:.16em;margin-left:2px;color:var(--accent-soft)}
+.hudDato{display:inline-flex;align-items:baseline;gap:6px;font-size:13px;min-width:0}
+.hudK{font-family:var(--font-spline-mono),monospace;font-size:9.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-soft)}
+.hudChips{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px;flex:1 1 100%}
+.hudChips li{display:flex;flex-direction:column;gap:1px;min-width:0}
+.hudChips .cifraValor{font-size:16px;color:var(--card)}
+.hudChips .sinDatos{color:var(--accent-soft)}
+.hudAcciones{display:flex;gap:8px;margin-left:auto}
+.hudBoton{min-height:44px;padding:0 14px;border-radius:999px;border:1px solid color-mix(in srgb, var(--card) 45%, transparent);
+  background:color-mix(in srgb, var(--card) 10%, transparent);color:var(--card);font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background-color .15s}
+.hudBoton:hover{background:color-mix(in srgb, var(--card) 20%, transparent)}
+.hudBoton[aria-pressed="true"]{background:var(--card);color:var(--primary)}
+@media (min-width:760px){
+  .hudChips{display:flex;flex-wrap:wrap;gap:6px 22px;flex:0 1 auto}
+}
+
+/* ── Tarjetas de cifras ────────────────────────────────────────────────────── */
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.kpiK{font-family:var(--font-spline-mono),monospace;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+/* ── Avisos, copiar, apagado ───────────────────────────────────────────────── */
+.avisos{margin:8px 0 28px;padding:0;border-top:0}
+.avisosLista{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}
+.aviso{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--red);border-radius:var(--radius);padding:10px 12px;font-size:13.5px;color:var(--ink)}
+.copiar{display:flex;flex-direction:column;align-items:flex-end;gap:6px;width:100%}
+.copiarAviso{font-size:12.5px;color:var(--muted);margin:0;text-align:right;min-height:1em}
+.copiarTexto{width:100%;font-family:var(--font-spline-mono),monospace;font-size:11.5px;border:1px solid var(--line);border-radius:var(--radius);padding:8px;background:var(--card);color:var(--ink)}
+.apagado{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:var(--radius);padding:20px;max-width:720px;margin-top:8px}
+
+/* ── Inicio ────────────────────────────────────────────────────────────────── */
+.portada{display:flex;flex-direction:column;gap:14px;background:var(--crema);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin:14px 0 24px}
+.logo{width:150px;height:auto}
+@media (min-width:760px){
+  .portada{flex-direction:row;align-items:center;gap:28px;padding:22px 26px}
+  .logo{width:190px;flex:0 0 auto}
+}
+.modulos{list-style:none;margin:12px 0 0;padding:0;display:grid;grid-template-columns:1fr;gap:12px}
+@media (min-width:760px){.modulos{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.modulo{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.moduloCabeza{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.moduloTitulo{font-family:var(--font-fraunces),serif;font-weight:700;font-size:18px;color:var(--ink);margin:0}
+.moduloTexto{font-size:13px;color:var(--muted);margin:0;flex:1}
+.modulo .acciones{margin-top:4px}
+
+/* ── La Hacienda ───────────────────────────────────────────────────────────── */
+.lienzo{margin:0 0 18px;background:color-mix(in srgb, var(--crema) 55%, var(--paper));border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.dibujo{display:block;width:100%;height:auto}
+.cara{stroke:var(--os-trazo);stroke-width:.6;stroke-linejoin:round}
+.calleBorde{fill:none;stroke:var(--os-calle-borde);stroke-linecap:round;stroke-linejoin:round}
+.calle{fill:none;stroke:var(--os-calle);stroke-linecap:round;stroke-linejoin:round}
+.onda{fill:none;stroke:var(--os-agua-2);stroke-width:1.4;stroke-linecap:round}
+.edificio{cursor:pointer;outline:none}
+.anillo{fill:color-mix(in srgb, var(--primary) 10%, transparent);stroke:var(--primary);stroke-width:2.2;stroke-dasharray:6 4;opacity:0;transition:opacity .15s}
+.edificio:hover .anillo{opacity:.55}
+.edificio:focus-visible .anillo,.anilloSel{opacity:1}
+.rotulos{pointer-events:none}
+.rotuloFondo{fill:var(--card);stroke:var(--line);stroke-width:1}
+.rotuloTexto{font-family:var(--font-spline-mono),monospace;font-size:10px;font-weight:600;letter-spacing:.06em;fill:var(--ink)}
+.chip{fill:var(--primary)}
+.chipVacio{fill:var(--card);stroke:var(--muted);stroke-width:1.2;stroke-dasharray:2 2}
+.chipTexto{font-family:var(--font-spline-mono),monospace;font-size:10.5px;font-weight:700;fill:var(--card)}
+.chipTextoVacio{fill:var(--muted)}
+.bandera{fill:var(--red)}
+.banderaTexto{font-family:var(--font-spline-mono),monospace;font-size:8.5px;font-weight:700;letter-spacing:.08em;fill:var(--card)}
+/* En el teléfono el dibujo es una vista de conjunto: los rótulos no caben y la lista de abajo es el control. */
+@media (max-width:759px){
+  .rotulos{display:none}
+}
+
+.hubLista{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (min-width:760px){.hubLista{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.hubBoton{width:100%;min-height:44px;height:100%;display:flex;flex-direction:column;align-items:flex-start;gap:5px;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;font:inherit;color:var(--ink);cursor:pointer;transition:border-color .15s,background-color .15s}
+.hubBoton:hover{border-color:var(--primary)}
+.hubSel{border-color:var(--primary);background:color-mix(in srgb, var(--primary) 6%, var(--card))}
+.hubN{font-family:var(--font-spline-mono),monospace;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.hubNombre{font-family:var(--font-fraunces),serif;font-weight:700;font-size:15px;line-height:1.2}
+.hubCifras{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12px;color:var(--muted)}
+.hubCifras > span{display:inline-flex;align-items:center;gap:5px}
+.hubCifras .cifraValor{color:var(--ink)}
+
+.hoja{display:flex;flex-direction:column;gap:16px}
+.hoja .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (min-width:560px){.hoja .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.piezas{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.pieza{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px 12px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:8px 12px;font-size:13.5px;color:var(--ink)}
+.piezaNombre{min-width:0}
+.subtitulo{font-family:var(--font-spline-mono),monospace;font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0}
+
+/* ── El Almacén ────────────────────────────────────────────────────────────── */
+.tira{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (min-width:760px){.tira{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
+.paso{display:flex;flex-direction:column;gap:6px;background:var(--card);border:1px solid var(--line);border-top:3px solid var(--primary);border-radius:var(--radius);padding:10px 12px;min-width:0}
+.pasoVacio{border:1px dashed var(--muted);border-top:3px dashed var(--muted);background:transparent}
+.pasoNombre{font-size:12.5px;color:var(--ink);line-height:1.3}
+.sellos{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.sello{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:3px 12px 3px 3px;border-radius:999px;font-family:var(--font-spline-mono),monospace;font-size:12px;font-weight:600;letter-spacing:.06em}
+.selloImagen{border-radius:50%;background:var(--card)}
+
+/* ── El Taller ─────────────────────────────────────────────────────────────── */
+.marco{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--card)}
+.tabla{width:100%;border-collapse:collapse;font-size:13px;color:var(--ink)}
+.tabla th{font-family:var(--font-spline-mono),monospace;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tabla td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.tabla tr:last-child td{border-bottom:0}
+.mono{font-family:var(--font-spline-mono),monospace;font-size:11.5px;color:var(--muted);overflow-wrap:anywhere}
+.version{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.versionValor{font-family:var(--font-spline-mono),monospace;font-weight:600;font-size:15px;color:var(--ink)}
+/* En el teléfono la tabla de los crons se apila: cada fila es una tarjeta. */
+@media (max-width:759px){
+  .apilada thead{display:none}
+  .apilada tr{display:block;padding:10px 12px;border-bottom:1px solid var(--line)}
+  .apilada tr:last-child{border-bottom:0}
+  .apilada td{display:block;padding:2px 0;border:0}
+}
+
+/* ── El modo demostración (solo local) ─────────────────────────────────────── */
+.demo{max-width:1240px;margin:0 auto;padding:12px 14px 40px;background:var(--paper);min-height:100vh}
+@media (min-width:1024px){.demo{padding:20px 40px 48px}}
+.demo .hud{top:0}
+.demoBanda{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;background:var(--accent);color:var(--ink);border-radius:var(--radius);padding:8px 14px;margin:0 0 10px;font-size:13px;font-weight:600}
+.demoNav{display:flex;flex-wrap:wrap;gap:6px}
+.demoNav a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:13px;font-weight:600;text-decoration:none}
+.demoNav a[aria-current="page"]{background:var(--primary);border-color:var(--primary);color:var(--card)}

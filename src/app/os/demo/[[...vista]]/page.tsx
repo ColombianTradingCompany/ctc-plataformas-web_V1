@@ -1,0 +1,59 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { Hud } from "@/components/os/Hud";
+import { ProcedenciaProvider } from "@/components/os/Procedencia";
+import { Almacen } from "@/components/os/vistas/Almacen";
+import { Hacienda } from "@/components/os/vistas/Hacienda";
+import { InicioVista } from "@/components/os/vistas/Inicio";
+import { Taller } from "@/components/os/vistas/Taller";
+import { demoPermitido } from "@/lib/os/demo/permitido";
+import { IDENTIDAD_DEMO, TABLERO_DEMO } from "@/lib/os/demo/datos";
+import { parsearModulos } from "@/lib/os/modulos";
+import s from "@/components/os/os.module.css";
+import "@/components/os/identidad/os-tokens.css";
+
+// ── CTCx OS · el modo demostración (V6.19, F2) · SOLO LOCAL ──────────────────
+// Las MISMAS vistas de la OS con un tablero inventado (`demo/datos.ts`), para las capturas de revisión
+// de identidad (PLAN §7.8) con Chrome sin interfaz: la OS de verdad pide contraseña y código por correo.
+// Vive FUERA de `(app)`: no pasa por la compuerta de la consola, así que trae su propio contexto de quien
+// mira (una identidad inventada) y sus propios tokens del juego (crítica 10). No toca la base ni los
+// lectores. Sin `OS_DEMO=1`, o en producción, es un 404 (`demoPermitido`).
+
+export const dynamic = "force-dynamic";
+
+const VISTAS = [
+  { clave: undefined, titulo: "Inicio" },
+  { clave: "hacienda", titulo: "Hacienda" },
+  { clave: "almacen", titulo: "Almacén" },
+  { clave: "taller", titulo: "Taller" },
+] as const;
+
+export default async function OsDemoPage({ params }: { params: Promise<{ vista?: string[] }> }) {
+  if (!demoPermitido()) notFound();
+  const { vista } = await params;
+  if (vista && vista.length > 1) notFound();
+  const clave = vista?.[0];
+  if (clave !== undefined && !VISTAS.some((v) => v.clave === clave)) notFound();
+
+  return (
+    <ProcedenciaProvider consolas={IDENTIDAD_DEMO.consolas} isOwner={IDENTIDAD_DEMO.isOwner} nombre={IDENTIDAD_DEMO.nombre}>
+      <main data-os-juego="" className={s.demo}>
+        <div className={s.demoBanda}>
+          <span role="status">Modo demostración · datos inventados</span>
+          <nav aria-label="Vistas de la demostración" className={s.demoNav}>
+            {VISTAS.map((v) => (
+              <Link key={v.titulo} href={v.clave ? `/os/demo/${v.clave}` : "/os/demo"} aria-current={v.clave === clave ? "page" : undefined}>
+                {v.titulo}
+              </Link>
+            ))}
+          </nav>
+        </div>
+        <Hud tablero={TABLERO_DEMO} />
+        {clave === undefined && <InicioVista tablero={TABLERO_DEMO} modulos={parsearModulos(null)} base="/os/demo" />}
+        {clave === "hacienda" && <Hacienda tablero={TABLERO_DEMO} />}
+        {clave === "almacen" && <Almacen tablero={TABLERO_DEMO} />}
+        {clave === "taller" && <Taller tablero={TABLERO_DEMO} version="V0.0-EJEMPLO" sha="ejemplo" />}
+      </main>
+    </ProcedenciaProvider>
+  );
+}

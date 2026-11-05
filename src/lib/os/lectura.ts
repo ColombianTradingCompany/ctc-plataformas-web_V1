@@ -264,8 +264,9 @@ export async function leerLotesPorEtapa(service: SupabaseClient): Promise<Lectur
     ]);
     if (total === null || porEtapa.some((n) => n === null)) return mal("lectura_lotes", fuentes);
     const out: Partial<Record<string, number>> = {};
+    // Cada etapa conocida sale con su cuenta, también el cero (el Almacén pinta la tira entera: un paso vacío es un dato).
     etapas.forEach((e, i) => {
-      if (porEtapa[i]) out[e] = porEtapa[i] as number;
+      out[e] = porEtapa[i] as number;
     });
     const conocidas = porEtapa.reduce<number>((a, n) => a + (n ?? 0), 0);
     if (total > conocidas) out.otra = total - conocidas;

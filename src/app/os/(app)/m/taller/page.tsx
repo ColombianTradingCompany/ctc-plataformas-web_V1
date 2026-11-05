@@ -1,20 +1,22 @@
-import Link from "next/link";
-import styles from "@/components/panel/shared.module.css";
+import { Hud } from "@/components/os/Hud";
+import { Taller } from "@/components/os/vistas/Taller";
+import { moduloEncendido } from "@/lib/os/interruptores";
+import { leerTablero } from "@/lib/os/tableroServidor";
+import { BUILD_SHA, VERSION_LABEL } from "@/lib/version";
 
-// CTCx OS · módulo «Taller» (V6.19, F2 — el esqueleto). PROVISIONAL: la ruta existe, pasa la compuerta de la
-// consola y su rail la enciende; todavía no lee nada, así que no enseña ninguna cifra.
+// CTCx OS · módulo «Taller» (V6.19, F2). Solo lectura. El layout del módulo pinta el aviso si está apagado; como en el App
+// Router la página corre EN PARALELO con su layout, la página mira también el interruptor ANTES de leer (qa-os-check H2b):
+// apagado, no lee nada y no pinta nada.
 export const dynamic = "force-dynamic";
 
-export default function TallerPage() {
+export default async function TallerPage() {
+  const estado = await moduloEncendido("taller");
+  if (!estado.encendido) return null;
+  const tablero = await leerTablero();
   return (
-    <div style={{ maxWidth: 820 }}>
-      <h1 className={styles.title}>Taller</h1>
-      <p className={styles.meta} style={{ fontSize: 14, marginBottom: 18 }}>
-        Este módulo de la CTCx OS está en construcción: todavía no lee datos de la red.
-      </p>
-      <Link href="/os" className="btn btn-sm">
-        Volver a Inicio
-      </Link>
-    </div>
+    <>
+      <Hud tablero={tablero} />
+      <Taller tablero={tablero} version={VERSION_LABEL} sha={BUILD_SHA} />
+    </>
   );
 }

@@ -1,31 +1,21 @@
-import Link from "next/link";
-import { CONSOLES } from "@/lib/panel/consoles";
-import styles from "@/components/panel/shared.module.css";
+import { Hud } from "@/components/os/Hud";
+import { InicioVista } from "@/components/os/vistas/Inicio";
+import { leerModulosOs } from "@/lib/os/interruptores";
+import { leerTablero } from "@/lib/os/tableroServidor";
 
-// CTCx OS · Inicio (V6.19, F2 — el esqueleto). PROVISIONAL: la ruta existe y pasa la compuerta, pero todavía no
-// lee nada. Los lectores (solo lectura, solo cifras y enlaces a la consola dueña de cada pieza) llegan en los
-// pasos siguientes de F2; hasta entonces esta página no enseña ni una cifra, para no enseñar una inventada.
+// CTCx OS · Inicio (V6.19, F2). La puerta de la consola: el HUD, el logo, los módulos con su interruptor y la deuda de
+// datos. Inicio no es un módulo y no tiene interruptor propio; pero si TODOS los módulos están apagados (la consola
+// apagada desde el BCP o el interruptor sin lectura), no lee el tablero: apagar el OS apaga también sus lecturas.
 export const dynamic = "force-dynamic";
 
-export default function OsInicioPage() {
-  const c = CONSOLES.os;
-  const modulos = c.nav.flatMap((g) => g.links).filter((l) => l.href !== c.home);
+export default async function OsInicioPage() {
+  const modulos = await leerModulosOs();
+  const alguno = Object.values(modulos).some((m) => m.encendido);
+  const tablero = alguno ? await leerTablero() : null;
   return (
-    <div style={{ maxWidth: 820 }}>
-      <h1 className={styles.title}>{c.name}</h1>
-      <p className={styles.meta} style={{ fontSize: 14, marginBottom: 18 }}>
-        {c.tagline}. Esta consola está en construcción: todavía no lee datos de la red.
-      </p>
-      <ul style={{ listStyle: "none", display: "grid", gap: 12 }}>
-        {modulos.map((m) => (
-          <li key={m.href} className={styles.card}>
-            <h3>{m.label}</h3>
-            <Link href={m.href} className="btn btn-sm">
-              Abrir
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <>
+      <Hud tablero={tablero} />
+      <InicioVista tablero={tablero} modulos={modulos} base="/os/m" />
+    </>
   );
 }

@@ -51,6 +51,10 @@ export const PIEZAS = [
 export type PiezaId = (typeof PIEZAS)[number];
 
 export type Fuente = {
+  /** Cómo se llama la cifra en pantalla (el HUD, la Hacienda, el Almacén y el Taller la rotulan con ESTO). */
+  etiqueta: string;
+  /** La unidad que `Cifra` pone detrás del número. */
+  unidad?: "kg";
   fuente: `${string}.${string}` | `archivo:${string}#${string}`;
   /** El filtro que aplica la lectura, en palabras (sale en el panel de procedencia). */
   filtro?: string;
@@ -65,35 +69,35 @@ const TAREAS = "archivo:src/lib/panel/tareasCarga.ts#cargarTareas" as const;
 const FRANJA = "archivo:src/lib/stock/circuito.ts#cargarCircuitoDelStock" as const;
 
 export const FUENTES: Record<PiezaId, Fuente> = {
-  tareas_abiertas: { fuente: TAREAS, filtro: "casilla sin marcar en bcp_task_state", enlace: "/ecp", cuentaCeroSiFalla: true },
-  tareas_vencidas: { fuente: TAREAS, filtro: "solo los despachos vencidos tienen fecha", enlace: "/ecp", cuentaCeroSiFalla: true },
+  tareas_abiertas: { etiqueta: "Tareas abiertas", fuente: TAREAS, filtro: "casilla sin marcar en bcp_task_state", enlace: "/ecp", cuentaCeroSiFalla: true },
+  tareas_vencidas: { etiqueta: "Tareas vencidas", fuente: TAREAS, filtro: "solo los despachos vencidos tienen fecha", enlace: "/ecp", cuentaCeroSiFalla: true },
 
-  contratos_por_estado: { fuente: "purchase_contracts.status", enlace: "/ocp/contratos/lista" },
-  ventanas_vigentes: { fuente: "purchase_contracts.ventana_tipo", filtro: "contrato activo con ventana", enlace: "/ocp/contratos/lista" },
-  despachos_pendientes: { fuente: "contract_despachos.estado", filtro: "pendiente, de un contrato activo", enlace: "/ocp/compras" },
-  despachos_despachados: { fuente: "contract_despachos.estado", filtro: "despachado, de un contrato activo", enlace: "/ocp/compras" },
+  contratos_por_estado: { etiqueta: "Contratos", fuente: "purchase_contracts.status", enlace: "/ocp/contratos/lista" },
+  ventanas_vigentes: { etiqueta: "Contratos con ventana vigente", fuente: "purchase_contracts.ventana_tipo", filtro: "contrato activo con ventana", enlace: "/ocp/contratos/lista" },
+  despachos_pendientes: { etiqueta: "Despachos pendientes", fuente: "contract_despachos.estado", filtro: "pendiente, de un contrato activo", enlace: "/ocp/compras" },
+  despachos_despachados: { etiqueta: "Despachos en camino", fuente: "contract_despachos.estado", filtro: "despachado, de un contrato activo", enlace: "/ocp/compras" },
   // La MISMA regla que el Tablero (crítica 6): saco o adelanto pendiente con el plazo (o su prórroga) vencido.
-  despachos_vencidos: { fuente: "archivo:src/lib/stock/circuito.ts#pendientesDelCircuito", filtro: "saco o adelanto pendiente, plazo vencido", enlace: "/ocp/contratos/lista", cuentaCeroSiFalla: true },
-  despachos_kg_por_recibir: { fuente: "contract_despachos.kg", filtro: "pendiente o despachado, de un contrato activo", enlace: "/ocp/compras" },
+  despachos_vencidos: { etiqueta: "Despachos vencidos", fuente: "archivo:src/lib/stock/circuito.ts#pendientesDelCircuito", filtro: "saco o adelanto pendiente, plazo vencido", enlace: "/ocp/contratos/lista", cuentaCeroSiFalla: true },
+  despachos_kg_por_recibir: { etiqueta: "Kilos por recibir", unidad: "kg", fuente: "contract_despachos.kg", filtro: "pendiente o despachado, de un contrato activo", enlace: "/ocp/compras" },
 
-  franja_por_recibir: { fuente: FRANJA, enlace: "/ocp/compras", cuentaCeroSiFalla: true },
-  franja_en_stock: { fuente: FRANJA, enlace: "/ocp/stock", cuentaCeroSiFalla: true },
-  franja_por_declarar: { fuente: FRANJA, enlace: "/ocp/contratos", cuentaCeroSiFalla: true },
-  franja_en_catalogo: { fuente: FRANJA, enlace: "/ocp/catalogo", cuentaCeroSiFalla: true },
-  franja_vendido: { fuente: FRANJA, enlace: "/ocp/catalogo", cuentaCeroSiFalla: true },
+  franja_por_recibir: { etiqueta: "Franja · por recibir", unidad: "kg", fuente: FRANJA, enlace: "/ocp/compras", cuentaCeroSiFalla: true },
+  franja_en_stock: { etiqueta: "Franja · en stock", unidad: "kg", fuente: FRANJA, enlace: "/ocp/stock", cuentaCeroSiFalla: true },
+  franja_por_declarar: { etiqueta: "Franja · por declarar", unidad: "kg", fuente: FRANJA, enlace: "/ocp/contratos", cuentaCeroSiFalla: true },
+  franja_en_catalogo: { etiqueta: "Franja · en catálogo", unidad: "kg", fuente: FRANJA, enlace: "/ocp/catalogo", cuentaCeroSiFalla: true },
+  franja_vendido: { etiqueta: "Franja · vendido", unidad: "kg", fuente: FRANJA, enlace: "/ocp/catalogo", cuentaCeroSiFalla: true },
 
-  pvc_vigente: { fuente: "archivo:src/lib/pvc/servicio.ts#edicionVigente", filtro: "publicada o corregida, vigente hoy", enlace: "/ecp/pvc", nuloSiFalla: true },
-  pvc_proxima: { fuente: "archivo:src/lib/pvc/servicio.ts#edicionProxima", enlace: "/ecp/pvc", nuloSiFalla: true },
-  pvc_correcciones: { fuente: "pvc_correcciones.estado", filtro: "propuesta", enlace: "/ecp/pvc" },
-  pvc_borrador: { fuente: "archivo:src/lib/pvc/agente.ts#estadoDelAgente", filtro: "borrador del agente sin publicar", enlace: "/ecp/pvc" },
+  pvc_vigente: { etiqueta: "Edición vigente del Modelo Económico", fuente: "archivo:src/lib/pvc/servicio.ts#edicionVigente", filtro: "publicada o corregida, vigente hoy", enlace: "/ecp/pvc", nuloSiFalla: true },
+  pvc_proxima: { etiqueta: "Edición siguiente", fuente: "archivo:src/lib/pvc/servicio.ts#edicionProxima", enlace: "/ecp/pvc", nuloSiFalla: true },
+  pvc_correcciones: { etiqueta: "Correcciones por revisar", fuente: "pvc_correcciones.estado", filtro: "propuesta", enlace: "/ecp/pvc" },
+  pvc_borrador: { etiqueta: "Borrador del agente por publicar", fuente: "archivo:src/lib/pvc/agente.ts#estadoDelAgente", filtro: "borrador del agente sin publicar", enlace: "/ecp/pvc" },
 
-  salud_crons: { fuente: "latidos.estado", filtro: "último latido terminado de cada cron", enlace: "/ecp/automatizaciones" },
-  cola_pendientes: { fuente: "integration_events.estado", filtro: "pendiente", enlace: "/ecp/automatizaciones" },
-  cola_fallidos: { fuente: "integration_events.estado", filtro: "fallido", enlace: "/ecp/automatizaciones" },
-  automatizaciones_por_etapa: { fuente: "automations.etapa", enlace: "/ecp/automatizaciones" },
+  salud_crons: { etiqueta: "Salud de los crons", fuente: "latidos.estado", filtro: "último latido terminado de cada cron", enlace: "/ecp/automatizaciones" },
+  cola_pendientes: { etiqueta: "Eventos en cola", fuente: "integration_events.estado", filtro: "pendiente", enlace: "/ecp/automatizaciones" },
+  cola_fallidos: { etiqueta: "Eventos fallidos", fuente: "integration_events.estado", filtro: "fallido", enlace: "/ecp/automatizaciones" },
+  automatizaciones_por_etapa: { etiqueta: "Automatizaciones", fuente: "automations.etapa", enlace: "/ecp/automatizaciones" },
 
-  hechos_por_hub: { fuente: "archivo:src/lib/os/hechos.ts#leerHechos", filtro: "últimas 24 horas", enlace: null },
-  lotes_por_etapa: { fuente: "lots.stage", enlace: "/ocp/kr" },
+  hechos_por_hub: { etiqueta: "Hechos del turno (24 h)", fuente: "archivo:src/lib/os/hechos.ts#leerHechos", filtro: "últimas 24 horas", enlace: null },
+  lotes_por_etapa: { etiqueta: "Lotes", fuente: "lots.stage", enlace: "/ocp/kr" },
 };
 
 // ── Lo que devuelve un lector ────────────────────────────────────────────────

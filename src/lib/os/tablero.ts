@@ -2,7 +2,8 @@ import { ACCIONES, ENTIDADES } from "./hechosCatalogo";
 import { FUENTES, PIEZAS, type CodigoDeLectura, type Lectura, type Medida, type NotaDeMedida, type PiezaId, type Rotulo } from "./fuentes";
 import { DOMINIOS, ETAPAS, type Dominio, type Etapa } from "@/lib/integraciones/dominios";
 import { TIPOS_DE_TAREA, tipoDeLaTarea, type TareaDeConsola, type TipoDeTarea } from "@/lib/panel/tareas";
-import { CRONS, saludDeCron, type LatidoFinal, type Salud } from "@/lib/integraciones/registroCrons";
+import { CRONS, SALUD_LABEL, saludDeCron, type LatidoFinal, type Salud } from "@/lib/integraciones/registroCrons";
+import { ESTADO_DE_CONTRATO, ETAPA_DEL_LOTE } from "@/lib/ocp/etapas";
 import type { DatosDeLaFranja } from "@/lib/stock/franja";
 
 // ── CTCx OS · el tablero (V6.19, F2) · PURO ──────────────────────────────────
@@ -422,4 +423,88 @@ export function piezasDelTablero(t: Tablero): Set<PiezaId> {
 export function piezasMuertas(t: Tablero): PiezaId[] {
   const usadas = piezasDelTablero(t);
   return PIEZAS.filter((p) => !usadas.has(p));
+}
+
+// ── El HUD y el contexto para Tailor ─────────────────────────────────────────
+
+/**
+ * Suma cifras de la MISMA pieza. Una sola en «Sin datos» deja la suma en «Sin datos» (nunca un total que
+ * calla un hueco); las notas y la marca de demostración pasan a la suma.
+ */
+export function sumarMedidas(ms: readonly Medida[], pieza: PiezaId, leidoAt: string): Medida {
+  let suma: number | null = ms.length ? 0 : null;
+  const notas = new Set<NotaDeMedida>();
+  let demo = false;
+  for (const m of ms) {
+    if (m.valor === null) suma = null;
+    else if (suma !== null) suma += m.valor;
+    for (const n of m.notas ?? []) notas.add(n);
+    if (m.demo) demo = true;
+  }
+  return { valor: suma, pieza, leidoAt, ...(notas.size ? { notas: [...notas] } : {}), ...(demo ? { demo: true as const } : {}) };
+}
+
+export type ResumenDelHud = { abiertas: Medida; vencidas: Medida; despachosPendientes: Medida; colaFallida: Medida };
+
+/** Las cuatro cifras del HUD. Las tareas suman SOLO los hubs que pueden tenerlas (los demás dicen «sin fuente aún»). */
+export function resumenDelHud(t: Tablero): ResumenDelHud {
+  const conFuente = Object.values(t.edificios).filter((e) => !e.abiertas.notas?.includes("sin_fuente_aun"));
+  const sinPieza = (pieza: PiezaId): Medida => ({ valor: null, pieza, leidoAt: t.leidoAt });
+  return {
+    abiertas: sumarMedidas(conFuente.map((e) => e.abiertas), "tareas_abiertas", t.leidoAt),
+    vencidas: sumarMedidas(conFuente.map((e) => e.vencidas), "tareas_vencidas", t.leidoAt),
+    despachosPendientes: t.almacen.despachos.find((m) => m.pieza === "despachos_pendientes") ?? sinPieza("despachos_pendientes"),
+    colaFallida: t.taller.cola.fallidos,
+  };
+}
+
+/** Las etiquetas de las etapas del registro de automatizaciones (en el registro son claves en minúscula). */
+const ETAPA_DE_AUTOMATIZACION: Record<Etapa, string> = {
+  propuesta: "Propuesta",
+  piloto: "Piloto",
+  activa: "Activa",
+  pausada: "Pausada",
+  deprecada: "Deprecada",
+};
+
+/** El nombre de una cifra desglosada (un estado de contrato, una etapa de lote o de automatización), de su fuente única. */
+export function etiquetaDeClave(pieza: PiezaId, clave: string): string {
+  if (pieza === "contratos_por_estado") return ESTADO_DE_CONTRATO[clave] ?? (clave === "otro" ? "Otro estado" : clave);
+  if (pieza === "lotes_por_etapa") return ETAPA_DEL_LOTE[clave] ?? (clave === "otra" ? "Otra etapa" : clave);
+  if (pieza === "automatizaciones_por_etapa") return ETAPA_DE_AUTOMATIZACION[clave as Etapa] ?? clave;
+  return clave;
+}
+
+/** El orden de una tira desglosada: el de su fuente (las etapas del lote en su orden, no el alfabético); lo desconocido al final. */
+export function ordenDeClave(pieza: PiezaId, clave: string | undefined): number {
+  const orden = pieza === "lotes_por_etapa" ? Object.keys(ETAPA_DEL_LOTE) : pieza === "contratos_por_estado" ? Object.keys(ESTADO_DE_CONTRATO) : [...ETAPAS];
+  const i = clave === undefined ? -1 : orden.indexOf(clave);
+  return i < 0 ? orden.length : i;
+}
+
+const enTexto = (m: Medida) => (m.valor === null ? "sin datos" : String(m.valor));
+
+/**
+ * El texto que «Copiar contexto para Tailor» deja en el portapapeles: SOLO conteos, estados y la hora de lectura
+ * (ni nombres, ni referencias, ni importes). Sin `dominio`, el resumen de los diez hubs; con él, ese hub y sus piezas.
+ */
+export function contextoParaTailor(t: Tablero, dominio?: Dominio): string {
+  const edificios = dominio ? [t.edificios[dominio]] : Object.values(t.edificios);
+  const demo = edificios.some((e) => e.abiertas.demo);
+  const lineas = [`CTCx OS · tablero leído ${t.leidoAt}${demo ? " · DATOS INVENTADOS del modo demostración" : ""}`];
+  for (const e of edificios) {
+    const salud = e.salud.valor ? SALUD_LABEL[e.salud.valor].toLowerCase() : "sin crons o sin lectura";
+    lineas.push(
+      `${e.n} · ${e.label}: tareas abiertas ${enTexto(e.abiertas)}, vencidas ${enTexto(e.vencidas)}, hechos del turno ${enTexto(e.hechos)}, ` +
+        `cola ${enTexto(e.cola.pendientes)} en espera y ${enTexto(e.cola.fallidos)} fallidos, salud de sus crons: ${salud}.`
+    );
+    if (dominio) {
+      for (const p of e.piezas) {
+        const valor = "valor" in p ? enTexto(p) : (p.texto ?? "sin datos");
+        lineas.push(`  - ${FUENTES[p.pieza].etiqueta}${"clave" in p && p.clave ? ` (${etiquetaDeClave(p.pieza, p.clave)})` : ""}: ${valor}${FUENTES[p.pieza].unidad && "valor" in p && p.valor !== null ? ` ${FUENTES[p.pieza].unidad}` : ""}`);
+      }
+    }
+  }
+  if (t.avisos.length) lineas.push(`Lecturas que fallaron: ${t.avisos.map((a) => a.error).join(", ")}.`);
+  return lineas.join("\n");
 }

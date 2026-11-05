@@ -49,7 +49,9 @@ import { MODULOS_OS, CLAVE_MODULOS_OS, MOTIVO_SIN_LECTURA, parsearModulos, modul
 import {
   hubDeTarea, hubDeTipo, hubDePieza, hubsConTareas, tareasPorHub, esTareaVencida, peorSalud,
   armarTablero, piezasMuertas, PIEZAS_POR_HUB, saludDeLosCrons, automatizacionesPorHub, colaPorHub,
+  sumarMedidas, resumenDelHud, contextoParaTailor, etiquetaDeClave, ordenDeClave,
 } from "../src/lib/os/tablero.ts";
+import { TABLERO_DEMO, IDENTIDAD_DEMO } from "../src/lib/os/demo/datos.ts";
 import { FORMAS, TOKENS_DE_ARTE, VIEWBOX, HX, edificioArte, sueloArte, arbolesArte, matasArte, granosArte, iso } from "../src/lib/os/haciendaArte.ts";
 import { CONSOLES, CONSOLE_ORDER } from "../src/lib/panel/consoles.ts";
 import { TIPOS_DE_TAREA } from "../src/lib/panel/tareas.ts";
@@ -84,12 +86,7 @@ for (const r of RAICES) {
 }
 
 /** Lo que llega en pasos posteriores de F2. Si el archivo YA existe, la entrada falla: quítela y su regla corre. */
-const PENDIENTES = [
-  { archivo: "src/components/os/identidad/os-tokens.css", paso: 8, reglas: "D4: cada --os-* se define una vez, de tokens de la casa, y se usa" },
-  { archivo: "src/components/os/identidad/SelloGrado.tsx", paso: 8, reglas: "D5: el sello lee GRADOS/GRADO_POR_ID" },
-  { archivo: "src/components/os/Cifra.tsx", paso: 9, reglas: "C6: «Sin datos» y «EJEMPLO», medida obligatoria" },
-  { archivo: "src/lib/os/demo/datos.ts", paso: 11, reglas: "H6/H7: demo aislada y datos evidentemente falsos" },
-];
+const PENDIENTES = [];
 for (const p of PENDIENTES) {
   if (existe(p.archivo)) check(`pendientes · «${p.archivo}» ya existe: quite su entrada de PENDIENTES (su regla ya corre)`, false);
   else avisos.push(`pendiente (paso ${p.paso}): ${p.archivo} — ${p.reglas}`);
@@ -157,7 +154,8 @@ const REGLAS = [
   { id: "A9", que: "nunca select(\"*\") ni select() vacío", sobre: "limpio", re: /\.select\(\s*(?:["'`]\*["'`])?\s*\)/, malo: 'service.from("lots").select("*")', bueno: 'service.from("lots").select("stage")' },
 
   // B · nada de negocio ni datos reales
-  { id: "B1", que: "ninguna cifra de negocio escrita", sobre: "limpio", re: RE_B1, malo: "const precioMinimo = 12000; const x = { kgPorSaco: 70 }; const MAX_PVC = 3;", bueno: "const ancho = 860; const draw = 1; const totalCola = (k) => k; const subtotal = 3;" },
+  // La demostración es el ÚNICO archivo con cifras escritas, todas inventadas (H7 vigila que lo sean).
+  { id: "B1", que: "ninguna cifra de negocio escrita", sobre: "limpio", permitidos: ["src/lib/os/demo/datos.ts"], re: RE_B1, malo: "const precioMinimo = 12000; const x = { kgPorSaco: 70 }; const MAX_PVC = 3;", bueno: "const ancho = 860; const draw = 1; const totalCola = (k) => k; const subtotal = 3;" },
   { id: "B2", que: "ningún importe ni porcentaje escrito en un texto", sobre: "visible", hechos: false, filtro: (t) => !ES_CSS_VALOR.test(t), re: /(?:US\$|COP|€|\$)\s?\d|\d+(?:[.,]\d+)?\s?%/, malo: 'const t = "Margen del 25 % sobre US$ 3";', bueno: 'const w = "100%"; const t = "Sin datos";' },
   { id: "B3", que: "los grados no se redefinen", sobre: "limpio", re: /\[\s*["']black["']\s*,\s*["']red["']|\bBANDAS_PUNTOS\b|\bGRADO_HEX\b|from\s+["']@\/lib\/grados\/escala["']/, malo: 'const g = ["black", "red", "blue"];', bueno: 'import { GRADOS } from "@/lib/grados/definicion";' },
   { id: "B4", que: "ninguna referencia real (lote hex o base32, CF, COT, TAR, OBJ, HIT)", sobre: "limpio", re: /CTC-L-(?:[0-9A-F]{8}|[0-9A-HJKMNP-TV-Z]{8})(?![0-9A-Z])|\bCF-\d{4}-\d{4}\b|\bCOT-\d|\bTAR-\d+|\bOBJ-\d+|\bHIT-\d+/, malo: 'const r = "CTC-L-3FA9C21B"; const s = "CTC-L-7KQ2M9XZ"; const o = "OBJ-10";', bueno: 'const r = "CTC-L-EJEMPLO1"; const o = "OBJ-EJ-1";' },
@@ -412,8 +410,10 @@ const IMPORTS_PERMITIDOS = {
   "@/lib/stock/franja": "*",
   "@/lib/ocp/etapas": "*",
   "@/lib/grados/definicion": "*",
+  "@/lib/version": "*",
 };
-const COMPONENTES_PERMITIDOS = [/^@\/components\/os\//, /^@\/components\/panel\/PanelShell$/, /^@\/components\/panel\/[\w]+\.module\.css$/];
+// El modal de la casa (la hoja de un hub en la Hacienda): solo pinta, no lee ni escribe.
+const COMPONENTES_PERMITIDOS = [/^@\/components\/os\//, /^@\/components\/panel\/PanelShell$/, /^@\/components\/panel\/[\w]+\.module\.css$/, /^@\/components\/Modal$/];
 const APP_PERMITIDOS = [/^@\/app\/os\//, /^@\/app\/bcp\/tailwind\.css$/];
 const PAQUETES_PERMITIDOS = new Set(["next", "next/link", "next/navigation", "next/image", "react", "server-only", "client-only"]);
 
@@ -935,6 +935,38 @@ check("T · todo falla → ninguna cifra es cero: todas «Sin datos»", todasLas
 check("T · todo falla → ninguna salud inventada", tm.taller.crons.filas === null && Object.values(tm.edificios).every((e) => e.salud.valor === null));
 const unaMal = armarTablero({ ...todoBien, stock: no("lectura_stock", ["franja_en_stock"]) });
 check("T · una lectura fallida apaga SOLO sus piezas", unaMal.avisos.length === 1 && unaMal.almacen.franja.every((m) => m.valor === null) && unaMal.edificios.operacion_logistica.abiertas.valor === 2);
+
+// El HUD y el contexto para Tailor
+{
+  const m = (valor, extra = {}) => ({ valor, pieza: "tareas_abiertas", leidoAt: LEIDO, ...extra });
+  check("T · sumarMedidas suma y lleva las notas", sumarMedidas([m(2, { notas: ["cuenta_cero_si_falla"] }), m(3)], "tareas_abiertas", LEIDO).valor === 5
+    && sumarMedidas([m(2, { notas: ["cuenta_cero_si_falla"] }), m(3)], "tareas_abiertas", LEIDO).notas?.includes("cuenta_cero_si_falla"));
+  check("T · sumarMedidas: una en «Sin datos» deja la suma en «Sin datos» (nunca un total que calla un hueco)", sumarMedidas([m(2), m(null)], "tareas_abiertas", LEIDO).valor === null);
+  check("T · sumarMedidas: sin cifras no hay suma (no un cero)", sumarMedidas([], "tareas_abiertas", LEIDO).valor === null);
+  check("T · sumarMedidas: la marca de demostración pasa a la suma", sumarMedidas([m(1, { demo: true })], "tareas_abiertas", LEIDO).demo === true);
+  const r = resumenDelHud(tb);
+  check("T · HUD: las tareas suman solo los hubs que pueden tenerlas", r.abiertas.valor === 4 && r.vencidas.valor === 1, JSON.stringify([r.abiertas.valor, r.vencidas.valor]));
+  check("T · HUD: despachos pendientes y eventos fallidos son las cifras del tablero", r.despachosPendientes.valor === 4 && r.colaFallida.valor === 1);
+  const rm = resumenDelHud(tm);
+  check("T · HUD: todo falla → las cuatro cifras «Sin datos»", [rm.abiertas, rm.vencidas, rm.despachosPendientes, rm.colaFallida].every((x) => x.valor === null));
+  const ctx = contextoParaTailor(tb);
+  check("T · el contexto para Tailor nombra los diez hubs y la hora de lectura", DOMINIOS.every((d) => ctx.includes(`${d.n} · ${d.label}`)) && ctx.includes(LEIDO));
+  check("T · el contexto para Tailor no lleva el texto de una tarea", !ctx.includes(CANARIO) && !contextoParaTailor(tb, "comercial").includes(CANARIO));
+  check("T · el contexto de UN hub lleva sus piezas con su etiqueta", contextoParaTailor(tb, "comercial").includes("Edición vigente del Modelo Económico: EJ-1") && !contextoParaTailor(tb, "comercial").includes("0 · Dirección"));
+  check("T · el contexto dice «sin datos», nunca un cero inventado", contextoParaTailor(tm).includes("sin datos") && !/abiertas 0/.test(contextoParaTailor(tm)));
+  check("T · las claves desglosadas se nombran con su fuente única", etiquetaDeClave("contratos_por_estado", "active") === "Vigente" && etiquetaDeClave("lotes_por_etapa", "apto") === "Apto" && etiquetaDeClave("automatizaciones_por_etapa", "activa") === "Activa");
+  check("T · los lotes se ordenan como su pasaporte, lo desconocido al final", ordenDeClave("lotes_por_etapa", "borrador") < ordenDeClave("lotes_por_etapa", "galardonado") && ordenDeClave("lotes_por_etapa", "otra") > ordenDeClave("lotes_por_etapa", "galardonado"));
+}
+
+// La demostración: el mismo tablero, todo marcado y todo inventado
+{
+  check("T · la demostración saca todas las piezas", piezasMuertas(TABLERO_DEMO).length === 0, piezasMuertas(TABLERO_DEMO).join(","));
+  const cifrasDemo = todasLasCifras(TABLERO_DEMO);
+  check("T · cada cifra de la demostración lleva demo: true (→ «EJEMPLO»)", cifrasDemo.length > 0 && cifrasDemo.every((x) => x.demo === true));
+  check("T · la demostración no da avisos ni «Sin datos» de lectura", TABLERO_DEMO.avisos.length === 0);
+  check("T · la identidad de la demostración es inventada y no es el owner", /Ejemplo/.test(IDENTIDAD_DEMO.nombre) && IDENTIDAD_DEMO.isOwner === false);
+  check("T · el contexto de la demostración se declara inventado", contextoParaTailor(TABLERO_DEMO).includes("DATOS INVENTADOS"));
+}
 
 // La salud de los crons: la regla del tablero de Automatizaciones (crítica 7)
 {

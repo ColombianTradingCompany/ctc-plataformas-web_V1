@@ -145,17 +145,19 @@ function readHeadline(win: Window, kind: Quote["kind"]) {
   // Mermas V15: el valor del lote al precio ancla, en pesos. Su `state` es un `const` de primer nivel: `w.state` era SIEMPRE
   // `undefined` (Chromium, 2026-11-05), y la etiqueta, los kg finales, la merma y los costos de cada cotización de lote se
   // guardaban vacíos. Se lee por `globalDeLaApp`. `lotValue` es una función de primer nivel: esa sí está en `window`.
-  const st = globalDeLaApp(win, "state") as { _final?: number; _totalMerma?: number; _cf?: number; _costs?: { total?: number; perKgFinal?: number } } | undefined;
+  const st = globalDeLaApp(win, "state") as { _totalMerma?: number; _cf?: number; _costs?: { total?: number; perKgFinal?: number; finalKg?: number } } | undefined;
   const lotValue = typeof w.lotValue === "function" ? (w.lotValue as () => number)() : NaN;
   const ok = Number.isFinite(lotValue);
+  // `state._final` va en la unidad elegida en la app (kg, lb, t, sacos, cargas); `state._costs.finalKg` ya es kg.
+  const kgFinal = st?._costs?.finalKg ?? null;
   return {
     currency: "COP",
     validUntil: null as string | null,
     total: ok ? Math.round(lotValue) : null,
-    unitLabel: st?._final ? `${Math.round(st._final)} kg finales · merma ${Math.round(st._totalMerma ?? 0)}%` : null,
+    unitLabel: kgFinal ? `${Math.round(kgFinal)} kg finales · merma ${Math.round(st?._totalMerma ?? 0)}%` : null,
     headline: {
       valorLote: ok ? Math.round(lotValue) : null,
-      kgFinal: st?._final ?? null,
+      kgFinal,
       mermaPct: st?._totalMerma ?? null,
       factorConversion: st?._cf ?? null,
       costoTotal: st?._costs?.total ?? null,

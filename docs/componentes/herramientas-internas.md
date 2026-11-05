@@ -61,10 +61,11 @@ viene). Se funden con la fase 2. La pestaña vacía «Modelo Económico» de Dir
   (`GRADOS`, `gradoPorPuntaje`, `redondeaPuntaje`) y `GradosBoard.tsx` — **contrato transversal de `ALINEACION` §1**: se
   cambia aquí y solo aquí, avisando a todos los que lo leen. **Anclas**: `src/lib/anclas/{actions,fnc,parseFnc,types}.ts`,
   `src/lib/market/ticker.ts` (lector FNC/ICE para Home y anclas). Plan: `docs/PVC_BCP_PLAN.md`.
-- **Procesamiento y Logística**: `src/lib/cotizador/{actions,types}.ts` (12 compuertas desde la V5.194, más 4 en `anclas/actions.ts`: cada módulo declara su consola UNA
+- **Procesamiento y Logística**: `src/lib/cotizador/{actions,types,puente}.ts` (12 compuertas desde la V5.194, más 4 en `anclas/actions.ts`: cada módulo declara su consola UNA
   vez —`const CONSOLA = "ecp"`— y `qa-rutas-consolas` (f-bis) la contrasta con el rail; las rutas salen de `QUOTE_BASE_PATH`
   y `ANCLAS_PATH`), `src/components/cotizador/` (con `QuoteDetail.tsx`, que antes vivía en la carpeta de rutas). Dos cotizadores:
-  lotes y logístico (el de empaque salió en la V5.194).
+  lotes y logístico (el de empaque salió en la V5.194). `puente.ts`: `globalDeLaApp`, el lector de globales léxicas de las apps
+  embebidas.
 - **Producción · Empacado hasta FOB** (V5.194): `src/lib/produccion/empaqueFob.ts` (PURO: modos, salidas, valores por defecto con
   su fuente, `calcularEmpaqueFob`, `ESTIMADOS_DEL_PVC`), `referencias.ts` (`cargarReferenciasEmpaque`, sin compuerta: la reusará el
   Triage), `actions.ts` (`guardarReferenciaEmpaque` · `retirarReferenciaEmpaque`, nivel emite, `CONSOLA = "ecp"`),
@@ -84,7 +85,7 @@ Solo lee: `lots`, `lot_offers`, `purchase_contracts`, `lot_listings` (para saber
 `qa-pvc-vigencia.mjs` (28) · `qa-pvc-lectura.mjs` (60 — el MOQ de compra y los tipos de mezcla, en el código Y en el plan §14.8) ·
 `qa-pvc-escala.mjs` (68 — incluye la Base física) · `qa-pvc-canales.mjs` (57) · `qa-pvc-compromiso.mjs` (31) ·
 `qa-grados-check.mjs` (48 — el contrato de grados) · `qa-definicion-check.mjs` · `qa-direccionamiento-check.mjs` ·
-`qa-anclas-check.mjs` · `qa-courier-check.mjs` (51 — el cálculo contra un acuerdo FICTICIO, la fuga cero por hash, el combustible derivado contra el historial de FedEx, el combustible provisional y el límite de paquete por medidas). `qa-empaque-fob-check.mjs` (47 — Empacado hasta FOB: el cálculo contra cuatro casos hechos a mano, que la máquina no vuelva, que el servidor recalcule y emita, la compuerta de la tabla). Y de la casa, porque el grupo vive en el rail del ECP: `qa-rutas-consolas.mjs`.
+`qa-anclas-check.mjs` · `qa-courier-check.mjs` (51 — el cálculo contra un acuerdo FICTICIO, la fuga cero por hash, el combustible derivado contra el historial de FedEx, el combustible provisional y el límite de paquete por medidas). `qa-empaque-fob-check.mjs` (47 — Empacado hasta FOB: el cálculo contra cuatro casos hechos a mano, que la máquina no vuelva, que el servidor recalcule y emita, la compuerta de la tabla). `qa-cotizador-puente-check.mjs` (39 — el puente AppFrame ↔ Mermas/CoGS: ids del DOM del titular logístico, funciones leídas por window, `state` por `globalDeLaApp`, los kg finales en kg, GLOBAL_KEYS declaradas; córrelo al reemplazar una calculadora). Y de la casa, porque el grupo vive en el rail del ECP: `qa-rutas-consolas.mjs`.
 
 ## Reglas propias
 

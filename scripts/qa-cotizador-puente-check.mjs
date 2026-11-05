@@ -55,9 +55,14 @@ check("la CoGS declara recalc como función de primer nivel", declaradaComo(logi
   check("el titular de lote lee state por globalDeLaApp", titularLote.includes('globalDeLaApp(win, "state")'));
   const codigo = titularLote.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
   check("el titular de lote no vuelve a leer w.state (window no lo ve)", !/\bw\.state\b/.test(codigo));
-  for (const campo of ["_final", "_totalMerma", "_cf", "_costs"]) {
+  for (const campo of ["_totalMerma", "_cf", "_costs"]) {
     check(`Mermas escribe state.${campo} (lo lee el titular)`, lotes.includes(`state.${campo}`) || lotes.includes(`${campo}:`));
   }
+  // Los kg finales: `state._final` va en la unidad elegida en la app (kg, lb, t, sacos, cargas); `state._costs.finalKg` es kg.
+  check("Mermas escribe finalKg en state._costs (en kg)",
+    /const finalKg=\(state\._final\|\|0\)\*\(UNIT_KG\[state\.unit\]\|\|1\)/.test(lotes) && /const d=\{[^}]*\bfinalKg\b/.test(lotes) && lotes.includes("state._costs=d"));
+  check("el titular de lote toma los kg finales de _costs.finalKg", codigo.includes("st?._costs?.finalKg"));
+  check("el titular de lote no arma la etiqueta ni kgFinal con _final (va en la unidad de la app)", !/\bst\??\._final\b/.test(codigo));
 }
 
 // ── 4 · GLOBAL_KEYS: cada una existe en una app, y el archivo dice por qué hoy no se guardan ──

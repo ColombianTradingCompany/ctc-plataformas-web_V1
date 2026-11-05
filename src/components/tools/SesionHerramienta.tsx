@@ -10,6 +10,7 @@ import {
   listarTrabajos,
   type TrabajoResumen,
 } from "@/lib/tools/trabajos";
+import type { PrefillHerramienta } from "@/lib/tools/entrada";
 import styles from "./ConchaHerramienta.module.css";
 
 // ── El Home Menu de una herramienta con memoria (A11, 2026-08-19) ───────────
@@ -30,12 +31,22 @@ import styles from "./ConchaHerramienta.module.css";
 // mientras se guarda, se guarda al terminar — el último gana). El indicador
 // dice la verdad: «Guardando…», «Guardado HH:MM» o el error, nunca un tic
 // decorativo.
+//
+// TAR-121 · LA ENTRADA DE MÓDULO. La página puede traer `trabajoInicial`
+// (`?trabajo=`): se abre por `abrirTrabajo`, que filtra por la cuenta — un id
+// ajeno da el mismo «ya no existe» que uno borrado, y cae al menú. Y puede traer
+// `prefill` (`?finca=` / `?lote=`, resuelto contra la cuenta en el servidor):
+// el menú propone el nombre del trabajo, y SOLO un trabajo NUEVO o «Abrir sin
+// guardar» lo reciben — un trabajo guardado se abre como se dejó. El prellenado
+// viaja en un mensaje propio, `{ctc:"prefill", campos, registro}`, después del
+// `init` (lo aplica `ctc-bridge.js`), a SU iframe y con el origen propio, igual
+// que el resto del protocolo. No se crea nada en la base sin el clic de la persona.
 
 type Modo =
   | { tipo: "cargando" }
   | { tipo: "menu"; trabajos: TrabajoResumen[]; error: string | null }
-  | { tipo: "abierta"; trabajoId: string; nombreTrabajo: string; estado: Record<string, unknown> }
-  | { tipo: "suelta" };
+  | { tipo: "abierta"; trabajoId: string; nombreTrabajo: string; estado: Record<string, unknown>; conPrefill: boolean }
+  | { tipo: "suelta"; conPrefill: boolean };
 
 const fecha = (iso: string) =>
   new Date(iso).toLocaleDateString("es-CO", { day: "2-digit", month: "short" }) +
@@ -47,6 +58,9 @@ export function SesionHerramienta({
   nombre,
   src,
   guia,
+  trabajoInicial = null,
+  prefill = null,
+  avisoEntrada = null,
 }: {
   toolId: string;
   nombre: string;
@@ -54,11 +68,17 @@ export function SesionHerramienta({
   /** Que es y como funciona (V5.7): el acordeon del menu, CERRADO por defecto
    *  — la convencion de la casa para todo acordeon. */
   guia?: string | null;
+  /** TAR-121: el trabajo que pide la URL. */
+  trabajoInicial?: string | null;
+  /** TAR-121: el prellenado de un trabajo nuevo, ya resuelto contra la cuenta. */
+  prefill?: PrefillHerramienta | null;
+  /** TAR-121: lo que no se pudo usar del enlace. */
+  avisoEntrada?: string | null;
 }) {
   const [modo, setModo] = useState<Modo>({ tipo: "cargando" });
-  const [nuevoNombre, setNuevoNombre] = useState("");
+  const [nuevoNombre, setNuevoNombre] = useState(prefill?.etiqueta ?? "");
   const [ocupado, setOcupado] = useState(false);
-  const [aviso, setAviso] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(avisoEntrada);
   const [guardado, setGuardado] = useState<string>("");
 
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -68,6 +88,20 @@ export function SesionHerramienta({
   const modoRef = useRef<Modo>(modo);
   useEffect(() => {
     modoRef.current = modo;
+  }, [modo]);
+  const prefillRef = useRef<PrefillHerramienta | null>(prefill);
+  useEffect(() => {
+    prefillRef.current = prefill;
+  }, [prefill]);
+  // El trabajo de la URL se abre una vez; si la persona pide «Mis trabajos» antes de que termine, manda ella.
+  const inicialVigente = useRef(true);
+  // El prellenado se re-envía tras cada init del ARRANQUE (una herramienta que se re-anuncia vuelve a restaurar su
+  // estado vacío), pero solo mientras arranca: hasta el primer guardado de ese marco o unos segundos, lo que llegue
+  // antes. Después, un «ready» tardío no pisa lo que la persona escribió.
+  const prefillHasta = useRef<{ marco: string; hasta: number } | null>(null);
+  // Volver al menú cierra esa sesión: la próxima («Crear y abrir» o «Abrir sin guardar») estrena su ventana.
+  useEffect(() => {
+    if (modo.tipo === "menu" || modo.tipo === "cargando") prefillHasta.current = null;
   }, [modo]);
   // Cadena de guardado: una promesa a la vez; el estado más nuevo espera turno.
   const guardando = useRef<Promise<void>>(Promise.resolve());
@@ -86,17 +120,29 @@ export function SesionHerramienta({
   // set-state-in-effect no puede probar que el setState de dentro es asíncrono
   // y lo marca; en un callback de promesa no hay duda. El flag `vivo` evita
   // escribir estado en un componente ya desmontado.
+  // TAR-121: con `trabajoInicial`, primero se intenta abrir ESE trabajo (la
+  // server action comprueba sesión, acceso y dueño); si no se puede, el menú,
+  // con el motivo a la vista.
   useEffect(() => {
     let vivo = true;
-    listarTrabajos(toolId).then((r) => {
-      if (!vivo) return;
-      if (r.ok) setModo({ tipo: "menu", trabajos: r.data, error: null });
-      else setModo({ tipo: "menu", trabajos: [], error: r.error });
-    });
+    const alMenu = (avisoExtra: string | null) =>
+      listarTrabajos(toolId).then((r) => {
+        if (!vivo) return;
+        if (avisoExtra) setAviso((a) => [a, avisoExtra].filter(Boolean).join(" "));
+        if (r.ok) setModo({ tipo: "menu", trabajos: r.data, error: null });
+        else setModo({ tipo: "menu", trabajos: [], error: r.error });
+      });
+    if (trabajoInicial) {
+      abrirTrabajo(toolId, trabajoInicial).then((r) => {
+        if (!vivo || !inicialVigente.current) return;
+        if (r.ok) setModo({ tipo: "abierta", trabajoId: trabajoInicial, nombreTrabajo: r.data.nombre, estado: r.data.estado, conPrefill: false });
+        else alMenu(`${r.error} Elige uno de tu lista.`);
+      });
+    } else alMenu(null);
     return () => {
       vivo = false;
     };
-  }, [toolId]);
+  }, [toolId, trabajoInicial]);
 
   // La rueda dentada de la cinta (V5.8) pide «Mis trabajos» por evento y no por
   // prop: la cinta la pinta la PÁGINA (servidor) y este menú vive dentro de la
@@ -104,6 +150,7 @@ export function SesionHerramienta({
   // Un CustomEvent en window los une sin inventar contexto ni subir estado.
   useEffect(() => {
     function alMenu() {
+      inicialVigente.current = false;
       setAviso(null);
       setModo({ tipo: "cargando" });
       cargarLista();
@@ -122,14 +169,26 @@ export function SesionHerramienta({
       if (!d || typeof d !== "object") return;
       const m = modoRef.current;
 
-      if (d.ctc === "ready" && m.tipo === "abierta") {
-        marco.contentWindow?.postMessage(
-          { ctc: "init", nombre: m.nombreTrabajo, estado: m.estado },
-          window.location.origin
-        );
+      if (d.ctc === "ready" && (m.tipo === "abierta" || m.tipo === "suelta")) {
+        if (m.tipo === "abierta")
+          marco.contentWindow?.postMessage(
+            { ctc: "init", nombre: m.nombreTrabajo, estado: m.estado },
+            window.location.origin
+          );
+        // El prellenado va DESPUÉS del init (y otra vez tras cada init: una
+        // herramienta que se re-anuncia vuelve a restaurar su estado vacío), y
+        // solo a un trabajo nuevo o a la sesión sin guardar.
+        const p = prefillRef.current;
+        const clave = m.tipo === "abierta" ? m.trabajoId : "suelta";
+        const ahora = Date.now();
+        if (!prefillHasta.current || prefillHasta.current.marco !== clave) prefillHasta.current = { marco: clave, hasta: ahora + 8000 };
+        if (m.conPrefill && p && (p.campos.length > 0 || p.registro) && ahora < prefillHasta.current.hasta)
+          marco.contentWindow?.postMessage({ ctc: "prefill", campos: p.campos, registro: p.registro }, window.location.origin);
         return;
       }
       if (d.ctc === "estado" && m.tipo === "abierta" && d.estado) {
+        // Primer guardado de este marco: se cierra la ventana del prellenado.
+        if (prefillHasta.current?.marco === m.trabajoId) prefillHasta.current = { marco: m.trabajoId, hasta: 0 };
         const resumen = typeof (d as { resumen?: unknown }).resumen === "string" ? (d as { resumen: string }).resumen : "";
         pendiente.current = d.estado;
         setGuardado("guardando");
@@ -168,7 +227,7 @@ export function SesionHerramienta({
       return;
     }
     setGuardado("");
-    setModo({ tipo: "abierta", trabajoId: t.id, nombreTrabajo: r.data.nombre, estado: r.data.estado });
+    setModo({ tipo: "abierta", trabajoId: t.id, nombreTrabajo: r.data.nombre, estado: r.data.estado, conPrefill: false });
   }
 
   async function crear() {
@@ -183,7 +242,7 @@ export function SesionHerramienta({
     }
     setNuevoNombre("");
     setGuardado("");
-    setModo({ tipo: "abierta", trabajoId: r.data.id, nombreTrabajo: nuevoNombre.trim(), estado: {} });
+    setModo({ tipo: "abierta", trabajoId: r.data.id, nombreTrabajo: nuevoNombre.trim(), estado: {}, conPrefill: !!prefill });
   }
 
   async function borrar(t: TrabajoResumen) {
@@ -217,6 +276,14 @@ export function SesionHerramienta({
 
         {modo.error && <p className={styles.menuError}>{modo.error}</p>}
         {aviso && <p className={styles.menuError}>{aviso}</p>}
+        {prefill && (
+          <p className={styles.menuEntrada}>
+            Este enlace la abre para <b>{prefill.etiqueta}</b>:{" "}
+            {prefill.campos.length > 0 || prefill.registro
+              ? "un trabajo nuevo, o «Abrir sin guardar», llega prellenado; tus trabajos guardados se abren como los dejaste."
+              : "el trabajo nuevo ya lleva ese nombre."}
+          </p>
+        )}
 
         {guia && (
           <details className={styles.menuGuia}>
@@ -272,7 +339,7 @@ export function SesionHerramienta({
             <button type="button" className="btn btn-sm btn-solid" onClick={crear} disabled={ocupado || !nuevoNombre.trim()}>
               Crear y abrir
             </button>
-            <button type="button" className="btn btn-sm" onClick={() => setModo({ tipo: "suelta" })} disabled={ocupado}>
+            <button type="button" className="btn btn-sm" onClick={() => setModo({ tipo: "suelta", conPrefill: !!prefill })} disabled={ocupado}>
               Abrir sin guardar
             </button>
           </div>

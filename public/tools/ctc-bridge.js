@@ -25,19 +25,37 @@
  *   concha → puente   {ctc:"init", nombre, estado}  al abrir el trabajo
  *   puente → concha   {ctc:"estado", estado}        tras cambios (debounce 900 ms)
  *   puente → concha   {ctc:"emitir", evento, payload}
+ *   concha → puente   {ctc:"prefill", campos, registro}   (TAR-121, ver abajo)
  *
  * FUERA de la concha (la herramienta abierta suelta, sin trabajo) el puente no
  * hace nada: sin `init` no captura ni manda. La herramienta sigue funcionando
  * offline y sola, que es el contrato de siempre.
+ *
+ * EL PRELLENADO (TAR-121). Cuando el taller se abre con `?finca=` o `?lote=`
+ * (resueltos contra la cuenta en el servidor), la concha manda, tras el init de
+ * un trabajo NUEVO o a una sesión sin guardar, `{ctc:"prefill", campos,
+ * registro}`:
+ *   · `campos` = [{sel, valor}] con los selectores que la herramienta declaró en
+ *     `src/lib/tools/carpetas.ts` (solo `#id` o `[data-field="x"]`). El puente
+ *     pone el valor y dispara input/change como una persona; un campo que aún no
+ *     existe (o un <select> sin esa opción todavía) se reintenta unos segundos.
+ *   · `registro` (solo si la herramienta lo pidió con `propio: true`) llega a
+ *     `CTC.usarPrefill(function (registro) {…})`: {finca, lote} ya resueltos.
+ * Jamás toca contraseñas ni archivos, y no guarda nada por su cuenta: si hay un
+ * trabajo abierto, el autoguardado de siempre recoge los campos prellenados.
  */
 (function () {
   "use strict";
   if (window.CTC && window.CTC.__bridge) return; // doble inclusión = no-op
 
   var activo = false; // solo tras recibir init de la concha
+  var restaurando = false; // mientras se restaura un trabajo, sus eventos no son «cambios»
   var timer = null;
   var custom = null; // {leer, poner} si la herramienta llamó usarEstado
   var resumenFn = null; // si la herramienta llamó usarResumen
+  var prefillFn = null; // si la herramienta llamó usarPrefill
+  var ultimoRegistro = null; // el registro del último prefill, para quien se registre tarde
+  var prefillGen = 0; // cada prefill nuevo cancela los reintentos del anterior
 
   // ── Serialización por defecto: todos los campos del documento ────────────
   function claveDe(el, i) {
@@ -112,7 +130,8 @@
   }
 
   function tocado() {
-    if (!activo) return;
+    // Restaurar no es cambiar (TAR-121): abrir un trabajo no lo vuelve a guardar; guarda el primer cambio de verdad.
+    if (!activo || restaurando) return;
     clearTimeout(timer);
     timer = setTimeout(mandarEstado, 900);
   }
@@ -122,9 +141,59 @@
   document.addEventListener("input", tocado, true);
   document.addEventListener("change", tocado, true);
 
+  // ── El prellenado (TAR-121) ──────────────────────────────────────────────
+  var SELECTOR_SIMPLE = /^(#[A-Za-z][\w-]*|\[data-field="[\w-]+"\])$/;
+  function ponerUno(c) {
+    if (!c || typeof c.sel !== "string" || !SELECTOR_SIMPLE.test(c.sel)) return true; // inválido: no se reintenta
+    var el = document.querySelector(c.sel);
+    if (!el || !/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) return false; // aún no está
+    if (el.type === "password" || el.type === "file") return true; // jamás
+    var valor = String(c.valor == null ? "" : c.valor);
+    if (el.tagName === "SELECT") {
+      var hay = Array.prototype.some.call(el.options, function (o) { return o.value === valor; });
+      if (!hay) return false; // la opción llega después (p. ej. una lista que se carga)
+    }
+    if (el.type === "checkbox" || el.type === "radio") el.checked = valor === "true" || valor === el.value;
+    else el.value = valor;
+    try {
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    } catch (err) {
+      /* sin constructor Event: el valor queda puesto igual */
+    }
+    return true;
+  }
+  function aplicarPrefill(campos, gen, intento) {
+    if (gen !== prefillGen) return; // llegó otro prefill: este se abandona
+    var faltan = campos.filter(function (c) {
+      try {
+        return !ponerUno(c);
+      } catch (err) {
+        return false;
+      }
+    });
+    // 20 × 250 ms = 5 s: lo que tarda una herramienta en pintar una lista que pide al servidor.
+    if (faltan.length && intento < 20) setTimeout(function () { aplicarPrefill(faltan, gen, intento + 1); }, 250);
+  }
+
   window.addEventListener("message", function (e) {
     var d = e && e.data;
     if (!d || e.source !== window.parent) return;
+    if (d.ctc === "prefill") {
+      // La concha vive SIEMPRE en el mismo origen que la herramienta: un prellenado de otro origen no se atiende.
+      if (e.origin !== window.location.origin) return;
+      prefillGen++;
+      ultimoRegistro = d.registro && typeof d.registro === "object" ? d.registro : null;
+      if (ultimoRegistro && prefillFn) {
+        try {
+          prefillFn(ultimoRegistro);
+        } catch (err) {
+          /* un prellenado no debe tumbar la herramienta */
+        }
+      }
+      if (Array.isArray(d.campos) && d.campos.length) aplicarPrefill(d.campos.slice(0, 40), prefillGen, 0);
+      return;
+    }
     // La concha toca a la puerta al cargar el iframe («hola»): si el ready del
     // arranque se perdió por una carrera, se vuelve a anunciar. Belt & braces.
     if (d.ctc === "hola") {
@@ -134,12 +203,14 @@
     if (d.ctc !== "init") return;
     activo = true;
     if (d.estado && typeof d.estado === "object") {
+      restaurando = true;
       try {
         if (custom) custom.poner(d.estado);
         else ponerCampos(d.estado);
       } catch (err) {
         /* un estado de otra versión no debe tumbar la herramienta */
       }
+      restaurando = false;
     }
   });
 
@@ -154,6 +225,18 @@
     /** La línea que resume el trabajo en el Home Menu (V5.7). */
     usarResumen: function (fn) {
       resumenFn = fn;
+    },
+    /** TAR-121: recibir el registro de `?finca=` / `?lote=` (solo herramientas con `propio: true` en su contrato). Si el
+     *  prellenado llegó antes de registrarse, se entrega en el acto. */
+    usarPrefill: function (fn) {
+      prefillFn = typeof fn === "function" ? fn : null;
+      if (prefillFn && ultimoRegistro) {
+        try {
+          prefillFn(ultimoRegistro);
+        } catch (err) {
+          /* idem */
+        }
+      }
     },
     /** Empujar un evento al resto del ecosistema (lo recoge la concha). */
     emitir: function (evento, payload) {

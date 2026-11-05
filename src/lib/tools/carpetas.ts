@@ -25,6 +25,34 @@ export type CarpetaHerramienta = {
   id: string;
   /** Archivos de la carpeta. El primero es el que la base tiene publicado. */
   archivos: string[];
+  /** TAR-121: qué prellenan `?finca=` y `?lote=` al abrirla desde el taller. Sin esta clave, la herramienta los ignora. */
+  entrada?: EntradaHerramienta;
+};
+
+// ── TAR-121 · la herramienta como MÓDULO: el contrato de entrada del taller ───────────────────────────────────────────────
+// `herramientas.ctcexport.com/taller/<id>` acepta, además de `?volver=`, `?trabajo=<id>` (abre un trabajo guardado de la
+// propia cuenta; vale para toda herramienta con memoria, sin declararlo aquí: lo dice `tools.soporta_memoria`) y
+// `?finca=` / `?lote=` (prellenan un trabajo nuevo con una finca o un lote DE LA CUENTA). Lo segundo sí se declara aquí,
+// herramienta por herramienta, porque cada una tiene sus campos: el dato del registro → el selector CSS del campo en SU
+// documento. Solo `#id` o `[data-field="x"]`: `qa-taller-entrada-check` comprueba que el campo existe en el archivo.
+// Una herramienta de esquema propio (React, o con `CTC.usarEstado`) que prefiere recibir el registro entero lo pide con
+// `propio: true` y lo lee con `CTC.usarPrefill(fn)`. La lista vive AQUÍ y no en otro sitio: es el registro tipado de las
+// herramientas del repo; el contrato completo, en `docs/componentes/herramientas-cafe.md` («El contrato de URL del taller»).
+
+/** Los datos de una finca que una herramienta puede pedir (`resumen` = una línea con nombre, municipio y altitud). */
+export const DATOS_FINCA = ["id", "referencia", "nombre", "municipio", "departamento", "altitud_m", "resumen"] as const;
+/** Los datos de un lote (`resumen` = referencia, nombre, variedad, proceso y finca en una línea). */
+export const DATOS_LOTE = ["referencia", "nombre", "variedad", "proceso", "altitud_m", "resumen"] as const;
+export type DatoFinca = (typeof DATOS_FINCA)[number];
+export type DatoLote = (typeof DATOS_LOTE)[number];
+
+export type EntradaHerramienta = {
+  /** dato de la finca → selector del campo que llena. */
+  finca?: Partial<Record<DatoFinca, string>>;
+  /** dato del lote → selector del campo que llena. */
+  lote?: Partial<Record<DatoLote, string>>;
+  /** true = la herramienta recibe además el registro entero (finca y lote) por `CTC.usarPrefill`. */
+  propio?: boolean;
 };
 
 export const CARPETAS_HERRAMIENTAS: CarpetaHerramienta[] = [
@@ -58,7 +86,8 @@ export const CARPETAS_HERRAMIENTAS: CarpetaHerramienta[] = [
   // ⚠️ Los ids de mermas están cruzados con sus nombres: `mermas-ctc` es la
   // DETALLADA y `mermas-detallada` era el «Reporte de proceso» (borrado, abajo). La
   // carpeta sigue al id, que es lo que no se puede cambiar sin migrar trabajos.
-  { id: "mermas-ctc", archivos: ["mermas-ctc.html"] },
+  // TAR-121: las notas del cálculo («Ej.: Lote Huila 2026, proceso lavado…») reciben la línea del lote o de la finca.
+  { id: "mermas-ctc", archivos: ["mermas-ctc.html"], entrada: { lote: { resumen: "#notes" }, finca: { resumen: "#notes" } } },
   { id: "mermas-rapida", archivos: ["mermas-rapida.html"] },
   { id: "qr", archivos: ["generador-qr.html"] },
   { id: "viaje-cafe", archivos: ["viaje-cafe.html"] },

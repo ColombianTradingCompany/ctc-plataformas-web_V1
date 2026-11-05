@@ -47,6 +47,9 @@ const ATAQUES = [
   ["prefijo parecido pero distinto", "/kaffetal-regal-falso/login"],
   ["relativa suelta", "fincas"],
   ["vacía", ""],
+  // TAR-121: el navegador resuelve `..` (y `%2e%2e`) antes de navegar: la ruta saldría de la superficie.
+  ["punto-punto", "/kaffetal-regal/../bcp"],
+  ["punto-punto codificado", "/kaffetal-regal/%2E%2E/ocp"],
 ];
 for (const [nombre, valor] of ATAQUES) {
   check(`rechaza ${nombre}`, vueltaSegura(valor, KR) === INICIO[KR]);

@@ -5,7 +5,7 @@ Existe porque el trabajo se segmentó por componentes (2026-09-11, `REFURBISH_PL
 puso la condición: «tie all up somehow to avoid silo development that may cause divergent or
 inconsistent logic». Este archivo es el atado. Tiene cuatro partes: los **contratos transversales**
 (§1), la **regla del backstage** (§2), el **registro de permeación** (§3) y las **reglas de trabajo**
-(§4) que valen igual en los trece componentes.
+(§4) que valen igual en los catorce componentes.
 
 **Cómo se usa, en tres líneas.** Al empezar: leer §3 desde la última fecha que conozcas — ahí se
 entera Cherry Picked de que Kaffetal Regal cambió algo que lo alcanza. Al trabajar: si vas a tocar
@@ -319,7 +319,7 @@ qué · dónde quedó.** Se escribe en el mismo commit que el cambio; se lee al 
 | consolas (ECP · Automatizaciones, OCP · Stock y KR) | ctcx-os | **Lo que la OS (F2, V6.19) necesita de su código, sin prisa**: (a) extraer a `registroCrons.ts` el filtro de la salud de los crons que vive en `AutomatizacionesBoard.tsx` (la OS lo copia y `qa-os-check` vigila la copia por texto; extraído, se retira ese control); (b) que `pendientesDelCircuito` acepte el stock ya cargado, para que el tablero de la OS lo cargue una vez y no dos; (c) **F2b**: la consulta del circuito del lote de `cargarKr` (`kr/carga.ts`) como lector compartido del servidor; (d) **PR1b**: el escritor del interruptor `os_modulos` en el BCP (Manejo de Plataformas), con `ctcx-os`; (e) ~~que `cargarTareas` pueda no armar las tareas `pvc:*`~~ **hecho en F2**: `cargarTareas(service, { conPvc })`, por defecto `true` (el ECP, el OCP y la LCP no cambian); la OS pasa `conPvc: isOwner` y, sin el owner, ya no se lee el PVC. Queda, **si el owner lo pide** (el Modelo Económico es solo suyo, decisión del 5 nov): que el Tablero de Ejecución pase también `conPvc: isOwner` (charter `ctcx-os`, Pendientes) | V6.19 |
 | owner | ctcx-os, consolas | **Los pasos de producción de F2** (en su sesión y con su sí): el conteo de solo lectura de `bcp_admin` sin fila en `panel_users` ANTES de fusionar; la revisión de los nombres de las variables del entorno Preview; la fusión y el despliegue; y DESPUÉS, la llave `os` por SQL para el owner y para GVB a nivel `admin` (decisión 16, ya decidida; cada una con la fila de `audit_log` propuesta en el charter `consolas`; hasta la de GVB nadie más que el owner ve `/os`). Más las decisiones 17–24 del charter `ctcx-os` (la 14, la 15 y la 16 las decidió el owner el 5 nov) | V6.19 |
 
-## 4 · Reglas de trabajo (valen en los trece componentes)
+## 4 · Reglas de trabajo (valen en los catorce componentes)
 
 1. **Las definiciones del repo mandan** sobre Notion, hojas y prototipos: cuando una fuente externa
    contradice una definición que vive en código (grados, año-cosecha, legal, subdominios), gana el
@@ -359,7 +359,7 @@ qué · dónde quedó.** Se escribe en el mismo commit que el cambio; se lee al 
 
 ## 5 · Versionado y wraps con desarrollos en paralelo (2026-09-11)
 
-Las conversaciones de los trece componentes despliegan sobre el mismo `main`. Las dos cosas que antes hacía una sola sesión
+Las conversaciones de los catorce componentes despliegan sobre el mismo `main`. Las dos cosas que antes hacía una sola sesión
 lineal —numerar versiones y compilar el mapa— se reparten así:
 
 1. **La versión se toma al empujar, no al empezar.** `git pull --ff-only` → leer `APP_VERSION` →

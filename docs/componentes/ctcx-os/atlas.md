@@ -22,7 +22,7 @@ Cada subsección de §2 es un grupo de superficies (un subdominio, una consola o
 
 | Valor | Quién es |
 |---|---|
-| consola/owner | El owner en las cuatro consolas (BCP · ECP · OCP · LCP), tras el login maestro con contraseña y OTP. |
+| consola/owner | El owner en las consolas internas (BCP · ECP · OCP · LCP y, desde la V6.19, la OS), tras el login maestro con contraseña y OTP. |
 | equipo GVG/GVB | Los colaboradores de la casa: fila en `panel_users` con sus consolas concedidas y su nivel por consola (`admin` · `viewer`). Son los jugadores del modo Equipo. |
 | productor KR | El productor de Kaffetal Regal (`profiles.role` = producer, `producer_profiles`), con su sesión propia; «en sesión asistida» = el OCP actúa en su nombre. |
 | comprador CP | El comprador de Cherry Picked. «Real» = `buyer_profiles` con actividad (`membresiasDe` en `src/lib/identidad/matriz.ts`); `role` buyer solo no basta. |
@@ -109,7 +109,7 @@ Una subsección por grupo, del público a las consolas y la espina.
 
 ### 2.1 · Plataforma y login (`www`, `panel.`, rutas compartidas)
 
-Es la entrada a la red: la portada de CTC Home con sus formularios de captación, la vitrina y la cinta de mercado; el login maestro de las cuatro consolas (contraseña y OTP); la recuperación de acceso que comparten las 11 puertas; y la infraestructura común (proxy, matriz de identidad, compuertas de consola, SEO). La usan sobre todo el visitante anónimo y consola/owner · equipo GVG/GVB. Productor KR, comprador CP, directorio y socio pasan por aquí cuando recuperan el acceso o cambian de plataforma dentro de la red, y cron/sistema actúa en cada petición a través del proxy.
+Es la entrada a la red: la portada de CTC Home con sus formularios de captación, la vitrina y la cinta de mercado; el login maestro de las consolas internas (contraseña y OTP); la recuperación de acceso que comparten las 11 puertas; y la infraestructura común (proxy, matriz de identidad, compuertas de consola, SEO). La usan sobre todo el visitante anónimo y consola/owner · equipo GVG/GVB. Productor KR, comprador CP, directorio y socio pasan por aquí cuando recuperan el acceso o cambian de plataforma dentro de la red, y cron/sistema actúa en cada petición a través del proxy.
 
 | Ruta | Quién | Lee | Escribe | Acciones (clase) | Hechos | Juego |
 |---|---|---|---|---|---|---|
@@ -249,7 +249,7 @@ Es el lado del comprador de la red. Lo forman la portada que reparte los cuatro 
   - `/docs/ficha/[lotId]` → el Dossier público.
   - `/api/cron/renovaciones` se registra como «Cron · Ventanas de Cherry Picked» (`src/lib/integraciones/registroCrons.ts`, latidos vía `conLatido`), pero trabaja los tratos del productor (`purchase_contracts`): pertenece a consolas o a Kaffetal Regal.
   - `/ocp/subastas` es el lado administrativo de la subasta.
-- **`src/lib/os/` no está en `main`:** el catálogo de hechos vive en la rama de hechos (#36). De este grupo, `catalogo_fuente` ya tiene regla con efecto (`triage_declarada` / `triage_retirada`), y `lot_listing` tiene regla de entidad (Ficha) pero solo cuenta. `place_order` (`orders`) y las subastas Tyrian no dejan hecho (§5.1).
+- **El catálogo de hechos** (`src/lib/os/`, en `main` desde la V6.18): de este grupo, `catalogo_fuente` ya tiene regla con efecto (`triage_declarada` / `triage_retirada`), y `lot_listing` tiene regla de entidad (Ficha) pero solo cuenta. `place_order` (`orders`) y las subastas Tyrian no dejan hecho (§5.1).
 
 ### 2.4 · Captación y red (`ctc-tech.`, `varietales.`, `directoriodelcafe.`, `terratalento.`, SCAJ 2026 en `www`)
 

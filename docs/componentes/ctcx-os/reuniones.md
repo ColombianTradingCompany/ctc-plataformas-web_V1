@@ -1,7 +1,7 @@
 # CTCx OS · Módulo «Reuniones» — STRETCH (antes / durante / después)
 
 > Solo lectura. Fuentes: `docs/UNIFICACION_ALINEACION.md` (D-002, D-003, D-007, D-009 3.4, D-013, D-014, D-025, D-031, D-032), `docs/PLAN_UNIFICACION.md` (P5, P6/H8, P7, P25–P33, matriz de entidades, flujos 22/26–29), `docs/SECRETARIA_PLAN.md`, `docs/componentes/{secretaria,consolas}.md`, `docs/BCP_USER_ADMIN_PLAN.md` (niveles) y el código citado. En Notion solo se leyeron esquemas: nombres de bases, propiedades y tipos.
-> **BORRADOR · decide el owner.** El charter del componente (`docs/componentes/ctcx-os.md`) y el atlas (`docs/componentes/ctcx-os/atlas.md`) entraron con esta nota en la V6.18 (borrador); hoy no hay ruta `/os/…` (rumbo aprobado por el owner el 2026-11-05: `/os` como quinta consola, con los módulos en `/os/m/<clave>`) ni tablas de juego. Solo nombres de bases, propiedades, tablas, rutas y funciones: ningún dato, id ni persona.
+> **BORRADOR · decide el owner.** El charter del componente (`docs/componentes/ctcx-os.md`) y el atlas (`docs/componentes/ctcx-os/atlas.md`) entraron con esta nota en la V6.18 (borrador); desde la V6.19 existe `/os` (la quinta consola, de solo lectura, abierta en el mapa, con los módulos en `/os/m/<clave>`), pero todavía no el módulo Reuniones ni tablas de juego. Solo nombres de bases, propiedades, tablas, rutas y funciones: ningún dato, id ni persona.
 
 ---
 

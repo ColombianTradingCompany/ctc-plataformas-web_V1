@@ -7,7 +7,7 @@
 > `os/f2-esqueleto` como V6.19 (el número se toma al empujar) y espera la revisión del owner y la fusión: ver «Superficies y
 > rutas» y «Mapa de código». Hasta que se fusione y el owner conceda la llave `os` por SQL, **nadie ve `/os`**. Lo marcado
 > «Propuesto · pendiente del sí del owner» sigue sin decidir, y las decisiones que F2 tomó por defecto están en «Decisiones
-> abiertas» (14–24; la 14, la 15 y la 16 las decidió el owner el 5 nov, y su rumbo está en «Rumbo del owner (5 nov)»). El plan maestro de Code Master que se cita como «el blueprint» (por sección: §4.4, §7, F2, F4, §9.7…) es
+> abiertas» (14–24; la 14, la 15, la 16 y la 20 las decidió el owner el 5 nov, y su rumbo está en «Rumbo del owner (5 nov)»). El plan maestro de Code Master que se cita como «el blueprint» (por sección: §4.4, §7, F2, F4, §9.7…) es
 > un archivo local, fuera del repo: una sesión en la nube no lo lee, así que lo que importa de él está escrito aquí. Se lee con
 > `docs/ALINEACION.md` al lado, con el **atlas** (`docs/componentes/ctcx-os/atlas.md`: cada superficie con sus tablas,
 > acciones y hechos, y su proyección al juego) y con la nota del primer módulo (`docs/componentes/ctcx-os/reuniones.md`). Es un
@@ -51,6 +51,17 @@ Lo que el owner fijó el 5 de noviembre. Manda sobre lo que diga en contra el re
 - **El Modelo Económico (PVC) es solo del owner**, y vive en el edificio 3 · Comercial (decisión 14 abajo; lo solo del owner,
   en «Superficies y rutas» y en `qa-os-check` H12).
 - **GVB será admin de `/os`** (decisión 16). La llave se concede después de fusionar, en la sesión del owner (Pendientes).
+- **Notas finales del owner (5 nov, noche):**
+  - **La regla madre: todo coherente y cohesivo.** Cada registro nace con las llaves de su contexto y alimenta un índice único de
+    verdad (la regla 1, vista desde el índice). El diseño, en borrador local.
+  - **La Planta de Procesamiento** (de pergamino a verde, con evaluación y empaque de verde) llega como una estructura nueva
+    «en obra» en la Hacienda; vendrán más estructuras. Dónde se dibuja y qué mecánica usa lo propone un borrador local.
+  - **Kaffetal Regal y Cherry Picked son la contraparte del CRM del OS**: lo que el productor y el comprador ven y hacen allí
+    es la otra cara de su ficha en el juego.
+  - **El resto del Ecosistema de Valor y la Red de Socios** entran también en el mapa del juego.
+  - **Las interfaces y herramientas que se solapan se fusionan, se mejoran y se integran**, siempre con paridad antes de
+    retirar nada. La auditoría, en borrador local.
+  - **El sistema crece y se adapta** a medida que aparecen conexiones nuevas y se definen flujos nuevos.
 
 ## El vocabulario (owner, 2026-11-04)
 
@@ -103,7 +114,7 @@ El juego reemplaza una pantalla vieja **solo a paridad**, módulo por módulo:
    (`src/lib/panel/rutasMovidas.ts`); nunca se borra en silencio.
 4. Hasta la paridad, la pantalla vieja es la que manda. Un módulo a medio hacer no retira nada.
 
-| Módulo (orden del owner) | Lo que abre | La pantalla vieja que reemplazaría | Acciones reales (ya existen) |
+| Módulo (orden propuesto el 4 nov; lo confirma la decisión 10) | Lo que abre | La pantalla vieja que reemplazaría | Acciones reales (ya existen) |
 |---|---|---|---|
 | 1 · **Reuniones** | antes · durante · después de una reunión | Notion «Reuniones» + `/ecp/transcripciones` | Notion: fila de Reuniones y Tareas con `Origen = Reunión`; plataforma: `src/lib/transcripciones/actions.ts` (detalle en `ctcx-os/reuniones.md`) |
 | 2 · **Compra y Bodega** (primero: la recepción en Santillana, la sede de CTCx) | el Recibo de un despacho y la Partida que nace de él | `/ocp/contratos/[id]` (la ventana del contrato), `/ocp/compras`, `/ocp/stock` | `recibirDespacho` (`src/app/ocp/(app)/ventanaActions.ts`: escribe `contract_despachos`, `compras` y `stock_partidas`, y deja `despacho_recibido`, `compra_registrada` y `stock_raiz_despacho` en `audit_log`; y avisa al productor: nota en `producer_comm_log` (la ve él) y correo (`sendTransactionalEmail`). Es clase `emite` (`permisoDeEscritura("ocp", "emite")`). `compras` solo se escribe si no es lo vendido, ni una devolución, ni Tyrian (y el contrato trae su grado); en una devolución no hay partida), `confirmarDespacho`, `stockActions.ts`, `comprasActions.ts` |
@@ -226,7 +237,7 @@ owner llega con la revisión de las capturas):
 - **Accesibilidad — F2 NO puede declarar WCAG 2.2 AA** (crítica 29). El anillo de foco de la casa (3 px de `--accent`) da ≈ 1,4:1
   sobre el papel de la consola, y los botones, enlaces y tarjetas de hub de la OS lo heredan; solo los edificios de la Hacienda
   llevan un anillo propio (discontinuo, `--primary`). El arreglo (anillo de foco con contraste, el amarillo sobre claro del tema de
-  consola, el carmesí del logo) repinta TODAS las consolas y va en su propio PR con el sí del owner (decisión 20). **Otro hueco
+  consola, el carmesí del logo) repinta TODAS las consolas y va en su propio PR con el sí del owner (decisión 20). **Hecho:** el PR #53 entra en el mismo tren que la V6.19. **Otro hueco
   conocido**: el modal de la casa (la hoja de un hub) no encierra el foco ni deja inerte el fondo; su arreglo es del modal, para
   todas las consolas (charter `consolas`, Pendientes).
 - **La Hacienda es accesible por teclado**: el SVG es `role="group"` (no `img`, que ocultaría los botones), cada edificio un
@@ -456,8 +467,8 @@ decisión abierta 12.
 19. **El enlace «Hablar con Tailor»**: F2 COPIA el contexto (conteos y estados) para pegarlo en Tailor («Copiar contexto para
     Tailor»). ¿Basta, o se quiere un enlace directo al proyecto de Tailor? Ese enlace tendría que vivir fuera del repo público.
 20. **Los tres arreglos de la casa que repintan todas las consolas** (un anillo de foco con contraste, el texto amarillo sobre claro
-    del tema de consola, el carmesí del logo): ¿un PR pequeño propio ahora, o después? Mientras no entren, la OS no declara WCAG
-    2.2 AA (ver «Identidad CTCx»).
+    del tema de consola, el carmesí del logo): **decidida (owner, 5 nov): un PR pequeño propio, ya** (PR #53, en el
+    mismo tren que la V6.19; ver «Identidad CTCx»).
 21. **La OS en la invitación de Usuarios**: hoy queda FUERA del formulario de invitación y de `sanitizeConsoles`
     (`CONSOLAS_INVITABLES`), y se concede a mano por SQL. ¿Se ofrece por invitación, y a quién? (charter `consolas`, Pendientes.)
 22. **El loro de la barra morada**: las SVG de `reference/` son trazos de la PNG, no originales. ¿Puede pedirse a quien diseñó el
@@ -539,10 +550,12 @@ las que falten, cuando lleguen.)*
   adelanto, como el «Por recibir» de Adquisición y la franja; la cola de eventos cuenta TODOS los pendientes y fallidos, y el tablero
   de Automatizaciones solo los de sus 30 últimos eventos (su arreglo es de `consolas`, Pendientes, punto 8). «Ver fuentes» lo dice.
 - **El catálogo de los hechos** sigue sin «Jugador» ni «Incumbent» (punto de arriba): F2 no lee esos términos.
-- **Accesibilidad** (decisión 20): con el anillo de foco de la casa, la OS no declara WCAG 2.2 AA. La hoja de un edificio retiene
+- **Accesibilidad** (decisión 20, decidida): el anillo de foco de la casa se arregla en el PR #53, en el mismo tren que la V6.19;
+  aun así la OS no declara WCAG 2.2 AA sin una auditoría propia. La hoja de un edificio retiene
   el foco por su cuenta (Tab y Mayús+Tab dan la vuelta dentro de la hoja, en `Hacienda.tsx`); el `Modal` compartido sigue sin
   retenerlo en las otras consolas, y su arreglo repinta todas (va con la decisión 20).
 - **Las capturas de la demostración** (1280, 1024 y 375 px, solo locales) se adjuntan al PR; no viven en el repo.
+- **La fila del Registro del sistema** «CTCx OS · Puesto de mando» (consola, Área 5) se crea el día de la fusión (regla 2).
 - **Para las notas del PR · la llave de GVB**: el PR NO concede nada. Después de fusionar, con el sí del owner en su sesión: la llave
   `os` a nivel `admin` para el usuario de panel de GVB, con su fila en `audit_log` (decisión 16). Hasta entonces nadie más que el
   owner ve `/os`.

@@ -162,10 +162,12 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
   `moqCargas(b)` ya no pide el número de lotes. Los dos tableros del PVC (Escala · Lectura) dicen «3 cargas · MOQ de compra · Single
   Origin o Regional Blend». `PVC_BCP_PLAN` gana el §14.8 (n.º 30–32) y deja tachados el §9.2, §9.3, §12.6, §14.4 y el n.º 28.
   `qa-pvc-lectura` reescrito (§3, §4, §7). Nada más de este componente cambió; quien arma las mezclas es `consolas`.
-  **Pendiente de CÓDIGO, dueño aquí** (lo anota el nodo final, wrap V47, 2026-09-25): la tarjeta «Mínimos y empaque por grado» de
+  ~~**Pendiente de CÓDIGO, dueño aquí** (lo anota el nodo final, wrap V47, 2026-09-25): la tarjeta «Mínimos y empaque por grado» de
   `src/components/panel/pvc/LecturaBoard.tsx` (hacia las líneas 284-288) **sigue diciendo** «Black y Red son mezclas de 3 a 4
   productores… una sola variedad… así que son 3 o 4 cargas» — la regla que la V5.91 retiró. Debe decir lo del §14.8: 3 cargas,
-  el MOQ de compra; Single Origin o Regional Blend. `qa-pvc-lectura` no mira ese párrafo.
+  el MOQ de compra; Single Origin o Regional Blend. `qa-pvc-lectura` no mira ese párrafo.~~ **Ya estaba hecho** (comprobado el
+  2026-11-05 en la sesión nocturna): la tarjeta dice «El MOQ de compra de Black y Red es de 3 cargas… una mezcla Single Origin o
+  Regional Blend»; solo este párrafo seguía abierto.
 - **Cotizador Courier — ciclo 1 cerrado por el owner el 2026-09-23 (V5.73).** Lo que dejó para el ciclo 2: (1) ~~El combustible es semanal y se anotaba a mano~~ — **automático desde la V5.69**: cron de los jueves (`/api/cron/courier-combustible`) que deriva el % de la EIA (USGC jet fuel) + la tabla de escalones de FedEx (`courier_combustible_escalas`), porque fedex.com no responde a un servidor. **Queda**: cuando FedEx cambie su tabla de escalones (la vigente es del 2026-05-11), cargar la nueva — el cron lo avisa si un precio se sale de la tabla. Lo anotado a mano siempre manda. (2) **Confirmar con el ejecutivo de FedEx** que el descuento por zona, el adquirido y la bonificación **se suman** (así está cargado, `modo_suma = aditivo`) y si el acuerdo cubre la **caja FedEx 10/25 kg** (hoy se cotiza a lista: sale mucho más cara y quizá no lo es). (3) **Contrastar tres envíos reales** contra la factura o fedex.com. (3b) V5.70, tras el primer recorrido del owner: combustible provisional para envíos futuros, carga por medidas (no por volumétrico), gráfica del recargo, cotizaciones que se reabren. La consola no se puede conducir en un navegador (OTP): el diseño nuevo lo verifica el owner en su próxima visita. (4) El **periodo de gracia termina el 2026-11-24**: desde ahí el descuento adquirido depende del gasto anualizado, que la pantalla pide a mano; calcularlo de las facturas es otra tanda. (5) Segunda tanda: importación y terceros; la API de tarifas de FedEx como contraste (owner: «después»); y que la modalidad courier del cotizador logístico y la Gestión de Muestras lean este costo (línea en `ALINEACION` §3). (6) Cuando llegue la guía 2027: `parse-guia.py` + `seed-courier.mjs … guia` — las tarifas son versión, no se sobrescriben.
 - ~~**El overhaul de las consolas devuelve este grupo al ECP**~~ — **ejecutado en la V5.60** (fase 2 de
   `docs/OVERHAUL_CONSOLAS_PLAN.md`): el grupo vive en el ECP, agrupado por modelo como lo dibujó el owner — Definición de
@@ -179,7 +181,8 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
   (el embudo en `lectura.ts`, las mermas dentro de `cotizador-lotes.html`, los costos de trilla dentro del HTML LOGÍSTICO, el
   vacío en el cotizador de empaque, y GrainPro sin estimador — los dos los estima desde la V5.194 «Empacado hasta FOB»); las tarifas logísticas están todas escritas a mano en un HTML de
   366 KB, sin fuente ni fecha; los tres cotizadores no tienen guardián; y la página `/ecp/cotizador-logistico` le dice al
-  operador que «falta el motor de cálculo» cuando el motor lleva semanas funcionando (se corrige en su primera tanda).
+  operador que «falta el motor de cálculo» cuando el motor lleva semanas funcionando (~~se corrige en su primera tanda~~
+  **corregido el 2026-11-05**, sin esperar a la tanda: el subtítulo dice que el cálculo es la CoGS V19 íntegra).
   ⚠️ Riesgo común: partir `params.proc` o añadir la columna marítima toca `paridad.json`, el contrato entre cuatro motores.
 - **Los dos modelos sin módulo (2026-09-19).** **Modelo de Procesamiento** y **Modelo de Logística** existen como piezas
   sueltas (tabla de arriba). Primera tanda de cada uno: un **brief** que diga qué entra (etapas finca → CPS → verde →
@@ -202,6 +205,15 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
   grado» para OCP, KR y campo) ya era de aquí: su primera versión es la pestaña Grados (V5.45).
 - **Conflicto vivo en un precio real** (2026-09-18): la edición PVC-F4-2026 rotula su fila «Gold» como *88,0–88,9* y
   `definicion.ts` dice Gold 86,00–87,99. El owner decidió que manda `definicion.ts` — **cerrado en la V5.82** (fase 5 del `PLAN_CIRCUITO_DEL_LOTE`, desde `consolas`): `RANGOS` del motor TS se DERIVA de `definicion.ts` (`80,00–81,99`…) y `precio.ts` no lee el `rango` de una edición publicada (las de antes conservan los rótulos viejos). Quedan con dueño aquí los rótulos del motor Python (`pvc_model_v2.py`) y del tablero HTML (`PVC_Tablero.html:232`), que deben decir lo mismo.
+  **Alcance real, medido el 2026-11-05** (sesión nocturna; no se tocó el HTML porque es texto de doctrina del owner): el tablero no
+  solo rotula `RANGOS` con las bandas SCA viejas (Blue «86,0–87,9», Gold «88,0–88,9»; la definición vigente pone a un café común en
+  Blue desde SCA 88 y en Gold desde 89); también imprime en el **one-pager** de la edición la regla anterior a la V5.160 — la columna
+  «Puntaje SCA» / «SCA score» (`OP_T.es.th`, `OP_T.en.th`), la fila Tyrian «≥ 89,0 · genética A/B…» (`tyr`), la nota «Grado = puntaje
+  SCA + reconocimientos (+1 / ++2), con puertas de genética…» (`small`, ES y EN) y la ayuda del dial «Escalera de calidad» (`escalera.q`).
+  Cambiar solo `RANGOS` dejaría un one-pager que se contradice. **Antes de publicar PVC-F1-2027 desde el Tablero (plazo 29-nov)**, el owner
+  decide el texto; la propuesta: columna «Puntos CTCx», rótulos `1000–1399 pts · CCC ≥ 82,00` (neutros de idioma, de `definicion.ts`),
+  Tyrian «2001–2500 pts · SCA ≥ 89 + surplus», y la nota con «El Punto y la Tríada». El guardián que lo cierre debe leer las bandas
+  de `definicion.ts`, no del HTML.
 - ~~**Validar la escala de puntos con el owner** antes de tocar `definicion.ts` (`ALINEACION` §3b): multiplicativa, K derivada,
   puerta 80–81,99, Tyrian exige SCA ≥ 89;~~ **superado en la V5.160** (la escala gobierna `definicion.ts`; viñeta V5.160, arriba). **Queda
   solo** fijar el X % del collar de TRM (propuesta 6 %).

@@ -26,8 +26,9 @@ vista responde una pregunta de precio: **Puerto Colombia** = qué cuesta ponerlo
   barato que el dedicado de CaaS, y hoy son el mismo número (`src/lib/pvc/canales.ts` lo avisa; plan §12.10).
 - **Las regiones no existen en la base**; el motor conoce tres destinos (EE. UU., Países Bajos, Alemania). `qa-pvc-canales` (57)
   ya afirma que Cherry Picked solo se entrega DDP y que CaaS tiene los tres tramos.
-- De paso: la página `/ecp/cotizador-logistico` le dice al operador «falta el motor de cálculo, entra cuando llegue el HTML de
-  referencia». **El HTML llegó y está funcionando.** Es un texto viejo; se corrige en la primera tanda.
+- ~~De paso: la página `/ecp/cotizador-logistico` le dice al operador «falta el motor de cálculo, entra cuando llegue el HTML de
+  referencia». **El HTML llegó y está funcionando.** Es un texto viejo; se corrige en la primera tanda.~~ **Corregido el
+  2026-11-05** sin esperar a la tanda (el subtítulo dice que el cálculo es la CoGS V19 íntegra).
 
 **Dónde vivirá** — Módulo de consola: **`/ecp/logistica`** con tres pestañas (los tres tramos), en «ECP · Modelo Logístico»; el
 cotizador se queda como está, al lado. Lógica en `src/lib/logistica/` — **pura**: el catálogo de conceptos por tramo y modalidad.
@@ -49,7 +50,7 @@ qué no (el marítimo, hasta la v2.2.0); (3) ninguna tarifa sin fuente ni fecha;
 
 **Primera tanda** — El catálogo de conceptos en TypeScript y las tres vistas de SOLO LECTURA: para un volumen dado, qué
 conceptos entran en cada tramo, con su valor por defecto **marcado como lo que es** («valor por defecto del cotizador, sin
-fuente»). Más la corrección del texto viejo. No cambia ningún precio: convierte 366 KB de HTML en una lista que se puede leer,
+fuente»). ~~Más la corrección del texto viejo~~ (hecha el 2026-11-05). No cambia ningún precio: convierte 366 KB de HTML en una lista que se puede leer,
 discutir y vigilar. Es el inventario que CN-8 necesita antes de volver las tarifas un dato.
 
 **Decisiones del owner**

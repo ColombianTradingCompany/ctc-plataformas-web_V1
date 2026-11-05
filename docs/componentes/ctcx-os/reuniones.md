@@ -1,7 +1,7 @@
 # CTCx OS · Módulo «Reuniones» — STRETCH (antes / durante / después)
 
 > Solo lectura. Fuentes: `docs/UNIFICACION_ALINEACION.md` (D-002, D-003, D-007, D-009 3.4, D-013, D-014, D-025, D-031, D-032), `docs/PLAN_UNIFICACION.md` (P5, P6/H8, P7, P25–P33, matriz de entidades, flujos 22/26–29), `docs/SECRETARIA_PLAN.md`, `docs/componentes/{secretaria,consolas}.md`, `docs/BCP_USER_ADMIN_PLAN.md` (niveles) y el código citado. En Notion solo se leyeron esquemas: nombres de bases, propiedades y tipos.
-> **BORRADOR · decide el owner.** El charter del componente (`docs/componentes/ctcx-os.md`) y el atlas (`docs/componentes/ctcx-os/atlas.md`) llegan en PR aparte, sin fusionar; hoy no hay ruta `/m/…` ni tablas de juego. Solo nombres de bases, propiedades, tablas, rutas y funciones: ningún dato, id ni persona.
+> **BORRADOR · decide el owner.** El charter del componente (`docs/componentes/ctcx-os.md`) y el atlas (`docs/componentes/ctcx-os/atlas.md`) llegan en PR aparte, sin fusionar; hoy no hay ruta `/os/…` (propuesto · pendiente del sí del owner: `/os` como quinta consola, con los módulos en `/os/m/<clave>`) ni tablas de juego. Solo nombres de bases, propiedades, tablas, rutas y funciones: ningún dato, id ni persona.
 
 ---
 
@@ -122,6 +122,7 @@ Una reunión es la **jugada base** del juego. Un Jugador (GVG o GVB) se sienta c
   - ventana y despachos (`src/app/ocp/(app)/ventanaActions.ts`: `venta_semanal_confirmada`, `despacho_confirmado_60`, `despacho_recibido`…);
   - cotizaciones (`src/lib/cotizador/actions.ts`: `setQuoteCounterparty` y `saveQuoteDraft` como borrador; `issueQuote` emite). Estas **no escriben `audit_log`**: su rastro es `quotes.change_log` y el evento `cotizacion.emitida` de `integration_events`, que `issueQuote` inserta con `emitEvent`.
 - **Casilla de una tarea derivada:** `setTaskState` (`src/components/panel/tareasActions.ts`, borrador) → `bcp_task_state`.
+- **Precio y kilos dichos en una reunión:** van como propuesta a la cola del OCP (`/ocp/contratos`) y nunca cambian un contrato solos. La jugada en vivo es la acción del contrato en su consola, no la reunión.
 
 ---
 
@@ -139,6 +140,7 @@ Una reunión es la **jugada base** del juego. Un Jugador (GVG o GVB) se sienta c
 - **Quién la crea:**
   - Hoy, la persona, con el botón de la plantilla por defecto de Reuniones (contenido no comprobado en el esquema).
   - Con el briefing: una propuesta «Crear tarea» en Propuestas. Tras el go-live la ejecuta el peldaño (d) del P33, y el (b) archiva las notas en Reuniones.
+  - Desde el OS (propuesto · pendiente del sí del owner): el acta confirmada sale por la espina (`emitEvent` → `integration_events` → Make → Reuniones y Tareas). El ejecutor P33 es el camino del briefing, no el del juego.
 - **Lo que no se copia (D-002):** el trabajo pendiente de la plataforma, por ejemplo emitir una oferta, se hace en su consola. Cerrar una Tarea nunca cierra nada de la plataforma.
 - **Al cerrar, en `Reuniones`:**
   - `Estado`: Realizada → Cerrada.
@@ -154,7 +156,7 @@ Hoy **ningún código emite eventos de reuniones ni de transcripciones**. Los no
 |---|---|---|---|
 | Saliente | `transcripcion.lista` | `cloud.ts::ingestAssemblyResult` o `createTranscript`. El worker (Python) escribe por PostgREST (`rpc/claim_transcript_job`, `transcripts`, `transcript_workers`) y no puede llamar a `emitEvent`, así que su caso pide que la plataforma emita al ver la fila `ready` | id de la transcripción, `recorded_on`, duración, `segment_count`, ref de la reunión si ya está vinculada |
 | Saliente | `transcripcion.vinculada` | una acción nueva que vincula una transcripción con una fila de Reuniones | id de la transcripción, ref de la fila; Make escribe `Enlace CTC` en la fila |
-| Entrante | `reunion.espejada` | Make → `/api/integraciones/make` → **manejador nuevo** en `aplicar.ts` | devuelve dónde quedó la fila; la columna nueva de `transcripts` sigue el patrón de `cotizacion.espejada` |
+| Entrante | `reunion.espejada` | Make → `/api/integraciones/make` → **manejador nuevo** en `aplicar.ts` | devuelve la URL de la fila de Reuniones al acta (`os_actas`, tabla propuesta del OS, sin crear), que pasa a «entregada». Sigue el patrón de `cotizacion.espejada`, pero sobre el acta: no abre columnas en `transcripts` (hueco 1) |
 | Entrante | `reunion.realizada` · `reunion.cerrada` | Make, al vigilar `Reuniones.Estado` | ref de la fila, `Área`, `Tipo`, los `ctc_id` de los Personajes, número de tareas nacidas |
 | Entrante | `tarea.cerrada` (con `Origen = Reunión`) | Make | ref de la tarea y de la reunión, ¿a tiempo? (Vence frente a Cerrada el) |
 
@@ -200,7 +202,7 @@ No hay tabla ni vista de barras. Todo se deriva de cifras reales. Las fórmulas 
 | Durante | sesión asistida y aceptación provisional → `audit_log` + `producer_comm_log` | E | jugadas en vivo | ✅ |
 | Después | Notion `Tareas` (`Origen = Reunión`, `Reunión`, una clave de plataforma) | E | Acciones nacidas | ✅ manual · ❌ Propuestas y ejecutor (P29–P33) |
 | Después | Notion `Reuniones` (`Cerrada`, `Enlace CTC`, `Archivo principal`) | E | cierre | ✅ manual |
-| Después | `transcripts` ↔ Reuniones (`notion_page_id`…) | E | vínculo | ❌ |
+| Después | vínculo `transcripts` ↔ Reuniones (dónde anclarlo es decisión abierta del owner; propuesta: en el acta, `os_actas`) | E | vínculo | ❌ |
 | Después | `audit_log` (`entity_type` transcript) | E | rastro | ❌ |
 | Después | `integration_events` `transcripcion.*` / `entrante.reunion.*` | E | hechos | ❌ |
 | Después | `aplicar.ts` manejador `reunion.espejada` / `reunion.*` | E | retorno Notion → plataforma | ❌ |
@@ -213,6 +215,7 @@ No hay tabla ni vista de barras. Todo se deriva de cifras reales. Las fórmulas 
 
 1. **No hay vínculo entre `transcripts` y Reuniones.**
    - `transcripts` no tiene `notion_page_id`, `notion_url` ni `notion_synced_at`. `quotes` sí los tiene.
+   - Dónde anclar el vínculo es **decisión abierta del owner**. La propuesta es anclarlo en el acta (`os_actas`, sin crear), adonde `reunion.espejada` devuelve la URL de la fila de Reuniones, en vez de abrir columnas `notion_*` en `transcripts`: esa tabla es de `consolas`, y tocarla pediría su línea en `docs/ALINEACION.md` §3.
    - Reuniones tiene `Enlace CTC` (url), pero no `ctc_id` ni `CTC`.
    - Falta además un emisor y un manejador para unirlos.
 2. **`transcripts` no sabe con quién fue la conversación.** No tiene contraparte: ni `counterparty_kind`, ni `profile_id` o `lead_id`, como sí tiene `quotes`. `speaker_names` es texto libre, sin vínculo con Contactos.
@@ -237,7 +240,7 @@ No hay tabla ni vista de barras. Todo se deriva de cifras reales. Las fórmulas 
 12. **No hay H3 ni nada del juego.**
     - Ninguna celda H3 (librería ni columna).
     - Ninguna tabla de juego: jugadores, turnos o barras.
-    - Ninguna ruta `/m/reuniones` ni charter `ctcx-os`.
+    - Ninguna ruta `/os/m/reuniones` (propuesto · pendiente del sí del owner) ni charter `ctcx-os`.
 13. **Dos capturas en paralelo sin regla.** Notion AI meeting notes y `transcripts` (local o AssemblyAI) conviven sin decir cuál manda.
 14. **La plataforma no tiene un canal de nota interna por productor.** `producer_comm_log` la ve el productor. Las notas internas viven en Notion (D-007), lo cual es correcto, pero el juego tendría que leerlas allí.
 15. **El Mapa de Trabajo está desfasado.** `src/lib/workmap/schema.ts` sigue con la barra anterior a la V5.64, así que no sirve para ubicar Fichas en el circuito.

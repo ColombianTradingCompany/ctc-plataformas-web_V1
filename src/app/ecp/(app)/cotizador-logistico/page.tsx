@@ -8,8 +8,9 @@ export const metadata: Metadata = { title: "Cotizador Logístico · ECP", robots
 // historial— y su MOTOR es la calculadora CoGS V19 del owner, embebida íntegra por `AppFrame.tsx`
 // (`/ocp-apps/cotizador-logistico.html`): al guardar se archiva su estado completo y se lee su precio de venta.
 // Hasta 2026-11-05 el subtítulo decía que el motor «entra cuando llegue el HTML de referencia»; llevaba semanas
-// funcionando. Las tarifas siguen escritas a mano dentro del HTML: darles fuente y fecha es la primera tanda del
-// brief del Modelo Logístico (`docs/componentes/briefs/herramientas-internas-modelo-logistico.md`), que espera al owner.
+// funcionando. Las tarifas siguen escritas a mano dentro del HTML, sin fuente ni fecha: la primera tanda del brief del
+// Modelo Logístico (`docs/componentes/briefs/herramientas-internas-modelo-logistico.md`, espera al owner) las inventaría en
+// un catálogo TS de solo lectura, marcadas «sin fuente»; darles fuente y fecha (`logistica_tarifas`) es su segunda tanda, con CN-8.
 export default function CotizadorLogisticoPage() {
   return (
     <QuotesBoard

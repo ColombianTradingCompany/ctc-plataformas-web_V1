@@ -88,10 +88,12 @@ img{display:block;max-width:100%}
 /* Anillo de foco de dos colores en las consolas (técnica WCAG C40; 1.4.11 + 2.4.7).
    El anillo global (`:focus-visible`, arriba) es amarillo: 1,4:1 sobre el papel claro.
    Aquí, desde el borde del elemento hacia fuera: 2 px de amarillo (rellena el
-   outline-offset) y 3 px de morado. Sobre papel claro el morado da 12,4:1; sobre el
-   rail, la barra superior y la cabecera oscura de la Datasheet, el amarillo da
-   8,5–12,5:1. Un anillo solo morado se perdería en esas superficies oscuras (1,1–1,4:1). */
-[data-theme="bcp"] :focus-visible{outline-color:var(--primary);box-shadow:0 0 0 2px var(--accent)}
+   outline-offset) y 3 px de morado oscuro (--primary-deep). Sobre papel claro el morado
+   da 15,1:1 (16,2:1 sobre tarjeta); sobre el rail, la barra superior y la cabecera
+   oscura de la Datasheet, el amarillo da 8,5–12,5:1. Entre los dos colores hay 10,8:1
+   (C40 pide 9:1, así uno de los dos llega siempre a 3:1). Un anillo solo morado se
+   perdería en esas superficies oscuras (1,1–1,4:1). */
+[data-theme="bcp"] :focus-visible{outline-color:var(--primary-deep);box-shadow:0 0 0 2px var(--accent)}
 
 /* ============================================================
    Shared layout primitives

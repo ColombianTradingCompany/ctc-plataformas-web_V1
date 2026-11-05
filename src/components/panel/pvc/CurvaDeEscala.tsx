@@ -40,8 +40,8 @@ export function CurvaDeEscala({ t, sca, puntos }: { t: Triada; sca: number; punt
       ))}
       <line x1={x(SCA_TYRIAN)} x2={x(SCA_TYRIAN)} y1={T} y2={H - B} stroke="var(--muted)" strokeWidth="1" strokeDasharray="3 3" opacity="0.7" />
       <path d={linea(ccc)} fill="none" stroke="var(--ink)" strokeWidth="1.5" opacity="0.45" />
-      {hayS && <path d={linea(t)} fill="none" stroke="var(--accent, #8A5A2B)" strokeWidth="2.2" />}
-      <circle cx={x(sca)} cy={y(puntos)} r="6" fill="var(--accent, #8A5A2B)" stroke="var(--card)" strokeWidth="2" />
+      {hayS && <path d={linea(t)} fill="none" stroke="var(--accent-ink, var(--accent, #8A5A2B))" strokeWidth="2.2" />}
+      <circle cx={x(sca)} cy={y(puntos)} r="6" fill="var(--accent-ink, var(--accent, #8A5A2B))" stroke="var(--card)" strokeWidth="2" />
     </svg>
   );
 }

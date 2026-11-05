@@ -49,7 +49,7 @@
 .field{margin-bottom:15px}
 .field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;color:var(--ink)}
 .field input{width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;background:var(--paper)}
-.field input:focus{border-color:var(--p-accent);outline:none}
+.field input:focus{border-color:var(--p-accent)}
 .err{color:#B91C1C;font-size:13px;margin-bottom:12px;display:block}
 .panelHead{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin:34px 0 6px}
 .orgLine{font-size:13px;color:var(--muted)}

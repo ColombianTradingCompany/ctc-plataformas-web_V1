@@ -275,7 +275,7 @@
   --amber: #b8860b;
   --amber-light: #fdf5dc;
   --amber-text: #7a5800;
-  --red: #C8102F;
+  --red: #C8102E;
   --red-light: #fef0f2;
   --blue: #003087;
   --blue-light: #e6eaf6;
@@ -4578,7 +4578,7 @@ function exportHTML(){
     {label:'Materia prima',       val:c.materiaPrimaTotal, color:'#3C0A86'},
     {label:'Empaque',             val:c.empTotal,          color:'#003087'},
     {label:'Export. en origen',   val:c.origTotal,         color:'#b8860b'},
-    {label:'Transporte int.',     val:c.intTotal,          color:'#C8102F'},
+    {label:'Transporte int.',     val:c.intTotal,          color:'#C8102E'},
     {label:'Destino & last mile', val:c.destTotal+c.lastmileTotal, color:'#555'},
   ].filter(p=>p.val>0);
   const pieTotal = phases.reduce((s,p)=>s+p.val,0)||1;
@@ -4679,7 +4679,7 @@ function exportHTML(){
     : `Bajo ${incotermLabel}, el comprador gestiona estos tramos.`;
 
   const expCol = renderCol(expRows, `💼 Exportador — ${incotermLabel}`, '#3C0A86', '#3C0A86', 'Sin fases asignadas al exportador.');
-  const impCol = renderCol(impRows, buyerTitle, '#C8102F', '#C8102F', buyerEmpty);
+  const impCol = renderCol(impRows, buyerTitle, '#C8102E', '#C8102E', buyerEmpty);
 
   // ── Narrative ──
   const incoExpl={
@@ -4731,7 +4731,7 @@ body{font-family:'Inter',Arial,sans-serif;color:#1a1816;background:#fff;font-siz
 .card .cv{font-size:13px;font-weight:700;line-height:1.1}
 .card .cs{font-size:8.5px;color:#666;margin-top:2px}
 .c-sel{background:#f7f4fb;border-color:#3C0A86}.c-sel .cv{color:#3C0A86}
-.c-buy{background:#fff5f6;border-color:#C8102F}.c-buy .cv{color:#C8102F}
+.c-buy{background:#fff5f6;border-color:#C8102E}.c-buy .cv{color:#C8102E}
 .c-tot{background:#3C0A86;border-color:#3C0A86}.c-tot .cl,.c-tot .cs{color:#D3B8FA}.c-tot .cv{color:#FFCD00}
 .c-prc{background:#003087;border-color:#003087}.c-prc .cl,.c-prc .cs{color:#b3bfe8}.c-prc .cv{color:#FFCD00}
 .c-pl{background:#faf8f6}
@@ -4750,7 +4750,7 @@ body{font-family:'Inter',Arial,sans-serif;color:#1a1816;background:#fff;font-siz
 .ftr{background:#1a1816;padding:7px 18px;display:flex;align-items:center;justify-content:space-between;margin-top:auto}
 .fb{font-size:9.5px;font-weight:600;color:#FFCD00}
 .fb small{display:block;font-size:7.5px;color:#666;font-weight:400;margin-top:1px}
-.conf{background:#C8102F;color:#fff;font-size:7.5px;font-weight:700;padding:2px 7px;border-radius:3px;text-transform:uppercase;letter-spacing:.1em}
+.conf{background:#C8102E;color:#fff;font-size:7.5px;font-weight:700;padding:2px 7px;border-radius:3px;text-transform:uppercase;letter-spacing:.1em}
 .flg{font-size:7.5px;color:#555;text-align:right;line-height:1.5}
 @page{size:Letter;margin:0}
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}

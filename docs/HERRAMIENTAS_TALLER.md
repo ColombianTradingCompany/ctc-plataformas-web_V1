@@ -82,6 +82,11 @@ persona, y reintenta unos segundos lo que aún no existe (una lista que llega de
 las herramientas que lo piden con `propio: true`, y lo reciben con `CTC.usarPrefill(fn)`. Un trabajo GUARDADO nunca recibe prellenado.
 Si hay trabajo abierto, el autoguardado de siempre recoge los campos prellenados; en la sesión suelta el puente sigue inerte.
 
+**TAR-121 · «Copiar enlace»**: cada trabajo del Home Menu (y el trabajo abierto, en su línea) ofrece su enlace directo,
+`https://herramientas.ctcexport.com/taller/<id>?trabajo=<uuid>` (`enlaceDeTrabajo`; en local o en una vista previa, el del host
+donde se está). Es lo que la persona pega en un asistente, un evento del calendario o una nota para volver a ESE trabajo. No es una
+credencial: otra cuenta que lo abra cae en su propio menú con el aviso de siempre.
+
 **V5.7**: el puente además manda un `resumen` con cada estado (por defecto los
 primeros campos con valor; `CTC.usarResumen(fn)` para darlo mejor) — es la línea
 que el Home Menu lista bajo el nombre del trabajo. El menú también enseña la

@@ -87,7 +87,8 @@ La puerta `/herramientas/acceso` acepta `?siguiente=` (solo rutas de `/herramien
   `solicitudes.ts` (`tool_access_requests`, «pedir no es poder»), `solicitarPlus.ts`, `volverSeguro.ts`
   (**vuelta segura = seguridad**, lista blanca por superficie), `toolAccess.ts`. **TAR-121**: `entrada.ts` (PURO: lee y valida
   `?trabajo=` · `?finca=` · `?lote=` · `?volver=`, arma el prellenado con el contrato de `carpetas.ts` y escribe la URL de entrada,
-  `urlDeHerramienta`) y `entradaServidor.ts` (solo servidor, NO server action: resuelve la finca o el lote filtrando `producer_id`
+  `urlDeHerramienta`; la absoluta y canónica para compartir fuera del sitio, `urlPublicaDeHerramienta`; y el enlace de un trabajo,
+  `enlaceDeTrabajo`, que el Home Menu ofrece como «Copiar enlace») y `entradaServidor.ts` (solo servidor, NO server action: resuelve la finca o el lote filtrando `producer_id`
   por la cuenta en la consulta; «no existe» y «no es suyo» dan el mismo aviso).
 - `src/components/tools/` — `CoverFlow`, `ConchaHerramienta`, `SesionHerramienta` (Home Menu de trabajos),
   `BarraHerramienta`, `TallerBarra`, `ObtenerPlus`, `SolicitarHerramienta`, `ToolIcons`, `CapturaMiniatura`.
@@ -113,7 +114,7 @@ La puerta `/herramientas/acceso` acepta `?siguiente=` (solo rutas de `/herramien
 ## Guardianes
 
 `qa-tools-carpetas.mjs` (185, `node --experimental-strip-types`: carpeta ↔ lista ↔ disco ↔ 308, y nadie escribe una ruta plana) ·
-`qa-taller-check.mjs` (69) · `qa-taller-entrada-check.mjs` (214, TAR-121, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`:
+`qa-taller-check.mjs` (69) · `qa-taller-entrada-check.mjs` (223, TAR-121, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`:
 la entrada de módulo — parámetros, la vuelta con sus ataques (incluidos `..` y `%2e%2e`), el prellenado de mínimo privilegio, cada
 selector del contrato existe en el archivo de su herramienta, y el filtro por dueño en la consulta) · `qa-herramientas-acceso-check.mjs` (31) · `qa-concha-herramientas-check.mjs` (44,
 once vectores de ataque) · `qa-tools-puente-conformance.mjs` (15/15; las de esquema propio —`agtron`, `coffee-datasheet`, `gulliver`— con sonda;

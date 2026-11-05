@@ -39,15 +39,25 @@ export function nombreDeArchivo(exportadoEl: string, unidad: UnidadId | null = n
   return `ctcx-definicion-de-contexto${unidad ? `-${unidad}` : ""}-${dia}.md`;
 }
 
-/** El texto de una casilla, tal cual lo escribió el equipo, salvo dos cosas que
- *  romperían la estructura del archivo: los saltos `\r\n` y una línea que empiece
- *  por `#` (sería un título nuevo dentro de la respuesta). */
+/** El texto de una casilla, tal cual lo escribió el equipo, salvo lo que se SALDRÍA de la casilla y rompería la estructura
+ *  del archivo (el equipo pega a menudo Markdown copiado de Claude Chat): los saltos `\r\n`; una línea que empiece por `#`
+ *  (un título nuevo); una valla de código ``` o ~~~ (sin cerrar, se tragaría el resto del archivo, la memoria incluida); una
+ *  línea de solo `-` o `=` (debajo de un texto lo vuelve un título, «setext»); y una línea que empiece por `<` (un comentario
+ *  HTML sin cerrar esconde lo que sigue). A esas líneas se les antepone `\`: el texto se lee igual y la estructura no se mueve.
+ *  Revisión adversarial del 2026-11-05: la primera versión solo cuidaba el `#`. */
 export function textoDeCasilla(v: unknown): string {
   if (typeof v !== "string") return SIN_RESPONDER;
   const limpio = v
     .replace(/\r\n?/g, "\n")
     .split("\n")
-    .map((l) => l.replace(/\s+$/, "").replace(/^(\s*)#/, "$1\\#"))
+    .map((l) =>
+      l
+        .replace(/\s+$/, "")
+        .replace(/^(\s*)#/, "$1\\#")
+        .replace(/^(\s*)(`{3,}|~{3,})/, "$1\\$2")
+        .replace(/^(\s*)(=+|-+)$/, "$1\\$2")
+        .replace(/^(\s*)</, "$1\\<"),
+    )
     .join("\n")
     .trim();
   return limpio ? limpio : SIN_RESPONDER;

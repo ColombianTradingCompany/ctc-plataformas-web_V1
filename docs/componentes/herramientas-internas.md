@@ -51,6 +51,7 @@ viene). Se funden con la fase 2. La pestaña vacía «Modelo Económico» de Dir
   `src/components/panel/direccionamiento/{DefinicionDeContexto,DireccionamientoClient,DireccionamientoTabs}.tsx`.
   **Exportar como Markdown** (TAR-122): `src/lib/direccionamiento/markdown.ts` (PURO: `contextoComoMarkdown`, `unidadValida`,
   `nombreDeArchivo`) + `src/app/ecp/(app)/direccionamiento/exportar/route.ts` (GET, `requireConsoleAccess("ecp")`: lectura).
+  Lo vigila `qa-definicion-check` (su sección 6 es la exportación; 58 comprobaciones en total).
   (`PlataformasBoard.tsx` vive en esa carpeta pero es **Manejo de Plataformas**, del ECP: charter `consolas`.)
 - **Modelo Económico** — `src/lib/pvc/`: `motor.ts` (port del Python; **`paridad.json` es el contrato entre los cuatro
   motores** — Python de referencia en `C:\dev\ctc-platforms\apps-internas\PVC - Modelo\v2.0`, Excel, `motor.ts` y el JS del
@@ -86,7 +87,7 @@ Solo lee: `lots`, `lot_offers`, `purchase_contracts`, `lot_listings` (para saber
 `qa-pvc-motor.mjs` (49 — paridad con Python, tolerancia 1e-4) · `qa-pvc-tablero.mjs` (44 — marcadores `@@MODELO`) ·
 `qa-pvc-vigencia.mjs` (28) · `qa-pvc-lectura.mjs` (60 — el MOQ de compra y los tipos de mezcla, en el código Y en el plan §14.8) ·
 `qa-pvc-escala.mjs` (68 — incluye la Base física) · `qa-pvc-canales.mjs` (57) · `qa-pvc-compromiso.mjs` (31) ·
-`qa-grados-check.mjs` (48 — el contrato de grados) · `qa-definicion-check.mjs` (54 — las claves y, desde TAR-122, la exportación a Markdown) · `qa-direccionamiento-check.mjs` ·
+`qa-grados-check.mjs` (48 — el contrato de grados) · `qa-definicion-check.mjs` · `qa-direccionamiento-check.mjs` ·
 `qa-anclas-check.mjs` · `qa-courier-check.mjs` (51 — el cálculo contra un acuerdo FICTICIO, la fuga cero por hash, el combustible derivado contra el historial de FedEx, el combustible provisional y el límite de paquete por medidas). `qa-empaque-fob-check.mjs` (47 — Empacado hasta FOB: el cálculo contra cuatro casos hechos a mano, que la máquina no vuelva, que el servidor recalcule y emita, la compuerta de la tabla). Y de la casa, porque el grupo vive en el rail del ECP: `qa-rutas-consolas.mjs`.
 
 ## Reglas propias

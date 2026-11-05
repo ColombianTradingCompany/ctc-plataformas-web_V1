@@ -118,6 +118,21 @@ check("next.config.ts ya no levanta bodySizeLimit",
   check("export · no lleva quién editó ni claves que no son casillas", !md.includes("00000000-0000") && !/updated_by/.test(md) && !md.includes("42"));
   check("export · lleva la memoria del sistema tal cual la recibe la redacción", md.includes(textoMemoria()));
   check("export · textoDeCasilla no toca el texto normal", textoDeCasilla("a\n\nb") === "a\n\nb");
+  // Revisión adversarial (2026-11-05): lo que el equipo pega de Claude Chat no puede salirse de su casilla.
+  {
+    const pegado = contextoComoMarkdown({ ...entrada, values: {
+      [claveDe("kr", "cliente", "relacion")]: "Tres roles conviven\n---\n- productor\n===",
+      [claveDe("kr", "cliente", "duele")]: "```js\nconst x = 1;",
+      [claveDe("kr", "cliente", "quiere")]: "~~~\n<!-- sin cerrar",
+    } });
+    const lineas = pegado.split("\n");
+    check("export · una línea de solo «-» o «=» bajo un texto no lo vuelve título (setext)",
+      !lineas.some((l, i) => /^\s*(-+|=+)\s*$/.test(l) && i > 0 && lineas[i - 1].trim() !== "") && pegado.includes("Tres roles conviven\n\\---"));
+    check("export · una valla ``` o ~~~ de una casilla no abre un bloque: solo quedan las dos de la memoria",
+      lineas.filter((l) => /^\s{0,3}(`{3,}|~{3,})/.test(l)).length === 2 && lineas.filter((l) => /^```/.test(l)).join("|") === "```text|```");
+    check("export · un comentario HTML sin cerrar no esconde lo que sigue", !lineas.some((l) => /^\s{0,3}<!--/.test(l)));
+    check("export · tras lo pegado, las unidades siguientes siguen siendo títulos", pegado.includes("\n## CHP · Cherry Picked\n") && pegado.includes("\n## Memoria del sistema · Grados de Calidad CTC\n"));
+  }
   // ?unidad= es lista blanca: un id de UNIDADES o nada.
   check("export · unidadValida acepta los cuatro ids", UNIDADES.every((u) => unidadValida(u.id) === u.id));
   check("export · unidadValida rechaza lo demás", [null, undefined, "", "KR", "kr ", "general", "../x"].every((x) => unidadValida(x) === null));

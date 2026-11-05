@@ -53,13 +53,6 @@ Las fuentes que el owner entrega llegan a `C:\dev\ctc-platforms\reference\html_t
 `defectos-cafe\Defectos_del_Cafe_CTC_V3.html`, `cromatografia-suelo\Analisis Cromatografico\`); una nueva
 sin id todavía, en `_candidatas\<nombre>\`.
 
-## Superficies y rutas
-
-`/herramientas` (landing) · `/herramientas/acceso` · `/herramientas/taller` · `/herramientas/taller/[slug]` ·
-`/kaffetal-regal/herramientas/[slug]` · `/cherry-picked-green/herramientas/[slug]` (la ruta es de la
-SUPERFICIE, no de una consola — gotcha 12) · `/tools/<id>/*.html` y `/tools/h/[slug]` (fuera del matcher del proxy; las `/tools/<archivo>.html` planas son 308) ·
-`/bcp/herramientas` (administración).
-
 ## El contrato de URL del taller (TAR-121)
 
 Cada herramienta del taller es un **módulo** que se abre desde fuera —un tablero, un evento del calendario, el móvil, un
@@ -125,6 +118,13 @@ acepta `trabajo` sin declarar nada; si tiene campos de finca o de lote, se decla
 **Para quien construye los enlaces** (el tablero de CTCx OS, un asistente): la URL se escribe con `urlDeHerramienta(id, { trabajo,
 finca, lote, volver })`, nunca a mano; los ids de los trabajos de una persona solo los conoce hoy su propio Home Menu (no hay todavía
 una lectura de «mis trabajos» para fuera del taller).
+
+## Superficies y rutas
+
+`/herramientas` (landing) · `/herramientas/acceso` · `/herramientas/taller` · `/herramientas/taller/[slug]` ·
+`/kaffetal-regal/herramientas/[slug]` · `/cherry-picked-green/herramientas/[slug]` (la ruta es de la
+SUPERFICIE, no de una consola — gotcha 12) · `/tools/<id>/*.html` y `/tools/h/[slug]` (fuera del matcher del proxy; las `/tools/<archivo>.html` planas son 308) ·
+`/bcp/herramientas` (administración).
 
 ## Mapa de código
 

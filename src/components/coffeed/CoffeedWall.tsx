@@ -59,6 +59,11 @@ export type CoffeedWallLabels = {
   /** RT-Scriptor. Opcional a propósito: las superficies que ya traen su propio
    *  juego de etiquetas (Cherry Picked en inglés) no se rompen al añadirla. */
   storyboard?: string;
+  /** El sello de la noticia y la palabra delante del medio citado. Opcionales
+   *  por lo mismo que `storyboard`. Son etiquetas, no contenido: llegan en el
+   *  idioma de la superficie. */
+  news?: string;
+  source?: string;
   emptyTitle: string;
   emptyBody: string;
   loading: string;
@@ -72,6 +77,8 @@ const ES: CoffeedWallLabels = {
   video: "Video",
   shared: "Compartido",
   storyboard: "Guion",
+  news: "Noticia",
+  source: "Fuente:",
   emptyTitle: "El primer capítulo está en producción",
   emptyBody: "Coffeed es el noticiero de la red CTC: capítulos breves sobre el mercado del café, en paneles. Vuelve pronto.",
   loading: "Cargando el muro…",
@@ -143,10 +150,14 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
                   {a.publishedAt ? ` · ${fmtDay(a.publishedAt)}` : ""}
                 </span>
               </div>
-              <h3 className={styles.postTitle} style={{ fontFamily: brandFont }}>
+              {/* `lang="es"` en lo que ESCRIBE Coffeed (títulos, cuerpos, tiras, extractos y pies), no en el muro entero: el contenido
+                  se produce en español a propósito (ALINEACION §1, «Tres idiomas»), pero las etiquetas llegan en el
+                  idioma de la superficie (`labels`). Desde que `<html lang>` sigue al idioma en pantalla
+                  (`useHtmlLang`), en una página en inglés estos textos heredarían «en» sin esta marca. */}
+              <h3 className={styles.postTitle} style={{ fontFamily: brandFont }} lang="es">
                 {a.title}
               </h3>
-              {a.body && <p className={styles.annBody}>{a.body}</p>}
+              {a.body && <p className={styles.annBody} lang="es">{a.body}</p>}
             </article>
           );
         }
@@ -157,7 +168,7 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
           c.kind === "carrusel"
             ? `${labels.chapter} ${c.chapterNo ?? ""}`.trim()
             : c.kind === "noticia"
-              ? "Noticia"
+              ? (labels.news ?? "Noticia")
             : c.kind === "video"
               ? labels.video
               : c.kind === "guion"
@@ -181,7 +192,7 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
                 {c.publishedAt ? ` · ${fmtDay(c.publishedAt)}` : ""}
               </span>
             </div>
-            <h3 className={styles.postTitle} style={{ fontFamily: brandFont }}>
+            <h3 className={styles.postTitle} style={{ fontFamily: brandFont }} lang="es">
               {c.title}
             </h3>
 
@@ -197,7 +208,7 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
               />
             )}
             {(c.kind === "carrusel" || c.kind === "noticia") && (
-              <div className={styles.strip}>
+              <div className={styles.strip} lang="es">
                 {c.panels.map((p, i) => (
                   <div key={p.position} className={[styles.panel, i === 0 ? styles.panelFirst : "", i === c.panels.length - 1 ? styles.panelLast : ""].join(" ")}>
                     <span className={styles.panelBar}>
@@ -218,7 +229,7 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
 
             {c.kind === "noticia" && c.fuente && (
               <p className={styles.eyebrow} style={{ marginTop: 8 }}>
-                Fuente:{" "}
+                {labels.source ?? "Fuente:"}{" "}
                 <a href={c.fuente.url} target="_blank" rel="noopener noreferrer">
                   {c.fuente.outlet} ↗
                 </a>
@@ -228,7 +239,7 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
             {/* RT-Scriptor: la tira de fotogramas se lee como se leería un
                 tablero — de izquierda a derecha, con el pie de cada cuadro. */}
             {c.kind === "guion" && c.guion && (
-              <div className={styles.strip}>
+              <div className={styles.strip} lang="es">
                 {c.guion.frames.map((f, i) => (
                   <div
                     key={i}
@@ -243,8 +254,8 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
               </div>
             )}
 
-            {c.excerpt && c.kind !== "carrusel" && <p className={styles.caption}>{c.excerpt}</p>}
-            {c.media?.caption && <p className={styles.caption}>{c.media.caption}</p>}
+            {c.excerpt && c.kind !== "carrusel" && <p className={styles.caption} lang="es">{c.excerpt}</p>}
+            {c.media?.caption && <p className={styles.caption} lang="es">{c.media.caption}</p>}
           </article>
         );
       })}

@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { ROOT_DOMAIN } from "@/lib/red/subdominios";
+import { ROOT_DOMAIN, RUTAS_QUE_REDIRIGEN, SUBDOMAIN_ROUTES } from "@/lib/red/subdominios";
 
 // ── robots.txt (route handler desde 2026-08-14; antes era `robots.ts`) ───────
 // Se convirtió en handler el día que nació el sitemap por host: la línea
@@ -28,15 +28,18 @@ export function GET(request: NextRequest) {
   const port = request.headers.get("host")?.split(":")[1];
   const origin = `${proto}://${host}${port ? `:${port}` : ""}`;
 
+  // La puerta vieja de algo (su portada es un 308) no tiene sitemap: anunciarlo
+  // mandaría al rastreador a un 404 (`sitemap.xml/route.ts`).
+  const ruta = SUBDOMAIN_ROUTES[host.split(".")[0]];
+  const sitemap = ruta && RUTAS_QUE_REDIRIGEN.has(ruta) ? "" : `\nSitemap: ${origin}/sitemap.xml\n`;
+
   const body = `User-Agent: *
 Disallow: /bcp
 Disallow: /ecp
 Disallow: /ocp
 Disallow: /lcp
 Disallow: /lab
-
-Sitemap: ${origin}/sitemap.xml
-`;
+${sitemap}`;
   return new Response(body, {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",

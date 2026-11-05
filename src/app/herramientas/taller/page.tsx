@@ -54,7 +54,7 @@ export default async function TallerPage() {
 
   return (
     <div data-theme="ctc-home">
-      <LangProvider storageKey="ctc-lang">
+      <LangProvider storageKey="ctc-lang" declaraHtml={false}>
         <BarraHerramienta
           nombre="Herramientas del Café"
           email={taller.email}

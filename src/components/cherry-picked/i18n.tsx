@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { useHtmlLang } from "@/components/lang/i18n";
 
 // Shared trilingual runtime for the Cherry Picked family (Green / Roast / X).
 // English is the canonical language of the storefront (the audience is
@@ -73,6 +74,11 @@ export function LangProvider({ children }: { children: ReactNode }) {
       if (saved === "es" || saved === "de") setLangState(saved);
     });
   }, []);
+
+  // `<html lang>` follows the language on screen (the root layout says "es";
+  // this family is English by default). The hook lives with the shared
+  // provider so both families do it the same way.
+  useHtmlLang(lang);
 
   const setLang = (l: Lang) => {
     setLangState(l);

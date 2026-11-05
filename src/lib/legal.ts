@@ -10,6 +10,8 @@
 
 export const NIT = "NIT 901.483.425-7";
 export const CTC_RAZON = "Colombian Trading Company";
+/** «Municipio, Departamento, País». `seo/jsonLd.ts` la parte en esos tres campos para la dirección del JSON-LD; con
+ *  otra forma publica la línea entera tal cual (no se rompe nada, solo pierde los campos). */
 export const CTC_SEDE = "Piedecuesta, Santander, Colombia";
 export const CTC_EMAIL = "info@ctcexport.com";
 /** El sitio web, como se imprime en un documento (sin protocolo). */

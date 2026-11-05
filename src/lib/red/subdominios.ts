@@ -54,8 +54,10 @@ export const SUBDOMAIN_ROUTES: Record<string, string> = {
   // enlace ya compartido, ni las tarjetas de enlace ya indexadas, caigan en un
   // 404. Las DOS entradas apuntan a rutas DISTINTAS a propósito: si las dos
   // apuntaran a `/caas`, el mapa inverso `ROUTE_SUBDOMAIN` —que se deriva de
-  // este objeto— se quedaría con la última y el canonical podría acabar
-  // firmando el subdominio viejo.
+  // este objeto— se quedaría con la última y `origenDeSuperficie("/caas")`
+  // devolvería el subdominio viejo: el 308 de la puerta vieja apuntaría a sí
+  // mismo. (Hasta el 2026-08-15 también el canonical salía de este mapa; desde
+  // entonces vive en www + la ruta, `src/lib/seo/openGraph.ts`.)
   "caas": "/caas",
   "co-create": "/co-create",
   "varietales": "/varietales",
@@ -110,6 +112,16 @@ export const ROUTE_SUBDOMAIN: Record<string, string> = Object.fromEntries(
 // solo comprueba que esa lista CONTENGA `/recuperar-acceso`, así que no
 // atraparía un error ahí.
 export const RUTAS_SOLO_WWW: string[] = ["/ctcx-public-catalogue"];
+
+/** Rutas del mapa que NO son destino: su página solo responde un 308 a otra
+ *  superficie (hoy la puerta vieja de CaaS). Las leen el sitemap —que no debe
+ *  anunciar un 308, ni en www ni en el sitemap del propio subdominio—,
+ *  robots.txt, que en ese host no anuncia sitemap, y Manejo de Plataformas
+ *  (`bcp/(app)/plataformasActions.ts`), que no les ofrece casilla de sitemap.
+ *  Viven aquí, junto al mapa, porque son tres lectores: una copia en cada uno
+ *  garantizaría que una puerta vieja nueva se apague en uno y siga
+ *  anunciándose en otro. */
+export const RUTAS_QUE_REDIRIGEN: ReadonlySet<string> = new Set(["/co-create"]);
 
 /** El origen absoluto donde vive una superficie en PRODUCCIÓN.
  *

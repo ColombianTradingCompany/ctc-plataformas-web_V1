@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { SUBDOMAIN_ROUTES, RUTAS_SOLO_WWW, ROOT_DOMAIN, WWW_ORIGIN } from "@/lib/red/subdominios";
+import { SUBDOMAIN_ROUTES, RUTAS_SOLO_WWW, RUTAS_QUE_REDIRIGEN, ROOT_DOMAIN, WWW_ORIGIN } from "@/lib/red/subdominios";
 import { overridesDeSuperficies } from "@/lib/seo/superficies";
 
 // ── El sitemap de la red (2026-08-14) ────────────────────────────────────────
@@ -35,8 +35,9 @@ import { overridesDeSuperficies } from "@/lib/seo/superficies";
 export const dynamic = "force-dynamic";
 
 /** Rutas del mapa que NO son destino: responden con un redirect permanente, y un
- *  sitemap no debe anunciar un 308. Hoy solo el subdominio viejo de CaaS. */
-const REDIRECCIONES = new Set(["/co-create"]);
+ *  sitemap no debe anunciar un 308. Hoy solo el subdominio viejo de CaaS. La
+ *  lista vive en `subdominios.ts` porque robots.txt también la lee. */
+const REDIRECCIONES = RUTAS_QUE_REDIRIGEN;
 
 /** Las rutas canónicas de la red, bajo un origen dado.
  *
@@ -63,13 +64,19 @@ function rutasCanonicas(origin: string, fuera: Set<string>): string[] {
   const rutas = [...new Set([...Object.values(SUBDOMAIN_ROUTES), ...RUTAS_SOLO_WWW])]
     .filter((r) => !REDIRECCIONES.has(r) && !fuera.has(r))
     .sort();
-  return [origin, ...rutas.map((r) => `${origin}${r}`)];
+  // La casa matriz también obedece al interruptor: Manejo de Plataformas ofrece
+  // «/» con su casilla de sitemap como a cualquier otra superficie, y hasta la
+  // noche del 2026-11-04 esta línea la anunciaba siempre, casilla o no.
+  return [...(fuera.has("/") ? [] : [origin]), ...rutas.map((r) => `${origin}${r}`)];
 }
 
 /** Las URLs que anuncia un host dado. */
 function urlsFor(host: string, fuera: Set<string>): string[] {
   const sub = host.split(":")[0].split(".")[0];
-  // Un subdominio: su portada y nada más. El canonical hace el resto.
+  // Un subdominio: su portada y nada más. El canonical hace el resto. (El que
+  // solo reenvía —`co-create`— no llega aquí: GET responde 404 antes.) La
+  // casilla de Manejo de Plataformas gobierna el sitemap de la CASA MATRIZ —así
+  // la rotula el panel— y esta puerta de descubrimiento no la lee.
   if (SUBDOMAIN_ROUTES[sub]) return [`https://${sub}.${ROOT_DOMAIN}/`];
   // www, el ápex, las previews de Vercel y localhost caen aquí: son el sitemap
   // completo de la red, porque son el origen que el canonical señala.
@@ -79,8 +86,18 @@ function urlsFor(host: string, fuera: Set<string>): string[] {
   return rutasCanonicas(WWW_ORIGIN, fuera);
 }
 
+/** El host es la puerta vieja de algo (su ruta solo responde un 308)? */
+function esPuertaQueReenvia(host: string): boolean {
+  const ruta = SUBDOMAIN_ROUTES[host.split(":")[0].split(".")[0]];
+  return !!ruta && REDIRECCIONES.has(ruta);
+}
+
 export async function GET(request: NextRequest) {
   const host = request.headers.get("host") ?? ROOT_DOMAIN;
+  // Un host que solo reenvía no tiene NADA que anunciar: su portada es un 308, y
+  // un `<urlset>` vacío no vale contra el esquema 0.9 (pide al menos un `<url>`).
+  // Así que no tiene sitemap, y su robots.txt no lo anuncia.
+  if (esPuertaQueReenvia(host)) return new Response("Not found", { status: 404 });
   const overrides = await overridesDeSuperficies();
   const fuera = new Set(Object.entries(overrides).filter(([, v]) => !v.enSitemap).map(([r]) => r));
   const body = `<?xml version="1.0" encoding="UTF-8"?>

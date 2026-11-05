@@ -28,6 +28,33 @@ export const LangContext = createContext<{ lang: Lang; setLang: (l: Lang) => voi
   setLang: () => {},
 });
 
+/** Keeps `<html lang>` in step with the language the surface is SHOWING.
+ *
+ *  The root layout (src/app/layout.tsx) can only write one static value, "es",
+ *  for the whole network — and the Cherry Picked family renders English by
+ *  default (its og:locale is en_GB), while every surface lets the visitor
+ *  switch to EN or DE. Without this, an English page declared itself Spanish to
+ *  screen readers (wrong voice), to the browser's translate prompt and to
+ *  search engines, which read the rendered DOM. Both language providers call
+ *  it, so the attribute follows the switch. On unmount it puts back what it
+ *  found, so a client navigation to a surface without a provider doesn't keep
+ *  the last surface's language.
+ *
+ *  What it can't fix: the FIRST byte still says "es" until hydration, because
+ *  the attribute lives in the shared root layout. Serving it right from the
+ *  server needs one root layout per language family — a bigger change that
+ *  is the owner's call. */
+export function useHtmlLang(lang: Lang) {
+  useEffect(() => {
+    const html = document.documentElement;
+    const antes = html.lang;
+    html.lang = lang;
+    return () => {
+      html.lang = antes;
+    };
+  }, [lang]);
+}
+
 export function LangProvider({
   children,
   storageKey,
@@ -47,6 +74,8 @@ export function LangProvider({
       if (saved === "es" || saved === "en" || saved === "de") setLangState(saved);
     });
   }, [storageKey]);
+
+  useHtmlLang(lang);
 
   const setLang = (l: Lang) => {
     setLangState(l);

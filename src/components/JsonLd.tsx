@@ -8,7 +8,7 @@
 // no está parseando JSON: busca el cierre `</script>` en el texto crudo. Si un
 // dato llegara a contener esa secuencia —hoy no ocurre, todo sale de constantes
 // de la casa— cerraría la etiqueta antes de tiempo y lo que viniera detrás se
-// ejecutaría como código. Escapar `<` a `<` lo hace imposible POR
+// ejecutaría como código. Escapar `<` a `\u003c` lo hace imposible POR
 // CONSTRUCCIÓN, que es la única garantía que sobrevive a que mañana alguien
 // meta aquí un campo administrable desde el panel.
 

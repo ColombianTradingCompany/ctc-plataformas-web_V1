@@ -143,10 +143,14 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
                   {a.publishedAt ? ` · ${fmtDay(a.publishedAt)}` : ""}
                 </span>
               </div>
-              <h3 className={styles.postTitle} style={{ fontFamily: brandFont }}>
+              {/* `lang="es"` en lo que ESCRIBE Coffeed (títulos, cuerpos, tiras), no en el muro entero: el contenido
+                  se produce en español a propósito (ALINEACION §1, «Tres idiomas»), pero las etiquetas llegan en el
+                  idioma de la superficie (`labels`). Desde que `<html lang>` sigue al idioma en pantalla
+                  (`useHtmlLang`), en una página en inglés estos textos heredarían «en» sin esta marca. */}
+              <h3 className={styles.postTitle} style={{ fontFamily: brandFont }} lang="es">
                 {a.title}
               </h3>
-              {a.body && <p className={styles.annBody}>{a.body}</p>}
+              {a.body && <p className={styles.annBody} lang="es">{a.body}</p>}
             </article>
           );
         }
@@ -181,7 +185,7 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
                 {c.publishedAt ? ` · ${fmtDay(c.publishedAt)}` : ""}
               </span>
             </div>
-            <h3 className={styles.postTitle} style={{ fontFamily: brandFont }}>
+            <h3 className={styles.postTitle} style={{ fontFamily: brandFont }} lang="es">
               {c.title}
             </h3>
 
@@ -197,7 +201,7 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
               />
             )}
             {(c.kind === "carrusel" || c.kind === "noticia") && (
-              <div className={styles.strip}>
+              <div className={styles.strip} lang="es">
                 {c.panels.map((p, i) => (
                   <div key={p.position} className={[styles.panel, i === 0 ? styles.panelFirst : "", i === c.panels.length - 1 ? styles.panelLast : ""].join(" ")}>
                     <span className={styles.panelBar}>
@@ -228,7 +232,7 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
             {/* RT-Scriptor: la tira de fotogramas se lee como se leería un
                 tablero — de izquierda a derecha, con el pie de cada cuadro. */}
             {c.kind === "guion" && c.guion && (
-              <div className={styles.strip}>
+              <div className={styles.strip} lang="es">
                 {c.guion.frames.map((f, i) => (
                   <div
                     key={i}

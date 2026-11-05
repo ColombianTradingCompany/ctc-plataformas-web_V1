@@ -1,5 +1,6 @@
-import { NIT, CTC_RAZON, CTC_EMAIL } from "@/lib/legal";
+import { NIT, CTC_RAZON, CTC_EMAIL, CTC_SEDE } from "@/lib/legal";
 import { GRADOS } from "@/lib/grados/definicion";
+import { SCA_TYRIAN } from "@/lib/pvc/escala";
 import { FAQ } from "@/lib/kaffetal/faq";
 import { WWW_ORIGIN } from "@/lib/red/subdominios";
 
@@ -34,6 +35,20 @@ const TAX_ID = NIT.replace(/^NIT\s*/i, "");
 
 type Json = Record<string, unknown>;
 
+/** La sede, sacada de `CTC_SEDE`: la dirección vivía aquí escrita a mano, otra
+ *  copia de lo que `legal.ts` ya posee. Con la forma de hoy («Municipio,
+ *  Departamento, País») se parte en sus tres campos, y el país va en ISO 3166-1
+ *  alfa-2, que es lo que schema.org espera en `addressCountry` (un país sin código
+ *  en la tabla sale con su nombre, que también vale). Con CUALQUIER otra forma
+ *  —una calle delante, dos partes— no se adivina: sale la línea entera como
+ *  texto, que schema.org también acepta, en vez de correr los campos de sitio. */
+const SEDE = CTC_SEDE.split(",").map((s) => s.trim());
+const PAIS_ISO: Record<string, string> = { Colombia: "CO" };
+const DIRECCION: Json | string =
+  SEDE.length === 3
+    ? { "@type": "PostalAddress", addressLocality: SEDE[0], addressRegion: SEDE[1], addressCountry: PAIS_ISO[SEDE[2]] ?? SEDE[2] }
+    : CTC_SEDE;
+
 /** La empresa. Es la ficha que sostiene a todas las demás. */
 export function organizationLd(): Json {
   return {
@@ -61,12 +76,7 @@ export function organizationLd(): Json {
       "Microlotes de café por fracciones",
       "Café de Santander, Colombia",
     ],
-    address: {
-      "@type": "PostalAddress",
-      addressLocality: "Piedecuesta",
-      addressRegion: "Santander",
-      addressCountry: "CO",
-    },
+    address: DIRECCION,
     areaServed: [
       { "@type": "Country", name: "Colombia" },
       { "@type": "Place", name: "Unión Europea" },
@@ -155,8 +165,9 @@ export function gradosLd(): Json {
       name: g.nombre,
       termCode: g.id,
       inDefinedTermSet: { "@id": `${WWW_ORIGIN}/#grados-ctc` },
-      description: `${g.lema}. ${g.puntosMin}–${g.puntosMax} puntos CTC (el Punto SCA de la taza por la tríada variedad · proceso · reconocimiento)${g.scaDesdeComun != null ? `; un café común lo alcanza desde SCA ${g.scaDesdeComun}` : "; exige SCA 89 o más y surplus"}. Clase de lote: ${g.claseLote.toLowerCase()}. ${g.variedad}.`,
-      image: `${WWW_ORIGIN}/images/shared/grados/${g.id}.webp`,
+      description: `${g.lema}. ${g.puntosMin}–${g.puntosMax} puntos CTC (el Punto SCA de la taza por la tríada variedad · proceso · reconocimiento)${g.scaDesdeComun != null ? `; un café común lo alcanza desde SCA ${g.scaDesdeComun}` : `; exige SCA ${SCA_TYRIAN} o más y surplus`}. Clase de lote: ${g.claseLote.toLowerCase()}. ${g.variedad}.`,
+      // El sello sale de la definición del grado (`g.logo`), no de reconstruir su ruta.
+      image: `${WWW_ORIGIN}${g.logo}`,
     })),
   };
 }

@@ -13,6 +13,9 @@
   padding: 0;
 }
 
+/* Puerta de entrada (CTCx OS): el «Volver» cuando la ficha se abrió desde otra pantalla. */
+.volver { margin: 0 0 14px; font-size: 13px; }
+
 .generales {
   display: grid;
   gap: 14px;

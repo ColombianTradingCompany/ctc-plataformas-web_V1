@@ -44,6 +44,47 @@ Hay **dos pantallas de grados**, y desde la V5.56 no se llaman igual: `/ecp/dire
 definición vigente» (LA que leen todas las superficies) y `/ecp/pvc/grados` es «Escala de puntos · en validación» (la que
 viene). Se funden con la fase 2. La pestaña vacía «Modelo Económico» de Direccionamiento se retiró (308 → `/ecp/pvc`).
 
+## Puertas de entrada (CTCx OS, 2026-11-05)
+
+Desde el 2026-11-05 el owner lleva la plataforma hacia **CTCx OS**: una concha de juego sobre la operación real, donde las
+herramientas internas se abren **como módulos** —desde el tablero del juego, un evento de calendario, el teléfono o el chat con
+Tailor— con contexto. Se crece sobre lo que hay (misma base, mismos logins, mismas reglas). Este es el **contrato de URL** de cada
+herramienta de este charter: qué registro abre, qué precarga y cómo vuelve. Reglas comunes:
+
+- **La URL precarga, no autoriza.** Toda herramienta sigue detrás de su compuerta de consola (el layout del ECP o, en un route
+  handler, `requireConsoleAccess`); escribir sigue pasando por la compuerta de su acción y su CLASE (`niveles.ts`).
+- **Todo parámetro es de lista blanca o de forma estricta**, y lo que no casa se **ignora**: la herramienta abre como si no viniera
+  (nunca se adivina ni se mete en rango un valor que viene fuera). Los analizadores son PUROS y viven en
+  `src/lib/herramientasInternas/entrada.ts`; los vigila `qa-entradas-check`.
+- **`?volver=`** (todas): una ruta RELATIVA de consola (`/ecp`, `/ocp`, `/lcp`, `/bcp`, `/panel`, por frontera de segmento), con las
+  reglas de `vueltaSegura` de las herramientas públicas (sin `//host`, sin `://`, sin `\` ni controles, ≤ 300 caracteres). Si vale,
+  la herramienta pinta «← Volver»; si no, no pinta nada (ya tiene su rail). Una superficie nueva de CTCx OS entra en
+  `VUELTAS_PERMITIDAS` con una línea.
+- **Quién abre**: «ECP» = cualquier operador activo con el grant del ECP (también un `viewer`, que lee); «owner» = el rail solo se
+  lo muestra al owner y sus escrituras son del owner.
+
+| Herramienta | URL de entrada | Parámetros | Qué abre / precarga | Quién abre | Estado |
+|---|---|---|---|---|---|
+| Definición de Contexto | `/ecp/direccionamiento` | `unidad` ∈ `ctcx`·`kr`·`chp`·`ecosistema` · `volver` | la ficha en esa unidad | ECP (escribir: `emite`) | **hecho** (2026-11-05) |
+| Definición de Contexto · exportar | `/ecp/direccionamiento/exportar` | `unidad` (lista blanca; otra cosa = 400) | descarga `.md` de la ficha guardada (esa unidad + generales + memoria) | ECP (lectura) | TAR-122 (en PR) |
+| Grados de Calidad · definición vigente | `/ecp/direccionamiento/grados` | `volver` | — (la escalera entera) | ECP | propuesto (`volver`) |
+| Escala de puntos · calculadora | `/ecp/pvc/grados` | `sca` (78–100, hasta 2 decimales, `.` o `,`) · `triada` (3 letras C/B/A: variedad·proceso·reconocimiento) · `volver` | la calculadora con ese Punto y esa tríada: grado, puntos y lo que vale en la edición vigente | owner (rail) | **hecho** (2026-11-05) |
+| Escala de puntos · desde un lote | `/ecp/pvc/grados` | `lote` = `CTC-L-XXXXXXXX` (la referencia pública, V5.198) | el Punto y la tríada **del lote** (los que ya pinta el informe del Centro, `triadaDelLote.ts`) | owner | propuesto: lee `lots` (solo lectura) y la Ficha; necesita SQL para verificarse |
+| Tablero del modelo (PVC) | `/ecp/pvc/tablero` | `borrador` (uuid) | el borrador del agente (V5.179) | owner | existe |
+| Ediciones · Lectura · Parámetros · Dossier (PVC) | `/ecp/pvc[/lectura\|/parametros\|/dossier]` | `volver` | — | owner | propuesto (`volver`) |
+| Anclas de mercado | `/ecp/anclas-mercado` | `volver` | — | ECP | propuesto (`volver`) |
+| Cotizador de lotes | `/ecp/cotizador-lotes/<id>` | `id` (uuid, en la ruta) · `volver` | abre esa cotización | ECP (guardar/emitir: `emite`) | existe el registro; `volver` propuesto |
+| Cotizador de lotes · nueva desde un lote | `/ecp/cotizador-lotes` | `lote` = `CTC-L-…` | una cotización nueva con el productor y los kg del lote | ECP | propuesto: crea un borrador (escritura), va con su tanda y su SQL |
+| Cotizador logístico | `/ecp/cotizador-logistico/<id>` | `id` · `volver` | abre esa cotización | ECP | existe el registro; `volver` propuesto |
+| Empacado hasta FOB | `/ecp/cotizador-empaque` | `kg` (de verde) · `modo` (uno de los cinco de `empaqueFob.ts`) · `volver` | el cálculo con ese embarque | ECP (guardar referencia: `emite`) | propuesto |
+| Cotizador Courier · FedEx | `/ecp/cotizador-courier` | `lead` (uuid, item CaaS) · `abrir` (uuid, cotización) | cotizar para ese item / reabrir esa cotización (V5.73) | ECP | existe |
+| Automatizaciones | `/ecp/automatizaciones` | `clave` (una `automations.clave`) | la fila de ese automatismo | ECP | propuesto |
+| Calculadoras de los cotizadores | `/ocp-apps/<archivo>.html` | — (lista blanca de dos archivos) | la app del owner, sola (la embebe el cotizador) | consola del cotizador (rail) | TAR-119 (en PR) |
+
+**`?finca=` y `?trabajo=`** no tienen hoy una herramienta de este charter que los lea: `?finca=` sería el flete por región del PVC
+(`flete_por_region`, V5.177) cuando una oferta se cotice desde la finca —es del OCP, `consolas`—, y `?trabajo=` es de los trabajos
+guardados del taller de Herramientas del Café (`herramientas-cafe`).
+
 ## Mapa de código
 
 - **Definición de Contexto**: `src/lib/direccionamiento/{definicion,memoria}.ts`,
@@ -80,6 +121,7 @@ Solo lee: `lots`, `lot_offers`, `purchase_contracts`, `lot_listings` (para saber
 
 ## Guardianes
 
+`qa-entradas-check.mjs` (97 — las puertas de entrada: `?volver=`, `?unidad=`, `?sca=`, `?triada=`, y que la tabla de arriba diga lo que el código hace) ·
 `qa-pvc-motor.mjs` (49 — paridad con Python, tolerancia 1e-4) · `qa-pvc-tablero.mjs` (44 — marcadores `@@MODELO`) ·
 `qa-pvc-vigencia.mjs` (28) · `qa-pvc-lectura.mjs` (60 — el MOQ de compra y los tipos de mezcla, en el código Y en el plan §14.8) ·
 `qa-pvc-escala.mjs` (68 — incluye la Base física) · `qa-pvc-canales.mjs` (57) · `qa-pvc-compromiso.mjs` (31) ·
@@ -128,6 +170,12 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
   **Objetivo 1, tanda A** (dueño `plataforma`): la propuesta es que el calendario público de CTC, KR y CP pase a los Ciclos y lea
   las fechas de las ediciones (`src/lib/trato/calendario.ts`, `public_pvc_next`; decisión 2 del owner): si se aprueba, una edición
   sin fechas o sin publicar se notará en las tres landings. La edición siguiente, PVC-F1-2027, sigue en borrador con plazo del owner el 29-nov-2026 (viñeta V5.179).
+- **2026-11-05 · Puertas de entrada (CTCx OS)** (sesión nocturna en la nube; sin versión hasta que aterrice en `main`). La tabla
+  «Puertas de entrada» (arriba) es el contrato de URL de cada herramienta; hechas: la calculadora de la escala (`/ecp/pvc/grados?sca=&triada=&volver=`)
+  y la Definición de Contexto (`/ecp/direccionamiento?unidad=&volver=`), sobre `src/lib/herramientasInternas/entrada.ts`. **Siguen
+  propuestas** (cada una con su tanda): `?lote=CTC-L-…` en la calculadora y en el cotizador de lotes (leen `lots`; el segundo crea un
+  borrador), `?kg=&modo=` en Empacado hasta FOB, `?clave=` en Automatizaciones y `?volver=` en el resto. Verificar en la consola (OTP)
+  que las dos precargan y que «Volver» aparece solo con una vuelta válida.
 - **V5.196 · las referencias de Empacado hasta FOB ya anclan precios**: el Triage de Catálogo Activo (`consolas`) suma una referencia
   vigente al café de cada declaración para su FOB mínimo (lo que el plan llamó «el ancla»); la declaración guarda su referencia y la
   cifra. Retirar una referencia no cambia las declaraciones ya hechas.

@@ -48,14 +48,16 @@ type Props = {
   aiComplete: (prompt: string) => Promise<string>;
   memory: () => Promise<string>;
   initialData: Record<string, unknown> | null;
+  /** La unidad con la que abre (puerta de entrada `?unidad=`, CTCx OS); sin ella, CTCX. */
+  unidadInicial?: UnidadId | null;
 };
 
 const AUTOSAVE_MS = 3500;
 
-export default function DefinicionDeContexto({ adapter, aiComplete, memory, initialData }: Props) {
+export default function DefinicionDeContexto({ adapter, aiComplete, memory, initialData, unidadInicial = null }: Props) {
   const inicial = (initialData?.values as Record<string, string> | undefined) ?? {};
   const [values, setValues] = useState<Record<string, string>>(inicial);
-  const [unidad, setUnidad] = useState<UnidadId>("ctcx");
+  const [unidad, setUnidad] = useState<UnidadId>(unidadInicial ?? "ctcx");
   const [estado, setEstado] = useState<"limpio" | "guardando" | "guardado" | "error">("limpio");
   const [redactando, setRedactando] = useState<string | null>(null);
   // V5.164 (owner): redactar con IA enseña su avance bajo el campo.

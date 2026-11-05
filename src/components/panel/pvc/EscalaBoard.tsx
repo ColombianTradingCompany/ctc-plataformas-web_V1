@@ -38,13 +38,18 @@ const TRIADAS_TABLA: { letras: string; t: Triada; nota: string }[] = [
 // V5.158: `CurvaDeEscala` vive en `./CurvaDeEscala.tsx` — la pinta también el informe del Centro en el OCP.
 
 export function EscalaBoard({
-  edicionCode, escalera,
+  edicionCode, escalera, scaInicial = null, triadaInicial = null, volver = null,
 }: {
   edicionCode: string | null;
   escalera: { banda: string; cop: number; mult: number }[];
+  /** Puerta de entrada (CTCx OS): `?sca=` y `?triada=` ya validados en la página (`herramientasInternas/entrada.ts`). */
+  scaInicial?: number | null;
+  triadaInicial?: Triada | null;
+  /** `?volver=` saneado (`vueltaDeConsola`): solo entonces se pinta «Volver». */
+  volver?: string | null;
 }) {
-  const [sca, setSca] = useState(86);
-  const [t, setT] = useState<Triada>({ variedad: "C", proceso: "C", reconocimiento: "C" });
+  const [sca, setSca] = useState(scaInicial ?? 86);
+  const [t, setT] = useState<Triada>(triadaInicial ?? { variedad: "C", proceso: "C", reconocimiento: "C" });
   const [fisica, setFisica] = useState<BaseFisica>({ factor: 92.8, humedad: 11, densidadEnRango: true });
 
   const r = useMemo(() => puntosCtc(sca, t), [sca, t]);
@@ -71,8 +76,19 @@ export function EscalaBoard({
     techo: `Techo de la escala: ${PUNTOS_MAX} puntos.`,
   };
 
+  const precargada = scaInicial !== null || triadaInicial !== null;
+  const precarga = [
+    scaInicial !== null ? `Punto ${num(scaInicial, 2)}` : null,
+    triadaInicial !== null ? `tríada ${letras(triadaInicial)}` : null,
+  ].filter(Boolean).join(" · ");
+
   return (
     <>
+      {volver && (
+        <p className={styles.meta}>
+          <Link href={volver}>← Volver a donde estaba</Link>
+        </p>
+      )}
       <h1 className={styles.title}>Grados · El Punto y la Tríada</h1>
       <p className={styles.subtitle}>
         La escala que viene: el grado se lee de los <strong>puntos</strong>, que salen del puntaje SCA (la base) y de las
@@ -107,6 +123,11 @@ export function EscalaBoard({
       {/* ── La calculadora ── */}
       <div className={styles.card}>
         <div className={styles.sectionHead}><strong>Calculadora</strong></div>
+        {precargada && (
+          <p className={styles.meta}>
+            Abierta con un café ya cargado ({precarga}): cámbielo aquí; no se guarda nada.
+          </p>
+        )}
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
           <div style={{ flex: "0 0 300px", display: "grid", gap: 14, alignContent: "start" }}>
             <label className={styles.field}>

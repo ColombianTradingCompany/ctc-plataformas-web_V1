@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DireccionamientoClient } from "@/components/panel/direccionamiento/DireccionamientoClient";
 import { cargarContexto } from "../direccionamientoActions";
+import { unidadDeUrl, vueltaDeConsola, type Param } from "@/lib/herramientasInternas/entrada";
 
 export const metadata: Metadata = {
   title: "Direccionamiento · ECP",
@@ -12,7 +13,10 @@ export const metadata: Metadata = {
 // las pide aparte por el adaptador, que es justo para lo que están separadas.
 export const dynamic = "force-dynamic";
 
-export default async function DireccionamientoPage() {
-  const record = await cargarContexto("record");
-  return <DireccionamientoClient initialRecord={record} />;
+//
+// PUERTA DE ENTRADA (CTCx OS, 2026-11-05; tabla del charter): `?unidad=kr&volver=/ecp` abre la ficha en esa unidad, con un
+// «Volver». Lista blanca (`herramientasInternas/entrada.ts`): lo que no casa se ignora y abre en CTCX, como siempre.
+export default async function DireccionamientoPage({ searchParams }: { searchParams: Promise<Record<string, Param>> }) {
+  const [record, q] = await Promise.all([cargarContexto("record"), searchParams]);
+  return <DireccionamientoClient initialRecord={record} unidadInicial={unidadDeUrl(q.unidad)} volver={vueltaDeConsola(q.volver)} />;
 }

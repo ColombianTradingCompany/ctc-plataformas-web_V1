@@ -31,9 +31,19 @@ for (const malo of [
   null, undefined, "", "   ", "ecp", "//evil.example/ecp", "https://evil.example/ecp", "/ecp://x", "/\\evil.example",
   "/ecp\\..\\x", "/ecp\nSet-Cookie: x", "/ecp\tx", "/ecpx", "/ecp-falso", "/ocpanel", "/panelx", "/kaffetal-regal", "/login",
   "/", "javascript:alert(1)", "/ecp/" + "a".repeat(VOLVER_MAX), ["/ecp", "/ocp"],
+  // Segmentos punto (revisión adversarial, 2026-11-05): el prefijo es de consola, pero el navegador los resuelve fuera.
+  "/ecp/../kaffetal-regal", "/ecp/..//evil.example", "/ecp/%2e%2e/login", "/ecp/%2E%2E/x", "/panel/./../x", "/ecp/./x",
+  "/ocp/..", "/bcp/.%2e/lcp", "/ecp%2f..%2fx", "/ecp/..?x", "/ecp/..#x",
 ]) {
   check(`volver rechaza ${String(JSON.stringify(malo)).slice(0, 40)}`, vueltaDeConsola(malo) === null);
 }
+// Lo que se devuelve es lo que el navegador resolvería (el mismo texto, para una vuelta limpia), y siempre cae en una consola.
+check("una vuelta aceptada, resuelta por el navegador, se queda en el mismo origen y dentro de una consola",
+  ["/ecp/pvc/grados?sca=86#x", "/ocp/kr?lote=CTC-L-ABCDEFGH", "/panel"].every((x) => {
+    const r = vueltaDeConsola(x);
+    const u = r && new URL(r, "https://www.ctcexport.com/ecp/pvc/grados");
+    return r === x && u.origin === "https://www.ctcexport.com" && VUELTAS_PERMITIDAS.some((p) => u.pathname === p || u.pathname.startsWith(p + "/"));
+  }));
 check("conVuelta codifica la vuelta y respeta una consulta previa",
   conVuelta("/ecp/pvc/grados?sca=86", "/ocp/kr?lote=X&y=1") === "/ecp/pvc/grados?sca=86&volver=%2Focp%2Fkr%3Flote%3DX%26y%3D1"
     && conVuelta("/ecp/direccionamiento", null) === "/ecp/direccionamiento");

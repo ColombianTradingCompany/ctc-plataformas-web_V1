@@ -38,8 +38,21 @@ export function vueltaDeConsola(volver: Param): string | null {
   if (!v.startsWith("/") || v.startsWith("//")) return null; // absoluta, esquema raro o `//otro-host`
   if (/[\\\u0000-\u001f\u007f]/.test(v)) return null; // `\`, saltos de línea, tabuladores y demás controles
   if (v.includes("://")) return null;
-  const ok = VUELTAS_PERMITIDAS.some((r) => v === r || v.startsWith(r + "/") || v.startsWith(r + "?") || v.startsWith(r + "#"));
-  return ok ? v : null;
+  // Segmentos `.` y `..` (también en `%2e`): el navegador los RESUELVE, así que `/ecp/../kaffetal-regal` empieza por `/ecp/` y
+  // aterriza fuera de las consolas. Una vuelta legítima nunca los lleva: se rechazan, sin intentar «arreglarlos».
+  if (/(^|\/)(\.|%2e){1,2}(\/|\?|#|$)/i.test(v)) return null;
+  // Y la prueba de verdad: lo que el NAVEGADOR haría con ella. Se resuelve contra un origen ficticio; tiene que quedarse en él y
+  // su ruta, ya normalizada, caer por frontera de segmento dentro de una consola. Se devuelve la forma normalizada.
+  const BASE = "https://vuelta.invalid";
+  let u: URL;
+  try {
+    u = new URL(v, BASE);
+  } catch {
+    return null;
+  }
+  if (u.origin !== BASE || u.pathname.startsWith("//")) return null;
+  const ok = VUELTAS_PERMITIDAS.some((r) => u.pathname === r || u.pathname.startsWith(r + "/"));
+  return ok ? `${u.pathname}${u.search}${u.hash}` : null;
 }
 
 /** El enlace de una herramienta con su vuelta (para quien la abre desde otra pantalla). */

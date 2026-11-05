@@ -62,7 +62,10 @@ asistente— ya puesto en su trabajo o prellenado con lo que la persona tiene en
 https://herramientas.ctcexport.com/taller/<id>?<parámetros>
 ```
 
-(desde otro host de la red, la misma ruta con su base: `/herramientas/taller/<id>?…`). **Fuente en el código**: los parámetros los lee
+(desde www, el ápex o el propio host de Herramientas vale la ruta relativa `/herramientas/taller/<id>?…`; desde cualquier otro
+subdominio —Kaffetal Regal, Cherry Picked, el panel, el Centro de Calidad…— el enlace tiene que ser ABSOLUTO,
+`${origenDeSuperficie("/herramientas")}/taller/<id>?…`, porque allí el proxy le antepone su base y la página da 404, como ya
+advierte `RUTAS_SOLO_WWW` en `src/lib/red/subdominios.ts`). **Fuente en el código**: los parámetros los lee
 `leerEntrada()` y las URLs las escribe `urlDeHerramienta()`, las dos en `src/lib/tools/entrada.ts`; qué prellena cada herramienta lo
 declara su fila de `CARPETAS_HERRAMIENTAS` (`src/lib/tools/carpetas.ts`, clave `entrada`). Esta tabla es su espejo: si cambia uno,
 cambia el otro, y `qa-taller-entrada-check` comprueba que cada campo declarado exista en el archivo de su herramienta.
@@ -115,11 +118,16 @@ Reglas que no cambian con la herramienta:
 | Defectos del Café | `defectos-cafe` | default | `volver` | — (sin memoria: ni trabajos ni prellenado) | `/taller/defectos-cafe?volver=/herramientas/taller` |
 | Navegador de Incoterms® 2020 | `incoterms` | **plus** *(fila de `tools` creada y nivel puesto por el owner el 2026-10-29; lo cuenta ColombianTradingCompany/ctc-plataformas-web_V1#32)* | `volver` | — (sin memoria) | `/taller/incoterms` |
 
-`mermas-detallada` está archivada (308 a `mermas-ctc`). Una herramienta nueva entra en esta tabla con su alta: si guarda trabajo,
+`mermas-detallada` está archivada: `/taller/mermas-detallada` da 404 (el 308 a `mermas-ctc` es solo para sus URLs de archivo,
+`/tools/mermas-detallada.html` y `/tools/mermas-detallada/mermas-detallada.html`); un enlace nuevo usa `mermas-ctc`. Una herramienta
+nueva entra en esta tabla con su alta: si guarda trabajo,
 acepta `trabajo` sin declarar nada; si tiene campos de finca o de lote, se declara su `entrada` en `carpetas.ts` y se añade aquí.
 
 **Para quien construye los enlaces** (el tablero de CTCx OS, un asistente): la URL se escribe con `urlDeHerramienta(id, { trabajo,
 finca, lote, volver })` (relativa) o `urlPublicaDeHerramienta(…)` (absoluta y canónica, para compartir fuera del sitio), nunca a mano.
+La relativa solo vale en www, en el ápex y en el host de Herramientas: desde cualquier otro subdominio el resultado de
+`urlDeHerramienta()` va precedido de `origenDeSuperficie("/herramientas")` (`src/lib/red/subdominios.ts`), o el proxy le antepone
+la base de ese subdominio y da 404. Así enlazan ya al taller, con el origen absoluto, `BloqueB1.tsx` y `LabEvalEditor.tsx`.
 Los ids de los trabajos de una persona los conoce su Home Menu, que ofrece en cada trabajo **«Copiar enlace»** (el enlace directo
 `…/taller/<id>?trabajo=<uuid>`, que solo abre la cuenta dueña) *(los dos llegan con ColombianTradingCompany/ctc-plataformas-web_V1#46)*;
 no hay todavía una lectura de «mis trabajos» para fuera del taller.

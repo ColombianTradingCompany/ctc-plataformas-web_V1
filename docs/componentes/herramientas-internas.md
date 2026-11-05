@@ -63,11 +63,12 @@ seguía diciendo «en validación»). La pestaña vacía «Modelo Económico» d
   (`GRADOS`, `gradoPorPuntaje`, `redondeaPuntaje`) y `GradosBoard.tsx` — **contrato transversal de `ALINEACION` §1**: se
   cambia aquí y solo aquí, avisando a todos los que lo leen. **Anclas**: `src/lib/anclas/{actions,fnc,parseFnc,types}.ts`,
   `src/lib/market/ticker.ts` (lector FNC/ICE para Home y anclas). Plan: `docs/PVC_BCP_PLAN.md`.
-- **Procesamiento y Logística**: `src/lib/cotizador/{actions,types}.ts` (12 compuertas desde la V5.194, más 4 en `anclas/actions.ts`: cada módulo declara su consola UNA
+- **Procesamiento y Logística**: `src/lib/cotizador/{actions,types,puente}.ts` (12 compuertas desde la V5.194, más 4 en `anclas/actions.ts`: cada módulo declara su consola UNA
   vez —`const CONSOLA = "ecp"`— y `qa-rutas-consolas` (f-bis) la contrasta con el rail; las rutas salen de `QUOTE_BASE_PATH`
   y `ANCLAS_PATH`), `src/components/cotizador/` (con `QuoteDetail.tsx`, que antes vivía en la carpeta de rutas). Dos cotizadores:
   lotes y logístico (el de empaque salió en la V5.194). Sus calculadoras: `private/ocp-apps/` + `src/lib/cotizador/apps.ts` (lista
-  blanca) + `src/app/ocp-apps/[archivo]/route.ts` (TAR-119).
+  blanca) + `src/app/ocp-apps/[archivo]/route.ts` (TAR-119). `puente.ts`: `globalDeLaApp`, el lector de globales léxicas de las apps
+  embebidas.
 - **Producción · Empacado hasta FOB** (V5.194): `src/lib/produccion/empaqueFob.ts` (PURO: modos, salidas, valores por defecto con
   su fuente, `calcularEmpaqueFob`, `ESTIMADOS_DEL_PVC`), `referencias.ts` (`cargarReferenciasEmpaque`, sin compuerta: la reusará el
   Triage), `actions.ts` (`guardarReferenciaEmpaque` · `retirarReferenciaEmpaque`, nivel emite, `CONSOLA = "ecp"`),
@@ -87,7 +88,7 @@ Solo lee: `lots`, `lot_offers`, `purchase_contracts`, `lot_listings` (para saber
 `qa-pvc-vigencia.mjs` (28) · `qa-pvc-lectura.mjs` (60 — el MOQ de compra y los tipos de mezcla, en el código Y en el plan §14.8) ·
 `qa-pvc-escala.mjs` (70 — incluye la Base física y, desde TAR-124, el rótulo de la pestaña) · `qa-pvc-canales.mjs` (57) · `qa-pvc-compromiso.mjs` (31) ·
 `qa-grados-check.mjs` (48 — el contrato de grados) · `qa-definicion-check.mjs` · `qa-direccionamiento-check.mjs` ·
-`qa-anclas-check.mjs` · `qa-courier-check.mjs` (51 — el cálculo contra un acuerdo FICTICIO, la fuga cero por hash, el combustible derivado contra el historial de FedEx, el combustible provisional y el límite de paquete por medidas). `qa-empaque-fob-check.mjs` (47 — Empacado hasta FOB: el cálculo contra cuatro casos hechos a mano, que la máquina no vuelva, que el servidor recalcule y emita, la compuerta de la tabla). Y de la casa, porque el grupo vive en el rail del ECP: `qa-rutas-consolas.mjs`.
+`qa-anclas-check.mjs` · `qa-courier-check.mjs` (51 — el cálculo contra un acuerdo FICTICIO, la fuga cero por hash, el combustible derivado contra el historial de FedEx, el combustible provisional y el límite de paquete por medidas). `qa-empaque-fob-check.mjs` (47 — Empacado hasta FOB: el cálculo contra cuatro casos hechos a mano, que la máquina no vuelva, que el servidor recalcule y emita, la compuerta de la tabla). `qa-cotizador-puente-check.mjs` (39 — el puente AppFrame ↔ Mermas/CoGS: ids del DOM del titular logístico, funciones leídas por window, `state` por `globalDeLaApp`, los kg finales en kg, GLOBAL_KEYS declaradas; córrelo al reemplazar una calculadora). Y de la casa, porque el grupo vive en el rail del ECP: `qa-rutas-consolas.mjs`.
 `qa-cotizador-apps-check.mjs` (40 — TAR-119: ninguna copia en `public/`, la puerta antes del disco, la consola leída del rail, la carpeta trazada).
 
 ## Reglas propias
@@ -140,6 +141,15 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
 - **V5.196 · las referencias de Empacado hasta FOB ya anclan precios**: el Triage de Catálogo Activo (`consolas`) suma una referencia
   vigente al café de cada declaración para su FOB mínimo (lo que el plan llamó «el ancla»); la declaración guarda su referencia y la
   cifra. Retirar una referencia no cambia las declaraciones ya hechas.
+- **2026-11-05 · El puente de los cotizadores leía globales que `window` no ve** (sesión nocturna en la nube; sin versión hasta que
+  aterrice en `main`). Comprobado en Chromium: las dos apps declaran su estado con `let`/`const` de primer nivel (Mermas: `const state`;
+  CoGS: `let rowUnits`, `let currentCurrency`… las once de `GLOBAL_KEYS`), que viven en el ámbito léxico del iframe y no como
+  propiedad de `window`. **Arreglado** (lo que solo LEE): el titular de cada cotización de lote —etiqueta, kg finales, merma, factor,
+  costos— se guardaba vacío; ahora se lee por `globalDeLaApp` (`src/lib/cotizador/puente.ts`), guardián `qa-cotizador-puente-check`.
+  **Decisión del owner** (lo que cambia una cotización ya guardada): `readState` nunca guardó una sola global y `writeState` no las
+  restaura, así que reabrir una cotización restaura solo sus `<input>`. Arreglarlo cambiaría lo que reabren las cotizaciones nuevas
+  (y la `state` de Mermas lleva el ancla FNC, que AppFrame inyecta al cargar: habría que decidir cuál manda). Las guardadas hasta hoy
+  no tienen esas globales y no cambiarían.
 - **V5.194 · Empacado hasta FOB** (owner, 2026-10-09; ejecutado desde el nodo final, plan `docs/PLAN_TRIAGE_CATALOGO.md` §2.2):
   reemplazó al costo de empaque de la máquina de sellado (la amortización y el Cuadro de evaluación salieron por pedido del owner).
   **Pendiente del owner**: ~~guardar la primera referencia~~ (**hecho a medias el 2026-10-09**: `EF-2026-001` está vigente, pero es

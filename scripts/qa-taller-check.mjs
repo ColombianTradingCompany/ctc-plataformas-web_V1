@@ -36,6 +36,30 @@ check(
   "una herramienta sin puente no ofrece trabajos",
   trabajos.includes("soporta_memoria") && trabajos.includes("no guarda trabajos")
 );
+// El rastro de `emitirDesdeHerramienta` (herramienta, usuario) lo pone el servidor. Sin levantar nada: se toma el objeto
+// `payload: {…}` tal como está escrito en la función y se evalúa con un payload que trae sus propios campos con esos nombres.
+{
+  const desde = trabajos.indexOf("export async function emitirDesdeHerramienta(");
+  const hasta = trabajos.indexOf("export async function", desde + 1);
+  const cuerpo = desde < 0 ? "" : trabajos.slice(desde, hasta < 0 ? undefined : hasta);
+  const literal = cuerpo.match(/payload:\s*(\{[^{}]*\})/)?.[1];
+  let emitido = null;
+  try {
+    emitido = literal
+      ? new Function("toolId", "r", "payload", `return (${literal});`)(
+          "mermas-ctc",
+          { user: { id: "perfil-de-la-sesion" } },
+          { herramienta: "otra-herramienta", usuario: "otro-perfil", lote: "X" }
+        )
+      : null;
+  } catch {
+    emitido = null;
+  }
+  check(
+    "emitir: un payload con su propio usuario o herramienta no los cambia (quedan los del servidor, y el resto viaja)",
+    emitido?.herramienta === "mermas-ctc" && emitido?.usuario === "perfil-de-la-sesion" && emitido?.lote === "X"
+  );
+}
 
 // ── 2. El puente: inerte fuera de la concha, sordo a extraños ───────────────
 const puente = lee("public/tools/ctc-bridge.js");

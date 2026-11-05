@@ -210,7 +210,8 @@ export async function emitirDesdeHerramienta(
   await emitEvent({
     dominio: "conocimiento",
     tipo,
-    payload: { herramienta: toolId, usuario: r.user.id, ...payload },
+    // El rastro va DESPUÉS del payload: si la herramienta manda campos con esos nombres, quedan los del servidor.
+    payload: { ...payload, herramienta: toolId, usuario: r.user.id },
   });
   return { ok: true, data: null };
 }

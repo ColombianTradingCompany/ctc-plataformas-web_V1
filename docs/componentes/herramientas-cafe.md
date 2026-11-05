@@ -100,9 +100,9 @@ Reglas que no cambian con la herramienta:
 | Herramienta | `id` | Nivel | Parámetros | Qué prellenan `?finca=` / `?lote=` | Ejemplo |
 |---|---|---|---|---|---|
 | Calculadora de mermas · Detallada | `mermas-ctc` | default | `volver` · `trabajo` · `finca` · `lote` | «Notas para el reporte»: la línea del lote (referencia · nombre · variedad · proceso · finca) o la de la finca (nombre · municipio, departamento · altitud) | `/taller/mermas-ctc?lote=CTC-L-XXXXXXXX` |
-| CTCx Coffee Datasheet Tool | `coffee-datasheet` | default | `volver` · `trabajo` · `finca` · `lote` | El lote en curso: nombre; Caracterización Extrínseca: país, región, municipio, finca, altitud; B1: variedad y proceso. Solo lo que esté vacío *(llega con el PR de prellenado de las más usadas; hasta entonces, el nombre del trabajo)* | `/taller/coffee-datasheet?lote=CTC-L-XXXXXXXX` |
-| Lector de Cromatografía de Suelo | `cromatografia-suelo` | **plus** | `volver` · `trabajo` · `finca` · `lote` | «Su finca» (y con ella departamento, municipio y altitud, como si la persona la eligiera); variedad del lote *(ídem)* | `/taller/cromatografia-suelo?finca=CTC-F-XXXXXXXX` |
-| Ficha de café verde | `green-datasheet` | default | `volver` · `trabajo` · `finca` · `lote` | Nombre del producto (el del lote), finca, departamento, municipio y altitud (msnm) *(ídem)* | `/taller/green-datasheet?lote=CTC-L-XXXXXXXX` |
+| CTCx Coffee Datasheet Tool | `coffee-datasheet` | default | `volver` · `trabajo` · `finca` · `lote` | El lote en curso: nombre; Caracterización Extrínseca: país, región, municipio, finca, altitud; B1: variedad y proceso. Solo lo que esté vacío | `/taller/coffee-datasheet?lote=CTC-L-XXXXXXXX` |
+| Lector de Cromatografía de Suelo | `cromatografia-suelo` | **plus** | `volver` · `trabajo` · `finca` · `lote` | «Su finca» (y con ella departamento, municipio y altitud, como si la persona la eligiera); variedad del lote | `/taller/cromatografia-suelo?finca=CTC-F-XXXXXXXX` |
+| Ficha de café verde | `green-datasheet` | default | `volver` · `trabajo` · `finca` · `lote` | Nombre del producto (el del lote), finca, departamento, municipio y altitud (msnm) | `/taller/green-datasheet?lote=CTC-L-XXXXXXXX` |
 | Disco Agtron | `agtron` | default | `volver` · `trabajo` · `finca` · `lote` | El nombre del trabajo nuevo | `/taller/agtron?trabajo=<id del trabajo>` |
 | Calculadora logística de café | `calculadora-logistica` | default | ídem | El nombre del trabajo nuevo | `/taller/calculadora-logistica?lote=CTC-L-XXXXXXXX` |
 | Rueda del Café | `catacion` | default | ídem | El nombre del trabajo nuevo | `/taller/catacion?lote=CTC-L-XXXXXXXX` |
@@ -243,7 +243,7 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
   nombre y la persona da el clic; el lote trae SU finca, y una `?finca=` distinta se ignora con aviso); `?volver=` se lee
   con el mismo contrato para la cinta y la concha (lista blanca de la superficie, sin segmentos `.`/`..`). El puente lleva un mensaje nuevo,
   `{ctc:"prefill", campos, registro}`, y `CTC.usarPrefill`. Primera herramienta con contrato: `mermas-ctc` (las notas del reporte). Abierto:
-  (a) el contrato completo, herramienta por herramienta, en la sección «El contrato de URL del taller» (siguiente PR); ~~(b) prellenado de
+  ~~(a) el contrato completo, herramienta por herramienta~~ (hecho: sección «El contrato de URL del taller»); ~~(b) prellenado de
   `coffee-datasheet`, `cromatografia-suelo` y `green-datasheet`~~ (hecho en el PR apilado de prellenado: la Datasheet por su puente React
   con `conPrefill`, solo donde esté vacío; Cromatografía elige «Su finca» cuando llega su lista; Green Datasheet llena producto, finca,
   departamento, municipio y altitud — departamento y municipio solo si el nombre coincide con su lista); ~~(c) **la puerta no vuelve a la herramienta**~~ (hecho en el PR apilado de la puerta:

@@ -13,11 +13,12 @@ import { admiteSaco, empaqueDe, incrementoCargas, moqCargas } from "@/lib/pvc/le
 import { CurvaDeEscala } from "./CurvaDeEscala";
 import type { Banda5 } from "@/lib/pvc/motor";
 
-// ── BCP · Modelo Económico · Grados ──────────────────────────────────────────
+// ── ECP · Modelo Económico · Grados ──────────────────────────────────────────
 // La escala «El Punto y la Tríada» (docs/PVC_BCP_PLAN.md §9.1) con su
-// calculadora. Existe para que el owner la VALIDE antes de que la fase 2 la
-// lleve a `definicion.ts` — que es, hasta entonces, la que gobierna de verdad
-// (ALINEACION §1). Esta pantalla calcula y enseña; no escribe en ningún lote.
+// calculadora. Nació (V5.45) para que el owner la VALIDARA; desde la V5.160
+// gobierna: `definicion.ts` lee de `escala.ts` sus bandas (ALINEACION §1), y la
+// definición vigente que leen las superficies es `/ecp/direccionamiento/grados`.
+// Esta pantalla calcula y enseña; no escribe en ningún lote.
 
 const cop0 = (v: number | null | undefined) =>
   v == null ? "—" : new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(v);
@@ -75,8 +76,8 @@ export function EscalaBoard({
     <>
       <h1 className={styles.title}>Grados · El Punto y la Tríada</h1>
       <p className={styles.subtitle}>
-        La escala que viene: el grado se lee de los <strong>puntos</strong>, que salen del puntaje SCA (la base) y de las
-        tres letras de la Tríada (el surplus). Sirve para <strong>validarla</strong> antes de llevarla al código.
+        La escala vigente: el grado se lee de los <strong>puntos</strong>, que salen del puntaje SCA (la base) y de las
+        tres letras de la Tríada (el surplus). La calculadora dice qué grado lleva un café y lo que ese grado vale hoy.
       </p>
 
       <p className={styles.meta}>

@@ -56,7 +56,7 @@ export function InteresRow({
           {contactado && contactadoEl && <> · contactado el {contactadoEl}</>}
         </p>
         {error && (
-          <p className={styles.meta} style={{ margin: "4px 0 0", color: "var(--accent)" }}>
+          <p className={styles.meta} style={{ margin: "4px 0 0", color: "var(--red)" }}>
             {error}
           </p>
         )}

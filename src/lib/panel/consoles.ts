@@ -283,7 +283,7 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
     code: "LCP",
     name: "Lead Control Panel",
     tagline: "La relación: lo que entra de fuera y a quién se le responde",
-    // Carmesí corporativo (`--crimson` #C8102F) aclarado para el rail oscuro, igual que el azul del
+    // Carmesí corporativo (`--crimson` #C8102E) aclarado para el rail oscuro, igual que el azul del
     // OCP aclara el `--navy`. El plan (D3) proponía un azul acero; se descartó al ejecutarlo porque
     // en el conmutador no se distingue del azul del OCP, y el carmesí era el color de la paleta
     // corporativa que ninguna consola usaba.

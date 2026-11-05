@@ -62,7 +62,7 @@ const SWATCHES: { hex: string; name: string }[] = [
   { hex: "#E3A32C", name: "Acento CTC" },
   { hex: "#D3B8FA", name: "Lavanda corporativa" },
   { hex: "#FFCD00", name: "Amarillo corporativo" },
-  { hex: "#C8102F", name: "Carmesí corporativo" },
+  { hex: "#C8102E", name: "Carmesí corporativo" },
   { hex: "#8FE3B0", name: "Verde claro" },
   { hex: "#0E2C48", name: "Azul profundo" },
 ];

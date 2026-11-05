@@ -8,7 +8,7 @@ import type { EudrStatus } from "@/lib/eudr";
 const TONE_COLOR: Record<EudrStatus["tone"], string> = {
   ok: "#2E7D46",
   pend: "#B45309",
-  stop: "#C8102F",
+  stop: "#C8102E",
 };
 
 export function EudrStatusBadge({ status }: { status: EudrStatus }) {

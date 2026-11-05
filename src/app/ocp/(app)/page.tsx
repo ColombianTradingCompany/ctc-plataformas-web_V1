@@ -81,7 +81,7 @@ export default async function OcpHomePage() {
       icon: "💧",
       v: flagged.length,
       denom: totalReadings ?? 0,
-      color: "#C8102F",
+      color: "#C8102E",
       href: "/ocp/contratos/humedad",
       sub: `de ${totalReadings ?? 0} lecturas`,
     },

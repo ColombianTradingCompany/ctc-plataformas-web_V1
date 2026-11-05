@@ -330,7 +330,7 @@ export const FICHA_PREVIEW_CSS = `
 .scoreband .big{font-family:ui-monospace,monospace;font-size:28px;font-weight:700;color:#3C0A86}
 .scoreclass{font-family:ui-monospace,monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#003087;font-weight:700}
 .pi-note{margin-top:14px;border-top:1px solid #DDD9EE;padding-top:12px;font-family:ui-monospace,monospace;font-size:10px;color:#4E4A60;line-height:1.6}
-.pi-note strong{color:#C8102F}
+.pi-note strong{color:#C8102E}
 .copyright{opacity:.7}
 .ficha-foot{background:#F5F3FC;border-top:2px solid #3C0A86;padding:12px 28px;display:flex;justify-content:space-between;align-items:center;font-family:ui-monospace,monospace;font-size:10px;color:#4E4A60}
 @media print{

@@ -76,10 +76,22 @@ img{display:block;max-width:100%}
   --paper:#F7F6FB; --card:#FFFFFF; --ink:#12101A; --muted:#4E4A60;
   --primary:#3C0A86; --primary-deep:#2A0760;
   --accent:#FFCD00; --accent-soft:#D3B8FA;
-  --crimson:#C8102F; --navy:#003087;
+  --crimson:#C8102E; --navy:#003087;
   --red:#C4402F; --green:#2E7D52;
   --line:#DDD9EE; --radius:6px;
+  /* El amarillo de la casa como TEXTO sobre papel claro da 1,4:1 (WCAG pide 4,5:1; 3:1 en
+     texto grande y glifos). En las consolas el texto «de acento» se pinta en morado (12,4:1);
+     el amarillo sigue siendo relleno, borde y barra. Los otros temas no definen
+     --accent-ink y caen en su --accent: no cambian ni un píxel. */
+  --accent-ink:var(--primary);
 }
+/* Anillo de foco de dos colores en las consolas (técnica WCAG C40; 1.4.11 + 2.4.7).
+   El anillo global (`:focus-visible`, arriba) es amarillo: 1,4:1 sobre el papel claro.
+   Aquí, desde el borde del elemento hacia fuera: 2 px de amarillo (rellena el
+   outline-offset) y 3 px de morado. Sobre papel claro el morado da 12,4:1; sobre el
+   rail, la barra superior y la cabecera oscura de la Datasheet, el amarillo da
+   8,5–12,5:1. Un anillo solo morado se perdería en esas superficies oscuras (1,1–1,4:1). */
+[data-theme="bcp"] :focus-visible{outline-color:var(--primary);box-shadow:0 0 0 2px var(--accent)}
 
 /* ============================================================
    Shared layout primitives
@@ -89,11 +101,11 @@ section{padding:78px 0;border-top:1px solid var(--line)}
 .mono{font-family:var(--font-spline-mono),monospace}
 .eyebrow{
   font-family:var(--font-spline-mono),monospace;font-size:12px;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--accent);
+  text-transform:uppercase;color:var(--accent-ink,var(--accent));
 }
 .sec-head{display:flex;align-items:end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:30px}
 .sec-head h2{font-size:clamp(28px,4vw,42px);font-weight:800;max-width:24ch;color:var(--primary-deep)}
-.sec-head h2 em{font-style:italic;color:var(--accent)}
+.sec-head h2 em{font-style:italic;color:var(--accent-ink,var(--accent))}
 .sec-head p{max-width:50ch;color:var(--muted)}
 /* Texto solo para lectores de pantalla y buscadores (2026-08-14: los h3 de las
    tarjetas insignia, cuyo nombre visible ES su logotipo). */
@@ -296,7 +308,7 @@ section{padding:78px 0;border-top:1px solid var(--line)}
 .accordion{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--card)}
 .accordion summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:14px;padding:16px 20px}
 .accordion summary::-webkit-details-marker{display:none}
-.accordion .chev{margin-left:auto;color:var(--accent);font-size:26px;line-height:1;transition:transform .2s;flex:none}
+.accordion .chev{margin-left:auto;color:var(--accent-ink,var(--accent));font-size:26px;line-height:1;transition:transform .2s;flex:none}
 .accordion[open] .chev{transform:rotate(180deg);animation:none}
 .accordion:not([open]) .chev{animation:ctcChevPulse 1.8s ease-in-out infinite}
 .accordion-body{padding:0 20px 20px;border-top:1px dashed var(--line)}

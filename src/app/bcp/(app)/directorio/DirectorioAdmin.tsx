@@ -113,7 +113,7 @@ function CertCard({
               style={{ width: "100%", padding: 8, borderRadius: 8, border: "1px solid #e5e7eb", marginBottom: 6 }} />
             <div className={shared.actions} style={{ gap: 8 }}>
               <button disabled={pending} onClick={() => onRechazar(nota)}
-                style={{ background: "#C8102F", color: "#fff", border: "none", borderRadius: 8, padding: "7px 12px" }}>Confirmar rechazo</button>
+                style={{ background: "#C8102E", color: "#fff", border: "none", borderRadius: 8, padding: "7px 12px" }}>Confirmar rechazo</button>
               <button disabled={pending} onClick={() => { setRechazando(false); setNota(""); }}>Cancelar</button>
             </div>
           </div>
@@ -197,7 +197,7 @@ export function DirectorioAdmin({ data }: { data: DirectorioAdminData }) {
         <button className={tab === "muro" ? shared.tabActive : ""} onClick={() => setTab("muro")}>Muro</button>
       </div>
 
-      {msg ? <p style={{ color: msg.ok ? "#1B7A3A" : "#C8102F", fontSize: 13, margin: "10px 0" }}>{msg.text}</p> : null}
+      {msg ? <p style={{ color: msg.ok ? "#1B7A3A" : "#C8102E", fontSize: 13, margin: "10px 0" }}>{msg.text}</p> : null}
 
       {tab === "usuarios" ? (
         <>
@@ -397,7 +397,7 @@ function FichaDetalle({
               Aceptar y verificar
             </button>
             <button disabled={pending} onClick={onRevisar}>Revisar (pedir info)</button>
-            <button disabled={pending} onClick={onRechazar} style={{ background: "#C8102F", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px" }}>
+            <button disabled={pending} onClick={onRechazar} style={{ background: "#C8102E", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px" }}>
               Rechazar
             </button>
           </div>

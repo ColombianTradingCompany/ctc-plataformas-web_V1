@@ -60,7 +60,7 @@ const PILLAR_DEFS: Record<LeadPillarKey, { label: string; color: string; icon: s
   general: { label: "Escríbenos · Consulta general", color: "#3C0A86", icon: "✉️" },
   tech: { label: "CTC Tech", color: "#003087", icon: "🔬" },
   cocreate: { label: "CTC CaaS", color: "#A87A14", icon: "🤝" },
-  varietales: { label: "Varietales Registrados", color: "#C8102F", icon: "🌱" },
+  varietales: { label: "Varietales Registrados", color: "#C8102E", icon: "🌱" },
 };
 
 const STATUSES: { key: string; label: string }[] = [

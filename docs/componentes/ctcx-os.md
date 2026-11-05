@@ -176,6 +176,12 @@ consola escriba en `audit_log` alcanza el catálogo de los hechos (y el guardiá
   «Reuniones» y la contraparte de una transcripción (`consolas` + `secretaria`); el rastro de las transcripciones en
   `audit_log` y el gasto de AssemblyAI en `ai_usage` (`consolas`); los manejadores `reunion.*` en `aplicar.ts` (`consolas`);
   las relaciones que faltan en «Reuniones» (el carril R de la unificación).
+- **De la revisión de los hechos** (dueño `consolas`, cada uno con su línea en `ALINEACION.md` §3 cuando se haga):
+  `recibirDespacho` escribe la misma acción `despacho_recibido` para aceptado, compra ajustada y devolución (el resultado
+  queda solo en `contract_despachos.resultado`): mientras la acción no lo diga, un Recibo no mueve la realización. El lado
+  comprador del dinero (`place_order` → `orders`) no deja fila en `audit_log` ni en `integration_events`: hoy la barra
+  financiera solo ve lo que sale de CTCx y la tarifa de evaluación. Una transformación de stock apunta a la partida
+  madre, así que lo transformado (`stock_transformaciones.kg_entrada`) no se ubica desde el hecho.
 - **Cuando el owner decida 1 y 2**: el primer módulo, con su lista de paridad en la tabla de arriba y su guardián.
 - **Si el owner acepta el componente**: su fila en la tabla de componentes de `docs/HANDOFF.md` y su grupo en la barra
   lateral (hoy no se tocan: el componente es un borrador).

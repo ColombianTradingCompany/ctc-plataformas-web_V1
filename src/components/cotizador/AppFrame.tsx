@@ -1,8 +1,10 @@
 "use client";
 
 // ── BCP · Herramientas Internas · Cotizadores · la app real, embebida ────────────────────────────────
-// Las dos calculadoras del owner (Mermas V15 y CoGS V19) se montan TAL CUAL en
-// `public/ocp-apps/`. No se reescriben ni se reinterpretan: son las mismas
+// Las dos calculadoras del owner (Mermas V15 y CoGS V19) se montan TAL CUAL desde
+// `/ocp-apps/<archivo>` (desde TAR-119 viven en `private/ocp-apps/` y las sirve, solo
+// con sesión de consola, `src/app/ocp-apps/[archivo]/route.ts`; lista blanca en
+// `src/lib/cotizador/apps.ts`). No se reescriben ni se reinterpretan: son las mismas
 // aplicaciones, con sus mismos paneles, sus mismas curvas y sus mismos
 // exportadores. Lo ÚNICO que cambia es cómo se conectan al sistema de CTC.
 //

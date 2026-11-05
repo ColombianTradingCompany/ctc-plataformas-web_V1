@@ -15,12 +15,12 @@ Una reunión es la **jugada base** del juego. Un Jugador (GVG o GVB) se sienta c
 | **Misión** = Objetivo | Notion **«Objetivos»** (Tipo: Estratégico · Proyecto; Estado; Fechas/Inicio/Final; Progreso, un rollup sobre Hitos) | `Reuniones.Objetivo` (relation, límite 1) ↔ `Objetivos.Reuniones` |
 | **Etapa** = Hito | Notion **«Hitos»** (Tipo: Hito · Fase · Bloqueo de calendario; Fechas, cuyo fin es el plazo; Plazo, una fórmula; Bloquea/Bloqueado por; Estado; Responsable) | **Sin relación directa con Reuniones**. Solo se llega por `Objetivo → Hitos` o por `Tareas.Hito` |
 | **Acción** = Tarea | Notion **«Tareas»**, la única fuente de tareas (D-003) | `Reuniones.Tareas` ↔ `Tareas.Reunión` (límite 1). La tarea lleva `Tareas.Origen = «Reunión»`. El rollup `Reuniones.Tareas abiertas` cuenta las tareas sin «Cerrada el» |
-| **Turno** = Sesión diaria | Notion **«Briefings»** (Tipo: Apertura · Cierre; Para; Fecha; Vencidas, Hoy, Esperando, Correo nuevo, Pendientes de la plataforma, Días sin cierre; Estado: Generado · Revisado). La bitácora de corridas es la tabla `latidos` de la plataforma | Fórmula `Reuniones.Cuándo` (Hoy · Próxima · Pasada). **Briefings no tiene relación con Reuniones** |
-| **Personaje** | Notion «7 · Directorios»: **Proveedores**, **Clientes**, **Aliados** y **Contactos**. «Evento» va aparte. Los tres primeros llevan el trío `ctc_id` · `CTC` · `Enlace CTC` hacia la plataforma | Relaciones de Reuniones: `Proveedores`, `Clientes`, `Aliados`, `Contactos`, `Evento` (límite 1). Cada directorio enseña sus reuniones en una vista enlazada (D-031) |
-| **Jugador** | Notion **«Equipo»**, cuyo `Código Responsable` vale GVG · GVB · Contador · Externo, y `panel_users` en la plataforma | `Reuniones.Equipo` (relation) y `Reuniones.Responsable` (select). El Responsable solo se **propone**, nunca se escribe solo (matriz de entidades) |
-| **Cuartel** = proyecto de Claude | Notion **«Proyectos Claude»** (Nombre, Descripción, Enlace, Estado: Planeado · Activo · Archivado, Personas, Revisado el, Tareas programadas) | Solo de forma indirecta: `Reuniones.Objetivo → Objetivos.Proyectos Claude` |
+| **Turno** = Sesión diaria | Notion **«Briefings»** (Tipo: Apertura · Cierre; Para; Fecha; Vencidas, Hoy, Esperando, Correo nuevo, Pendientes de la plataforma, Días sin cierre (number); Estado: Generado · Revisado; además `Último cierre` (date), `No leídos` (text) y `Prueba` (checkbox); ninguna propiedad relation). La bitácora de corridas prevista es la tabla `latidos` de la plataforma. Hoy solo la escriben los crons de `vercel.json`, envueltos en `conLatido()` (`src/lib/integraciones/latido.ts`). Los trabajos `briefing:*` figuran en `registroCrons.ts` con `etapa: propuesta` | Fórmula `Reuniones.Cuándo` (Hoy · Próxima · Pasada). **Briefings no tiene relación con Reuniones** |
+| **Personaje** | Notion «7 · Directorios»: **Proveedores**, **Clientes**, **Aliados** y **Contactos**. La base «Eventos» (bajo el hub `3 · Comercial`, no en `7 · Directorios`) va aparte; la relación de Reuniones hacia ella se llama `Evento`. Los tres primeros llevan el trío `ctc_id` · `CTC` · `Enlace CTC` hacia la plataforma | Relaciones de Reuniones: `Proveedores`, `Clientes`, `Aliados`, `Contactos`, `Evento` (límite 1). Cada directorio enseña sus reuniones en una vista enlazada (D-031) |
+| **Jugador** | Notion **«Equipo»** (la fuente de datos «Equipo» de la base «Equipo e inmuebles»), cuyo `Código Responsable` (select) vale GVG · GVB · Contador · Externo y que enlaza de vuelta con `Equipo.Reuniones`, y `panel_users` en la plataforma | `Reuniones.Equipo` (relation) y `Reuniones.Responsable` (select). El Responsable solo se **propone**, nunca se escribe solo (matriz de entidades) |
+| **Cuartel** = proyecto de Claude | Notion **«Proyectos Claude»** (Nombre, Descripción, Enlace, Estado (select): Planeado · Activo · Archivado, Personas (multi_select), Revisado el, Tareas programadas, y la relación `Objetivos` ↔ `Objetivos.Proyectos Claude`; no tiene relación con Reuniones) | Solo de forma indirecta: `Reuniones.Objetivo → Objetivos.Proyectos Claude` |
 | **Ficha** / **Cuenta** / **Partida** | La plataforma: `lots`, `contract_despachos`, `stock_partidas`, `quotes`, `sample_pack_orders`, `leads`… | Solo por `Enlace CTC` (url). **Reuniones no tiene `ctc_id` ni `CTC`** |
-| **Casilla** (H3 res. 10) | No existe. En la plataforma hay coordenadas en `fincas.eudr_lat`, `fincas.eudr_lng` y `fincas.eudr_polygon_geojson`. En Notion, la propiedad `Ubicación` (place) de Proveedores, Clientes y Aliados | Reuniones **no tiene lugar** |
+| **Casilla** (H3 res. 10) | No existe. En la plataforma hay coordenadas en `fincas.eudr_lat`, `fincas.eudr_lng` y `fincas.eudr_polygon_geojson`, y por cafetal en `finca_parcelas.lat`, `finca_parcelas.lng` y `finca_parcelas.polygon_geojson` (la parcela 1 espeja la geometría de la finca). En Notion, la propiedad `Ubicación` (place) de Proveedores y Clientes, y `Coordenadas` (place) de la fuente Fincas. Aliados no tiene ninguna propiedad place: solo `Dirección` y `Ciudad` (text) y `Región`, `País` y `HQ City` (select). `Eventos.Ubicación` es text, no place | Reuniones **no tiene lugar** |
 
 **Esquema de «Reuniones»**, leído en Notion:
 - **Propiedades vigentes:**
@@ -33,8 +33,8 @@ Una reunión es la **jugada base** del juego. Un Jugador (GVG o GVB) se sienta c
   - Enlaces (url): `Enlace CTC`, `Enlace de la llamada`, `Evento de calendario`, `Carpeta Drive`, `Archivo principal`.
   - Relaciones: `Tareas`, `Objetivo`, `Evento`, `Proveedores`, `Clientes`, `Aliados`, `Contactos`, `Equipo`.
   - `Tareas abiertas` (rollup), `Creada`, `Última edición`.
-- **Columnas heredadas** que siguen ahí: `Status` (Programada · Open Points · Concluida), `Priority`, `Effort level` y `Assignee` (person).
-- **Plantilla por defecto:** la «Reunión», con su botón de tarea.
+- **Columnas heredadas** que siguen ahí: `Status` (status: Programada · Open Points · Concluida), `Priority` (select: Interna · High · Medium · Low), `Effort level` (select: Small · Medium · Large) y `Assignee` (person). El diseño de página de la base todavía fija en la cabecera `Assignee` y `Status` (junto a `Fecha` y `Tareas abiertas`), no `Estado`, y `Priority` encabeza la barra lateral.
+- **Plantilla por defecto:** la base tiene una (`default_page_template`). Que lleve un botón de tarea no se comprueba leyendo solo el esquema.
 
 ---
 
@@ -51,15 +51,15 @@ Una reunión es la **jugada base** del juego. Un Jugador (GVG o GVB) se sienta c
 
 | Personaje | Notion | Plataforma (`ctc_id` → id) |
 |---|---|---|
-| **Proveedor / productor** | `Proveedores`: Estado, Lista KR, Notas de estado, Última revisión, Última revisión de RFQ, Relevancia y Tipo. Relaciones Fincas, Contactos, Compras, Tareas y Reuniones. Campos de la plataforma: `Estado KR (CTC)`, `Gestión (CTC)`, `Cuenta (CTC)`. `Datos bancarios` y `NIT` son sensibles: **nunca se leen** | `profiles` + `producer_profiles` (incluidos `gestion` y `estado_cuenta`) · `fincas` · `finca_parcelas` · `finca_certificates` · `lots` · `arena_inscriptions` · `lot_offers` · `purchase_contracts` (incluido `provisional_at`) · `contract_despachos` · `compras` · `muestras` / `muestra_movimientos` · `producer_inactividad` · **`producer_comm_log`** (hilo con el productor: `context_label`, `note`, `author_role`, `finca_id`, `lot_id`, `lead_id`, `parent_id`, `seccion`, adjunto) · `audit_log` (`entity_type` producer, lot, finca, lot_offer, purchase_contract…). La lectura agregada ya existe: `cargarKr(service, { productorId })` en `src/app/ocp/(app)/kr/carga.ts`, más `src/lib/ocp/circuito.ts` (estado derivado del lote) |
-| **Cliente / comprador / lead** | `Clientes`: Estado, Interés en la oferta, Relevancia, Tipo, Oportunidades (→ «Oportunidades de venta»), Contactos, Tareas, Reuniones, `Baja (CTC)` | `buyer_profiles` · `orders` · `sample_pack_orders` · `quotes` (`counterparty_kind`, `profile_id`, `lead_id`, `status`, `total`, `valid_until`, `nota_comercial`, `notion_url`) · `leads` (`status`, `first_replied_at`, `profile_id`) · **`lead_replies`** (`subject`, `body`, `sent_at`, `send_error`) · `event_leads` (`status`, `notes`, `replied_at`, `unsubscribed_at`) · `newsletter_subscribers` |
-| **Aliado / socio** | `Aliados`: Estado, Relevancia, Tipo, Contactos, Compras de Insumos, Proceso hasta Producto Terminado, `Nodo CTC (CTC)`, `Credencial (CTC)` (estado, nunca el valor) | `partner_accounts`. Para el nodo del Centro de Calidad, `lot_evaluations` |
-| **Contacto** | `Contactos`: Cargo, Notas, Datos clave, `Último contacto` (rollup: la Fecha de reunión más reciente), relaciones Aliado, Cliente, Proveedor y Reuniones | **Sin contraparte** a propósito: `panel_users` nunca se espeja |
+| **Proveedor / productor** | `Proveedores`: Estado, Lista KR, Notas de estado, Última revisión, Última revisión de RFQ, Relevancia y Tipo. Relaciones Fincas, Contactos, Compras, Tareas y Reuniones. Campos de la plataforma: `Estado KR (CTC)`, `Gestión (CTC)`, `Cuenta (CTC)`. `Datos bancarios` y `NIT` son sensibles: **nunca se leen** | `profiles` + `producer_profiles` (incluidos `gestion` y `estado_cuenta`) · `fincas` · `finca_parcelas` · `finca_certificates` · `lots` · `arena_inscriptions` · `lot_offers` · `purchase_contracts` (incluido `provisional_at`) · `contract_despachos` · `compras` · `muestras` / `muestra_movimientos` · `producer_inactividad` · **`producer_comm_log`** (hilo con el productor: `context_label`, `note`, `author_role`, `finca_id`, `lot_id`, `lead_id`, `parent_id`, `seccion`, `adjunto_asset_id`, `adjunto_filename`) · `audit_log` (`entity_type` producer, lot, finca, lot_offer, purchase_contract…). La lectura agregada ya existe: `cargarKr(service, { productorId })` en `src/app/ocp/(app)/kr/carga.ts`, más `src/lib/ocp/circuito.ts` (estado derivado del lote) |
+| **Cliente / comprador / lead** | `Clientes`: Estado, Interés en la oferta, Relevancia, Tipo, Oportunidades (→ «Oportunidades de venta»), Contactos, Tareas, Reuniones, `Baja (CTC)` y el trío `ctc_id` · `CTC` · `Enlace CTC`. También tiene `Datos bancarios` y `NIT`: sensibles, **nunca se leen** | `buyer_profiles` · `orders` · `sample_pack_orders` · `quotes` (`counterparty_kind`, `profile_id`, `lead_id`, `status`, `total`, `valid_until`, `nota_comercial`, `notion_url`) · `leads` (`status`, `first_replied_at`, `profile_id`) · **`lead_replies`** (`subject`, `body`, `sent_at`, `send_error`) · `event_leads` (`status`, `notes`, `replied_at`, `unsubscribed_at`) · `newsletter_subscribers` |
+| **Aliado / socio** | `Aliados`: Estado, Relevancia, Tipo, relaciones Contactos, Compras de Insumos, `⚙️ Proceso hasta Producto Terminado` (el nombre lleva el emoji), Tareas y Reuniones, `Nodo CTC (CTC)`, `Credencial (CTC)` (select activa · suspendida: estado, nunca el valor) y el trío `ctc_id` · `CTC` · `Enlace CTC`. También tiene `Datos bancarios` y `NIT`: sensibles, **nunca se leen** | `partner_accounts`. Para el nodo del Centro de Calidad, `lot_evaluations` |
+| **Contacto** | `Contactos`: Cargo, Notas, Datos clave, `Último contacto` (rollup latest_date sobre `Reuniones.Fecha`), relaciones Aliado, Cliente, Proveedor, Tareas y Reuniones (más una relación heredada de un solo sentido, `Proveedor (duplicado)`) | **Sin contraparte** a propósito: `panel_users` nunca se espeja |
 | **Finca** | Solo desde `Proveedores.Fincas` | `fincas` (`status`, `eudr_*`), `finca_parcelas`, `finca_certificates` |
 
 **c) Acciones abiertas**
 - **En Notion:** las `Tareas` cuyo `Proveedor`, `Cliente`, `Aliado`, `Contacto` o `Reunión` apunta al Personaje, en el grupo de `Estado` que no es «complete». Se leen `Vence`, `Responsable`, `Esperando desde`, `CTC`, `ctc_id` y `Enlace CTC`.
-- **En la plataforma:** las tareas **derivadas** de `cargarTareas()` (`src/lib/panel/tareasCarga.ts`) con la casilla de `bcp_task_state` (`item_key`, `state`). Las claves son `lead:<id>`, `finca:<id>`, `comm:<id>`, `humidity:<id>`, `muestra:<lote>:<fecha>`, `pvc:*`, `despacho:vencido:<id>` y `partida:declarar:<id>`. Leen `fincas`, `humidity_readings`, `producer_comm_log` (las 25 últimas del productor), `leads`, `revisionesDeAlmacenaje`, `propuestasPendientes`, `estadoDelAgente` y `pendientesDelCircuito`.
+- **En la plataforma:** las tareas **derivadas** de `cargarTareas()` (`src/lib/panel/tareasCarga.ts`) con la casilla de `bcp_task_state` (`item_key`, `state`). Las claves son `lead:<id>`, `finca:<id>`, `comm:<id>`, `humidity:<id>`, `muestra:<lote>:<fecha>`, `pvc:*`, `despacho:vencido:<id>` y `partida:declarar:<id>`. Leen `fincas`, `humidity_readings`, `producer_comm_log` (las 25 últimas con `author_role = producer` en toda la tabla, de todos los productores a la vez; no es una lectura por productor), `leads`, `revisionesDeAlmacenaje`, `propuestasPendientes`, `estadoDelAgente` y `pendientesDelCircuito`.
 
 **d) Fichas y Cuentas en juego**
 - Para un productor: sus `lots` en el circuito (`stage`, `grade`, el código público), la oferta vigente (`lot_offers`), el contrato y su ventana (`purchase_contracts`, `contract_despachos`), las `compras`, las `stock_partidas` y `catalogo_fuentes` de sus lotes, y las `muestras`.
@@ -67,7 +67,7 @@ Una reunión es la **jugada base** del juego. Un Jugador (GVG o GVB) se sienta c
 
 **e) El contexto de la casa (para un dossier escrito con IA)**
 - `direccionamiento_context`, ámbitos `record` y `assets`, por `cargarContexto` en `src/app/ecp/(app)/direccionamientoActions.ts` (`requireActiveAdmin`).
-- `textoMemoria()` (`src/lib/direccionamiento/memoria.ts`, los grados desde `definicion.ts`).
+- `textoMemoria()` (`src/lib/direccionamiento/memoria.ts`; los grados vienen de `src/lib/grados/definicion.ts`: `GRADOS`, `SCA_MINIMO`, `SCA_MAXIMO`).
 - Las unidades de `src/lib/direccionamiento/definicion.ts`.
 
 **f) Google**
@@ -110,17 +110,17 @@ Una reunión es la **jugada base** del juego. Un Jugador (GVG o GVB) se sienta c
 - **Notas de directorio, de Notion:** `Proveedores.Notas de estado`, `Contactos.Notas` y `Contactos.Datos clave`, `Clientes.Interés en la oferta`.
 - **Cuidado: canales de la plataforma que NO son internos:**
   - `logProducerComm` (`src/app/ocp/(app)/commActions.ts`, emite) escribe en `producer_comm_log`, y **el productor la lee** en su panel (RLS `producer_comm_log_select_own`).
-  - `replyToLead` (`src/components/panel/leadsActions.ts`) **manda correo** e inserta en `lead_replies` y en `audit_log` (`replied`).
+  - `replyToLead` (`src/components/panel/leadsActions.ts`, emite) **manda correo** e inserta en `lead_replies` y en `audit_log` (`replied`). Si el envío sale, actualiza `leads` (`first_replied_at`, `status`) y, cuando el lead es de un productor, **copia la respuesta en `producer_comm_log`** con `lead_id` (`mirrorReplyToProducerFeed`), donde el productor la ve.
   - Ninguno de los dos sirve para la nota interna de una reunión.
-- **Notas internas de la plataforma que sí lo son:** `anotarLeadDeEvento` y `setEstadoLeadDeEvento` (`src/app/lcp/(app)/formulariosActions.ts`, borrador) → `event_leads.notes` y `status`.
+- **Notas internas de la plataforma que sí lo son:** `anotarLeadDeEvento` y `setEstadoLeadDeEvento` (`src/app/lcp/(app)/formulariosActions.ts`, borrador) → `event_leads.notes`, `replied_at` y `unsubscribed_at` (`anotarLeadDeEvento`) y `event_leads.status` (`setEstadoLeadDeEvento`).
 
 ### 3.3 Jugadas en vivo: acciones reales que ya dejan rastro
-- **Sesión asistida con un productor** (`src/lib/asistencia/actions.ts`): `abrirSesionAsistida` y `cerrarSesionAsistida`. Escriben `audit_log` (`assisted_session_opened`, `assisted_session_closed`) y una nota «Asistencia CTCx» en `producer_comm_log`.
-- **Aceptación provisional en sesión asistida**, V5.190 (`src/lib/ofertas/producerActions.ts`): escribe `audit_log` (`provisional_notified`; luego `ratified` cuando el productor ratifica) y manda correo.
+- **Sesión asistida con un productor** (`src/lib/asistencia/actions.ts`): `abrirSesionAsistida` y `cerrarSesionAsistida` (las dos `emite` en el OCP). Escriben `audit_log` (`assisted_session_opened`, `assisted_session_closed`, `entity_type` producer). Solo `abrirSesionAsistida` deja además una nota con `context_label` «Asistencia CTCx» en `producer_comm_log`.
+- **Aceptación provisional en sesión asistida**, V5.190 (`aceptarProvisionalmente` y luego `ratificarContrato`, en `src/lib/ofertas/producerActions.ts`; el contrato nace en `crearContratoDeOferta`, `src/lib/ofertas/aceptacion.ts`): escribe `audit_log` (`accepted_provisionally` sobre `purchase_contract`, `offer_accepted_provisionally` sobre `lot_offer` y `provisional_notified`; luego `ratified` cuando el productor ratifica), deja el aviso en `producer_comm_log` (también al ratificar) y manda correo.
 - **Otras acciones del circuito**, cada una con su acción de `audit_log`:
   - ofertas (`src/app/ocp/(app)/ofertasActions.ts`);
   - ventana y despachos (`src/app/ocp/(app)/ventanaActions.ts`: `venta_semanal_confirmada`, `despacho_confirmado_60`, `despacho_recibido`…);
-  - cotizaciones (`src/lib/cotizador/actions.ts`: `setQuoteCounterparty` y `saveQuoteDraft` como borrador; `issueQuote` emite `cotizacion.emitida`).
+  - cotizaciones (`src/lib/cotizador/actions.ts`: `setQuoteCounterparty` y `saveQuoteDraft` como borrador; `issueQuote` emite). Estas **no escriben `audit_log`**: su rastro es `quotes.change_log` y el evento `cotizacion.emitida` de `integration_events`, que `issueQuote` inserta con `emitEvent`.
 - **Casilla de una tarea derivada:** `setTaskState` (`src/components/panel/tareasActions.ts`, borrador) → `bcp_task_state`.
 
 ---
@@ -135,9 +135,9 @@ Una reunión es la **jugada base** del juego. Un Jugador (GVG o GVB) se sienta c
   - `Objetivo` y `Hito`.
   - `Proveedor`, `Cliente`, `Aliado`, `Contacto`.
   - `Descripción`, `Enlace de origen`.
-  - **Solo si es un seguimiento de algo de la plataforma:** `CTC`, `ctc_id` (una sola clave de plataforma) y `Enlace CTC`.
+  - **Solo si es un seguimiento de algo de la plataforma:** `CTC` (select OCP · ECP · BCP · LCP · CP), `ctc_id` (una sola clave de plataforma) y `Enlace CTC`. Ojo: la descripción de la propiedad `Tareas.ctc_id` en Notion la marca como llave estable del espejo y «no editar», aunque Tareas no es una base espejada; antes de escribirla a mano hay que alinear esa descripción (carril R).
 - **Quién la crea:**
-  - Hoy, la persona, con el botón de la plantilla «Reunión».
+  - Hoy, la persona, con el botón de la plantilla por defecto de Reuniones (contenido no comprobado en el esquema).
   - Con el briefing: una propuesta «Crear tarea» en Propuestas. Tras el go-live la ejecuta el peldaño (d) del P33, y el (b) archiva las notas en Reuniones.
 - **Lo que no se copia (D-002):** el trabajo pendiente de la plataforma, por ejemplo emitir una oferta, se hace en su consola. Cerrar una Tarea nunca cierra nada de la plataforma.
 - **Al cerrar, en `Reuniones`:**
@@ -148,11 +148,11 @@ Una reunión es la **jugada base** del juego. Un Jugador (GVG o GVB) se sienta c
   - `Tareas abiertas` baja sola: una automatización de Tareas fija «Cerrada el».
 
 ### 4.2 Hechos emitidos (propuesta de nombres)
-Hoy **ningún código emite eventos de reuniones ni de transcripciones**. Los nombres siguen el patrón de la casa: `cotizacion.emitida`, `jornada.creada`, `herramienta.<id>.<evento>`. El `dominio` es el enum `integration_domain` (`src/lib/integraciones/dominios.ts`) y se toma **del `Área` de la reunión**, 1 a 1: `direccion`, `origen`, `operacion_logistica`, `comercial`, `marca_contenido`, `plataformas_it`, `conocimiento`, `directorios`, `ejecucion`.
+Hoy **ningún código emite eventos de reuniones ni de transcripciones**. Los nombres siguen el patrón de la casa: `cotizacion.emitida`, `jornada.creada`, `herramienta.<id>.<evento>`. El `dominio` es el enum `integration_domain` (`src/lib/integraciones/dominios.ts`) y se toma **del `Área` de la reunión**, 1 a 1 (el enum tiene además `archivo`, el hub 9, que no está en el `Área` de Reuniones): `direccion`, `origen`, `operacion_logistica`, `comercial`, `marca_contenido`, `plataformas_it`, `conocimiento`, `directorios`, `ejecucion`.
 
 | Sentido | `tipo` propuesto | Quién | Payload, solo claves y números, nunca texto (S0, D-013) |
 |---|---|---|---|
-| Saliente | `transcripcion.lista` | `cloud.ts::ingestAssemblyResult`, el worker o `createTranscript` | id de la transcripción, `recorded_on`, duración, `segment_count`, ref de la reunión si ya está vinculada |
+| Saliente | `transcripcion.lista` | `cloud.ts::ingestAssemblyResult` o `createTranscript`. El worker (Python) escribe por PostgREST (`rpc/claim_transcript_job`, `transcripts`, `transcript_workers`) y no puede llamar a `emitEvent`, así que su caso pide que la plataforma emita al ver la fila `ready` | id de la transcripción, `recorded_on`, duración, `segment_count`, ref de la reunión si ya está vinculada |
 | Saliente | `transcripcion.vinculada` | una acción nueva que vincula una transcripción con una fila de Reuniones | id de la transcripción, ref de la fila; Make escribe `Enlace CTC` en la fila |
 | Entrante | `reunion.espejada` | Make → `/api/integraciones/make` → **manejador nuevo** en `aplicar.ts` | devuelve dónde quedó la fila; la columna nueva de `transcripts` sigue el patrón de `cotizacion.espejada` |
 | Entrante | `reunion.realizada` · `reunion.cerrada` | Make, al vigilar `Reuniones.Estado` | ref de la fila, `Área`, `Tipo`, los `ctc_id` de los Personajes, número de tareas nacidas |
@@ -169,7 +169,7 @@ No hay tabla ni vista de barras. Todo se deriva de cifras reales. Las fórmulas 
 
 | Barra | De dónde saldría |
 |---|---|
-| **Financiera** | Filas de `audit_log` con monto en su tabla de origen: `offer_accepted`, `ratified`, `despacho_confirmado_60`, `despacho_recibido`, `compra_registrada`. Más `quotes.total` / `decided_at` y `cotizacion.emitida`. Una reunión **suma solo si el hecho está vinculado a ella**, y hoy no hay ese vínculo |
+| **Financiera** | Filas de `audit_log` con monto en su tabla de origen: `offer_accepted` (y `offer_accepted_provisionally` cuando se acepta en sesión asistida), `ratified`, `despacho_confirmado_60`, `despacho_recibido`, `compra_registrada`. Más `quotes.total` / `decided_at` y `cotizacion.emitida`. Una reunión **suma solo si el hecho está vinculado a ella**, y hoy no hay ese vínculo |
 | **Felicidad** (relación) | Reuniones «Realizada» con un Personaje externo. `Contactos.Último contacto`. Días desde la última reunión por Personaje. `leads.first_replied_at`, `event_leads.replied_at`. Casillas `comm:*` y `lead:*` hechas en `bcp_task_state` |
 | **Realización** | Tareas con `Origen = Reunión` en «Hecha» antes de `Vence`, frente a las «Vencidas» del Briefing. `Hitos` en Hecha. `Objetivos.Progreso`. Reuniones «Cerrada» con `Tareas abiertas` = 0 |
 
@@ -227,7 +227,7 @@ No hay tabla ni vista de barras. Todo se deriva de cifras reales. Las fórmulas 
    - Los campos «(CTC)» de los Personajes no se refrescan.
    - D-014 6.4 limita la futura llave de Notion a las bases espejadas, así que **no podría leer Reuniones ni Tareas**.
 8. **La ruta protegida de pendientes del briefing (P25/P26) no está construida.** La base «Propuestas» no se confirmó en Notion. El briefing pasó a ser un proyecto posterior (D-032).
-9. **Las tareas derivadas no se pueden filtrar por Personaje.** `TareaDeConsola` (`key`, `href`, `consola`) no lleva clave de Personaje; habría que cruzar por `producer_id` o `lot_id`. Además, `comm` solo mira las 25 últimas notas del productor.
+9. **Las tareas derivadas no se pueden filtrar por Personaje.** `TareaDeConsola` (`src/lib/panel/tareas.ts`: `key`, `icon`, `label`, `sublabel`, `href`, `state`, `consola`) no lleva clave de Personaje; habría que cruzar por `producer_id` o `lot_id`. Además, `comm` solo mira las 25 últimas notas escritas por productores (`author_role = producer`) en toda la tabla, no las de cada productor.
 10. **No hay un lector del historial de `audit_log` por entidad.** Solo el panel del OCP muestra las 8 últimas filas. Tampoco hay un «dossier del Personaje» en `src/lib/`.
 11. **A Reuniones le faltan relaciones y propiedades.**
     - Relaciones: Hitos, Fincas, Fichas técnicas, Oportunidades de venta y Proyectos Claude (este solo es indirecto).
@@ -261,7 +261,7 @@ No hay tabla ni vista de barras. Todo se deriva de cifras reales. Las fórmulas 
 - **Datos que no viajan.**
   - Columnas sensibles (`Datos bancarios`, `NIT`): nunca se espejan, exportan ni entran a un briefing.
   - D-013: Notion guarda el enlace y la obligación, nunca el texto de un correo.
-  - Payloads y `ultimo_error`: solo claves, números y códigos (S0, `errores.ts`).
+  - `ultimo_error`: solo un código de la lista cerrada de `errores.ts` (S0). Lo de llevar en los payloads solo claves y números es la regla propuesta para los eventos nuevos (D-013): el `cotizacion.emitida` de hoy sí lleva texto (`title`, `contact_name`, `contact_email`).
 - **D-014.**
   - El briefing escribe solo sus propias páginas y filas de propuesta, y los peldaños de escritura llegan uno por semana tras el go-live.
   - La plataforma no entra a Google.

@@ -19,6 +19,49 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.18] — 2026-11-05 (commit pendiente)
+
+- **Hito**: **tren de fusión de la noche del 4 al 5 de noviembre**: diecinueve PR revisados (#33–#51) entran juntos en un solo despliegue.
+- **Añadido**: Herramientas del Café · **el taller abre una herramienta como módulo** (TAR-121, #40): `?trabajo=` abre un trabajo guardado
+  de la cuenta y `?finca=` / `?lote=` prellenan un trabajo NUEVO o «Abrir sin guardar» con una finca o un lote de la cuenta (el lote trae SU
+  finca); abrir el enlace nunca crea la fila. `src/lib/tools/entrada.ts` y `entradaServidor.ts`, guardián `qa-taller-entrada-check`.
+- **Añadido**: prellenado de la **Coffee Datasheet**, el **Lector de Cromatografía** y la **Ficha de café verde** (#42), solo donde el campo
+  esté vacío; el país de la finca sale de `fincas.pais` y abrir un trabajo guardado de la Datasheet ya no lo vuelve a guardar.
+- **Añadido**: la puerta de acceso **vuelve a la herramienta** con sus parámetros (`?siguiente=`, #45), también por Google; **«Copiar
+  enlace»** de un trabajo guardado con la URL pública canónica del taller (#46); la conformidad del prellenado en un navegador de verdad,
+  sin `next dev` (`qa-tools-prefill-conformance`, #48).
+- **Cambiado**: el evento `CTC.emitir` de las herramientas ordena sus campos de traza del servidor después de la carga de la herramienta
+  (#51; `qa-taller-check`).
+- **Docs**: el **contrato de URL del taller**, herramienta por herramienta, en el charter `herramientas-cafe` (#41): enlaces entre
+  subdominios, la puerta, «Copiar enlace» y las URLs de las herramientas archivadas.
+- **Cambiado**: Herramientas Internas · las calculadoras de los cotizadores (Mermas V15, CoGS V19) pasan de `public/ocp-apps/` a
+  `private/ocp-apps/` y las sirve `src/app/ocp-apps/[archivo]/route.ts` en la misma URL, con la consola del cotizador que las monta (TAR-119,
+  #39; `qa-cotizador-apps-check`).
+- **Corregido**: el titular de cada cotización de lote (etiqueta, kg finales, merma, factor, costos) vuelve a guardarse: el puente lee las
+  globales léxicas de las apps embebidas con `globalDeLaApp` (`src/lib/cotizador/puente.ts`) y los kg finales salen en kg (#49;
+  `qa-cotizador-puente-check`). Que reabrir una cotización restaure también esas globales queda como decisión del owner.
+- **Corregido**: el subtítulo de `/ecp/cotizador-logistico` ya no dice que falta el motor: el cálculo es la CoGS V19 íntegra (#44); la
+  pestaña de la escala de puntos deja de decir «en validación» y se llama «Escala de puntos · calculadora» (TAR-124, #34; `qa-pvc-escala`
+  68 → 70).
+- **Añadido**: **«Exportar como Markdown»** de la Definición de Contexto (TAR-122, #35): `GET /ecp/direccionamiento/exportar` (lectura de
+  consola) arma el archivo con `src/lib/direccionamiento/markdown.ts`, que escapa lo escrito para que no abra títulos ni bloques de código;
+  `?unidad=` exporta una sola unidad (`qa-definicion-check`).
+- **Añadido**: **puertas de entrada** de dos herramientas internas para CTCx OS (#43): `/ecp/pvc/grados?sca=…&triada=…` abre la
+  calculadora con ese Punto y esa tríada, y `/ecp/direccionamiento?unidad=…` la Definición de Contexto en esa unidad; `?volver=` solo acepta
+  rutas de consola (`src/lib/herramientasInternas/entrada.ts`, guardián `qa-entradas-check`).
+- **Cambiado**: plataforma · **`<html lang>` sigue al idioma en pantalla** (`useHtmlLang` en `LangProvider`, #47): la familia Cherry Picked
+  se declara en inglés; una superficie cuya página solo está en español pasa `declaraHtml={false}` y conserva el «es» (Terratalento, el
+  acceso al taller y sus dos páginas; el pie común sí se traduce); el muro de Coffeed marca en español su contenido. **SEO**: el JSON-LD
+  lee sus fuentes, `co-create` deja de anunciar sitemap y `RUTAS_QUE_REDIRIGEN` es la lista única de puertas viejas (sitemap, robots.txt y
+  Manejo de Plataformas).
+- **Corregido**: `scripts/build-og-cards.mjs` busca los logos en `../reference/logos`, acepta `--logos <carpeta>` y `CTC_LOGOS_DIR`, y
+  revisa todos los argumentos antes de escribir (TAR-123, #33).
+- **Docs**: **CTCx OS en borrador** (decide el owner): el charter `docs/componentes/ctcx-os.md` (#37), el primer módulo, Reuniones (#38), y
+  el atlas de la plataforma como tablero de juego (#50). **Los hechos** (#36): `src/lib/os/{hechos,hechosCatalogo}.ts` normalizan
+  `audit_log`, `integration_events` y `latidos` en solo lectura, sin ruta ni migración; estrenar un `entity_type` o un `tipo` de evento
+  exige su línea en `hechosCatalogo.ts` (`qa-os-hechos-check`).
+- **Docs**: charters `herramientas-cafe` y `herramientas-internas` y `docs/ALINEACION.md` §3 al día con lo fusionado.
+
 ## [V6.17] — 2026-11-03 (commit dfe824a)
 
 - **Cambiado**: ECP › Automatizaciones: «Registrar automatización» y «Editar» abren el formulario en una **ventana encima del tablero**

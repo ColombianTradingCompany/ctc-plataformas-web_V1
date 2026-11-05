@@ -86,7 +86,8 @@ Solo lee: `lots`, `lot_offers`, `purchase_contracts`, `lot_listings` (para saber
 `qa-pvc-vigencia.mjs` (28) · `qa-pvc-lectura.mjs` (60 — el MOQ de compra y los tipos de mezcla, en el código Y en el plan §14.8) ·
 `qa-pvc-escala.mjs` (68 — incluye la Base física) · `qa-pvc-canales.mjs` (57) · `qa-pvc-compromiso.mjs` (31) ·
 `qa-grados-check.mjs` (48 — el contrato de grados) · `qa-definicion-check.mjs` · `qa-direccionamiento-check.mjs` ·
-`qa-anclas-check.mjs` · `qa-cotizador-apps-check.mjs` (40 — TAR-119: ninguna copia en `public/`, la puerta antes del disco, la consola leída del rail, la carpeta trazada) · `qa-courier-check.mjs` (51 — el cálculo contra un acuerdo FICTICIO, la fuga cero por hash, el combustible derivado contra el historial de FedEx, el combustible provisional y el límite de paquete por medidas). `qa-empaque-fob-check.mjs` (47 — Empacado hasta FOB: el cálculo contra cuatro casos hechos a mano, que la máquina no vuelva, que el servidor recalcule y emita, la compuerta de la tabla). Y de la casa, porque el grupo vive en el rail del ECP: `qa-rutas-consolas.mjs`.
+`qa-anclas-check.mjs` · `qa-courier-check.mjs` (51 — el cálculo contra un acuerdo FICTICIO, la fuga cero por hash, el combustible derivado contra el historial de FedEx, el combustible provisional y el límite de paquete por medidas). `qa-empaque-fob-check.mjs` (47 — Empacado hasta FOB: el cálculo contra cuatro casos hechos a mano, que la máquina no vuelva, que el servidor recalcule y emita, la compuerta de la tabla). Y de la casa, porque el grupo vive en el rail del ECP: `qa-rutas-consolas.mjs`.
+`qa-cotizador-apps-check.mjs` (40 — TAR-119: ninguna copia en `public/`, la puerta antes del disco, la consola leída del rail, la carpeta trazada).
 
 ## Reglas propias
 
@@ -119,16 +120,16 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
 
 ## Pendientes
 
-- **2026-11-05 · TAR-119 · las calculadoras de los cotizadores, solo con sesión** (sesión nocturna en la nube; sin versión hasta
-  que aterrice en `main`). `public/ocp-apps/*.html` → `private/ocp-apps/` (mismo contenido) y una ruta las sirve en la misma URL
-  tras `requireConsoleAccess` de la consola del rail. **Pendiente**: comprobar en el preview de Vercel que el iframe de
-  `/ecp/cotizador-lotes/<id>` y `/ecp/cotizador-logistico/<id>` carga con sesión, y que `/ocp-apps/cotizador-lotes.html` sin
-  sesión va al login (el VM de la nube no llega a producción). Retirar las apps sigue siendo decisión del owner.
 - **2026-10-25 · V6.10: la salud de los crons llega a este componente** (B6.0, la tanda es de `consolas`; ALINEACION §3). El tablero
   Automatizaciones (`AutomatizacionesBoard.tsx`) gana la columna «Salud» y bloquea las filas de cron; los cuatro crons de aquí
   (market-anchors, vigilancia-pvc, agente-pvc, courier-combustible) van envueltos en `conLatido()` tras su `CRON_SECRET`, sin cambiar lo
   que hacen. **Para este componente**: un cron nuevo de un modelo lleva su envoltura y su fila en `src/lib/integraciones/registroCrons.ts`
   en la misma tanda (`qa-registro-crons`). Lo siguiente en ese tablero es la P25 (B6.1) del plan de unificación.
+- **2026-11-05 · TAR-119 · las calculadoras de los cotizadores, solo con sesión** (sesión nocturna en la nube; sin versión hasta
+  que aterrice en `main`). `public/ocp-apps/*.html` → `private/ocp-apps/` (mismo contenido) y una ruta las sirve en la misma URL
+  tras `requireConsoleAccess` de la consola del rail. **Pendiente**: comprobar en el preview de Vercel que el iframe de
+  `/ecp/cotizador-lotes/<id>` y `/ecp/cotizador-logistico/<id>` carga con sesión, y que `/ocp-apps/cotizador-lotes.html` sin
+  sesión va al login (el VM de la nube no llega a producción). Retirar las apps sigue siendo decisión del owner.
 - **V6 · lo que los objetivos de `docs/PLAN_V6_OBJETIVOS.md` le piden a este componente** (owner, 2026-10-10, al declarar la V6.0;
   anotado por el nodo final). **Objetivo 2, tanda A** (dueño `consolas`): la referencia de Empacado hasta FOB con **flete real** —la
   única vigente, `EF-2026-001`, se llama «REF 1 TEST»— y el **N2 del PVC** contra el que el Triage compara el ancla de cada trato.

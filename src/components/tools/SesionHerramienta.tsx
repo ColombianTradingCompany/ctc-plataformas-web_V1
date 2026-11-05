@@ -10,7 +10,7 @@ import {
   listarTrabajos,
   type TrabajoResumen,
 } from "@/lib/tools/trabajos";
-import type { PrefillHerramienta } from "@/lib/tools/entrada";
+import { enlaceDeTrabajo, type PrefillHerramienta } from "@/lib/tools/entrada";
 import styles from "./ConchaHerramienta.module.css";
 
 // ── El Home Menu de una herramienta con memoria (A11, 2026-08-19) ───────────
@@ -80,6 +80,8 @@ export function SesionHerramienta({
   const [ocupado, setOcupado] = useState(false);
   const [aviso, setAviso] = useState<string | null>(avisoEntrada);
   const [guardado, setGuardado] = useState<string>("");
+  // El trabajo cuyo enlace se acaba de copiar (para el «Copiado» del botón).
+  const [copiado, setCopiado] = useState<string | null>(null);
 
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   // El oído del puente necesita el modo VIGENTE sin re-suscribirse por cambio:
@@ -245,6 +247,20 @@ export function SesionHerramienta({
     setModo({ tipo: "abierta", trabajoId: r.data.id, nombreTrabajo: nuevoNombre.trim(), estado: {}, conPrefill: !!prefill });
   }
 
+  // TAR-121 · «Copiar enlace»: el enlace directo a un trabajo (`?trabajo=`), para pegarlo en un asistente, un evento del
+  // calendario o una nota. No es una credencial: solo lo abre la cuenta dueña. Si el portapapeles no está (http, permisos),
+  // el enlace se enseña para copiarlo a mano.
+  async function copiarEnlace(trabajoId: string) {
+    const url = enlaceDeTrabajo(toolId, trabajoId, window.location.origin);
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiado(trabajoId);
+      setTimeout(() => setCopiado((c) => (c === trabajoId ? null : c)), 2500);
+    } catch {
+      window.prompt("Copia el enlace de este trabajo (solo tu cuenta lo abre):", url);
+    }
+  }
+
   async function borrar(t: TrabajoResumen) {
     if (ocupado) return;
     if (!window.confirm(`¿Borrar «${t.nombre}»? No se puede deshacer.`)) return;
@@ -308,6 +324,15 @@ export function SesionHerramienta({
                 <button
                   type="button"
                   className={styles.menuBorrar}
+                  onClick={() => copiarEnlace(t.id)}
+                  aria-label={`Copiar el enlace de ${t.nombre}`}
+                  title="El enlace directo a este trabajo. Solo tu cuenta lo abre."
+                >
+                  {copiado === t.id ? "Copiado" : "Enlace"}
+                </button>
+                <button
+                  type="button"
+                  className={styles.menuBorrar}
                   onClick={() => borrar(t)}
                   disabled={ocupado}
                   aria-label={`Borrar ${t.nombre}`}
@@ -359,6 +384,14 @@ export function SesionHerramienta({
         {enTrabajo ? (
           <>
             <span className={styles.sesionNombre}>{modo.nombreTrabajo}</span>
+            <button
+              type="button"
+              className={styles.menuBorrar}
+              onClick={() => copiarEnlace(modo.trabajoId)}
+              title="El enlace directo a este trabajo. Solo tu cuenta lo abre."
+            >
+              {copiado === modo.trabajoId ? "Enlace copiado" : "Copiar enlace"}
+            </button>
             <span className={styles.sesionGuardado} aria-live="polite">
               {guardado === "guardando" ? "Guardando…" : guardado}
             </span>

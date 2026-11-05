@@ -34,6 +34,8 @@ import {
   VUELTA_TALLER,
 } from "../src/lib/tools/entrada.ts";
 import { CARPETAS_HERRAMIENTAS, DATOS_FINCA, DATOS_LOTE } from "../src/lib/tools/carpetas.ts";
+import { urlPublicaDeHerramienta, enlaceDeTrabajo } from "../src/lib/tools/entrada.ts";
+import { SUBDOMAIN_ROUTES } from "../src/lib/red/subdominios.ts";
 
 let ok = 0;
 const fallos = [];
@@ -202,6 +204,15 @@ check("una herramienta desconocida no tiene contrato", entradaDe("no-existe") ==
   check("ida y vuelta: la vuelta", e.volver === "/herramientas/taller");
   check("el slug va codificado", urlDeHerramienta("a b/c").startsWith("/herramientas/taller/a%20b%2Fc"));
   check("sin parámetros no hay «?»", urlDeHerramienta("qr") === "/herramientas/taller/qr");
+
+  // La entrada que se comparte fuera del sitio: absoluta, en el host de Herramientas y sin la base.
+  check("el mapa de la red sigue llevando herramientas → /herramientas", SUBDOMAIN_ROUTES.herramientas === "/herramientas");
+  check("la URL pública es la canónica del host de Herramientas", urlPublicaDeHerramienta("mermas-ctc", { lote: "CTC-L-6BA7B810" }) === "https://herramientas.ctcexport.com/taller/mermas-ctc?lote=CTC-L-6BA7B810");
+  check("y su `volver` sigue siendo una ruta con base (la lista blanca la lee igual)", new URL(urlPublicaDeHerramienta("qr", { volver: "/herramientas/taller" })).searchParams.get("volver") === "/herramientas/taller");
+  check("el enlace de un trabajo desde la red es el canónico", enlaceDeTrabajo("qr", U, "https://kaffetal-regal.ctcexport.com") === `https://herramientas.ctcexport.com/taller/qr?trabajo=${U}`);
+  check("en local o en una vista previa, el del host donde se está", enlaceDeTrabajo("qr", U, "http://localhost:3000") === `http://localhost:3000/herramientas/taller/qr?trabajo=${U}`);
+  check("un host que solo se PARECE a la red no cuenta como la red", enlaceDeTrabajo("qr", U, "https://evilctcexport.com").startsWith("https://evilctcexport.com/"));
+  check("el enlace de un trabajo vuelve a leerse como ese trabajo", leerEntrada(Object.fromEntries(new URL(enlaceDeTrabajo("qr", U, "https://herramientas.ctcexport.com")).searchParams)).trabajo === U);
 }
 
 // ── 8. Las piezas con sesión (leídas como texto) ─────────────────────────────────────────────────────────────────────
@@ -236,6 +247,8 @@ check("una herramienta desconocida no tiene contrato", entradaDe("no-existe") ==
   check("y «Abrir sin guardar» también", /setModo\(\{ tipo: "suelta", conPrefill: !!prefill \}\)/.test(sinCom));
   check("solo esos dos llevan prellenado", (sinCom.match(/conPrefill: !!prefill/g) ?? []).length === 2);
   check("el «ready» solo envía el prellenado si el modo lo lleva", /d\.ctc === "ready"[\s\S]{0,1400}if \(m\.conPrefill && p && /.test(sinCom));
+  check("«Copiar enlace» copia el enlace del trabajo con enlaceDeTrabajo, y si no hay portapapeles lo enseña", sinCom.includes("enlaceDeTrabajo(toolId, trabajoId, window.location.origin)") && sinCom.includes("navigator.clipboard.writeText(url)") && sinCom.includes("window.prompt("));
+  check("«Copiar enlace» está en cada trabajo del menú y en el trabajo abierto", sinCom.includes("onClick={() => copiarEnlace(t.id)}") && sinCom.includes("onClick={() => copiarEnlace(modo.trabajoId)}"));
   check("abrir un enlace no crea trabajos (crearTrabajo solo dentro de crear)", (sinCom.match(/crearTrabajo\(/g) ?? []).length === 1 && /async function crear\(\)[\s\S]*?crearTrabajo\(toolId, nuevoNombre\)/.test(sinCom));
   {
     const usos = [...sinCom.matchAll(/\bcrear\b(?!Trabajo)/g)].map((m) => sinCom.slice(Math.max(0, m.index - 40), m.index + 12));

@@ -22,6 +22,7 @@
 import { CARPETAS_HERRAMIENTAS, type DatoFinca, type DatoLote, type EntradaHerramienta } from "./carpetas";
 import { normalizaReferencia } from "../catalogo/codigoPublico";
 import { vueltaSegura } from "./volverSeguro";
+import { origenDeSuperficie, ROOT_DOMAIN } from "../red/subdominios";
 
 /** La vuelta por omisión del taller: la rejilla de herramientas (no la landing, que no abre ninguna). */
 export const VUELTA_TALLER = "/herramientas/taller";
@@ -290,4 +291,32 @@ export function urlDeHerramienta(
   if (p.volver) q.set("volver", p.volver);
   const s = q.toString();
   return `/herramientas/taller/${encodeURIComponent(slug)}${s ? `?${s}` : ""}`;
+}
+
+// ── La entrada que se comparte FUERA del sitio ───────────────────────────────────────────────────────────────────────
+// Un asistente, un evento del calendario, un correo o el móvil necesitan la URL ABSOLUTA. La canónica es la del host de
+// Herramientas sin la base: `https://herramientas.ctcexport.com/taller/<id>?…` (el proxy antepone `/herramientas`).
+
+/** La URL absoluta y canónica de una entrada del taller. */
+export function urlPublicaDeHerramienta(
+  slug: string,
+  p: { trabajo?: string; finca?: string; lote?: string; volver?: string } = {}
+): string {
+  return origenDeSuperficie("/herramientas") + urlDeHerramienta(slug, p).replace(/^\/herramientas(?=\/)/, "");
+}
+
+/**
+ * El enlace de UN trabajo guardado, para «Copiar enlace» del Home Menu. Desde la red (`*.ctcexport.com`) es la canónica;
+ * en local o en una vista previa, la del host donde se está (si no, el enlace llevaría a producción). El enlace NO es una
+ * credencial: solo lo abre la cuenta dueña del trabajo (`abrirTrabajo` filtra `user_id`).
+ */
+export function enlaceDeTrabajo(slug: string, trabajoId: string, origenActual: string): string {
+  let host = "";
+  try {
+    host = new URL(origenActual).hostname;
+  } catch {
+    host = "";
+  }
+  const red = host === ROOT_DOMAIN || host.endsWith("." + ROOT_DOMAIN);
+  return red ? urlPublicaDeHerramienta(slug, { trabajo: trabajoId }) : `${origenActual}${urlDeHerramienta(slug, { trabajo: trabajoId })}`;
 }

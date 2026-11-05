@@ -1,5 +1,6 @@
 // ── Guardián de los Grados de Calidad ────────────────────────────────────────
-//   node --experimental-strip-types scripts/qa-grados-check.mjs
+//   node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/qa-grados-check.mjs
+//   (sin el `--import`, `definicion.ts` no resuelve sus importaciones `@/lib/…` y el guardián revienta antes de empezar)
 //
 // Los grados estaban definidos en tres sitios con tres respuestas distintas, y
 // dos de ellas eran material de cliente. Ahora hay una sola definición; esto

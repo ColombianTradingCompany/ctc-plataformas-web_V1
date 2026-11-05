@@ -22,7 +22,7 @@
   --amber: #b8860b;
   --amber-light: #fdf5dc;
   --amber-text: #7a5800;
-  --red: #C8102F;
+  --red: #C8102E;
   --red-light: #fef0f2;
   --blue: #003087;
   --blue-light: #e6eaf6;
@@ -40,7 +40,7 @@
   --ctc-purple: #3C0A86;
   --ctc-purple-d: #2A0660;
   --ctc-purple-l: #6B3BB8;
-  --ctc-red: #C8102F;
+  --ctc-red: #C8102E;
   --ctc-blue: #003087;
   --ctc-gold: #FFCD00;
   --ctc-lilac: #D3B8FA;
@@ -912,7 +912,7 @@ input.inco-range::-moz-range-thumb {
       <div class="grade-select-wrap">
         <select id="quality-grade" onchange="updateGradeDot(); recalc()">
           <option value="Black" style="color:#1a1816">⬤ Black</option>
-          <option value="Red" style="color:#C8102F">⬤ Red</option>
+          <option value="Red" style="color:#C8102E">⬤ Red</option>
           <option value="Blue" style="color:#003087">⬤ Blue</option>
           <option value="Gold" selected style="color:#b8860b">⬤ Gold</option>
           <option value="Tyrian" style="color:#66023C">⬤ Tyrian</option>
@@ -4667,7 +4667,7 @@ function buildAnnexReport(){
     {label:'Materia prima',       val:c.materiaPrimaTotal, color:'#3C0A86'},
     {label:'Empaque',             val:c.empTotal,          color:'#003087'},
     {label:'Export. en origen',   val:c.origTotal,         color:'#b8860b'},
-    {label:'Transporte int.',     val:c.intTotal,          color:'#C8102F'},
+    {label:'Transporte int.',     val:c.intTotal,          color:'#C8102E'},
     {label:'Destino & last mile', val:c.destTotal+c.lastmileTotal, color:'#555'},
   ].filter(p=>p.val>0);
   const pieTotal = phases.reduce((s,p)=>s+p.val,0)||1;
@@ -4768,7 +4768,7 @@ function buildAnnexReport(){
     : `Bajo ${incotermLabel}, el comprador gestiona estos tramos.`;
 
   const expCol = renderCol(expRows, `💼 Exportador — ${incotermLabel}`, '#3C0A86', '#3C0A86', 'Sin fases asignadas al exportador.');
-  const impCol = renderCol(impRows, buyerTitle, '#C8102F', '#C8102F', buyerEmpty);
+  const impCol = renderCol(impRows, buyerTitle, '#C8102E', '#C8102E', buyerEmpty);
 
   // ── Narrative ──
   const incoExpl={
@@ -4815,7 +4815,7 @@ body{font-family:'Inter',Arial,sans-serif;color:#1a1816;background:#fff;font-siz
 .card .cv{font-size:13px;font-weight:700;line-height:1.1}
 .card .cs{font-size:8.5px;color:#666;margin-top:2px}
 .c-sel{background:#f7f4fb;border-color:#3C0A86}.c-sel .cv{color:#3C0A86}
-.c-buy{background:#fff5f6;border-color:#C8102F}.c-buy .cv{color:#C8102F}
+.c-buy{background:#fff5f6;border-color:#C8102E}.c-buy .cv{color:#C8102E}
 .c-tot{background:#3C0A86;border-color:#3C0A86}.c-tot .cl,.c-tot .cs{color:#D3B8FA}.c-tot .cv{color:#FFCD00}
 .c-prc{background:#003087;border-color:#003087}.c-prc .cl,.c-prc .cs{color:#b3bfe8}.c-prc .cv{color:#FFCD00}
 .c-pl{background:#faf8f6}
@@ -4840,7 +4840,7 @@ body{font-family:'Inter',Arial,sans-serif;color:#1a1816;background:#fff;font-siz
 .ftr{background:#1a1816;padding:7px 18px;display:flex;align-items:center;justify-content:space-between;margin-top:auto}
 .fb{font-size:9.5px;font-weight:600;color:#FFCD00}
 .fb small{display:block;font-size:7.5px;color:#666;font-weight:400;margin-top:1px}
-.conf{background:#C8102F;color:#fff;font-size:7.5px;font-weight:700;padding:2px 7px;border-radius:3px;text-transform:uppercase;letter-spacing:.1em}
+.conf{background:#C8102E;color:#fff;font-size:7.5px;font-weight:700;padding:2px 7px;border-radius:3px;text-transform:uppercase;letter-spacing:.1em}
 .flg{font-size:7.5px;color:#555;text-align:right;line-height:1.5}
 @page{size:Letter;margin:0}
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
@@ -4957,7 +4957,7 @@ async function fetchFxRate(){
 }
 
 /* Colores de los grados de calidad */
-const GRADE_COLORS = { Black:'#1a1816', Red:'#C8102F', Blue:'#003087', Gold:'#b8860b', Tyrian:'#66023C', Mix:'#6b7280' };
+const GRADE_COLORS = { Black:'#1a1816', Red:'#C8102E', Blue:'#003087', Gold:'#b8860b', Tyrian:'#66023C', Mix:'#6b7280' };
 function updateGradeDot(){
   const sel = document.getElementById('quality-grade');
   if(!sel) return;
@@ -5156,7 +5156,7 @@ body{font-family:'Inter','Helvetica Neue',Arial,sans-serif;color:#1a1816;backgro
 .q-hdr-t .t2{font-size:8.5px;text-transform:uppercase;letter-spacing:.14em;color:#D3B8FA;margin-top:3px}
 .q-hdr-r{text-align:right;font-size:9px;color:#D3B8FA;line-height:1.7}
 .q-hdr-r .qn{display:block;font-size:14px;font-weight:700;color:#FFCD00;letter-spacing:.02em}
-.rule{height:4px;background:linear-gradient(90deg,#FFCD00 0 34%,#003087 34% 62%,#C8102F 62% 100%)}
+.rule{height:4px;background:linear-gradient(90deg,#FFCD00 0 34%,#003087 34% 62%,#C8102E 62% 100%)}
 .band{background:#f7f4fb;border-bottom:1px solid #e6ddf5;padding:9px 22px;display:flex;gap:16px}
 .band .bf{flex:1}
 .band .l{font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#3C0A86;margin-bottom:2px}
@@ -5238,7 +5238,7 @@ td.r,th.r{text-align:right}
     <div class="bf"><div class="l">Cantidad</div><div class="v">${num(c.kgFinal)} kg</div></div>
     <div class="bf"><div class="l">Incoterm 2020</div><div class="v"><span class="badge">${inco}</span> ${c.destCity}</div></div>
     <div class="bf"><div class="l">Modalidad</div><div class="v">${modalLabel}</div></div>
-    <div class="bf"><div class="l">Válida hasta</div><div class="v" style="color:#C8102F">${q.until}</div></div>
+    <div class="bf"><div class="l">Válida hasta</div><div class="v" style="color:#C8102E">${q.until}</div></div>
   </div>
 
   <div class="body">

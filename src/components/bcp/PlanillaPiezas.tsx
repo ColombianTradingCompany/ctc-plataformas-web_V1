@@ -268,7 +268,7 @@ export function RuedaDeSabores({
           <span style={{ fontWeight: 400, fontSize: 11.5, color: "var(--muted)" }}>{pista}</span>
         )}
       </div>
-      <svg viewBox="22 22 856 856" role="group" aria-label={lang === "en" ? "Coffee flavor wheel" : "Rueda del sabor del café"} style={{ width: "100%", display: "block", margin: "0 auto" }}>
+      <svg className="rueda-sabor" viewBox="22 22 856 856" role="group" aria-label={lang === "en" ? "Coffee flavor wheel" : "Rueda del sabor del café"} style={{ width: "100%", display: "block", margin: "0 auto" }}>
         {ARCOS.map((fam) => {
           const colorSub = matiz(fam.f.color, 0.16);
           const colorNota = matiz(fam.f.color, 0.34);

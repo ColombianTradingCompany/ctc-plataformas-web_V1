@@ -89,7 +89,7 @@ export function CompradorCard({
       </label>
 
       {error && (
-        <p className={styles.meta} style={{ margin: 0, color: "var(--accent)" }}>
+        <p className={styles.meta} style={{ margin: 0, color: "var(--red)" }}>
           {error}
         </p>
       )}

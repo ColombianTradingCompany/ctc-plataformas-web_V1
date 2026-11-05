@@ -40,7 +40,7 @@ function TasteWheelSketch() {
       {spokes.map(([x, y], i) => (
         <line key={i} x1={x * 24} y1={y * 24} x2={x * 72} y2={y * 72} stroke="currentColor" strokeWidth="0.9" opacity="0.45" />
       ))}
-      <path d="M 0 -24 A 24 24 0 0 1 20.8 -12 L 41.6 -24 A 48 48 0 0 0 0 -48 Z" fill="var(--accent, #C8102F)" opacity="0.35" />
+      <path d="M 0 -24 A 24 24 0 0 1 20.8 -12 L 41.6 -24 A 48 48 0 0 0 0 -48 Z" fill="var(--accent, #C8102E)" opacity="0.35" />
       <path d="M 20.8 12 A 24 24 0 0 1 0 24 L 0 48 A 48 48 0 0 0 41.6 24 Z" fill="var(--primary, #3C0A86)" opacity="0.3" />
       <path d="M -24 0 A 24 24 0 0 1 -12 -20.8 L -24 -41.6 A 48 48 0 0 0 -48 0 Z" fill="var(--gold, #A87A14)" opacity="0.35" />
     </svg>

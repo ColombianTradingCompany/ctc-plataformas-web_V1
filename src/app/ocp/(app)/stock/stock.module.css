@@ -26,7 +26,7 @@
 .etiqueta { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; background: #fef3c7; color: #92400e; margin-left: 6px; vertical-align: middle; }
 
 /* El tablero: se desplaza a lo ancho dentro de su caja en pantallas angostas. */
-.desplazable { overflow-x: auto; padding-bottom: 4px; }
+.desplazable { overflow-x: auto; padding: 0 6px 6px; } /* sitio para el anillo de foco de las cajas de los bordes */
 .columnas, .tablero { display: grid; grid-template-columns: repeat(4, minmax(150px, 1fr)); column-gap: 46px; min-width: 700px; }
 .columnas { margin-bottom: 8px; }
 .columna { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; padding: 5px 9px; border-radius: 7px; background: color-mix(in srgb, var(--c) 14%, var(--card, #fff)); color: var(--ink, #1f1a2e); font-size: 12px; font-weight: 700; border-top: 3px solid var(--c); }
@@ -38,7 +38,7 @@
 .curvas path.tenue, .tenue { opacity: .14; }
 
 .caja { position: relative; z-index: 1; align-self: center; text-align: left; font: inherit; color: var(--ink, #1f1a2e); background: color-mix(in srgb, var(--c) 10%, var(--card, #fff)); border: 1.5px solid color-mix(in srgb, var(--c) 45%, var(--line, #e5e2ee)); border-left: 5px solid var(--c); border-radius: 9px; padding: 8px 10px; cursor: pointer; transition: opacity .15s, box-shadow .15s, transform .15s; min-width: 0; }
-.caja:hover, .caja:focus-visible { box-shadow: 0 2px 10px color-mix(in srgb, var(--c) 30%, transparent); outline: none; }
+.caja:hover { box-shadow: 0 2px 10px color-mix(in srgb, var(--c) 30%, transparent); }
 .cajaElegida { box-shadow: 0 0 0 2.5px var(--c); }
 .cajaTenue { opacity: .32; }
 .cajaConsumida { border-style: dashed; background: var(--card, #fff); }

@@ -13,7 +13,7 @@
   transition:border-color .15s ease, box-shadow .15s ease, transform .12s ease;
 }
 .option:hover{border-color:var(--accent,#c9a45c);transform:translateY(-1px)}
-.option:focus-visible{outline:2px solid var(--accent,#c9a45c);outline-offset:2px}
+.option:focus-visible{outline:2px solid var(--focus-ring,var(--accent,#c9a45c));outline-offset:2px}
 .optionActive{
   border-color:var(--accent,#c9a45c);
   box-shadow:inset 0 0 0 1px var(--accent,#c9a45c);

@@ -154,9 +154,9 @@ export function DatasheetTool({ langInicial = "es" }: { langInicial?: IdiomaDePl
   const selectorDeIdioma = (
     <div role="group" aria-label={t.idioma} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "#D3B8FA" }}>
       {t.idioma}
-      <span style={{ display: "inline-flex", border: "1.5px solid rgba(255,255,255,.35)", borderRadius: 999, overflow: "hidden" }}>
-        {IDIOMAS_DE_PLANILLA.map((l) => (
-          <button key={l} type="button" aria-pressed={lang === l} onClick={() => setLang(l)} style={{ padding: "3px 12px", fontSize: 11.5, fontWeight: 800, border: "none", cursor: "pointer", background: lang === l ? "#FFCD00" : "transparent", color: lang === l ? "#2A0760" : "#D3B8FA" }}>
+      <span className="conmutador" style={{ display: "inline-flex", border: "1.5px solid rgba(255,255,255,.35)", borderRadius: 999 }}>
+        {IDIOMAS_DE_PLANILLA.map((l, i) => (
+          <button key={l} type="button" aria-pressed={lang === l} onClick={() => setLang(l)} style={{ padding: "3px 12px", fontSize: 11.5, fontWeight: 800, border: "none", cursor: "pointer", borderRadius: i === 0 ? "999px 0 0 999px" : i === IDIOMAS_DE_PLANILLA.length - 1 ? "0 999px 999px 0" : 0, background: lang === l ? "#FFCD00" : "transparent", color: lang === l ? "#2A0760" : "#D3B8FA" }}>
             {l.toUpperCase()}
           </button>
         ))}
@@ -172,7 +172,7 @@ export function DatasheetTool({ langInicial = "es" }: { langInicial?: IdiomaDePl
   return (
     <div style={{ minHeight: "100dvh", background: "var(--paper)", color: "var(--ink)" }}>
       <style>{`@media print { .cdt-no-print { display: none !important; } .cdt-ficha { border: none !important; box-shadow: none !important; margin: 0 !important; max-width: none !important; } .cdt-ficha header, .cdt-ficha footer, .cdt-agua { -webkit-print-color-adjust: exact; print-color-adjust: exact; } body { background: #fff !important; } }`}</style>
-      <header className="cdt-no-print" style={{ background: "#12101A", color: "#fff", borderBottom: "3px solid #FFCD00", padding: "8px 18px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+      <header className="cdt-no-print" data-superficie="oscura" style={{ background: "#12101A", color: "#fff", borderBottom: "3px solid #FFCD00", padding: "8px 18px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginRight: "auto" }}>
           <Image src="/images/shared/ctc-logo-parrot-black.webp" alt={CTC_RAZON} width={34} height={38} style={{ filter: "invert(1)" }} priority />
           <div style={{ lineHeight: 1.15 }}>
@@ -196,9 +196,9 @@ export function DatasheetTool({ langInicial = "es" }: { langInicial?: IdiomaDePl
         <main style={{ maxWidth: 1180, margin: "0 auto", padding: "14px 16px 60px" }}>
           <div className="cdt-no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
             {vivo.lotes.length > 1 ? (
-              <span style={{ display: "inline-flex", border: "1.5px solid var(--line)", borderRadius: 999, overflow: "hidden" }}>
+              <span className="conmutador" style={{ display: "inline-flex", border: "1.5px solid var(--line)", borderRadius: 999 }}>
                 {[false, true].map((v) => (
-                  <button key={String(v)} type="button" aria-pressed={todos === v} onClick={() => setTodos(v)} style={{ padding: "4px 12px", fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer", background: todos === v ? "var(--primary)" : "transparent", color: todos === v ? "#fff" : "var(--muted)" }}>
+                  <button key={String(v)} type="button" aria-pressed={todos === v} onClick={() => setTodos(v)} style={{ borderRadius: v ? "0 999px 999px 0" : "999px 0 0 999px", padding: "4px 12px", fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer", background: todos === v ? "var(--primary)" : "transparent", color: todos === v ? "#fff" : "var(--muted)" }}>
                     {v ? t.fiTodos : `${t.fiEste} · ${lote.codigo}`}
                   </button>
                 ))}

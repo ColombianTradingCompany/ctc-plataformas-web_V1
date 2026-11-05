@@ -2,6 +2,10 @@
 
 import { BANDAS_PUNTOS, PUNTOS_MAX, SCA_TYRIAN, letras, puntosCtc, type Triada } from "@/lib/pvc/escala";
 
+/** Tinta del rótulo de cada banda cuando el color del grado no llega a 4,5:1 sobre su propio tinte.
+ *  Solo Gold (#A87A14 da 3,4:1); #7A5800 da 5,8:1. El tinte de la banda sigue siendo el del grado. */
+const TINTA_DE_ROTULO: Record<string, string> = { gold: "#7A5800" };
+
 /** La curva: puntos contra SCA para la tríada elegida, sobre las cinco bandas.
  *  Enseña de un vistazo lo que ninguna tabla dice — que el surplus no desplaza
  *  la línea, la inclina. V5.158: sale de `EscalaBoard` a su propio archivo para que el informe del Centro en el OCP
@@ -26,7 +30,7 @@ export function CurvaDeEscala({ t, sca, puntos }: { t: Triada; sca: number; punt
       {BANDAS_PUNTOS.map((b) => (
         <g key={b.id}>
           <rect x={L} y={y(b.max)} width={W - L - R} height={Math.max(0, y(b.min) - y(b.max))} fill={b.hex} opacity="0.10" />
-          <text x={W - R - 4} y={y(b.min) - 4} textAnchor="end" fontSize="10" fill={b.hex} fontWeight="600">{b.nombre}</text>
+          <text x={W - R - 4} y={y(b.min) - 4} textAnchor="end" fontSize="10" fill={TINTA_DE_ROTULO[b.id] ?? b.hex} fontWeight="600">{b.nombre}</text>
         </g>
       ))}
       {[1000, 1400, 1600, 1800, 2000, 2500].map((v) => (
@@ -40,8 +44,8 @@ export function CurvaDeEscala({ t, sca, puntos }: { t: Triada; sca: number; punt
       ))}
       <line x1={x(SCA_TYRIAN)} x2={x(SCA_TYRIAN)} y1={T} y2={H - B} stroke="var(--muted)" strokeWidth="1" strokeDasharray="3 3" opacity="0.7" />
       <path d={linea(ccc)} fill="none" stroke="var(--ink)" strokeWidth="1.5" opacity="0.45" />
-      {hayS && <path d={linea(t)} fill="none" stroke="var(--accent, #8A5A2B)" strokeWidth="2.2" />}
-      <circle cx={x(sca)} cy={y(puntos)} r="6" fill="var(--accent, #8A5A2B)" stroke="var(--card)" strokeWidth="2" />
+      {hayS && <path d={linea(t)} fill="none" stroke="var(--accent-ink, var(--accent, #8A5A2B))" strokeWidth="2.2" />}
+      <circle cx={x(sca)} cy={y(puntos)} r="6" fill="var(--accent-ink, var(--accent, #8A5A2B))" stroke="var(--card)" strokeWidth="2" />
     </svg>
   );
 }

@@ -41,7 +41,7 @@ export function ConsoleScaffold({
   return (
     <div>
       <div className={styles.head}>
-        <span className={styles.code} style={{ color: accent }}>
+        <span className={styles.code} style={{ color: "var(--ink)", textDecorationLine: "underline", textDecorationColor: accent, textDecorationThickness: 3, textUnderlineOffset: 4 }}>
           {code}
         </span>
         <h1 className={styles.title}>{name}</h1>

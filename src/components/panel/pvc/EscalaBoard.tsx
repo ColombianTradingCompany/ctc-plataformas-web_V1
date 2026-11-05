@@ -15,7 +15,7 @@ import type { Banda5 } from "@/lib/pvc/motor";
 
 // ── ECP · Modelo Económico · Grados ──────────────────────────────────────────
 // La escala «El Punto y la Tríada» (docs/PVC_BCP_PLAN.md §9.1) con su
-// calculadora. Nació (V5.56) para que el owner la VALIDARA; desde la V5.160
+// calculadora. Nació (V5.45) para que el owner la VALIDARA; desde la V5.160
 // gobierna: `definicion.ts` lee de `escala.ts` sus bandas (ALINEACION §1), y la
 // definición vigente que leen las superficies es `/ecp/direccionamiento/grados`.
 // Esta pantalla calcula y enseña; no escribe en ningún lote.

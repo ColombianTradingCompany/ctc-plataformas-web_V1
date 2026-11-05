@@ -13,8 +13,9 @@
 // consulta — aquí nunca se toca la base. Lo vigila `scripts/qa-taller-entrada-check.mjs`.
 //
 // Lo que NO hace la URL, a propósito:
-//   · No crea trabajos. Un enlace que escribe en la base al abrirse sería un GET con efectos; el menú propone el nombre y
-//     la persona da UN clic.
+//   · No crea trabajos. Un enlace que crea filas al abrirse sería un GET con efectos; el menú propone el nombre y la
+//     persona da UN clic. (Abrir un trabajo PROPIO con `?trabajo=` sí sella su `abierto_at`, igual que el clic del menú:
+//     es la misma acción, hecha por la persona dueña.)
 //   · No dice si un trabajo, una finca o un lote ajeno EXISTE: el aviso es el mismo para «no existe» y «no es suyo».
 //   · No prellena un trabajo GUARDADO: si llegan `?trabajo=` y `?lote=` juntos, manda el trabajo tal como se dejó.
 
@@ -46,6 +47,7 @@ export const AVISO = {
   lote: "El enlace trae un lote que no se reconoce: la herramienta abre sin prellenar.",
   fincaAjena: "Esa finca no está en tu cuenta: la herramienta abre sin prellenar.",
   loteAjeno: "Ese lote no está en tu cuenta: la herramienta abre sin prellenar.",
+  fincaNoEsDelLote: "La finca del enlace no es la de ese lote: se usa la del lote.",
 } as const;
 
 type Param = string | string[] | undefined;
@@ -114,10 +116,26 @@ export type LotePrefill = {
   variedad: string | null;
   proceso: string | null;
   altitud_m: number | null;
+  /** La finca principal DEL LOTE (también de la cuenta), o `null`. La línea del lote siempre nombra ésta. */
+  finca: FincaPrefill | null;
 };
-/** Lo que el servidor resolvió de la cuenta: solo datos que la persona ya ve en su panel. `finca` es la del parámetro o,
- *  si solo vino el lote, la finca principal del lote. */
+/** Lo que el servidor resolvió de la cuenta: solo datos que la persona ya ve en su panel. `finca` es la que llenan los
+ *  campos de finca: la del parámetro o, si solo vino el lote, la del lote (ver `combinarRegistro`). */
 export type RegistroPrefill = { finca: FincaPrefill | null; lote: LotePrefill | null };
+
+/**
+ * Junta la finca del parámetro y el lote. El lote TRAE su finca: si llegan los dos y la finca del enlace no es la del lote,
+ * manda la del lote (un lote con la finca equivocada sería un origen falso escrito en el trabajo) y se avisa.
+ */
+export function combinarRegistro(fincaParam: FincaPrefill | null, lote: LotePrefill | null): { registro: RegistroPrefill | null; avisos: string[] } {
+  const avisos: string[] = [];
+  let finca = fincaParam ?? lote?.finca ?? null;
+  if (lote?.finca && fincaParam && fincaParam.id !== lote.finca.id) {
+    finca = lote.finca;
+    avisos.push(AVISO.fincaNoEsDelLote);
+  }
+  return { registro: finca || lote ? { finca, lote } : null, avisos };
+}
 
 /** Lo que la concha le pasa a la herramienta. `campos` = selector → valor (lo aplica `ctc-bridge.js`); `registro` solo va
  *  a las herramientas que lo piden (`propio: true`) — mínimo privilegio: nadie recibe un dato que no declaró. */
@@ -147,8 +165,8 @@ export function resumenFinca(f: FincaPrefill): string {
   return unir([`Finca ${f.nombre}`, lugar, f.altitud_m ? `${f.altitud_m} m` : null]).slice(0, 200);
 }
 
-export function resumenLote(l: LotePrefill, f: FincaPrefill | null): string {
-  return unir([l.referencia, l.nombre, l.variedad, l.proceso, f ? `Finca ${f.nombre}` : null]).slice(0, 200);
+export function resumenLote(l: LotePrefill): string {
+  return unir([l.referencia, l.nombre, l.variedad, l.proceso, l.finca ? `Finca ${l.finca.nombre}` : null]).slice(0, 200);
 }
 
 function valorFinca(f: FincaPrefill, d: DatoFinca): string {
@@ -170,7 +188,8 @@ function valorFinca(f: FincaPrefill, d: DatoFinca): string {
   }
 }
 
-function valorLote(l: LotePrefill, f: FincaPrefill | null, d: DatoLote): string {
+function valorLote(l: LotePrefill, d: DatoLote): string {
+  const f = l.finca;
   switch (d) {
     case "referencia":
       return l.referencia;
@@ -183,7 +202,7 @@ function valorLote(l: LotePrefill, f: FincaPrefill | null, d: DatoLote): string 
     case "altitud_m":
       return l.altitud_m == null ? (f?.altitud_m == null ? "" : String(f.altitud_m)) : String(l.altitud_m);
     case "resumen":
-      return resumenLote(l, f);
+      return resumenLote(l);
   }
 }
 
@@ -204,7 +223,12 @@ export function construirPrefill(toolId: string, registro: RegistroPrefill | nul
   const etiqueta = etiquetaDe(registro);
   const contrato = entradaDe(toolId);
   if (!contrato) return { etiqueta, campos: [], registro: null };
+  return { etiqueta, campos: camposDe(contrato, registro), registro: contrato.propio ? registro : null };
+}
 
+/** Los campos de un contrato con un registro: selector → valor. Un selector que no es simple, uno ya usado o un valor
+ *  vacío no entran (un prellenado no escribe campos en blanco). */
+export function camposDe(contrato: EntradaHerramienta, registro: RegistroPrefill): { sel: string; valor: string }[] {
   const campos: { sel: string; valor: string }[] = [];
   const usados = new Set<string>();
   const poner = (sel: string | undefined, valor: string) => {
@@ -213,11 +237,10 @@ export function construirPrefill(toolId: string, registro: RegistroPrefill | nul
     campos.push({ sel, valor: valor.slice(0, 500) });
   };
   if (registro.lote && contrato.lote)
-    for (const [d, sel] of Object.entries(contrato.lote) as [DatoLote, string][]) poner(sel, valorLote(registro.lote, registro.finca, d));
+    for (const [d, sel] of Object.entries(contrato.lote) as [DatoLote, string][]) poner(sel, valorLote(registro.lote, d));
   if (registro.finca && contrato.finca)
     for (const [d, sel] of Object.entries(contrato.finca) as [DatoFinca, string][]) poner(sel, valorFinca(registro.finca, d));
-
-  return { etiqueta, campos, registro: contrato.propio ? registro : null };
+  return campos;
 }
 
 /**

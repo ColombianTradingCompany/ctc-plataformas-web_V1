@@ -2,7 +2,7 @@ import "server-only";
 
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
 import { ctcLotReference, fincaCode } from "@/components/kaffetal-regal/data";
-import { AVISO, type FincaPrefill, type LotePrefill, type RefRegistro, type RegistroPrefill } from "./entrada";
+import { AVISO, combinarRegistro, type FincaPrefill, type LotePrefill, type RefRegistro, type RegistroPrefill } from "./entrada";
 
 // ── TAR-121 · `?finca=` y `?lote=` del taller, resueltos CONTRA LA CUENTA ──────────────────────────────────────────────────
 // La mitad servidor de `entrada.ts`. La regla es una sola y va en la CONSULTA, no en el render: una finca o un lote solo
@@ -93,7 +93,6 @@ export async function resolverEntrada(finca: RefRegistro | null, lote: RefRegist
   }
 
   let loteRes: LotePrefill | null = null;
-  let fincaDelLote: FincaPrefill | null = null;
   if (lote) {
     try {
       let q = service
@@ -107,16 +106,16 @@ export async function resolverEntrada(finca: RefRegistro | null, lote: RefRegist
       // Dos lotes de la MISMA cuenta con la misma referencia corta es ambiguo: mejor nada que el equivocado.
       if (hit.length === 1) {
         const l = hit[0];
+        const f = Array.isArray(l.fincas) ? l.fincas[0] : l.fincas;
         loteRes = {
           referencia: ctcLotReference(l.id),
           nombre: l.name,
           variedad: capitaliza(l.ficha_variedad),
           proceso: capitaliza(l.ficha_proceso),
           altitud_m: l.ficha_altitud_m,
+          // La finca del lote también tiene que ser de la cuenta: el embed no filtra por dueño, así que se comprueba aquí.
+          finca: f && f.producer_id === userId ? aFinca(f) : null,
         };
-        const f = Array.isArray(l.fincas) ? l.fincas[0] : l.fincas;
-        // La finca del lote también tiene que ser de la cuenta: el embed no filtra por dueño, así que se comprueba aquí.
-        fincaDelLote = f && f.producer_id === userId ? aFinca(f) : null;
       }
     } catch {
       loteRes = null;
@@ -124,6 +123,7 @@ export async function resolverEntrada(finca: RefRegistro | null, lote: RefRegist
     if (!loteRes) avisos.push(AVISO.loteAjeno);
   }
 
-  const registro: RegistroPrefill = { finca: fincaRes ?? fincaDelLote, lote: loteRes };
-  return { registro: registro.finca || registro.lote ? registro : null, avisos };
+  // El lote trae su finca: si la del enlace es otra, manda la del lote (y se avisa). Regla pura, en `entrada.ts`.
+  const junto: { registro: RegistroPrefill | null; avisos: string[] } = combinarRegistro(fincaRes, loteRes);
+  return { registro: junto.registro, avisos: [...avisos, ...junto.avisos] };
 }

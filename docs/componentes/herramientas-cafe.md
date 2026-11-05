@@ -112,7 +112,7 @@ de la cuenta), `?finca=<uuid | CTC-F-…>` y `?lote=<uuid | CTC-L-…>` (prellen
 ## Guardianes
 
 `qa-tools-carpetas.mjs` (185, `node --experimental-strip-types`: carpeta ↔ lista ↔ disco ↔ 308, y nadie escribe una ruta plana) ·
-`qa-taller-check.mjs` (69) · `qa-taller-entrada-check.mjs` (104, TAR-121, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`:
+`qa-taller-check.mjs` (69) · `qa-taller-entrada-check.mjs` (119, TAR-121, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`:
 la entrada de módulo — parámetros, la vuelta con sus ataques (incluidos `..` y `%2e%2e`), el prellenado de mínimo privilegio, cada
 selector del contrato existe en el archivo de su herramienta, y el filtro por dueño en la consulta) · `qa-herramientas-acceso-check.mjs` (31) · `qa-concha-herramientas-check.mjs` (44,
 once vectores de ataque) · `qa-tools-puente-conformance.mjs` (15/15; las de esquema propio —`agtron`, `coffee-datasheet`, `gulliver`— con sonda;
@@ -154,8 +154,9 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 
 - **TAR-121 · la herramienta del taller como MÓDULO** (2026-11-04, sesión nocturna en la nube; PR abierto, sin versión hasta que aterrice
   en `main`). Hecho: `?trabajo=` abre un trabajo guardado de la cuenta (por `abrirTrabajo`, que filtra `user_id`; uno ajeno o borrado cae al
-  menú con el mismo aviso); `?finca=` / `?lote=` se resuelven contra la cuenta en el servidor y prellenan un trabajo NUEVO o «Abrir sin
-  guardar» (nunca uno guardado; nunca crean filas al abrir el enlace: el menú propone el nombre y la persona da el clic); `?volver=` se lee
+  menú con el mismo aviso; abrirlo sella su `abierto_at`, como el clic del menú); `?finca=` / `?lote=` se resuelven contra la cuenta en el
+  servidor y prellenan un trabajo NUEVO o «Abrir sin guardar» (nunca uno guardado; nunca crean filas al abrir el enlace: el menú propone el
+  nombre y la persona da el clic; el lote trae SU finca, y una `?finca=` distinta se ignora con aviso); `?volver=` se lee
   con el mismo contrato para la cinta y la concha (lista blanca de la superficie, sin segmentos `.`/`..`). El puente lleva un mensaje nuevo,
   `{ctc:"prefill", campos, registro}`, y `CTC.usarPrefill`. Primera herramienta con contrato: `mermas-ctc` (las notas del reporte). Abierto:
   (a) el contrato completo, herramienta por herramienta, en la sección «El contrato de URL del taller» (siguiente PR); (b) prellenado de

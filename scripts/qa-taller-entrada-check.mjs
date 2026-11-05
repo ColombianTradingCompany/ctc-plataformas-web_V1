@@ -11,12 +11,15 @@
 //   2. La VUELTA. `?volver=` sigue la lista blanca de la superficie (`vueltaSegura`), también en la cinta del taller.
 //   3. El MÍNIMO PRIVILEGIO del prellenado: una herramienta recibe solo los datos que declaró en `carpetas.ts`, en campos
 //      que EXISTEN en su archivo, y el registro entero solo si lo pidió (`propio`).
-//   4. Nada se escribe en la base por abrir un enlace.
+//   4. Abrir un enlace no CREA nada: el trabajo nuevo nace del clic de la persona. (Abrir un trabajo propio con
+//      `?trabajo=` sella su `abierto_at`, como el clic del menú, y restaurarlo no lo vuelve a guardar.)
 
 import { readFileSync, existsSync } from "node:fs";
 import {
   leerEntrada,
   construirPrefill,
+  camposDe,
+  combinarRegistro,
   entradaDe,
   esSelectorSimple,
   etiquetaDe,
@@ -109,7 +112,8 @@ for (const [nombre, v] of [
 
 // ── 5. El prellenado: mínimo privilegio ──────────────────────────────────────────────────────────────────────────────
 const FINCA = { id: U, referencia: "CTC-F-3F2504E0", nombre: "La Cumbre", municipio: "Pitalito", departamento: "Huila", altitud_m: 1650 };
-const LOTE = { referencia: "CTC-L-6BA7B810", nombre: "Mitaca 2026", variedad: "Castillo", proceso: "Lavado", altitud_m: null };
+const LOTE = { referencia: "CTC-L-6BA7B810", nombre: "Mitaca 2026", variedad: "Castillo", proceso: "Lavado", altitud_m: null, finca: FINCA };
+const OTRA = { ...FINCA, id: U2, referencia: "CTC-F-6BA7B810", nombre: "El Roble", municipio: "Garzón" };
 {
   check("sin registro no hay prellenado", construirPrefill("mermas-ctc", null) === null);
   check("registro vacío tampoco", construirPrefill("mermas-ctc", { finca: null, lote: null }) === null);
@@ -127,7 +131,27 @@ const LOTE = { referencia: "CTC-L-6BA7B810", nombre: "Mitaca 2026", variedad: "C
 
   check("la etiqueta del lote es nombre · referencia", etiquetaDe({ finca: FINCA, lote: LOTE }) === "Mitaca 2026 · CTC-L-6BA7B810");
   check("la etiqueta cabe en el techo de crearTrabajo (80)", etiquetaDe({ finca: null, lote: { ...LOTE, nombre: "x".repeat(200) } }).length <= 80);
-  check("un dato vacío no escribe un campo vacío", construirPrefill("mermas-ctc", { finca: null, lote: { ...LOTE, nombre: "", variedad: null, proceso: null } })?.campos[0].valor === "CTC-L-6BA7B810");
+  check("la línea del lote omite los datos vacíos", construirPrefill("mermas-ctc", { finca: null, lote: { ...LOTE, nombre: "", variedad: null, proceso: null, finca: null } })?.campos[0].valor === "CTC-L-6BA7B810");
+  // camposDe, directo: un dato vacío no escribe un campo en blanco; un selector repetido o no simple, tampoco.
+  const c = camposDe(
+    { lote: { variedad: "#var", nombre: "#nom", proceso: "#a b" }, finca: { municipio: "#mun", nombre: "#nom" } },
+    { finca: { ...FINCA, municipio: null }, lote: { ...LOTE, variedad: null } }
+  );
+  check("camposDe: un dato vacío no escribe un campo", !c.some((x) => x.sel === "#var" || x.sel === "#mun"));
+  check("camposDe: el primero que pide un selector se lo queda (el lote antes que la finca)", c.length === 1 && c[0].sel === "#nom" && c[0].valor === "Mitaca 2026");
+
+  // El lote TRAE su finca: la del enlace no la reemplaza.
+  const mismatch = combinarRegistro(OTRA, LOTE);
+  check("lote + finca ajena al lote: manda la del lote, y se avisa", mismatch.registro?.finca?.id === FINCA.id && mismatch.avisos.includes(AVISO.fincaNoEsDelLote));
+  const mm = construirPrefill("mermas-ctc", mismatch.registro);
+  check("y la línea del lote nombra SU finca", mm?.campos[0].valor.includes("Finca La Cumbre") && !mm.campos[0].valor.includes("El Roble"));
+  const igual = combinarRegistro(FINCA, LOTE);
+  check("lote + su propia finca: sin aviso", igual.registro?.finca?.id === FINCA.id && igual.avisos.length === 0);
+  const sinFincaDelLote = combinarRegistro(OTRA, { ...LOTE, finca: null });
+  check("lote sin finca conocida + finca: la del enlace llena los campos de finca, la línea del lote no inventa finca", sinFincaDelLote.registro?.finca?.id === OTRA.id && sinFincaDelLote.avisos.length === 0 && construirPrefill("mermas-ctc", sinFincaDelLote.registro)?.campos[0].valor === "CTC-L-6BA7B810 · Mitaca 2026 · Castillo · Lavado");
+  check("solo el lote: su finca llena la finca", combinarRegistro(null, LOTE).registro?.finca?.id === FINCA.id);
+  check("solo la finca", combinarRegistro(FINCA, null).registro?.finca?.id === FINCA.id && combinarRegistro(FINCA, null).registro?.lote === null);
+  check("nada resuelto, nada", combinarRegistro(null, null).registro === null);
 
   for (const c of CARPETAS_HERRAMIENTAS.filter((x) => x.entrada)) {
     const p = construirPrefill(c.id, { finca: FINCA, lote: LOTE });
@@ -199,8 +223,20 @@ check("una herramienta desconocida no tiene contrato", entradaDe("no-existe") ==
   check("el trabajo de la URL se abre por la server action con dueño", sesion.includes("abrirTrabajo(toolId, trabajoInicial)"));
   check("el prellenado va a SU iframe y al origen propio", sesion.includes('{ ctc: "prefill", campos: p.campos, registro: p.registro }, window.location.origin'));
   check("la concha nunca habla con «*»", !/postMessage\([^)]*"\*"\)/.test(sesion.replace(/\/\/.*$/gm, "")));
-  check("solo un trabajo nuevo o la sesión suelta llevan prellenado", sesion.includes("conPrefill: false") && sesion.includes("conPrefill: !!prefill"));
-  check("abrir un enlace no crea trabajos (crearTrabajo solo en el clic)", (sesion.match(/crearTrabajo\(/g) ?? []).length === 1 && /async function crear\(\)[\s\S]*crearTrabajo\(toolId, nuevoNombre\)/.test(sesion));
+  // Anclados al sitio donde se decide, no a un texto en cualquier parte del archivo.
+  const sinCom = sesion.replace(/\/\/.*$/gm, "");
+  check("un trabajo abierto desde la lista NO lleva prellenado", /async function abrir\(t: TrabajoResumen\)[\s\S]*?setModo\(\{ tipo: "abierta"[^}]*conPrefill: false \}\)/.test(sinCom));
+  check("el trabajo de la URL tampoco", /if \(trabajoInicial\) \{[\s\S]{0,400}conPrefill: false \}\)/.test(sinCom));
+  check("un trabajo NUEVO sí", /async function crear\(\)[\s\S]*?setModo\(\{ tipo: "abierta", trabajoId: r\.data\.id,[^\n]{0,120}conPrefill: !!prefill \}\)/.test(sinCom));
+  check("y «Abrir sin guardar» también", /setModo\(\{ tipo: "suelta", conPrefill: !!prefill \}\)/.test(sinCom));
+  check("solo esos dos llevan prellenado", (sinCom.match(/conPrefill: !!prefill/g) ?? []).length === 2);
+  check("el «ready» solo envía el prellenado si el modo lo lleva", /d\.ctc === "ready"[\s\S]{0,1400}if \(m\.conPrefill && p && /.test(sinCom));
+  check("abrir un enlace no crea trabajos (crearTrabajo solo dentro de crear)", (sinCom.match(/crearTrabajo\(/g) ?? []).length === 1 && /async function crear\(\)[\s\S]*?crearTrabajo\(toolId, nuevoNombre\)/.test(sinCom));
+  {
+    const usos = [...sinCom.matchAll(/\bcrear\b(?!Trabajo)/g)].map((m) => sinCom.slice(Math.max(0, m.index - 40), m.index + 12));
+    const permitidos = usos.filter((u) => /async function crear\(\)/.test(u) || /onClick=\{crear\}/.test(u) || /nuevoNombre\.trim\(\)\) crear\(\)/.test(u));
+    check("«crear» solo se llama desde el botón o con Enter (nunca al montar)", usos.length > 0 && usos.length === permitidos.length);
+  }
 
   const puente = lee("public/tools/ctc-bridge.js");
   const iGuarda = puente.indexOf("e.source !== window.parent");

@@ -1,4 +1,4 @@
-# private/ocp-apps · las calculadoras de los cotizadores (no son públicas)
+# private/ocp-apps · las calculadoras de los cotizadores (la web las sirve solo con sesión de consola)
 
 Dos HTML del owner que los cotizadores del ECP embeben **tal cual** en un iframe (`src/components/cotizador/AppFrame.tsx`):
 

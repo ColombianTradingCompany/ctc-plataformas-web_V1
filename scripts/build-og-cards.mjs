@@ -56,8 +56,12 @@ logotipos de marca, que viven FUERA del repo.
   CTC_LOGOS_DIR       lo mismo, como variable de entorno (el flag manda)
   por omisión         ../reference/logos (carpeta hermana del repo)`;
 
-/** Lee `--logos` de la línea de comandos. Devuelve undefined si no está. */
+/** Lee `--logos` de la línea de comandos. Devuelve undefined si no está.
+ *  Recorre TODOS los argumentos antes de devolver nada: así `--help`, un
+ *  argumento desconocido o un `--logos` repetido se detectan estén donde estén
+ *  (`--logos X --help` enseña la ayuda en vez de reescribir las tarjetas). */
 function logosDeLaLineaDeComandos(argv) {
+  let logos;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--help" || a === "-h") {
@@ -66,17 +70,22 @@ function logosDeLaLineaDeComandos(argv) {
     }
     if (a === "--logos") {
       const v = argv[i + 1];
-      if (!v || v.startsWith("--")) fallar("`--logos` necesita una carpeta: `--logos <carpeta>`.", { conUso: true });
-      return v;
+      if (!v || v.startsWith("-")) fallar("`--logos` necesita una carpeta: `--logos <carpeta>`.", { conUso: true });
+      if (logos !== undefined) fallar("`--logos` va una sola vez.", { conUso: true });
+      logos = v;
+      i++;
+      continue;
     }
     if (a.startsWith("--logos=")) {
       const v = a.slice("--logos=".length);
       if (!v) fallar("`--logos=` necesita una carpeta: `--logos=<carpeta>`.", { conUso: true });
-      return v;
+      if (logos !== undefined) fallar("`--logos` va una sola vez.", { conUso: true });
+      logos = v;
+      continue;
     }
     fallar(`Argumento desconocido: ${a}`, { conUso: true });
   }
-  return undefined;
+  return logos;
 }
 
 /** Corta con un mensaje claro y código 1. `conUso` añade la ayuda de la línea

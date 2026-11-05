@@ -18,7 +18,7 @@
 // `src/lib/grados/definicion.ts` (contrato de ALINEACION §1), lee de aquí sus
 // bandas, y `qa-grados-check` la vigila aparte. Este guardián cuida el modelo, y
 // de paso que la pantalla y su pestaña no vuelvan a decir que espera validación
-// (TAR-124: la pestaña siguió diciendo «en validación» medio año después).
+// (TAR-124: la pestaña siguió diciendo «en validación» un mes después de la V5.160).
 
 import { readFileSync } from "node:fs";
 import {

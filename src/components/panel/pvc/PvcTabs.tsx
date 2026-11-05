@@ -20,7 +20,8 @@ const TABS = [
   // superficies— es la pestaña de Direccionamiento (`/ecp/direccionamiento/grados`, `definicion.ts`).
   // Esta es la misma escala («El Punto y la Tríada», `escala.ts`) con su calculadora y lo que vale
   // cada grado en la edición vigente. Gobierna desde la V5.160: `definicion.ts` lee de ella sus bandas.
-  // (De la V5.56 a la V5.160 se llamó «Escala de puntos · en validación», cuando aún no gobernaba.)
+  // (Desde la V5.56 se llamó «Escala de puntos · en validación»; la escala gobierna desde la V5.160, pero el rótulo siguió así
+  // hasta TAR-124.)
   { href: "/ecp/pvc/grados", label: "Escala de puntos · calculadora" },
   { href: "/ecp/pvc/tablero", label: "Tablero" },
   { href: "/ecp/pvc/parametros", label: "Parámetros del modelo" },

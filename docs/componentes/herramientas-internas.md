@@ -54,8 +54,8 @@ seguía diciendo «en validación»). La pestaña vacía «Modelo Económico» d
   motores** — Python de referencia en `C:\dev\ctc-platforms\apps-internas\PVC - Modelo\v2.0`, Excel, `motor.ts` y el JS del
   tablero `docs/pvc/tablero/PVC_Tablero.html`), `servicio.ts` (`edicionVigente(fecha?)`: la edición cuya ventana contiene el día; **V5.82**: **`pvcParaGrado(grado, fecha?, {modificadorPct})`**, LA puerta al precio de un grado, sobre **`precio.ts`** —puro: `precioDeLaEscalera`, `bandaDeGrado`; nunca lee `rango`—),
   `actions.ts` (`crearVersionModeloAction`), `dossier.ts`, `tablero.ts`, `tipos.ts`, y los módulos PUROS que hoy se exhiben
-  y no gobiernan nada: `escala.ts` («El Punto y la Tríada» y la Base física), `canales.ts`, `compromiso.ts` — **menos
-  `lectura.ts`, que GOBIERNA desde la V5.87**: `src/lib/compras/mezclas.ts` (OCP, `consolas`) lee de ahí `MOQ_CARGAS_BLACK_RED`,
+  y no gobiernan nada: `canales.ts`, `compromiso.ts` — **menos `escala.ts`** («El Punto y la Tríada» y la Base física), **que
+  GOBIERNA desde la V5.160** (`definicion.ts` lee de ahí sus bandas), **y `lectura.ts`, que GOBIERNA desde la V5.87**: `src/lib/compras/mezclas.ts` (OCP, `consolas`) lee de ahí `MOQ_CARGAS_BLACK_RED`,
   `COMPOSICION_POR_GRADO` y `TIPOS_DE_MEZCLA` (V5.91) y los hace cumplir al armar y cerrar una mezcla, con `guard_mezcla_cerrada`
   en la base (nodo final, wrap V47, 2026-09-25).
   Pantallas en `src/components/panel/pvc/`; `scripts/seed-pvc-f4-2026.mjs`. **Grados**: `src/lib/grados/definicion.ts`
@@ -83,7 +83,7 @@ Solo lee: `lots`, `lot_offers`, `purchase_contracts`, `lot_listings` (para saber
 
 `qa-pvc-motor.mjs` (49 — paridad con Python, tolerancia 1e-4) · `qa-pvc-tablero.mjs` (44 — marcadores `@@MODELO`) ·
 `qa-pvc-vigencia.mjs` (28) · `qa-pvc-lectura.mjs` (60 — el MOQ de compra y los tipos de mezcla, en el código Y en el plan §14.8) ·
-`qa-pvc-escala.mjs` (68 — incluye la Base física) · `qa-pvc-canales.mjs` (57) · `qa-pvc-compromiso.mjs` (31) ·
+`qa-pvc-escala.mjs` (70 — incluye la Base física y, desde TAR-124, el rótulo de la pestaña) · `qa-pvc-canales.mjs` (57) · `qa-pvc-compromiso.mjs` (31) ·
 `qa-grados-check.mjs` (48 — el contrato de grados) · `qa-definicion-check.mjs` · `qa-direccionamiento-check.mjs` ·
 `qa-anclas-check.mjs` · `qa-courier-check.mjs` (51 — el cálculo contra un acuerdo FICTICIO, la fuga cero por hash, el combustible derivado contra el historial de FedEx, el combustible provisional y el límite de paquete por medidas). `qa-empaque-fob-check.mjs` (47 — Empacado hasta FOB: el cálculo contra cuatro casos hechos a mano, que la máquina no vuelva, que el servidor recalcule y emita, la compuerta de la tabla). Y de la casa, porque el grupo vive en el rail del ECP: `qa-rutas-consolas.mjs`.
 
@@ -95,8 +95,8 @@ Solo lee: `lots`, `lot_offers`, `purchase_contracts`, `lot_listings` (para saber
 - **La cifra de un guardián sale de la FUENTE, nunca del módulo que vigila**: el plan del owner, la documentación, el
   tablero. `qa-pvc-escala` afirmó en verde la Base física invertida (V5.53) por copiarla del código.
 - **Desde la V5.82 el PVC GOBIERNA una oferta real**: `emitOffer` (OCP) pide el precio a `pvcParaGrado` y guarda `pvc_edition_id`, `pvc_cop_kg` y el % (línea en `ALINEACION` §3 del 2026-09-24). Publicar una edición ya mueve dinero: la ventana `valid_from`/`valid_to` y la banda de cada grado son lo que el productor ve en su oferta.
-- **Un modelo se EXHIBE antes de GOBERNAR.** `escala`, `canales` y `compromiso` son cálculo puro que hoy solo
-  se enseña en el ECP. El día que una oferta, un contrato o un listado los lea, es un cambio con alcance: línea en
+- **Un modelo se EXHIBE antes de GOBERNAR.** `canales` y `compromiso` son cálculo puro que hoy solo
+  se enseña en el ECP (`escala` cruzó la línea en la V5.160: `definicion.ts` lee sus bandas; ALINEACION §1). El día que una oferta, un contrato o un listado los lea, es un cambio con alcance: línea en
   `ALINEACION` §3 y aviso previo a la superficie. **`lectura` ya cruzó esa línea (V5.87, fila de §3)**: las mezclas del OCP
   leen su MOQ de compra, la composición por grado y los tipos de mezcla — cambiar esas constantes cambia lo que el OCP admite,
   y va con su línea en §3 y `qa-compras` (§10) además de `qa-pvc-lectura`.

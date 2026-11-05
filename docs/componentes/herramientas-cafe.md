@@ -113,7 +113,7 @@ Reglas que no cambian con la herramienta:
 | Generador de códigos QR | `qr` | default | ídem | El nombre del trabajo nuevo | `/taller/qr?lote=CTC-L-XXXXXXXX` |
 | El viaje del café | `viaje-cafe` | default | ídem | El nombre del trabajo nuevo | `/taller/viaje-cafe` |
 | Defectos del Café | `defectos-cafe` | default | `volver` | — (sin memoria: ni trabajos ni prellenado) | `/taller/defectos-cafe?volver=/herramientas/taller` |
-| Navegador de Incoterms® 2020 | `incoterms` | default *(propuesto; alta en `tools` pendiente del deploy)* | `volver` | — (sin memoria) | `/taller/incoterms` |
+| Navegador de Incoterms® 2020 | `incoterms` | **plus** *(fila de `tools` creada y nivel puesto por el owner el 2026-10-29; lo cuenta ColombianTradingCompany/ctc-plataformas-web_V1#32)* | `volver` | — (sin memoria) | `/taller/incoterms` |
 
 `mermas-detallada` está archivada (308 a `mermas-ctc`). Una herramienta nueva entra en esta tabla con su alta: si guarda trabajo,
 acepta `trabajo` sin declarar nada; si tiene campos de finca o de lote, se declara su `entrada` en `carpetas.ts` y se añade aquí.

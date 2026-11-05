@@ -76,9 +76,10 @@ acuña otro. Un archivo con UIDs repetidos o inválidos los reacuña al cargarse
 
 ## TAR-121 · se abre prellenada con un lote o una finca de la cuenta (2026-11-04)
 
-`/herramientas/taller/coffee-datasheet?lote=CTC-L-XXXXXXXX` (o `?finca=CTC-F-XXXXXXXX`) abre un trabajo NUEVO con el lote en curso
-prellenado: nombre del lote; en la Caracterización Extrínseca país (Colombia, si la finca trae departamento), región, municipio, finca
-y altitud; en B1 la variedad y el proceso (Lavado · Honey · Natural, o «Otro» con su texto). Solo donde el campo esté vacío: el
+`/herramientas/taller/coffee-datasheet?lote=CTC-L-XXXXXXXX` (o `?finca=CTC-F-XXXXXXXX`) abre el menú de trabajos con el nombre del
+lote propuesto; el trabajo nuevo («Crear y abrir», el clic de la persona) o «Abrir sin guardar» llegan con el lote en curso
+prellenado. El enlace nunca crea la fila. Se prellena: nombre del lote; en la Caracterización Extrínseca país (el de la finca,
+`fincas.pais`; Colombia si no trae país y sí departamento), región, municipio, finca y altitud; en B1 la variedad y el proceso (Lavado · Honey · Natural, o «Otro» con su texto). Solo donde el campo esté vacío: el
 prellenado propone, no pisa. La finca y el lote los resuelve el servidor contra la cuenta (`src/lib/tools/entradaServidor.ts`); aquí
 llegan por el puente React (`usePuente`, mensaje `prefill`, mismo origen) y los vuelca `conPrefill` (`estado.ts`, puro, en
 `qa-coffee-datasheet` §7). El contrato de la herramienta es `{ propio: true }` en `src/lib/tools/carpetas.ts`.

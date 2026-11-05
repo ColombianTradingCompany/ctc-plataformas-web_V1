@@ -24,6 +24,8 @@ type FilaFinca = {
   name: string;
   municipio: string | null;
   departamento: string | null;
+  /** V5.127: el país de una finca fuera de Colombia; `null` = Colombia. */
+  pais: string | null;
   altitude_m: number | null;
 };
 
@@ -36,7 +38,7 @@ type FilaLote = {
   fincas: FilaFinca | FilaFinca[] | null;
 };
 
-const COLS_FINCA = "id, producer_id, name, municipio, departamento, altitude_m";
+const COLS_FINCA = "id, producer_id, name, municipio, departamento, pais, altitude_m";
 /** Un productor tiene decenas de lotes, no miles: buscar la referencia entre los SUYOS cabe en una consulta. */
 const MAX_FILAS = 500;
 
@@ -49,6 +51,7 @@ function aFinca(f: FilaFinca): FincaPrefill {
     nombre: f.name,
     municipio: f.municipio,
     departamento: f.departamento,
+    pais: f.pais,
     altitud_m: f.altitude_m,
   };
 }

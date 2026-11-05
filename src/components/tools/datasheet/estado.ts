@@ -333,8 +333,8 @@ export function conPrefill(ev: Evaluacion, registro: unknown): Evaluacion {
   const altitud = texto(l?.altitud_m) || texto(f?.altitud_m);
   const ext: Extrinseca = {
     ...lote.ext,
-    // Las fincas de Kaffetal Regal son colombianas (departamento y municipio de la lista del país).
-    pais: si(lote.ext.pais, f && texto(f.departamento) ? "Colombia" : ""),
+    // `fincas.pais` null = Colombia (V5.127); con país, el departamento va vacío.
+    pais: si(lote.ext.pais, texto(f?.pais) || (f && texto(f.departamento) ? "Colombia" : "")),
     region: si(lote.ext.region, f?.departamento),
     municipio: si(lote.ext.municipio, f?.municipio),
     finca: si(lote.ext.finca, f?.nombre),

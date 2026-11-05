@@ -2,7 +2,7 @@
 
 > **BORRADOR · decide el owner.** Construido leyendo el código de `main` sin acceso a la base: solo nombres de tablas, rutas y funciones. Se lee con el charter `docs/componentes/ctcx-os.md` y con la nota del primer módulo `docs/componentes/ctcx-os/reuniones.md`. Los tres entraron en `main` con la V6.18 (2026-11-05). Cada fila salió de un lector por grupo y la revisó un verificador contra el código.
 >
-> El catálogo de los hechos (`src/lib/os/hechosCatalogo.ts`, puro, y `src/lib/os/hechos.ts`, server-only) entró en `main` con la V6.18, sin ruta que lo lea; §3 y §4 lo citan tal como está. Nada de este atlas está decidido: las mecánicas son propuestas con su columna real, y los pesos, las metas y los términos sin dueño son decisiones abiertas del charter.
+> El catálogo de los hechos (`src/lib/os/hechosCatalogo.ts`, puro, y `src/lib/os/hechos.ts`, server-only) entró en `main` con la V6.18, sin ruta que lo lea; §3 y §4 lo citan tal como está. **Desde F2 (V6.19, pendiente de fusión)** lo lee `/os`, la quinta consola de solo lectura, para contar los hechos del turno por hub; lo que F2 construyó (rutas, lectores, fuentes de cada cifra) está en el charter, «Superficies y rutas» y «Mapa de código», no aquí. Nada de este atlas está decidido: las mecánicas son propuestas con su columna real, y los pesos, las metas y los términos sin dueño son decisiones abiertas del charter.
 
 ## 0 · Cómo se lee
 
@@ -22,7 +22,7 @@ Cada subsección de §2 es un grupo de superficies (un subdominio, una consola o
 
 | Valor | Quién es |
 |---|---|
-| consola/owner | El owner en las cuatro consolas (BCP · ECP · OCP · LCP), tras el login maestro con contraseña y OTP. |
+| consola/owner | El owner en las consolas internas (BCP · ECP · OCP · LCP y, desde la V6.19, la OS), tras el login maestro con contraseña y OTP. |
 | equipo GVG/GVB | Los colaboradores de la casa: fila en `panel_users` con sus consolas concedidas y su nivel por consola (`admin` · `viewer`). Son los jugadores del modo Equipo. |
 | productor KR | El productor de Kaffetal Regal (`profiles.role` = producer, `producer_profiles`), con su sesión propia; «en sesión asistida» = el OCP actúa en su nombre. |
 | comprador CP | El comprador de Cherry Picked. «Real» = `buyer_profiles` con actividad (`membresiasDe` en `src/lib/identidad/matriz.ts`); `role` buyer solo no basta. |
@@ -109,7 +109,7 @@ Una subsección por grupo, del público a las consolas y la espina.
 
 ### 2.1 · Plataforma y login (`www`, `panel.`, rutas compartidas)
 
-Es la entrada a la red: la portada de CTC Home con sus formularios de captación, la vitrina y la cinta de mercado; el login maestro de las cuatro consolas (contraseña y OTP); la recuperación de acceso que comparten las 11 puertas; y la infraestructura común (proxy, matriz de identidad, compuertas de consola, SEO). La usan sobre todo el visitante anónimo y consola/owner · equipo GVG/GVB. Productor KR, comprador CP, directorio y socio pasan por aquí cuando recuperan el acceso o cambian de plataforma dentro de la red, y cron/sistema actúa en cada petición a través del proxy.
+Es la entrada a la red: la portada de CTC Home con sus formularios de captación, la vitrina y la cinta de mercado; el login maestro de las consolas internas (contraseña y OTP); la recuperación de acceso que comparten las 11 puertas; y la infraestructura común (proxy, matriz de identidad, compuertas de consola, SEO). La usan sobre todo el visitante anónimo y consola/owner · equipo GVG/GVB. Productor KR, comprador CP, directorio y socio pasan por aquí cuando recuperan el acceso o cambian de plataforma dentro de la red, y cron/sistema actúa en cada petición a través del proxy.
 
 | Ruta | Quién | Lee | Escribe | Acciones (clase) | Hechos | Juego |
 |---|---|---|---|---|---|---|
@@ -141,7 +141,7 @@ Es la entrada a la red: la portada de CTC Home con sus formularios de captación
 - Las altas de Cuenta desde CTC Home (`leads`, `newsletter_subscribers`, `terratalento_interes`) no emiten ningún hecho. Para que alimenten el turno o las barras, el juego tendría que leer esas tablas directamente o añadir un `emitEvent`. Esa decisión es del owner y del componente que las posee (LCP).
 - Ningún correo del grupo se traga el fallo. Si el envío del OTP o del vale falla, se borra su fila. El lead guarda `leads.welcome_sent_at` / `leads.welcome_error`.
 - `/docs/ficha/[lotId]` es un talón 308: si el lote está en `public_lot_vitrina`, redirige a su Dossier público `/ctcx-public-catalogue/CTC-L-…`; si no, devuelve 404.
-- **Rumbo aprobado por el owner el 2026-11-05** (decisión 1 del charter, `docs/componentes/ctcx-os.md`). Para servir `/os` (la quinta consola propuesta; los módulos en `/os/m/<clave>`) detrás del login maestro hay un obstáculo: el host `panel.` reescribe cualquier ruta a `/control-panel/…`. Por eso se sirve en www, como `/bcp`. Necesita su layout raíz `src/app/os/layout.tsx` (tema de consola, Tailwind, noindex), `"os"` en `PanelConsoleKey` y en `CONSOLE_ORDER` (`src/lib/panel/consoles.ts`, que también leen los guardianes), la llave `os` en `panel_users.consoles` y `Disallow: /os` en `src/app/robots.txt/route.ts`.
+- **Rumbo aprobado por el owner el 2026-11-05** (decisión 1 del charter, `docs/componentes/ctcx-os.md`). Para servir `/os` (la quinta consola propuesta; los módulos en `/os/m/<clave>`) detrás del login maestro hay un obstáculo: el host `panel.` reescribe cualquier ruta a `/control-panel/…`. Por eso se sirve en www, como `/bcp`. Necesita su layout raíz `src/app/os/layout.tsx` (tema de consola, Tailwind, noindex), `"os"` en `PanelConsoleKey` y en `CONSOLE_ORDER` (`src/lib/panel/consoles.ts`, que también leen los guardianes), la llave `os` en `panel_users.consoles` y `Disallow: /os` en `src/app/robots.txt/route.ts`. **Construido en F2 (V6.19, pendiente de fusión)**: todo eso existe en la rama, la OS va la última de `CONSOLE_ORDER`, y la llave `os` se concede por SQL tras el despliegue (charter, Pendientes).
 - La rpc `buscar_identidad_para_recuperacion` es security definer y su SQL no está en el repo. Las tablas que lee (`profiles`, `panel_users`, `partner_accounts`) se deducen de sus columnas de salida.
 - La descripción de metadatos de `/control-panel` todavía habla de tres consolas; desde la V5.59 son cuatro (LCP).
 - Hay acciones compartidas con otros grupos. `subscribeNewsletter` también la usa `src/components/cherry-picked/NewsletterForm.tsx` (fuentes roast y x). `src/lib/terratalento/interesActions.ts` exporta también `marcarInteresTtContactado`, una acción de consola (borrador) que escribe `terratalento_interes.contacted` y `terratalento_interes.contact_undone` en audit_log y no pertenece a este grupo.
@@ -249,7 +249,7 @@ Es el lado del comprador de la red. Lo forman la portada que reparte los cuatro 
   - `/docs/ficha/[lotId]` → el Dossier público.
   - `/api/cron/renovaciones` se registra como «Cron · Ventanas de Cherry Picked» (`src/lib/integraciones/registroCrons.ts`, latidos vía `conLatido`), pero trabaja los tratos del productor (`purchase_contracts`): pertenece a consolas o a Kaffetal Regal.
   - `/ocp/subastas` es el lado administrativo de la subasta.
-- **`src/lib/os/` no está en `main`:** el catálogo de hechos vive en la rama de hechos (#36). De este grupo, `catalogo_fuente` ya tiene regla con efecto (`triage_declarada` / `triage_retirada`), y `lot_listing` tiene regla de entidad (Ficha) pero solo cuenta. `place_order` (`orders`) y las subastas Tyrian no dejan hecho (§5.1).
+- **El catálogo de hechos** (`src/lib/os/`, en `main` desde la V6.18): de este grupo, `catalogo_fuente` ya tiene regla con efecto (`triage_declarada` / `triage_retirada`), y `lot_listing` tiene regla de entidad (Ficha) pero solo cuenta. `place_order` (`orders`) y las subastas Tyrian no dejan hecho (§5.1).
 
 ### 2.4 · Captación y red (`ctc-tech.`, `varietales.`, `directoriodelcafe.`, `terratalento.`, SCAJ 2026 en `www`)
 

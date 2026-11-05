@@ -3,7 +3,7 @@
 import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
 import { createPanelSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
-import { CONSOLE_ORDER, type PanelConsoleKey } from "@/lib/panel/consoles";
+import { CONSOLAS_INVITABLES, type PanelConsoleKey } from "@/lib/panel/consoles";
 import type { ConsoleLevel } from "@/lib/panel/panelUsers";
 import { sendTransactionalEmail } from "@/lib/email/leadEmails";
 import { buildPanelInviteEmail, buildPanelResetEmail } from "@/lib/email/panelEmails";
@@ -36,9 +36,11 @@ function generateTempPassword(): string {
   return "Ctc-" + randomBytes(12).toString("base64url");
 }
 
+// Solo las consolas invitables: la OS (V6.19) no se concede por invitación hasta que el owner lo decida,
+// aunque alguien la mande a mano en la petición (`CONSOLAS_INVITABLES`, en consoles.ts).
 function sanitizeConsoles(input: Partial<Record<PanelConsoleKey, ConsoleLevel | "">>): Partial<Record<PanelConsoleKey, ConsoleLevel>> {
   const out: Partial<Record<PanelConsoleKey, ConsoleLevel>> = {};
-  for (const k of CONSOLE_ORDER) {
+  for (const k of CONSOLAS_INVITABLES) {
     const lvl = input[k];
     if (lvl === "admin" || lvl === "viewer") out[k] = lvl;
   }

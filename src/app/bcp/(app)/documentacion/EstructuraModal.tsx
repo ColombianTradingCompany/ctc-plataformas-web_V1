@@ -45,15 +45,17 @@ type Kind = keyof typeof FILL;
 
 const STROKE: Record<Kind, string> = { hub: MORADO, bi: AZUL, cap: AMBAR, dif: GRIS };
 
-function Box({ x, y, w, h, kind, title, sub }: {
+function Box({ x, y, w, h, kind, title, sub, fs = 14 }: {
   x: number; y: number; w: number; h: number; kind: Kind; title: string; sub?: string;
+  /** Cuerpo del título; 14 salvo en las columnas estrechas del Panel (V6.19). */
+  fs?: number;
 }) {
   const cx = x + w / 2;
   const ty = sub ? y + h / 2 - 3 : y + h / 2 + 5;
   return (
     <g>
       <rect x={x} y={y} width={w} height={h} rx={8} fill={FILL[kind]} stroke={STROKE[kind]} strokeWidth={1.4} />
-      <text x={cx} y={ty} textAnchor="middle" fontSize={14} fontWeight={500} fill={INK}>{title}</text>
+      <text x={cx} y={ty} textAnchor="middle" fontSize={fs} fontWeight={500} fill={INK}>{title}</text>
       {sub && <text x={cx} y={ty + 18} textAnchor="middle" fontSize={12} fill={MUTED}>{sub}</text>}
     </g>
   );
@@ -146,7 +148,11 @@ const ATIENDE: Record<string, string> = {
   coffeed: GRIS, herramientas: GRIS,
 };
 
-const COL_W = 280;
+// Cinco columnas desde la V6.19 (la CTCx OS): 5×224 + 4×16 = 1184, dentro del viewBox de 1200. Con 280
+// la quinta se salía del lienzo sin que ningún guardián lo viera. Una sexta consola obliga a rehacer esto.
+const COL_W = 224;
+// El corte de la etiqueta de un módulo va con el ancho: caben unos 24 caracteres a 13 px en COL_W − 52.
+const ETIQUETA_MAX = 24;
 const COL_GAP = 16;
 const MOD_H = 30;
 const MOD_GAP = 6;
@@ -160,7 +166,7 @@ function ModuloRail({ x, y, label, dot }: { x: number; y: number; label: string;
     <g>
       <rect x={x} y={y} width={COL_W - 24} height={MOD_H} rx={4} fill="#FFFFFF" stroke="#CFC9BF" strokeWidth={1} />
       {dot && <rect x={x + 10} y={y + 10} width={10} height={10} rx={2} fill={dot} />}
-      <text x={x + 28} y={y + 20} fontSize={13} fill={INK}>{label.length > 32 ? label.slice(0, 31) + "…" : label}</text>
+      <text x={x + 28} y={y + 20} fontSize={13} fill={INK}>{label.length > ETIQUETA_MAX ? label.slice(0, ETIQUETA_MAX - 1) + "…" : label}</text>
     </g>
   );
 }
@@ -208,8 +214,9 @@ export function PanelDiagram() {
         const consola = CONSOLES[c.k];
         return (
           <g key={c.k}>
-            <Box x={c.x} y={TOP_CONSOLAS} w={COL_W} h={56} kind="hub" title={`${consola.code} · ${consola.name}`} sub={consola.tagline.split(":")[0]} />
-            <rect x={c.x} y={TOP_CONSOLAS} width={COL_W} height={4} rx={2} fill={consola.accent} />
+            <Box x={c.x} y={TOP_CONSOLAS} w={COL_W} h={56} kind="hub" fs={12.5} title={`${consola.code} · ${consola.name}`} sub={consola.tagline.split(":")[0]} />
+            {/* Una consola de acento claro (la OS, con `accentTexto`) pinta su raya en tinta: el crema no se ve aquí. */}
+            <rect x={c.x} y={TOP_CONSOLAS} width={COL_W} height={4} rx={2} fill={consola.accentTexto ? INK : consola.accent} />
             {c.grupos.map((g) => (
               <g key={`${c.k}-${g.label}-${g.y}`}>
                 <rect x={c.x} y={g.y} width={COL_W} height={g.h} rx={8} fill="none" stroke="#B9B3A9" strokeWidth={1} strokeDasharray="5 4" />

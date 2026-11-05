@@ -14,6 +14,12 @@ import { ROOT_DOMAIN, RUTAS_QUE_REDIRIGEN, SUBDOMAIN_ROUTES } from "@/lib/red/su
 //   · /bcp /ecp /ocp /lcp — las cuatro consolas internas (lcp desde la V5.59) (ecp/ocp añadidas 2026-08-14;
 //     nacieron con el login maestro del 2026-07-15 y faltaban aquí desde
 //     entonces).
+//   · /os — la CTCx OS, quinta consola interna (V6.19). Mismo patrón de la casa
+//     que las otras cuatro, y con la misma contrapartida: esta línea ANUNCIA
+//     que /os existe, aunque la landing pública del Control Panel no la
+//     enseñe. Se acepta a sabiendas; lo que la protege es el login y el
+//     `noindex` de su layout raíz, no el secreto. Es una regla de PREFIJO:
+//     hoy ninguna ruta pública empieza por /os (comprobado al añadirla).
 //   · /lab — la mesa de pruebas del owner (tipografía del titular): no está
 //     enlazada desde ningún sitio y no debe indexarse. Ver app/lab/.
 //
@@ -38,6 +44,7 @@ Disallow: /bcp
 Disallow: /ecp
 Disallow: /ocp
 Disallow: /lcp
+Disallow: /os
 Disallow: /lab
 ${sitemap}`;
   return new Response(body, {

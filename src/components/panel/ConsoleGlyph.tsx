@@ -5,6 +5,8 @@ import type { PanelConsoleKey } from "@/lib/panel/consoles";
 //   ECP — an upward trend: direction, pricing, finances, network health.
 //   OCP — a cycle: dispatch and relevos, the operational loop.
 //   LCP — a speech bubble: what comes in from outside, and who has been answered.
+//   OS  — a 2×2 tile grid: the command post that reads the other consoles side by side
+//         (a generic line glyph, never a logo or a game icon).
 export function ConsoleGlyph({ console: key, size = 24, className }: { console: PanelConsoleKey; size?: number; className?: string }) {
   const common = {
     width: size,
@@ -51,6 +53,15 @@ export function ConsoleGlyph({ console: key, size = 24, className }: { console: 
           <path d="M4.5 6.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H11l-4.5 3.5v-3.5a2 2 0 0 1-2-2z" />
           <path d="M8.5 9h7" />
           <path d="M8.5 12h4.5" />
+        </svg>
+      );
+    case "os":
+      return (
+        <svg {...common}>
+          <rect x="4" y="4" width="7" height="7" rx="1.5" />
+          <rect x="13" y="4" width="7" height="7" rx="1.5" />
+          <rect x="4" y="13" width="7" height="7" rx="1.5" />
+          <rect x="13" y="13" width="7" height="7" rx="1.5" />
         </svg>
       );
   }

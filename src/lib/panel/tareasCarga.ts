@@ -44,7 +44,15 @@ function snippet(text: string, n = 60): string {
   return text.length > n ? text.slice(0, n).trimEnd() + "…" : text;
 }
 
-export async function cargarTareas(service: SupabaseClient): Promise<{
+/**
+ * `conPvc` (por defecto `true`, como hasta ahora para el ECP, el OCP y la LCP): en `false` no se lee el estado del Modelo
+ * Económico (`propuestasPendientes`, `estadoDelAgente`) ni se arman las tareas `pvc:*`. Lo pasa la CTCx OS cuando quien mira
+ * no es el owner (decisión del owner, 5 nov: el Modelo Económico es solo suyo).
+ */
+export async function cargarTareas(
+  service: SupabaseClient,
+  { conPvc = true }: { conPvc?: boolean } = {}
+): Promise<{
   tareas: TareaDeConsola[];
   fuentes: { pendingFincas: NamedRow[]; flagged: HumidityRow[]; newLeads: LeadRow[] };
 }> {
@@ -133,29 +141,31 @@ export async function cargarTareas(service: SupabaseClient): Promise<{
     });
   }
 
-  // V5.178 (docs/PLAN_CICLOS.md §6): la corrección del PVC que propuso la vigilancia del ciclo, hasta que el owner la resuelva.
-  for (const c of await propuestasPendientes(service)) {
-    pon({
-      key: `pvc:correccion:${c.id}`,
-      icon: "📈",
-      label: `${c.relacion === "vigente" ? "Corrección" : "Enmienda"} del PVC propuesta — ${c.codigo} ${c.tipo === "alza" ? "+" : "−"}$${c.monto.toLocaleString("es-CO")} → $${c.pvcNuevo.toLocaleString("es-CO")}`,
-      sublabel: `${c.ciclo} · ${c.aciertos} de 20 lecturas FNC · vence el ${c.cicloHasta}`,
-      href: "/ecp/pvc#vigilancia",
-      consola: "ecp",
-    });
-  }
+  if (conPvc) {
+    // V5.178 (docs/PLAN_CICLOS.md §6): la corrección del PVC que propuso la vigilancia del ciclo, hasta que el owner la resuelva.
+    for (const c of await propuestasPendientes(service)) {
+      pon({
+        key: `pvc:correccion:${c.id}`,
+        icon: "📈",
+        label: `${c.relacion === "vigente" ? "Corrección" : "Enmienda"} del PVC propuesta — ${c.codigo} ${c.tipo === "alza" ? "+" : "−"}$${c.monto.toLocaleString("es-CO")} → $${c.pvcNuevo.toLocaleString("es-CO")}`,
+        sublabel: `${c.ciclo} · ${c.aciertos} de 20 lecturas FNC · vence el ${c.cicloHasta}`,
+        href: "/ecp/pvc#vigilancia",
+        consola: "ecp",
+      });
+    }
 
-  // V5.179: el borrador del agente de la edición siguiente, hasta que se publique.
-  const ag = await estadoDelAgente(service);
-  if (ag.ok && ag.borrador && !ag.publicada) {
-    pon({
-      key: `pvc:edicion:${ag.destino.codigo}`,
-      icon: "🗓️",
-      label: `Publicar la edición siguiente — ${ag.destino.codigo} (borrador del agente: $${(ag.borrador.pvc ?? 0).toLocaleString("es-CO")})`,
-      sublabel: `revisar lo arrastrado y publicar desde el Tablero a más tardar el ${ag.destino.publicaAMasTardar}`,
-      href: "/ecp/pvc#siguiente",
-      consola: "ecp",
-    });
+    // V5.179: el borrador del agente de la edición siguiente, hasta que se publique.
+    const ag = await estadoDelAgente(service);
+    if (ag.ok && ag.borrador && !ag.publicada) {
+      pon({
+        key: `pvc:edicion:${ag.destino.codigo}`,
+        icon: "🗓️",
+        label: `Publicar la edición siguiente — ${ag.destino.codigo} (borrador del agente: $${(ag.borrador.pvc ?? 0).toLocaleString("es-CO")})`,
+        sublabel: `revisar lo arrastrado y publicar desde el Tablero a más tardar el ${ag.destino.publicaAMasTardar}`,
+        href: "/ecp/pvc#siguiente",
+        consola: "ecp",
+      });
+    }
   }
 
   // V6.1 (lo que la V5.203 dejó «sin hacer»): el circuito del stock pide a alguien. Un saco o adelanto de un trato por ventana cuyo

@@ -1,0 +1,43 @@
+/* ── CTCx OS · los tokens del juego (V6.19, F2) ───────────────────────────────
+   El ÚNICO archivo que define `--os-*` (qa-os-check D4). Cada valor es un token de la
+   casa (`globals.css`, tema de consola `data-theme="bcp"`) o una mezcla `color-mix` de
+   tokens de la casa: ningún color nuevo (PLAN §7.1). Los edificios se distinguen por su
+   silueta y su rótulo en mono, nunca por el tono; aquí no hay colores de grado (esos solo
+   los pinta `SelloGrado`). Los tokens del mapa esperan a F7.
+
+   Se aplican dentro de `[data-os-juego]`, la envoltura del contenido de la OS (y de su
+   demostración): el rail y la cabecera siguen en el tema de la casa. */
+
+[data-os-juego]{
+  /* El terreno: la crema del costal con el verde de la casa (el cafetal) */
+  --os-suelo-a:color-mix(in srgb, var(--green) 18%, var(--crema));
+  --os-suelo-b:color-mix(in srgb, var(--green) 26%, var(--crema));
+  --os-suelo-c:color-mix(in srgb, var(--green) 36%, var(--crema));
+  --os-surco:color-mix(in srgb, color-mix(in srgb, var(--red) 35%, var(--ink)) 40%, var(--crema));
+  --os-mata:color-mix(in srgb, var(--green) 78%, var(--ink));
+  --os-tronco:color-mix(in srgb, color-mix(in srgb, var(--red) 40%, var(--ink)) 80%, var(--crema));
+  --os-patio:color-mix(in srgb, var(--ink) 5%, var(--crema));
+  --os-grano:color-mix(in srgb, var(--red) 55%, var(--ink));
+
+  /* El río: el azul de la casa, apagado sobre el papel */
+  --os-agua:color-mix(in srgb, var(--navy) 32%, var(--paper));
+  --os-agua-2:color-mix(in srgb, var(--navy) 22%, var(--paper));
+
+  /* Los cantos de la parcela y las calles */
+  --os-canto-1:color-mix(in srgb, var(--ink) 28%, var(--crema));
+  --os-canto-2:color-mix(in srgb, var(--ink) 40%, var(--crema));
+  --os-calle:color-mix(in srgb, var(--ink) 9%, var(--crema));
+  --os-calle-borde:color-mix(in srgb, var(--ink) 20%, var(--crema));
+
+  /* Los edificios: muros en crema, tejas de barro, vidrio y puertas en tinta */
+  --os-muro:var(--crema);
+  --os-muro-sombra:color-mix(in srgb, var(--ink) 16%, var(--crema));
+  --os-muro-sombra-2:color-mix(in srgb, var(--ink) 6%, var(--crema));
+  --os-teja:color-mix(in srgb, color-mix(in srgb, var(--red) 70%, var(--ink)) 82%, var(--crema));
+  --os-teja-luz:color-mix(in srgb, var(--red) 62%, var(--crema));
+  --os-vidrio:color-mix(in srgb, var(--navy) 30%, var(--paper));
+  --os-puerta:color-mix(in srgb, var(--ink) 72%, var(--crema));
+
+  /* Las líneas del dibujo: la tinta, suave */
+  --os-trazo:color-mix(in srgb, var(--ink) 38%, transparent);
+}

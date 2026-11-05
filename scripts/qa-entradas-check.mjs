@@ -23,13 +23,14 @@ const check = (n, c, d) => (c ? ok++ : fallos.push(d ? `${n} (${d})` : n));
 const lee = (r) => readFileSync(new URL(`../${r}`, import.meta.url), "utf8");
 
 // ── 1 · ?volver= — solo rutas relativas de consola ────────────────────────
-check("las raíces son las cuatro consolas y su selector", VUELTAS_PERMITIDAS.join(",") === "/ecp,/ocp,/lcp,/bcp,/panel");
-for (const bueno of ["/ecp", "/ecp/", "/ecp/pvc/grados?sca=86", "/ocp/kr?lote=CTC-L-ABCDEFGH", "/lcp/buzon", "/bcp/mapa", "/panel", "/ecp#x", " /ecp/pvc "]) {
+check("las raíces son las consolas y su selector", VUELTAS_PERMITIDAS.join(",") === "/ecp,/ocp,/lcp,/bcp,/panel,/os");
+for (const bueno of ["/ecp", "/ecp/", "/ecp/pvc/grados?sca=86", "/ocp/kr?lote=CTC-L-ABCDEFGH", "/lcp/buzon", "/bcp/mapa", "/panel", "/ecp#x", " /ecp/pvc ", "/os", "/os/m/hacienda"]) {
   check(`volver acepta ${JSON.stringify(bueno)}`, vueltaDeConsola(bueno) === bueno.trim());
 }
 for (const malo of [
   null, undefined, "", "   ", "ecp", "//evil.example/ecp", "https://evil.example/ecp", "/ecp://x", "/\\evil.example",
   "/ecp\\..\\x", "/ecp\nSet-Cookie: x", "/ecp\tx", "/ecpx", "/ecp-falso", "/ocpanel", "/panelx", "/kaffetal-regal", "/login",
+  "/osx", "/os-falso", "/os/../login",
   "/", "javascript:alert(1)", "/ecp/" + "a".repeat(VOLVER_MAX), ["/ecp", "/ocp"],
   // Segmentos punto (revisión adversarial, 2026-11-05): el prefijo es de consola, pero el navegador los resuelve fuera.
   "/ecp/../kaffetal-regal", "/ecp/..//evil.example", "/ecp/%2e%2e/login", "/ecp/%2E%2E/x", "/panel/./../x", "/ecp/./x",

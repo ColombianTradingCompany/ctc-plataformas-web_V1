@@ -1,5 +1,5 @@
 // ── CTC Web Platform · the internal consoles ────────────────────────────────
-// Single source of truth for the FOUR internal consoles that share ONE login
+// Single source of truth for the internal consoles (FIVE since V6.19) that share ONE login
 // (the "master key") and ONE session. They are PARALLEL surfaces, each with its
 // own route tree and shell — NOT tabs inside one panel. See the vision board
 // (`reference_html-vision-board/ctc-arquitectura-v3.html`, tab "BCP · credenciales"):
@@ -19,6 +19,13 @@
 //                                     de Cherry Picked. CUARTA consola, nacida
 //                                     en la V5.59 (overhaul de las consolas,
 //                                     docs/OVERHAUL_CONSOLAS_PLAN.md, fase 1).
+//   OS · CTCx OS                    — «Puesto de mando». QUINTA consola (V6.19,
+//                                     fase F2 de CTCx OS): LEE la red y no la
+//                                     reemplaza — sin escrituras, solo cifras
+//                                     y enlaces a la consola dueña de cada
+//                                     pieza. Charter: docs/componentes/ctcx-os.md.
+//                                     Va la ÚLTIMA en CONSOLE_ORDER a propósito
+//                                     (ver la nota de ese array).
 //
 // ⚠️ Ese es el reparto al que VAMOS. Las palabras se congelaron el 2026-08-18
 // (paso (i) de docs/V5_CONSOLAS_PLAN.md) ANTES de mover un solo módulo, y solo
@@ -30,7 +37,7 @@
 // tier (see docs/BCP_USER_ADMIN_PLAN.md) — they are credentialed by BCP but are
 // not consoles listed here, and their operators are never `bcp_admin`.
 
-export type PanelConsoleKey = "bcp" | "ecp" | "ocp" | "lcp";
+export type PanelConsoleKey = "bcp" | "ecp" | "ocp" | "lcp" | "os";
 
 export type PanelNavLink = { href: string; label: string; exact?: boolean; ownerOnly?: boolean };
 /** `ownerOnly` en el grupo oculta TODO el grupo; en un link, solo ese link.
@@ -45,6 +52,12 @@ export type PanelConsole = {
   tagline: string; // one-line role
   /** Accent used to distinguish the console in the switcher (on the dark rail). */
   accent: string;
+  /** Color para cuando el acento se usa como TEXTO, ICONO o RAYA sobre blanco (el código, el glifo, la raya
+   *  y el borde al pasar de la tarjeta de `/panel`; el código y el borde de la ficha de la consola en Usuarios;
+   *  la raya de la columna en el diagrama de Documentación). Opcional: sin él se usa `accent`, así
+   *  que las cuatro consolas de siempre no cambian un píxel. Lo necesita la OS, cuyo acento es claro
+   *  (se lee bajo el texto oscuro del conmutador, no sobre blanco). */
+  accentTexto?: string;
   /** Where entering this console lands. */
   home: string;
   nav: PanelNavGroup[];
@@ -325,12 +338,46 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
       },
     ],
   },
+  os: {
+    key: "os",
+    code: "OS",
+    name: "CTCx OS",
+    tagline: "Puesto de mando: lee la red, no la reemplaza",
+    // El crema de la casa (`--crema` #F5F0E2 en globals.css, el texto de las bandas): claro, se lee bajo
+    // el texto oscuro (#12101A) del conmutador. Sobre blanco no se ve, así que donde el acento es texto o
+    // icono la OS usa la tinta (`accentTexto`). Aprobado por el owner el 5 nov (charter ctcx-os, decisión 15).
+    accent: "#F5F0E2",
+    accentTexto: "var(--ink)",
+    home: "/os",
+    // F2 (el esqueleto): Inicio y tres módulos de solo lectura. Sin enlaces `ownerOnly`: el lado del
+    // Code Master («Pedidos a Code») no tiene página todavía.
+    nav: [
+      {
+        links: [
+          { href: "/os", label: "Inicio", exact: true },
+          { href: "/os/m/hacienda", label: "Hacienda" },
+          { href: "/os/m/almacen", label: "Almacén" },
+          { href: "/os/m/taller", label: "Taller" },
+        ],
+      },
+    ],
+  },
 };
 
-// El orden es el del cuadro del owner (2026-09-19): BCP · ECP · OCP · LCP. Todo lo que enumera
-// consolas —el conmutador, `/panel`, la pantalla de credenciales, `grantedConsoles`, los guardianes—
-// lee de aquí: una quinta consola es una línea en este archivo, no una búsqueda por el repo.
-export const CONSOLE_ORDER: PanelConsoleKey[] = ["bcp", "ecp", "ocp", "lcp"];
+// El orden es el del cuadro del owner (2026-09-19): BCP · ECP · OCP · LCP, y la OS (V6.19) la ÚLTIMA.
+// Todo lo que enumera consolas —el conmutador, `/panel`, la pantalla de credenciales, `grantedConsoles`,
+// los guardianes— lee de aquí. La OS va al final a propósito: `consolaDelModulo` recorre este array y se
+// queda con la PRIMERA coincidencia, y `porConsola` agrupa en este orden saltando las vacías; con la OS al
+// final, todo lo que ya existía resuelve y se ordena exactamente como antes.
+export const CONSOLE_ORDER: PanelConsoleKey[] = ["bcp", "ecp", "ocp", "lcp", "os"];
+
+/**
+ * Las consolas que ofrece el formulario de invitación de Usuarios (y las únicas que `sanitizeConsoles`
+ * deja pasar). La OS queda FUERA hasta que el owner decida quién la recibe por invitación: hoy se concede
+ * a mano, con un UPDATE de `panel_users` en la sesión del owner (charter `consolas`, Pendientes).
+ * Las filas que YA la tienen se siguen pintando en la lista (sus chips leen `CONSOLE_ORDER`).
+ */
+export const CONSOLAS_INVITABLES: PanelConsoleKey[] = CONSOLE_ORDER.filter((k) => k !== "os");
 
 /**
  * La consola en cuyo rail vive un módulo, por su segmento: `consolaDelModulo("coffeed")` es la que tenga

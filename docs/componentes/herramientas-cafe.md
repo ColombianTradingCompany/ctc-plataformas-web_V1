@@ -79,6 +79,8 @@ cambia el otro, y `qa-taller-entrada-check` comprueba que cada campo declarado e
 Reglas que no cambian con la herramienta:
 
 - **Manda el trabajo.** Con `trabajo` y `lote` juntos se abre el trabajo como se dejó; un trabajo guardado nunca se prellena.
+- **El lote trae SU finca.** Con `lote` y `finca` juntos, si la finca no es la del lote se usa la del lote y se avisa (un lote con
+  otra finca sería un origen falso escrito en el trabajo).
 - **Abrir no crea.** El enlace no crea trabajos: el Home Menu propone el nombre (el del lote o la finca) y la persona da UN clic
   («Crear y abrir»). Abrir un trabajo guardado solo sella su `abierto_at`, como siempre lo hizo el menú; el autoguardado empieza con el
   primer cambio de la persona (o con el prellenado de un trabajo nuevo).

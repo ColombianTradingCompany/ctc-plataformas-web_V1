@@ -15,6 +15,7 @@
 //      `?trabajo=` sella su `abierto_at`, como el clic del menú, y restaurarlo no lo vuelve a guardar.)
 
 import { readFileSync, existsSync } from "node:fs";
+import { createRequire } from "node:module";
 import {
   leerEntrada,
   construirPrefill,
@@ -293,6 +294,22 @@ check("una herramienta desconocida no tiene contrato", entradaDe("no-existe") ==
   // Por Google: el valor de la cookie lo escribe encodeURIComponent y Next lo decodifica UNA vez al leerlo.
   const deLaCookie = decodeURIComponent(encodeURIComponent(t));
   check("ida y vuelta por la cookie: la misma herramienta, con su `volver` aún codificado dentro", siguienteSeguro(deLaCookie) === t && new URL(deLaCookie, "https://x.test").searchParams.get("volver") === "/herramientas/taller");
+  // Con el parser de cookies REAL de Next (el que usa `request.cookies` del callback) y un `volver` que lleva DOS parámetros
+  // anidados: lo que lee el callback es exactamente la herramienta, y su contexto no se mezcla con el de la de dentro.
+  {
+    const { RequestCookies } = createRequire(import.meta.url)("next/dist/compiled/@edge-runtime/cookies");
+    const dentro = urlDeHerramienta("green-datasheet", { trabajo: U, lote: "CTC-L-6BA7B810" });
+    const fuera = urlDeHerramienta("mermas-ctc", { volver: dentro });
+    const leido = new RequestCookies(new Headers({ cookie: `${COOKIE_SIGUIENTE}=${encodeURIComponent(fuera)}` })).get(COOKIE_SIGUIENTE)?.value;
+    const destino = siguienteSeguro(leido ?? null);
+    const e = destino ? leerEntrada(Object.fromEntries(new URL(destino, "https://x.test").searchParams)) : null;
+    check("cookie real de Next: el callback lee la herramienta EXACTA", destino === fuera);
+    check("cookie real de Next: el lote y el trabajo de la herramienta de dentro no se cuelan en la de fuera", !!e && e.lote === null && e.trabajo === null && e.volver === dentro);
+    for (const hostil of ["@evil.example", "//evil.example", "https://evil.example", "%2F%2Fevil.example", "/herramientas/taller\\@evil.example", "/herramientas/taller/%2e%2e/%2e%2e/bcp"]) {
+      const v = new RequestCookies(new Headers({ cookie: `${COOKIE_SIGUIENTE}=${encodeURIComponent(hostil)}` })).get(COOKIE_SIGUIENTE)?.value;
+      check(`cookie hostil «${hostil}»: el callback cae al taller`, (siguienteSeguro(v ?? null) ?? VUELTA_TALLER) === VUELTA_TALLER);
+    }
+  }
 
   const pagina = lee("src/app/herramientas/acceso/page.tsx");
   // Atados a cómo se USA el valor, no solo a que exista la línea que valida.

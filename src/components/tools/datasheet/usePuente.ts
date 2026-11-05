@@ -38,6 +38,10 @@ export function usePuente<T>({
 }) {
   const activo = useRef(false);
   const origenDeLaConcha = useRef<string>("*");
+  // Como `restaurando` en ctc-bridge.js: el estado que pinta un `init` no es un cambio de la persona, así que abrir un
+  // trabajo guardado no lo vuelve a guardar. Un `prefill` sí es un cambio (el de un trabajo nuevo): lo apaga, y el
+  // prellenado se guarda aunque llegue en el mismo render que el init.
+  const recienRestaurado = useRef(false);
   const alInitRef = useRef(alInit);
   useEffect(() => {
     alInitRef.current = alInit;
@@ -61,12 +65,14 @@ export function usePuente<T>({
       if (d.ctc === "prefill") {
         // Como en ctc-bridge.js: la concha vive en el MISMO origen; un prellenado de otro origen no se atiende.
         if (e.origin !== window.location.origin) return;
+        recienRestaurado.current = false;
         if (d.registro && typeof d.registro === "object") alPrefillRef.current?.(d.registro);
         return;
       }
       if (d.ctc !== "init") return;
       activo.current = true;
       origenDeLaConcha.current = e.origin.startsWith("https://") || e.origin.startsWith("http://") ? e.origin : "*";
+      recienRestaurado.current = true;
       alInitRef.current(d.estado);
     };
     window.addEventListener("message", onMessage);
@@ -82,6 +88,10 @@ export function usePuente<T>({
       return;
     }
     if (estado == null) return;
+    if (recienRestaurado.current) {
+      recienRestaurado.current = false;
+      return;
+    }
     const t = setTimeout(() => {
       if (enConcha()) {
         if (!activo.current) return;

@@ -248,6 +248,15 @@ check("una herramienta desconocida no tiene contrato", entradaDe("no-existe") ==
   check("expone CTC.usarPrefill", puente.includes("usarPrefill: function"));
   check("el prellenado solo del MISMO origen (la concha siempre lo es)", /d\.ctc === "prefill"\) \{[\s\S]{0,200}if \(e\.origin !== window\.location\.origin\) return;/.test(puente));
   check("restaurar un trabajo no lo vuelve a guardar (abrir no escribe el estado)", puente.includes("if (!activo || restaurando) return;") && /restaurando = true;[\s\S]{0,260}restaurando = false;/.test(puente));
+  // Lo mismo en el puente React de la Coffee Datasheet: el init marca el estado como restaurado, el prellenado lo desmarca
+  // (un trabajo nuevo prellenado SÍ se guarda) y el efecto de guardado se salta el estado restaurado.
+  const puenteReact = lee("src/components/tools/datasheet/usePuente.ts");
+  check(
+    "restaurar un trabajo no lo vuelve a guardar, también en el puente React (Coffee Datasheet)",
+    /recienRestaurado\.current = true;\s*alInitRef\.current\(d\.estado\);/.test(puenteReact) &&
+      /d\.ctc === "prefill"\) \{[\s\S]{0,260}recienRestaurado\.current = false;[\s\S]{0,120}alPrefillRef\.current\?\.\(d\.registro\)/.test(puenteReact) &&
+      /if \(estado == null\) return;\s*if \(recienRestaurado\.current\) \{\s*recienRestaurado\.current = false;\s*return;\s*\}/.test(puenteReact)
+  );
   check("el prellenado se re-envía solo mientras arranca el marco (ventana + primer guardado)", sesion.includes("hasta: ahora + 8000") && sesion.includes("ahora < prefillHasta.current.hasta") && sesion.includes("hasta: 0 }"));
   check("«Mis trabajos» cancela el trabajo de la URL que aún se está abriendo", sesion.includes("inicialVigente.current = false;") && sesion.includes("if (!vivo || !inicialVigente.current) return;"));
   check("la finca embebida del lote también se exige de la cuenta", srv.includes("f && f.producer_id === userId ? aFinca(f) : null"));

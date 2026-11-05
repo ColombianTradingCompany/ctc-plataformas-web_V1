@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.19] — 2026-11-05 (commit pendiente)
+## [V6.19] — 2026-11-05 (commit 5bdf3ec)
 
 - **Añadido**: **CTCx OS · fase F2, «el esqueleto de `/os`»** (charter `ctcx-os`): la **quinta consola interna**, `/os`, la última de
   `CONSOLE_ORDER`, de **solo lectura** y solo con datos de la plataforma. **Abre en el mapa** (rumbo del owner, 5 nov: el OS es un

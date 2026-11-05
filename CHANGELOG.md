@@ -50,8 +50,8 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
   calculadora con ese Punto y esa tríada, y `/ecp/direccionamiento?unidad=…` la Definición de Contexto en esa unidad; `?volver=` solo acepta
   rutas de consola (`src/lib/herramientasInternas/entrada.ts`, guardián `qa-entradas-check`).
 - **Cambiado**: plataforma · **`<html lang>` sigue al idioma en pantalla** (`useHtmlLang` en `LangProvider`, #47): la familia Cherry Picked
-  se declara en inglés; una superficie cuya página solo está en español pasa `declaraHtml={false}` y conserva el «es» (Terratalento, el
-  acceso al taller y sus dos páginas; el pie común sí se traduce); el muro de Coffeed marca en español su contenido. **SEO**: el JSON-LD
+  se declara en inglés; una superficie cuya página solo está en español pasa `declaraHtml={false}` y conserva el «es» (Terratalento, cuyo
+  pie común sí se traduce, el acceso al taller y sus dos páginas); el muro de Coffeed marca en español su contenido. **SEO**: el JSON-LD
   lee sus fuentes, `co-create` deja de anunciar sitemap y `RUTAS_QUE_REDIRIGEN` es la lista única de puertas viejas (sitemap, robots.txt y
   Manejo de Plataformas).
 - **Corregido**: `scripts/build-og-cards.mjs` busca los logos en `../reference/logos`, acepta `--logos <carpeta>` y `CTC_LOGOS_DIR`, y

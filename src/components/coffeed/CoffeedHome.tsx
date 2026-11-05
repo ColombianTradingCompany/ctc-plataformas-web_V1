@@ -47,7 +47,7 @@ export function CoffeedHome() {
         {lang !== "es" && <p className={styles.ctaNote} style={{ marginTop: 10 }}>{chrome.langNote}</p>}
       </section>
       <section className={styles.section} style={{ paddingTop: 0 }}>
-        <div className={`${styles.sectionInner} ${styles.single}`}>
+        <div className={`${styles.sectionInner} ${styles.single}`} lang="es">
           <CoffeedWall />
         </div>
       </section>

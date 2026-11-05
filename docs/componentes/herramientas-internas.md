@@ -169,8 +169,7 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
 
 ## Pendientes
 
-- **2026-11-05 · TAR-122 · Exportar la Definición de Contexto como Markdown** (sesión nocturna en la nube; sin versión hasta que
-  aterrice en `main`). Botón «Exportar como Markdown» abajo a la derecha de la pestaña 1: guarda lo que haya en pantalla y descarga
+- **2026-11-05 · TAR-122 · Exportar la Definición de Contexto como Markdown** (sesión nocturna en la nube; V6.18). Botón «Exportar como Markdown» abajo a la derecha de la pestaña 1: guarda lo que haya en pantalla y descarga
   la ficha GUARDADA de `/ecp/direccionamiento/exportar` — generales, las cuatro unidades en el orden de `definicion.ts`, «(sin responder)»
   en lo vacío, y la memoria del sistema (los Grados) al final; sin quién editó. `?unidad=ctcx|kr|chp|ecosistema` (lista blanca; lo demás,
   400) exporta una sola unidad: es la entrada de módulo para CTCx OS y para subir a cada proyecto de Claude solo lo suyo. Pendiente:
@@ -180,8 +179,7 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
   (market-anchors, vigilancia-pvc, agente-pvc, courier-combustible) van envueltos en `conLatido()` tras su `CRON_SECRET`, sin cambiar lo
   que hacen. **Para este componente**: un cron nuevo de un modelo lleva su envoltura y su fila en `src/lib/integraciones/registroCrons.ts`
   en la misma tanda (`qa-registro-crons`). Lo siguiente en ese tablero es la P25 (B6.1) del plan de unificación.
-- **2026-11-05 · TAR-119 · las calculadoras de los cotizadores, solo con sesión** (sesión nocturna en la nube; sin versión hasta
-  que aterrice en `main`). `public/ocp-apps/*.html` → `private/ocp-apps/` (mismo contenido) y una ruta las sirve en la misma URL
+- **2026-11-05 · TAR-119 · las calculadoras de los cotizadores, solo con sesión** (sesión nocturna en la nube; V6.18). `public/ocp-apps/*.html` → `private/ocp-apps/` (mismo contenido) y una ruta las sirve en la misma URL
   tras `requireConsoleAccess` de la consola del rail. **Pendiente**: comprobar en el preview de Vercel que el iframe de
   `/ecp/cotizador-lotes/<id>` y `/ecp/cotizador-logistico/<id>` carga con sesión, y que `/ocp-apps/cotizador-lotes.html` sin
   sesión va al login (el VM de la nube no llega a producción). Retirar las apps sigue siendo decisión del owner.
@@ -191,7 +189,7 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
   **Objetivo 1, tanda A** (dueño `plataforma`): la propuesta es que el calendario público de CTC, KR y CP pase a los Ciclos y lea
   las fechas de las ediciones (`src/lib/trato/calendario.ts`, `public_pvc_next`; decisión 2 del owner): si se aprueba, una edición
   sin fechas o sin publicar se notará en las tres landings. La edición siguiente, PVC-F1-2027, sigue en borrador con plazo del owner el 29-nov-2026 (viñeta V5.179).
-- **2026-11-05 · Puertas de entrada (CTCx OS)** (sesión nocturna en la nube; sin versión hasta que aterrice en `main`). La tabla
+- **2026-11-05 · Puertas de entrada (CTCx OS)** (sesión nocturna en la nube; V6.18). La tabla
   «Puertas de entrada» (arriba) es el contrato de URL de cada herramienta; hechas: la calculadora de la escala (`/ecp/pvc/grados?sca=&triada=&volver=`)
   y la Definición de Contexto (`/ecp/direccionamiento?unidad=&volver=`), sobre `src/lib/herramientasInternas/entrada.ts`. **Siguen
   propuestas** (cada una con su tanda): `?lote=CTC-L-…` en la calculadora y en el cotizador de lotes (leen `lots`; el segundo crea un
@@ -200,8 +198,7 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
 - **V5.196 · las referencias de Empacado hasta FOB ya anclan precios**: el Triage de Catálogo Activo (`consolas`) suma una referencia
   vigente al café de cada declaración para su FOB mínimo (lo que el plan llamó «el ancla»); la declaración guarda su referencia y la
   cifra. Retirar una referencia no cambia las declaraciones ya hechas.
-- **2026-11-05 · El puente de los cotizadores leía globales que `window` no ve** (sesión nocturna en la nube; sin versión hasta que
-  aterrice en `main`). Comprobado en Chromium: las dos apps declaran su estado con `let`/`const` de primer nivel (Mermas: `const state`;
+- **2026-11-05 · El puente de los cotizadores leía globales que `window` no ve** (sesión nocturna en la nube; V6.18). Comprobado en Chromium: las dos apps declaran su estado con `let`/`const` de primer nivel (Mermas: `const state`;
   CoGS: `let rowUnits`, `let currentCurrency`… las once de `GLOBAL_KEYS`), que viven en el ámbito léxico del iframe y no como
   propiedad de `window`. **Arreglado** (lo que solo LEE): el titular de cada cotización de lote —etiqueta, kg finales, merma, factor,
   costos— se guardaba vacío; ahora se lee por `globalDeLaApp` (`src/lib/cotizador/puente.ts`), guardián `qa-cotizador-puente-check`.

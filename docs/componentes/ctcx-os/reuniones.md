@@ -1,7 +1,7 @@
 # CTCx OS · Módulo «Reuniones» — STRETCH (antes / durante / después)
 
 > Solo lectura. Fuentes: `docs/UNIFICACION_ALINEACION.md` (D-002, D-003, D-007, D-009 3.4, D-013, D-014, D-025, D-031, D-032), `docs/PLAN_UNIFICACION.md` (P5, P6/H8, P7, P25–P33, matriz de entidades, flujos 22/26–29), `docs/SECRETARIA_PLAN.md`, `docs/componentes/{secretaria,consolas}.md`, `docs/BCP_USER_ADMIN_PLAN.md` (niveles) y el código citado. En Notion solo se leyeron esquemas: nombres de bases, propiedades y tipos.
-> **BORRADOR · decide el owner.** El charter del componente (`docs/componentes/ctcx-os.md`) y el atlas (`docs/componentes/ctcx-os/atlas.md`) llegan en PR aparte, sin fusionar; hoy no hay ruta `/os/…` (propuesto · pendiente del sí del owner: `/os` como quinta consola, con los módulos en `/os/m/<clave>`) ni tablas de juego. Solo nombres de bases, propiedades, tablas, rutas y funciones: ningún dato, id ni persona.
+> **BORRADOR · decide el owner.** El charter del componente (`docs/componentes/ctcx-os.md`) y el atlas (`docs/componentes/ctcx-os/atlas.md`) entraron con esta nota en la V6.18 (borrador); hoy no hay ruta `/os/…` (rumbo aprobado por el owner el 2026-11-05: `/os` como quinta consola, con los módulos en `/os/m/<clave>`) ni tablas de juego. Solo nombres de bases, propiedades, tablas, rutas y funciones: ningún dato, id ni persona.
 
 ---
 
@@ -53,9 +53,10 @@ Una reunión es la **jugada base** del juego. Un Jugador (GVG o GVB) se sienta c
 |---|---|---|
 | **Proveedor / productor** | `Proveedores`: Estado, Lista KR, Notas de estado, Última revisión, Última revisión de RFQ, Relevancia y Tipo. Relaciones Fincas, Contactos, Compras, Tareas y Reuniones. Campos de la plataforma: `Estado KR (CTC)`, `Gestión (CTC)`, `Cuenta (CTC)`. `Datos bancarios` y `NIT` son sensibles: **nunca se leen** | `profiles` + `producer_profiles` (incluidos `gestion` y `estado_cuenta`) · `fincas` · `finca_parcelas` · `finca_certificates` · `lots` · `arena_inscriptions` · `lot_offers` · `purchase_contracts` (incluido `provisional_at`) · `contract_despachos` · `compras` · `muestras` / `muestra_movimientos` · `producer_inactividad` · **`producer_comm_log`** (hilo con el productor: `context_label`, `note`, `author_role`, `finca_id`, `lot_id`, `lead_id`, `parent_id`, `seccion`, `adjunto_asset_id`, `adjunto_filename`) · `audit_log` (`entity_type` producer, lot, finca, lot_offer, purchase_contract…). La lectura agregada ya existe: `cargarKr(service, { productorId })` en `src/app/ocp/(app)/kr/carga.ts`, más `src/lib/ocp/circuito.ts` (estado derivado del lote) |
 | **Cliente / comprador / lead** | `Clientes`: Estado, Interés en la oferta, Relevancia, Tipo, Oportunidades (→ «Oportunidades de venta»), Contactos, Tareas, Reuniones, `Baja (CTC)` y el trío `ctc_id` · `CTC` · `Enlace CTC`. También tiene `Datos bancarios` y `NIT`: sensibles, **nunca se leen** | `buyer_profiles` · `orders` · `sample_pack_orders` · `quotes` (`counterparty_kind`, `profile_id`, `lead_id`, `status`, `total`, `valid_until`, `nota_comercial`, `notion_url`) · `leads` (`status`, `first_replied_at`, `profile_id`) · **`lead_replies`** (`subject`, `body`, `sent_at`, `send_error`) · `event_leads` (`status`, `notes`, `replied_at`, `unsubscribed_at`) · `newsletter_subscribers` |
-| **Aliado / socio** | `Aliados`: Estado, Relevancia, Tipo, relaciones Contactos, Compras de Insumos, `⚙️ Proceso hasta Producto Terminado` (el nombre lleva el emoji), Tareas y Reuniones, `Nodo CTC (CTC)`, `Credencial (CTC)` (select activa · suspendida: estado, nunca el valor) y el trío `ctc_id` · `CTC` · `Enlace CTC`. También tiene `Datos bancarios` y `NIT`: sensibles, **nunca se leen** | `partner_accounts`. Para el nodo del Centro de Calidad, `lot_evaluations` |
+| **Aliado / socio** (su ficha; el socio de la Red de Socios juega como Jugador con su correo virtual, canon del owner 2026-11-05) | `Aliados`: Estado, Relevancia, Tipo, relaciones Contactos, Compras de Insumos, `⚙️ Proceso hasta Producto Terminado` (el nombre lleva el emoji), Tareas y Reuniones, `Nodo CTC (CTC)`, `Credencial (CTC)` (select activa · suspendida: estado, nunca el valor) y el trío `ctc_id` · `CTC` · `Enlace CTC`. También tiene `Datos bancarios` y `NIT`: sensibles, **nunca se leen** | `partner_accounts`. Para el nodo del Centro de Calidad, `lot_evaluations` |
 | **Contacto** | `Contactos`: Cargo, Notas, Datos clave, `Último contacto` (rollup latest_date sobre `Reuniones.Fecha`), relaciones Aliado, Cliente, Proveedor, Tareas y Reuniones (más una relación heredada de un solo sentido, `Proveedor (duplicado)`) | **Sin contraparte** a propósito: `panel_users` nunca se espeja |
 | **Finca** | Solo desde `Proveedores.Fincas` | `fincas` (`status`, `eudr_*`), `finca_parcelas`, `finca_certificates` |
+| **Incumbent** (tipo nuevo, owner 2026-11-05: no aliado, posiblemente confrontacional) | Sin base todavía: rol o base propia en «7 · Directorios», decisión abierta 13 del charter | Sin contraparte |
 
 **c) Acciones abiertas**
 - **En Notion:** las `Tareas` cuyo `Proveedor`, `Cliente`, `Aliado`, `Contacto` o `Reunión` apunta al Personaje, en el grupo de `Estado` que no es «complete». Se leen `Vence`, `Responsable`, `Esperando desde`, `CTC`, `ctc_id` y `Enlace CTC`.
@@ -122,7 +123,7 @@ Una reunión es la **jugada base** del juego. Un Jugador (GVG o GVB) se sienta c
   - ventana y despachos (`src/app/ocp/(app)/ventanaActions.ts`: `venta_semanal_confirmada`, `despacho_confirmado_60`, `despacho_recibido`…);
   - cotizaciones (`src/lib/cotizador/actions.ts`: `setQuoteCounterparty` y `saveQuoteDraft` como borrador; `issueQuote` emite). Estas **no escriben `audit_log`**: su rastro es `quotes.change_log` y el evento `cotizacion.emitida` de `integration_events`, que `issueQuote` inserta con `emitEvent`.
 - **Casilla de una tarea derivada:** `setTaskState` (`src/components/panel/tareasActions.ts`, borrador) → `bcp_task_state`.
-- **Precio y kilos dichos en una reunión:** van como propuesta a la cola del OCP (`/ocp/contratos`) y nunca cambian un contrato solos. La jugada en vivo es la acción del contrato en su consola, no la reunión.
+- **Precio y kilos dichos en una reunión:** irán como propuesta a la cola del OCP (`/ocp/contratos`; propuesta y sin construir: guardarraíl 8 y decisión abierta 12 del charter) y nunca cambian un contrato solos. La jugada en vivo es la acción del contrato en su consola, no la reunión.
 
 ---
 
@@ -240,7 +241,7 @@ No hay tabla ni vista de barras. Todo se deriva de cifras reales. Las fórmulas 
 12. **No hay H3 ni nada del juego.**
     - Ninguna celda H3 (librería ni columna).
     - Ninguna tabla de juego: jugadores, turnos o barras.
-    - Ninguna ruta `/os/m/reuniones` (propuesto · pendiente del sí del owner) ni charter `ctcx-os`.
+    - Ninguna ruta `/os/m/reuniones` todavía (rumbo aprobado por el owner el 2026-11-05). El charter `ctcx-os` entró con la V6.18, en borrador.
 13. **Dos capturas en paralelo sin regla.** Notion AI meeting notes y `transcripts` (local o AssemblyAI) conviven sin decir cuál manda.
 14. **La plataforma no tiene un canal de nota interna por productor.** `producer_comm_log` la ve el productor. Las notas internas viven en Notion (D-007), lo cual es correcto, pero el juego tendría que leerlas allí.
 15. **El Mapa de Trabajo está desfasado.** `src/lib/workmap/schema.ts` sigue con la barra anterior a la V5.64, así que no sirve para ubicar Fichas en el circuito.

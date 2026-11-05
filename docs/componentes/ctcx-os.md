@@ -1,7 +1,10 @@
 # Charter · `ctcx-os` — CTCx OS (la capa de juego sobre la plataforma, Notion, Drive y Gmail)
 
-> **BORRADOR · decide el owner.** Nació la noche del 2026-11-04 al 05 como trabajo de agentes en la nube, sin fusionar y
-> sin desplegar; nada de lo que dice este charter está decidido hasta que el owner lo diga. Se lee con `docs/ALINEACION.md`
+> **BORRADOR · decide el owner.** Nació la noche del 2026-11-04 al 05 como trabajo de agentes en la nube y entró en
+> `main` con la V6.18 (2026-11-05), sin código vivo. El owner decidió el 2026-11-05 el rumbo (decisión 1) y el canon de
+> personajes («Modos de juego»); lo demás de este charter no está decidido hasta que el owner lo diga. El plan maestro de
+> Code Master que se cita como «el blueprint» (por sección: §4.4, F4, §9.7…) es un archivo local, fuera del repo: una
+> sesión en la nube no lo lee, así que lo que importa de él está escrito aquí. Se lee con `docs/ALINEACION.md`
 > al lado, con el **atlas** (`docs/componentes/ctcx-os/atlas.md`: cada superficie con sus tablas, acciones y hechos, y su
 > proyección al juego) y con la nota del primer módulo (`docs/componentes/ctcx-os/reuniones.md`). Es un componente **de
 > capa**: hoy no posee tablas (propuestas: `os_actas` y las metas, ver «Tablas que posee») y casi no tiene código propio;
@@ -36,7 +39,9 @@ las mismas compuertas.
 | **Acción** | una Tarea | Notion «Tareas» (la única fuente de tareas, D-003); las tareas DERIVADAS de la plataforma en `src/lib/panel/tareasCarga.ts` |
 | **Turno** | la sesión diaria | Notion «Briefings» (apertura · cierre, D-014; proyecto posterior por D-032) |
 | **Cuartel** | un proyecto de Claude | Notion «Proyectos Claude» |
-| **Personaje** | un aliado, cliente, contacto, proveedor o finca | Notion «7 · Directorios»; en la plataforma `profiles`, `producer_profiles`, `buyer_profiles`, `partner_accounts`, `fincas` |
+| **Jugador** | una cuenta ligada a una persona real (canon del owner, 2026-11-05) | hoy `panel_users` (GVG y GVB); los socios de la Red de Socios con su correo virtual (`partner_accounts`); después, productores (`producer_profiles`) y compradores (`buyer_profiles`) con su sesión |
+| **Personaje** | una ficha de los directorios, no jugable: proveedor, cliente, aliado o contacto; los roles se solapan (canon del owner, 2026-11-05) | Notion «7 · Directorios» (Proveedores, Clientes, Aliados, Contactos); en la plataforma, el perfil de un productor o de un comprador mientras no juega (`producer_profiles`, `buyer_profiles`); sus fincas son Parcelas |
+| **Incumbent** | un Personaje no aliado y posiblemente confrontacional: un competidor, un intermediario que busca saltarse a CTCx, un actor hostil (owner, 2026-11-05) | **no existe**: dónde vive en Directorios, como rol o como base propia, es la decisión abierta 13 |
 | **Ficha** | un lote o un envío | `lots`, `contract_despachos`. **Choca:** Ficha (juego) ≠ ficha técnica (`lot_fichas`, `fichasActions.ts`, `/ocp/fichas`); ver la decisión 7 |
 | **Sello** | el sello de un nodo de la Red de Socios | `partner_accounts.node_type`; el del Centro de Calidad, en `lot_evaluations`. **Choca:** Sello (juego) ≠ sellos de grado de Papagayo Beans® (loro y monograma PB, `ALINEACION.md` §1); ver la decisión 7 |
 | **Partida** | café en un estado | `stock_partidas`, `stock_transformaciones`, `stock_salidas` |
@@ -50,15 +55,19 @@ las mismas compuertas.
 
 ## Modos de juego
 
-1. **Equipo** (el primero): GVG y GVB, las personas de la casa. Un jugador es un perfil con fila en `panel_users`; lo que
+**Canon (owner, 2026-11-05):** juegan las cuentas ligadas a una persona real; todo lo demás son Personajes, no jugables,
+con los roles ya establecidos (Proveedor, Cliente, Aliado y Contacto, que se solapan) y el tipo nuevo Incumbent.
+
+1. **Equipo** (el primero): GVG y GVB, las personas de la casa. Aquí un jugador es un perfil con fila en `panel_users`; lo que
    puede hacer en un módulo lo deciden sus grants por consola **y nivel** (`admin` · `viewer`, `src/lib/panel/niveles.ts`).
    El juego no inventa permisos.
 2. **Productor** (después): el productor de Kaffetal Regal juega sobre SUS Fichas, Parcelas y Recibos, con su sesión de
    siempre (la cookie compartida) y lo que ya ve por `select-own`.
 3. **Comprador** (después): el comprador de Cherry Picked juega sobre sus Cuentas y las Fichas del catálogo. Aquí manda
    la regla anticircunvención (`ALINEACION.md` §1, «Lo público del lote»): **nada** lleva al productor sin pasar por CTCx.
-4. **Socio** (posible, sin decidir): un nodo de la Red de Socios pone su **Sello** (el Centro de Calidad ya lo hace al
-   registrar una evaluación: `lot.evaluacion_registrada_centro`).
+4. **Socio** (jugable, canon del owner 2026-11-05): un socio de la Red de Socios juega con su cuenta y su correo virtual, y
+   pone su **Sello** (el Centro de Calidad ya lo hace al registrar una evaluación: `lot.evaluacion_registrada_centro`). Qué
+   ve y qué hace dentro del OS sigue abierto.
 
 ## El principio estrangulador
 
@@ -111,12 +120,14 @@ El juego reemplaza una pantalla vieja **solo a paridad**, módulo por módulo:
 
 Hoy **ninguna**.
 
-**Propuesto · pendiente del sí del owner** (decisión abierta 1): `www.ctcexport.com/os` es la **quinta consola**, con
+**Rumbo aprobado por el owner (2026-11-05, decisión 1); el diseño de abajo se aprueba al construirlo:**
+`www.ctcexport.com/os` es la **quinta consola**, con
 entrada `os` en `PanelConsoleKey` y en `CONSOLE_ORDER` (`src/lib/panel/consoles.ts`; hoy hay cuatro: `bcp` · `ecp` · `ocp`
 · `lcp`).
 
 - Layout raíz `src/app/os/layout.tsx` (`data-theme="bcp"`, Tailwind, `noindex`).
-- Llave `os` en `panel_users.consoles` (al principio, solo el owner), con los niveles de `src/lib/panel/niveles.ts` y la
+- Llave `os` en `panel_users.consoles` (al principio, el owner y GVB: el owner dio a GVB acceso completo al sistema salvo
+  el lado de Code Master, decisión 3 del 2026-11-05), con los niveles de `src/lib/panel/niveles.ts` y la
   CLASE de cada acción.
 - Un interruptor por módulo en `platform_settings`.
 - Sin subdominio. Solo la sesión `ctc-panel-auth`, sin mezclarla nunca con la cookie compartida ni con la de socios.
@@ -166,7 +177,7 @@ Actions de su dueño**.
 
 ## Guardianes
 
-- **`qa-os-hechos-check.mjs`** (offline; llega con el PR de los hechos): todo `entity_type` de `audit_log` y todo `tipo` de
+- **`qa-os-hechos-check.mjs`** (offline; V6.18): todo `entity_type` de `audit_log` y todo `tipo` de
   `emitEvent` del código tiene su línea en el catálogo y al revés; cada acción con efecto existe; cada medida es una columna
   real; privacidad probada con centinelas; `hechos.ts` es server-only y no escribe.
 - Por venir, con el primer módulo: un guardián de **paridad** (cada módulo declara la pantalla vieja y las acciones que
@@ -206,9 +217,10 @@ decisión abierta 12.
 
 ## Decisiones abiertas (las toma el owner)
 
-1. **Dónde vive el juego**: la propuesta es `/os`, una quinta consola en `CONSOLE_ORDER`, con los módulos en
-   `/os/m/<clave>` (ver «Superficies y rutas»). Las alternativas: `/m/<clave>` bajo el login maestro, o fuera de la
-   plataforma (Notion o el lado del Chat). Mientras tanto: ninguna ruta.
+1. **Dónde vive el juego** — **decidida (owner, 2026-11-05):** `/os`, la quinta consola en `CONSOLE_ORDER`, con los
+   módulos en `/os/m/<clave>` (ver «Superficies y rutas»); Tailor al frente, paridad antes de reemplazar, y Kaffetal Regal
+   y Cherry Picked al final, como modos. Sigue abierto el diseño (layout, llave, interruptores), que se aprueba al
+   construirlo. Mientras tanto: ninguna ruta.
 2. **Las barras**: qué mide cada una, con qué pesos, contra qué meta y en qué periodo (¿el turno, la semana ISO, el ciclo de
    `docs/PLAN_CICLOS.md`?). Mientras tanto: `hechosCatalogo.ts` solo da dirección y medida; en la financiera el signo es el
    sentido del dinero para CTCx (entra +1, sale −1, se compromete 0).
@@ -231,13 +243,19 @@ decisión abierta 12.
 11. **El acta y la espina** (si se acepta `os_actas`): qué texto guarda el acta y qué viaja en el payload de la espina (la
     regla S0 del blueprint: solo claves y números).
 12. **Dónde se guarda la cola del OCP** (guardarraíl 8): el blueprint no fija la tabla.
+13. **Dónde viven los Incumbents** (canon del owner, 2026-11-05): como un rol más en las bases de «7 · Directorios» o como
+    una base propia.
 
 *(Las decisiones del blueprint de Code Master se pliegan aquí con la etiqueta «Propuesto · pendiente del sí del owner»;
 las que falten, cuando lleguen.)*
 
 ## Pendientes
 
-- **Revisión de los tres PR de la noche** (atlas, hechos, este charter) y de la nota de Reuniones: Code Master y el owner.
+- ~~**Revisión de los tres PR de la noche** (atlas, hechos, este charter) y de la nota de Reuniones: Code Master y el owner.~~
+  Hecha el 2026-11-05: entraron en la V6.18 como borrador, con las decisiones 1 y 3 y el canon de personajes plegados.
+- **El catálogo de los hechos es anterior al canon** (`src/lib/os/hechosCatalogo.ts`): `TerminoDelJuego` no tiene
+  «Jugador» ni «Incumbent», y mapea `panel_user` → «Personaje» y `partner_account` → «Sello». Se corrige con el primer
+  código que lea esos términos, con su caso en `qa-os-hechos-check`.
 - **Del atlas** (§5, huecos): los elementos del juego sin tabla (Casilla, barras, turno en la plataforma, jugador) y las
   tablas sin superficie, cada uno con su paso mínimo.
 - **De Reuniones**, con dueño fuera de este componente (ver `ctcx-os/reuniones.md` §6): el vínculo `transcripts` ↔ Notion

@@ -236,8 +236,7 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 
 ## Pendientes
 
-- **TAR-121 · la herramienta del taller como MÓDULO** (2026-11-04, sesión nocturna en la nube; PR abierto, sin versión hasta que aterrice
-  en `main`). Hecho: `?trabajo=` abre un trabajo guardado de la cuenta (por `abrirTrabajo`, que filtra `user_id`; uno ajeno o borrado cae al
+- **TAR-121 · la herramienta del taller como MÓDULO** (2026-11-04, sesión nocturna en la nube; V6.18). Hecho: `?trabajo=` abre un trabajo guardado de la cuenta (por `abrirTrabajo`, que filtra `user_id`; uno ajeno o borrado cae al
   menú con el mismo aviso; abrirlo sella su `abierto_at`, como el clic del menú); `?finca=` / `?lote=` se resuelven contra la cuenta en el
   servidor y prellenan un trabajo NUEVO o «Abrir sin guardar» (nunca uno guardado; nunca crean filas al abrir el enlace: el menú propone el
   nombre y la persona da el clic; el lote trae SU finca, y una `?finca=` distinta se ignora con aviso); `?volver=` se lee

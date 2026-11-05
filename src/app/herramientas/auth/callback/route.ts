@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createSessionClient } from "@/lib/supabase/server";
+import { COOKIE_SIGUIENTE, rutaDeAcceso, siguienteSeguro, VUELTA_TALLER } from "@/lib/tools/entrada";
 
 // ── Herramientas del Café · el callback de Google (A8b, 2026-08-19) ─────────
 // El séptimo callback de la casa (KR, CP viejo, CP Green, Directorio,
@@ -25,15 +26,29 @@ export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const origin = request.nextUrl.origin;
 
+  // TAR-121: si la puerta dejó un destino (la herramienta de la que vino), se vuelve ahí — validado OTRA vez aquí: la
+  // cookie viene del navegador. Se lee ANTES de los caminos de error para no perderlo si Google falla o se cancela, y la
+  // cookie se borra SIEMPRE (una vieja no puede secuestrar un ingreso posterior).
+  // ⚠️ `request.cookies` YA decodifica el valor (decodeURIComponent en el parser de Next): decodificarlo otra vez convertiría
+  // el `volver` codificado DENTRO de la URL en parámetros sueltos de la de fuera.
+  const crudo = request.cookies.get(COOKIE_SIGUIENTE)?.value;
+  const destino = siguienteSeguro(crudo ?? null) ?? VUELTA_TALLER;
+  const responder = (url: string) => {
+    const res = NextResponse.redirect(url);
+    if (crudo !== undefined) res.cookies.set(COOKIE_SIGUIENTE, "", { path: "/", maxAge: 0 });
+    return res;
+  };
+
+  // Sin código o con error: de vuelta a la puerta, que conserva el destino en `?siguiente=` para el siguiente intento.
   if (!code) {
-    return NextResponse.redirect(`${origin}/herramientas/acceso`);
+    return responder(`${origin}${rutaDeAcceso(destino)}`);
   }
 
   const sessionClient = await createSessionClient();
   const { data, error } = await sessionClient.auth.exchangeCodeForSession(code);
   if (error || !data.user) {
-    return NextResponse.redirect(`${origin}/herramientas/acceso`);
+    return responder(`${origin}${rutaDeAcceso(destino)}`);
   }
 
-  return NextResponse.redirect(`${origin}/herramientas/taller`);
+  return responder(`${origin}${destino}`);
 }

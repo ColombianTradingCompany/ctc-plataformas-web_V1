@@ -25,7 +25,11 @@ import {
   etiquetaDe,
   normalizaReferenciaFinca,
   urlDeHerramienta,
+  siguienteSeguro,
+  rutaDeAcceso,
   AVISO,
+  COOKIE_SIGUIENTE,
+  PUERTA_TALLER,
   VUELTA_TALLER,
 } from "../src/lib/tools/entrada.ts";
 import { CARPETAS_HERRAMIENTAS, DATOS_FINCA, DATOS_LOTE } from "../src/lib/tools/carpetas.ts";
@@ -253,6 +257,69 @@ check("una herramienta desconocida no tiene contrato", entradaDe("no-existe") ==
   check("la finca embebida del lote también se exige de la cuenta", srv.includes("f && f.producer_id === userId ? aFinca(f) : null"));
   const concha = lee("src/components/tools/ConchaHerramienta.tsx");
   check("otra entrada en la URL remonta el menú (key)", concha.includes("key={`${toolId}|${trabajoInicial ?? \"\"}|"));
+}
+
+// ── 9. La puerta que devuelve a la herramienta (`?siguiente=`) ───────────────────────────────────────────────────────
+{
+  const t = "/herramientas/taller/mermas-ctc?lote=CTC-L-6BA7B810&volver=%2Fherramientas%2Ftaller";
+  check("siguiente: una herramienta del taller con sus parámetros vale", siguienteSeguro(t) === t);
+  check("siguiente: la rejilla vale", siguienteSeguro("/herramientas/taller") === "/herramientas/taller");
+  for (const [nombre, v] of [
+    ["otro dominio", "https://sitio-falso/login"],
+    ["esquema sin host", "//sitio-falso"],
+    ["javascript:", "javascript:alert(1)"],
+    ["la landing (no es el taller)", "/herramientas"],
+    ["la propia puerta (bucle)", "/herramientas/acceso"],
+    ["prefijo parecido", "/herramientas/tallerx"],
+    ["punto-punto", "/herramientas/taller/../../bcp"],
+    ["punto-punto codificado", "/herramientas/taller/%2e%2e/acceso"],
+    ["otra superficie", "/kaffetal-regal/herramientas/agtron"],
+    ["barra invertida", "/herramientas/taller\\@sitio-falso"],
+    ["vacío", ""],
+    ["larguísimo", "/herramientas/taller/" + "a".repeat(700)],
+    ["un NUL", "/herramientas/taller/\u0000"],
+    ["un tabulador vertical", "/herramientas/taller/a\u000bb"],
+    ["un DEL", "/herramientas/taller/\u007f"],
+    ["no-ASCII", "/herramientas/taller/\u3002"],
+    ["un espacio", "/herramientas/taller/a b"],
+  ]) {
+    check(`siguiente rechaza ${nombre}`, siguienteSeguro(v) === null);
+  }
+  check("siguiente: null y no-texto", siguienteSeguro(null) === null && siguienteSeguro(undefined) === null && siguienteSeguro(["/herramientas/taller"]) === null);
+  check("«Entrar» lleva a la puerta con la herramienta codificada", rutaDeAcceso(t) === `${PUERTA_TALLER}?siguiente=${encodeURIComponent(t)}`);
+  check("«Entrar» hacia la rejilla o hacia fuera: la puerta pelada", rutaDeAcceso("/herramientas/taller") === PUERTA_TALLER && rutaDeAcceso("https://sitio-falso") === PUERTA_TALLER);
+  const ida = new URL(rutaDeAcceso(t), "https://x.test").searchParams.get("siguiente");
+  check("ida y vuelta: la puerta recupera la herramienta exacta", siguienteSeguro(ida) === t);
+  // Por Google: el valor de la cookie lo escribe encodeURIComponent y Next lo decodifica UNA vez al leerlo.
+  const deLaCookie = decodeURIComponent(encodeURIComponent(t));
+  check("ida y vuelta por la cookie: la misma herramienta, con su `volver` aún codificado dentro", siguienteSeguro(deLaCookie) === t && new URL(deLaCookie, "https://x.test").searchParams.get("volver") === "/herramientas/taller");
+
+  const pagina = lee("src/app/herramientas/acceso/page.tsx");
+  // Atados a cómo se USA el valor, no solo a que exista la línea que valida.
+  const pag = pagina.replace(/\/\/.*$/gm, "");
+  check("la puerta sanea `siguiente` antes de usarlo", pag.includes("const siguiente = siguienteSeguro(typeof crudo === \"string\" ? crudo : null) ?? VUELTA_TALLER;"));
+  check("`siguiente` se declara una sola vez y el valor crudo solo entra en siguienteSeguro", (pag.match(/\bsiguiente\s*=\s*[^{=\s]/g) ?? []).length === 1 && (pag.match(/\bcrudo\b/g) ?? []).length === 3);
+  check("con sesión, directo a `siguiente` (ya saneado)", pag.includes("if (conSesion) redirect(siguiente)") && (pag.match(/redirect\(/g) ?? []).length === 1);
+  check("el formulario recibe el valor saneado", pag.includes("<AccesoTaller siguiente={siguiente} />"));
+  const form = lee("src/app/herramientas/acceso/AccesoTaller.tsx");
+  check("tras la contraseña, a `siguiente`", form.includes("router.push(siguiente)"));
+  check("Google: el destino viaja en una cookie corta, no en la URL del callback", form.includes("COOKIE_SIGUIENTE") && form.includes("Max-Age=600") && form.includes("redirectTo: `${window.location.origin}/herramientas/auth/callback` }"));
+  const cb = lee("src/app/herramientas/auth/callback/route.ts");
+  const cbs = cb.replace(/\/\/.*$/gm, "");
+  check("el callback VALIDA otra vez la cookie, sin decodificarla dos veces (Next ya la decodifica)", cbs.includes("const destino = siguienteSeguro(crudo ?? null) ?? VUELTA_TALLER;") && !cbs.includes("decodeURIComponent("));
+  check("el callback solo redirige por `responder`, una vez", (cbs.match(/NextResponse\.redirect\(/g) ?? []).length === 1 && cbs.includes("const res = NextResponse.redirect(url);"));
+  {
+    const llamadas = [...cbs.matchAll(/responder\(([^;]*)\);/g)].map((m) => m[1]);
+    check("y `responder` solo recibe el destino saneado o la puerta con él", llamadas.length === 3 && llamadas.every((a) => a === "`${origin}${destino}`" || a === "`${origin}${rutaDeAcceso(destino)}`"));
+  }
+  check("el valor crudo de la cookie no llega a ninguna URL", (cbs.match(/\bcrudo\b/g) ?? []).length === 3);
+  check("y la cookie se borra en toda respuesta", cbs.includes('if (crudo !== undefined) res.cookies.set(COOKIE_SIGUIENTE, "", { path: "/", maxAge: 0 });'));
+  check("el formulario escribe la cookie SIEMPRE con Google (o la borra) y la borra tras la contraseña", form.includes("document.cookie = siguienteCookie(siguiente !== VUELTA_TALLER ? siguiente : null);") && form.includes("document.cookie = siguienteCookie(null);"));
+  check("la cookie tiene nombre propio", COOKIE_SIGUIENTE === "ctc-herramientas-siguiente");
+  const taller = lee("src/app/herramientas/taller/[slug]/page.tsx");
+  check("el taller arma «Entrar» con rutaDeAcceso + urlDeHerramienta", taller.includes("rutaDeAcceso(") && taller.includes("urlDeHerramienta(h.id"));
+  const concha = lee("src/components/tools/ConchaHerramienta.tsx");
+  check("la concha usa ese enlace solo para «Entrar»", concha.includes("href={entrarHref ?? destino}"));
 }
 
 if (fallos.length) {

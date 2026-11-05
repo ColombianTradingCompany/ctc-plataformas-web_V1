@@ -4,7 +4,7 @@ import { ConchaHerramienta } from "@/components/tools/ConchaHerramienta";
 import { BarraHerramienta } from "@/components/tools/BarraHerramienta";
 import { resolverHerramienta } from "@/lib/tools/unaHerramienta";
 import { cargarTaller } from "@/lib/tools/taller";
-import { construirPrefill, leerEntrada } from "@/lib/tools/entrada";
+import { construirPrefill, leerEntrada, rutaDeAcceso, urlDeHerramienta } from "@/lib/tools/entrada";
 import { resolverEntrada } from "@/lib/tools/entradaServidor";
 
 // ── Herramientas del Café · una herramienta, en SU casa (A8/A11, V5.4) ──────
@@ -39,6 +39,18 @@ export default async function HerramientaTallerPage({
   const { registro, avisos } = conMenu && !entrada.trabajo ? await resolverEntrada(entrada.finca, entrada.lote) : { registro: null, avisos: [] };
   const prefill = conMenu && !entrada.trabajo ? construirPrefill(h.id, registro) : null;
   const avisoEntrada = conMenu ? [...entrada.avisos, ...avisos].join(" ") || null : null;
+  // Sin sesión, «Entrar» vuelve a ESTA herramienta con sus parámetros (ya validados), no a la rejilla.
+  const entrarHref =
+    h.veredicto.abre || h.veredicto.motivo !== "sin-cuenta"
+      ? null
+      : rutaDeAcceso(
+          urlDeHerramienta(h.id, {
+            trabajo: entrada.trabajo ?? undefined,
+            finca: entrada.finca?.valor,
+            lote: entrada.lote?.valor,
+            volver: entrada.volver,
+          })
+        );
 
   return (
     <div data-theme="ctc-home" style={{ height: "100dvh", display: "flex", flexDirection: "column" }}>
@@ -66,6 +78,7 @@ export default async function HerramientaTallerPage({
             trabajoInicial={conMenu ? entrada.trabajo : null}
             prefill={prefill}
             avisoEntrada={avisoEntrada}
+            entrarHref={entrarHref}
             pantallaCompleta
           />
         </main>

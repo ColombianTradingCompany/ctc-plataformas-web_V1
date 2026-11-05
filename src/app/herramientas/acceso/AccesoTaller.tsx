@@ -6,6 +6,7 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import styles from "./acceso.module.css";
 import { hrefRecuperar } from "@/lib/auth/puertas";
+import { COOKIE_SIGUIENTE, VUELTA_TALLER } from "@/lib/tools/entrada";
 
 // ── La puerta del taller (A8, 2026-08-19) ────────────────────────────────────
 // Palabra del owner: «Herramientas del Café will be ALSO working with a login,
@@ -30,7 +31,16 @@ const PLATAFORMAS =
         { n: "Directorio del Café", href: "/directorio" },
       ];
 
-export function AccesoTaller() {
+/** La cookie que lleva el destino por el camino de Google, o la que la borra (`null`). Path=/ porque el navegador ve
+ *  `/acceso` en el host de Herramientas y `/herramientas/auth/callback` al volver de Google. */
+function siguienteCookie(destino: string | null): string {
+  const segura = window.location.protocol === "https:" ? "; Secure" : "";
+  return destino
+    ? `${COOKIE_SIGUIENTE}=${encodeURIComponent(destino)}; Path=/; Max-Age=600; SameSite=Lax${segura}`
+    : `${COOKIE_SIGUIENTE}=; Path=/; Max-Age=0; SameSite=Lax${segura}`;
+}
+
+export function AccesoTaller({ siguiente = VUELTA_TALLER }: { siguiente?: string }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
@@ -43,6 +53,11 @@ export function AccesoTaller() {
     // ESTA superficie, que canjea el código y manda al taller. La cuenta de
     // Google es la misma identidad única — si ya existe con ese correo, entra
     // a la misma cuenta de siempre.
+    // TAR-121: el callback no lleva parámetros propios (su URL exacta está en la
+    // lista de Supabase), así que el destino viaja en una cookie corta que el
+    // callback lee, VALIDA otra vez y borra. Ya viene saneado del servidor.
+    // Se escribe SIEMPRE: con destino, el destino; sin él, se borra la que hubiera quedado de un intento abandonado.
+    document.cookie = siguienteCookie(siguiente !== VUELTA_TALLER ? siguiente : null);
     await createClient().auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: `${window.location.origin}/herramientas/auth/callback` },
@@ -62,8 +77,10 @@ export function AccesoTaller() {
       setError("Correo o contraseña incorrectos. Revisa e intenta de nuevo.");
       return;
     }
-    // La cookie ya está puesta; el servidor decide a dónde (el taller).
-    router.push("/herramientas/taller");
+    // La sesión ya está puesta: de vuelta a la herramienta de la que vino (o al taller). Y fuera la cookie de un intento
+    // con Google abandonado, para que no decida el destino de un ingreso posterior.
+    document.cookie = siguienteCookie(null);
+    router.push(siguiente);
     router.refresh();
   }
 

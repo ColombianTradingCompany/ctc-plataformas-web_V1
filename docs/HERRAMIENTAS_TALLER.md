@@ -124,8 +124,9 @@ mantiene a mano; una herramienta nueva se añade ahí.
 
 ## Lo que quedó pendiente a propósito
 
-- **Google OAuth en la puerta**: el correo/contraseña cubre la identidad única;
-  el camino Google exige `auth/callback` propio + entrada en la allowlist de
-  Supabase (patrón de KR/CP/Directorio). Se añade cuando el owner lo pida.
+- ~~**Google OAuth en la puerta**~~: hecho desde la A8b (`conGoogle` +
+  `/herramientas/auth/callback`). Desde TAR-121 la puerta además vuelve a la
+  herramienta de la que vino quien no tenía sesión (`?siguiente=`; por Google,
+  en una cookie corta que el callback valida y borra).
 - **Trabajos compartidos** (entre dos cuentas) y **capturas por versión**: no
   pedidos; el esquema lo admite sin migrar nada roto.

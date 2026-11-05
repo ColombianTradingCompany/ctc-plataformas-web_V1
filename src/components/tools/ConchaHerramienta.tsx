@@ -39,6 +39,7 @@ export function ConchaHerramienta({
   trabajoInicial = null,
   prefill = null,
   avisoEntrada = null,
+  entrarHref = null,
   pantallaCompleta = false,
 }: {
   superficie: SuperficieHerramientas;
@@ -60,6 +61,9 @@ export function ConchaHerramienta({
   prefill?: PrefillHerramienta | null;
   /** TAR-121: lo que no se pudo usar del enlace, dicho a la persona en el Home Menu. */
   avisoEntrada?: string | null;
+  /** TAR-121: a dónde lleva «Entrar» a quien no tiene sesión (la puerta, con esta herramienta como destino). Sin él, a la
+   *  vuelta de siempre. Lo arma el servidor con `rutaDeAcceso()`, que solo deja pasar rutas del taller. */
+  entrarHref?: string | null;
   /** Pantalla completa (segunda pasada del owner, 2026-08-19): la concha llena
    *  el alto de la ventana, la cabecera se aprieta y el marco se queda con
    *  todo lo demás — «the working space is very reduced». */
@@ -115,7 +119,7 @@ export function ConchaHerramienta({
               todavía, y ofrecérselo sería mandarlo a una cola que no avanza. */}
           {veredicto.motivo === "sin-permiso" && <SolicitarHerramienta toolId={toolId} nombre={nombre} />}
           {veredicto.motivo === "sin-cuenta" && (
-            <Link href={destino} className="btn btn-sm btn-solid">
+            <Link href={entrarHref ?? destino} className="btn btn-sm btn-solid">
               Entrar a {casa}
             </Link>
           )}

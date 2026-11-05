@@ -16,7 +16,9 @@
 //   · `integration_events` — dominio (Mapa CTC 0–9) · tipo · created_at (+ payload,
 //                            del que se leen SOLO las llaves de `LLAVES_DEL_PAYLOAD`:
 //                            el de `cotizacion.emitida` lleva nombre y correo del
-//                            contacto y no debe salir de la base).
+//                            contacto y no debe salir de la base). Las copias
+//                            ENTRANTES (`entrante.*`, lo que vuelve de Make) no
+//                            son hechos de la casa y no se leen.
 //   · `latidos`            — clave · estado · inicio · fin (las corridas de los crons).
 //
 // Las reglas que este catálogo NO rompe (guardarraíles del componente):
@@ -24,10 +26,15 @@
 //      columna REAL vive el número («tabla.columna»); quien pinte una barra lo
 //      lee de ahí. Un efecto sin medida solo CUENTA.
 //   2. El signo de la barra financiera es el sentido del dinero PARA CTCx:
-//      +1 entra, −1 sale, 0 se compromete (oferta, contrato, cotización).
+//      +1 entra, −1 sale, 0 se compromete (contrato, cotización, penalidad).
 //      En «felicidad» y «realización» +1 sube y −1 baja.
-//   3. Lo derivado no se persiste: nada de aquí se guarda; se calcula al leer.
-//   4. Los pesos, las metas y lo que vale cada barra son DECISIÓN DEL OWNER
+//   3. Un mismo acto de negocio mueve cada barra UNA vez: si la Server Action
+//      escribe dos filas a la vez (aceptar la oferta crea el contrato), solo una
+//      lleva el efecto.
+//   4. El actor sale solo de columnas que escribe el servidor (`performed_by`);
+//      de un payload no se toma identidad.
+//   5. Lo derivado no se persiste: nada de aquí se guarda; se calcula al leer.
+//   6. Los pesos, las metas y lo que vale cada barra son DECISIÓN DEL OWNER
 //      (decisiones abiertas del charter). Aquí solo hay dirección y medida.
 
 import type { Dominio } from "@/lib/integraciones/dominios";
@@ -49,6 +56,8 @@ export type EfectoEnBarra = {
   sentido: 1 | 0 | -1;
   /** «tabla.columna» donde vive la cifra real. Vacío = el hecho solo cuenta. */
   medidas: readonly string[];
+  /** Cómo se lee la medida cuando no basta la columna: un filtro o la moneda. */
+  condicion?: string;
 };
 
 export type Hecho = {
@@ -60,8 +69,15 @@ export type Hecho = {
   dominio: Dominio;
   /** El perfil (uuid) y su rol. Nunca un nombre: el nombre lo pone quien pinta. */
   actor: { rol: RolDelActor; perfil: string | null };
-  entidad: { termino: TerminoDelJuego; tabla: string | null; id: string | null; ref: string | null };
-  /** ISO 8601, tal como lo guardó la base. */
+  entidad: {
+    termino: TerminoDelJuego;
+    tabla: string | null;
+    id: string | null;
+    ref: string | null;
+    /** «tabla.columna» que DESCRIBEN la entidad (la humedad de un Recibo) sin mover una barra. */
+    atributos: readonly string[];
+  };
+  /** ISO 8601, tal como lo guardó la base (la misma columna por la que se filtra). */
   cuando: string;
   transicion: { de: string | null; a: string | null } | null;
   /** El nodo de la Red de Socios que selló el hecho (`partner_accounts.node_type`). */
@@ -70,6 +86,25 @@ export type Hecho = {
   /** La entidad se puede llevar a una Casilla (lote → finca → parcela con lat/lng). */
   ubicable: boolean;
 };
+
+export const ES_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// ── Lo que se selecciona (lista blanca: el guardián la compara columna a columna) ──
+
+export const SELECT_AUDITORIA = "id, entity_type, entity_id, action, previous_status, new_status, performed_by, created_at";
+
+/** Las ÚNICAS llaves del payload que se leen (por ruta JSON en el select): ids y
+ *  referencias de la casa, nunca nombres, correos, importes ni identidades. */
+export const LLAVES_DEL_PAYLOAD = ["ctc_id", "ref", "deliverableId", "projectId"] as const;
+export type LlaveDelPayload = (typeof LLAVES_DEL_PAYLOAD)[number];
+
+export const SELECT_EVENTOS = ["id", "dominio", "tipo", "created_at", ...LLAVES_DEL_PAYLOAD.map((k) => `${k}:payload->>${k}`)].join(", ");
+
+export const SELECT_LATIDOS = "id, clave, estado, inicio, fin";
+
+/** Una corrida `en_curso` más vieja que esto ya no corre (el techo de un cron es de
+ *  60 s, el del agente del PVC de 300 s): murió sin cerrar su latido. */
+export const LATIDO_SIN_CIERRE_MS = 15 * 60 * 1000;
 
 // ── Las entidades de audit_log ───────────────────────────────────────────────
 
@@ -91,12 +126,15 @@ export const ENTIDADES: Readonly<Record<string, ReglaDeEntidad>> = {
   finca:                    { termino: "Parcela",   tabla: "fincas",                   dominio: "origen",              ubicable: true },
   producer:                 { termino: "Personaje", tabla: "profiles",                 dominio: "origen",              ubicable: false },
   producer_profile:         { termino: "Personaje", tabla: "producer_profiles",        dominio: "origen",              ubicable: false },
-  arena_inscription:        { termino: "Ficha",     tabla: "arena_inscriptions",       dominio: "origen",              ubicable: true },
+  // OJO: las filas de `arena_inscription` y de `lot_offer` llevan en `entity_id` el id
+  // del LOTE (solicitudesActions, nominadosActions, ofertasActions, aceptacion): la
+  // tabla del id es `lots`; la inscripción o la oferta se buscan por `lot_id`.
+  arena_inscription:        { termino: "Ficha",     tabla: "lots",                     dominio: "origen",              ubicable: true },
   arena_entry_code:         { termino: "Ficha",     tabla: "arena_entry_codes",        dominio: "origen",              ubicable: false },
   arena_session:            { termino: "Ficha",     tabla: "arena_sessions",           dominio: "origen",              ubicable: false },
   club_campaign:            { termino: "Ficha",     tabla: "club_campaigns",           dominio: "origen",              ubicable: false },
   sondeo_batch:             { termino: "Ficha",     tabla: "sondeo_batches",           dominio: "origen",              ubicable: false },
-  lot_offer:                { termino: "Ficha",     tabla: "lot_offers",               dominio: "origen",              ubicable: true },
+  lot_offer:                { termino: "Ficha",     tabla: "lots",                     dominio: "origen",              ubicable: true },
   purchase_contract:        { termino: "Ficha",     tabla: "purchase_contracts",       dominio: "origen",              ubicable: true },
   terratalento_jornada:     { termino: "Parcela",   tabla: "terratalento_jornadas",    dominio: "origen",              ubicable: true },
   terratalento_postulacion: { termino: "Personaje", tabla: "terratalento_postulaciones", dominio: "origen",            ubicable: false },
@@ -155,25 +193,32 @@ export type ReglaDeAccion = {
   dominio?: Dominio;
   /** El nodo de la Red de Socios que hace esta acción. */
   sello?: string;
+  /** Las columnas que describen la entidad en este hecho (no mueven una barra). */
+  atributos?: readonly string[];
 };
 
 const sube = (barra: Barra, ...medidas: string[]): EfectoEnBarra => ({ barra, sentido: 1, medidas });
 const baja = (barra: Barra, ...medidas: string[]): EfectoEnBarra => ({ barra, sentido: -1, medidas });
 const compromete = (...medidas: string[]): EfectoEnBarra => ({ barra: "financiera", sentido: 0, medidas });
+const con = (e: EfectoEnBarra, condicion: string): EfectoEnBarra => ({ ...e, condicion });
 
 const PUNTO = "lot_evaluations.sca_total";
-const OFERTA = ["lot_offers.price_per_kg", "lot_offers.quantity_kg"];
 const CONTRATO = ["purchase_contracts.quantity_frozen_kg", "purchase_contracts.price_per_kg_locked"];
+/** La compra de un trato ya se cuenta por sus pagos (60 al despachar, 40 al recibir):
+ *  `compras.total_cop` solo es dinero propio de la compra cuando no viene de un contrato. */
+const COMPRA_SIN_TRATO = "solo filas con compras.contract_id nulo: la de un trato se cuenta por sus pagos 60/40";
+const PENALIDAD = "contract_retiros.penalidad_cop";
 
-/** `<entity_type>.<action>` → efecto. Solo las acciones que mueven una barra; las
- *  demás entran al turno y cuentan. Las medidas son columnas que existen (las de
- *  `docs/migraciones/*.sql` o las que el código selecciona); el guardián lo vigila
- *  contra esa lista. */
+/** `<entity_type>.<action>` → efecto. Solo las acciones que mueven una barra (o que
+ *  deben NO moverla aunque un prefijo las atrape); las demás entran al turno y
+ *  cuentan. Las medidas son columnas que existen (las de `docs/migraciones/*.sql` o
+ *  las que el código selecciona); el guardián lo vigila. */
 export const ACCIONES: Readonly<Record<string, ReglaDeAccion>> = {
   // La Ficha avanza por el circuito del lote (realización)
   "lot.ficha_transcrita":                   { efectos: [sube("realizacion")] },
   "lot.dds_registered":                     { efectos: [sube("realizacion")] },
   "lot.sample_received":                    { efectos: [sube("realizacion")] },
+  "lot.sample_reset":                       { efectos: [baja("realizacion")] },
   "lot.existencia_registrada":              { efectos: [sube("realizacion")] },
   "lot.evaluacion_registrada_centro":       { efectos: [sube("realizacion", PUNTO)], sello: "centro-calidad" },
   "lot.evaluacion_anulada_centro":          { efectos: [baja("realizacion")], sello: "centro-calidad" },
@@ -186,44 +231,66 @@ export const ACCIONES: Readonly<Record<string, ReglaDeAccion>> = {
   "finca.cert_verified":                    { efectos: [sube("realizacion")] },
   "arena_inscription.postulated":           { efectos: [sube("realizacion")] },
   "arena_inscription.postulated_on_behalf": { efectos: [sube("realizacion")] },
-  // La evaluación se cobra (COP 200.000 menos la coinversión): el dinero entra
+  "arena_inscription.sondeo_rechazado":     { efectos: [baja("realizacion")] },
+  // La evaluación se cobra (la tarifa menos la coinversión): el dinero entra
   "arena_inscription.factura_emitida":      { efectos: [compromete("arena_inscriptions.amount_due_cop")] },
   "arena_inscription.payment_confirmed":    { efectos: [sube("financiera", "arena_inscriptions.amount_due_cop")] },
-  "arena_inscription.cashback_paid":        { efectos: [baja("financiera")] },
-  // La oferta y el contrato (el trato con el productor)
-  "lot_offer.offer_emitted":                { efectos: [compromete(...OFERTA)] },
-  "lot_offer.offer_accepted":               { efectos: [sube("felicidad"), compromete(...OFERTA)] },
-  "lot_offer.offer_accepted_provisionally": { efectos: [compromete(...OFERTA)] },
+  "arena_inscription.cashback_paid":        { efectos: [baja("financiera", "arena_inscriptions.cashback_cop")] },
+  // La oferta y el contrato. Aceptar una oferta escribe A LA VEZ `lot_offer.offer_accepted`
+  // y `purchase_contract.created` (o `accepted_provisionally`): el efecto va solo en el contrato.
+  "lot_offer.offer_emitted":                { efectos: [compromete("lot_offers.price_per_kg", "lot_offers.quantity_kg")] },
+  "lot_offer.offer_accepted":               { efectos: [] },
+  "lot_offer.offer_accepted_provisionally": { efectos: [] },
   "lot_offer.offer_rejected":               { efectos: [baja("felicidad")] },
   "lot_offer.offer_expired":                { efectos: [baja("realizacion")] },
   "purchase_contract.created":              { efectos: [sube("felicidad"), compromete(...CONTRATO)] },
-  "purchase_contract.signed":               { efectos: [sube("felicidad"), compromete(...CONTRATO)] },
   "purchase_contract.accepted_provisionally": { efectos: [compromete(...CONTRATO)] },
   "purchase_contract.ratified":             { efectos: [sube("felicidad")] },
+  // La firma de CTCx sobre un contrato ya comprometido: avanza, no vuelve a comprometer.
+  "purchase_contract.signed":               { efectos: [sube("realizacion")] },
   "purchase_contract.venta_semanal_confirmada": { efectos: [compromete("contract_ventas.kg", "contract_ventas.total_cop")] },
   "purchase_contract.ventana_cumplida":     { efectos: [sube("realizacion")] },
   "purchase_contract.completed":            { efectos: [sube("realizacion")] },
   "purchase_contract.ruptura_declarada":    { efectos: [baja("felicidad")] },
-  "purchase_contract.faltante_cobrado":     { efectos: [baja("felicidad")] },
+  "purchase_contract.cancelled":            { efectos: [baja("felicidad")] },
   "purchase_contract.cancelado_por_despacho": { efectos: [baja("felicidad")] },
-  // El envío (Ficha) y su recepción (Recibo): humedad, actividad de agua, 60/40
-  "purchase_contract.despacho_registrado":  { efectos: [sube("realizacion", "contract_despachos.kg")], dominio: "operacion_logistica" },
+  // La penalidad se causa a favor de CTCx; no hay registro de cobro: se compromete.
+  "purchase_contract.faltante_cobrado":     { efectos: [baja("felicidad"), compromete(PENALIDAD)] },
+  "purchase_contract.retiro":               { efectos: [compromete(PENALIDAD)] },
+  // El envío (Ficha) y su recepción (Recibo). La fila de audit_log lleva el id del
+  // CONTRATO: el despacho exacto no viaja en el hecho y la medida se resuelve por contrato.
+  "purchase_contract.despacho_registrado":  { efectos: [sube("realizacion", "contract_despachos.peso_kg")], dominio: "operacion_logistica" },
   "purchase_contract.despacho_confirmado_60": {
     efectos: [baja("financiera", "contract_despachos.pago_despacho_cop"), sube("felicidad")],
     dominio: "operacion_logistica",
   },
+  // `recibirDespacho` escribe la MISMA acción para aceptado, compra ajustada y devolución
+  // (el resultado queda en `contract_despachos.resultado`, no en la fila de audit_log):
+  // hasta que la acción lo diga, el Recibo no mueve la realización; el 40 % sí sale.
   "purchase_contract.despacho_recibido": {
-    efectos: [sube("realizacion", "contract_despachos.peso_kg", "contract_despachos.humedad_pct", "contract_despachos.aw")],
+    efectos: [baja("financiera", "contract_despachos.pago_recepcion_cop")],
     termino: "Recibo",
     dominio: "operacion_logistica",
+    atributos: ["contract_despachos.peso_kg", "contract_despachos.humedad_pct", "contract_despachos.aw", "contract_despachos.resultado"],
   },
   "purchase_contract.despacho_sin_stock":   { efectos: [baja("realizacion")], dominio: "operacion_logistica" },
   // La Partida: compra, stock, mezcla
-  "compra.compra_registrada":               { efectos: [baja("financiera", "compras.total_cop", "compras.kg")] },
+  "compra.compra_registrada":               { efectos: [con(baja("financiera", "compras.total_cop"), COMPRA_SIN_TRATO)] },
+  "compra.compra_anulada":                  { efectos: [con(sube("financiera", "compras.total_cop"), COMPRA_SIN_TRATO)] },
   "compra.compra_al_stock":                 { efectos: [sube("realizacion", "compras.kg")] },
   "stock_partida.stock_raiz_compra":        { efectos: [sube("realizacion", "stock_partidas.kg")] },
   "stock_partida.stock_raiz_despacho":      { efectos: [sube("realizacion", "stock_partidas.kg")] },
   "stock_partida.stock_ingreso_manual":     { efectos: [sube("realizacion", "stock_partidas.kg")] },
+  "stock_partida.stock_raiz_anulada":       { efectos: [baja("realizacion")] },
+  "stock_partida.stock_ingreso_anulado":    { efectos: [baja("realizacion")] },
+  // Las transformaciones (`stock_${tipo}`, stockActions.ts). La fila apunta a la partida
+  // MADRE; lo transformado vive en `stock_transformaciones.kg_entrada` y no se puede
+  // ubicar desde el hecho: cuenta, sin medida.
+  "stock_partida.stock_trilla":             { efectos: [sube("realizacion")] },
+  "stock_partida.stock_tostion":            { efectos: [sube("realizacion")] },
+  "stock_partida.stock_empaque":            { efectos: [sube("realizacion")] },
+  "stock_partida.stock_transformacion_anulada": { efectos: [baja("realizacion")] },
+  "stock_partida.stock_ubicada":            { efectos: [] },
   "mezcla.mezcla_cerrada":                  { efectos: [sube("realizacion")] },
   // Comercial: el catálogo y el embudo
   "catalogo_fuente.triage_declarada":       { efectos: [sube("realizacion")] },
@@ -241,39 +308,30 @@ export const ACCIONES: Readonly<Record<string, ReglaDeAccion>> = {
   "tool.version_publicada":                 { efectos: [sube("realizacion")] },
 };
 
-/** Acciones con nombre armado en el código (`stock_${tipo}`, `mes_${n}_…`). El
- *  primer prefijo que case gana; el orden importa. */
+/** Acciones con nombre armado en el código que NO juegan (`mes_${n}_…`, `stock_salida_${tipo}`,
+ *  `selection_${accion}`, `borrado_nuclear_${tipo}`). Las que sí juegan van exactas arriba. */
 export const PREFIJOS: readonly { prefijo: string; regla: ReglaDeAccion }[] = [
   // `contract_months` está dormida desde la V5.176 (`PLAN_CICLOS.md` §8): cuenta, no juega.
   { prefijo: "purchase_contract.mes_", regla: { efectos: [] } },
   { prefijo: "stock_partida.stock_salida_", regla: { efectos: [] } },
-  { prefijo: "stock_partida.stock_", regla: { efectos: [sube("realizacion", "stock_partidas.kg")] } },
   { prefijo: "lot_offer.selection_", regla: { efectos: [] } },
   { prefijo: "borrado_nuclear.", regla: { efectos: [] } },
 ];
-
-/** Lo que nunca mueve una barra aunque un prefijo lo atrape: deshacer no es jugar. */
-const ES_ANULACION = /_(anulad[ao]|reset|undone|retirad[ao])$/;
 
 export function reglaDeAccion(entityType: string, action: string): ReglaDeAccion | null {
   const clave = `${entityType}.${action}`;
   const exacta = ACCIONES[clave];
   if (exacta) return exacta;
-  if (ES_ANULACION.test(action)) return null;
   for (const p of PREFIJOS) if (clave.startsWith(p.prefijo)) return p.regla;
   return null;
 }
 
 // ── Los eventos de la espina (integration_events) ────────────────────────────
 
-/** Las ÚNICAS llaves del payload que se leen (por ruta JSON en el select): ids y
- *  referencias, nunca nombres, correos ni importes. */
-export const LLAVES_DEL_PAYLOAD = ["ctc_id", "ref", "deliverableId", "projectId", "usuario"] as const;
-export type LlaveDelPayload = (typeof LLAVES_DEL_PAYLOAD)[number];
-
 export type ReglaDeEvento = {
   termino: TerminoDelJuego;
   tabla: string | null;
+  /** El rol de quien lo origina: un evento sabe de qué consola o superficie sale. */
   actor: RolDelActor;
   ubicable: boolean;
   efectos: readonly EfectoEnBarra[];
@@ -281,14 +339,12 @@ export type ReglaDeEvento = {
   ref?: LlaveDelPayload;
   /** De qué llave del payload sale el id de la entidad. */
   id?: LlaveDelPayload;
-  /** De qué llave del payload sale el perfil del actor. */
-  perfil?: LlaveDelPayload;
   sello?: string;
 };
 
 /** Cada `tipo` que el código emite con `emitEvent` (`qa-os-hechos-check` los cuenta). */
 export const EVENTOS: Readonly<Record<string, ReglaDeEvento>> = {
-  "cotizacion.emitida":            { termino: "Cuenta",  tabla: "quotes",                actor: "equipo",      ubicable: false, efectos: [compromete("quotes.total")], ref: "ctc_id" },
+  "cotizacion.emitida":            { termino: "Cuenta",  tabla: "quotes",                actor: "equipo",      ubicable: false, efectos: [con(compromete("quotes.total"), "en la moneda de quotes.currency, no en COP")], ref: "ctc_id" },
   "coffeed.redaccion.post_creado": { termino: "Módulo",  tabla: "coffeed_deliverables",  actor: "equipo",      ubicable: false, efectos: [sube("realizacion")], id: "deliverableId" },
   "rts.tablero":                   { termino: "Módulo",  tabla: "coffeed_rts_projects",  actor: "desconocido", ubicable: false, efectos: [sube("realizacion")], id: "projectId", sello: "estudio-contenido" },
   "jornada.creada":                { termino: "Parcela", tabla: "terratalento_jornadas", actor: "productor",   ubicable: true,  efectos: [], ref: "ref" },
@@ -298,14 +354,16 @@ export const EVENTOS: Readonly<Record<string, ReglaDeEvento>> = {
 
 /** `herramienta.<id>.<evento>` (el puente `CTC.emitir` de las herramientas). */
 export const EVENTO_DE_HERRAMIENTA: ReglaDeEvento = {
-  termino: "Módulo", tabla: "tools", actor: "desconocido", ubicable: false, efectos: [], perfil: "usuario",
+  termino: "Módulo", tabla: "tools", actor: "desconocido", ubicable: false, efectos: [],
 };
 
-/** Los tipos que no son hechos del negocio (la prueba de vida del tablero). */
+/** Los tipos que no son hechos del negocio: la prueba de vida del tablero y las copias
+ *  ENTRANTES de Make (`entrante.<x>`, `/api/integraciones/[canal]`), que son ecos. */
 export const EVENTOS_FUERA_DEL_JUEGO: readonly string[] = ["prueba.ping"];
+export const PREFIJO_ENTRANTE = "entrante.";
 
 export function reglaDeEvento(tipo: string): ReglaDeEvento | null {
-  if (EVENTOS_FUERA_DEL_JUEGO.includes(tipo)) return null;
+  if (EVENTOS_FUERA_DEL_JUEGO.includes(tipo) || tipo.startsWith(PREFIJO_ENTRANTE)) return null;
   const exacta = EVENTOS[tipo];
   if (exacta) return exacta;
   if (tipo.startsWith("herramienta.")) return EVENTO_DE_HERRAMIENTA;
@@ -341,8 +399,30 @@ export type FilaDeLatido = {
 };
 
 /** Quién es cada perfil: su rol y, si es socio, su nodo. Lo arma `hechos.ts` con
- *  tres lecturas de ids y roles (nunca nombres). */
+ *  lecturas de ids, roles y actividad (nunca nombres). */
 export type Actores = ReadonlyMap<string, { rol: RolDelActor; sello: string | null }>;
+
+/** Lo que `hechos.ts` sabe de un perfil para decidir su rol. */
+export type DatosDeActor = {
+  role: string | null;
+  enPanel: boolean;
+  nodo: string | null;
+  /** Pedidos, reservas, puntos o un escalón por encima de verde en Cherry Picked. */
+  actividadDeComprador: boolean;
+};
+
+/** El rol de un perfil en el juego. `role = 'buyer'` NO basta para ser comprador:
+ *  `handle_new_user` se lo pone a todo registro que no pida productor (Terratalento,
+ *  el Directorio, Google). Es la misma regla que `membresiasDe` en
+ *  `src/lib/identidad/matriz.ts` («comprador real» = buyer CON actividad); el guardián
+ *  vigila que esa regla siga diciendo lo mismo. */
+export function rolDeActor(d: DatosDeActor): { rol: RolDelActor; sello: string | null } {
+  if (d.enPanel || d.role === "bcp_admin") return { rol: "equipo", sello: d.nodo };
+  if (d.nodo || d.role === "partner") return { rol: "socio", sello: d.nodo };
+  if (d.role === "producer") return { rol: "productor", sello: null };
+  if (d.role === "buyer" && d.actividadDeComprador) return { rol: "comprador", sello: null };
+  return { rol: "desconocido", sello: null };
+}
 
 // ── Normalizar ───────────────────────────────────────────────────────────────
 
@@ -350,7 +430,7 @@ export type Actores = ReadonlyMap<string, { rol: RolDelActor; sello: string | nu
  *  en `audit_log` un `performed_by` nulo es un cron o una cuenta ya borrada
  *  (`borrarCuenta` lo pone a null): «desconocido», no «sistema». */
 function actorDe(perfil: string | null, actores: Actores, porDefecto: RolDelActor): Hecho["actor"] & { sello: string | null } {
-  if (!perfil) return { rol: porDefecto, perfil: null, sello: null };
+  if (!perfil || !ES_UUID.test(perfil)) return { rol: porDefecto, perfil: null, sello: null };
   const a = actores.get(perfil);
   return { rol: a?.rol ?? porDefecto, perfil, sello: a?.sello ?? null };
 }
@@ -366,7 +446,7 @@ export function normalizarAuditoria(f: FilaDeAuditoria, actores: Actores): Hecho
     tipo: `${f.entity_type}.${f.action}`,
     dominio: regla?.dominio ?? ent.dominio,
     actor: { rol: actor.rol, perfil: actor.perfil },
-    entidad: { termino: regla?.termino ?? ent.termino, tabla: ent.tabla, id: f.entity_id, ref: null },
+    entidad: { termino: regla?.termino ?? ent.termino, tabla: ent.tabla, id: f.entity_id, ref: null, atributos: regla?.atributos ?? [] },
     cuando: f.created_at,
     transicion: hayTransicion ? { de: f.previous_status, a: f.new_status } : null,
     sello: regla?.sello ?? actor.sello,
@@ -375,41 +455,46 @@ export function normalizarAuditoria(f: FilaDeAuditoria, actores: Actores): Hecho
   };
 }
 
-export function normalizarEvento(f: FilaDeEvento, actores: Actores): Hecho | null {
+export function normalizarEvento(f: FilaDeEvento): Hecho | null {
   const regla = reglaDeEvento(f.tipo);
   if (!regla) return null;
-  const perfil = regla.perfil ? (f[regla.perfil] ?? null) : null;
-  const actor = actorDe(perfil, actores, regla.actor);
   return {
     id: `integration_events:${f.id}`,
     fuente: "integration_events",
     tipo: f.tipo,
     dominio: f.dominio,
-    actor: { rol: actor.rol, perfil: actor.perfil },
+    actor: { rol: regla.actor, perfil: null },
     entidad: {
       termino: regla.termino,
       tabla: regla.tabla,
       id: regla.id ? (f[regla.id] ?? null) : null,
       ref: regla.ref ? (f[regla.ref] ?? null) : null,
+      atributos: [],
     },
     cuando: f.created_at,
     transicion: null,
-    sello: regla.sello ?? actor.sello,
+    sello: regla.sello ?? null,
     efectos: regla.efectos,
     ubicable: regla.ubicable,
   };
 }
 
-export function normalizarLatido(f: FilaDeLatido): Hecho | null {
-  if (f.estado === "en_curso") return null;
+/** Una corrida terminada es `cron.<estado>`; una `en_curso` más vieja que
+ *  `LATIDO_SIN_CIERRE_MS` murió sin cerrar (`cron.sin_cierre`); una viva no es un hecho.
+ *  Se fecha por `inicio`, la misma columna por la que se filtra y se ordena. */
+export function normalizarLatido(f: FilaDeLatido, ahora: string): Hecho | null {
+  let tipo: string;
+  if (f.estado !== "en_curso") tipo = `cron.${f.estado}`;
+  else if (Date.parse(ahora) - Date.parse(f.inicio) > LATIDO_SIN_CIERRE_MS) tipo = "cron.sin_cierre";
+  else return null;
   return {
     id: `latidos:${f.id}`,
     fuente: "latidos",
-    tipo: `cron.${f.estado}`,
+    tipo,
     dominio: "plataformas_it",
     actor: { rol: "sistema", perfil: null },
-    entidad: { termino: "Sistema", tabla: "latidos", id: f.id, ref: f.clave },
-    cuando: f.fin ?? f.inicio,
+    entidad: { termino: "Sistema", tabla: "latidos", id: f.id, ref: f.clave, atributos: [] },
+    cuando: f.inicio,
     transicion: null,
     sello: null,
     efectos: [],

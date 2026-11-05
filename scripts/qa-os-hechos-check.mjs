@@ -25,13 +25,16 @@
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   ENTIDADES, ACCIONES, PREFIJOS, EVENTOS, EVENTOS_FUERA_DEL_JUEGO, LLAVES_DEL_PAYLOAD,
   SELECT_AUDITORIA, SELECT_EVENTOS, SELECT_LATIDOS, LATIDO_SIN_CIERRE_MS,
   reglaDeAccion, reglaDeEvento, rolDeActor, normalizarAuditoria, normalizarEvento, normalizarLatido, resumirTurno,
 } from "../src/lib/os/hechosCatalogo.ts";
 
-const RAIZ = new URL("..", import.meta.url).pathname;
+// fileURLToPath y no `.pathname`: en Windows `.pathname` da «/C:/…» y `join` lo
+// resuelve contra la raíz de la unidad.
+const RAIZ = fileURLToPath(new URL("..", import.meta.url));
 let pass = 0;
 const fails = [];
 const check = (name, cond, detail = "") => { if (cond) pass++; else fails.push(`${name}${detail ? ` — ${detail}` : ""}`); };
@@ -197,6 +200,10 @@ check("6 · la evaluación del Centro lleva su Sello", hSello.sello === "centro-
 check("6 · una salida de stock no juega", reglaDeAccion("stock_partida", "stock_salida_venta")?.efectos.length === 0);
 check("6 · una trilla sube la realización, sin medida (la fila apunta a la madre)", reglaDeAccion("stock_partida", "stock_trilla")?.efectos[0]?.sentido === 1 && reglaDeAccion("stock_partida", "stock_trilla")?.efectos[0]?.medidas.length === 0);
 check("6 · mover una partida de sitio no juega", reglaDeAccion("stock_partida", "stock_ubicada")?.efectos.length === 0);
+// `entidad.tabla` es la tabla donde vive `entity_id`: estas filas llevan el id de OTRA tabla.
+for (const [ent, tabla] of [["lot_offer", "lots"], ["arena_inscription", "lots"], ["platform_setting", "profiles"], ["platform_surface", "profiles"], ["tool_user_grant", "profiles"]]) {
+  check(`6 · «${ent}» apunta a la tabla de su entity_id (${tabla})`, ENTIDADES[ent]?.tabla === tabla, ENTIDADES[ent]?.tabla ?? "sin regla");
+}
 check("6 · deshacer devuelve: anular una compra devuelve el dinero", reglaDeAccion("compra", "compra_anulada")?.efectos[0]?.sentido === 1);
 check("6 · deshacer devuelve: anular una transformación baja la realización", reglaDeAccion("stock_partida", "stock_transformacion_anulada")?.efectos[0]?.sentido === -1);
 check("6 · el mes a mes dormido no juega", reglaDeAccion("purchase_contract", "mes_3_pedido")?.efectos.length === 0);

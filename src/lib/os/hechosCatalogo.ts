@@ -163,12 +163,16 @@ export const ENTIDADES: Readonly<Record<string, ReglaDeEntidad>> = {
   panel_user:               { termino: "Personaje", tabla: "panel_users",              dominio: "plataformas_it",      ubicable: false },
   profile:                  { termino: "Personaje", tabla: "profiles",                 dominio: "plataformas_it",      ubicable: false },
   identidad:                { termino: "Sistema",   tabla: null,                       dominio: "plataformas_it",      ubicable: false },
-  platform_setting:         { termino: "Sistema",   tabla: "platform_settings",        dominio: "plataformas_it",      ubicable: false },
-  platform_surface:         { termino: "Sistema",   tabla: "platform_surfaces",        dominio: "plataformas_it",      ubicable: false },
+  // OJO: las filas de `platform_setting`, `platform_surface` y `tool_user_grant` llevan
+  // en `entity_id` un id de PERFIL (quien cambió el ajuste o la superficie; a quien se
+  // le concede la herramienta): la tabla del id es `profiles`. La superficie y la
+  // herramienta van en `new_status`; el ajuste no tiene id propio en la fila.
+  platform_setting:         { termino: "Sistema",   tabla: "profiles",                 dominio: "plataformas_it",      ubicable: false },
+  platform_surface:         { termino: "Sistema",   tabla: "profiles",                 dominio: "plataformas_it",      ubicable: false },
   // Conocimiento (hub 6): las herramientas
   tool:                     { termino: "Módulo",    tabla: "tools",                    dominio: "conocimiento",        ubicable: false },
   tool_access_request:      { termino: "Módulo",    tabla: "tool_access_requests",     dominio: "conocimiento",        ubicable: false },
-  tool_user_grant:          { termino: "Módulo",    tabla: "tool_user_grants",         dominio: "conocimiento",        ubicable: false },
+  tool_user_grant:          { termino: "Módulo",    tabla: "profiles",                 dominio: "conocimiento",        ubicable: false },
   tools_plus_grant:         { termino: "Módulo",    tabla: "tools_plus_grants",        dominio: "conocimiento",        ubicable: false },
   // Directorios (hub 7): aliados, socios, el Directorio del Café
   partner_account:          { termino: "Sello",     tabla: "partner_accounts",         dominio: "directorios",         ubicable: false },

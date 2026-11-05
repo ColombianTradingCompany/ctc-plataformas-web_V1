@@ -114,7 +114,10 @@ La puerta `/herramientas/acceso` acepta `?siguiente=` (solo rutas de `/herramien
 ## Guardianes
 
 `qa-tools-carpetas.mjs` (185, `node --experimental-strip-types`: carpeta ↔ lista ↔ disco ↔ 308, y nadie escribe una ruta plana) ·
-`qa-taller-check.mjs` (69) · `qa-taller-entrada-check.mjs` (223, TAR-121, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`:
+`qa-taller-check.mjs` (69) · `qa-tools-prefill-conformance.mjs` (22, TAR-121, Playwright SIN `next dev`: servidor estático propio sobre
+`public/` y un doble de `/fincas`; el prellenado en Chromium con los campos exactos de `construirPrefill`, el puente —origen, parent, selectores,
+reintento, restaurar no guarda— y `mermas-ctc` · `cromatografia-suelo` · `green-datasheet`; `PW_CHROMIUM=` si el Chromium no es el de Playwright) ·
+`qa-taller-entrada-check.mjs` (223, TAR-121, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`:
 la entrada de módulo — parámetros, la vuelta con sus ataques (incluidos `..` y `%2e%2e`), el prellenado de mínimo privilegio, cada
 selector del contrato existe en el archivo de su herramienta, y el filtro por dueño en la consulta) · `qa-herramientas-acceso-check.mjs` (31) · `qa-concha-herramientas-check.mjs` (44,
 once vectores de ataque) · `qa-tools-puente-conformance.mjs` (15/15; las de esquema propio —`agtron`, `coffee-datasheet`, `gulliver`— con sonda;

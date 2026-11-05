@@ -43,7 +43,6 @@ const GLOBAL_KEYS = [
   "state", // la V15 guarda TODO su modelo aquí
 ];
 
-
 /* Hasta la V5.194 una herramienta podía traer su PROPIO puente (`window.CTC_TOOL`): lo usaba solo la de costo de empaque, que
    salió del ECP ese día (la reemplazó «Empacado hasta FOB», `src/components/produccion/`). Las dos que quedan se leen por sus
    <input>. La herramienta pública sigue trayendo su puente para el banco de herramientas: no es de aquí. */

@@ -6,6 +6,7 @@
 //   puente → concha   {ctc:"ready", v:1}            al montar (y cada vez que la concha dice «hola»)
 //   concha → puente   {ctc:"init", nombre, estado}  al abrir el trabajo → se normaliza y se pinta
 //   puente → concha   {ctc:"estado", estado, resumen} tras cambios (debounce 900 ms), solo después del init
+//   concha → puente   {ctc:"prefill", campos, registro} (TAR-121) → `alPrefill(registro)`: la finca y el lote de la cuenta
 // Fuera de la concha (la página abierta suelta) el puente queda inerte y el borrador vive en el navegador (localStorage):
 // dentro de la concha NUNCA se usa localStorage, porque un borrador local cruzaría dos trabajos distintos.
 // Solo se obedece al `parent`. El «ready» no lleva datos y sale con `*`, como en `ctc-bridge.js` (la concha valida `source` y
@@ -25,12 +26,15 @@ export function usePuente<T>({
   estado,
   resumen,
   alInit,
+  alPrefill,
 }: {
   /** `null` mientras el estado no ha nacido (antes de leer el borrador o el init): entonces no se guarda nada. */
   estado: T | null;
   resumen: string;
   /** Lo que la concha manda al abrir el trabajo (puede venir vacío: trabajo nuevo). */
   alInit: (estado: unknown) => void;
+  /** TAR-121: el registro de `?finca=` / `?lote=` (un trabajo nuevo o la sesión sin guardar). Llega como `unknown`. */
+  alPrefill?: (registro: unknown) => void;
 }) {
   const activo = useRef(false);
   const origenDeLaConcha = useRef<string>("*");
@@ -38,16 +42,26 @@ export function usePuente<T>({
   useEffect(() => {
     alInitRef.current = alInit;
   }, [alInit]);
+  const alPrefillRef = useRef(alPrefill);
+  useEffect(() => {
+    alPrefillRef.current = alPrefill;
+  }, [alPrefill]);
 
   useEffect(() => {
     if (!enConcha()) return;
     const ready = () => window.parent.postMessage({ ctc: "ready", v: 1 }, "*");
     const onMessage = (e: MessageEvent) => {
       if (e.source !== window.parent) return;
-      const d = e.data as { ctc?: string; estado?: unknown } | null;
+      const d = e.data as { ctc?: string; estado?: unknown; registro?: unknown } | null;
       if (!d || typeof d !== "object") return;
       if (d.ctc === "hola") {
         ready();
+        return;
+      }
+      if (d.ctc === "prefill") {
+        // Como en ctc-bridge.js: la concha vive en el MISMO origen; un prellenado de otro origen no se atiende.
+        if (e.origin !== window.location.origin) return;
+        if (d.registro && typeof d.registro === "object") alPrefillRef.current?.(d.registro);
         return;
       }
       if (d.ctc !== "init") return;

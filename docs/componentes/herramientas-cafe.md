@@ -112,14 +112,14 @@ de la cuenta), `?finca=<uuid | CTC-F-…>` y `?lote=<uuid | CTC-L-…>` (prellen
 ## Guardianes
 
 `qa-tools-carpetas.mjs` (185, `node --experimental-strip-types`: carpeta ↔ lista ↔ disco ↔ 308, y nadie escribe una ruta plana) ·
-`qa-taller-check.mjs` (69) · `qa-taller-entrada-check.mjs` (119, TAR-121, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`:
+`qa-taller-check.mjs` (69) · `qa-taller-entrada-check.mjs` (167, TAR-121, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`:
 la entrada de módulo — parámetros, la vuelta con sus ataques (incluidos `..` y `%2e%2e`), el prellenado de mínimo privilegio, cada
 selector del contrato existe en el archivo de su herramienta, y el filtro por dueño en la consulta) · `qa-herramientas-acceso-check.mjs` (31) · `qa-concha-herramientas-check.mjs` (44,
 once vectores de ataque) · `qa-tools-puente-conformance.mjs` (15/15; las de esquema propio —`agtron`, `coffee-datasheet`, `gulliver`— con sonda;
 V5.149: una sonda que revienta ya no aprueba en silencio) · `qa-tools-seo-check.mjs` (273, recorre las carpetas) ·
 `qa-gulliver-check.mjs` (63, puro: el evento en un solo bloque, la trampa del `localStorage` ejecutada en Node, descargos y NIT) ·
 `qa-tools-seo-espejo.mjs` (98, toca la base: columna = archivo; `noindex` en archivadas y en `FUERA_DEL_INDICE`) ·
-`qa-coffee-datasheet-check.mjs` (61 desde la V6.6, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`: la herramienta renderiza la planilla del Centro y no copia fórmulas, las partes propias no duplican datos, el UID es único, la marca de la casa en la ficha, V1 → V2; hasta la V6.5 eran 1.340 sobre el HTML: catálogos generados al día,
+`qa-coffee-datasheet-check.mjs` (73; 61 desde la V6.6 y 12 del prellenado de TAR-121, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`: la herramienta renderiza la planilla del Centro y no copia fórmulas, las partes propias no duplican datos, el UID es único, la marca de la casa en la ficha, V1 → V2; hasta la V6.5 eran 1.340 sobre el HTML: catálogos generados al día,
 **paridad de las fórmulas SCA 2004 y CVA con la planilla de la plataforma** sobre 1.200 planillas, los dos métodos sin mezclar, tres idiomas
 completos, sin CDN) ·
 `qa-cromatografia-check.mjs` (294, puro) · `qa-cromatografia-modelo.mjs` (manual, gasta: estabilidad del modelo; acepta
@@ -159,8 +159,10 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
   nombre y la persona da el clic; el lote trae SU finca, y una `?finca=` distinta se ignora con aviso); `?volver=` se lee
   con el mismo contrato para la cinta y la concha (lista blanca de la superficie, sin segmentos `.`/`..`). El puente lleva un mensaje nuevo,
   `{ctc:"prefill", campos, registro}`, y `CTC.usarPrefill`. Primera herramienta con contrato: `mermas-ctc` (las notas del reporte). Abierto:
-  (a) el contrato completo, herramienta por herramienta, en la sección «El contrato de URL del taller» (siguiente PR); (b) prellenado de
-  `coffee-datasheet`, `cromatografia-suelo` y `green-datasheet`; (c) **la puerta no vuelve a la herramienta**: quien llega sin sesión entra y
+  (a) el contrato completo, herramienta por herramienta, en la sección «El contrato de URL del taller» (siguiente PR); ~~(b) prellenado de
+  `coffee-datasheet`, `cromatografia-suelo` y `green-datasheet`~~ (hecho en el PR apilado de prellenado: la Datasheet por su puente React
+  con `conPrefill`, solo donde esté vacío; Cromatografía elige «Su finca» cuando llega su lista; Green Datasheet llena producto, finca,
+  departamento, municipio y altitud — departamento y municipio solo si el nombre coincide con su lista); (c) **la puerta no vuelve a la herramienta**: quien llega sin sesión entra y
   cae en el taller, no en la herramienta con sus parámetros (`/herramientas/acceso` aún no lee un `?siguiente=`); (d) solo cuentas de
   **productor** prellenan (las fincas y los lotes son suyos); un comprador de CP o un experto del DC abren la herramienta vacía — decidir con el
   owner si un comprador debe prellenar con un lote que compró; (e) KR y CP siguen leyendo solo `?volver=` en sus rutas de herramienta.

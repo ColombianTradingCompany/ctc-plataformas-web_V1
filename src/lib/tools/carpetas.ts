@@ -68,13 +68,34 @@ export const CARPETAS_HERRAMIENTAS: CarpetaHerramienta[] = [
   // V5.132: nace de combinar `catacion` (la rueda) y `green-datasheet` (la ficha), que siguen vivas. V6.6: la herramienta es la
   // planilla del Centro de Calidad en React (`/tools/coffee-datasheet/app`, `src/components/tools/datasheet/`); este HTML es
   // solo la página de paso a esa ruta, para los enlaces viejos.
-  { id: "coffee-datasheet", archivos: ["ctcx-coffee-datasheet-tool.html"] },
+  // TAR-121: es una ruta de Next con su puente React: recibe el registro entero (`propio`) y llena el lote en curso —nombre,
+  // Caracterización Extrínseca (país, región, municipio, finca, altitud) y B1 (variedad, proceso)— solo donde esté vacío
+  // (`conPrefill` en `src/components/tools/datasheet/estado.ts`).
+  { id: "coffee-datasheet", archivos: ["ctcx-coffee-datasheet-tool.html"], entrada: { propio: true } },
   { id: "cool-pdf", archivos: ["cool-pdf.html"] },
   { id: "costo-empaque", archivos: ["costo-empaque.html"] },
-  { id: "cromatografia-suelo", archivos: ["cromatografia-suelo.html"] },
+  // TAR-121: «Su finca» se elige sola cuando llega la lista de fincas de la cuenta (y su manejador pone departamento,
+  // municipio y altitud, como si la persona la eligiera); los campos de texto van de respaldo mientras la lista no llega.
+  {
+    id: "cromatografia-suelo",
+    archivos: ["cromatografia-suelo.html"],
+    entrada: {
+      lote: { variedad: "#variedad" },
+      finca: { id: "#fincaSel", nombre: "#fincaTxt", municipio: "#municipio", altitud_m: "#altitud" },
+    },
+  },
   { id: "defectos-cafe", archivos: ["defectos-cafe.html"] },
   { id: "formula-calidad", archivos: ["formula-calidad.html"] },
-  { id: "green-datasheet", archivos: ["green-coffee-datasheet.html"] },
+  // TAR-121: el departamento va ANTES que el municipio (su cambio pinta la lista de municipios); departamento y municipio
+  // solo entran si el nombre coincide con la lista de la herramienta.
+  {
+    id: "green-datasheet",
+    archivos: ["green-coffee-datasheet.html"],
+    entrada: {
+      lote: { nombre: '[data-field="product_name"]', altitud_m: '[data-field="masl"]' },
+      finca: { nombre: '[data-field="estate"]', departamento: "#region_dep", municipio: "#county_muni", altitud_m: '[data-field="masl"]' },
+    },
+  },
   // V6.14 (2026-10-29): Navegador de Incoterms® 2020, mar y aire lado a lado, EN · ES · JA · DE, hoja de dos
   // páginas imprimible. Sin memoria (el estado es solo regla · idioma · destino). La FUENTE vive en el repo de la
   // campaña SCAJ 2026 (`entregables/incoterms-navigator/`, `build.py` arma esta copia con las fuentes locales).

@@ -24,7 +24,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import {
   APP, CERT_OFICIALES, CERT_OTRAS, INCOTERMS, LOTES_RECOMENDADOS, MAX_LOTES, NORMAS_CALIDAD, PARTES, PROCESOS, UID_RE, UNIDADES_PRECIO, VERSION_ESTADO,
-  casillasExtrinsecas, esUid, evaluacionVacia, loteVacio, normLote, normalizar, nuevoUid, partesConDatos, precioTx, resumen, vigenciaDe,
+  casillasExtrinsecas, conPrefill, esUid, evaluacionVacia, loteVacio, normLote, normalizar, nuevoUid, partesConDatos, precioTx, procesoDeB1, resumen, vigenciaDe,
 } from "../src/components/tools/datasheet/estado.ts";
 import { TX } from "../src/components/tools/datasheet/textos.ts";
 import { DESCRIPCION, TITULO } from "../src/components/tools/datasheet/meta.ts";
@@ -129,7 +129,7 @@ check("resumen del trabajo: lotes y nombres, en el idioma, con tope", resumen(no
 check("lo que se carga de un archivo se normaliza antes de pintarse, y un archivo ajeno se rechaza", tool.includes("setEv(normalizar(o.estado, lang))") && tool.includes("o.app !== APP"));
 
 // ── 6. El puente, la página de paso y las listas del repo ────────────────────────────────────────────────────────────
-check("puente React: ready al montar y al «hola» (con `*`, como ctc-bridge.js), solo obedece al parent, y el estado va al origen que mandó el init", puente.includes('{ ctc: "ready", v: 1 }, "*")') && puente.includes('d.ctc === "hola"') && puente.includes("e.source !== window.parent") && puente.includes('e.origin.startsWith("https://") || e.origin.startsWith("http://") ? e.origin : "*"') && puente.includes("}, origenDeLaConcha.current);") && !puente.includes("window.location.origin"));
+check("puente React: ready al montar y al «hola» (con `*`, como ctc-bridge.js), solo obedece al parent, y el estado va al origen que mandó el init", puente.includes('{ ctc: "ready", v: 1 }, "*")') && puente.includes('d.ctc === "hola"') && puente.includes("e.source !== window.parent") && puente.includes('e.origin.startsWith("https://") || e.origin.startsWith("http://") ? e.origin : "*"') && puente.includes("}, origenDeLaConcha.current);") && !/postMessage\([^;]*window\.location\.origin\)/.test(puente));
 check("puente React: el estado sale solo tras el init, con debounce y la foto entera", puente.includes("if (!activo.current) return;") && puente.includes("DEBOUNCE_MS = 900") && puente.includes("JSON.parse(JSON.stringify(estado))"));
 check("puente React: nada se guarda mientras el estado no ha nacido (StrictMode corre los efectos dos veces)", puente.includes("if (estado == null) return;") && tool.includes("usePuente({ estado: ev,"));
 check("puente React: dentro de la concha jamás localStorage; fuera, el borrador v2", puente.includes("if (enConcha()) return null;") && puente.includes('CLAVE_BORRADOR = "ctcx-coffee-datasheet-borrador-v2"'));
@@ -141,6 +141,34 @@ check("la conformidad del puente sondea la ruta nueva", lee("scripts/qa-tools-pu
 check("qa-tools-seo-espejo sabe leer una versión repo que es una RUTA", lee("scripts/qa-tools-seo-espejo.mjs").includes("src/app${src}/page.tsx"));
 check("el generador de catálogos de la V1 se retiró (los catálogos se importan)", !existsSync(new URL("../scripts/build-coffee-datasheet.mjs", import.meta.url)) && b1.includes('from "@/components/kaffetal-regal/ficha/fichaData"') && ext.includes("DEP_MUNI"));
 check("los textos propios están en ES y EN, con las mismas claves", igual(Object.keys(TX.es).sort(), Object.keys(TX.en).sort()) && Object.keys(TX.es).every((k) => typeof TX.es[k] === typeof TX.en[k]));
+
+// ── 7. TAR-121 · el prellenado del taller (`?finca=` / `?lote=`) ─────────────────────────────────────────────────────
+{
+  const REG = {
+    finca: { id: "x", referencia: "CTC-F-3F2504E0", nombre: "La Cumbre", municipio: "Pitalito", departamento: "Huila", altitud_m: 1650 },
+    lote: { referencia: "CTC-L-6BA7B810", nombre: "Mitaca 2026", variedad: "Castillo", proceso: "Lavado", altitud_m: null },
+  };
+  const p = conPrefill(evaluacionVacia("es"), REG);
+  const l = p.lotes[0];
+  check("prellenado: el lote en curso toma el nombre del lote", l.nombre === "Mitaca 2026");
+  check("prellenado: la extrínseca toma finca, municipio, región, país y altitud (la de la finca si el lote no trae)", l.ext.finca === "La Cumbre" && l.ext.municipio === "Pitalito" && l.ext.region === "Huila" && l.ext.pais === "Colombia" && l.ext.altitud === "1650");
+  check("prellenado: B1 toma variedad y proceso", l.b1.variedades.length === 1 && l.b1.variedades[0].nombre === "Castillo" && l.b1.proceso === "Lavado");
+  const escrito = normalizar({ lotes: [{ nombre: "Mío", ext: { finca: "Otra", altitud: "1900" }, b1: { variedades: [{ nombre: "Geisha", pct: "100" }], proceso: "Natural" } }] });
+  const q = conPrefill(escrito, REG).lotes[0];
+  check("prellenado: propone y NUNCA pisa lo que ya está escrito", q.nombre === "Mío" && q.ext.finca === "Otra" && q.ext.altitud === "1900" && q.b1.variedades[0].nombre === "Geisha" && q.b1.proceso === "Natural" && q.ext.municipio === "Pitalito");
+  const dos = normalizar({ actual: 1, lotes: [{ nombre: "A" }, {}] });
+  const r = conPrefill(dos, REG);
+  check("prellenado: solo el lote EN CURSO", r.lotes[0].nombre === "A" && r.lotes[1].nombre === "Mitaca 2026");
+  const vacia = evaluacionVacia("es");
+  check("prellenado: basura o vacío no cambian nada", [null, "x", 7, {}, { finca: "x", lote: 3 }].every((b) => conPrefill(vacia, b) === vacia));
+  const hostil = conPrefill(evaluacionVacia("es"), { lote: { nombre: { toString: () => "x" }, variedad: ["a"], proceso: 5 }, finca: { nombre: "F", altitud_m: Infinity } });
+  check("prellenado: lo que no es texto no entra", hostil.lotes[0].nombre === "" && hostil.lotes[0].b1.variedades[0].nombre === "" && hostil.lotes[0].ext.altitud === "" && hostil.lotes[0].ext.finca === "F");
+  check("prellenado: sin departamento no inventa el país", conPrefill(evaluacionVacia("es"), { finca: { nombre: "F" } }).lotes[0].ext.pais === "");
+  check("proceso de KR → B1", procesoDeB1("Lavado").proceso === "Lavado" && procesoDeB1("washed").proceso === "Lavado" && procesoDeB1("Honey amarillo").proceso === "Honey" && procesoDeB1("natural").proceso === "Natural" && procesoDeB1("Anaeróbico").proceso === "Otro" && procesoDeB1("Anaeróbico").proceso_otro === "Anaeróbico" && procesoDeB1("").proceso === "");
+  check("puente React: el prellenado solo del parent, del MISMO origen, y solo con un registro objeto", puente.includes('if (d.ctc === "prefill")') && puente.indexOf("e.source !== window.parent") < puente.indexOf('d.ctc === "prefill"') && puente.includes("if (e.origin !== window.location.origin) return;") && puente.includes('if (d.registro && typeof d.registro === "object") alPrefillRef.current?.(d.registro);'));
+  check("la herramienta vuelca el prellenado con conPrefill, sin pisar el estado (actualización funcional)", tool.includes("setEv((prev) => conPrefill(prev ?? evaluacionVacia(langInicial), registro))") && tool.includes("alInit, alPrefill })"));
+  check("carpetas.ts: coffee-datasheet pide el registro entero (propio), sin selectores", CARPETAS_HERRAMIENTAS.some((c) => c.id === "coffee-datasheet" && c.entrada?.propio === true && !c.entrada.finca && !c.entrada.lote));
+}
 
 if (fallos.length) {
   console.error(`✗ qa-coffee-datasheet: ${fallos.length} fallo(s), ${ok} OK\n`);

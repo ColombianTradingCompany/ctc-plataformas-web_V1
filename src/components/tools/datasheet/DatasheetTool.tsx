@@ -22,7 +22,7 @@ import { CTC_EMAIL, CTC_LEGAL_LINE, CTC_RAZON, CTC_TELEFONOS, CTC_WEB } from "@/
 import { BloqueB1 } from "./BloqueB1";
 import { BloqueComercial } from "./BloqueComercial";
 import { BloqueExtrinseca } from "./BloqueExtrinseca";
-import { APP, LOTES_RECOMENDADOS, MAX_LOTES, PARTES, type B1, type Comercial, type Evaluacion, type Extrinseca, type Lote, type Parte, type Sesion, evaluacionVacia, hoy, loteVacio, normLote, normalizar, resumen } from "./estado";
+import { APP, LOTES_RECOMENDADOS, MAX_LOTES, PARTES, type B1, type Comercial, type Evaluacion, type Extrinseca, type Lote, type Parte, type Sesion, conPrefill, evaluacionVacia, hoy, loteVacio, normLote, normalizar, resumen } from "./estado";
 import { E } from "./estilos";
 import { FichaDeLote } from "./FichaImpresa";
 import { TX } from "./textos";
@@ -70,7 +70,9 @@ export function DatasheetTool({ langInicial = "es" }: { langInicial?: IdiomaDePl
   const lote = vivo.lotes[vivo.actual];
 
   const alInit = useCallback((estado: unknown) => setEv((prev) => normalizar(estado, prev?.lang ?? langInicial)), [langInicial]);
-  usePuente({ estado: ev, resumen: ev ? resumen(ev) : "", alInit });
+  // TAR-121: el prellenado del taller llega DESPUÉS del init (o solo, en la sesión sin guardar) y propone sin pisar.
+  const alPrefill = useCallback((registro: unknown) => setEv((prev) => conPrefill(prev ?? evaluacionVacia(langInicial), registro)), [langInicial]);
+  usePuente({ estado: ev, resumen: ev ? resumen(ev) : "", alInit, alPrefill });
 
   const toast = (m: string) => {
     setAviso(m);

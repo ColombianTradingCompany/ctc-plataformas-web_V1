@@ -18,6 +18,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { issueQuote, reopenQuote, saveQuoteDraft } from "@/lib/cotizador/actions";
 import { latestAnchor } from "@/lib/anclas/actions";
 import type { Quote } from "@/lib/cotizador/types";
+import { globalDeLaApp } from "@/lib/cotizador/puente";
 import styles from "./appFrame.module.css";
 import panel from "@/components/panel/shared.module.css";
 
@@ -29,11 +30,19 @@ type AppState = {
   globals: Record<string, unknown>;
 };
 
+// ⚠️ LO QUE ESTA LISTA HACE HOY (comprobado en Chromium el 2026-11-05): NADA. Las dos apps declaran estas variables con
+// `let`/`const` de primer nivel (CoGS: `let rowUnits`, `let currentCurrency`…; Mermas: `const state`), y eso vive en el ámbito
+// léxico global del iframe, NO como propiedad de `window`: `win[k]` da `undefined`, así que `readState` nunca guardó una sola
+// global y `writeState` escribe propiedades que la app no lee. Reabrir una cotización restaura solo sus <input> (y lo que la app
+// recalcula de ellos). Se deja así A PROPÓSITO: leerlas y escribirlas por el ámbito léxico (`globalDeLaApp`) cambiaría lo que
+// reabre una cotización ya guardada —y la `state` de Mermas lleva el ancla FNC, que AppFrame inyecta al cargar: competirían—.
+// Es decisión del owner (charter `herramientas-internas`, «Pendientes»). Lo que SÍ se arregló: el titular, que solo lee.
 const GLOBAL_KEYS = [
   "rowUnits", "unitPriceMode", "bolsaSize", "cajaVacioSize", "verdeLimpioMode", "tuesteUnit",
   "currentTariffCode", "currentPurchaseFormat", "currentTransportMode", "currentIncoCode", "currentCurrency",
   "state", // la V15 guarda TODO su modelo aquí
 ];
+
 
 /* Hasta la V5.194 una herramienta podía traer su PROPIO puente (`window.CTC_TOOL`): lo usaba solo la de costo de empaque, que
    salió del ECP ese día (la reemplazó «Empacado hasta FOB», `src/components/produccion/`). Las dos que quedan se leen por sus
@@ -134,8 +143,10 @@ function readHeadline(win: Window, kind: Quote["kind"]) {
     };
   }
 
-  // Mermas V15: el valor del lote al precio ancla, en pesos.
-  const st = w.state as { _final?: number; _totalMerma?: number; _cf?: number; _costs?: { total?: number; perKgFinal?: number } } | undefined;
+  // Mermas V15: el valor del lote al precio ancla, en pesos. Su `state` es un `const` de primer nivel: `w.state` era SIEMPRE
+  // `undefined` (Chromium, 2026-11-05), y la etiqueta, los kg finales, la merma y los costos de cada cotización de lote se
+  // guardaban vacíos. Se lee por `globalDeLaApp`. `lotValue` es una función de primer nivel: esa sí está en `window`.
+  const st = globalDeLaApp(win, "state") as { _final?: number; _totalMerma?: number; _cf?: number; _costs?: { total?: number; perKgFinal?: number } } | undefined;
   const lotValue = typeof w.lotValue === "function" ? (w.lotValue as () => number)() : NaN;
   const ok = Number.isFinite(lotValue);
   return {

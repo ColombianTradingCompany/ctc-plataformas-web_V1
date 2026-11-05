@@ -8,7 +8,7 @@
 // «Manejo de Plataformas», que fue la primera ruta del rail que es prefijo de
 // otra y destapó que dos enlaces se pintaban activos a la vez.
 
-import { CONSOLES } from "../src/lib/panel/consoles.ts";
+import { CONSOLES, CONSOLE_ORDER } from "../src/lib/panel/consoles.ts";
 import { hrefActivoDelRail, enlaceCubre } from "../src/lib/panel/navActivo.ts";
 
 let ok = 0;
@@ -35,7 +35,11 @@ check(
   "sin que ningún otro enlace del rail la cubra también",
   links(CONSOLA_DE_PLATAFORMAS).filter((l) => enlaceCubre(l, "/bcp/plataformas")).length === 1
 );
-check("y ninguna otra consola la enlaza", ["ecp", "ocp", "lcp"].every((k) => !links(k).some((l) => l.label === "Manejo de Plataformas")));
+// Las demás consolas salen de CONSOLE_ORDER (V6.19): con la lista escrita a mano, la OS se quedaba fuera.
+check(
+  "y ninguna otra consola la enlaza",
+  CONSOLE_ORDER.filter((k) => k !== CONSOLA_DE_PLATAFORMAS).every((k) => !links(k).some((l) => l.label === "Manejo de Plataformas"))
+);
 
 // ── Límite de segmento (misma familia que ESTR-3 en el proxy) ────────────────
 check(
@@ -54,15 +58,20 @@ check("LCP: y no el de un hermano", !enlaceCubre({ href: "/lcp/crm/x" }, "/lcp/c
 check("LCP: el Panel (exact) no se enciende en un CRM", activo("lcp", "/lcp/crm/caas") !== "/lcp");
 check("LCP: el filtro de la lista de espera no apaga su enlace", activo("lcp", "/lcp/lista-espera") === "/lcp/lista-espera");
 check("el Panel (exact) sí se enciende en su propia ruta", activo("ecp", "/ecp") === "/ecp");
+// La OS (V6.19): Inicio es `exact` y sus módulos cuelgan de `/os/m/…`; un módulo no enciende Inicio.
+check("OS: Inicio (exact) se enciende en /os", activo("os", "/os") === "/os");
+check("OS: un módulo enciende solo su enlace", activo("os", "/os/m/hacienda") === "/os/m/hacienda");
+check("OS: Inicio no se enciende en un módulo", activo("os", "/os/m/taller") !== "/os");
 
 // ── Ninguna consola tiene hrefs repetidos en su rail ─────────────────────────
-for (const k of Object.keys(CONSOLES)) {
+check("CONSOLE_ORDER y CONSOLES nombran las mismas consolas", CONSOLE_ORDER.join(",") === Object.keys(CONSOLES).join(","));
+for (const k of CONSOLE_ORDER) {
   const hs = links(k).map((l) => l.href);
   check(`${k}: sin hrefs duplicados en el rail`, new Set(hs).size === hs.length);
 }
 
 // ── Y cada ruta del rail resuelve a sí misma ─────────────────────────────────
-for (const k of Object.keys(CONSOLES)) {
+for (const k of CONSOLE_ORDER) {
   const malos = links(k).filter((l) => activo(k, l.href) !== l.href);
   check(`${k}: cada enlace se enciende en su propia ruta`, malos.length === 0);
   if (malos.length) console.log("   ", k, malos.map((m) => m.href));

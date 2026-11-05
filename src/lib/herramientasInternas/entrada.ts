@@ -19,8 +19,9 @@ export type Param = string | string[] | null | undefined;
 const uno = (v: Param): string | null => (typeof v === "string" ? v : null);
 
 /** Las raíces a las que puede volver una herramienta interna: las consolas y su selector. Una superficie nueva de
- *  CTCx OS que abra estas herramientas entra aquí con UNA línea (y su prueba en el guardián). */
-export const VUELTAS_PERMITIDAS = ["/ecp", "/ocp", "/lcp", "/bcp", "/panel"] as const;
+ *  CTCx OS que abra estas herramientas entra aquí con UNA línea (y su prueba en el guardián). `/os` (V6.19) es la
+ *  consola de la OS: una herramienta abierta desde ella con `?volver=/os/...` conserva su «Volver». */
+export const VUELTAS_PERMITIDAS = ["/ecp", "/ocp", "/lcp", "/bcp", "/panel", "/os"] as const;
 
 /** Tope de largo de `?volver=`: una vuelta legítima es una ruta de consola con su consulta, no un párrafo. */
 export const VOLVER_MAX = 300;

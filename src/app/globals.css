@@ -28,6 +28,10 @@ img{display:block;max-width:100%}
   --t-gold:#A87A14;
   --t-tyrian:#66023C;
 
+  /* El crema de la casa (V6.19): el texto claro de las bandas (`.band h2`) y el acento de la OS
+     en `src/lib/panel/consoles.ts`. Antes era un literal en `.band h2`; mismo valor, mismos píxeles. */
+  --crema:#F5F0E2;
+
   /* Alto de la cabecera de CTC Home, en UN solo sitio (2026-08-19).
      La cabecera es `sticky`, o sea que OCUPA sitio en el flujo: el hero, que
      viene justo debajo, necesita restarlo para llegar exacto al borde inferior
@@ -286,7 +290,7 @@ section{padding:78px 0;border-top:1px solid var(--line)}
   background:linear-gradient(100deg,rgba(14,32,26,.86) 0%,rgba(14,32,26,.5) 50%,rgba(14,32,26,.12) 100%);
 }
 .band .wrap{position:relative;z-index:2}
-.band h2{font-size:clamp(28px,4.2vw,48px);color:#F5F0E2;max-width:24ch;font-weight:800}
+.band h2{font-size:clamp(28px,4.2vw,48px);color:var(--crema);max-width:24ch;font-weight:800}
 .band h2 em{font-style:italic;color:var(--accent-soft)}
 .band .cap{font-family:var(--font-spline-mono),monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#B9C6D4;margin-top:18px}
 

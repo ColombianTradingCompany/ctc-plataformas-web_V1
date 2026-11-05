@@ -6,8 +6,8 @@ import { ConsoleGlyph } from "@/components/panel/ConsoleGlyph";
 import styles from "./hub.module.css";
 
 // The console selector: the neutral landing after the master login. Presents the
-// internal consoles (four since V5.59) as parallel surfaces. If the operator can reach only
-// one, we forward straight into it.
+// internal consoles (four since V5.59, five with the CTCx OS since V6.19) as parallel surfaces.
+// If the operator can reach only one, we forward straight into it.
 export default async function PanelHubPage() {
   const identity = await requirePanelIdentity();
   const consoles = CONSOLE_ORDER.filter((k) => identity.consoles.includes(k));
@@ -22,7 +22,7 @@ export default async function PanelHubPage() {
           <h1>{consoles.length ? "Elige una consola" : "Sin consolas asignadas"}</h1>
           <p>
             {consoles.length
-              ? "Una sola sesión, cuatro consolas paralelas. Puedes cambiar entre ellas en cualquier momento desde la barra lateral."
+              ? "Una sola sesión, varias consolas. Puedes cambiar entre ellas en cualquier momento desde la barra lateral."
               : "Tu cuenta no tiene ninguna consola asignada todavía. Pídele a un owner que te conceda acceso desde Usuarios y credenciales."}
           </p>
         </div>
@@ -30,7 +30,13 @@ export default async function PanelHubPage() {
           {consoles.map((key) => {
             const c = CONSOLES[key];
             return (
-              <Link key={key} href={c.home} className={styles.card} style={{ "--acc": c.accent } as React.CSSProperties}>
+              <Link
+                key={key}
+                href={c.home}
+                className={styles.card}
+                // `--acc-txt` solo existe si la consola trae `accentTexto` (la OS): las demás no cambian un píxel.
+                style={{ "--acc": c.accent, ...(c.accentTexto ? { "--acc-txt": c.accentTexto } : {}) } as React.CSSProperties}
+              >
                 <span className={styles.iconBox}>
                   <ConsoleGlyph console={key} size={24} />
                 </span>

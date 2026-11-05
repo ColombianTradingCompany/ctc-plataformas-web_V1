@@ -59,7 +59,7 @@ herramienta de este charter: qué registro abre, qué precarga y cómo vuelve. R
 - **Todo parámetro es de lista blanca o de forma estricta**, y lo que no casa se **ignora**: la herramienta abre como si no viniera
   (nunca se adivina ni se mete en rango un valor que viene fuera). Los analizadores son PUROS y viven en
   `src/lib/herramientasInternas/entrada.ts`; los vigila `qa-entradas-check`.
-- **`?volver=`** (todas): una ruta RELATIVA de consola (`/ecp`, `/ocp`, `/lcp`, `/bcp`, `/panel`, por frontera de segmento), con las
+- **`?volver=`** (todas): una ruta RELATIVA de consola (`/ecp`, `/ocp`, `/lcp`, `/bcp`, `/panel`, `/os` — la CTCx OS desde la V6.19 —, por frontera de segmento), con las
   reglas de `vueltaSegura` de las herramientas públicas (sin `//host`, sin `://`, sin `\` ni controles, ≤ 300 caracteres) y una
   más: sin segmentos `.`/`..` (ni `%2e`), y la ruta que el navegador resolvería tiene que seguir dentro de la consola. Si vale,
   la herramienta pinta «← Volver»; si no, no pinta nada (ya tiene su rail). Una superficie nueva de CTCx OS entra en
@@ -130,7 +130,7 @@ Solo lee: `lots`, `lot_offers`, `purchase_contracts`, `lot_listings` (para saber
 
 ## Guardianes
 
-`qa-entradas-check.mjs` (109 — las puertas de entrada: `?volver=`, `?unidad=`, `?sca=`, `?triada=`, y que la tabla de arriba diga lo que el código hace) ·
+`qa-entradas-check.mjs` (114 — las puertas de entrada: `?volver=`, `?unidad=`, `?sca=`, `?triada=`, y que la tabla de arriba diga lo que el código hace) ·
 `qa-pvc-motor.mjs` (49 — paridad con Python, tolerancia 1e-4) · `qa-pvc-tablero.mjs` (44 — marcadores `@@MODELO`) ·
 `qa-pvc-vigencia.mjs` (28) · `qa-pvc-lectura.mjs` (60 — el MOQ de compra y los tipos de mezcla, en el código Y en el plan §14.8) ·
 `qa-pvc-escala.mjs` (70 — incluye la Base física y, desde TAR-124, el rótulo de la pestaña) · `qa-pvc-canales.mjs` (57) · `qa-pvc-compromiso.mjs` (31) ·

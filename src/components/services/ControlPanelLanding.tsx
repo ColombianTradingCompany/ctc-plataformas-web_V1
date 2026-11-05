@@ -11,6 +11,11 @@ import styles from "./surface.module.css";
 // — solo le pone puerta con nombre. Los datos de las consolas (código, nombre,
 // acento) salen de la fuente única src/lib/panel/consoles.ts; las taglines
 // públicas por idioma viven aquí (las de consoles.ts son la UI interna).
+// La CTCx OS (quinta consola, V6.19) es interna y NO se anuncia aquí: se filtra del mapa y su clave
+// queda fuera del tipo, así que el «Cuatro / Four / Vier» de la copia sigue siendo cierto.
+
+type ConsolaPublica = Exclude<PanelConsoleKey, "os">;
+const CONSOLAS_PUBLICAS = CONSOLE_ORDER.filter((k): k is ConsolaPublica => k !== "os");
 
 const LOGIN_URL = process.env.NODE_ENV === "production" ? "https://www.ctcexport.com/login" : "/login";
 
@@ -21,7 +26,7 @@ const CHROME: Record<
     sub: string;
     body: string;
     thesis: string;
-    consoles: Record<PanelConsoleKey, string>;
+    consoles: Record<ConsolaPublica, string>;
     enter: string;
     note: string;
   }
@@ -93,7 +98,7 @@ export function ControlPanelLanding() {
         <div className={`${styles.sectionInner} ${styles.single}`}>
           <div>
             <div className={styles.points}>
-              {CONSOLE_ORDER.map((key) => {
+              {CONSOLAS_PUBLICAS.map((key) => {
                 const c = CONSOLES[key];
                 return (
                   <div className={styles.point} key={key} style={{ borderTop: `4px solid ${c.accent}` }}>

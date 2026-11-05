@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { AVANCE, ProgresoDeAccion, useAvance, type Progreso } from "@/components/panel/ProgresoDeAccion";
 import { useRouter } from "next/navigation";
-import { CONSOLE_ORDER, CONSOLES, type PanelConsoleKey } from "@/lib/panel/consoles";
+import { CONSOLAS_INVITABLES, CONSOLE_ORDER, CONSOLES, type PanelConsoleKey } from "@/lib/panel/consoles";
 import type { PanelUserRow, ConsoleLevel } from "@/lib/panel/panelUsers";
 import {
   invitePanelUser,
@@ -32,7 +32,9 @@ const STATUS_LABEL: Record<PanelUserRow["status"], string> = {
 
 type LevelMap = Record<PanelConsoleKey, "" | ConsoleLevel>;
 // Se DERIVA del rail: una consola nueva (la LCP, V5.59) aparece aquí sola, sin tocar este archivo.
-const EMPTY_LEVELS = Object.fromEntries(CONSOLE_ORDER.map((k) => [k, ""])) as LevelMap;
+// Salvo la OS (V6.19): el formulario de invitación ofrece solo `CONSOLAS_INVITABLES` hasta que el owner
+// decida quién la recibe por invitación. La lista de abajo sí pinta una OS ya concedida (lee `CONSOLE_ORDER`).
+const EMPTY_LEVELS = Object.fromEntries(CONSOLAS_INVITABLES.map((k) => [k, ""])) as LevelMap;
 
 export function UsuariosClient({ users, currentUserId }: { users: PanelUserRow[]; currentUserId: string }) {
   const router = useRouter();
@@ -81,7 +83,7 @@ export function UsuariosClient({ users, currentUserId }: { users: PanelUserRow[]
       }, AVANCE.invitarUsuario);
   }
 
-  const hasAnyGrant = CONSOLE_ORDER.some((k) => levels[k]);
+  const hasAnyGrant = CONSOLAS_INVITABLES.some((k) => levels[k]);
 
   return (
     <div>
@@ -130,10 +132,10 @@ export function UsuariosClient({ users, currentUserId }: { users: PanelUserRow[]
           una marca del CRM), pero no ejecuta nada que emita, publique, cobre, notifique o borre.
         </p>
         <div className={styles.grants}>
-          {CONSOLE_ORDER.map((k) => (
+          {CONSOLAS_INVITABLES.map((k) => (
             <div key={k} className={styles.grantRow}>
               <div className={styles.grantName}>
-                <span className={styles.grantCode} style={{ color: CONSOLES[k].accent }}>
+                <span className={styles.grantCode} style={{ color: CONSOLES[k].accentTexto ?? CONSOLES[k].accent }}>
                   {CONSOLES[k].code}
                 </span>
                 <span>{CONSOLES[k].name}</span>

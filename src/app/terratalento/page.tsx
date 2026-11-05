@@ -20,7 +20,7 @@ export default function TerratalentoPage() {
   return (
     <div data-theme="kaffetal-regal">
       <OrganizationLd />
-      <LangProvider storageKey="ctc-lang">
+      <LangProvider storageKey="ctc-lang" declaraHtml={false}>
         <TerratalentoExperience />
       </LangProvider>
     </div>

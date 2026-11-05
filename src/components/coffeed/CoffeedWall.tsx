@@ -59,6 +59,11 @@ export type CoffeedWallLabels = {
   /** RT-Scriptor. Opcional a propósito: las superficies que ya traen su propio
    *  juego de etiquetas (Cherry Picked en inglés) no se rompen al añadirla. */
   storyboard?: string;
+  /** El sello de la noticia y la palabra delante del medio citado. Opcionales
+   *  por lo mismo que `storyboard`. Son etiquetas, no contenido: llegan en el
+   *  idioma de la superficie. */
+  news?: string;
+  source?: string;
   emptyTitle: string;
   emptyBody: string;
   loading: string;
@@ -72,6 +77,8 @@ const ES: CoffeedWallLabels = {
   video: "Video",
   shared: "Compartido",
   storyboard: "Guion",
+  news: "Noticia",
+  source: "Fuente:",
   emptyTitle: "El primer capítulo está en producción",
   emptyBody: "Coffeed es el noticiero de la red CTC: capítulos breves sobre el mercado del café, en paneles. Vuelve pronto.",
   loading: "Cargando el muro…",
@@ -143,7 +150,7 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
                   {a.publishedAt ? ` · ${fmtDay(a.publishedAt)}` : ""}
                 </span>
               </div>
-              {/* `lang="es"` en lo que ESCRIBE Coffeed (títulos, cuerpos, tiras), no en el muro entero: el contenido
+              {/* `lang="es"` en lo que ESCRIBE Coffeed (títulos, cuerpos, tiras, extractos y pies), no en el muro entero: el contenido
                   se produce en español a propósito (ALINEACION §1, «Tres idiomas»), pero las etiquetas llegan en el
                   idioma de la superficie (`labels`). Desde que `<html lang>` sigue al idioma en pantalla
                   (`useHtmlLang`), en una página en inglés estos textos heredarían «en» sin esta marca. */}
@@ -161,7 +168,7 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
           c.kind === "carrusel"
             ? `${labels.chapter} ${c.chapterNo ?? ""}`.trim()
             : c.kind === "noticia"
-              ? "Noticia"
+              ? (labels.news ?? "Noticia")
             : c.kind === "video"
               ? labels.video
               : c.kind === "guion"
@@ -222,7 +229,7 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
 
             {c.kind === "noticia" && c.fuente && (
               <p className={styles.eyebrow} style={{ marginTop: 8 }}>
-                Fuente:{" "}
+                {labels.source ?? "Fuente:"}{" "}
                 <a href={c.fuente.url} target="_blank" rel="noopener noreferrer">
                   {c.fuente.outlet} ↗
                 </a>
@@ -247,8 +254,8 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
               </div>
             )}
 
-            {c.excerpt && c.kind !== "carrusel" && <p className={styles.caption}>{c.excerpt}</p>}
-            {c.media?.caption && <p className={styles.caption}>{c.media.caption}</p>}
+            {c.excerpt && c.kind !== "carrusel" && <p className={styles.caption} lang="es">{c.excerpt}</p>}
+            {c.media?.caption && <p className={styles.caption} lang="es">{c.media.caption}</p>}
           </article>
         );
       })}

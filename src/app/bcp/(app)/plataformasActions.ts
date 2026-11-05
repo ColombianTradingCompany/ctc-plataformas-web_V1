@@ -3,7 +3,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permisoDeEscritura, requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
-import { SUBDOMAIN_ROUTES, RUTAS_SOLO_WWW } from "@/lib/red/subdominios";
+import { SUBDOMAIN_ROUTES, RUTAS_SOLO_WWW, RUTAS_QUE_REDIRIGEN } from "@/lib/red/subdominios";
 import { TAG_SUPERFICIES } from "@/lib/seo/superficies";
 import { cargarToolsAdmin } from "@/lib/tools/toolAccess";
 
@@ -23,10 +23,14 @@ export type ActionResult = { ok: true } | { ok: false; error: string };
  *  aquí o `guardarSuperficie()` las rechaza —«Esa superficie no existe en el
  *  mapa de la red»— y el owner se queda sin poder corregir su título ni
  *  apagarlas del sitemap. El mismo array lo lee `sitemap.xml/route.ts`; una
- *  copia local sería garantizar que se enruten bien y se gobiernen mal. */
+ *  copia local sería garantizar que se enruten bien y se gobiernen mal.
+ *
+ *  Las puertas viejas (`RUTAS_QUE_REDIRIGEN`, junto al mapa) no se ofrecen: su
+ *  página solo responde un 308, y una casilla de sitemap para ellas no
+ *  gobernaría nada. */
 function rutasDeLaRed(): string[] {
   const rutas = [...new Set([...Object.values(SUBDOMAIN_ROUTES), ...RUTAS_SOLO_WWW])]
-    .filter((r) => r !== "/co-create")
+    .filter((r) => !RUTAS_QUE_REDIRIGEN.has(r))
     .sort();
   return ["/", ...rutas];
 }

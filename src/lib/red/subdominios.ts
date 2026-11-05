@@ -115,10 +115,12 @@ export const RUTAS_SOLO_WWW: string[] = ["/ctcx-public-catalogue"];
 
 /** Rutas del mapa que NO son destino: su página solo responde un 308 a otra
  *  superficie (hoy la puerta vieja de CaaS). Las leen el sitemap —que no debe
- *  anunciar un 308, ni en www ni en el sitemap del propio subdominio— y
- *  robots.txt, que en ese host no anuncia sitemap. Viven aquí, junto al mapa,
- *  porque son dos lectores: una copia en cada uno garantizaría que una puerta
- *  vieja nueva se apague en uno y siga anunciándose en el otro. */
+ *  anunciar un 308, ni en www ni en el sitemap del propio subdominio—,
+ *  robots.txt, que en ese host no anuncia sitemap, y Manejo de Plataformas
+ *  (`bcp/(app)/plataformasActions.ts`), que no les ofrece casilla de sitemap.
+ *  Viven aquí, junto al mapa, porque son tres lectores: una copia en cada uno
+ *  garantizaría que una puerta vieja nueva se apague en uno y siga
+ *  anunciándose en otro. */
 export const RUTAS_QUE_REDIRIGEN: ReadonlySet<string> = new Set(["/co-create"]);
 
 /** El origen absoluto donde vive una superficie en PRODUCCIÓN.

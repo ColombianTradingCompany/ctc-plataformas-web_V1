@@ -43,9 +43,14 @@ export const LangContext = createContext<{ lang: Lang; setLang: (l: Lang) => voi
  *  What it can't fix: the FIRST byte still says "es" until hydration, because
  *  the attribute lives in the shared root layout. Serving it right from the
  *  server needs one root layout per language family — a bigger change that
- *  is the owner's call. */
-export function useHtmlLang(lang: Lang) {
+ *  is the owner's call.
+ *
+ *  `null` leaves the attribute alone: a surface whose text is Spanish only
+ *  (it mounts the provider but translates nothing) keeps the layout's "es"
+ *  even when the visitor picked EN or DE elsewhere on the network. */
+export function useHtmlLang(lang: Lang | null) {
   useEffect(() => {
+    if (!lang) return;
     const html = document.documentElement;
     const antes = html.lang;
     html.lang = lang;
@@ -59,10 +64,15 @@ export function LangProvider({
   children,
   storageKey,
   defaultLang = "es",
+  declaraHtml = true,
 }: {
   children: ReactNode;
   storageKey: string;
   defaultLang?: Lang;
+  /** false on a surface that only has Spanish text: the provider still runs
+   *  (its children read the language), but `<html lang>` stays as the layout
+   *  wrote it, because the page itself does not change language. */
+  declaraHtml?: boolean;
 }) {
   const [lang, setLangState] = useState<Lang>(defaultLang);
 
@@ -75,7 +85,7 @@ export function LangProvider({
     });
   }, [storageKey]);
 
-  useHtmlLang(lang);
+  useHtmlLang(declaraHtml ? lang : null);
 
   const setLang = (l: Lang) => {
     setLangState(l);

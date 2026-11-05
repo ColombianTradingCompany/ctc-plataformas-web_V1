@@ -27,7 +27,7 @@ export default async function HerramientaTallerPage({
 
   return (
     <div data-theme="ctc-home" style={{ height: "100dvh", display: "flex", flexDirection: "column" }}>
-      <LangProvider storageKey="ctc-lang">
+      <LangProvider storageKey="ctc-lang" declaraHtml={false}>
         <BarraHerramienta
           nombre={h.nombre}
           email={taller.email}

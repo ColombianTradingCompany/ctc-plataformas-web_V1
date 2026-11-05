@@ -35,7 +35,7 @@ export default async function AccesoTallerPage() {
 
   return (
     <div data-theme="ctc-home">
-      <LangProvider storageKey="ctc-lang">
+      <LangProvider storageKey="ctc-lang" declaraHtml={false}>
         <main style={{ minHeight: "70vh", padding: "0 20px" }}>
           <AccesoTaller />
         </main>

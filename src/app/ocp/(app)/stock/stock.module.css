@@ -26,7 +26,7 @@
 .etiqueta { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; background: #fef3c7; color: #92400e; margin-left: 6px; vertical-align: middle; }
 
 /* El tablero: se desplaza a lo ancho dentro de su caja en pantallas angostas. */
-.desplazable { overflow-x: auto; padding-bottom: 4px; }
+.desplazable { overflow-x: auto; padding: 0 6px 6px; } /* sitio para el anillo de foco de las cajas de los bordes */
 .columnas, .tablero { display: grid; grid-template-columns: repeat(4, minmax(150px, 1fr)); column-gap: 46px; min-width: 700px; }
 .columnas { margin-bottom: 8px; }
 .columna { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; padding: 5px 9px; border-radius: 7px; background: color-mix(in srgb, var(--c) 14%, var(--card, #fff)); color: var(--ink, #1f1a2e); font-size: 12px; font-weight: 700; border-top: 3px solid var(--c); }

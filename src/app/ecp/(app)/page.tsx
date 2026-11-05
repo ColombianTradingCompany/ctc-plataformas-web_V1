@@ -47,7 +47,7 @@ export default async function TableroDeEjecucionPage() {
               <div className={styles.kpiTop}>
                 <span className={styles.kpiK}>{c.code}</span>
               </div>
-              <div className={styles.kpiV} style={{ color: abiertas > 0 ? c.accent : "var(--ink)" }}>
+              <div className={styles.kpiV} style={abiertas > 0 ? { color: "var(--ink)", textDecorationLine: "underline", textDecorationColor: c.accent, textDecorationThickness: 3, textUnderlineOffset: 4 } : { color: "var(--ink)" }}>
                 {abiertas}
               </div>
               <div className={styles.kpiSub}>{abiertas === 1 ? "tarea pendiente" : "tareas pendientes"} · de {suyas.length}</div>

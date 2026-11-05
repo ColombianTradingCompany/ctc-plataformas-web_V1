@@ -48,7 +48,7 @@ export function PanelSidebar({
   const hrefActivo = hrefActivoDelRail(navGroups.flatMap((g) => g.links), pathname);
 
   return (
-    <nav className={styles.sidebar}>
+    <nav className={styles.sidebar} data-superficie="oscura">
       <div className={styles.brand}>
         <span className={styles.brandName}>
           CTC Web Platform

@@ -196,9 +196,9 @@ export function DatasheetTool({ langInicial = "es" }: { langInicial?: IdiomaDePl
         <main style={{ maxWidth: 1180, margin: "0 auto", padding: "14px 16px 60px" }}>
           <div className="cdt-no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
             {vivo.lotes.length > 1 ? (
-              <span style={{ display: "inline-flex", border: "1.5px solid var(--line)", borderRadius: 999, overflow: "hidden" }}>
+              <span style={{ display: "inline-flex", border: "1.5px solid var(--line)", borderRadius: 999 }}>
                 {[false, true].map((v) => (
-                  <button key={String(v)} type="button" aria-pressed={todos === v} onClick={() => setTodos(v)} style={{ padding: "4px 12px", fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer", background: todos === v ? "var(--primary)" : "transparent", color: todos === v ? "#fff" : "var(--muted)" }}>
+                  <button key={String(v)} type="button" aria-pressed={todos === v} onClick={() => setTodos(v)} style={{ borderRadius: v ? "0 999px 999px 0" : "999px 0 0 999px", padding: "4px 12px", fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer", background: todos === v ? "var(--primary)" : "transparent", color: todos === v ? "#fff" : "var(--muted)" }}>
                     {v ? t.fiTodos : `${t.fiEste} · ${lote.codigo}`}
                   </button>
                 ))}

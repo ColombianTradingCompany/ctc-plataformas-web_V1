@@ -144,6 +144,21 @@ function tintaSobre(hex: string): string {
   return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? "#211632" : "#ffffff";
 }
 
+/** El anillo de foco de un sector: el color (morado oscuro o amarillo) que más contrasta con su relleno.
+ *  Lo leen las reglas `.rueda-sabor` de globals.css. */
+function anilloDeFoco(hex: string): "oscuro" | "claro" {
+  if (!/^#[0-9a-f]{6}$/i.test(hex)) return "oscuro";
+  const lum = (h: string) => {
+    const c = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  };
+  const ratio = (a: string, b: string) => {
+    const [x, y] = [lum(a), lum(b)];
+    return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+  };
+  return ratio(hex, "#2A0760") >= ratio(hex, "#FFCD00") ? "oscuro" : "claro";
+}
+
 /** Cada familia, subcategoría y nota con su arco: la rueda es estática, los ángulos se calculan una vez. */
 const TOTAL_DE_NOTAS = RUEDA.reduce((n, f) => n + f.subs.reduce((m, sub) => m + sub.hojas.length, 0), 0);
 const GRADOS_POR_NOTA = 360 / TOTAL_DE_NOTAS;
@@ -231,6 +246,7 @@ export function RuedaDeSabores({
         stroke={on ? MORADO : "#ffffff"}
         strokeWidth={on ? 5 : 1.6}
         role="checkbox"
+        data-anillo={anilloDeFoco(fill)}
         aria-checked={on}
         aria-label={rutaDe(id, lang)}
         tabIndex={disabled ? -1 : 0}

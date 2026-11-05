@@ -77,7 +77,7 @@ export function PanelChrome({
   return (
     <div className={`${styles.shell} ${stateClass}`}>
       {/* Barra superior — solo por debajo de 1024 px */}
-      <div className={styles.topbar}>
+      <div className={styles.topbar} data-superficie="oscura">
         <button
           type="button"
           className={styles.burger}

@@ -133,7 +133,7 @@ export function UsuariosClient({ users, currentUserId }: { users: PanelUserRow[]
           {CONSOLE_ORDER.map((k) => (
             <div key={k} className={styles.grantRow}>
               <div className={styles.grantName}>
-                <span className={styles.grantCode} style={{ color: CONSOLES[k].accent }}>
+                <span className={styles.grantCode} style={{ color: "var(--ink)", textDecorationLine: "underline", textDecorationColor: CONSOLES[k].accent, textDecorationThickness: 3, textUnderlineOffset: 4 }}>
                   {CONSOLES[k].code}
                 </span>
                 <span>{CONSOLES[k].name}</span>

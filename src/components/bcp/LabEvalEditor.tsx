@@ -278,14 +278,14 @@ export function LabEvalEditor({
   const selectorDeIdioma = (
     <div role="group" aria-label={t.idioma} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "var(--muted)" }}>
       {t.idioma}
-      <span style={{ display: "inline-flex", border: "1.5px solid var(--line)", borderRadius: 999, overflow: "hidden" }}>
-        {IDIOMAS_DE_PLANILLA.map((l) => (
+      <span style={{ display: "inline-flex", border: "1.5px solid var(--line)", borderRadius: 999 }}>
+        {IDIOMAS_DE_PLANILLA.map((l, i) => (
           <button
             key={l}
             type="button"
             aria-pressed={lang === l}
             onClick={() => setLang(l)}
-            style={{ padding: "3px 12px", fontSize: 11.5, fontWeight: 800, border: "none", cursor: "pointer", background: lang === l ? "var(--primary, #3C0A86)" : "transparent", color: lang === l ? "#fff" : "var(--muted)" }}
+            style={{ borderRadius: i === 0 ? "999px 0 0 999px" : i === IDIOMAS_DE_PLANILLA.length - 1 ? "0 999px 999px 0" : 0, padding: "3px 12px", fontSize: 11.5, fontWeight: 800, border: "none", cursor: "pointer", background: lang === l ? "var(--primary, #3C0A86)" : "transparent", color: lang === l ? "#fff" : "var(--muted)" }}
           >
             {l.toUpperCase()}
           </button>

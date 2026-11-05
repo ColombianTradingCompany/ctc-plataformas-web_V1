@@ -16,7 +16,9 @@
 // escuchan porque el guardado ya va por `adapter.save`.
 
 import { useMemo } from "react";
+import Link from "next/link";
 import DefinicionDeContexto from "./DefinicionDeContexto";
+import type { UnidadId } from "@/lib/direccionamiento/definicion";
 import styles from "./direccionamiento.module.css";
 import {
   cargarContexto,
@@ -25,7 +27,15 @@ import {
   memoriaContexto,
 } from "@/app/ecp/(app)/direccionamientoActions";
 
-export function DireccionamientoClient({ initialRecord }: { initialRecord: Record<string, unknown> | null }) {
+export function DireccionamientoClient({
+  initialRecord, unidadInicial = null, volver = null,
+}: {
+  initialRecord: Record<string, unknown> | null;
+  /** Puerta de entrada (CTCx OS): `?unidad=` ya validada en la página. */
+  unidadInicial?: UnidadId | null;
+  /** `?volver=` saneado (`vueltaDeConsola`): solo entonces se pinta «Volver». */
+  volver?: string | null;
+}) {
   const adapter = useMemo(
     () => ({
       load: (scope: string) => cargarContexto(scope),
@@ -43,11 +53,17 @@ export function DireccionamientoClient({ initialRecord }: { initialRecord: Recor
   // de globals.css (ver direccionamiento.module.css).
   return (
     <div className={styles.host}>
+      {volver && (
+        <p className={styles.volver}>
+          <Link href={volver}>← Volver a donde estaba</Link>
+        </p>
+      )}
       <DefinicionDeContexto
         adapter={adapter}
         aiComplete={aiComplete}
         memory={memory}
         initialData={initialRecord}
+        unidadInicial={unidadInicial}
       />
     </div>
   );

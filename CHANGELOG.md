@@ -60,12 +60,18 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
   la hoja de un edificio retiene el foco del teclado (Tab da la vuelta dentro); el texto de Inicio dice desde qué hub se abre cada
   módulo según el registro y su interruptor; el recuadro de los módulos de la hoja sin el hueco ni el gris que le ponía el modal.
 - **Cambiado**: plataforma · `robots.txt` con `Disallow: /os`; token de la casa `--crema` en `globals.css` (mismo color de las bandas).
+- **Corregido**: plataforma · **el contraste de la casa en las consolas** (PR #53, decisión 20 del owner): anillo de foco de dos colores
+  (`--focus-ring`, amarillo pegado y morado oscuro por fuera; amarillo con hueco oscuro sobre el rail, la barra superior y la cabecera de
+  la Datasheet), el amarillo como texto pasa a `--accent-ink`, el color de cada consola como texto a tinta con un subrayado de su color,
+  el carmesí del logo `#C8102E` en todas partes, y los controles que quitaban el anillo ya lo pintan (accesos, socios, Stock, la rueda
+  del sabor, los conmutadores). Los temas públicos no cambian salvo el carmesí (1/255). Lo que ya estaba antes queda en `ALINEACION.md` §3.
 - **Cambiado**: Herramientas Internas · `?volver=/os…` es una vuelta válida de sus entradas (`VUELTAS_PERMITIDAS`; `qa-entradas-check`
   114). `qa-nav-check` recorre `CONSOLE_ORDER`.
 - **Docs**: el charter `ctcx-os` pasa a «F2 construido (pendiente de fusión)», con las decisiones abiertas 14–24 (la 14 —el PVC en
   3 · Comercial—, la 15 —el crema— y la 16 —GVB admin— las decidió el owner el 5 nov) y la sección «Rumbo del owner (5 nov)»; `consolas` (cinco
   consolas; la OS fuera de la invitación; la concesión por SQL y la propuesta de su fila en `audit_log`); `ALINEACION.md` §1 (vocabulario
-  con cinco consolas y la fila «CTCx OS lee, no escribe») y §3/§3b; `AGENTS.md`, `HANDOFF.md`, el atlas.
+  con cinco consolas y la fila «CTCx OS lee, no escribe») y §3/§3b; `AGENTS.md`, `HANDOFF.md`, el atlas; y el estudio de coherencia del 5 nov (la decisión 20 decidida, las notas
+  finales del owner, catorce componentes).
 - **Datos**: ninguno en el despliegue (sin migración). Después, en la sesión del owner y con su sí: la llave `os` en `panel_users` para el
   owner y para GVB a nivel `admin`, cada una con su fila en `audit_log`.
 

@@ -1,6 +1,6 @@
 # Charter · `ctcx-os` — CTCx OS (la capa de juego sobre la plataforma, Notion, Drive y Gmail)
 
-> **F2 construido (pendiente de fusión) · lo demás, BORRADOR · decide el owner.** Nació la noche del 2026-11-04 al 05 como
+> **F2 publicado en la V6.19 · lo demás, BORRADOR · decide el owner.** Nació la noche del 2026-11-04 al 05 como
 > trabajo de agentes en la nube y entró en `main` con la V6.18 (2026-11-05), sin código vivo. El owner decidió el 2026-11-05
 > el rumbo (decisión 1: `/os` es la **quinta consola**, la última de `CONSOLE_ORDER`) y el canon de personajes («Modos de
 > juego»). **La fase F2, «el esqueleto de `/os`»** (solo lectura, solo datos de la plataforma), **está construida** en la rama
@@ -151,7 +151,7 @@ El juego reemplaza una pantalla vieja **solo a paridad**, módulo por módulo:
 
 ## Superficies y rutas
 
-**F2 · construido en la V6.19, pendiente de fusión** (rumbo del owner del 2026-11-05, decisión 1). `www.ctcexport.com/os` es
+**F2 · publicado en la V6.19** (rumbo del owner del 2026-11-05, decisión 1). `www.ctcexport.com/os` es
 la **quinta consola**: `os` en `PanelConsoleKey`, en `CONSOLES` y la **última** de `CONSOLE_ORDER` (`src/lib/panel/consoles.ts`,
 de `consolas`; ir al final hace que `consolaDelModulo` y `porConsola` resuelvan y ordenen todo lo anterior exactamente igual).
 Se sirve en www porque el host `panel.` reescribe toda ruta a `/control-panel/…`. Todo F2 es de **solo lectura**: cero Server

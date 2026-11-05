@@ -199,7 +199,7 @@ ciclo; `docs/PLAN_CICLOS.md`) · **`qa-triage-catalogo-check.mjs`** (V5.196 — 
 
 ## Pendientes
 
-- **2026-11-05 · V6.19: la quinta consola, la OS (F2 de CTCx OS; pendiente de fusión).** Lo que deja a ESTE componente:
+- **2026-11-05 · V6.19: la quinta consola, la OS (F2 de CTCx OS).** Lo que deja a ESTE componente:
   (1) **La OS no se ofrece en la invitación de Usuarios**: el formulario, `EMPTY_LEVELS`, `hasAnyGrant` y `sanitizeConsoles` leen
   `CONSOLAS_INVITABLES` (`CONSOLE_ORDER` sin `os`); la lista de chips de cada fila sigue leyendo `CONSOLE_ORDER`, así que una llave
   concedida a mano se ve. Si se ofrece por invitación, y a quién, lo decide el owner (decisión 21 de `ctcx-os`). (2) **La llave se

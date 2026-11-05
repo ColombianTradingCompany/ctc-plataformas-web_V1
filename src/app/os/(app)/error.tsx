@@ -2,7 +2,9 @@
 
 // ── CTCx OS · cuando una pantalla falla (V6.19, F2) ────────────────────────────────────────────────────────────────────────────────
 // El mismo límite que el del OCP (`src/app/ocp/(app)/error.tsx`): envuelve las páginas de la OS —no su layout—, así que el rail y la
-// cabecera siguen en pie si Inicio no puede leer. Cada módulo (`m/*`) trae además el suyo, para que un módulo caído no tumbe Inicio.
+// cabecera siguen en pie si Inicio no puede leer. Cada módulo (`m/*`) trae además el suyo, para que un módulo caído no tumbe Inicio;
+// y el mapa de la portada va dentro de `SiElMapaFalla` (`src/components/os/SiElMapaFalla.tsx`): si el mapa falla, Inicio vuelve a
+// las tarjetas, con la lista de los módulos, los avisos y «Copiar contexto para Tailor», en vez de caer aquí.
 
 import { useEffect } from "react";
 import Link from "next/link";

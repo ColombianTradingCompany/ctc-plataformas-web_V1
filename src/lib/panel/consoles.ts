@@ -52,8 +52,9 @@ export type PanelConsole = {
   tagline: string; // one-line role
   /** Accent used to distinguish the console in the switcher (on the dark rail). */
   accent: string;
-  /** Color para cuando el acento se usa como TEXTO o ICONO sobre blanco (el código y el glifo de la
-   *  tarjeta de `/panel`, el código de la consola en Usuarios). Opcional: sin él se usa `accent`, así
+  /** Color para cuando el acento se usa como TEXTO, ICONO o RAYA sobre blanco (el código, el glifo, la raya
+   *  y el borde al pasar de la tarjeta de `/panel`; el código y el borde de la ficha de la consola en Usuarios;
+   *  la raya de la columna en el diagrama de Documentación). Opcional: sin él se usa `accent`, así
    *  que las cuatro consolas de siempre no cambian un píxel. Lo necesita la OS, cuyo acento es claro
    *  (se lee bajo el texto oscuro del conmutador, no sobre blanco). */
   accentTexto?: string;
@@ -344,7 +345,7 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
     tagline: "Puesto de mando: lee la red, no la reemplaza",
     // El crema de la casa (`--crema` #F5F0E2 en globals.css, el texto de las bandas): claro, se lee bajo
     // el texto oscuro (#12101A) del conmutador. Sobre blanco no se ve, así que donde el acento es texto o
-    // icono la OS usa la tinta (`accentTexto`). Pendiente del visto bueno del owner (charter ctcx-os).
+    // icono la OS usa la tinta (`accentTexto`). Aprobado por el owner el 5 nov (charter ctcx-os, decisión 15).
     accent: "#F5F0E2",
     accentTexto: "var(--ink)",
     home: "/os",

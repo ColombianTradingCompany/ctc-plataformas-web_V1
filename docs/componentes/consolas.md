@@ -1,13 +1,13 @@
-# Charter · `consolas` — CTC Consolas internas (BCP · ECP · OCP · LCP)
+# Charter · `consolas` — CTC Consolas internas (BCP · ECP · OCP · LCP · OS)
 
 > Se lee con `docs/ALINEACION.md` al lado. Este componente es **el backstage de todo lo demás**
 > (§2 de la alineación): lo que aquí se decide se empuja hacia las superficies, nunca en silencio.
 
 ## Qué es
 
-Las **cuatro** consolas internas del equipo CTC detrás de **un login maestro** (contraseña + OTP por
+Las **cinco** consolas internas del equipo CTC detrás de **un login maestro** (contraseña + OTP por
 correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18; la cuarta, la LCP, nació el
-2026-09-19 con la V5.59 — fase 1 de `docs/OVERHAUL_CONSOLAS_PLAN.md`):
+2026-09-19 con la V5.59 — fase 1 de `docs/OVERHAUL_CONSOLAS_PLAN.md`; la quinta, la **OS**, nace con la V6.19, F2 de CTCx OS):
 
 - **BCP · Base Control Panel — *Business***: **lo que la casa ES** (cuadro del owner, V5.60). «BCP · Ecosistema de Valor»:
   el tablero de cada plataforma de la red — Herramientas del Café, Directorio, Coffeed/Redacción, CTC Tech, Varietales
@@ -21,7 +21,8 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
   (escáner; el set vive en la vista del lote y `/ocp/fichas` es un 308 a `/ocp/kr` desde la V5.97), CTC Selection, y el **Stock CTCx**
   (V5.195). (Los cuatro CRM de Cherry Picked se fueron a la LCP en la V5.59.)
 - **ECP · Executive Control Panel — *Execution***: **con qué decide la casa y qué tiene pendiente** (V5.60). Cabecera «ECP ·
-  Ejecución»: el **Tablero de Ejecución** (el Panel del ECP: las tareas DERIVADAS de las cuatro consolas en un sitio —
+  Ejecución»: el **Tablero de Ejecución** (el Panel del ECP: las tareas DERIVADAS de las cuatro consolas de operación en un sitio —
+  la OS no genera tareas: las cuenta —
   `src/lib/panel/{tareas,tareasCarga}.ts`) y **Transcripciones** (con Stripe y la Herramienta de Guion, de este charter desde
   el 2026-09-19). Y **«Herramientas Internas»**, agrupadas por MODELO — Definición de Contexto · Modelo Económico en Origen ·
   Modelo de Producción · Modelo Logístico · Automatizaciones —, que **NO es de este charter: es de `herramientas-internas`**.
@@ -33,6 +34,13 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
   ser solo la de la portada: reúne con un filtro las cinco fuentes de `newsletter_subscribers` y la lista de Terratalento.
   «LCP · CRM»: los cuatro **CRM de Cherry Picked** (CaaS, Green, Roast, X). No decide precios ni mueve lotes. Color: el
   carmesí corporativo aclarado (`#F0708A`) — el plan proponía un azul acero, que en el conmutador no se distinguía del OCP.
+- **OS · CTCx OS — «Puesto de mando»** (V6.19, fase F2 de CTCx OS; **su contenido es del charter `ctcx-os`**): LEE la red y no
+  la reemplaza — Inicio, Hacienda, Almacén y Taller, de solo lectura, cero Server Actions; cada cifra con su fuente y un «Abrir» a
+  la pantalla de la consola dueña. Va la **ÚLTIMA** en `CONSOLE_ORDER` (así `consolaDelModulo` y `porConsola` resuelven y ordenan
+  lo de siempre igual). De ESTE charter son su entrada en `consoles.ts`, su llave en `panel_users.consoles`, su compuerta
+  (`requireConsoleAccess("os")`) y lo que la rodea (`/panel`, Usuarios, el diagrama de Documentación). Color: el crema de la casa
+  (`#F5F0E2`) en el conmutador y la tinta donde el acento es texto sobre blanco (`accentTexto`); aprobado por el owner el 5 nov
+  (decisión 15 de `ctcx-os`). `/control-panel` no la anuncia.
 
 `/panel` es el selector tras el login; `/control-panel` la puerta pública (`panel.ctcexport.com`).
 
@@ -44,6 +52,7 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 | `/bcp/(app)/…` | Business | Ecosistema de Valor: `herramientas`, `directorio`, `coffeed`, `ctc-tech`, `varietales`, `terratalento`, `arena` (+ `[sessionId]`: sesiones de segunda apreciación, V5.77; + `temporadas`) · Configuración: `usuarios`, `socios/[nodo]`, `documentacion`, `mapa`, `consumo`, `plataformas`. `club` → 308 a `/ocp/subvenciones` (V5.77) |
 | `/ocp/(app)/…` | Operation — **el rail es el cuadro del owner (V5.63)**: Kaffetal Regal · Catálogo · Manejo de Stock Físico | `kr` (+ `kr/[id]/{dossier,kml}`, el Pasaporte de una finca) · **`asistencia`** y **`desacoplado`** (V5.75: la sesión asistida y el proveedor sin buzón, `src/lib/asistencia/`) · **`subvenciones`** (+ `campanas/[id]`, V5.77: las campañas del Club, `subvencionesActions.ts`) · **`solicitudes`**, `a-evaluar` y `en-evaluacion` (las TRES vistas de lo que fue Nominados: `nominados/CircuitoVista.tsx`; V5.80: la solicitud con factura y subvención, los Baches de Evaluación, el veredicto hasta la fase 4) · **`muestras`** (V5.80: Gestión de Muestras, 1.ª tanda) · `ofertas` («Pendiente Oferta»), `catalogo` (V5.196: los listados con sus entradas y su ancla; lo comercial), `contratos` (V5.196: el **Triage de Catálogo Activo** — `TriageBoard.tsx`, `triageActions.ts`, `src/lib/triage/{fobMinimo,servidor}.ts` —; + `lista`, `[id]`, `humedad`), `subastas`, ~~`fichas`~~ (308 a `/ocp/kr` desde la V5.97: `FichasClient.tsx` vive en `kr/`), `ctc-selection` (V5.85: «Oferta desde CTCx Selection», la disponibilidad de lo comprado en firme + el perfil único y la imagen por lote) · **`compras`** (+ `compras/mezclas`, `compras/mezclas/[id]` — V5.85/V5.87: el registro de compras en firme y las mezclas; desde la V5.195 la entrada se llama **«Adquisición de Stock Café»** y cada compra es de CTCx Selection o solo de stock; `comprasActions.ts`, `src/lib/compras/{reglas,mezclas,mezclasServidor,sampleKits,sampleKitsServidor}.ts`) · **`stock`** (+ `stock/sample-kits`, `stock/sample-kits/[id]` — V5.195: **«Stock CTCx»** en Manejo de Stock Físico, el café físico en partidas de pergamino · verde · tostado · empacado con su linaje y su cuadre, `stockActions.ts`, `src/lib/stock/{linaje,servidor}.ts`; los Sample Kits CP · Plus · Max armado → enviado · anulado son su segunda pestaña, sobre partidas; la URL de la V5.90 va con un 308) |
 | `/ecp/(app)/…` | Execution | `/ecp` (Tablero de Ejecución), `transcripciones` — y, **de `herramientas-internas`**: `direccionamiento/*`, `pvc/*`, `cotizador-{lotes,logistico,empaque}`, `anclas-mercado`, `automatizaciones` |
+| `/os/(app)/…` | CTCx OS (V6.19) — **contenido del charter `ctcx-os`** | `/os` (Inicio) y `m/{hacienda,almacen,taller}`, de solo lectura; layout raíz `src/app/os/layout.tsx`; `/os/demo` solo en local (`OS_DEMO=1`, 404 en Vercel) |
 | `/lcp/(app)/…` | Relationship (V5.59) | `buzon`, `leads`, **`formularios`** (V6.2 · Interfaz de Leads: `?form=` · `/export` CSV · `/tarjeta`), `lista-espera` (`?lista=ctc-home·roast·x·directorio·herramientas·terratalento`), `crm/{caas,green,roast,x}` |
 | `/scaj2026` · `/scaj2026/baja` · `/scaj2026/privacidad` | **el formulario de leads de SCAJ 2026** (V6.2): público, sin sesión, móvil primero, ES · EN · 日本語, `noindex`; recibe envíos solo mientras la LCP lo tenga ENCENDIDO; la cabecera de CTC Home enseña su insignia | `src/app/scaj2026/*`, `src/components/leadForms/LeadForm.tsx`, `src/lib/leadForms/*` (registro, campos, correos, envíos, sello) · cron `/api/cron/seguimientos-leads` |
 | `/bcp|/ocp|/ecp/<modulo>/[[...resto]]` | **talones 308** de las mudanzas V4.24–V5.61 (53 rutas; nueve viajes de vuelta en la V5.60; cuatro «muchas a una» en la V5.61) | fuente: `src/lib/panel/rutasMovidas.ts`; fuera de `(app)` a propósito |
@@ -60,7 +69,8 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 - `src/components/panel/` — la concha compartida: `PanelShell`, `PanelSidebar` (+ conmutador de
   consola), `PanelChrome` (rail plegable), `shared.module.css`, `interes/` (listas de espera).
 - `src/lib/panel/` — `consoles.ts` (**fuente única** del rail, los taglines y `CONSOLE_ORDER`: una consola nueva es una
-  entrada ahí — el conmutador, `/panel`, la pantalla de credenciales y los guardianes la leen), `leadsPilares.ts` (**qué
+  entrada ahí — el conmutador, `/panel`, la pantalla de credenciales y los guardianes la leen; desde la V6.19 también
+  `CONSOLAS_INVITABLES`, la lista que ofrece la invitación de Usuarios, sin `os`, y el campo opcional `accentTexto`), `leadsPilares.ts` (**qué
   tablero administra cada pilar de `leads`; la CONSOLA se deduce de esa ruta**, ya no se escribe a mano), `requireConsoleAccess`,
   `requireActiveAdmin`, `requireConsoleWrite`, `rutasMovidas.ts`, `salidasDeLaPlataforma.ts`,
   `navActivo.ts`, `panelUsers.ts`, `architectureDocs.ts`.
@@ -189,6 +199,43 @@ ciclo; `docs/PLAN_CICLOS.md`) · **`qa-triage-catalogo-check.mjs`** (V5.196 — 
 
 ## Pendientes
 
+- **2026-11-05 · V6.19: la quinta consola, la OS (F2 de CTCx OS; pendiente de fusión).** Lo que deja a ESTE componente:
+  (1) **La OS no se ofrece en la invitación de Usuarios**: el formulario, `EMPTY_LEVELS`, `hasAnyGrant` y `sanitizeConsoles` leen
+  `CONSOLAS_INVITABLES` (`CONSOLE_ORDER` sin `os`); la lista de chips de cada fila sigue leyendo `CONSOLE_ORDER`, así que una llave
+  concedida a mano se ve. Si se ofrece por invitación, y a quién, lo decide el owner (decisión 21 de `ctcx-os`). (2) **La llave se
+  concede por SQL**, en la sesión del owner, con su sí, DESPUÉS del despliegue: `update panel_users set consoles = consoles ||
+  '{"os":"admin"}'::jsonb where profile_id in (<owner>, <GVB>)` y volver a leer las dos filas (los ids nunca van al repo).
+  **Ninguna acción de la plataforma edita grants**, así que ese `UPDATE` no deja rastro en `audit_log` (crítica 22). **Propuesta**:
+  en la MISMA sentencia, una fila de `audit_log` por perfil — `entity_type = 'panel_user'`, `entity_id` = el perfil, `action =
+  'consola_concedida'`, `new_status = 'os:admin'`, `performed_by` = el owner, la misma forma que deja `invited` en
+  `usuariosActions.ts` (`panel_user` ya está en `ENTIDADES` de `src/lib/os/hechosCatalogo.ts`; la acción no lleva efecto, así
+  que no pide fila en `ACCIONES`). Si el owner prefiere no dejarla, el hueco queda anotado aquí. (3) **Antes de fusionar**: contar en solo lectura las cuentas `bcp_admin` sin fila en `panel_users` (hoy las tres cuentas
+  del equipo tienen fila). (4) **PR1b, con `ctcx-os`**: el escritor del interruptor de los
+  módulos (`osModulosActions.ts` en el BCP, clase `emite`, tarjeta en Manejo de Plataformas, fila `platform_setting.os_modulo_cambiado`
+  del catálogo de los hechos con la convención de `platform_setting`). (5) **Dos ajustes que pide la OS a código de aquí**: extraer
+  a `registroCrons.ts` el filtro de la salud de los crons que hoy vive en `AutomatizacionesBoard.tsx` (la OS lo copia y
+  `qa-os-check` vigila la copia por texto: tocar esas líneas del tablero lo hace saltar), y que `pendientesDelCircuito` acepte el
+  stock ya cargado para que el tablero de la OS no lo cargue dos veces. `qa-os-check` también lleva un cable trampa sobre el bucle
+  de `tareasCarga.ts` que crea las tareas `despacho:vencido:*` (la OS las cuenta como los despachos vencidos). (6) **F2b**: la
+  consulta del circuito del lote dentro de `cargarKr` (`src/app/ocp/(app)/kr/carga.ts`) pasa a un lector compartido del servidor que
+  lean `cargarKr` y la OS (decisión 24 de `ctcx-os`).
+  **De la revisión de F2 (2026-11-05)**, también de aquí:
+  (7) *(retirado de este documento)*.
+  (8) **Los KPI «Eventos en cola» y «Eventos fallidos» de Automatizaciones** (`AutomatizacionesBoard.tsx`) cuentan solo entre
+  los 30 eventos que trae `listRecentEvents()`; la OS cuenta TODOS (y su filtro en «Ver fuentes» lo dice). En cuanto haya un
+  evento fallido más viejo que los 30 últimos, las dos pantallas darán cifras distintas bajo la misma etiqueta. **Arreglo
+  propuesto**: los KPI del tablero con un conteo `head` propio, para que las dos digan lo mismo.
+  (9) **El modal de la casa** (`src/components/Modal.tsx`) es `aria-modal` pero no mueve el foco al abrirse, no lo encierra y no
+  deja inerte el fondo: con el teclado, el Tab sigue por la página de detrás. La hoja de la Hacienda mete el foco en su título
+  (V6.19), pero el arreglo de verdad es UNO en el modal (foco al primer control o al diálogo, Tab dentro, fondo `inert`, y el foco
+  de vuelta al cerrar) y sirve a todas las consolas.
+  (10) **Cambio visual aceptado en el diagrama de Documentación** (`EstructuraModal.tsx`): para que quepan cinco columnas en el
+  lienzo de 1200, la columna pasa de 280 a 224 px, el título de cada consola de 14 a 12,5 y la etiqueta de un módulo se corta a
+  los 24 caracteres (antes 32). Siete etiquetas de las consolas de siempre, enteras hasta la V6.19, salen ahora cortadas con «…»
+  («Documentación del sistema», «Cotizador courier · FedEx», «Productores, Fincas y Lotes», «Solicitudes de Evaluación»,
+  «Triage de Catálogo Activo», «Oferta desde CTCx Selection», «Adquisición de Stock Café»). Si el owner lo prefiere, se parten
+  en dos líneas o se ensancha el lienzo. La raya de la columna de la OS va en tinta (el crema no se ve sobre el lavanda), como
+  el borde de su ficha en Usuarios y la raya y el borde de su tarjeta en `/panel` (`accentTexto`); las otras cuatro, igual.
 - **2026-10-23 · el seguimiento SCAJ 2026, PAUSADO** (owner, desde la sesión de unificación; acta
   `docs/migraciones/2026-10-23_scaj_seguimiento_pausado.sql`, decisión D-008 en `docs/UNIFICACION_ALINEACION.md`). `yaRespondio`
   (`src/lib/leadForms/envios.ts`) busca la respuesta del comprador SOLO en `inbound_emails`, y el Buzón no se sincroniza desde el
@@ -879,7 +926,8 @@ Trabajas SOLO en el componente «CTC Consolas internas» (clave: consolas) de la
 3. AGENTS.md                      ← la compuerta y las reglas de la casa
 Eres el BACKSTAGE: todo cambio que altere lo que una superficie muestra o exige se ejecuta allí en
 la misma tanda o queda como pendiente con dueño en su charter, y siempre con una línea en el §3.
-Son CUATRO consolas (BCP · ECP · OCP · LCP; la lista tiene una sola fuente, CONSOLE_ORDER). Los grupos de «Herramientas
+Son CINCO consolas (BCP · ECP · OCP · LCP · OS; la lista tiene una sola fuente, CONSOLE_ORDER; la OS, la última, es de
+solo lectura y su contenido es del charter ctcx-os: de ti son su rail, su llave y su compuerta). Los grupos de «Herramientas
 Internas» del rail del ECP (Definición de Contexto, Modelo Económico —PVC y Grados—, Producción, Logística, Automatizaciones,
 con sus cotizadores y anclas) NO son tuyos: son del charter herramientas-internas.
 Tuyos son su rail, sus permisos y sus rutas — y llevar lo que esos modelos calculan a ofertas, contratos y veredicto.

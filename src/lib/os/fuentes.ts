@@ -74,11 +74,11 @@ export const FUENTES: Record<PiezaId, Fuente> = {
 
   contratos_por_estado: { etiqueta: "Contratos", fuente: "purchase_contracts.status", enlace: "/ocp/contratos/lista" },
   ventanas_vigentes: { etiqueta: "Contratos con ventana vigente", fuente: "purchase_contracts.ventana_tipo", filtro: "contrato activo con ventana", enlace: "/ocp/contratos/lista" },
-  despachos_pendientes: { etiqueta: "Despachos pendientes", fuente: "contract_despachos.estado", filtro: "pendiente, de un contrato activo", enlace: "/ocp/compras" },
-  despachos_despachados: { etiqueta: "Despachos en camino", fuente: "contract_despachos.estado", filtro: "despachado, de un contrato activo", enlace: "/ocp/compras" },
+  despachos_pendientes: { etiqueta: "Despachos pendientes", fuente: "contract_despachos.estado", filtro: "pendiente, saco o adelanto, de un contrato activo", enlace: "/ocp/compras" },
+  despachos_despachados: { etiqueta: "Despachos en camino", fuente: "contract_despachos.estado", filtro: "despachado, saco o adelanto, de un contrato activo", enlace: "/ocp/compras" },
   // La MISMA regla que el Tablero (crítica 6): saco o adelanto pendiente con el plazo (o su prórroga) vencido.
   despachos_vencidos: { etiqueta: "Despachos vencidos", fuente: "archivo:src/lib/stock/circuito.ts#pendientesDelCircuito", filtro: "saco o adelanto pendiente, plazo vencido", enlace: "/ocp/contratos/lista", cuentaCeroSiFalla: true },
-  despachos_kg_por_recibir: { etiqueta: "Kilos por recibir", unidad: "kg", fuente: "contract_despachos.kg", filtro: "pendiente o despachado, de un contrato activo", enlace: "/ocp/compras" },
+  despachos_kg_por_recibir: { etiqueta: "Kilos por recibir", unidad: "kg", fuente: "contract_despachos.kg", filtro: "pendiente o despachado, saco o adelanto, de un contrato activo", enlace: "/ocp/compras" },
 
   franja_por_recibir: { etiqueta: "Franja · por recibir", unidad: "kg", fuente: FRANJA, enlace: "/ocp/compras", cuentaCeroSiFalla: true },
   franja_en_stock: { etiqueta: "Franja · en stock", unidad: "kg", fuente: FRANJA, enlace: "/ocp/stock", cuentaCeroSiFalla: true },
@@ -92,8 +92,8 @@ export const FUENTES: Record<PiezaId, Fuente> = {
   pvc_borrador: { etiqueta: "Borrador del agente por publicar", fuente: "archivo:src/lib/pvc/agente.ts#estadoDelAgente", filtro: "borrador del agente sin publicar", enlace: "/ecp/pvc" },
 
   salud_crons: { etiqueta: "Salud de los crons", fuente: "latidos.estado", filtro: "último latido terminado de cada cron", enlace: "/ecp/automatizaciones" },
-  cola_pendientes: { etiqueta: "Eventos en cola", fuente: "integration_events.estado", filtro: "pendiente", enlace: "/ecp/automatizaciones" },
-  cola_fallidos: { etiqueta: "Eventos fallidos", fuente: "integration_events.estado", filtro: "fallido", enlace: "/ecp/automatizaciones" },
+  cola_pendientes: { etiqueta: "Eventos en cola", fuente: "integration_events.estado", filtro: "pendiente; todos, no solo los últimos 30 del tablero de Automatizaciones", enlace: "/ecp/automatizaciones" },
+  cola_fallidos: { etiqueta: "Eventos fallidos", fuente: "integration_events.estado", filtro: "fallido; todos, no solo los últimos 30 del tablero de Automatizaciones", enlace: "/ecp/automatizaciones" },
   automatizaciones_por_etapa: { etiqueta: "Automatizaciones", fuente: "automations.etapa", enlace: "/ecp/automatizaciones" },
 
   hechos_por_hub: { etiqueta: "Hechos del turno (24 h)", fuente: "archivo:src/lib/os/hechos.ts#leerHechos", filtro: "últimas 24 horas", enlace: null },
@@ -121,7 +121,9 @@ export type Lectura<T> =
 export type NotaDeMedida =
   | "cuenta_cero_si_falla" // la función reusada cuenta cero cuando una lectura falla
   | "tope_de_filas" // la lectura llegó al tope de filas: la cifra es un mínimo
-  | "sin_fuente_aun"; // este hub no tiene esta pieza en la plataforma (llega con Notion, F3)
+  | "sin_fuente_aun" // este hub no tiene esta pieza en la plataforma (llega con Notion, F3)
+  | "solo_owner" // una pieza del Modelo Económico y quien mira no es el owner: no se leyó, se pinta «Solo el owner»
+  | "sin_el_pvc"; // la cuenta deja fuera las tareas y los hechos del Modelo Económico (quien mira no es el owner)
 
 /** Una cifra del tablero. `valor: null` se pinta «Sin datos», NUNCA cero. */
 export type Medida = {

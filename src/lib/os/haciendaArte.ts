@@ -199,10 +199,29 @@ export function cumbreDe(dominio: Dominio): Punto {
 export function anclaDelRotulo(dominio: Dominio): Punto {
   const b = FORMAS[dominio];
   const extra: Partial<Record<Dominio, number>> = { plataformas_it: 22, direccion: 26, ejecucion: 26, marca_contenido: 16 };
-  const desplazar: Partial<Record<Dominio, Punto>> = { conocimiento: [-16, 0], ejecucion: [18, -6] };
+  // 4 · Marca y Contenido y 7 · Directorios quedan a la misma altura: se apartan a lo ancho (qa-os-check H11 mide que no se pisen).
+  const desplazar: Partial<Record<Dominio, Punto>> = { conocimiento: [-16, 0], ejecucion: [18, -6], marca_contenido: [-8, 0], directorios: [12, 0] };
   const top = dominio === "origen" ? iso(9, 1.5, 34) : iso(b.i + b.w / 2, b.j + b.d / 2, b.h + b.techo + (extra[dominio] ?? 0));
   const [dx, dy] = desplazar[dominio] ?? [0, 0];
   return [top[0] + dx, top[1] - 30 + dy];
+}
+
+/** Lo que mide el icono de alerta del banderín de vencidas (el triángulo antes de la palabra). */
+const ICONO_DEL_BANDERIN = 11;
+
+/**
+ * Las medidas del rótulo de un hub en el dibujo: la píldora con su número y nombre, la ficha de las tareas y, si hay
+ * vencidas, el banderín con su icono y su palabra. La vista las pinta y el guardián (H11) mide con ESTO que ningún
+ * rótulo pise a otro. `caja` es el rectángulo que ocupa todo el rótulo: [x0, y0, x1, y1].
+ */
+export function rotuloArte(dominio: Dominio, texto: string, vencidas: string | null) {
+  const [x, y] = anclaDelRotulo(dominio);
+  const ancho = texto.length * 6.6 + 16;
+  const izq = x - (ancho + 22) / 2;
+  const bx = izq + ancho + 24;
+  const banderin = vencidas ? vencidas.length * 6 + 18 + ICONO_DEL_BANDERIN : 0;
+  const derecha = vencidas ? bx + banderin : izq + ancho + 21;
+  return { y, ancho, izq, chipX: izq + ancho + 10, bx, banderin, icono: ICONO_DEL_BANDERIN, caja: [izq, y - 11, derecha, y + 11] as const };
 }
 
 // ── El terreno ───────────────────────────────────────────────────────────────

@@ -23,6 +23,9 @@
 .badgeAviso{background:var(--accent);color:var(--ink)}
 .badgeNeutro{background:var(--line);color:var(--ink)}
 .badgeMal{background:color-mix(in srgb, var(--red) 14%, var(--card));color:color-mix(in srgb, var(--red) 78%, var(--ink))}
+/* El icono de una alerta (IconoAlerta): va delante de su palabra, nunca solo. */
+.icono{flex:0 0 auto;margin-right:4px}
+.iconoMarca{fill:none;stroke:var(--card);stroke-width:1.5;stroke-linecap:round}
 
 /* ── La cifra ──────────────────────────────────────────────────────────────── */
 .cifra{display:inline-flex;flex-direction:column;gap:3px;min-width:0;max-width:100%}
@@ -32,6 +35,7 @@
 .cifraGrande .cifraValor{font-family:var(--font-fraunces),serif;font-weight:800;font-size:28px;line-height:1.05;color:var(--ink)}
 .rotulo{font-family:var(--font-spline-mono),monospace;font-weight:600;letter-spacing:.04em}
 .sinDatos{display:inline-flex;align-items:center;font-family:var(--font-spline-mono),monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border:1px dashed currentColor;border-radius:999px;padding:1px 8px;white-space:nowrap}
+.soloOwner{display:inline-flex;align-items:center;font-family:var(--font-spline-mono),monospace;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);background:var(--line);border-radius:999px;padding:1px 8px;white-space:nowrap}
 .ejemplo{font-family:var(--font-spline-mono),monospace;font-size:9.5px;font-weight:700;letter-spacing:.1em;background:var(--accent);color:var(--ink);border-radius:4px;padding:1px 5px}
 .abrir{font-size:12.5px;font-weight:600;color:var(--primary);text-decoration:underline;text-underline-offset:2px}
 .fuente{display:block;font-family:var(--font-spline-mono),monospace;font-size:10.5px;line-height:1.45;color:var(--muted);overflow-wrap:anywhere;font-weight:400;letter-spacing:0;text-transform:none}
@@ -94,6 +98,20 @@
 .moduloTitulo{font-family:var(--font-fraunces),serif;font-weight:700;font-size:18px;color:var(--ink);margin:0}
 .moduloTexto{font-size:13px;color:var(--muted);margin:0;flex:1}
 .modulo .acciones{margin-top:4px}
+/* La portada en el mapa: la lista corta de los módulos (una fila por módulo) y la firma con el logo, al pie. */
+.modulosLista{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.moduloFila{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 12px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:10px 14px;min-width:0}
+.moduloFilaNombre{font-family:var(--font-fraunces),serif;font-weight:700;font-size:16px;color:var(--ink)}
+.moduloFilaTexto{grid-column:1 / -1;font-size:13px;color:var(--muted);min-width:0}
+.moduloFilaAbrir{grid-column:1 / -1;justify-self:end;display:inline-flex;align-items:center;min-height:44px;font-size:13px;font-weight:600;color:var(--primary);text-decoration:underline;text-underline-offset:2px}
+@media (min-width:760px){
+  .moduloFila{grid-template-columns:140px auto minmax(0,1fr) auto}
+  .moduloFilaTexto{grid-column:auto}
+  .moduloFilaAbrir{grid-column:auto}
+}
+.firma{display:flex;flex-direction:column;gap:12px;align-items:flex-start;border-top:1px solid var(--line);margin-top:28px;padding-top:18px}
+.firmaLogo{width:120px;height:auto;flex:0 0 auto}
+@media (min-width:760px){.firma{flex-direction:row;align-items:center;gap:22px}}
 
 /* ── La Hacienda ───────────────────────────────────────────────────────────── */
 .lienzo{margin:0 0 18px;background:color-mix(in srgb, var(--crema) 55%, var(--paper));border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
@@ -115,6 +133,8 @@
 .chipTextoVacio{fill:var(--muted)}
 .bandera{fill:var(--red)}
 .banderaTexto{font-family:var(--font-spline-mono),monospace;font-size:8.5px;font-weight:700;letter-spacing:.08em;fill:var(--card)}
+.banderaIcono{fill:var(--card)}
+.banderaIconoMarca{fill:none;stroke:var(--red);stroke-width:1.3;stroke-linecap:round}
 /* En el teléfono el dibujo es una vista de conjunto: los rótulos no caben y la lista de abajo es el control. */
 @media (max-width:759px){
   .rotulos{display:none}
@@ -132,11 +152,19 @@
 .hubCifras .cifraValor{color:var(--ink)}
 
 .hoja{display:flex;flex-direction:column;gap:16px}
+/* El título de la hoja recibe el foco al abrirla (no es un control: no lleva anillo). */
+.hojaTitulo:focus{outline:none}
 .hoja .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media (min-width:560px){.hoja .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .piezas{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .pieza{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px 12px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:8px 12px;font-size:13.5px;color:var(--ink)}
 .piezaNombre{min-width:0}
+.edificioModulos{display:flex;flex-direction:column;gap:6px;background:var(--crema);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
+.edificioModulos .acciones{margin-top:0;justify-content:flex-start}
+/* La hoja vive en el Modal de la casa, y `.modal p` (globals.css: 14px, gris, 20px debajo) pesa más que una clase sola:
+   dentro del recuadro de los módulos se sube a dos clases para que valgan las de aquí. */
+.edificioModulos .subtitulo{margin:0}
+.edificioModulos .edificioApagado{margin:0;font-size:13.5px;color:var(--ink)}
 .subtitulo{font-family:var(--font-spline-mono),monospace;font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0}
 
 /* ── El Almacén ────────────────────────────────────────────────────────────── */

@@ -1,5 +1,6 @@
 import { FUENTES, type CodigoDeLectura } from "@/lib/os/fuentes";
 import type { Aviso } from "@/lib/os/tablero";
+import { IconoAlerta } from "./IconoAlerta";
 import s from "./os.module.css";
 
 // ── CTCx OS · la deuda de datos, dicha (V6.19, F2) ───────────────────────────
@@ -27,7 +28,10 @@ export function Avisos({ avisos }: { avisos: readonly Aviso[] }) {
       <ul className={s.avisosLista}>
         {avisos.map((a) => (
           <li key={a.error + a.fuentes.join()} className={s.aviso}>
-            <span className={`${s.badge} ${s.badgeMal}`}>Aviso</span>
+            <span className={`${s.badge} ${s.badgeMal}`}>
+              <IconoAlerta />
+              Aviso
+            </span>
             <span>
               {QUE_FALLO[a.error]} Quedan en «Sin datos»: {a.fuentes.map((p) => FUENTES[p].etiqueta).join(", ")}.
               <span className={s.fuente}>Plataforma › {[...new Set(a.fuentes.map((p) => FUENTES[p].fuente))].join(" · ")}</span>

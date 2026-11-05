@@ -18,8 +18,9 @@
   transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
   box-shadow:0 12px 28px -24px rgba(24,24,27,.5);
 }
-.card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--acc)}
-.card:hover{transform:translateY(-4px);border-color:color-mix(in srgb, var(--acc) 55%, var(--line));box-shadow:0 22px 44px -26px rgba(24,24,27,.55)}
+/* La raya y el borde al pasar usan `--acc-txt` si la consola lo trae (la OS: su crema no se ve sobre blanco); las demás no lo traen y no cambian. */
+.card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--acc-txt, var(--acc))}
+.card:hover{transform:translateY(-4px);border-color:color-mix(in srgb, var(--acc-txt, var(--acc)) 55%, var(--line));box-shadow:0 22px 44px -26px rgba(24,24,27,.55)}
 
 .iconBox{
   width:46px;height:46px;border-radius:11px;display:flex;align-items:center;justify-content:center;

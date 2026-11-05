@@ -19,6 +19,56 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.19] — 2026-11-05 (commit pendiente)
+
+- **Añadido**: **CTCx OS · fase F2, «el esqueleto de `/os`»** (charter `ctcx-os`): la **quinta consola interna**, `/os`, la última de
+  `CONSOLE_ORDER`, de **solo lectura** y solo con datos de la plataforma. **Abre en el mapa** (rumbo del owner, 5 nov: el OS es un
+  juego): Inicio es el HUD y la **Hacienda** como imagen principal, con el Almacén abriéndose desde la hoja del hub 2 y el Taller desde la
+  del hub 5 (cada uno según su interruptor); debajo, la lista corta de los módulos, los avisos de lectura, «Copiar contexto para Tailor» y
+  el logo oficial. Con la Hacienda apagada, Inicio vuelve a una tarjeta por módulo. Tres módulos: **Hacienda** (los diez hubs del Mapa
+  CTC 0–9 como edificios, con una hoja por hub; su ruta `/os/m/hacienda` sigue viva), **Almacén** (la
+  franja del circuito del stock, lotes por etapa, despachos, contratos por estado y los cinco grados de la casa) y **Taller** (la salud del
+  sistema: versión, crons por latido, cola de eventos y automatizaciones, estas con el rótulo «Registro sin conciliar»). Sin Server
+  Actions; cada cifra declara su fuente (`src/lib/os/fuentes.ts`) y abre la pantalla de la consola dueña siguiendo la regla del rail; una
+  lectura que falla dice «Sin datos», nunca 0. Nadie la ve hasta que se conceda la llave `os` de `panel_users`.
+- **Añadido**: **el Modelo Económico es solo del owner en la OS** (decisión del owner; vive en 3 · Comercial): para quien no es el owner
+  la OS no llama a su lector del PVC ni lo lee por las tareas de la casa, sus piezas dicen «Solo el owner» (no es un error ni «Sin datos») y ni sus
+  códigos ni sus conteos llegan a la pantalla; sus tareas y sus hechos tampoco se cuentan. `isOwner` sale de la identidad del layout (`identidadDeLaOs`, una lectura por
+  petición). La demostración (que no es el owner) lo enseña.
+- **Añadido**: el núcleo puro de la OS (`src/lib/os/{fuentes,tablero,modulos,haciendaArte}.ts`), sus lectores de servidor
+  (`interruptores.ts`, `lectura.ts`, `tableroServidor.ts`), que reusan en solo lectura las tareas de la casa, la franja del stock, el
+  estado del Modelo Económico (sin precios), la salud de los crons y los hechos, y sus vistas y componentes (`src/components/os/`).
+- **Añadido**: un **interruptor por módulo** en `platform_settings.os_modulos`, solo de lectura en esta versión: sin fila mandan los valores
+  por defecto (los tres encendidos); si no se puede leer, se apagan los módulos de la OS y nada más. Quién lo escribe llega aparte.
+- **Añadido**: el **modo demostración** `/os/demo` con datos inventados, solo en local (`OS_DEMO=1`; 404 en producción), para revisar la
+  identidad con capturas.
+- **Añadido**: guardián **`qa-os-check`** (659 comprobaciones: el OS no escribe, ningún dato real ni cifra de negocio escrita, cada cifra con
+  fuente y pantalla, solo tokens, fuentes y logos de la casa, estructura de módulos e interruptores, las cuatro listas de consolas con la
+  OS fuera de la invitación, los rótulos de la Hacienda que no se pisan, el PVC que nunca se lee sin la condición del owner (H12), la
+  portada en el mapa con cada módulo abierto desde su edificio (H13), y las reglas puras con datos inventados);
+  `scripts/os-qa-comun.mjs`, utilidades compartidas con `qa-os-hechos-check`.
+- **Cambiado** (revisión de F2, antes de fusionar): los despachos de la OS cuentan solo saco o adelanto, como Adquisición; la salud de un
+  hub distingue «Sin datos» (lectura fallida) de «Sin crons»; la hoja de un hub recibe el foco al abrirse; cada alerta lleva icono y
+  palabra; «Ver fuentes» no cambia de nombre; la raya y el borde de la OS van en tinta en `/panel`, Usuarios y Documentación (las
+  otras consolas no cambian por el acento; el diagrama de Documentación sí, para las cinco, por el ancho de columna: charter `consolas`).
+- **Cambiado**: consolas · `CONSOLES.os` y `CONSOLAS_INVITABLES` en `src/lib/panel/consoles.ts`: la invitación de Usuarios no ofrece la OS
+  (se concede por SQL); campo opcional `accentTexto` para la tarjeta de `/panel` y Usuarios (las otras cuatro consolas sin cambio visual);
+  el diagrama de Documentación a columnas de 224 px para cinco consolas; `ConsoleGlyph` con su glifo; `/control-panel` no la anuncia.
+- **Cambiado**: consolas · `cargarTareas` acepta `{ conPvc }` (por defecto `true`: el ECP, el OCP y la LCP no cambian); en `false` no
+  lee el estado del Modelo Económico ni arma sus tareas. La OS lo pasa con la condición del owner.
+- **Corregido** (revisión de la portada en el mapa): si el mapa de Inicio falla, Inicio vuelve a las tarjetas en vez de caerse entero;
+  la hoja de un edificio retiene el foco del teclado (Tab da la vuelta dentro); el texto de Inicio dice desde qué hub se abre cada
+  módulo según el registro y su interruptor; el recuadro de los módulos de la hoja sin el hueco ni el gris que le ponía el modal.
+- **Cambiado**: plataforma · `robots.txt` con `Disallow: /os`; token de la casa `--crema` en `globals.css` (mismo color de las bandas).
+- **Cambiado**: Herramientas Internas · `?volver=/os…` es una vuelta válida de sus entradas (`VUELTAS_PERMITIDAS`; `qa-entradas-check`
+  114). `qa-nav-check` recorre `CONSOLE_ORDER`.
+- **Docs**: el charter `ctcx-os` pasa a «F2 construido (pendiente de fusión)», con las decisiones abiertas 14–24 (la 14 —el PVC en
+  3 · Comercial—, la 15 —el crema— y la 16 —GVB admin— las decidió el owner el 5 nov) y la sección «Rumbo del owner (5 nov)»; `consolas` (cinco
+  consolas; la OS fuera de la invitación; la concesión por SQL y la propuesta de su fila en `audit_log`); `ALINEACION.md` §1 (vocabulario
+  con cinco consolas y la fila «CTCx OS lee, no escribe») y §3/§3b; `AGENTS.md`, `HANDOFF.md`, el atlas.
+- **Datos**: ninguno en el despliegue (sin migración). Después, en la sesión del owner y con su sí: la llave `os` en `panel_users` para el
+  owner y para GVB a nivel `admin`, cada una con su fila en `audit_log`.
+
 ## [V6.18] — 2026-11-05 (commit e9d92bf)
 
 - **Hito**: **tren de fusión de la noche del 4 al 5 de noviembre**: diecinueve PR revisados (#33–#51) entran juntos en un solo despliegue.

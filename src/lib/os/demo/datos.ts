@@ -1,7 +1,7 @@
 import { CRONS } from "@/lib/integraciones/registroCrons";
 import type { Dominio } from "@/lib/integraciones/dominios";
 import type { PanelConsoleKey } from "@/lib/panel/consoles";
-import { armarTablero, tareasPorHub, type LecturasDelTablero, type Tablero } from "../tablero";
+import { PVC_SOLO_OWNER, armarTablero, tareasPorHub, type LecturasDelTablero, type Tablero } from "../tablero";
 import { PIEZAS, type PiezaId } from "../fuentes";
 
 // ── CTCx OS · los datos de la demostración (V6.19, F2) · PURO, TODO INVENTADO ─
@@ -52,7 +52,9 @@ export const LECTURAS_DEMO: LecturasDelTablero = {
     },
     fuentes: todas,
   },
-  pvc: { ok: true, valor: { vigente: { codigo: "EJEMPLO-1" }, proxima: null, correccionesPropuestas: 1, borradorPorPublicar: true }, fuentes: todas },
+  // Quien mira la demostración NO es el owner (IDENTIDAD_DEMO): el Modelo Económico no se lee y sus piezas dicen «Solo el owner»,
+  // igual que en la OS de verdad para quien no es el owner (qa-os-check H12).
+  pvc: PVC_SOLO_OWNER,
   salud: {
     ok: true,
     valor: {

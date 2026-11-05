@@ -215,7 +215,8 @@ export function PanelDiagram() {
         return (
           <g key={c.k}>
             <Box x={c.x} y={TOP_CONSOLAS} w={COL_W} h={56} kind="hub" fs={12.5} title={`${consola.code} · ${consola.name}`} sub={consola.tagline.split(":")[0]} />
-            <rect x={c.x} y={TOP_CONSOLAS} width={COL_W} height={4} rx={2} fill={consola.accent} />
+            {/* Una consola de acento claro (la OS, con `accentTexto`) pinta su raya en tinta: el crema no se ve aquí. */}
+            <rect x={c.x} y={TOP_CONSOLAS} width={COL_W} height={4} rx={2} fill={consola.accentTexto ? INK : consola.accent} />
             {c.grupos.map((g) => (
               <g key={`${c.k}-${g.label}-${g.y}`}>
                 <rect x={c.x} y={g.y} width={COL_W} height={g.h} rx={8} fill="none" stroke="#B9B3A9" strokeWidth={1} strokeDasharray="5 4" />

@@ -24,8 +24,13 @@
 //   G. Voz y mesura: palabras prohibidas, sin sonido, sin bucles, transiciones cortas,
 //      sin modo noche, sin restos de la maqueta (crítica 28).
 //   H. Estructura: registro de módulos ↔ carpetas ↔ rail, aislamiento del OS, el
-//      escritor del interruptor (PR1b), las cuatro listas de consolas a la vez, lo
-//      server-only y lo puro, y las reglas del tablero probadas con datos inventados.
+//      escritor del interruptor (PR1b), las cuatro listas de consolas a la vez
+//      (CONSOLES, CONSOLE_ORDER, ConsoleGlyph y CONSOLAS_INVITABLES, que deja fuera a
+//      la OS), lo server-only y lo puro, los rótulos de la Hacienda que no se pisan
+//      (H11), el Modelo Económico solo del owner (H12: `leerPvc` nunca sin la condición
+//      del owner, `isOwner` desde la identidad del layout), la portada en el mapa y cada
+//      módulo abierto desde su edificio (H13), y las reglas del tablero probadas con
+//      datos inventados.
 //
 // Las reglas se prueban a sí mismas (autoprueba): cada buscador recibe una muestra
 // mala y una buena, y si la mala no salta o la buena salta, el guardián falla. Así
@@ -50,10 +55,11 @@ import {
   hubDeTarea, hubDeTipo, hubDePieza, hubsConTareas, tareasPorHub, esTareaVencida, peorSalud,
   armarTablero, piezasMuertas, PIEZAS_POR_HUB, saludDeLosCrons, automatizacionesPorHub, colaPorHub,
   sumarMedidas, resumenDelHud, contextoParaTailor, etiquetaDeClave, ordenDeClave,
+  PVC_SOLO_OWNER, esPvcSoloOwner, esTareaDelPvc, esHechoDelPvc, TABLAS_DEL_PVC, hubsDelPvc,
 } from "../src/lib/os/tablero.ts";
-import { TABLERO_DEMO, IDENTIDAD_DEMO } from "../src/lib/os/demo/datos.ts";
-import { FORMAS, TOKENS_DE_ARTE, VIEWBOX, HX, edificioArte, sueloArte, arbolesArte, matasArte, granosArte, iso } from "../src/lib/os/haciendaArte.ts";
-import { CONSOLES, CONSOLE_ORDER } from "../src/lib/panel/consoles.ts";
+import { TABLERO_DEMO, IDENTIDAD_DEMO, LECTURAS_DEMO } from "../src/lib/os/demo/datos.ts";
+import { FORMAS, TOKENS_DE_ARTE, VIEWBOX, HX, edificioArte, sueloArte, arbolesArte, matasArte, granosArte, iso, rotuloArte } from "../src/lib/os/haciendaArte.ts";
+import { CONSOLES, CONSOLE_ORDER, CONSOLAS_INVITABLES } from "../src/lib/panel/consoles.ts";
 import { TIPOS_DE_TAREA } from "../src/lib/panel/tareas.ts";
 import { DOMINIOS, ETAPAS } from "../src/lib/integraciones/dominios.ts";
 import { ACCIONES } from "../src/lib/os/hechosCatalogo.ts";
@@ -135,7 +141,32 @@ const ALT_GUION = [...NEGOCIO, ...NEGOCIO.map((w) => w.toUpperCase())].join("|")
 /** B1: un nombre de negocio (al empezar la palabra, en una joroba camelCase o tras `_`) recibe un número escrito. */
 const RE_B1 = new RegExp(`(?:\\b(?:${ALT_INICIO})|(?<=[a-z0-9])(?:${ALT_JOROBA})|(?<=_)(?:${ALT_GUION}))\\w*\\s*[:=]\\s*-?\\d`, "g");
 
-const ES_CSS_VALOR = /^\s*(?:calc|var|color-mix|translate|rotate|scale|repeat|minmax|linear-gradient|radial-gradient)\(|^[\d.\s%a-z()+\-*/,#]*$/;
+/** D3: los 148 nombres de color de CSS (sin `transparent` ni `currentColor`, que no son un color escrito). */
+const NOMBRES_DE_COLOR = ("aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet brown burlywood cadetblue chartreuse " +
+  "chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgreen darkgrey darkkhaki darkmagenta darkolivegreen " +
+  "darkorange darkorchid darkred darksalmon darkseagreen darkslateblue darkslategray darkslategrey darkturquoise darkviolet deeppink deepskyblue dimgray dimgrey " +
+  "dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite gold goldenrod gray green greenyellow grey honeydew hotpink indianred indigo ivory " +
+  "khaki lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan lightgoldenrodyellow lightgray lightgreen lightgrey lightpink lightsalmon " +
+  "lightseagreen lightskyblue lightslategray lightslategrey lightsteelblue lightyellow lime limegreen linen magenta maroon mediumaquamarine mediumblue " +
+  "mediumorchid mediumpurple mediumseagreen mediumslateblue mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream mistyrose moccasin " +
+  "navajowhite navy oldlace olive olivedrab orange orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum " +
+  "powderblue purple rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna silver skyblue slateblue slategray slategrey " +
+  "snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white whitesmoke yellow yellowgreen").split(" ");
+/**
+ * D3: un hex; una función de color (rgb, hsl, hwb, oklch, oklab, lab, lch, color()); un NOMBRE de color como valor de
+ * cualquier propiedad de color (también las abreviadas: `border: 1px solid black`, `outline`, las sombras, y las de
+ * React en camelCase: `borderColor: "white"`); o la paleta de Tailwind.
+ */
+const RE_D3 = new RegExp(
+  String.raw`(?<![\w&/])#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\b(?![\w-])` +
+    String.raw`|\b(?:rgba?|hsla?|hwb|oklch|oklab|lab|lch)\(|(?<![\w.-])color\(` +
+    String.raw`|(?:fill|stroke|stop-color|flood-color|lighting-color|(?<![\w-])color|background(?:-color)?|border(?:-[a-z]+){0,3}|outline(?:-color)?|box-shadow|text-shadow|text-decoration(?:-color)?|caret-color|accent-color|column-rule(?:-color)?|[a-z]+Color|boxShadow|textShadow)` +
+    String.raw`\s*[:=]\s*\{?\s*["'${"`"}]?(?:[^;}\n"'${"`"}<>]*?[\s,(])?(?<![\w-])(?:${NOMBRES_DE_COLOR.join("|")})(?![\w-])` +
+    String.raw`|\b(?:bg|text|border|ring|fill|stroke|from|via|to|outline|decoration|divide|shadow|accent|caret|placeholder)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3}\b|-\[#`,
+  "i"
+);
+
+const ES_CSS_VALOR =/^\s*(?:calc|var|color-mix|translate|rotate|scale|repeat|minmax|linear-gradient|radial-gradient)\(|^[\d.\s%a-z()+\-*/,#]*$/;
 
 /**
  * `sobre`: "limpio" (código sin comentarios) o "visible" (cadenas y texto JSX).
@@ -143,20 +174,29 @@ const ES_CSS_VALOR = /^\s*(?:calc|var|color-mix|translate|rotate|scale|repeat|mi
  */
 const REGLAS = [
   // A · no escribe
-  { id: "A1", que: "no escribe en la base", sobre: "limpio", re: /\.(insert|update|upsert|delete|rpc)\s*\(/, malo: 'service.from("x").insert({ a: 1 })', bueno: 'service.from("x").select("a")' },
+  // A1 ve también el acceso con corchetes (`["update"]`) y cualquier acceso calculado tras `.from(...)` (`[OP]`).
+  { id: "A1", que: "no escribe en la base", sobre: "limpio", re: /\.(insert|update|upsert|delete|rpc)\s*\(|\[\s*["'`](?:insert|update|upsert|delete|rpc)["'`]\s*\]|(?<!\bArray)\.from\([^()]*\)\s*\[/, malo: 'service.from("x").insert({ a: 1 })', bueno: 'service.from("x").select("a"); const p = filas[0];' },
   { id: "A2", que: "no escribe en Storage", sobre: "limpio", re: /\.storage\b[\s\S]{0,160}?\.(upload|remove|move|copy)\s*\(|createSignedUploadUrl\s*\(/, malo: 'service.storage.from("b").upload(p, f)', bueno: 'service.storage.from("b").getPublicUrl(p)' },
   { id: "A3", que: "no hace fetch (la lista de hosts empieza vacía en F2)", sobre: "limpio", re: /\bfetch\s*\(/, malo: 'await fetch("https://x.invalid")', bueno: "await leerTablero()" },
   { id: "A4", que: "no emite eventos de integración", sobre: "limpio", re: /\bemitEvent\b/, malo: 'import { emitEvent } from "@/lib/integraciones/emit";', bueno: 'import { leerHechos } from "./hechos";' },
-  { id: "A5", que: "no importa acciones de otra consola", sobre: "limpio", re: /from\s+["']@\/app\/(?:bcp|ecp|ocp|lcp)\/[^"']*["']|from\s+["'][^"']*(?:Actions|\/actions)["']/, malo: 'import { x } from "@/app/ocp/(app)/stockActions";', bueno: 'import "@/app/bcp/tailwind.css";' },
+  // A5 ve también la importación dinámica: `await import("@/app/bcp/…")` es tan importación como la estática.
+  { id: "A5", que: "no importa acciones de otra consola", sobre: "limpio", re: /(?:from\s+|import\(\s*)["']@\/app\/(?:bcp|ecp|ocp|lcp)\/[^"']*["']|(?:from\s+|import\(\s*)["'][^"']*(?:Actions|\/actions)["']/, malo: 'import { x } from "@/app/ocp/(app)/stockActions";', bueno: 'import "@/app/bcp/tailwind.css";' },
   { id: "A6", que: "no usa el cliente del navegador", sobre: "limpio", re: /@\/lib\/supabase\/client/, malo: 'import { createClient } from "@/lib/supabase/client";', bueno: 'import { createServiceRoleClient } from "@/lib/supabase/server";' },
-  { id: "A7", que: "no tiene Server Actions (F2 es de solo lectura)", sobre: "limpio", re: /^\s*["']use server["']/m, malo: '"use server";\nexport async function x() {}', bueno: '"use client";\nexport function x() {}' },
+  // A7: la directiva al empezar una línea, y también tras `{` o `;` (una acción escrita en una sola línea).
+  { id: "A7", que: "no tiene Server Actions (F2 es de solo lectura)", sobre: "limpio", re: /(?:^|[{;])\s*["']use server["']/m, malo: 'export async function zz() { "use server"; return 1; }', bueno: '"use client";\nexport function x() {}' },
   { id: "A8", que: "no habla con Notion (F3 lo traerá por su dueño)", sobre: "limpio", re: /@notionhq\/client|api\.notion\.com|notion\.so\b|notion\.com\/|process\.env\.NOTION/, malo: 'const u = "https://api.notion.com/v1";', bueno: 'const u = "/ecp/automatizaciones";' },
   { id: "A9", que: "nunca select(\"*\") ni select() vacío", sobre: "limpio", re: /\.select\(\s*(?:["'`]\*["'`])?\s*\)/, malo: 'service.from("lots").select("*")', bueno: 'service.from("lots").select("stage")' },
 
   // B · nada de negocio ni datos reales
   // La demostración es el ÚNICO archivo con cifras escritas, todas inventadas (H7 vigila que lo sean).
   { id: "B1", que: "ninguna cifra de negocio escrita", sobre: "limpio", permitidos: ["src/lib/os/demo/datos.ts"], re: RE_B1, malo: "const precioMinimo = 12000; const x = { kgPorSaco: 70 }; const MAX_PVC = 3;", bueno: "const ancho = 860; const draw = 1; const totalCola = (k) => k; const subtotal = 3;" },
-  { id: "B2", que: "ningún importe ni porcentaje escrito en un texto", sobre: "visible", hechos: false, filtro: (t) => !ES_CSS_VALOR.test(t), re: /(?:US\$|COP|€|\$)\s?\d|\d+(?:[.,]\d+)?\s?%/, malo: 'const t = "Margen del 25 % sobre US$ 3";', bueno: 'const w = "100%"; const t = "Sin datos";' },
+  // B2: la moneda delante («US$ 3») o detrás («12.000 COP»), los kilos, cargas y sacos escritos, y los porcentajes.
+  // El filtro salta los valores de CSS («100%», «calc(…)»), que son minúsculas y cifras; un peso escrito en minúsculas
+  // («70 kg») también lo parece, así que no se salta.
+  { id: "B2", que: "ningún importe, peso ni porcentaje escrito en un texto", sobre: "visible", hechos: false,
+    filtro: (t) => !ES_CSS_VALOR.test(t) || /\d\s?(?:kg|kilos?|cargas?|sacos?)(?![\p{L}\d])/u.test(t),
+    re: /(?:US\$|COP|USD|EUR|€|\$)\s?\d|\d[\d.,]*\s?(?:US\$|COP|USD|EUR|€|kg|kilos?|cargas?|sacos?)(?![\p{L}\d])|\d+(?:[.,]\d+)?\s?%/u,
+    malo: 'const t = "Margen del 25 % sobre US$ 3"; const u = "Precio 12.000 COP la carga"; const v = "70 kg";', bueno: 'const w = "100%"; const t = "Sin datos"; const k = "Kilos por recibir";' },
   { id: "B3", que: "los grados no se redefinen", sobre: "limpio", re: /\[\s*["']black["']\s*,\s*["']red["']|\bBANDAS_PUNTOS\b|\bGRADO_HEX\b|from\s+["']@\/lib\/grados\/escala["']/, malo: 'const g = ["black", "red", "blue"];', bueno: 'import { GRADOS } from "@/lib/grados/definicion";' },
   { id: "B4", que: "ninguna referencia real (lote hex o base32, CF, COT, TAR, OBJ, HIT)", sobre: "limpio", re: /CTC-L-(?:[0-9A-F]{8}|[0-9A-HJKMNP-TV-Z]{8})(?![0-9A-Z])|\bCF-\d{4}-\d{4}\b|\bCOT-\d|\bTAR-\d+|\bOBJ-\d+|\bHIT-\d+/, malo: 'const r = "CTC-L-3FA9C21B"; const s = "CTC-L-7KQ2M9XZ"; const o = "OBJ-10";', bueno: 'const r = "CTC-L-EJEMPLO1"; const o = "OBJ-EJ-1";' },
   { id: "B5", que: "ningún correo (salvo @ejemplo.invalid)", sobre: "limpio", re: /[A-Za-z0-9._%+-]+@(?!ejemplo\.invalid\b)[A-Za-z0-9-]+\.[A-Za-z][A-Za-z.]+/, malo: 'const c = "alguien@ctcexport.com";', bueno: 'const c = "ana@ejemplo.invalid"; import x from "@/lib/x";' },
@@ -169,9 +209,9 @@ const REGLAS = [
   { id: "C5", que: "solo Cifra formatea números", sobre: "limpio", hechos: false, permitidos: ["src/components/os/Cifra.tsx", "src/lib/os/haciendaArte.ts"], re: /\.toLocaleString\(|Intl\.NumberFormat|\.toFixed\(/, malo: "const s = n.toLocaleString(\"es-CO\");", bueno: "const s = <Cifra medida={m} />;" },
 
   // D · colores
-  { id: "D3", que: "ningún color escrito (hex, rgb, hsl, oklch, lab, nombres, paleta Tailwind)", sobre: "limpio",
-    re: /(?<![\w&/])#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\b(?![\w-])|\b(?:rgba?|hsla?|oklch|oklab|lab|lch)\(|(?:fill|stroke|stop-color|(?<![\w-])color|background(?:-color)?)\s*[:=]\s*["']?(?:white|black|red|green|blue|yellow|orange|purple|gray|grey|pink|brown)\b|\b(?:bg|text|border|ring|fill|stroke|from|via|to|outline|decoration|divide|shadow|accent|caret|placeholder)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3}\b|-\[#/,
-    malo: 'const s = { fill: "#A9512F", color: "white" }; const t = "rgba(0,0,0,.05)"; const c = "bg-red-500";', bueno: 'const s = { fill: "var(--os-teja)" }; const h = href="#contenido";' },
+  { id: "D3", que: "ningún color escrito (hex, rgb, hsl, hwb, oklch, lab, color(), los 148 nombres de CSS, paleta Tailwind)", sobre: "limpio",
+    re: RE_D3,
+    malo: 'const s = { fill: "#A9512F", color: "white" }; const t = "rgba(0,0,0,.05)"; const c = "bg-red-500";', bueno: 'const s = { fill: "var(--os-teja)", stroke: "currentColor" }; const h = href="#contenido"; const b = { border: "1px solid var(--line)" };' },
   { id: "D6", que: "--accent nunca es color de texto (1,4:1)", sobre: "limpio", re: /(?<![\w-])color\s*:\s*["']?var\(--accent\)|text-\[var\(--accent\)\]/, malo: ".x{color:var(--accent)}", bueno: ".x{background-color:var(--accent);color:var(--ink)}" },
 
   // E · fuentes
@@ -249,6 +289,24 @@ for (const w of PALABRAS) {
   check(`autoprueba · G1 «${w.p}» calla con «${w.bueno}»`, hallarPalabras(muestra(`const t = "${w.bueno}";`)).length === 0);
 }
 check("autoprueba · B1 caza las tres formas (inicio, joroba, _)", hallar(REGLAS.find((r) => r.id === "B1"), muestra("const kg = 5; const porKg: 3; const MAX_PVC = 2;")).length === 3);
+{
+  const regla = (id) => REGLAS.find((r) => r.id === id);
+  const salta = (id, txt) => hallar(regla(id), muestra(txt)).length > 0;
+  check("autoprueba · A1 caza la escritura con corchetes y con un acceso calculado tras .from()",
+    salta("A1", 'service.from("lots")["update"]({ a: 1 })') && salta("A1", 'const OP = "delete"; service.from("lots")[OP]()') && !salta("A1", "const x = Array.from(m)[0];"));
+  check("autoprueba · A5 caza una acción importada con import() dinámico",
+    salta("A5", 'const m = await import("@/app/bcp/(app)/usuariosActions");') && salta("A5", 'await import("../stockActions")') && !salta("A5", 'await import("./Hoja")'));
+  check("autoprueba · A7 caza la directiva en su línea y en una acción de una línea",
+    salta("A7", '"use server";\nexport async function x() {}') && salta("A7", 'async function z() {\n  "use server";\n}') && salta("A7", 'export async function zz() { "use server"; return 1; }'));
+  check("autoprueba · B2 caza la moneda detrás del número, los kilos y las cargas",
+    salta("B2", 'const t = "Precio 12.000 COP la carga";') && salta("B2", 'const t = "3 USD";') && salta("B2", 'const t = "70 kg por saco";') && salta("B2", 'const t = "2 cargas";') && !salta("B2", 'const t = "Kilos por recibir";'));
+  const d3 = ['.zz{border:1px solid black}', '.zz{color:crimson}', '.zz{background:hwb(10 20% 30%)}', '.zz{outline:2px solid red}', '.zz{box-shadow:0 0 0 1px black}',
+    'const s = { borderColor: "white" };', '<path fill="tomato" />', '.zz{fill:color(display-p3 1 0 0)}'];
+  const d3Mudas = d3.filter((t) => !salta("D3", t));
+  check("autoprueba · D3 caza las abreviadas, los nombres de CSS, hwb(), color() y las propiedades en camelCase", d3Mudas.length === 0, d3Mudas.join(" | "));
+  check("autoprueba · D3 calla con los tokens, currentColor, transparent y color-mix",
+    !salta("D3", '.zz{border:1px solid var(--line);outline:none;background:color-mix(in srgb, var(--red) 14%, var(--card));fill:transparent;stroke:currentColor}'));
+}
 check("autoprueba · los comentarios no cuentan (un comentario puede nombrar lo prohibido)", hallar(REGLAS.find((r) => r.id === "A1"), muestra("// .insert( en un comentario\n/* .delete( */ const x = 1;")).length === 0);
 check("autoprueba · una URL dentro de una cadena no es un comentario", quitarComentarios('const u = "https://x.invalid"; // fin').includes("https://x.invalid"));
 check("autoprueba · quitar comentarios conserva las líneas", quitarComentarios("a\n/* b\nc */\nd").split("\n").length === 4);
@@ -322,6 +380,10 @@ const TABLAS_DE_CONTROL = ["stock_partidas"];
 const TABLAS_PERMITIDAS = new Set([...TABLAS_DE_FUENTES, ...TABLAS_DE_HECHOS, ...TABLAS_DE_CONTROL, "platform_settings"]);
 function problemasDeTablas(limpio) {
   const p = [];
+  // Una tabla en una variable, una plantilla o una expresión se saltaría la lista y la de prohibidas: solo literales.
+  for (const m of limpio.matchAll(/(?<!\bArray)\.from\((?!\s*["'][a-z_0-9]+["']\s*\))\s*([^)]{0,40})/g)) {
+    p.push(`.from() sin una tabla escrita como literal: «${m[1].trim()}» (el guardián solo puede vigilar nombres literales)`);
+  }
   for (const m of limpio.matchAll(/\.from\(\s*["']([a-z_0-9]+)["']\s*\)/g)) {
     const t = m[1];
     if (TABLAS_PROHIBIDAS.test(t)) p.push(`tabla prohibida «${t}»`);
@@ -340,6 +402,9 @@ check("autoprueba · A9b salta con una tabla prohibida", problemasDeTablas('serv
 check("autoprueba · A9b salta con platform_settings por otra llave", problemasDeTablas('service.from("platform_settings").select("value").eq("key", "triage_catalogo")').length > 0);
 check("autoprueba · A9b salta con una tabla de control leída en filas", problemasDeTablas('service.from("stock_partidas").select("codigo")').length > 0);
 check("autoprueba · A9b calla con una tabla de control contada", problemasDeTablas('service.from("stock_partidas").select("id", { count: "exact", head: true })').length === 0);
+check("autoprueba · A9b salta con una tabla en una variable o en una plantilla",
+  problemasDeTablas('const TAB = "leads"; service.from(TAB).select("id", { count: "exact", head: true })').length > 0 && problemasDeTablas("service.from(`leads`).select(\"id\")").length > 0);
+check("autoprueba · A9b no confunde Array.from con una tabla", problemasDeTablas("const xs = Array.from({ length: 3 }, (_, i) => i);").length === 0);
 check("autoprueba · A9b calla con lo declarado", problemasDeTablas('service.from("lots").select("stage"); service.from("platform_settings").select("value").eq("key", CLAVE_MODULOS_OS).maybeSingle()').length === 0);
 for (const a of codigo.filter((x) => x.ruta.startsWith("src/lib/os/"))) for (const p of problemasDeTablas(a.limpio)) check(`A9 · ${p}`, false, a.ruta);
 check("A9 · src/lib/os lee solo tablas declaradas", true);
@@ -452,12 +517,29 @@ function problemasDeImports(ruta, limpio) {
     if (spec.startsWith(".")) continue;
     if (!soloTipo && !PAQUETES_PERMITIDOS.has(spec)) p.push(`paquete no declarado: ${spec}`);
   }
+  // La importación dinámica trae el módulo ENTERO: solo vale para lo del OS, lo relativo de dentro, un módulo de la
+  // plataforma declarado entero ("*"), un componente o parte de la app declarados, o un paquete declarado. Un
+  // `import()` con algo que no es una cadena escrita no se puede vigilar: falla siempre.
+  for (const m of limpio.matchAll(/\bimport\(\s*(?:["']([^"']+)["']\s*\)|([^)]{0,40}))/g)) {
+    if (m[1] === undefined) { p.push(`import() sin una ruta escrita como literal: «${(m[2] ?? "").trim()}»`); continue; }
+    const spec = especificador(ruta, m[1]);
+    if (spec.startsWith("@/lib/os/") || spec.startsWith("@/components/os/") || spec.startsWith("@/app/os/") || spec.startsWith(".")) continue;
+    if (spec.startsWith("@/lib/")) { if (IMPORTS_PERMITIDOS[spec] !== "*") p.push(`import() dinámico de ${spec}: traería el módulo entero (impórtelo por nombre, declarado)`); continue; }
+    if (spec.startsWith("@/components/")) { if (!COMPONENTES_PERMITIDOS.some((x) => x.test(spec))) p.push(`componente no declarado (import()): ${spec}`); continue; }
+    if (spec.startsWith("@/app/")) { if (!APP_PERMITIDOS.some((x) => x.test(spec))) p.push(`importa de otra parte de la app (import()): ${spec}`); continue; }
+    if (spec.startsWith("@/") || spec.startsWith("src/")) { p.push(`importación dinámica no declarada: ${spec}`); continue; }
+    if (!PAQUETES_PERMITIDOS.has(spec)) p.push(`paquete no declarado (import()): ${spec}`);
+  }
   return p;
 }
 check("autoprueba · A10 salta con una función que escribe de un módulo de lectura", problemasDeImports("src/lib/os/x.ts", 'import { aprobarCorreccion } from "@/lib/pvc/vigilancia";').length > 0);
 check("autoprueba · A10 salta con un módulo no declarado", problemasDeImports("src/lib/os/x.ts", 'import { cargarStock } from "@/lib/stock/servidor";').length > 0);
 check("autoprueba · A10 salta con un componente no declarado", problemasDeImports("src/app/os/x.tsx", 'import { PanelTasks } from "@/components/panel/PanelTasks";').length > 0);
 check("autoprueba · A10 salta con un relativo que sale del OS", problemasDeImports("src/lib/os/x.ts", 'import { marcar } from "../panel/tareasActions";').length > 0);
+check("autoprueba · A10 salta con un import() dinámico de una acción de otra consola", problemasDeImports("src/lib/os/x.ts", 'const m = await import("@/app/bcp/(app)/usuariosActions");').length > 0);
+check("autoprueba · A10 salta con un import() dinámico de un módulo de lectura (lo traería entero)", problemasDeImports("src/lib/os/x.ts", 'const m = await import("@/lib/pvc/vigilancia");').length > 0);
+check("autoprueba · A10 salta con un import() sin ruta literal", problemasDeImports("src/lib/os/x.ts", "const m = await import(ruta);").length > 0);
+check("autoprueba · A10 calla con un import() dinámico de dentro del OS", problemasDeImports("src/components/os/x.tsx", 'const H = await import("./vistas/Hacienda"); const F = await import("@/lib/os/fuentes");').length === 0);
 check("autoprueba · A10 calla con lecturas y tipos", problemasDeImports("src/lib/os/x.ts", 'import { propuestasPendientes, type PropuestaDeCorreccion } from "@/lib/pvc/vigilancia";\nimport type { StockCargado } from "@/lib/stock/servidor";\nimport { FUENTES } from "./fuentes";').length === 0);
 for (const a of codigo.filter((x) => !x.css)) for (const p of problemasDeImports(a.ruta, a.limpio)) check(`A10 · ${p}`, false, a.ruta);
 check("A10 · el OS importa solo lo declarado (lecturas, puros, su chrome)", true);
@@ -802,7 +884,20 @@ if (existe("src/lib/os/demo/datos.ts")) {
   check("H6 · demoPermitido exige OS_DEMO=1 y no producción", /OS_DEMO\s*===\s*["']1["']/.test(perm) && /VERCEL_ENV\s*!==\s*["']production["']/.test(perm));
 }
 
-// H8 · las cuatro listas de consolas, juntas
+// H8 · las cuatro listas de consolas, juntas: CONSOLES, CONSOLE_ORDER, ConsoleGlyph y CONSOLAS_INVITABLES (la del
+// formulario de invitación, que deja FUERA a la OS hasta que el owner decida: decisión 21 del charter ctcx-os y
+// Pendientes de `consolas`). Cuando el owner decida, esta parte de H8 se cambia con su decisión, no antes.
+{
+  const invitar = quitarComentarios(leer("src/app/bcp/(app)/usuarios/UsuariosClient.tsx"));
+  const acciones = quitarComentarios(leer("src/app/bcp/(app)/usuariosActions.ts"));
+  check("H8 · la OS NO está en CONSOLAS_INVITABLES (decisión pendiente del owner)", !CONSOLAS_INVITABLES.includes("os"));
+  check("H8 · CONSOLAS_INVITABLES es CONSOLE_ORDER sin la OS (ni una consola de menos)",
+    CONSOLAS_INVITABLES.join(",") === CONSOLE_ORDER.filter((k) => k !== "os").join(","), CONSOLAS_INVITABLES.join(","));
+  check("H8 · sanitizeConsoles solo deja pasar CONSOLAS_INVITABLES", /function\s+sanitizeConsoles[\s\S]{0,400}?for\s*\(\s*const\s+\w+\s+of\s+CONSOLAS_INVITABLES\s*\)/.test(acciones));
+  check("H8 · el formulario de invitación (EMPTY_LEVELS, hasAnyGrant y las filas) lee CONSOLAS_INVITABLES",
+    /EMPTY_LEVELS\s*=\s*Object\.fromEntries\(\s*CONSOLAS_INVITABLES\.map/.test(invitar) && /hasAnyGrant\s*=\s*CONSOLAS_INVITABLES\.some\(/.test(invitar)
+      && /CONSOLAS_INVITABLES\.map\(\s*\(k\)\s*=>\s*\(\s*<div[^>]*className=\{styles\.grantRow\}/.test(invitar) && !/CONSOLE_ORDER\.map\(\s*\(k\)\s*=>\s*\(\s*<div[^>]*className=\{styles\.grantRow\}/.test(invitar));
+}
 {
   const glifo = leer("src/components/panel/ConsoleGlyph.tsx");
   for (const k of CONSOLE_ORDER) {
@@ -832,6 +927,133 @@ for (const a of codigo.filter((x) => x.ruta.startsWith("src/lib/os/") && !PUROS.
     const malas = cadenasDe(a.limpio).filter((c) => c.comilla !== "`" && !/^(?:[a-z_]+|--[a-z0-9-]+|@\/[\w/]+|[MLZ ]?)$/.test(c.txt));
     check("H10 · haciendaArte.ts: ninguna cadena es texto (solo enums, tokens, importaciones y separadores de trazo)", malas.length === 0, malas.map((m) => m.txt).join(" | "));
   }
+}
+
+// H11 · en el dibujo de la Hacienda ningún rótulo pisa a otro (ni dentro del lienzo se sale), con el banderín de
+// vencidas más ancho posible en los hubs que pueden tenerlas. Mide con `rotuloArte`, lo mismo que pinta la vista.
+{
+  const conTareas = hubsConTareas();
+  const cajas = DOMINIOS.map((d) => ({ n: d.n, c: rotuloArte(d.id, `${d.n} · ${d.label.toUpperCase()}`, conTareas.has(d.id) ? "VENCIDAS 999" : null).caja }));
+  const pisa = (a, b, margen = 2) => Math.min(a[2], b[2]) - Math.max(a[0], b[0]) > -margen && Math.min(a[3], b[3]) - Math.max(a[1], b[1]) > -margen;
+  check("autoprueba · H11 ve dos cajas que se pisan y calla con dos apartadas", pisa([0, 0, 10, 10], [9, 5, 20, 15]) && !pisa([0, 0, 10, 10], [20, 0, 30, 10]));
+  let hall = 0;
+  for (let i = 0; i < cajas.length; i++) {
+    for (let j = i + 1; j < cajas.length; j++) {
+      if (pisa(cajas[i].c, cajas[j].c)) { hall++; check("H11 · ningún rótulo de la Hacienda pisa a otro", false, `hub ${cajas[i].n} y hub ${cajas[j].n}`); }
+    }
+    const [x0, , x1] = cajas[i].c;
+    check(`H11 · el rótulo del hub ${cajas[i].n} cabe a lo ancho del lienzo`, x0 >= 0 && x1 <= VIEWBOX.ancho, `${x0.toFixed(1)}–${x1.toFixed(1)}`);
+  }
+  if (hall === 0) check("H11 · ningún rótulo de la Hacienda pisa a otro", true);
+}
+
+// H12 · el Modelo Económico es SOLO DEL OWNER (decisión del owner, 5 nov: `/ecp/pvc` es `ownerOnly`). Para quien no es el owner el
+// servidor no llama a `leerPvc` y nada del PVC viaja al cliente. Se vigila: (a) `leerPvc` solo se nombra en su archivo y en el del
+// tablero leído; (b) cada llamada va en la rama verdadera de `isOwner ?` y le pasa `{ isOwner }` (su tipo pide `{ isOwner: true }`);
+// (c) su primera línea devuelve `PVC_SOLO_OWNER` sin el owner; (d) `isOwner` llega de la identidad del layout (`identidadDeLaOs`) a
+// cada `leerTablero(isOwner)`, nunca escrito a mano, y `leerTablero` solo se nombra en su definición y en las cuatro páginas de
+// `(app)` (un ayudante de src/lib/os o src/components/os no puede llamarlo con `true`); (e) las tareas `pvc:*` y los hechos del
+// PVC tampoco se cuentan sin el owner, y `cargarTareas` ni siquiera LEE el PVC sin el owner (`{ conPvc: op.conPvc }`).
+function llamadasAlPvcSinOwner(limpio) {
+  const malas = [];
+  const sinImports = limpio.replace(/import\s*(?:type\s*)?\{[^}]*\}\s*from\s*["'][^"']+["'];?/g, "");
+  for (const m of sinImports.matchAll(/\bleerPvc\b/g)) {
+    const antes = sinImports.slice(Math.max(0, m.index - 60), m.index);
+    const desde = sinImports.slice(m.index);
+    if (/export\s+async\s+function\s+$/.test(antes)) continue; // su definición
+    const bien = /isOwner\s*\?\s*$/.test(antes) && /^leerPvc\(\s*service\s*,\s*\{\s*isOwner\s*\}\s*\)/.test(desde);
+    if (!bien) malas.push(desde.slice(0, 50));
+  }
+  return malas;
+}
+check("autoprueba · H12 salta con una llamada sin la condición del owner",
+  llamadasAlPvcSinOwner("const x = await leerPvc(service, { isOwner: true });").length === 1
+  && llamadasAlPvcSinOwner("const p = isOwner ? leerPvc(service, { isOwner: true }) : y;").length === 1
+  && llamadasAlPvcSinOwner("const f = leerPvc; f(service);").length === 1
+  && llamadasAlPvcSinOwner("const p = esAdmin ? leerPvc(service, { isOwner }) : y;").length === 1);
+/** Cada mención de `leerTablero` (fuera de los imports) es la llamada `leerTablero(isOwner)`, con `isOwner` de `identidadDeLaOs`. */
+function tableroSinIdentidad(limpio) {
+  const sinImports = limpio.replace(/import\s*(?:type\s*)?\{[^}]*\}\s*from\s*["'][^"']+["'];?/g, "");
+  const usos = [...sinImports.matchAll(/\bleerTablero\b/g)];
+  const malas = usos.map((m) => sinImports.slice(m.index)).filter((d) => !/^leerTablero\(\s*isOwner\s*\)/.test(d)).map((d) => d.slice(0, 40));
+  if (usos.length && !sinImports.includes("const { isOwner } = await identidadDeLaOs();")) malas.push("isOwner no sale de identidadDeLaOs");
+  return malas;
+}
+check("autoprueba · H12 salta con un leerTablero(true) en un ayudante, pasado como valor o con un isOwner escrito a mano",
+  tableroSinIdentidad('import "server-only";\nimport { leerTablero } from "./tableroServidor";\nexport const tableroDeTodos = () => leerTablero(true);').length > 0
+  && tableroSinIdentidad("const { isOwner } = await identidadDeLaOs();\nconst f = leerTablero; f(true);").length > 0
+  && tableroSinIdentidad("const isOwner = true;\nconst t = await leerTablero(isOwner);").length > 0);
+check("autoprueba · H12 calla con la página buena",
+  tableroSinIdentidad('import { leerTablero } from "@/lib/os/tableroServidor";\nconst { isOwner } = await identidadDeLaOs();\nconst t = await leerTablero(isOwner);').length === 0);
+check("autoprueba · H12 calla con la llamada buena, el import y la definición",
+  llamadasAlPvcSinOwner("import {\n  leerHechosPorHub,\n  leerPvc,\n  leerSalud,\n} from \"./lectura\";\nconst p = isOwner ? leerPvc(service, { isOwner }) : Promise.resolve(PVC_SOLO_OWNER);\nexport async function leerPvc(service, quien) {}").length === 0);
+{
+  const conPvc = codigo.filter((a) => /\bleerPvc\b/.test(a.limpio)).map((a) => a.ruta).sort();
+  check("H12 · leerPvc solo se nombra en lectura.ts (su definición) y en tableroServidor.ts (su llamada)",
+    JSON.stringify(conPvc) === JSON.stringify(["src/lib/os/lectura.ts", "src/lib/os/tableroServidor.ts"]), conPvc.join(", "));
+  for (const a of codigo.filter((x) => /\bleerPvc\b/.test(x.limpio))) {
+    const malas = llamadasAlPvcSinOwner(a.limpio);
+    check(`H12 · ${a.ruta}: cada llamada a leerPvc va tras «isOwner ?» y le pasa { isOwner }`, malas.length === 0, malas.join(" | "));
+  }
+  const srv = quitarComentarios(leer("src/lib/os/tableroServidor.ts"));
+  check("H12 · tableroServidor.ts llama a leerPvc exactamente una vez", (srv.match(/\bleerPvc\(/g) ?? []).length === 1);
+  check("H12 · leerTablero recibe isOwner y, sin el owner, pone PVC_SOLO_OWNER (también si la lectura entera falla)",
+    /cache\(async \(isOwner: boolean\)/.test(srv) && /isOwner \? leerPvc\(service, \{ isOwner \}\) : Promise\.resolve\(PVC_SOLO_OWNER\)/.test(srv)
+    && /pvc: isOwner \? sin\("pvc"\) : PVC_SOLO_OWNER/.test(srv));
+  check("H12 · sin el owner tampoco se cuentan las tareas ni los hechos del PVC",
+    /leerTareasDeLaCasa\(service, \{ conPvc: isOwner \}\)/.test(srv) && /leerHechosPorHub\(\{ conPvc: isOwner \}\)/.test(srv));
+  const lec = quitarComentarios(leer("src/lib/os/lectura.ts"));
+  check("H12 · leerPvc pide { isOwner: true } y su primera línea devuelve PVC_SOLO_OWNER sin el owner",
+    /export async function leerPvc\(service: SupabaseClient, quien: \{ isOwner: true \}\)[^{]*\{\s*if \(quien\?\.isOwner !== true\) return PVC_SOLO_OWNER;/.test(lec));
+  check("H12 · leerTareasDeLaCasa y leerHechosPorHub descartan lo del PVC sin conPvc",
+    /tareas\.filter\(\(t\) => op\.conPvc \|\| !esTareaDelPvc\(t\.key\)\)/.test(lec) && /op\.conPvc \? r\.hechos : r\.hechos\.filter\(\(h\) => !esHechoDelPvc\(h\)\)/.test(lec));
+  const quien = existe("src/app/os/(app)/quienMira.ts") ? quitarComentarios(leer("src/app/os/(app)/quienMira.ts")) : "";
+  check("H12 · identidadDeLaOs es la compuerta de la OS, una vez por petición", /export const identidadDeLaOs = cache\(\(\) => requireConsoleAccess\("os"\)\)/.test(quien));
+  const lay = quitarComentarios(leer("src/app/os/(app)/layout.tsx"));
+  check("H12 · el layout de la OS pasa por identidadDeLaOs (la misma identidad que leen las páginas)", /const identity = await identidadDeLaOs\(\);/.test(lay) && !/requireConsoleAccess/.test(lay));
+  // En TODO el código de la OS (no solo src/app/os): un ayudante de src/lib/os o src/components/os que llamara a leerTablero(true)
+  // leería el PVC para cualquiera.
+  const DEF_TABLERO = "src/lib/os/tableroServidor.ts";
+  const PAGINAS_CON_TABLERO = ["src/app/os/(app)/page.tsx", "src/app/os/(app)/m/almacen/page.tsx", "src/app/os/(app)/m/hacienda/page.tsx", "src/app/os/(app)/m/taller/page.tsx"];
+  const conTablero = codigo.filter((a) => /\bleerTablero\b/.test(a.limpio)).map((a) => a.ruta).sort();
+  check("H12 · leerTablero solo se nombra en tableroServidor.ts (su definición) y en las cuatro páginas de (app)",
+    JSON.stringify(conTablero) === JSON.stringify([...PAGINAS_CON_TABLERO, DEF_TABLERO].sort()), conTablero.join(", "));
+  check("H12 · tableroServidor.ts nombra leerTablero solo en su definición",
+    (srv.match(/\bleerTablero\b/g) ?? []).length === 1 && /export const leerTablero = cache\(async \(isOwner: boolean\)/.test(srv));
+  for (const a of codigo.filter((x) => x.ruta !== DEF_TABLERO && /\bleerTablero\b/.test(x.limpio))) {
+    const malas = tableroSinIdentidad(a.limpio);
+    check(`H12 · ${a.ruta}: isOwner sale de identidadDeLaOs y cada leerTablero lo recibe tal cual`, malas.length === 0, malas.join(" | "));
+  }
+  const carga = quitarComentarios(leer("src/lib/panel/tareasCarga.ts"));
+  check("H12 · cargarTareas tiene la opción conPvc (por defecto true) y sin ella no lee el PVC",
+    /\{ conPvc = true \}: \{ conPvc\?: boolean \} = \{\}/.test(carga)
+    && /if \(conPvc\) \{\s*for \(const c of await propuestasPendientes\(service\)\)/.test(carga)
+    && (carga.match(/\bpropuestasPendientes\(/g) ?? []).length === 1 && (carga.match(/\bestadoDelAgente\(/g) ?? []).length === 1
+    && carga.indexOf("estadoDelAgente(service)") > carga.indexOf("if (conPvc) {"));
+  check("H12 · la OS le pasa a cargarTareas la condición del owner", /cargarTareas\(service, \{ conPvc: op\.conPvc \}\)/.test(lec));
+}
+
+// H13 · el OS abre en el mapa (rumbo del owner, 5 nov): Inicio pinta la MISMA Hacienda (no una copia) si su módulo está encendido,
+// y cada módulo que vive en un edificio se abre desde la hoja de ese edificio, según su interruptor.
+{
+  check("H13 · el registro: la Hacienda es el mapa (sin edificio); Almacén en el hub 2 y Taller en el hub 5",
+    MODULOS_OS.find((m) => m.clave === "hacienda")?.edificio === null
+    && MODULOS_OS.find((m) => m.clave === "almacen")?.edificio === "operacion_logistica"
+    && MODULOS_OS.find((m) => m.clave === "taller")?.edificio === "plataformas_it");
+  for (const m of MODULOS_OS) if (m.edificio !== null) check(`H13 · «${m.clave}»: su edificio es un hub del Mapa CTC`, DOMINIOS.some((d) => d.id === m.edificio));
+  const ini = quitarComentarios(leer("src/components/os/vistas/Inicio.tsx"));
+  check("H13 · Inicio pinta la Hacienda (portada) cuando su módulo está encendido, y las tarjetas si no",
+    /if \(tablero && modulos\.hacienda\.encendido\) return <InicioEnElMapa/.test(ini) && /<Hacienda tablero=\{tablero\} modulos=\{modulos\} base=\{base\} portada \/>/.test(ini) && /<InicioEnTarjetas/.test(ini));
+  check("H13 · si el mapa de la portada falla, Inicio vuelve a las tarjetas (su límite y su Suspense), no se cae entero",
+    /<SiElMapaFalla enSuLugar=\{tarjetas\}>\s*<Suspense fallback=\{tarjetas\}>\s*<ElMapaYLoDemas \{\.\.\.p\} \/>/.test(ini)
+    && /const tarjetas = <InicioEnTarjetas /.test(ini));
+  check("H13 · la portada conserva los avisos, «Copiar contexto para Tailor» y la lista de los módulos con su interruptor",
+    (ini.match(/<Avisos avisos=\{tablero\.avisos\} \/>/g) ?? []).length === 2 && (ini.match(/contextoParaTailor\(tablero\)/g) ?? []).length === 2 && /className=\{s\.modulosLista\}/.test(ini));
+  const hac = quitarComentarios(leer("src/components/os/vistas/Hacienda.tsx"));
+  check("H13 · la hoja de un edificio abre sus módulos solo si están encendidos; si no, dice por qué (las palabras de ModuloApagado)",
+    /MODULOS_OS\.filter\(\(m\) => m\.edificio === dominio\)/.test(hac) && /e\.encendido \?/.test(hac) && /porQueEstaApagado\(e\)/.test(hac));
+  const ruta = quitarComentarios(leer("src/app/os/(app)/m/hacienda/page.tsx"));
+  check("H13 · /os/m/hacienda sigue viva: la misma vista, con los módulos para sus hojas", /<Hacienda tablero=\{tablero\} modulos=\{modulos\} base="\/os\/m" \/>/.test(ruta));
 }
 
 // ── T · las reglas puras, con datos inventados ───────────────────────────────
@@ -904,6 +1126,7 @@ check("T · un hub con tareas posibles y ninguna dice cero", tb.edificios.comerc
 check("T · las tareas llevan la nota «cuenta cero si falla»", tb.edificios.origen.abiertas.notas?.includes("cuenta_cero_si_falla"));
 check("T · hechos: un hub sin hechos en un turno leído es cero de verdad", tb.edificios.origen.hechos.valor === 5 && tb.edificios.archivo.hechos.valor === 0);
 check("T · la salud de un hub es la peor de sus crons", tb.edificios.plataformas_it.salud.valor === "fallo" && tb.edificios.origen.salud.valor === null);
+check("T · un hub sin crons en una salud LEÍDA no lleva sinLectura («Sin crons», no «Sin datos»)", !tb.edificios.origen.salud.sinLectura && !tb.edificios.plataformas_it.salud.sinLectura);
 check("T · una lectura al tope de filas lo dice en cada cifra", tb.taller.cola.fallidos.notas?.includes("tope_de_filas") && tb.taller.cola.fallidos.valor === 1);
 check("T · automatizaciones por etapa: una cifra por etapa", tb.taller.automatizaciones.length === ETAPAS.length && tb.taller.automatizaciones.find((m) => m.clave === "activa")?.valor === 3);
 check("T · el registro sin conciliar lo dice el tablero (crítica 25)", tb.taller.registroConciliado === false);
@@ -933,6 +1156,9 @@ const todasLasCifras = (t) => [
 ];
 check("T · todo falla → ninguna cifra es cero: todas «Sin datos»", todasLasCifras(tm).every((m) => ("valor" in m ? m.valor === null : m.texto === null)));
 check("T · todo falla → ninguna salud inventada", tm.taller.crons.filas === null && Object.values(tm.edificios).every((e) => e.salud.valor === null));
+check("T · salud sin leer → cada hub lo dice (sinLectura: «Sin datos», nunca «Sin crons»)", Object.values(tm.edificios).every((e) => e.salud.sinLectura === true));
+check("T · el contexto para Tailor no confunde una salud sin leer con un hub sin crons",
+  contextoParaTailor(tm, "origen").includes("sin datos (la lectura falló)") && contextoParaTailor(tb, "origen").includes("salud de sus crons: sin crons."));
 const unaMal = armarTablero({ ...todoBien, stock: no("lectura_stock", ["franja_en_stock"]) });
 check("T · una lectura fallida apaga SOLO sus piezas", unaMal.avisos.length === 1 && unaMal.almacen.franja.every((m) => m.valor === null) && unaMal.edificios.operacion_logistica.abiertas.valor === 2);
 
@@ -966,6 +1192,37 @@ check("T · una lectura fallida apaga SOLO sus piezas", unaMal.avisos.length ===
   check("T · la demostración no da avisos ni «Sin datos» de lectura", TABLERO_DEMO.avisos.length === 0);
   check("T · la identidad de la demostración es inventada y no es el owner", /Ejemplo/.test(IDENTIDAD_DEMO.nombre) && IDENTIDAD_DEMO.isOwner === false);
   check("T · el contexto de la demostración se declara inventado", contextoParaTailor(TABLERO_DEMO).includes("DATOS INVENTADOS"));
+  // H12 en la demostración: quien mira no es el owner, así que el Modelo Económico dice «Solo el owner» y no trae nada suyo.
+  const pvcDemo = TABLERO_DEMO.edificios.comercial.piezas.filter((p) => p.pieza.startsWith("pvc_"));
+  check("T · H12 · la demostración (no owner) no lee el PVC: sus cuatro piezas dicen «Solo el owner», sin valor",
+    !IDENTIDAD_DEMO.isOwner && "soloOwner" in LECTURAS_DEMO.pvc && pvcDemo.length === 4
+    && pvcDemo.every((p) => p.notas?.includes("solo_owner") && ("valor" in p ? p.valor === null : p.texto === null)));
+}
+
+// H12 con datos inventados: el PVC solo del owner
+{
+  const CODIGO = "EJ-OWNER-9";
+  const conOwner = armarTablero({ ...todoBien, pvc: ok({ vigente: { codigo: CODIGO }, proxima: null, correccionesPropuestas: 2, borradorPorPublicar: true }, ["pvc_vigente"]) });
+  const sinOwner = armarTablero({ ...todoBien, pvc: PVC_SOLO_OWNER });
+  const pvcDe = (t) => t.edificios.comercial.piezas.filter((p) => p.pieza.startsWith("pvc_"));
+  check("T · H12 · con el owner, el PVC trae su código", pvcDe(conOwner).some((p) => p.texto === CODIGO) && !pvcDe(conOwner).some((p) => p.notas?.includes("solo_owner")));
+  check("T · H12 · sin el owner, las cuatro piezas del PVC dicen «Solo el owner» (nota solo_owner, sin valor)",
+    pvcDe(sinOwner).length === 4 && pvcDe(sinOwner).every((p) => p.notas?.includes("solo_owner") && ("valor" in p ? p.valor === null : p.texto === null)));
+  check("T · H12 · sin el owner no hay aviso (no es una lectura fallida) y el tablero sigue sacando todas las piezas",
+    sinOwner.avisos.length === 0 && piezasMuertas(sinOwner).length === 0 && armarTablero({ ...todoMal, pvc: PVC_SOLO_OWNER }).avisos.length === 6);
+  check("T · H12 · sin el owner el hub del PVC lo dice en sus tareas y sus hechos (nota sin_el_pvc), y solo ese hub",
+    [...hubsDelPvc()].join() === "comercial"
+    && sinOwner.edificios.comercial.abiertas.notas?.includes("sin_el_pvc") && sinOwner.edificios.comercial.hechos.notas?.includes("sin_el_pvc")
+    && Object.values(sinOwner.edificios).filter((e) => e.abiertas.notas?.includes("sin_el_pvc")).length === 1
+    && !conOwner.edificios.comercial.abiertas.notas?.includes("sin_el_pvc"));
+  check("T · H12 · el contexto para Tailor dice «solo el owner», nunca «sin datos» ni un cero, para el PVC",
+    contextoParaTailor(sinOwner, "comercial").includes("Edición vigente del Modelo Económico: solo el owner")
+    && contextoParaTailor(sinOwner, "comercial").includes("Correcciones por revisar: solo el owner"));
+  check("T · H12 · las tareas pvc:* son del PVC; las demás no", esTareaDelPvc("pvc:correccion:x") && esTareaDelPvc("pvc:edicion:x") && !esTareaDelPvc("lead:x") && !esTareaDelPvc("despacho:vencido:x"));
+  check("T · H12 · las tablas del PVC salen del catálogo de los hechos y un hecho suyo se reconoce",
+    TABLAS_DEL_PVC.size > 0 && [...TABLAS_DEL_PVC].every((t) => t.startsWith("pvc_"))
+    && esHechoDelPvc({ entidad: { tabla: [...TABLAS_DEL_PVC][0] } }) && !esHechoDelPvc({ entidad: { tabla: "lots" } }) && !esHechoDelPvc({ entidad: { tabla: null } }));
+  check("T · H12 · esPvcSoloOwner distingue la marca de una lectura", esPvcSoloOwner(PVC_SOLO_OWNER) && !esPvcSoloOwner(todoBien.pvc) && !esPvcSoloOwner(todoMal.pvc));
 }
 
 // La salud de los crons: la regla del tablero de Automatizaciones (crítica 7)

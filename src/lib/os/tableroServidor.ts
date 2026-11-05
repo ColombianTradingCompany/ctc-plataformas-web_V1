@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { armarTablero, type LecturasDelTablero, type Tablero } from "./tablero";
+import { PVC_SOLO_OWNER, armarTablero, type LecturasDelTablero, type Tablero } from "./tablero";
 import {
   PIEZAS_DEL_LECTOR,
   leerHechosPorHub,
@@ -23,21 +23,25 @@ import {
 // Las tareas van primero en la cadena de los tratos: de ellas salen los despachos
 // vencidos (`despacho:vencido:*` = `pendientesDelCircuito().sacosVencidos`), y así el stock
 // no se carga otra vez solo para contarlos (crítica 5). El resto corre en paralelo.
+//
+// `isOwner` llega de la identidad del layout (`identidadDeLaOs`, la misma lectura por petición).
+// El Modelo Económico es SOLO DEL OWNER: sin él, `leerPvc` no se llama (va `PVC_SOLO_OWNER`) y
+// las tareas y los hechos del PVC no se cuentan. `qa-os-check` H12 lo vigila.
 
-export const leerTablero = cache(async (): Promise<Tablero> => {
+export const leerTablero = cache(async (isOwner: boolean): Promise<Tablero> => {
   const leidoAt = new Date().toISOString();
   let lecturas: LecturasDelTablero;
   try {
     const service = createServiceRoleClient();
-    const tareasP = leerTareasDeLaCasa(service);
+    const tareasP = leerTareasDeLaCasa(service, { conPvc: isOwner });
     const tratosP = tareasP.then((t) => leerTratos(service, t.ok ? { sacosVencidos: t.valor.sacosVencidos } : {}));
     const [tareas, tratos, stock, pvc, salud, hechos, lotes] = await Promise.all([
       tareasP,
       tratosP,
       leerStockDelCircuito(service),
-      leerPvc(service),
+      isOwner ? leerPvc(service, { isOwner }) : Promise.resolve(PVC_SOLO_OWNER),
       leerSalud(service, new Date(leidoAt)),
-      leerHechosPorHub(),
+      leerHechosPorHub({ conPvc: isOwner }),
       leerLotesPorEtapa(service),
     ]);
     lecturas = {
@@ -57,7 +61,7 @@ export const leerTablero = cache(async (): Promise<Tablero> => {
       tareas: sin("tareas"),
       tratos: sin("tratos"),
       stock: sin("stock"),
-      pvc: sin("pvc"),
+      pvc: isOwner ? sin("pvc") : PVC_SOLO_OWNER,
       salud: sin("salud"),
       hechos: sin("hechos"),
       lotes: sin("lotes"),

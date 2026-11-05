@@ -1,14 +1,15 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Modal } from "@/components/Modal";
+import { MODULOS_OS, type ClaveDeModulo, type EstadoDeModulo } from "@/lib/os/modulos";
 import { DOMINIOS, type Dominio } from "@/lib/integraciones/dominios";
 import { FUENTES } from "@/lib/os/fuentes";
 import { contextoParaTailor, etiquetaDeClave, type Edificio, type Tablero } from "@/lib/os/tablero";
 import {
   CALLE,
   VIEWBOX,
-  anclaDelRotulo,
   anilloDe,
   arbolesArte,
   callesArte,
@@ -17,11 +18,13 @@ import {
   matasArte,
   ondasArte,
   profundidad,
+  rotuloArte,
   sueloArte,
   type Cara,
 } from "@/lib/os/haciendaArte";
 import { Cifra, Hora, RotuloLeido, SaludLeida, textoDeCifra } from "../Cifra";
 import { CopiarContexto } from "../CopiarContexto";
+import { porQueEstaApagado } from "../ModuloApagado";
 import { useMovimientoReducido } from "../identidad/useMovimientoReducido";
 import { Encabezado } from "./Encabezado";
 import s from "../os.module.css";
@@ -30,12 +33,19 @@ import s from "../os.module.css";
 // Los diez hubs del Mapa CTC como edificios de una finca (la geometría sale de `haciendaArte.ts`;
 // los colores, de `os-tokens.css`). Cada edificio es un BOTÓN con nombre (Enter o Espacio), con su
 // rótulo en mono y una ficha con sus tareas abiertas en el morado de la casa. La bandera roja con
-// la palabra «VENCIDAS» sale solo si las hay; la ficha punteada dice «Sin datos · llega con Notion
-// (F3)» en los hubs que la plataforma todavía no alimenta. El anillo punteado morado es la
-// selección y el foco del teclado.
+// la palabra «VENCIDAS» sale solo si las hay; en los hubs sin cifra (la plataforma todavía no los
+// alimenta, o su lectura falló) la ficha va punteada con una raya, y el texto del encabezado dice qué
+// significa (el dibujo no tiene sitio para «Sin datos»). El anillo punteado morado es la selección y
+// el foco del teclado. Los edificios reciben el foco en el orden en que se pintan (de atrás adelante);
+// el camino ordenado por número de hub es la lista de debajo.
 // En el teléfono el dibujo es una vista de conjunto y la lista de los diez hubs, debajo, es el
 // control (también es la alternativa para un lector de pantalla). Elegir un hub abre su hoja: sus
 // cifras, sus piezas con «Abrir» y «Copiar contexto para Tailor». Ningún edificio usa un color de grado.
+//
+// Desde el 5 nov la Hacienda es la PORTADA de la OS (rumbo del owner: el OS es un juego y abre en el
+// mapa). Cada módulo se abre desde SU edificio (`MODULOS_OS[].edificio`): la hoja del hub 2 ofrece
+// «Abrir Almacén» y la del hub 5 «Abrir Taller», cada una según su interruptor; apagado, la hoja lo
+// dice con las palabras de `ModuloApagado` y no enlaza. `portada` cambia solo el encabezado.
 
 /** La franja de arriba del lienzo queda vacía (el cielo de la rejilla): la vista no la enseña. */
 const RECORTE = 84;
@@ -51,6 +61,8 @@ const CAPAS: Capa[] = [
 ].sort((a, b) => a.z - b.z);
 
 const sinFuente = (e: Edificio) => !!e.abiertas.notas?.includes("sin_fuente_aun");
+/** Una salud sin valor: «Sin datos» si su lectura falló, «Sin crons» solo si se leyó y el hub no tiene ninguno. */
+const vacioDeSalud = (e: Edificio) => (e.salud.sinLectura ? "Sin datos" : "Sin crons");
 
 function resumenEnPalabras(e: Edificio): string {
   if (sinFuente(e)) return `${e.n} · ${e.label}: tareas sin datos, llegan con Notion (F3)`;
@@ -68,30 +80,28 @@ const Caras = ({ caras }: { caras: readonly Cara[] }) => (
 
 /** El rótulo de un hub en el dibujo: su número y nombre en mono, y la ficha con sus tareas abiertas. */
 function Rotulo({ e }: { e: Edificio }) {
-  const [x, y] = anclaDelRotulo(e.dominio);
   const texto = `${e.n} · ${e.label.toUpperCase()}`;
-  const ancho = texto.length * 6.6 + 16;
   const vacio = sinFuente(e) || e.abiertas.valor === null;
-  const izq = x - (ancho + 22) / 2;
-  // La bandera de las vencidas: un banderín rojo con su palabra, colgado del rótulo (el color nunca va solo). Va aquí y
-  // no en la cumbre del edificio porque allí el rótulo la tapaba.
+  // La bandera de las vencidas: un banderín rojo con su icono y su palabra, colgado del rótulo (el color nunca va solo).
+  // Va aquí y no en la cumbre del edificio porque allí el rótulo la tapaba.
   const vencidas = e.vencidas.valor ? `VENCIDAS ${textoDeCifra(e.vencidas)}` : null;
-  const bx = izq + ancho + 24;
-  const banderin = vencidas ? vencidas.length * 6 + 18 : 0;
+  const { y, ancho, izq, chipX, bx, banderin, icono } = rotuloArte(e.dominio, texto, vencidas);
   return (
     <g>
       <rect x={izq} y={y - 10} width={ancho} height={20} rx={10} className={s.rotuloFondo} />
       <text x={izq + 8} y={y + 3.5} className={s.rotuloTexto}>
         {texto}
       </text>
-      <circle cx={izq + ancho + 10} cy={y} r={11} className={vacio ? s.chipVacio : s.chip} />
-      <text x={izq + ancho + 10} y={y + 3.6} textAnchor="middle" className={`${s.chipTexto}${vacio ? ` ${s.chipTextoVacio}` : ""}`}>
+      <circle cx={chipX} cy={y} r={11} className={vacio ? s.chipVacio : s.chip} />
+      <text x={chipX} y={y + 3.6} textAnchor="middle" className={`${s.chipTexto}${vacio ? ` ${s.chipTextoVacio}` : ""}`}>
         {textoDeCifra(e.abiertas)}
       </text>
       {vencidas && (
         <>
           <path d={`M${bx} ${y - 9}h${banderin}l-7 9 7 9h${-banderin}Z`} className={s.bandera} />
-          <text x={bx + 5} y={y + 3.2} className={s.banderaTexto}>
+          <path d={`M${bx + 9} ${y - 5}l4.5 8h-9Z`} className={s.banderaIcono} />
+          <path d={`M${bx + 9} ${y - 2.2}v2.6`} className={s.banderaIconoMarca} />
+          <text x={bx + 5 + icono} y={y + 3.2} className={s.banderaTexto}>
             {vencidas}
           </text>
         </>
@@ -101,18 +111,96 @@ function Rotulo({ e }: { e: Edificio }) {
 }
 
 
-function Hoja({ t, e }: { t: Tablero; e: Edificio }) {
+type Modulos = Record<ClaveDeModulo, EstadoDeModulo>;
+export type BaseDeModulos = "/os/m" | "/os/demo";
+
+/**
+ * Dónde se abre cada módulo encendido, en palabras y desde el registro (`MODULOS_OS[].edificio` → hub de `DOMINIOS`):
+ * «el módulo Almacén se abre desde el hub 2 y el módulo Taller, desde el hub 5». Un módulo apagado no se promete; sin
+ * ninguno encendido en un edificio, la frase queda vacía.
+ */
+function dondeSeAbren(modulos: Modulos): string {
+  const frases = MODULOS_OS.flatMap((m) => {
+    const hub = m.edificio && modulos[m.clave].encendido ? DOMINIOS.find((d) => d.id === m.edificio) : undefined;
+    return hub ? [{ titulo: m.titulo, n: hub.n }] : [];
+  }).map((x, i) => (i === 0 ? `el módulo ${x.titulo} se abre desde el hub ${x.n}` : `el módulo ${x.titulo}, desde el hub ${x.n}`));
+  if (frases.length < 2) return frases.join("");
+  return `${frases.slice(0, -1).join(", ")} y ${frases[frases.length - 1]}`;
+}
+
+/** Los módulos que se abren desde el edificio de un hub: «Abrir <módulo>» si está encendido; si no, por qué está apagado. */
+function ModulosDelEdificio({ dominio, modulos, base }: { dominio: Dominio; modulos: Modulos; base: BaseDeModulos }) {
+  const suyos = MODULOS_OS.filter((m) => m.edificio === dominio);
+  if (!suyos.length) return null;
   return (
-    <div className={s.hoja}>
+    <div className={s.edificioModulos}>
+      <p className={s.subtitulo}>Se abre desde este edificio</p>
+      {suyos.map((m) => {
+        const e = modulos[m.clave];
+        return e.encendido ? (
+          <div key={m.clave} className={s.acciones}>
+            <Link href={`${base}/${m.clave}`} className="btn btn-sm btn-solid">
+              Abrir {m.titulo}
+            </Link>
+          </div>
+        ) : (
+          <p key={m.clave} role="status" className={s.edificioApagado}>
+            <strong>«{m.titulo}» está apagado.</strong> {porQueEstaApagado(e)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Lo que recibe el foco con Tab dentro de la hoja (el «Cerrar» del modal incluido), en orden y visible. */
+const ENFOCABLES = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function Hoja({ t, e, modulos, base }: { t: Tablero; e: Edificio; modulos: Modulos; base: BaseDeModulos }) {
+  // Al abrirse, el foco entra en la hoja (su título): el modal de la casa no lo mueve, y sin esto el siguiente Tab
+  // seguiría por los edificios de detrás del velo. Al cerrar, `cerrar` lo devuelve a quien la abrió.
+  const titulo = useRef<HTMLHeadingElement>(null);
+  const hoja = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    titulo.current?.focus({ preventScroll: true });
+  }, [e.dominio]);
+  // El foco no sale de la hoja mientras está abierta (es un diálogo modal): Tab desde el último control vuelve al primero
+  // (el «Cerrar»), y Mayús+Tab desde el primero va al último. El modal de la casa solo atiende Escape; esto vive aquí, en la
+  // OS, para no repintar las otras consolas (el arreglo del modal compartido es de la decisión 20).
+  useEffect(() => {
+    const dialogo = hoja.current?.closest<HTMLElement>('[role="dialog"]');
+    if (!dialogo) return;
+    const alTab = (ev: KeyboardEvent) => {
+      if (ev.key !== "Tab") return;
+      const lista = [...dialogo.querySelectorAll<HTMLElement>(ENFOCABLES)].filter((el) => el.getClientRects().length > 0);
+      if (!lista.length) return;
+      const primero = lista[0];
+      const ultimo = lista[lista.length - 1];
+      const activo = document.activeElement;
+      const dentro = activo instanceof Node && dialogo.contains(activo);
+      if (ev.shiftKey && (activo === primero || !dentro)) {
+        ev.preventDefault();
+        ultimo.focus();
+      } else if (!ev.shiftKey && (activo === ultimo || !dentro)) {
+        ev.preventDefault();
+        primero.focus();
+      }
+    };
+    dialogo.addEventListener("keydown", alTab);
+    return () => dialogo.removeEventListener("keydown", alTab);
+  }, []);
+  return (
+    <div ref={hoja} className={s.hoja}>
       <div>
         <p className={s.eyebrow}>Hub {e.n} del Mapa CTC</p>
-        <h3>
+        <h3 ref={titulo} tabIndex={-1} className={s.hojaTitulo}>
           {e.n} · {e.label}
         </h3>
         <p>
           Leído el <Hora iso={t.leidoAt} /> · Solo conteos y estados; cada cifra abre la pantalla de la consola dueña.
         </p>
       </div>
+      <ModulosDelEdificio dominio={e.dominio} modulos={modulos} base={base} />
       <div className={s.kpis}>
         <div className={s.kpi}>
           <span className={s.kpiK}>Tareas abiertas</span>
@@ -136,7 +224,7 @@ function Hoja({ t, e }: { t: Tablero; e: Edificio }) {
         </div>
         <div className={s.kpi}>
           <span className={s.kpiK}>Salud de sus crons</span>
-          <SaludLeida salud={e.salud.valor} vacio="Sin crons" />
+          <SaludLeida salud={e.salud.valor} vacio={vacioDeSalud(e)} />
         </div>
       </div>
       <div>
@@ -164,7 +252,32 @@ function Hoja({ t, e }: { t: Tablero; e: Edificio }) {
   );
 }
 
-export function Hacienda({ tablero: t }: { tablero: Tablero }) {
+const ENCABEZADO = {
+  modulo: {
+    eyebrow: "Módulo · Hacienda",
+    titulo: "La Hacienda",
+  },
+  portada: {
+    eyebrow: "Inicio · la Hacienda",
+    titulo: "CTCx OS",
+  },
+} as const;
+
+export function Hacienda({
+  tablero: t,
+  modulos,
+  base,
+  portada = false,
+}: {
+  tablero: Tablero;
+  /** El estado de cada módulo: la hoja de su edificio ofrece «Abrir <módulo>» o dice por qué está apagado. */
+  modulos: Modulos;
+  base: BaseDeModulos;
+  /** En la portada (`/os`) el encabezado es el de la OS; en el módulo, el de la Hacienda. El mapa y las hojas son los mismos. */
+  portada?: boolean;
+}) {
+  const enc = ENCABEZADO[portada ? "portada" : "modulo"];
+  const donde = dondeSeAbren(modulos);
   const [sel, setSel] = useState<Dominio | null>(null);
   const origen = useRef<HTMLElement | SVGGElement | null>(null);
   const reducido = useMovimientoReducido();
@@ -193,9 +306,9 @@ export function Hacienda({ tablero: t }: { tablero: Tablero }) {
   return (
     <div className={s.vista}>
       <Encabezado
-        eyebrow="Módulo · Hacienda"
-        titulo="La Hacienda"
-        texto="Los diez hubs del Mapa CTC como edificios de la finca. La ficha morada cuenta las tareas abiertas de cada hub; el banderín rojo, las vencidas. Elija un edificio para ver sus cifras."
+        eyebrow={enc.eyebrow}
+        titulo={enc.titulo}
+        texto={`${portada ? "La casa entera, en un mapa: " : ""}los diez hubs del Mapa CTC como edificios de la finca. La ficha morada cuenta las tareas abiertas de cada hub; el banderín rojo, las vencidas; una ficha punteada con una raya es un hub sin datos todavía. Elija un edificio para ver sus cifras${portada && donde ? `: ${donde}` : ""}.`}
       />
       <figure className={s.lienzo}>
         <svg
@@ -252,7 +365,10 @@ export function Hacienda({ tablero: t }: { tablero: Tablero }) {
         <h2 id="os-hubs" className={s.seccionTitulo}>
           Los diez hubs
         </h2>
-        <p className={s.seccionNota}>La misma Hacienda en lista. Un hub en «Sin datos» no tiene todavía tareas en la plataforma: llegan con Notion (F3).</p>
+        <p className={s.seccionNota}>
+          La misma Hacienda en lista, en el orden del Mapa CTC (es también el camino ordenado con el teclado). Un hub con sus tareas en «Sin datos» no las
+          tiene todavía en la plataforma (llegan con Notion, F3) o su lectura falló: entonces el aviso de Inicio lo dice.
+        </p>
         <ul className={s.hubLista}>
           {DOMINIOS.map((d) => {
             const e = t.edificios[d.id];
@@ -276,7 +392,7 @@ export function Hacienda({ tablero: t }: { tablero: Tablero }) {
                       </span>
                     )}
                   </span>
-                  <SaludLeida salud={e.salud.valor} vacio="Sin crons" sinFuente />
+                  <SaludLeida salud={e.salud.valor} vacio={vacioDeSalud(e)} sinFuente />
                 </button>
               </li>
             );
@@ -285,7 +401,7 @@ export function Hacienda({ tablero: t }: { tablero: Tablero }) {
       </section>
 
       <Modal open={edificioSel !== null} onClose={cerrar} ariaLabel={edificioSel ? `${edificioSel.n} · ${edificioSel.label}` : "Hub"}>
-        {edificioSel && <Hoja t={t} e={edificioSel} />}
+        {edificioSel && <Hoja t={t} e={edificioSel} modulos={modulos} base={base} />}
       </Modal>
     </div>
   );

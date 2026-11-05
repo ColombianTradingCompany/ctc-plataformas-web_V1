@@ -214,7 +214,7 @@ export function UsuariosClient({ users, currentUserId }: { users: PanelUserRow[]
                 <div className={styles.chips}>
                   {grants.length ? (
                     grants.map((k) => (
-                      <span key={k} className={styles.chip} style={{ borderColor: CONSOLES[k].accent }}>
+                      <span key={k} className={styles.chip} style={{ borderColor: CONSOLES[k].accentTexto ?? CONSOLES[k].accent }}>
                         {CONSOLES[k].code} · {u.consoles[k]}
                       </span>
                     ))

@@ -34,6 +34,8 @@ export default async function OsDemoPage({ params }: { params: Promise<{ vista?:
   if (vista && vista.length > 1) notFound();
   const clave = vista?.[0];
   if (clave !== undefined && !VISTAS.some((v) => v.clave === clave)) notFound();
+  // Los valores por defecto del registro (los tres encendidos): la demostración no lee la base.
+  const modulos = parsearModulos(null);
 
   return (
     <ProcedenciaProvider consolas={IDENTIDAD_DEMO.consolas} isOwner={IDENTIDAD_DEMO.isOwner} nombre={IDENTIDAD_DEMO.nombre}>
@@ -49,8 +51,8 @@ export default async function OsDemoPage({ params }: { params: Promise<{ vista?:
           </nav>
         </div>
         <Hud tablero={TABLERO_DEMO} />
-        {clave === undefined && <InicioVista tablero={TABLERO_DEMO} modulos={parsearModulos(null)} base="/os/demo" />}
-        {clave === "hacienda" && <Hacienda tablero={TABLERO_DEMO} />}
+        {clave === undefined && <InicioVista tablero={TABLERO_DEMO} modulos={modulos} base="/os/demo" />}
+        {clave === "hacienda" && <Hacienda tablero={TABLERO_DEMO} modulos={modulos} base="/os/demo" />}
         {clave === "almacen" && <Almacen tablero={TABLERO_DEMO} />}
         {clave === "taller" && <Taller tablero={TABLERO_DEMO} version="V0.0-EJEMPLO" sha="ejemplo" />}
       </main>

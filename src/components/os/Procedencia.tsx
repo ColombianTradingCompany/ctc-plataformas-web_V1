@@ -82,12 +82,16 @@ export function useProcedencia(): Procedencia {
   return useContext(Contexto) ?? { ver: false, alternar: () => {}, consolas: [], isOwner: false, nombre: "" };
 }
 
-/** El interruptor «Ver fuentes» (va en el HUD). */
+/**
+ * El interruptor «Ver fuentes» (va en el HUD). Es un botón de alternar: su nombre NO cambia, su estado lo dice
+ * `aria-pressed` (y el estilo de `.hudBoton[aria-pressed="true"]`). Cambiar también el texto haría que un lector de
+ * pantalla anunciara «Ocultar fuentes, activado», que se contradice.
+ */
 export function VerFuentes() {
   const { ver, alternar } = useProcedencia();
   return (
     <button type="button" className={s.hudBoton} aria-pressed={ver} onClick={alternar}>
-      {ver ? "Ocultar fuentes" : "Ver fuentes"}
+      Ver fuentes
     </button>
   );
 }

@@ -3,13 +3,15 @@
 import Link from "next/link";
 import { FUENTES, enlaceVisible, type Medida, type NotaDeMedida, type PiezaId, type Rotulo } from "@/lib/os/fuentes";
 import { SALUD_LABEL, type Salud } from "@/lib/integraciones/registroCrons";
+import { IconoAlerta } from "./IconoAlerta";
 import { useProcedencia } from "./Procedencia";
 import s from "./os.module.css";
 
 // ── CTCx OS · la cifra (V6.19, F2) ───────────────────────────────────────────
 // El ÚNICO componente que formatea un número del OS (qa-os-check C5): en es-CO, con su unidad.
 // Su `medida` es OBLIGATORIA, así que una cifra sin pieza (sin fuente) no se puede pintar.
-//   · `valor: null` → «Sin datos», nunca un cero;
+//   · `valor: null` → «Sin datos», nunca un cero; con la nota `solo_owner` (el Modelo Económico y quien mira
+//     no es el owner) → «Solo el owner», que no es un error ni un hueco: la pieza no se leyó para él;
 //   · `demo` → la etiqueta «EJEMPLO»;
 //   · con «Ver fuentes» encendido → una línea en mono «Plataforma › tabla.columna» (o la función
 //     reusada), su filtro y sus notas (por ejemplo «cuenta cero si falla una lectura»);
@@ -25,7 +27,14 @@ const NOTA: Record<NotaDeMedida, string> = {
   cuenta_cero_si_falla: "cuenta cero si falla una lectura",
   tope_de_filas: "llegó al tope de filas: es un mínimo",
   sin_fuente_aun: "sin fuente aún: llega con Notion (F3)",
+  solo_owner: "el Modelo Económico es solo del owner: no se lee para quien mira",
+  sin_el_pvc: "sin lo del Modelo Económico (solo del owner)",
 };
+
+const esSoloOwner = (m: { notas?: readonly NotaDeMedida[] }) => !!m.notas?.includes("solo_owner");
+
+/** Una pieza del Modelo Económico para quien no es el owner: ni cifra, ni «Sin datos», ni cero. */
+const SoloOwner = () => <span className={s.soloOwner}>Solo el owner</span>;
 
 /** El texto corto de una cifra (para el dibujo de la Hacienda, donde no cabe una línea de fuente). */
 export function textoDeCifra(m: Medida): string {
@@ -87,7 +96,9 @@ export function Cifra({
   return (
     <span className={`${s.cifra}${grande ? ` ${s.cifraGrande}` : ""}`}>
       <span className={s.cifraFila}>
-        {medida.valor === null ? (
+        {esSoloOwner(medida) ? (
+          <SoloOwner />
+        ) : medida.valor === null ? (
           <span className={s.sinDatos}>Sin datos</span>
         ) : (
           <span className={s.cifraValor}>
@@ -108,14 +119,20 @@ export function Cifra({
   );
 }
 
-/** Un texto leído (el código de una edición): `null` → «Sin datos». */
+/** Un texto leído (el código de una edición): `null` → «Sin datos»; con `solo_owner` → «Solo el owner». */
 export function RotuloLeido({ rotulo, abrir = false }: { rotulo: Rotulo; abrir?: boolean }) {
   const { ver } = useProcedencia();
   const enlace = useEnlace(rotulo.pieza);
   return (
     <span className={s.cifra}>
       <span className={s.cifraFila}>
-        {rotulo.texto === null ? <span className={s.sinDatos}>Sin datos</span> : <span className={s.rotulo}>{rotulo.texto}</span>}
+        {esSoloOwner(rotulo) ? (
+          <SoloOwner />
+        ) : rotulo.texto === null ? (
+          <span className={s.sinDatos}>Sin datos</span>
+        ) : (
+          <span className={s.rotulo}>{rotulo.texto}</span>
+        )}
         {rotulo.demo && rotulo.texto !== null && <span className={s.ejemplo}>EJEMPLO</span>}
         {abrir && !ver && enlace && (
           <Link href={enlace} className={s.abrir}>
@@ -127,6 +144,9 @@ export function RotuloLeido({ rotulo, abrir = false }: { rotulo: Rotulo; abrir?:
     </span>
   );
 }
+
+/** Las saludes que son una alerta: llevan su icono además de su palabra (PLAN §7.7). */
+const ALERTA: ReadonlySet<Salud> = new Set<Salud>(["atrasada", "fallo"]);
 
 const TONO_DE_SALUD: Record<Salud, string> = {
   ok: s.badgeBien,
@@ -143,7 +163,10 @@ export function SaludLeida({ salud, vacio = "Sin datos", sinFuente = false }: { 
   return (
     <span className={s.cifra}>
       <span className={s.cifraFila}>
-        {salud === null ? <span className={s.sinDatos}>{vacio}</span> : <span className={`${s.badge} ${TONO_DE_SALUD[salud]}`}>{SALUD_LABEL[salud]}</span>}
+        {salud === null ? <span className={s.sinDatos}>{vacio}</span> : <span className={`${s.badge} ${TONO_DE_SALUD[salud]}`}>
+            {ALERTA.has(salud) && <IconoAlerta />}
+            {SALUD_LABEL[salud]}
+          </span>}
       </span>
       {ver && !sinFuente && <LineaDeFuente pieza="salud_crons" abrir={enlace} />}
     </span>

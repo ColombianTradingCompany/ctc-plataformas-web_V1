@@ -21,9 +21,16 @@ import type { DatosDeLaFranja } from "@/lib/stock/franja";
 //   3. Las tareas llegan reducidas a CONTEOS (crítica 13): ni su texto, ni su clave, ni
 //      su enlace por registro salen del servidor. El enlace es el de su pieza en FUENTES.
 //
-// ⚠️ PVC: el catálogo lo pone en 3 · Comercial (`pvc_edition`, `pvc_correccion`) y el
-// registro de crons en 0 · Dirección. Decisión ABIERTA del owner (charter ctcx-os); hasta
-// entonces manda el catálogo, sin armonizar en silencio.
+// PVC: vive en 3 · Comercial (aprobado por el owner el 5 nov), donde el catálogo de los hechos
+// pone la edición y las correcciones (`pvc_edition`, `pvc_correccion`). Sus dos crons siguen en
+// 0 · Dirección en el registro de crons (`registroCrons.ts`), que es de toda la plataforma y la
+// OS no lo cambia: la diferencia queda anotada en el charter ctcx-os (decisión 14).
+//
+// Y es SOLO DEL OWNER (decisión del owner: el Modelo Económico, `/ecp/pvc`, es `ownerOnly`). Para
+// quien no es el owner el servidor no llama a `leerPvc`: en su lugar va `PVC_SOLO_OWNER`, y el
+// tablero pinta las piezas del PVC con la nota `solo_owner` («Solo el owner»), sin código, sin
+// conteo y sin aviso. Sus tareas `pvc:*` y los hechos de sus tablas tampoco se cuentan para él
+// (nota `sin_el_pvc` en el hub donde caerían).
 
 // ── Tareas → hub ─────────────────────────────────────────────────────────────
 
@@ -35,7 +42,7 @@ export const ENTIDAD_DE_TAREA: Record<TipoDeTarea, string> = {
   humidity: "purchase_contract", // la humedad se mide en la entrega del trato
   lot: "lot",
   muestra: "muestra",
-  pvc: "pvc_correccion", // ⚠️ decisión abierta 0 · Dirección vs 3 · Comercial (ver arriba)
+  pvc: "pvc_correccion", // 3 · Comercial (aprobado por el owner el 5 nov; ver arriba)
   despacho: "purchase_contract",
   partida: "stock_partida",
 };
@@ -90,6 +97,41 @@ export function tareasPorHub(tareas: readonly Pick<TareaDeConsola, "key" | "stat
 /** Los hubs que PUEDEN tener tareas de la plataforma; en los demás la cifra es «Sin datos» (llegan con Notion). */
 export function hubsConTareas(): Set<Dominio> {
   return new Set(TIPOS_DE_TAREA.map(hubDeTipo).filter((d): d is Dominio => d !== null));
+}
+
+// ── El PVC es solo del owner ─────────────────────────────────────────────────
+
+/** Lo que el servidor pone en lugar de la lectura del PVC cuando quien mira no es el owner: no se lee y no viaja nada. */
+export const PVC_SOLO_OWNER = { soloOwner: true } as const;
+export type PvcSoloOwner = typeof PVC_SOLO_OWNER;
+
+export function esPvcSoloOwner(x: Lectura<EstadoDelPvc> | PvcSoloOwner): x is PvcSoloOwner {
+  return "soloOwner" in x && x.soloOwner === true;
+}
+
+/** Una tarea del Modelo Económico (`pvc:correccion:*`, `pvc:edicion:*`): para quien no es el owner no se cuenta. */
+export function esTareaDelPvc(key: string): boolean {
+  return tipoDeLaTarea(key) === "pvc";
+}
+
+/** Las entidades del Modelo Económico en el catálogo de los hechos (las `pvc_*`). */
+const ENTIDADES_DEL_PVC = Object.entries(ENTIDADES).filter(([clave]) => clave.startsWith("pvc_"));
+
+/** Las tablas del Modelo Económico, sacadas del catálogo de los hechos. */
+export const TABLAS_DEL_PVC: ReadonlySet<string> = new Set(ENTIDADES_DEL_PVC.flatMap(([, e]) => (e.tabla ? [e.tabla] : [])));
+
+/** Un hecho sobre una tabla del Modelo Económico: para quien no es el owner no se cuenta. */
+export function esHechoDelPvc(h: { entidad: { tabla: string | null } }): boolean {
+  return h.entidad.tabla !== null && TABLAS_DEL_PVC.has(h.entidad.tabla);
+}
+
+/** Los hubs donde caen las tareas y los hechos del PVC (hoy, 3 · Comercial): llevan la nota `sin_el_pvc` cuando no se cuentan. */
+export function hubsDelPvc(): Set<Dominio> {
+  const out = new Set<Dominio>();
+  const t = hubDeTipo("pvc");
+  if (t) out.add(t);
+  for (const [, e] of ENTIDADES_DEL_PVC) out.add(e.dominio);
+  return out;
 }
 
 // ── Salud ────────────────────────────────────────────────────────────────────
@@ -221,7 +263,8 @@ export type LecturasDelTablero = {
   tareas: Lectura<ConteoDeTareas>;
   tratos: Lectura<Tratos>;
   stock: Lectura<DatosDeLaFranja>;
-  pvc: Lectura<EstadoDelPvc>;
+  /** `PVC_SOLO_OWNER` cuando quien mira no es el owner: entonces no hubo lectura. */
+  pvc: Lectura<EstadoDelPvc> | PvcSoloOwner;
   salud: Lectura<SaludDelSistema>;
   hechos: Lectura<Partial<Record<Dominio, number>>>;
   lotes: Lectura<Partial<Record<string, number>>>;
@@ -231,8 +274,12 @@ export type LecturasDelTablero = {
 
 export type Aviso = { error: CodigoDeLectura; fuentes: readonly PiezaId[] };
 
-/** La salud se pinta con su PALABRA (`SALUD_LABEL`), no como cifra; igual lleva su pieza y su fuente. */
-export type EstadoDeSalud = { pieza: "salud_crons"; valor: Salud | null; leidoAt: string };
+/**
+ * La salud se pinta con su PALABRA (`SALUD_LABEL`), no como cifra; igual lleva su pieza y su fuente.
+ * `valor: null` tiene dos causas que la vista NO confunde: `sinLectura` = la lectura de la salud falló («Sin datos»);
+ * sin él, la lectura llegó y el hub no tiene crons («Sin crons»).
+ */
+export type EstadoDeSalud = { pieza: "salud_crons"; valor: Salud | null; leidoAt: string; sinLectura?: true };
 export type CronConSalud = { clave: string; dominio: Dominio; salud: Salud };
 
 export type Edificio = {
@@ -243,7 +290,7 @@ export type Edificio = {
   vencidas: Medida;
   hechos: Medida;
   cola: { pendientes: Medida; fallidos: Medida };
-  /** La peor salud de los crons de este hub; `valor: null` = sin crons en este hub o sin lectura. */
+  /** La peor salud de los crons de este hub; `valor: null` = sin crons en este hub, o sin lectura (`sinLectura`). */
   salud: EstadoDeSalud;
   /** Las piezas de un solo hub que caen aquí (contratos, despachos, franja, PVC, lotes). */
   piezas: readonly (Medida | Rotulo)[];
@@ -284,7 +331,10 @@ const notasDe = (pieza: PiezaId, truncado: boolean, extra: readonly NotaDeMedida
 export function armarTablero(l: LecturasDelTablero): Tablero {
   const leidoAt = l.leidoAt;
   const avisos: Aviso[] = [];
-  for (const x of [l.tareas, l.tratos, l.stock, l.pvc, l.salud, l.hechos, l.lotes] as const) {
+  // El PVC solo del owner no es una lectura fallida: no deja aviso.
+  const pvcLeido = esPvcSoloOwner(l.pvc) ? null : l.pvc;
+  const soloOwner = pvcLeido === null;
+  for (const x of [l.tareas, l.tratos, l.stock, ...(pvcLeido ? [pvcLeido] : []), l.salud, l.hechos, l.lotes]) {
     if (!x.ok) avisos.push({ error: x.error, fuentes: x.fuentes });
   }
   const trunc = (x: Lectura<unknown>) => x.ok && !!x.truncado;
@@ -293,8 +343,8 @@ export function armarTablero(l: LecturasDelTablero): Tablero {
     const notas = notasDe(pieza, truncado, opts.extra);
     return { valor, pieza, leidoAt, ...(opts.clave !== undefined ? { clave: opts.clave } : {}), ...(notas ? { notas } : {}) };
   };
-  const rotulo = (pieza: PiezaId, texto: string | null, truncado: boolean): Rotulo => {
-    const notas = notasDe(pieza, truncado);
+  const rotulo = (pieza: PiezaId, texto: string | null, truncado: boolean, extra: readonly NotaDeMedida[] = []): Rotulo => {
+    const notas = notasDe(pieza, truncado, extra);
     return { texto, pieza, leidoAt, ...(notas ? { notas } : {}) };
   };
 
@@ -326,15 +376,22 @@ export function armarTablero(l: LecturasDelTablero): Tablero {
     medida("franja_vendido", st ? (st.vendido ? st.vendido.kgVerde : null) : null, tSt),
   ];
 
-  // PVC (sin precios: el código, y lo que espera al owner)
-  const pv = l.pvc.ok ? l.pvc.valor : null;
-  const tPv = trunc(l.pvc);
-  const pvc: (Medida | Rotulo)[] = [
-    rotulo("pvc_vigente", pv?.vigente?.codigo ?? null, tPv),
-    rotulo("pvc_proxima", pv?.proxima?.codigo ?? null, tPv),
-    medida("pvc_correcciones", pv ? pv.correccionesPropuestas : null, tPv),
-    medida("pvc_borrador", pv ? (pv.borradorPorPublicar ? 1 : 0) : null, tPv),
-  ];
+  // PVC (sin precios: el código, y lo que espera al owner). Solo del owner: para los demás, las cuatro piezas dicen «Solo el owner».
+  const pv = pvcLeido?.ok ? pvcLeido.valor : null;
+  const tPv = pvcLeido ? trunc(pvcLeido) : false;
+  const pvc: (Medida | Rotulo)[] = soloOwner
+    ? [
+        rotulo("pvc_vigente", null, false, ["solo_owner"]),
+        rotulo("pvc_proxima", null, false, ["solo_owner"]),
+        medida("pvc_correcciones", null, false, { extra: ["solo_owner"] }),
+        medida("pvc_borrador", null, false, { extra: ["solo_owner"] }),
+      ]
+    : [
+        rotulo("pvc_vigente", pv?.vigente?.codigo ?? null, tPv),
+        rotulo("pvc_proxima", pv?.proxima?.codigo ?? null, tPv),
+        medida("pvc_correcciones", pv ? pv.correccionesPropuestas : null, tPv),
+        medida("pvc_borrador", pv ? (pv.borradorPorPublicar ? 1 : 0) : null, tPv),
+      ];
 
   // Lotes por etapa
   const lo = l.lotes.ok ? l.lotes.valor : null;
@@ -355,11 +412,14 @@ export function armarTablero(l: LecturasDelTablero): Tablero {
   const tSa = trunc(l.salud);
   const he = l.hechos.ok ? l.hechos.valor : null;
   const tHe = trunc(l.hechos);
+  // Para quien no es el owner, el hub del PVC cuenta sus tareas y sus hechos SIN los del PVC, y lo dice.
+  const sinPvc = soloOwner ? hubsDelPvc() : new Set<Dominio>();
 
   const edificios = Object.fromEntries(
     DOMINIOS.map((d): [Dominio, Edificio] => {
       const tieneTareas = conTareas.has(d.id);
-      const sinFuente: readonly NotaDeMedida[] = tieneTareas ? [] : ["sin_fuente_aun"];
+      const notaPvc: readonly NotaDeMedida[] = sinPvc.has(d.id) ? ["sin_el_pvc"] : [];
+      const sinFuente: readonly NotaDeMedida[] = tieneTareas ? notaPvc : ["sin_fuente_aun"];
       const conteo = ta && tieneTareas ? ta.porHub[d.id] : null;
       const cola = sa ? (sa.cola[d.id] ?? { pendientes: 0, fallidos: 0 }) : null;
       const crons = sa ? sa.crons.filter((c) => c.dominio === d.id).map((c) => c.salud) : [];
@@ -371,12 +431,12 @@ export function armarTablero(l: LecturasDelTablero): Tablero {
           label: d.label,
           abiertas: medida("tareas_abiertas", conteo ? conteo.abiertas : null, tTa, { extra: sinFuente }),
           vencidas: medida("tareas_vencidas", conteo ? conteo.vencidas : null, tTa, { extra: sinFuente }),
-          hechos: medida("hechos_por_hub", he ? (he[d.id] ?? 0) : null, tHe),
+          hechos: medida("hechos_por_hub", he ? (he[d.id] ?? 0) : null, tHe, { extra: notaPvc }),
           cola: {
             pendientes: medida("cola_pendientes", cola ? cola.pendientes : null, tSa),
             fallidos: medida("cola_fallidos", cola ? cola.fallidos : null, tSa),
           },
-          salud: { pieza: "salud_crons", valor: peorSalud(crons), leidoAt },
+          salud: sa ? { pieza: "salud_crons", valor: peorSalud(crons), leidoAt } : { pieza: "salud_crons", valor: null, leidoAt, sinLectura: true },
           piezas: piezasDe(d.id),
         },
       ];
@@ -482,7 +542,9 @@ export function ordenDeClave(pieza: PiezaId, clave: string | undefined): number 
   return i < 0 ? orden.length : i;
 }
 
-const enTexto = (m: Medida) => (m.valor === null ? "sin datos" : String(m.valor));
+const SOLO_OWNER = "solo el owner";
+const esSoloOwner = (m: Medida | Rotulo) => !!m.notas?.includes("solo_owner");
+const enTexto = (m: Medida) => (esSoloOwner(m) ? SOLO_OWNER : m.valor === null ? "sin datos" : String(m.valor));
 
 /**
  * El texto que «Copiar contexto para Tailor» deja en el portapapeles: SOLO conteos, estados y la hora de lectura
@@ -493,14 +555,14 @@ export function contextoParaTailor(t: Tablero, dominio?: Dominio): string {
   const demo = edificios.some((e) => e.abiertas.demo);
   const lineas = [`CTCx OS · tablero leído ${t.leidoAt}${demo ? " · DATOS INVENTADOS del modo demostración" : ""}`];
   for (const e of edificios) {
-    const salud = e.salud.valor ? SALUD_LABEL[e.salud.valor].toLowerCase() : "sin crons o sin lectura";
+    const salud = e.salud.valor ? SALUD_LABEL[e.salud.valor].toLowerCase() : e.salud.sinLectura ? "sin datos (la lectura falló)" : "sin crons";
     lineas.push(
       `${e.n} · ${e.label}: tareas abiertas ${enTexto(e.abiertas)}, vencidas ${enTexto(e.vencidas)}, hechos del turno ${enTexto(e.hechos)}, ` +
         `cola ${enTexto(e.cola.pendientes)} en espera y ${enTexto(e.cola.fallidos)} fallidos, salud de sus crons: ${salud}.`
     );
     if (dominio) {
       for (const p of e.piezas) {
-        const valor = "valor" in p ? enTexto(p) : (p.texto ?? "sin datos");
+        const valor = "valor" in p ? enTexto(p) : esSoloOwner(p) ? SOLO_OWNER : (p.texto ?? "sin datos");
         lineas.push(`  - ${FUENTES[p.pieza].etiqueta}${"clave" in p && p.clave ? ` (${etiquetaDeClave(p.pieza, p.clave)})` : ""}: ${valor}${FUENTES[p.pieza].unidad && "valor" in p && p.valor !== null ? ` ${FUENTES[p.pieza].unidad}` : ""}`);
       }
     }

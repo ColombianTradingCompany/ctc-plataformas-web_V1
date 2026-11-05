@@ -1,3 +1,4 @@
+import type { Dominio } from "@/lib/integraciones/dominios";
 import type { ClaseDeAccion } from "@/lib/panel/niveles";
 
 // ── CTCx OS · el registro de módulos y su interruptor (V6.19, F2) · PURO ──────
@@ -29,13 +30,18 @@ export type ModuloOs = {
   soloOwner: boolean;
   /** La clase más alta de lo que hace el módulo (F2: todo es lectura). */
   clase: ClaseDeAccion;
+  /**
+   * El edificio de la Hacienda desde cuya hoja se abre (rumbo del owner, 5 nov: el OS abre en el mapa y cada módulo se abre
+   * desde su edificio). `null` = no vive en un edificio (la Hacienda ES el mapa).
+   */
+  edificio: Dominio | null;
 };
 
 export const MODULOS_OS = [
-  { clave: "hacienda", titulo: "Hacienda", ruta: "/os/m/hacienda", porDefecto: "encendido", soloOwner: false, clase: "lectura" },
-  { clave: "almacen", titulo: "Almacén", ruta: "/os/m/almacen", porDefecto: "encendido", soloOwner: false, clase: "lectura" },
-  // Taller = la salud del sistema, que ve también GVB. «Pedidos a Code» (solo el owner) será OTRO módulo.
-  { clave: "taller", titulo: "Taller", ruta: "/os/m/taller", porDefecto: "encendido", soloOwner: false, clase: "lectura" },
+  { clave: "hacienda", titulo: "Hacienda", ruta: "/os/m/hacienda", porDefecto: "encendido", soloOwner: false, clase: "lectura", edificio: null },
+  { clave: "almacen", titulo: "Almacén", ruta: "/os/m/almacen", porDefecto: "encendido", soloOwner: false, clase: "lectura", edificio: "operacion_logistica" },
+  // Almacén: hub 2 · Operación y Logística. Taller: hub 5 · Plataformas e IT (la salud del sistema, que ve también GVB). «Pedidos a Code» (solo el owner) será OTRO módulo.
+  { clave: "taller", titulo: "Taller", ruta: "/os/m/taller", porDefecto: "encendido", soloOwner: false, clase: "lectura", edificio: "plataformas_it" },
 ] as const satisfies readonly ModuloOs[];
 
 export type ClaveDeModulo = (typeof MODULOS_OS)[number]["clave"];

@@ -12,13 +12,17 @@ import { leerHechos } from "./hechos";
 import { resumirTurno } from "./hechosCatalogo";
 import type { CodigoDeLectura, Lectura, PiezaId } from "./fuentes";
 import {
+  PVC_SOLO_OWNER,
   automatizacionesPorHub,
   colaPorHub,
+  esHechoDelPvc,
+  esTareaDelPvc,
   saludDeLosCrons,
   tareasPorHub,
   type ConteoDeTareas,
   type EstadoDelPvc,
   type FilaDeAutomatizacion,
+  type PvcSoloOwner,
   type SaludDelSistema,
   type Tratos,
   type UltimoLatidoFinal,
@@ -76,12 +80,17 @@ async function contar(q: Conteo): Promise<number | null> {
  * Las tareas del Tablero de Ejecución (`cargarTareas`), reducidas a CONTEOS por hub en el servidor: de cada
  * tarea solo se mira su clave y su casilla (ni su texto, ni su enlace por registro: crítica 13). Devuelve
  * además cuántas son `despacho:vencido:*` (marcadas o no): son exactamente `pendientesDelCircuito().sacosVencidos`.
+ * Sin `conPvc` (quien mira no es el owner), `cargarTareas` ni lee el estado del Modelo Económico ni arma sus tareas
+ * (`pvc:*`): se le pasa `{ conPvc }`. Y, por si alguna llegara, se descartan aquí, en el servidor, antes de contar.
  */
-export async function leerTareasDeLaCasa(service: SupabaseClient): Promise<Lectura<{ conteo: ConteoDeTareas; sacosVencidos: number }>> {
+export async function leerTareasDeLaCasa(
+  service: SupabaseClient,
+  op: { conPvc: boolean }
+): Promise<Lectura<{ conteo: ConteoDeTareas; sacosVencidos: number }>> {
   const fuentes = PIEZAS_DEL_LECTOR.tareas;
   try {
-    const { tareas } = await cargarTareas(service);
-    const claves = tareas.map((t) => ({ key: t.key, state: t.state }));
+    const { tareas } = await cargarTareas(service, { conPvc: op.conPvc });
+    const claves = tareas.filter((t) => op.conPvc || !esTareaDelPvc(t.key)).map((t) => ({ key: t.key, state: t.state }));
     const sacosVencidos = claves.filter((t) => t.key.startsWith("despacho:vencido:")).length;
     return bien({ conteo: tareasPorHub(claves), sacosVencidos }, fuentes);
   } catch {
@@ -93,8 +102,9 @@ export async function leerTareasDeLaCasa(service: SupabaseClient): Promise<Lectu
 
 /**
  * Contratos por estado (un conteo exacto por estado de `ESTADO_DE_CONTRATO`, y «otro» si la base tiene uno que la
- * etiqueta no conoce), ventanas vigentes, y los despachos de los contratos activos con la MISMA lectura que
- * Adquisición (`cargarAdquisicion`: pendiente o despachado, contrato activo, todos los tipos).
+ * etiqueta no conoce), ventanas vigentes, y los despachos de los contratos activos con la regla del «Por recibir» de
+ * Adquisición, la pantalla que abre «Abrir» (pendiente o despachado, contrato activo, SOLO saco o adelanto: la página
+ * aparta los `vendido`, que no son compras de CTCx) y de la franja (`cargarCircuitoDelStock`, el mismo filtro de tipo).
  * `sacosVencidos` llega de las tareas; sin él, se pregunta a `pendientesDelCircuito` (que cuenta cero si falla).
  */
 export async function leerTratos(service: SupabaseClient, op: { sacosVencidos?: number } = {}): Promise<Lectura<Tratos>> {
@@ -109,6 +119,7 @@ export async function leerTratos(service: SupabaseClient, op: { sacosVencidos?: 
         .from("contract_despachos")
         .select("kg, estado, purchase_contracts!inner(status)", { count: "exact" })
         .in("estado", ["pendiente", "despachado"])
+        .in("tipo", ["saco", "adelanto"])
         .eq("purchase_contracts.status", "active"),
       op.sacosVencidos !== undefined
         ? Promise.resolve(op.sacosVencidos)
@@ -143,6 +154,8 @@ export async function leerTratos(service: SupabaseClient, op: { sacosVencidos?: 
  * La franja tal cual la calculan Adquisición, Stock y el Triage (`cargarCircuitoDelStock`; cuenta cero si una de sus
  * lecturas falla: lo dice la pieza). `cargarStock` pide 5000 filas, pero la API entrega como mucho TOPE_DE_FILAS:
  * si las partidas pasan de ahí, la franja sale con `truncado` (sus cifras son un mínimo), nunca cortada en silencio.
+ * Si el conteo de las partidas falla, NO se afirma el tope (nadie lo vio): la franja sale con la nota que ya lleva,
+ * «cuenta cero si falla una lectura». Se vigilan solo las partidas, la tabla que más crece de las que lee `cargarStock`.
  */
 export async function leerStockDelCircuito(service: SupabaseClient): Promise<Lectura<DatosDeLaFranja>> {
   const fuentes = PIEZAS_DEL_LECTOR.stock;
@@ -151,7 +164,7 @@ export async function leerStockDelCircuito(service: SupabaseClient): Promise<Lec
       cargarCircuitoDelStock(service),
       contar(service.from("stock_partidas").select("id", { count: "exact", head: true })),
     ]);
-    return bien(franja, fuentes, partidas === null || partidas > TOPE_DE_FILAS);
+    return bien(franja, fuentes, partidas !== null && partidas > TOPE_DE_FILAS);
   } catch {
     return mal("lectura_stock", fuentes);
   }
@@ -165,8 +178,13 @@ export async function leerStockDelCircuito(service: SupabaseClient): Promise<Lec
  * insumos y las salidas de la edición: el OS los lee y NUNCA los pinta (crítica 8) —de aquí solo salen códigos y
  * conteos— y nunca calcula un precio. `edicionVigente`/`edicionProxima` devuelven null también si su lectura falla:
  * la pieza lo dice (`nuloSiFalla`).
+ *
+ * SOLO DEL OWNER (decisión del owner: `/ecp/pvc` es `ownerOnly`). El tipo pide `{ isOwner: true }`, así que quien la
+ * llama tiene que haberlo comprobado antes (`isOwner ? leerPvc(service, { isOwner }) : PVC_SOLO_OWNER`); y por si
+ * acaso, sin el owner no lee nada y devuelve `PVC_SOLO_OWNER`. `qa-os-check` H12 vigila las dos cosas.
  */
-export async function leerPvc(service: SupabaseClient): Promise<Lectura<EstadoDelPvc>> {
+export async function leerPvc(service: SupabaseClient, quien: { isOwner: true }): Promise<Lectura<EstadoDelPvc> | PvcSoloOwner> {
+  if (quien?.isOwner !== true) return PVC_SOLO_OWNER;
   const fuentes = PIEZAS_DEL_LECTOR.pvc;
   try {
     const [vigente, proxima, correcciones, agente] = await Promise.all([
@@ -239,13 +257,17 @@ export async function leerSalud(service: SupabaseClient, ahora: Date = new Date(
 
 // ── Los hechos del turno ─────────────────────────────────────────────────────
 
-/** Los hechos de las últimas 24 horas por hub (`leerHechos` + `resumirTurno`); `truncado` si una bitácora llegó al tope. */
-export async function leerHechosPorHub(): Promise<Lectura<Partial<Record<Dominio, number>>>> {
+/**
+ * Los hechos de las últimas 24 horas por hub (`leerHechos` + `resumirTurno`); `truncado` si una bitácora llegó al tope.
+ * Sin `conPvc` (quien mira no es el owner), los hechos de las tablas del Modelo Económico no se cuentan.
+ */
+export async function leerHechosPorHub(op: { conPvc: boolean }): Promise<Lectura<Partial<Record<Dominio, number>>>> {
   const fuentes = PIEZAS_DEL_LECTOR.hechos;
   try {
     const r = await leerHechos({ fuentes: ["audit_log", "integration_events", "latidos"], limite: TOPE_DE_FILAS });
     if (!r.ok) return mal("lectura_hechos", fuentes);
-    return bien(resumirTurno(r.hechos).porDominio, fuentes, r.truncado.length > 0);
+    const hechos = op.conPvc ? r.hechos : r.hechos.filter((h) => !esHechoDelPvc(h));
+    return bien(resumirTurno(hechos).porDominio, fuentes, r.truncado.length > 0);
   } catch {
     return mal("lectura_hechos", fuentes);
   }

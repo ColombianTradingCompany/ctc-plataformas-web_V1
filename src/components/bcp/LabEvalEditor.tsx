@@ -278,7 +278,7 @@ export function LabEvalEditor({
   const selectorDeIdioma = (
     <div role="group" aria-label={t.idioma} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "var(--muted)" }}>
       {t.idioma}
-      <span style={{ display: "inline-flex", border: "1.5px solid var(--line)", borderRadius: 999 }}>
+      <span className="conmutador" style={{ display: "inline-flex", border: "1.5px solid var(--line)", borderRadius: 999 }}>
         {IDIOMAS_DE_PLANILLA.map((l, i) => (
           <button
             key={l}

@@ -94,12 +94,15 @@ img{display:block;max-width:100%}
    da 15,1:1 (16,2:1 sobre tarjeta); sobre el rail, la barra superior y la cabecera
    oscura de la Datasheet, el amarillo da 8,5–12,5:1. Entre los dos colores hay 10,8:1
    (C40 pide 9:1, así uno de los dos llega siempre a 3:1). Un anillo solo morado se
-   perdería en esas superficies oscuras (1,1–1,4:1). */
+   perdería en esas superficies oscuras (1,0–1,2:1). */
 [data-theme="bcp"] :focus-visible{outline-color:var(--focus-ring);box-shadow:0 0 0 2px var(--accent)}
 /* Sobre una superficie oscura de consola (el rail, la barra superior y la cabecera de la Datasheet) el
    morado no se ve y el halo amarillo se funde con un botón o una ficha amarilla: ahí el anillo es
    amarillo (10,8:1 sobre el rail) con un hueco oscuro (12,5:1 frente al amarillo). */
 [data-theme="bcp"] [data-superficie="oscura"] :focus-visible{outline-color:var(--accent);box-shadow:0 0 0 2px #12101A}
+/* Conmutadores de botones pegados: el botón con foco sube por encima de su vecino, que si no le
+   pinta encima un lado del anillo. */
+.conmutador > :focus-visible{position:relative;z-index:1}
 /* La rueda del sabor (PlanillaPiezas): sus sectores son trazos SVG, donde ni el halo ni el anillo se
    dibujan bien. El foco es el trazo del sector, del color que más contrasta con SU relleno: cada sector
    trae `data-anillo` (oscuro = morado #2A0760, claro = amarillo #FFCD00; entre ellos 10,8:1, así que el

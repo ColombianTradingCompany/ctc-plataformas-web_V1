@@ -26,6 +26,7 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { columnasDe } from "./os-qa-comun.mjs";
 import {
   ENTIDADES, ACCIONES, PREFIJOS, EVENTOS, EVENTOS_FUERA_DEL_JUEGO, LLAVES_DEL_PAYLOAD,
   SELECT_AUDITORIA, SELECT_EVENTOS, SELECT_LATIDOS, LATIDO_SIN_CIERRE_MS,
@@ -104,18 +105,9 @@ for (const p of PREFIJOS) check(`2 · prefijo «${p.prefijo}»: su entidad está
 check("2 · los prefijos solo apagan (lo que juega va exacto)", PREFIJOS.every((p) => p.regla.efectos.length === 0));
 
 // ── 3 · cada medida y cada atributo es una columna que existe ────────────────
-function columnasDe(tabla) {
-  const cols = new Set();
-  for (const t of SQL) {
-    const re = new RegExp(`create table (?:if not exists )?(?:public\\.)?${tabla}\\s*\\(([\\s\\S]*?)\\n\\);`, "gi");
-    for (const m of t.matchAll(re)) for (const c of m[1].matchAll(/^\s+([a-z_0-9]+)\s+[a-z]/gm)) cols.add(c[1]);
-    for (const m of t.matchAll(new RegExp(`alter table (?:public\\.)?${tabla}\\s+add column (?:if not exists )?([a-z_0-9]+)`, "gi"))) cols.add(m[1]);
-  }
-  for (const m of TODO_SRC.matchAll(new RegExp(`from\\("${tabla}"\\)[\\s\\S]{0,240}?select\\("([^"]+)"`, "g"))) {
-    for (const c of m[1].split(",")) cols.add(c.trim().split(/[\s:(]/)[0]);
-  }
-  return cols;
-}
+// `columnasDe` vive en `os-qa-comun.mjs` (la comparte `qa-os-check`); el contexto es el de siempre: las migraciones y
+// el `src/` SIN `src/lib/os`.
+const CONTEXTO_COLUMNAS = { sql: SQL, src: TODO_SRC };
 const columnasCitadas = new Set();
 for (const r of [...Object.values(ACCIONES), ...PREFIJOS.map((p) => p.regla), ...Object.values(EVENTOS)]) {
   for (const e of r.efectos) for (const m of e.medidas) columnasCitadas.add(m);
@@ -124,7 +116,7 @@ for (const r of [...Object.values(ACCIONES), ...PREFIJOS.map((p) => p.regla), ..
 check("3 · hay medidas que comprobar", columnasCitadas.size >= 15, `${columnasCitadas.size}`);
 for (const m of columnasCitadas) {
   const [tabla, col] = m.split(".");
-  check(`3 · «${m}» es una columna real`, columnasDe(tabla).has(col));
+  check(`3 · «${m}» es una columna real`, columnasDe(tabla, CONTEXTO_COLUMNAS).has(col));
 }
 
 // ── 4 · privacidad por lista blanca ──────────────────────────────────────────

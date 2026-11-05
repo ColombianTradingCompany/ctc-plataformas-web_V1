@@ -304,3 +304,49 @@ export function vigenciaDe(validoHasta: string, hoyIso: string): "" | "vigente" 
 
 /** El texto de un precio: cifra + unidad, o vacío. */
 export const precioTx = (cifra: string, unidad: string): string => (cifra.trim() ? `${cifra.trim()} ${unidad}`.trim() : "");
+
+// ── TAR-121 · el prellenado desde el taller (`?finca=` / `?lote=`) ─────────────────────────────────────────────────────
+// La concha manda `{ctc:"prefill", registro}` con una finca y/o un lote DE LA CUENTA, ya resueltos en el servidor
+// (`src/lib/tools/entradaServidor.ts`). Aquí se vuelcan en el lote EN CURSO, y solo donde el campo esté vacío: el prellenado
+// propone, nunca pisa lo que la persona ya escribió. Lo que llega por postMessage es `unknown` y se lee campo a campo.
+
+/** El proceso de Kaffetal Regal → el de B1. Lo que no encaja va como «Otro» con su texto. */
+export function procesoDeB1(proceso: string): Pick<B1, "proceso" | "proceso_otro"> {
+  const p = proceso.trim().toLowerCase();
+  if (!p) return { proceso: "", proceso_otro: "" };
+  if (/^(lavado|washed)\b/.test(p)) return { proceso: "Lavado", proceso_otro: "" };
+  if (/^(honey|miel|semi-?lavado)\b/.test(p)) return { proceso: "Honey", proceso_otro: "" };
+  if (/^(natural|seco)\b/.test(p)) return { proceso: "Natural", proceso_otro: "" };
+  return { proceso: "Otro", proceso_otro: proceso.trim().slice(0, 80) };
+}
+
+export function conPrefill(ev: Evaluacion, registro: unknown): Evaluacion {
+  if (!registro || typeof registro !== "object") return ev;
+  const r = registro as { finca?: unknown; lote?: unknown };
+  const f = r.finca && typeof r.finca === "object" ? (r.finca as Record<string, unknown>) : null;
+  const l = r.lote && typeof r.lote === "object" ? (r.lote as Record<string, unknown>) : null;
+  if (!f && !l) return ev;
+  const lote = ev.lotes[ev.actual];
+  if (!lote) return ev;
+
+  const si = (actual: string, nuevo: unknown) => (actual.trim() ? actual : texto(nuevo).slice(0, 200));
+  const altitud = texto(l?.altitud_m) || texto(f?.altitud_m);
+  const ext: Extrinseca = {
+    ...lote.ext,
+    // `fincas.pais` null = Colombia (V5.127); con país, el departamento va vacío.
+    pais: si(lote.ext.pais, texto(f?.pais) || (f && texto(f.departamento) ? "Colombia" : "")),
+    region: si(lote.ext.region, f?.departamento),
+    municipio: si(lote.ext.municipio, f?.municipio),
+    finca: si(lote.ext.finca, f?.nombre),
+    altitud: si(lote.ext.altitud, altitud),
+  };
+  const variedad = texto(l?.variedad).slice(0, 80);
+  const sinVariedades = lote.b1.variedades.every((v) => !v.nombre.trim());
+  const b1: B1 = {
+    ...lote.b1,
+    variedades: sinVariedades && variedad ? [{ nombre: variedad, pct: "" }] : lote.b1.variedades,
+    ...(lote.b1.proceso ? {} : procesoDeB1(texto(l?.proceso))),
+  };
+  const nuevo: Lote = { ...lote, nombre: si(lote.nombre, l?.nombre).slice(0, 120), ext, b1 };
+  return { ...ev, lotes: ev.lotes.map((x, i) => (i === ev.actual ? nuevo : x)) };
+}

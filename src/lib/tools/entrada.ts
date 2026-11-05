@@ -108,6 +108,8 @@ export type FincaPrefill = {
   nombre: string;
   municipio: string | null;
   departamento: string | null;
+  /** `fincas.pais`: `null` = Colombia (V5.127); con país, el departamento va vacío. */
+  pais: string | null;
   altitud_m: number | null;
 };
 export type LotePrefill = {

@@ -296,4 +296,4 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - ANN `docs/ALINEACION.md` §3 (cuatro asientos del 2026-11-04/05, numerados V6.18), charters `herramientas-cafe` y `herramientas-internas`.
 - DATOS: ninguno (ni migración ni SQL tras el deploy).
 - Doc impact when wrapped: nodo de Herramientas del Café (el taller como módulo: contrato de URL, prellenado, puerta que vuelve, «Copiar enlace»); nodo de los cotizadores (calculadoras desde `private/ocp-apps/` por ruta de consola; el puente de globales); Definición de Contexto (exportar a Markdown) y entradas de herramientas internas; nodo de la red/SEO (`<html lang>` por idioma en pantalla, lista única de puertas viejas). CTCx OS entra como componente en BORRADOR (sin superficie): ninguna arista hasta que el owner decida. Sin entrada nueva de DICT.
-(commit: pendiente)
+(commit: e9d92bf)

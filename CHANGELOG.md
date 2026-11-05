@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.18] — 2026-11-05 (commit pendiente)
+## [V6.18] — 2026-11-05 (commit e9d92bf)
 
 - **Hito**: **tren de fusión de la noche del 4 al 5 de noviembre**: diecinueve PR revisados (#33–#51) entran juntos en un solo despliegue.
 - **Añadido**: Herramientas del Café · **el taller abre una herramienta como módulo** (TAR-121, #40): `?trabajo=` abre un trabajo guardado

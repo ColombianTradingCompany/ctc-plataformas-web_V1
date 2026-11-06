@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/components/panel/ActionForm";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
+import { leerPanelUser } from "@/lib/panel/panelUsers";
 import { emitOffer } from "./ofertasActions";
 import { mesesDelTrato, renovacionDebida } from "@/lib/trato/mesAMes";
 import { RENOVACION_DIAS } from "@/lib/trato/terminos";
@@ -364,10 +365,14 @@ export async function ofrecerRenovacion(contractId: string): Promise<ActionResul
   return { ok: true };
 }
 
-/** Solo un owner del panel declara la ruptura o descongela una cuenta (decisión 6: nunca automática). */
-async function esOwner(service: ReturnType<typeof createServiceRoleClient>, userId: string): Promise<boolean> {
-  const { data } = await service.from("panel_users").select("is_owner, status").eq("profile_id", userId).maybeSingle();
-  return Boolean(data?.is_owner && data?.status === "active");
+/**
+ * Solo un owner del panel declara la ruptura o descongela una cuenta (decisión 6: nunca automática). Aquí hace falta
+ * una fila de owner activo: el `bcp_admin` sin fila no basta. La fila se lee con `leerPanelUser`; si los permisos no se
+ * pueden leer, no es owner.
+ */
+async function esOwner(userId: string): Promise<boolean> {
+  const lectura = await leerPanelUser(userId);
+  return lectura.ok && Boolean(lectura.row?.is_owner && lectura.row.status === "active");
 }
 
 /**
@@ -380,7 +385,7 @@ export async function declararRuptura(contractId: string, formData: FormData): P
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
-  if (!(await esOwner(service, adminId))) return { ok: false, error: "Solo el owner declara una ruptura contractual." };
+  if (!(await esOwner(adminId))) return { ok: false, error: "Solo el owner declara una ruptura contractual." };
   const motivo = String(formData.get("motivo") ?? "").trim();
   if (!motivo) return { ok: false, error: "Escriba el motivo — queda en el rastro y el productor lo lee." };
   const { contract, lot } = await contratoYMeses(service, contractId);
@@ -411,7 +416,7 @@ export async function descongelarCuenta(producerId: string, formData: FormData):
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
-  if (!(await esOwner(service, adminId))) return { ok: false, error: "Solo el owner descongela una cuenta." };
+  if (!(await esOwner(adminId))) return { ok: false, error: "Solo el owner descongela una cuenta." };
   const motivo = String(formData.get("motivo") ?? "").trim();
   if (!motivo) return { ok: false, error: "Escriba por qué se descongela." };
   const { error } = await service.from("producer_profiles").update({ estado_cuenta: "activa", estado_cuenta_at: new Date().toISOString(), estado_cuenta_motivo: motivo }).eq("profile_id", producerId);

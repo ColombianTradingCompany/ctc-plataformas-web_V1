@@ -322,3 +322,13 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - DATOS: ninguno.
 - Doc impact when wrapped: ninguno en el mapa (estilo).
 (commit: 1f8881f)
+
+## [2026-11-06] V6.22 · Herramientas del Café con una sola cuenta, CTCx OS F3 (apagado) y consolas que no abren sin permisos legibles
+- ADD `src/lib/tools/mermas-ctc/calculo.ts`, `src/lib/tools/cogs-verde/calculo.ts`, `scripts/lib/extraerJs.mjs`, `scripts/qa-mermas-paridad.mjs` (239), `scripts/qa-cogs-paridad.mjs` (434).
+- ADD `src/lib/os/acciones.ts`, `src/lib/os/estafeta.ts`, `src/lib/os/lecturaNotion.ts`, `src/lib/os/textos/{es,en,idioma}.ts`, `src/components/os/vistas/{Acciones,Estafeta}.tsx`, `src/app/os/(app)/m/{acciones,estafeta}/**`; módulos `acciones` y `estafeta` en `MODULOS_OS` (apagados por defecto).
+- ADD `scripts/texto-lf.mjs` (leeTexto/aLf), `scripts/qa-permisos-legibles-check.mjs` (133).
+- ANN `src/lib/panel/panelUsers.ts` (leerPanelUser de tres salidas, esOwnerDelPanel; getPanelUser se retira), sus compuertas y toda lectura de permisos de `panel_users` (usuarios, socios, Mapa de Trabajo, Admin Lock, contratos del OCP, Buzón y los dos pasos del login); `src/lib/pvc/actions.ts`, `tablero/embed/publicar`, `tareasActions.ts` (esOwnerDelPanel); `src/lib/os/fuentes.ts` (fuentes `notion:`), `src/lib/panel/consoles.ts` (rail de la OS), `src/lib/os/demo/datos.ts`; `qa-os-check` (816), `qa-pvc-owner-check`, `qa-ciclos-check`, `qa-trato-check` y los guardianes que pasan a leeTexto.
+- ANN docs: charters `herramientas-cafe` (+ `mermas-ctc`, `cogs-verde`), `herramientas-internas`, `ctcx-os`, `consolas`; `docs/ALINEACION.md` §3 (cuatro filas).
+- DATOS: ninguno.
+- Doc impact when wrapped: la OS gana dos nodos apagados (Acciones en Ejecución, Estafeta en Directorios) con arista de lectura a Notion; las calculadoras de Mermas y CoGS ganan su módulo fuente; la identidad de consola gana la salida «no se pudo leer».
+(commit: pendiente)

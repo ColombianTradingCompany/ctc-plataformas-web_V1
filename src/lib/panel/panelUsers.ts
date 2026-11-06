@@ -28,10 +28,33 @@ export type PanelUserRow = {
   created_at: string;
 };
 
-export async function getPanelUser(profileId: string): Promise<PanelUserRow | null> {
-  const service = createServiceRoleClient();
-  const { data } = await service.from("panel_users").select("*").eq("profile_id", profileId).maybeSingle();
-  return (data as PanelUserRow) ?? null;
+/** Lo que oye quien pulsó un botón cuando los permisos no se pudieron leer. */
+export const PERMISOS_ILEGIBLES = "No se pudieron leer los permisos. Inténtalo de nuevo en un momento.";
+
+/**
+ * La lectura de la fila tiene TRES salidas, y quien la pide decide con las tres (2026-11-06):
+ *   · `{ ok: true, row }`        la fila del colaborador: manda ella.
+ *   · `{ ok: true, row: null }`  no hay fila: el `bcp_admin` de antes de `panel_users` (ver `grantedConsoles`).
+ *   · `{ ok: false }`            no se pudieron leer los permisos: la consola no abre y la acción no se hace.
+ * «No se pudo leer» nunca se trata como «no hay fila».
+ */
+export type LecturaDePanelUser = { ok: true; row: PanelUserRow | null } | { ok: false };
+
+export async function leerPanelUser(profileId: string): Promise<LecturaDePanelUser> {
+  try {
+    const service = createServiceRoleClient();
+    const { data, error } = await service.from("panel_users").select("*").eq("profile_id", profileId).maybeSingle();
+    if (error) return { ok: false };
+    return { ok: true, row: (data as PanelUserRow | null) ?? null };
+  } catch {
+    return { ok: false };
+  }
+}
+
+/** ¿Es owner activo? Si los permisos no se pueden leer, la respuesta es NO (las decisiones del owner no se toman). */
+export async function esOwnerDelPanel(profileId: string): Promise<boolean> {
+  const lectura = await leerPanelUser(profileId);
+  return lectura.ok && isPanelOwner(lectura.row);
 }
 
 /**

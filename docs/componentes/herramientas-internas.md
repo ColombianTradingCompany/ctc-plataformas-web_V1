@@ -148,6 +148,11 @@ Solo lee: `lots`, `lot_offers`, `purchase_contracts`, `lot_listings` (para saber
 `qa-grados-check.mjs` (48 — el contrato de grados) · `qa-definicion-check.mjs` · `qa-direccionamiento-check.mjs` ·
 `qa-anclas-check.mjs` · `qa-courier-check.mjs` (51 — el cálculo contra un acuerdo FICTICIO, la fuga cero por hash, el combustible derivado contra el historial de FedEx, el combustible provisional y el límite de paquete por medidas). `qa-empaque-fob-check.mjs` (47 — Empacado hasta FOB: el cálculo contra cuatro casos hechos a mano, que la máquina no vuelva, que el servidor recalcule y emita, la compuerta de la tabla). `qa-cotizador-puente-check.mjs` (39 — el puente AppFrame ↔ Mermas/CoGS: ids del DOM del titular logístico, funciones leídas por window, `state` por `globalDeLaApp`, los kg finales en kg, GLOBAL_KEYS declaradas; córrelo al reemplazar una calculadora). Y de la casa, porque el grupo vive en el rail del ECP: `qa-rutas-consolas.mjs`.
 `qa-cotizador-apps-check.mjs` (40 — TAR-119: ninguna copia en `public/`, la puerta antes del disco, la consola leída del rail, la carpeta trazada).
+**Al reemplazar `private/ocp-apps/cotizador-lotes.html` o `cotizador-logistico.html`** se corren también `qa-mermas-paridad.mjs` y `qa-cogs-paridad.mjs`
+(de `herramientas-cafe`, F-01 / F-02 etapa 1, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`): la cuenta de cada archivo tiene
+que dar lo mismo que `src/lib/tools/mermas-ctc/calculo.ts` y `src/lib/tools/cogs-verde/calculo.ts`. Para Mermas, el código en línea de
+`cotizador-lotes.html` tiene que ser el MISMO que el de `public/tools/mermas-ctc/mermas-ctc.html`: un cambio en un solo archivo lo hace fallar;
+se cambian los dos (y el módulo, si cambia la cuenta).
 
 ## Reglas propias
 
@@ -192,6 +197,10 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
 
 ## Pendientes
 
+- **2026-11-06 · V6.22 · F-01 etapa 2 · el cotizador de lotes abre la Mermas pública** (de `herramientas-cafe`, decisión del owner del 6 nov;
+  la etapa 1 está en `ALINEACION` §3 del 2026-11-06). `AppFrame.tsx` abre `/tools/mermas-ctc/mermas-ctc.html` con el puente inerte; la copia
+  privada `private/ocp-apps/cotizador-lotes.html` queda de respaldo detrás de un interruptor; se retira tras dos semanas de uso y el sí del
+  owner. Dueño: `herramientas-internas` (el `AppFrame.tsx`), con `herramientas-cafe` (el archivo público y su guardián).
 - **2026-11-06 · V6.20 · el Modelo Económico, solo del owner en todas las consolas** (decisión del owner del 5 nov; hecho:
   ver «Superficies y rutas» y `ALINEACION` §3). Queda: (a) **verlo en la consola** con una cuenta del equipo que no sea el owner
   (las consolas no se conducen en un navegador automático: lo hace el owner, o se comprueba por SQL que esa cuenta no es

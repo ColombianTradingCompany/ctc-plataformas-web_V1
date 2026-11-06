@@ -1,6 +1,6 @@
 import "server-only";
 import { createPanelSessionClient, createPartnerSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
-import { getPanelUser, grantedConsoles, nivelDeConsola } from "@/lib/panel/panelUsers";
+import { leerPanelUser, grantedConsoles, nivelDeConsola } from "@/lib/panel/panelUsers";
 import { puede, type ClaseDeAccion } from "@/lib/panel/niveles";
 import { consolaDelModulo } from "@/lib/panel/consoles";
 
@@ -44,10 +44,12 @@ export async function studioGate(clase: ClaseDeAccion = "emite"): Promise<Studio
   if (panelUser) {
     const { data: profile } = await panel.from("profiles").select("role, full_name, email").eq("id", panelUser.id).maybeSingle();
     if (profile?.role === "bcp_admin") {
-      const row = await getPanelUser(panelUser.id);
+      // Sin permisos legibles, la vía de la consola no abre (se sigue a la vía del socio, que tiene su propia credencial).
+      const lectura = await leerPanelUser(panelUser.id);
+      const row = lectura.ok ? lectura.row : null;
       // La consola de Coffeed se lee del rail (V5.60), igual que en `coffeedGate`: sin enlace, cierra.
       const consola = consolaDelModulo("coffeed");
-      if (consola && (!row || row.status === "active") && grantedConsoles(row).includes(consola) && puede(nivelDeConsola(row, consola), clase)) {
+      if (lectura.ok && consola && (!row || row.status === "active") && grantedConsoles(row).includes(consola) && puede(nivelDeConsola(row, consola), clase)) {
         return {
           userId: panelUser.id,
           via: "consola",

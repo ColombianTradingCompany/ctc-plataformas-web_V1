@@ -19,6 +19,38 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.22] — 2026-11-06 (commit pendiente)
+
+- **Añadido**: **Herramientas del Café · una cuenta, una fuente (F-01 y F-02, etapa 1).** La cuenta de la Calculadora de Mermas vive en
+  un solo módulo, `src/lib/tools/mermas-ctc/calculo.ts`, y el núcleo de la Calculadora CoGS · Café verde en `src/lib/tools/cogs-verde/calculo.ts`,
+  con la regla V19 que eligió el owner el 6 nov. Son puros: sin pantalla ni navegador. Dos guardianes de paridad corren la cuenta de cada archivo
+  servido (el taller y la copia del cotizador del ECP) con casos inventados y exigen el mismo resultado que el módulo: `qa-mermas-paridad` (239,
+  sin navegador) y `qa-cogs-paridad` (434, 7 casos, Playwright sin `next dev`). Compara el núcleo; empaque, exportación, transporte
+  internacional, destino y última milla quedan para la etapa 2. **Nada cambia para quien usa las herramientas o los cotizadores**: las dos copias
+  de Mermas ya daban lo mismo; la CoGS pública (V18) aún no tiene tres reglas de la V19 y el guardián lo avisa en cada corrida (se corrige al
+  reemplazar su archivo, tras dos semanas y con el sí del owner).
+- **Añadido**: **CTCx OS · F3, el cimiento de Acciones y Estafeta** (en obra, **apagados por defecto**): dos módulos nuevos de solo lectura.
+  **Estafeta** (`/os/m/estafeta`, hub 7 · Directorios, F-27): las tres bandejas (Te toca · Esperando a otros · Por revisar; cada carta cuenta
+  una vez), «Te toca» por hub con la más vieja y el Libro de entrada y salida («Enviado» solo con su prueba); lee solo los punteros del registro
+  «Correspondencia». **Acciones** (`/os/m/acciones`, hub 8 · Ejecución, F-23): las tareas de la plataforma junto a las Tareas de Notion, por hub,
+  unidas en la vista y nunca en los datos. Hasta que exista la integración de solo lectura de Notion del OS (decisión CON-28) sus cifras dicen
+  «Sin datos», nunca un cero. Textos en una fuente por idioma (`src/lib/os/textos/`, ES primero, EN con la misma forma). Demostración local
+  en `/os/demo/estafeta` y `/os/demo/acciones`. `qa-os-check` suma el grupo F3 (816).
+- **Cambiado**: **consolas · toda lectura de los permisos de un operador pasa por `leerPanelUser` / `esOwnerDelPanel`, y si no se
+  pueden leer, la consola no abre** (va al login), las acciones no se hacen y las decisiones del owner no se toman. Un operador sin fila en la
+  tabla de colaboradores sigue entrando como hoy. `leerPanelUser` (`src/lib/panel/panelUsers.ts`) tiene tres salidas —la fila, sin fila y no se
+  pudo leer— y `getPanelUser` se retira. Al pulsar un botón sin permisos legibles se ve «No se pudieron leer los permisos. Inténtalo de nuevo en
+  un momento.»; en el login, «No pudimos comprobar tu acceso. Intenta de nuevo en un momento.», sin enviar código. Guardián nuevo
+  `qa-permisos-legibles-check` (133): corre las compuertas y las acciones reales con un doble de Supabase y exige que fuera de `panelUsers.ts`
+  ningún archivo de `src/` lea la tabla por `profile_id`.
+- **Corregido**: **los guardianes leen el código con saltos LF en cualquier checkout** (`scripts/texto-lf.mjs`, `leeTexto`): un checkout de
+  Windows ve lo mismo que Vercel. `qa-stock-ctcx`, `qa-centro-calidad`, `qa-ciclos`, `qa-trato` y `qa-cromatografia` (y
+  `build-variedades-datos --check`) pasan ahora también en Windows. Ninguna comprobación se afloja.
+- **Docs**: charters `herramientas-cafe` (y las fichas `mermas-ctc` y `cogs-verde`), `herramientas-internas`, `ctcx-os` y `consolas`;
+  cuatro filas de `docs/ALINEACION.md` §3.
+
+---
+
 ## [V6.21] — 2026-11-06 (commit 1f8881f)
 
 - **Corregido**: **la ventana de login de Cherry Picked en la portada, Roast y X** salía transparente (sin tarjeta, sin bordes en los campos y sin el color del botón): `ProveedorDeCuenta` (`src/components/cherry-picked/sesion.tsx`) la pinta como hermana de la página, fuera del `data-theme="cherry-picked"` de cada portada. Ahora la ventana lleva su propio tema. Green no cambia (monta su ventana dentro de su tema). `qa-cp-sesion-check` lo vigila (34).

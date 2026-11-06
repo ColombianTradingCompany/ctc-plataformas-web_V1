@@ -1,4 +1,5 @@
-import { FUENTES, type CodigoDeLectura } from "@/lib/os/fuentes";
+import { FUENTES, describirFuente, type CodigoDeLectura } from "@/lib/os/fuentes";
+import { textosDelOs } from "@/lib/os/textos/idioma";
 import type { Aviso } from "@/lib/os/tablero";
 import { IconoAlerta } from "./IconoAlerta";
 import s from "./os.module.css";
@@ -15,8 +16,17 @@ const QUE_FALLO: Record<CodigoDeLectura, string> = {
   lectura_salud: "No se pudo leer la salud del sistema.",
   lectura_hechos: "No se pudieron leer los hechos del turno.",
   lectura_lotes: "No se pudieron leer los lotes.",
+  lectura_tareas_notion: textosDelOs().avisos.lectura_tareas_notion,
+  lectura_correspondencia: textosDelOs().avisos.lectura_correspondencia,
   lectura_fallida: "No se pudo abrir la lectura de la plataforma.",
 };
+
+/** La línea de fuentes de un aviso: la de F2 tal cual («Plataforma › …»); si alguna pieza sale de Notion (F3), cada una con su origen. */
+function lineaDeFuentes(piezas: Aviso["fuentes"]): string {
+  const crudas = [...new Set(piezas.map((p) => FUENTES[p].fuente))];
+  if (!crudas.some((f) => f.startsWith("notion:"))) return `Plataforma › ${crudas.join(" · ")}`;
+  return [...new Set(piezas.map((p) => describirFuente(p)).map((d) => `${d.origen} › ${d.texto}`))].join(" · ");
+}
 
 export function Avisos({ avisos }: { avisos: readonly Aviso[] }) {
   if (!avisos.length) return null;
@@ -34,7 +44,7 @@ export function Avisos({ avisos }: { avisos: readonly Aviso[] }) {
             </span>
             <span>
               {QUE_FALLO[a.error]} Quedan en «Sin datos»: {a.fuentes.map((p) => FUENTES[p].etiqueta).join(", ")}.
-              <span className={s.fuente}>Plataforma › {[...new Set(a.fuentes.map((p) => FUENTES[p].fuente))].join(" · ")}</span>
+              <span className={s.fuente}>{lineaDeFuentes(a.fuentes)}</span>
             </span>
           </li>
         ))}

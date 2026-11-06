@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permisoDeEscritura, requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { esOwnerDelPanel } from "@/lib/panel/panelUsers";
 
 // ── Admin Lock (2026-07-20, pedido del owner) ────────────────────────────────
 // Una contraseña SUAVE que desbloquea información estructuralmente oculta por
@@ -43,9 +44,8 @@ export async function setAdminLockPassword(current: string, next: string): Promi
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
-  // Owner = sin fila en panel_users (grandfathered) o con is_owner.
-  const { data: pu } = await service.from("panel_users").select("is_owner").eq("profile_id", adminId).maybeSingle();
-  if (pu && !pu.is_owner) return { ok: false, error: "Solo el owner puede cambiar el Admin Lock." };
+  // Owner = sin fila en panel_users (grandfathered) o owner activo; si los permisos no se pueden leer, no es owner.
+  if (!(await esOwnerDelPanel(adminId))) return { ok: false, error: "Solo el owner puede cambiar el Admin Lock." };
 
   const hash = await readHash(service);
   // Primera vez (fila ausente / sin hash aún): el owner establece el candado sin

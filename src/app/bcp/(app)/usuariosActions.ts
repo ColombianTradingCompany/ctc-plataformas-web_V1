@@ -4,7 +4,7 @@ import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
 import { createPanelSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { CONSOLAS_INVITABLES, type PanelConsoleKey } from "@/lib/panel/consoles";
-import type { ConsoleLevel } from "@/lib/panel/panelUsers";
+import { esOwnerDelPanel, leerPanelUser, PERMISOS_ILEGIBLES, type ConsoleLevel } from "@/lib/panel/panelUsers";
 import { sendTransactionalEmail } from "@/lib/email/leadEmails";
 import { buildPanelInviteEmail, buildPanelResetEmail } from "@/lib/email/panelEmails";
 
@@ -13,6 +13,7 @@ export type ActionResult = { ok: true } | { ok: false; error: string };
 // Owner gate for collaborator management. Defense in depth alongside the
 // read-path check in requireConsoleAccess. A bcp_admin with no panel_users row
 // is grandfathered as owner (predates the table); otherwise must be an ACTIVE owner.
+// Se pregunta con `esOwnerDelPanel`: si los permisos no se pueden leer, no es owner y la acción no se hace.
 async function requireOwner(): Promise<string> {
   const session = await createPanelSessionClient();
   const {
@@ -23,10 +24,7 @@ async function requireOwner(): Promise<string> {
   const { data: profile } = await session.from("profiles").select("role").eq("id", user.id).single();
   if (profile?.role !== "bcp_admin") throw new Error("No autorizado.");
 
-  const service = createServiceRoleClient();
-  const { data: pu } = await service.from("panel_users").select("is_owner, status").eq("profile_id", user.id).maybeSingle();
-  const isOwner = pu ? pu.is_owner && pu.status === "active" : true;
-  if (!isOwner) throw new Error("Solo un owner puede gestionar usuarios del panel.");
+  if (!(await esOwnerDelPanel(user.id))) throw new Error("Solo un owner puede gestionar usuarios del panel.");
 
   return user.id;
 }
@@ -146,7 +144,9 @@ export async function suspendPanelUser(profileId: string): Promise<ActionResult>
   if (profileId === ownerId) return { ok: false, error: "No puedes suspender tu propia cuenta." };
 
   const service = createServiceRoleClient();
-  const { data: target } = await service.from("panel_users").select("is_owner, status").eq("profile_id", profileId).single();
+  const lectura = await leerPanelUser(profileId);
+  if (!lectura.ok) return { ok: false, error: PERMISOS_ILEGIBLES };
+  const target = lectura.row;
   if (!target) return { ok: false, error: "Usuario no encontrado." };
 
   if (target.is_owner) {
@@ -175,7 +175,9 @@ export async function suspendPanelUser(profileId: string): Promise<ActionResult>
 export async function reactivatePanelUser(profileId: string): Promise<ActionResult> {
   const ownerId = await requireOwner();
   const service = createServiceRoleClient();
-  const { data: target } = await service.from("panel_users").select("status").eq("profile_id", profileId).single();
+  const lectura = await leerPanelUser(profileId);
+  if (!lectura.ok) return { ok: false, error: PERMISOS_ILEGIBLES };
+  const target = lectura.row;
   if (!target) return { ok: false, error: "Usuario no encontrado." };
 
   await service
@@ -200,11 +202,9 @@ export async function reactivatePanelUser(profileId: string): Promise<ActionResu
 export async function resendPanelInvite(profileId: string): Promise<ActionResult> {
   await requireOwner();
   const service = createServiceRoleClient();
-  const { data: target } = await service
-    .from("panel_users")
-    .select("email, delivery_email, display_name, consoles, status, invite_email_sent_at")
-    .eq("profile_id", profileId)
-    .single();
+  const lectura = await leerPanelUser(profileId);
+  if (!lectura.ok) return { ok: false, error: PERMISOS_ILEGIBLES };
+  const target = lectura.row;
   if (!target) return { ok: false, error: "Usuario no encontrado." };
   if (target.status !== "invited") return { ok: false, error: "Solo se puede reenviar la invitación a cuentas que aún no han ingresado." };
 
@@ -239,11 +239,9 @@ export async function resendPanelInvite(profileId: string): Promise<ActionResult
 export async function resetPanelUserPassword(profileId: string): Promise<ActionResult> {
   const ownerId = await requireOwner();
   const service = createServiceRoleClient();
-  const { data: target } = await service
-    .from("panel_users")
-    .select("email, delivery_email, display_name, status")
-    .eq("profile_id", profileId)
-    .single();
+  const lectura = await leerPanelUser(profileId);
+  if (!lectura.ok) return { ok: false, error: PERMISOS_ILEGIBLES };
+  const target = lectura.row;
   if (!target) return { ok: false, error: "Usuario no encontrado." };
   if (target.status === "suspended") return { ok: false, error: "Reactiva la cuenta antes de restablecer su contraseña." };
   if (target.status === "invited") return { ok: false, error: "Esta cuenta aún no ha ingresado — usa \"Reenviar invitación\"." };
@@ -273,7 +271,9 @@ export async function resetPanelUserPassword(profileId: string): Promise<ActionR
 export async function updateDeliveryEmail(profileId: string, deliveryEmail: string): Promise<ActionResult> {
   const ownerId = await requireOwner();
   const service = createServiceRoleClient();
-  const { data: target } = await service.from("panel_users").select("email, delivery_email").eq("profile_id", profileId).single();
+  const lectura = await leerPanelUser(profileId);
+  if (!lectura.ok) return { ok: false, error: PERMISOS_ILEGIBLES };
+  const target = lectura.row;
   if (!target) return { ok: false, error: "Usuario no encontrado." };
 
   const cleaned = deliveryEmail.trim().toLowerCase() || null;

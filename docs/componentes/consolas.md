@@ -135,7 +135,14 @@ que el Club no existe y la Arena no toca el circuito; `qa-jornada-check` se reti
 `qa-catalogo-publico-check.mjs` (119 — el código público del lote, «Find my Lot», las rutas SOLO-www, la marca del
 portal y el peso de las imágenes) ·
 `qa-moneda-check.mjs` (24 — la moneda de cara al comprador: USD en la tienda, EUR declarado en la subasta) ·
-`qa-guard-check.mjs` (seguridad, con cuentas QA) · **`qa-niveles-check.mjs`** (36 — el nivel `viewer`: la regla y la lista
+`qa-guard-check.mjs` (seguridad, con cuentas QA) · **`qa-permisos-legibles-check.mjs`** (133, 2026-11-06 — toda lectura de
+`panel_users` que decide permisos pasa por `leerPanelUser` / `esOwnerDelPanel`. Corre el código real con un doble de Supabase,
+con fila, sin fila, con error y lanzando: la identidad de las consolas (`requirePanelIdentity`, `requireConsoleAccess`,
+`tieneConsola`), las compuertas de escritura (`requireConsoleWrite`, `permisoDeEscritura`, `requireActiveAdmin`, `coffeedGate`,
+`studioGate`), `esOwnerDelPanel` y las decisiones del owner (usuarios y la fila del colaborador que gestiona, socios, Mapa de
+Trabajo, Admin Lock, ruptura y descongelar del OCP), la identidad del Buzón y los dos pasos del login (contraseña y código);
+sin fila, como siempre. Y lee `src/`: fuera de `panelUsers.ts` ningún archivo lee la tabla por `profile_id`, y una lectura que
+no decide permisos va en `LECTURAS_PERMITIDAS` con su motivo; con autopruebas de que una lectura mal hecha falla) · **`qa-niveles-check.mjs`** (36 — el nivel `viewer`: la regla y la lista
 blanca de borradores se leen DEL PLAN) · `qa-transcripciones-check.mjs` (50, con `ts-resolve`) ·
 `qa-transcripciones-nube.mjs` (20, toca AssemblyAI, ~US$0,002) · **`qa-asistencia-check.mjs`** (105 — la sesión asistida solo para
 productores y siempre con rastro; la etiqueta del desacoplado no recibe correos; el guard de `gestion`) · **`qa-registro-check.mjs`**
@@ -185,7 +192,7 @@ ciclo; `docs/PLAN_CICLOS.md`) · **`qa-triage-catalogo-check.mjs`** (V5.196 — 
 - **El Modelo Económico es solo del owner en todas las consolas** (decisión del owner del 5 nov; V6.19 en la OS, V6.20 en el
   resto). Además del `ownerOnly` del rail, todo `/ecp/pvc` pide la compuerta de `src/app/ecp/(app)/pvc/soloDelOwner.ts` (layout,
   cada página y cada route handler), el Tablero de Ejecución llama a `cargarTareas(…, { conPvc: identity.isOwner })`, la casilla
-  de una tarea `pvc:*` la marca solo el owner (`setTaskState`, con `isPanelOwner`), la «Actividad reciente» del Panel del OCP deja
+  de una tarea `pvc:*` la marca solo el owner (`setTaskState`, con `esOwnerDelPanel`, que responde que no si los permisos no se pueden leer), la «Actividad reciente» del Panel del OCP deja
   fuera, para quien no es el owner, los tipos de auditoría del PVC (`TIPOS_DE_AUDITORIA_DEL_PVC`) y el Panel del BCP lee las
   ediciones solo tras `identity.isOwner ?` (sin el owner, `BcpKpis` pinta el precio de la Federación del día y «Solo el owner»).
   Un tablero nuevo que pinte tareas `pvc:*`, filas de `audit_log` o cifras de una edición pasa la misma condición, con `isOwner`
@@ -209,6 +216,28 @@ ciclo; `docs/PLAN_CICLOS.md`) · **`qa-triage-catalogo-check.mjs`** (V5.196 — 
 
 ## Pendientes
 
+- **2026-11-06 · V6.22: toda lectura de `panel_users` que decide permisos pasa por `leerPanelUser` /
+  `esOwnerDelPanel`, y si no se pueden leer los permisos, la consola no abre.** `leerPanelUser` (`src/lib/panel/panelUsers.ts`)
+  tiene TRES salidas: la fila, «no hay fila» (el `bcp_admin` de antes de la tabla, que sigue entrando a todo como hoy) y «no se
+  pudieron leer los permisos». Con la tercera: `requireConsoleAccess` / `requirePanelIdentity` mandan al login, `tieneConsola`
+  responde que no, `requireConsoleWrite`, `coffeedGate` y `studioGate` (su vía de consola) no dejan escribir, `requireActiveAdmin`
+  no pasa, `permisoDeEscritura` responde `{ ok:false }` con `PERMISOS_ILEGIBLES` en llano, `/cambiar-contrasena` manda al login y
+  `esOwnerDelPanel` responde que no: las decisiones del owner (el PVC y la casilla `pvc:*` del Tablero, usuarios, socios, Mapa de
+  Trabajo, Admin Lock) no se toman. Las acciones de usuarios sobre la fila de un colaborador responden `PERMISOS_ILEGIBLES` sin
+  hacer nada; la ruptura y el descongelar del OCP piden una fila de owner activo y, ilegible, no se hacen; el Buzón trata a quien
+  pide como colaborador (solo su propio correo); el paso de la contraseña del login responde 503 «No pudimos comprobar tu acceso.
+  Intenta de nuevo en un momento.», que la pantalla de login pinta, sin enviar código, y el paso del código no apunta el ingreso.
+  `getPanelUser` se retiró. Lo vigila **`qa-permisos-legibles-check`** (133): corre esas compuertas y acciones reales con un doble
+  de Supabase y exige que fuera de `panelUsers.ts` ningún archivo de `src/` lea la tabla por `profile_id`. Verlo en la consola,
+  como siempre, no se puede en un navegador automático (OTP real).
+- **2026-11-06 · V6.22: los guardianes leen el código con saltos LF en cualquier checkout.** `scripts/texto-lf.mjs`
+  (`leeTexto`, `aLf`; no es guardián) es el sitio común para convertir `\r\n` en `\n`; lo usan `qa-stock-ctcx`, `qa-centro-calidad`,
+  `qa-ciclos`, `qa-trato`, `qa-cromatografia` y `build-variedades-datos --check`. En un checkout de Windows (`core.autocrlf=true`)
+  esos seis fallaban en las comprobaciones que buscan un trozo de código con un salto de línea dentro, y pasaban en Vercel: el
+  fallo de `qa-cromatografia` («handler: sanea el idioma…») era la misma causa, no un defecto del handler. Un guardián nuevo que
+  busque `"…\n…"` en el código lee con `leeTexto`; para comparar BYTES (una copia idéntica a otra) se sigue leyendo el Buffer.
+  Otros guardianes de antes (y `build-rueda-datos --check`) normalizan por su cuenta con `.replace(/\r\n/g, "\n")`, con el mismo
+  efecto; se pasan a `leeTexto` cuando se toquen.
 - **2026-11-06 · V6.20: el Modelo Económico, solo del owner en el ECP, el OCP y el BCP** (decisión del owner del 5 nov;
   `ALINEACION` §3, fila del 2026-11-06). Hecho en código: `/ecp` pasa `{ conPvc: identity.isOwner }` y la casilla de una tarea
   `pvc:*` es del owner; el Panel del BCP no lee las ediciones sin el owner. El Panel del OCP sigue con `cargarTareas(service)`:

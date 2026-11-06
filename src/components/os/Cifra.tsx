@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { FUENTES, enlaceVisible, type Medida, type NotaDeMedida, type PiezaId, type Rotulo } from "@/lib/os/fuentes";
+import { FUENTES, describirFuente, enlaceVisible, type Medida, type NotaDeMedida, type PiezaId, type Rotulo } from "@/lib/os/fuentes";
+import { textosDelOs } from "@/lib/os/textos/idioma";
 import { SALUD_LABEL, type Salud } from "@/lib/integraciones/registroCrons";
 import { IconoAlerta } from "./IconoAlerta";
 import { useProcedencia } from "./Procedencia";
@@ -14,7 +15,8 @@ import s from "./os.module.css";
 //     no es el owner) → «Solo el owner», que no es un error ni un hueco: la pieza no se leyó para él;
 //   · `demo` → la etiqueta «EJEMPLO»;
 //   · con «Ver fuentes» encendido → una línea en mono «Plataforma › tabla.columna» (o la función
-//     reusada), su filtro y sus notas (por ejemplo «cuenta cero si falla una lectura»);
+//     reusada; o, en F3, «Notion › «Base» · propiedad»), su filtro y sus notas (por ejemplo «cuenta
+//     cero si falla una lectura» o «sin la lectura de Notion todavía»);
 //   · «Abrir» → la pantalla de la consola dueña de la pieza, SOLO si quien mira la tiene y su rail
 //     se la enseña (`enlaceVisible`, crítica 12). Sin enlace visible, no hay «Abrir».
 // Aquí viven también el rótulo leído (un texto, como el código de la edición del PVC), la salud
@@ -29,6 +31,7 @@ const NOTA: Record<NotaDeMedida, string> = {
   sin_fuente_aun: "sin fuente aún: llega con Notion (F3)",
   solo_owner: "el Modelo Económico es solo del owner: no se lee para quien mira",
   sin_el_pvc: "sin lo del Modelo Económico (solo del owner)",
+  sin_integracion_notion: textosDelOs().notas.sin_integracion_notion,
 };
 
 const esSoloOwner = (m: { notas?: readonly NotaDeMedida[] }) => !!m.notas?.includes("solo_owner");
@@ -41,19 +44,12 @@ export function textoDeCifra(m: Medida): string {
   return m.valor === null ? "–" : NUMERO.format(m.valor);
 }
 
-/** La fuente de una pieza, en palabras: «tabla.columna» o la función reusada y su archivo. */
-function fuenteEnPalabras(pieza: PiezaId): string {
-  const f = FUENTES[pieza].fuente;
-  if (!f.startsWith("archivo:")) return f;
-  const [ruta, fn] = f.slice("archivo:".length).split("#");
-  return `${fn}() en ${ruta}`;
-}
-
 function LineaDeFuente({ pieza, notas, abrir }: { pieza: PiezaId; notas?: readonly NotaDeMedida[]; abrir: string | null }) {
   const f = FUENTES[pieza];
+  const d = describirFuente(pieza);
   return (
     <span className={s.fuente}>
-      Plataforma › {fuenteEnPalabras(pieza)}
+      {d.origen} › {d.texto}
       {f.filtro && <> · {f.filtro}</>}
       {notas?.map((n) => (
         <span key={n} className={s.fuenteNota}>

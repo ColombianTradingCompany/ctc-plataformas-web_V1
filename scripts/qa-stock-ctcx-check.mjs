@@ -26,12 +26,13 @@
 //      por LOTE en el panel de la partida —vendido o sin lote: no va a la vitrina— (H6); el éxito parcial en ámbar (H12); la compra de
 //      cada raíz se lee con `anulada_at` y la franja no cuenta las partidas anuladas (H13); la raíz de un despacho y su compra (H1/H2).
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
+import { leeTexto } from "./texto-lf.mjs";
 
 let ok = 0;
 const fallos = [];
 const check = (n, c, detalle = "") => (c ? ok++ : fallos.push(n + (detalle ? ` — ${detalle}` : "")));
-const lee = (r) => readFileSync(new URL(`../${r}`, import.meta.url), "utf8");
+const lee = (r) => leeTexto(new URL(`../${r}`, import.meta.url)); // con saltos LF en cualquier checkout
 const existe = (r) => existsSync(new URL(`../${r}`, import.meta.url));
 const cerca = (a, b, tol = 1e-6) => Math.abs(a - b) <= tol;
 

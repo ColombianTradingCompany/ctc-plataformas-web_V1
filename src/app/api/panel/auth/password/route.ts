@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { createEphemeralClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { generateOtpCode, hashOtpCode } from "@/lib/bcp/otp";
 import { sendOtpEmail } from "@/lib/bcp/sendOtpEmail";
+import { leerPanelUser } from "@/lib/panel/panelUsers";
 
 // ── Master login · step 1 (password) ────────────────────────────────────────
 // The single door to the internal CTC Web Platform (BCP / ECP / OCP). Verifies
@@ -16,6 +17,8 @@ import { sendOtpEmail } from "@/lib/bcp/sendOtpEmail";
 // slots in; partner accounts are a separate tier and never authenticate here.
 
 const GENERIC_ERROR = "Credenciales inválidas.";
+/** Lo que lee quien entra cuando su acceso no se pudo comprobar (503): reintentar, sin detalles. */
+const ACCESO_ILEGIBLE = "No pudimos comprobar tu acceso. Intenta de nuevo en un momento.";
 const OTP_TTL_MS = 10 * 60 * 1000;
 const MAX_CODES_PER_WINDOW = 3;
 const WINDOW_MS = 15 * 60 * 1000;
@@ -47,11 +50,13 @@ export async function POST(request: NextRequest) {
 
   // panel_users lifecycle gate: a suspended collaborator keeps the role but can't
   // log in. A missing row = a bcp_admin predating panel_users (grandfathered).
-  const { data: panelUser } = await service
-    .from("panel_users")
-    .select("status, delivery_email")
-    .eq("profile_id", signInData.user.id)
-    .maybeSingle();
+  // La fila se lee con `leerPanelUser`: si los permisos no se pueden leer, no se envía código ni se sigue;
+  // la pantalla de login pinta el aviso y se puede reintentar.
+  const lectura = await leerPanelUser(signInData.user.id);
+  if (!lectura.ok) {
+    return NextResponse.json({ error: ACCESO_ILEGIBLE }, { status: 503 });
+  }
+  const panelUser = lectura.row;
   if (panelUser && panelUser.status === "suspended") {
     return NextResponse.json({ error: GENERIC_ERROR }, { status: 401 });
   }

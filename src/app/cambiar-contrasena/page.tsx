@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createPanelSessionClient } from "@/lib/supabase/server";
-import { getPanelUser } from "@/lib/panel/panelUsers";
+import { leerPanelUser } from "@/lib/panel/panelUsers";
 import { ChangePasswordForm } from "./ChangePasswordForm";
 
 // Forced password-change step. Does its OWN light auth on purpose: the console
@@ -17,8 +17,10 @@ export default async function CambiarContrasenaPage() {
   if (profile?.role !== "bcp_admin") redirect("/login");
 
   // Nothing pending? Send them to the consoles.
-  const row = await getPanelUser(user.id);
-  if (!row?.must_change_password) redirect("/panel");
+  // Si no se pueden leer los permisos, no se cambia nada aquí: al login, como la consola.
+  const lectura = await leerPanelUser(user.id);
+  if (!lectura.ok) redirect("/login");
+  if (!lectura.row?.must_change_password) redirect("/panel");
 
   return <ChangePasswordForm />;
 }

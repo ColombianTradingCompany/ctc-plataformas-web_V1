@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createPanelSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { hashOtpCode } from "@/lib/bcp/otp";
+import { leerPanelUser } from "@/lib/panel/panelUsers";
 
 // ── Master login · step 2 (OTP) ─────────────────────────────────────────────
 // Consumes the 6-digit code, and only then promotes the parked tokens into a
@@ -53,14 +54,12 @@ export async function POST(request: NextRequest) {
   }
 
   // Stamp the login on panel_users, and flip an invited collaborator to active on
-  // their first successful sign-in. No-op for a grandfathered admin (no row).
+  // their first successful sign-in. No-op for a grandfathered admin (no row), y también si la fila
+  // no se pudo leer (`leerPanelUser`): sin fila legible no se escribe nada.
   if (otpRow.profile_id) {
     const now = new Date().toISOString();
-    const { data: pu } = await service
-      .from("panel_users")
-      .select("status")
-      .eq("profile_id", otpRow.profile_id)
-      .maybeSingle();
+    const lectura = await leerPanelUser(otpRow.profile_id);
+    const pu = lectura.ok ? lectura.row : null;
     if (pu) {
       await service
         .from("panel_users")

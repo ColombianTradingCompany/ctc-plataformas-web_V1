@@ -5,6 +5,7 @@ import { CONSOLES } from "@/lib/panel/consoles";
 import { MODULOS_OS, type ClaveDeModulo, type EstadoDeModulo } from "@/lib/os/modulos";
 import { DOMINIOS } from "@/lib/integraciones/dominios";
 import { contextoParaTailor, type Tablero } from "@/lib/os/tablero";
+import { textosDelOs } from "@/lib/os/textos/idioma";
 import { Avisos } from "../Avisos";
 import { CopiarContexto } from "../CopiarContexto";
 import { porQueEstaApagado } from "../ModuloApagado";
@@ -29,6 +30,9 @@ const QUE_HACE: Record<ClaveDeModulo, string> = {
   hacienda: "Los diez hubs del Mapa CTC como edificios: tareas abiertas y vencidas, hechos del turno, cola y salud de cada hub.",
   almacen: "El café de la casa en kilos: la franja del stock, los lotes por etapa y los despachos.",
   taller: "La salud del sistema: la versión, los crons, la cola de la espina y el registro de automatizaciones.",
+  // F3 (en obra, apagados por defecto): sus textos viven en una fuente por idioma (`src/lib/os/textos/`).
+  estafeta: textosDelOs().modulos.estafeta,
+  acciones: textosDelOs().modulos.acciones,
 };
 
 const hubDe = (clave: ClaveDeModulo) => {
@@ -66,7 +70,7 @@ function ElMapaYLoDemas({ tablero, modulos, base }: Props & { tablero: Tablero }
         <h2 id="os-modulos" className={s.seccionTitulo}>
           Los módulos
         </h2>
-        <p className={s.seccionNota}>Cada módulo se abre desde su edificio del mapa; aquí están los tres, con su interruptor.</p>
+        <p className={s.seccionNota}>Cada módulo se abre desde su edificio del mapa; aquí están todos, con su interruptor.</p>
         <ul className={s.modulosLista}>
           {MODULOS_OS.map((m) => {
             const e = modulos[m.clave];

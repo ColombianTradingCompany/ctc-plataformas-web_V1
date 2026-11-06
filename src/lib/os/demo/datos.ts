@@ -2,7 +2,9 @@ import { CRONS } from "@/lib/integraciones/registroCrons";
 import type { Dominio } from "@/lib/integraciones/dominios";
 import type { PanelConsoleKey } from "@/lib/panel/consoles";
 import { PVC_SOLO_OWNER, armarTablero, tareasPorHub, type LecturasDelTablero, type Tablero } from "../tablero";
-import { PIEZAS, type PiezaId } from "../fuentes";
+import { PIEZAS, PIEZAS_DE_ACCIONES, PIEZAS_DE_ESTAFETA, type PiezaId } from "../fuentes";
+import { armarAcciones, type Acciones, type TareasDeNotion } from "../acciones";
+import { armarEstafeta, type Carta, type Estafeta } from "../estafeta";
 
 // ── CTCx OS · los datos de la demostración (V6.19, F2) · PURO, TODO INVENTADO ─
 // Lo que pinta `/os/demo` (solo en local, con OS_DEMO=1) para las capturas de revisión de identidad.
@@ -84,6 +86,55 @@ function marcar<T>(x: T): T {
 }
 
 export const TABLERO_DEMO: Tablero = marcar(armarTablero(LECTURAS_DEMO));
+
+// ── F3 · Acciones y Estafeta, con Notion «leído» (todo inventado) ─────────────
+// La OS de verdad no lee Notion todavía (decisión CON-28): allí sus cifras dicen «Sin datos». La demostración
+// enseña cómo se verán CON la lectura, armadas por las MISMAS funciones (`armarAcciones`, `armarEstafeta`).
+
+/** Tareas de Notion inventadas: solo conteos por hub (el lector de verdad nunca trae títulos). */
+const TAREAS_DE_NOTION_EJEMPLO: TareasDeNotion = {
+  porHub: {
+    direccion: { abiertas: 2, vencidas: 0, esperando: 1 },
+    comercial: { abiertas: 3, vencidas: 1, esperando: 1 },
+    marca_contenido: { abiertas: 2, vencidas: 0, esperando: 0 },
+    plataformas_it: { abiertas: 4, vencidas: 1, esperando: 0 },
+    ejecucion: { abiertas: 5, vencidas: 2, esperando: 2 },
+  },
+  sinHub: 1,
+};
+
+export const ACCIONES_DEMO: Acciones = marcar(armarAcciones(TABLERO_DEMO, { ok: true, valor: TAREAS_DE_NOTION_EJEMPLO, fuentes: PIEZAS_DE_ACCIONES }));
+
+/** Una carta inventada con todas sus llaves; `cambios` quita las que falten. */
+const carta = (fecha: string, canal: Carta["canal"], direccion: Carta["direccion"], estado: Carta["estado"], hub: Carta["hub"], cambios: Partial<Carta> = {}): Carta => ({
+  fecha,
+  canal,
+  direccion,
+  estado,
+  hub,
+  conPersona: true,
+  conResponsable: true,
+  conMotivo: true,
+  conEvento: false,
+  conMensaje: false,
+  esperandoDesde: null,
+  ...cambios,
+});
+
+/** El Libro inventado: una carta por cada caso que la Estafeta distingue (te toca, esperando, revisar, enviado con y sin prueba, cerrado). */
+const CARTAS_EJEMPLO: readonly Carta[] = [
+  carta("2026-11-05T14:10:00.000Z", "gmail", "entra", "te_toca", "comercial"),
+  carta("2026-11-04T09:20:00.000Z", "gmail", "entra", "te_toca", "comercial"),
+  carta("2026-11-05T11:00:00.000Z", "instagram", "entra", "te_toca", "marca_contenido"),
+  carta("2026-11-03T16:45:00.000Z", "gmail", "sale", "esperando_respuesta", "origen", { esperandoDesde: "2026-11-03T16:45:00.000Z" }),
+  carta("2026-11-05T08:30:00.000Z", "gmail", "entra", "revisar", null, { conPersona: false }),
+  carta("2026-11-05T10:05:00.000Z", "whatsapp", "entra", "te_toca", "origen", { conMotivo: false }),
+  carta("2026-11-04T18:00:00.000Z", "gmail", "sale", "enviado", "comercial", { conEvento: true, conMensaje: true }),
+  carta("2026-11-04T17:30:00.000Z", "correo_plataforma", "sale", "enviado", "comercial", { conEvento: true }),
+  carta("2026-11-02T12:00:00.000Z", "gmail", "accion", "cerrado", "direccion"),
+];
+
+export const ESTAFETA_DEMO: Estafeta = marcar(armarEstafeta({ ok: true, valor: CARTAS_EJEMPLO, fuentes: PIEZAS_DE_ESTAFETA }, LEIDO));
 
 /** Quien «mira» la demostración: tiene las cinco consolas y NO es el owner (así se ve que «Abrir» al Modelo Económico se esconde). */
 export const IDENTIDAD_DEMO: { nombre: string; consolas: readonly PanelConsoleKey[]; isOwner: boolean } = {

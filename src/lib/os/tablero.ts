@@ -1,5 +1,5 @@
 import { ACCIONES, ENTIDADES } from "./hechosCatalogo";
-import { FUENTES, PIEZAS, type CodigoDeLectura, type Lectura, type Medida, type NotaDeMedida, type PiezaId, type Rotulo } from "./fuentes";
+import { FUENTES, PIEZAS_DEL_TABLERO, type CodigoDeLectura, type Lectura, type Medida, type NotaDeMedida, type PiezaId, type Rotulo } from "./fuentes";
 import { DOMINIOS, ETAPAS, type Dominio, type Etapa } from "@/lib/integraciones/dominios";
 import { TIPOS_DE_TAREA, tipoDeLaTarea, type TareaDeConsola, type TipoDeTarea } from "@/lib/panel/tareas";
 import { CRONS, SALUD_LABEL, saludDeCron, type LatidoFinal, type Salud } from "@/lib/integraciones/registroCrons";
@@ -325,7 +325,7 @@ const notasDe = (pieza: PiezaId, truncado: boolean, extra: readonly NotaDeMedida
 };
 
 /**
- * Arma el tablero. Puro y total: cada pieza de PIEZAS sale al menos una vez, con su
+ * Arma el tablero. Puro y total: cada pieza de PIEZAS_DEL_TABLERO sale al menos una vez, con su
  * valor o con `null`; cada lectura fallida deja un aviso con sus fuentes.
  */
 export function armarTablero(l: LecturasDelTablero): Tablero {
@@ -469,7 +469,7 @@ export function armarTablero(l: LecturasDelTablero): Tablero {
   };
 }
 
-/** Todas las piezas que salen en el tablero (el guardián exige que sean TODAS las de PIEZAS: sin entradas muertas en FUENTES). */
+/** Todas las piezas que salen en el tablero (el guardián exige que sean TODAS las de PIEZAS_DEL_TABLERO: sin entradas muertas en FUENTES; las de F3 las sacan sus módulos). */
 export function piezasDelTablero(t: Tablero): Set<PiezaId> {
   const s = new Set<PiezaId>();
   for (const e of Object.values(t.edificios)) {
@@ -482,7 +482,7 @@ export function piezasDelTablero(t: Tablero): Set<PiezaId> {
 /** Las piezas de FUENTES que el tablero NO saca (debe ser vacío). */
 export function piezasMuertas(t: Tablero): PiezaId[] {
   const usadas = piezasDelTablero(t);
-  return PIEZAS.filter((p) => !usadas.has(p));
+  return PIEZAS_DEL_TABLERO.filter((p) => !usadas.has(p));
 }
 
 // ── El HUD y el contexto para Tailor ─────────────────────────────────────────

@@ -3,9 +3,9 @@
 // Puro y local (no toca la base ni gasta): el calendario ISO con las anclas del owner, la ventana que decide la fecha de firma,
 // los mínimos (continuidad lineal, existencia insuficiente), la corrección del PVC por ciclo y el cableado de la tanda 1.
 
-import { readFileSync } from "node:fs";
+import { leeTexto } from "./texto-lf.mjs";
 
-const lee = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
+const lee = (p) => leeTexto(new URL(`../${p}`, import.meta.url)); // con saltos LF en cualquier checkout
 let ok = 0;
 const fallos = [];
 const check = (nombre, cond, detalle = "") => (cond ? ok++ : fallos.push(`${nombre}${detalle ? ` (${detalle})` : ""}`));
@@ -103,7 +103,7 @@ const { precioDeLaEscalera } = await import("../src/lib/pvc/precio.ts");
   check("migración · variables de la edición, re-fechado de F4-2026 con auditoría, existencia del lote", ["ciclo1_hasta date", "minimos_por_grado jsonb", "rangos_calidad jsonb", "valid_from = '2026-09-28', valid_to = '2027-01-03', ciclo1_hasta = '2026-11-15'", "'refechado_calendario_iso'", "add column if not exists existencia_cps_kg numeric"].every((k) => mig.includes(k)));
   const serv = lee("src/lib/pvc/servicio.ts");
   const act = lee("src/lib/pvc/actions.ts");
-  check("Modelo Económico · las variables se leen con la edición, se guardan con auditoría y las fija el owner (validando el calendario)", serv.includes("ciclo1_hasta, minimos_por_grado, rangos_calidad, flete_por_region") && serv.includes('action: "variables_de_edicion"') && act.includes("export async function guardarVariablesDeEdicionAction(") && act.includes("validarCalendario({") && act.includes("isPanelOwner(") && lee("src/components/panel/pvc/EdicionesBoard.tsx").includes("<VariablesDeEdicion"));
+  check("Modelo Económico · las variables se leen con la edición, se guardan con auditoría y las fija el owner (validando el calendario)", serv.includes("ciclo1_hasta, minimos_por_grado, rangos_calidad, flete_por_region") && serv.includes('action: "variables_de_edicion"') && act.includes("export async function guardarVariablesDeEdicionAction(") && act.includes("validarCalendario({") && act.includes("esOwnerDelPanel(") && lee("src/components/panel/pvc/EdicionesBoard.tsx").includes("<VariablesDeEdicion"));
   const pag = lee("src/app/ocp/(app)/ofertas/page.tsx");
   const ofa = lee("src/app/ocp/(app)/ofertasActions.ts");
   check("OCP · el mínimo de la oferta y el flete salen de la edición", pag.includes("minimoDelGrado(grade, edicion.minimosPorGrado)") && pag.includes("fletesDeLaEdicion(edicion.fletePorRegion)") && ofa.includes("minimoDelGrado(lot.grade, pvc?.edicion.minimosPorGrado)") && serv.includes("fletesDeLaEdicion(edicion.fletePorRegion)"));

@@ -2,12 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Hud } from "@/components/os/Hud";
 import { ProcedenciaProvider } from "@/components/os/Procedencia";
+import { Acciones } from "@/components/os/vistas/Acciones";
 import { Almacen } from "@/components/os/vistas/Almacen";
+import { Estafeta } from "@/components/os/vistas/Estafeta";
 import { Hacienda } from "@/components/os/vistas/Hacienda";
 import { InicioVista } from "@/components/os/vistas/Inicio";
 import { Taller } from "@/components/os/vistas/Taller";
 import { demoPermitido } from "@/lib/os/demo/permitido";
-import { IDENTIDAD_DEMO, TABLERO_DEMO } from "@/lib/os/demo/datos";
+import { ACCIONES_DEMO, ESTAFETA_DEMO, IDENTIDAD_DEMO, TABLERO_DEMO } from "@/lib/os/demo/datos";
 import { parsearModulos } from "@/lib/os/modulos";
 import s from "@/components/os/os.module.css";
 import "@/components/os/identidad/os-tokens.css";
@@ -26,6 +28,8 @@ const VISTAS = [
   { clave: "hacienda", titulo: "Hacienda" },
   { clave: "almacen", titulo: "Almacén" },
   { clave: "taller", titulo: "Taller" },
+  { clave: "estafeta", titulo: "Estafeta" },
+  { clave: "acciones", titulo: "Acciones" },
 ] as const;
 
 export default async function OsDemoPage({ params }: { params: Promise<{ vista?: string[] }> }) {
@@ -34,8 +38,9 @@ export default async function OsDemoPage({ params }: { params: Promise<{ vista?:
   if (vista && vista.length > 1) notFound();
   const clave = vista?.[0];
   if (clave !== undefined && !VISTAS.some((v) => v.clave === clave)) notFound();
-  // Los valores por defecto del registro (los tres encendidos): la demostración no lee la base.
-  const modulos = parsearModulos(null);
+  // Los valores por defecto del registro, salvo los dos de F3 (en obra, apagados por defecto en la OS de verdad): la
+  // demostración los enciende para que la revisión vea su hoja y su vista. No lee la base.
+  const modulos = parsearModulos({ version: 1, modulos: { estafeta: { encendido: true }, acciones: { encendido: true } } });
 
   return (
     <ProcedenciaProvider consolas={IDENTIDAD_DEMO.consolas} isOwner={IDENTIDAD_DEMO.isOwner} nombre={IDENTIDAD_DEMO.nombre}>
@@ -55,6 +60,8 @@ export default async function OsDemoPage({ params }: { params: Promise<{ vista?:
         {clave === "hacienda" && <Hacienda tablero={TABLERO_DEMO} modulos={modulos} base="/os/demo" />}
         {clave === "almacen" && <Almacen tablero={TABLERO_DEMO} />}
         {clave === "taller" && <Taller tablero={TABLERO_DEMO} version="V0.0-EJEMPLO" sha="ejemplo" />}
+        {clave === "estafeta" && <Estafeta estafeta={ESTAFETA_DEMO} />}
+        {clave === "acciones" && <Acciones acciones={ACCIONES_DEMO} />}
       </main>
     </ProcedenciaProvider>
   );

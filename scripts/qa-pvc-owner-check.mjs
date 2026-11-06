@@ -67,7 +67,7 @@ function exportsDePaginaSinCompuerta(texto) {
 const METODOS = "GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS";
 
 /** Route handler: cada método exportado es `export async function MÉTODO(…) {` y empieza por la compuerta del owner (403), o
- *  —la ruta de publicar— por la compuerta de escritura seguida de `isPanelOwner` con 403, antes de leer el cuerpo o el servicio.
+ *  —la ruta de publicar— por la compuerta de escritura seguida de `esOwnerDelPanel` con 403, antes de leer el cuerpo o el servicio.
  *  Las otras formas de exportar un método (`export const`, `export function` sin `async`, `export { … }`, `export *`) no se
  *  usan en el módulo. Devuelve los métodos que no cumplen. */
 function handlersSinCompuerta(texto) {
@@ -88,7 +88,7 @@ function handlersSinCompuerta(texto) {
   if (!metodos.length && !malos.length) malos.push("(ningún método exportado)");
   for (const { metodo, cuerpo } of metodos) {
     const primera = /^\s*if \(!\(await esOwnerDelPvc\(\)\)\) return new Response\(SOLO_OWNER_PVC, \{ status: 403\b/.test(cuerpo);
-    const escritura = /^\s*const who = await requireConsoleWrite\("ecp"\);\n[^\n]*\n\s*if \(!isPanelOwner\(await getPanelUser\(who\.userId\)\)\) return [^\n]*status: 403/.test(cuerpo);
+    const escritura = /^\s*const who = await requireConsoleWrite\("ecp"\);\n[^\n]*\n\s*if \(!\(await esOwnerDelPanel\(who\.userId\)\)\) return [^\n]*status: 403/.test(cuerpo);
     if (!primera && !escritura) malos.push(metodo);
   }
   return malos;
@@ -126,9 +126,9 @@ function lectoresQueUsa(texto) {
   return [...usados].sort();
 }
 
-/** `setTaskState`: con una clave `pvc:*`, pide `isPanelOwner` tras el permiso de escritura y antes de tocar la casilla. */
+/** `setTaskState`: con una clave `pvc:*`, pide `esOwnerDelPanel` tras el permiso de escritura y antes de tocar la casilla. */
 function casillaDelPvcSoloOwner(texto) {
-  const m = texto.match(/if \(tipoDeLaTarea\(itemKey\) === "pvc" && !isPanelOwner\(await getPanelUser\(permiso\.userId\)\)\)\s*return \{ ok: false, error: "[^"]*owner[^"]*" \};/);
+  const m = texto.match(/if \(tipoDeLaTarea\(itemKey\) === "pvc" && !\(await esOwnerDelPanel\(permiso\.userId\)\)\)\s*return \{ ok: false, error: "[^"]*owner[^"]*" \};/);
   if (!m) return false;
   const permiso = texto.indexOf("if (!permiso.ok)");
   const casilla = texto.indexOf('.from("bcp_task_state")');
@@ -170,7 +170,7 @@ check("autoprueba · salta una compuerta de otro sitio con el mismo nombre",
 check("autoprueba · el route handler bueno pasa",
   handlersSinCompuerta('export async function GET(request: Request) {\n  if (!(await esOwnerDelPvc())) return new Response(SOLO_OWNER_PVC, { status: 403, headers: {} });\n  return x;\n}').length === 0);
 check("autoprueba · la ruta de publicar (escritura + owner) pasa",
-  handlersSinCompuerta('export async function POST(request: Request) {\n  const who = await requireConsoleWrite("ecp");\n  if (!who) return NextResponse.json({}, { status: 401 });\n  if (!isPanelOwner(await getPanelUser(who.userId))) return NextResponse.json({ ok: false }, { status: 403 });\n}').length === 0);
+  handlersSinCompuerta('export async function POST(request: Request) {\n  const who = await requireConsoleWrite("ecp");\n  if (!who) return NextResponse.json({}, { status: 401 });\n  if (!(await esOwnerDelPanel(who.userId))) return NextResponse.json({ ok: false }, { status: 403 });\n}').length === 0);
 check("autoprueba · salta un route handler con solo la compuerta de la consola",
   handlersSinCompuerta('export async function GET(request: Request) {\n  await requireConsoleAccess("ecp");\n  return x;\n}').join() === "GET");
 check("autoprueba · salta un segundo método sin compuerta",
@@ -222,11 +222,11 @@ check("autoprueba · lectores: cuenta llamadas, referencias y reexports, y no lo
   JSON.stringify(lectoresQueUsa('import {\n  edicionVigente,\n  listarEdiciones,\n} from "@/lib/pvc/servicio";\nconst a = await edicionVigente();\nconst f = estadoDelAgente;\ntype T = ReturnType<typeof listarEdiciones>;\nexport { propuestasPendientes } from "@/lib/pvc/vigilancia";'))
   === JSON.stringify(["edicionVigente", "estadoDelAgente", "propuestasPendientes"]));
 // F · la casilla de las tareas del PVC.
-const CASILLA_BUENA = 'if (!permiso.ok) return { ok: false as const, error: permiso.error };\n  if (tipoDeLaTarea(itemKey) === "pvc" && !isPanelOwner(await getPanelUser(permiso.userId)))\n    return { ok: false, error: "Marcar una tarea del Modelo Económico es una decisión del owner." };\n  await service.from("bcp_task_state").upsert({});';
+const CASILLA_BUENA = 'if (!permiso.ok) return { ok: false as const, error: permiso.error };\n  if (tipoDeLaTarea(itemKey) === "pvc" && !(await esOwnerDelPanel(permiso.userId)))\n    return { ok: false, error: "Marcar una tarea del Modelo Económico es una decisión del owner." };\n  await service.from("bcp_task_state").upsert({});';
 check("autoprueba · casilla: la buena pasa", casillaDelPvcSoloOwner(CASILLA_BUENA));
 check("autoprueba · casilla: salta sin la condición del owner o con ella después de la escritura",
   !casillaDelPvcSoloOwner(CASILLA_BUENA.replace(/\n  if \(tipoDeLaTarea[^\n]*\n[^\n]*/, ""))
-  && !casillaDelPvcSoloOwner('if (!permiso.ok) return x;\n  await service.from("bcp_task_state").upsert({});\n  if (tipoDeLaTarea(itemKey) === "pvc" && !isPanelOwner(await getPanelUser(permiso.userId)))\n    return { ok: false, error: "es una decisión del owner." };'));
+  && !casillaDelPvcSoloOwner('if (!permiso.ok) return x;\n  await service.from("bcp_task_state").upsert({});\n  if (tipoDeLaTarea(itemKey) === "pvc" && !(await esOwnerDelPanel(permiso.userId)))\n    return { ok: false, error: "es una decisión del owner." };'));
 check("autoprueba · BCP: calla con la lectura condicionada y con el import",
   lecturasDelPvcSinOwner('import { edicionProxima, edicionVigente } from "@/lib/pvc/servicio";\n    identity.isOwner ? Promise.all([edicionVigente(), edicionProxima()]) : null,').length === 0);
 

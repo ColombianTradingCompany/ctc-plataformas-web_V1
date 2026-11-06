@@ -1,4 +1,5 @@
 import { CONSOLES, CONSOLE_ORDER, type PanelConsoleKey } from "@/lib/panel/consoles";
+import { TEXTOS_ES } from "./textos/es";
 
 // ── CTCx OS · de dónde sale cada cifra (V6.19, F2) · PURO ────────────────────
 // La regla madre del OS (PLAN §2): el tablero NUNCA enseña una constante. Cada cifra
@@ -6,18 +7,23 @@ import { CONSOLES, CONSOLE_ORDER, type PanelConsoleKey } from "@/lib/panel/conso
 // de la plataforma) sale y a qué pantalla real se va con «Abrir». El interruptor de
 // procedencia del HUD lee ESTO; ningún componente escribe su propia fuente.
 //
-// Dos formas de fuente:
+// Tres formas de fuente:
 //   · `tabla.columna`            → una columna que existe (`qa-os-check` C1 la busca en
 //                                  las migraciones y en los selects del código de fuera del OS);
 //   · `archivo:<ruta>#<función>` → una función de la plataforma que el OS reusa tal cual
-//                                  (C1 comprueba que el archivo existe y la exporta).
+//                                  (C1 comprueba que el archivo existe y la exporta);
+//   · `notion:<base>#<propiedad>` → (F3) una propiedad de una base de Notion que el OS LEERÁ con su
+//                                  integración de solo lectura (decisión CON-28); C1 exige que la base
+//                                  esté en `BASES_DE_NOTION_DEL_OS` (la lista de E-4) y que la pieza no
+//                                  tenga enlace de consola (Notion no es una pantalla de la plataforma).
 // `enlace` es la pantalla de la consola DUEÑA (C3: tiene página). `null` = no hay
 // pantalla todavía; la pieza se enseña sin «Abrir».
 //
 // Las tareas NO llevan enlace propio por registro (crítica 13): el OS las reduce a
 // conteos en el servidor y su único enlace es el de su pieza.
 
-export const PIEZAS = [
+/** Las piezas del tablero de F2 (Inicio, Hacienda, Almacén, Taller): `armarTablero` las saca TODAS. */
+export const PIEZAS_DEL_TABLERO = [
   // Tareas calculadas de la casa (las del Tablero de Ejecución), contadas por hub
   "tareas_abiertas",
   "tareas_vencidas",
@@ -48,14 +54,29 @@ export const PIEZAS = [
   "hechos_por_hub",
   "lotes_por_etapa",
 ] as const;
+
+/** (F3) Las piezas del módulo Acciones que salen de Notion: `armarAcciones` las saca TODAS. */
+export const PIEZAS_DE_ACCIONES = ["acciones_notion_abiertas", "acciones_notion_vencidas", "acciones_notion_esperando", "acciones_notion_sin_hub"] as const;
+
+/** (F3) Las piezas del módulo Estafeta (el registro «Correspondencia» de Notion): `armarEstafeta` las saca TODAS. */
+export const PIEZAS_DE_ESTAFETA = ["estafeta_te_toca", "estafeta_esperando", "estafeta_revisar", "estafeta_libro"] as const;
+
+export const PIEZAS = [...PIEZAS_DEL_TABLERO, ...PIEZAS_DE_ACCIONES, ...PIEZAS_DE_ESTAFETA] as const;
 export type PiezaId = (typeof PIEZAS)[number];
+
+/**
+ * (F3) Las bases de Notion que la integración de solo lectura del OS podrá leer (E-4, aceptada con la decisión CON-28:
+ * Objetivos, Hitos, Tareas, Reuniones, Sesiones diarias, Proyectos Claude, Marcas y Correspondencia). Una fuente
+ * `notion:` nombra una de éstas o `qa-os-check` falla. Nombres de base, nunca sus ids.
+ */
+export const BASES_DE_NOTION_DEL_OS = ["Objetivos", "Hitos", "Tareas", "Reuniones", "Sesiones diarias", "Proyectos Claude", "Marcas", "Correspondencia"] as const;
 
 export type Fuente = {
   /** Cómo se llama la cifra en pantalla (el HUD, la Hacienda, el Almacén y el Taller la rotulan con ESTO). */
   etiqueta: string;
   /** La unidad que `Cifra` pone detrás del número. */
   unidad?: "kg";
-  fuente: `${string}.${string}` | `archivo:${string}#${string}`;
+  fuente: `${string}.${string}` | `archivo:${string}#${string}` | `notion:${string}#${string}`;
   /** El filtro que aplica la lectura, en palabras (sale en el panel de procedencia). */
   filtro?: string;
   enlace: string | null;
@@ -66,6 +87,8 @@ export type Fuente = {
 };
 
 const TAREAS = "archivo:src/lib/panel/tareasCarga.ts#cargarTareas" as const;
+const P = TEXTOS_ES.piezas;
+const F = TEXTOS_ES.filtros;
 const FRANJA = "archivo:src/lib/stock/circuito.ts#cargarCircuitoDelStock" as const;
 
 export const FUENTES: Record<PiezaId, Fuente> = {
@@ -98,7 +121,32 @@ export const FUENTES: Record<PiezaId, Fuente> = {
 
   hechos_por_hub: { etiqueta: "Hechos del turno (24 h)", fuente: "archivo:src/lib/os/hechos.ts#leerHechos", filtro: "últimas 24 horas", enlace: null },
   lotes_por_etapa: { etiqueta: "Lotes", fuente: "lots.stage", enlace: "/ocp/kr" },
+
+  // F3 · Acciones: las Tareas de Notion (la única fuente de tareas de la casa, D-003), por su Área (el hub).
+  acciones_notion_abiertas: { etiqueta: P.acciones_notion_abiertas, fuente: "notion:Tareas#Estado", filtro: F.acciones_notion_abiertas, enlace: null },
+  acciones_notion_vencidas: { etiqueta: P.acciones_notion_vencidas, fuente: "notion:Tareas#Vence", filtro: F.acciones_notion_vencidas, enlace: null },
+  acciones_notion_esperando: { etiqueta: P.acciones_notion_esperando, fuente: "notion:Tareas#Estado", filtro: F.acciones_notion_esperando, enlace: null },
+  acciones_notion_sin_hub: { etiqueta: P.acciones_notion_sin_hub, fuente: "notion:Tareas#Área", filtro: F.acciones_notion_sin_hub, enlace: null },
+  // F3 · Estafeta: el registro «Correspondencia» (solo punteros y obligaciones, nunca el texto: CANALES §3.2).
+  estafeta_te_toca: { etiqueta: P.estafeta_te_toca, fuente: "notion:Correspondencia#Estado", filtro: F.estafeta_te_toca, enlace: null },
+  estafeta_esperando: { etiqueta: P.estafeta_esperando, fuente: "notion:Correspondencia#Estado", filtro: F.estafeta_esperando, enlace: null },
+  estafeta_revisar: { etiqueta: P.estafeta_revisar, fuente: "notion:Correspondencia#Estado", filtro: F.estafeta_revisar, enlace: null },
+  estafeta_libro: { etiqueta: P.estafeta_libro, fuente: "notion:Correspondencia#Fecha", filtro: F.estafeta_libro, enlace: null },
 };
+
+/** De dónde sale una pieza, en palabras: su origen («Plataforma» o «Notion») y la columna, la función o la propiedad. */
+export function describirFuente(pieza: PiezaId): { origen: string; texto: string } {
+  const f = FUENTES[pieza].fuente;
+  if (f.startsWith("notion:")) {
+    const [base, propiedad] = f.slice("notion:".length).split("#");
+    return { origen: TEXTOS_ES.origen.notion, texto: `«${base}» · ${propiedad}` };
+  }
+  if (f.startsWith("archivo:")) {
+    const [ruta, fn] = f.slice("archivo:".length).split("#");
+    return { origen: TEXTOS_ES.origen.plataforma, texto: `${fn}() en ${ruta}` };
+  }
+  return { origen: TEXTOS_ES.origen.plataforma, texto: f };
+}
 
 // ── Lo que devuelve un lector ────────────────────────────────────────────────
 
@@ -110,6 +158,8 @@ export type CodigoDeLectura =
   | "lectura_salud"
   | "lectura_hechos"
   | "lectura_lotes"
+  | "lectura_tareas_notion"
+  | "lectura_correspondencia"
   | "lectura_fallida";
 
 /** Un lector nunca lanza: o trae su valor, o dice qué falló y de qué piezas. */
@@ -117,13 +167,26 @@ export type Lectura<T> =
   | { ok: true; valor: T; fuentes: readonly PiezaId[]; truncado?: boolean }
   | { ok: false; error: CodigoDeLectura; fuentes: readonly PiezaId[] };
 
+/**
+ * (F3) Lo que devuelven los lectores de Notion mientras la integración de solo lectura del OS no exista (decisión CON-28):
+ * no es una lectura fallida (no deja aviso) ni un cero. Las piezas salen en «Sin datos» con la nota `sin_integracion_notion`.
+ */
+export const SIN_INTEGRACION_NOTION = { sinIntegracion: true } as const;
+export type SinIntegracionNotion = typeof SIN_INTEGRACION_NOTION;
+export type LecturaDeNotion<T> = Lectura<T> | SinIntegracionNotion;
+
+export function esSinIntegracionNotion<T>(x: LecturaDeNotion<T>): x is SinIntegracionNotion {
+  return "sinIntegracion" in x && x.sinIntegracion === true;
+}
+
 /** Por qué una cifra puede no ser exacta: sale en el panel de procedencia, junto a su fuente. */
 export type NotaDeMedida =
   | "cuenta_cero_si_falla" // la función reusada cuenta cero cuando una lectura falla
   | "tope_de_filas" // la lectura llegó al tope de filas: la cifra es un mínimo
   | "sin_fuente_aun" // este hub no tiene esta pieza en la plataforma (llega con Notion, F3)
   | "solo_owner" // una pieza del Modelo Económico y quien mira no es el owner: no se leyó, se pinta «Solo el owner»
-  | "sin_el_pvc"; // la cuenta deja fuera las tareas y los hechos del Modelo Económico (quien mira no es el owner)
+  | "sin_el_pvc" // la cuenta deja fuera las tareas y los hechos del Modelo Económico (quien mira no es el owner)
+  | "sin_integracion_notion"; // (F3) la pieza sale de Notion y su integración de solo lectura todavía no existe (decisión CON-28)
 
 /** Una cifra del tablero. `valor: null` se pinta «Sin datos», NUNCA cero. */
 export type Medida = {

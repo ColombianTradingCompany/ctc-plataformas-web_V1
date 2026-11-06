@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireConsoleWrite } from "@/lib/panel/requireConsoleWrite";
-import { getPanelUser, isPanelOwner } from "@/lib/panel/panelUsers";
+import { esOwnerDelPanel } from "@/lib/panel/panelUsers";
 import { PARAMS_V211, type PvcEntradas, type PvcParams } from "@/lib/pvc/motor";
 import { publicarEdicion, versionModeloVigente } from "@/lib/pvc/servicio";
 
@@ -17,7 +17,7 @@ const NO_PARAM = new Set<string>([...ENTRADA_KEYS, "nivel", "destino", "lb_excel
 export async function POST(request: Request) {
   const who = await requireConsoleWrite("ecp");
   if (!who) return NextResponse.json({ ok: false, error: "No se pudo ejecutar: o tu sesión del ECP ya no está activa (vuelve a iniciar sesión), o tu nivel en el BCP es de lectura y borradores y esta acción emite, publica, cobra, notifica o borra." }, { status: 401 });
-  if (!isPanelOwner(await getPanelUser(who.userId))) return NextResponse.json({ ok: false, error: "Publicar es una decisión del owner." }, { status: 403 });
+  if (!(await esOwnerDelPanel(who.userId))) return NextResponse.json({ ok: false, error: "Publicar es una decisión del owner." }, { status: 403 });
 
   let body: { code?: string; S?: Record<string, unknown>; notes?: string; correctionOf?: string | null };
   try { body = await request.json(); } catch { return NextResponse.json({ ok: false, error: "Cuerpo inválido." }, { status: 400 }); }

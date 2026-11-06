@@ -24,7 +24,11 @@
 ## Como interfaz en otras partes de la plataforma
 
 **Hoy:**
-- **Copia** en `public/ocp-apps/cotizador-lotes.html` (Mermas V15), montada por el cotizador de lotes del ECP (`AppFrame.tsx`, componente `herramientas-internas`). Es una copia: se separa en cuanto cambie una de las dos.
+- **Copia** en `private/ocp-apps/cotizador-lotes.html` (Mermas V15; desde TAR-119 fuera de `public/`, servida solo con sesión de consola), montada por el cotizador de lotes del ECP (`AppFrame.tsx`, componente `herramientas-internas`).
+- **La cuenta tiene UNA fuente desde el 2026-11-06 (F-01, etapa 1):** `src/lib/tools/mermas-ctc/calculo.ts`, puro. Los dos HTML todavía llevan su copia
+  dentro; `scripts/qa-mermas-paridad.mjs` exige que el cuerpo de las dos copias sea el mismo y que las funciones de cálculo de cada archivo servido den
+  lo mismo que el módulo (cadena, merma, factor, costos, escalera de precio y el titular que guarda el cotizador). Al empezar ya daban lo mismo.
+  Cambiar la cuenta = cambiar el módulo y los dos HTML en el mismo commit; el guardián lo exige.
 
 **Previsto / candidato:**
 - Kaffetal Regal · Ficha (`fichaCalculations`: factor × almendra = 17.500).
@@ -36,6 +40,8 @@
 
 ## Abierto
 
+- F-01 etapa 2 (decisión del owner del 6 nov: sí): el cotizador de lotes abre el archivo público con el puente inerte; la copia privada queda de respaldo con un interruptor y se retira tras dos semanas y el sí del owner (308 al archivo público). La copia de `reference\ocp_modules` va al archivo; HER-4 cambia su adjunto por un enlace.
+- Regla que el módulo copió tal cual y que el owner puede querer revisar: el cotizador guarda como «valor del lote» el valor EN EL NODO DEL ANCLA (`lotValue()` sin estado), no en el estado final de la cadena.
 - ⚠️ Los ids de la familia mermas están cruzados con sus nombres (`mermas-ctc` = Detallada; `mermas-detallada` = el «Reporte» archivado). La carpeta sigue al id.
 - Es la herramienta con más trabajos guardados (5): cualquier cambio de campos puede dejarlos viejos (serialización por posición del puente).
 

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permisoDeEscritura, requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { esOwnerDelPanel } from "@/lib/panel/panelUsers";
 import { toWorkMapConfig, DEFAULT_WORK_MAP, type WorkMapConfig, type ProposalMeta } from "@/lib/workmap/schema";
 
 // ── Mapa de Trabajo · Base + Propuestas ──────────────────────────────────────
@@ -11,7 +12,7 @@ import { toWorkMapConfig, DEFAULT_WORK_MAP, type WorkMapConfig, type ProposalMet
 // con el cambio). "Guardar" NO toca el Base: guarda una PROPUESTA (iteración con
 // nombre) en work_map_proposals — un cambio que el owner diseña para que CTC lo
 // implemente. Ver = cualquier admin activo; editar/guardar/borrar propuestas =
-// solo el owner (como el Admin Lock).
+// solo el owner (como el Admin Lock), preguntado con `esOwnerDelPanel`.
 
 type Service = ReturnType<typeof createServiceRoleClient>;
 
@@ -45,11 +46,6 @@ export async function getProposal(id: string): Promise<WorkMapConfig | null> {
   return data?.config ? toWorkMapConfig(data.config) : null;
 }
 
-async function isOwner(service: Service, adminId: string): Promise<boolean> {
-  const { data: pu } = await service.from("panel_users").select("is_owner").eq("profile_id", adminId).maybeSingle();
-  return pu ? pu.is_owner : true; // grandfathered (sin fila en panel_users) = owner
-}
-
 async function audit(service: Service, adminId: string, action: string, entityId: string) {
   await service.from("audit_log").insert({ entity_type: "work_map_proposal", entity_id: entityId, action, performed_by: adminId });
 }
@@ -65,7 +61,7 @@ export async function saveProposal(input: {
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
-  if (!(await isOwner(service, adminId))) return { ok: false, error: "Solo el owner puede guardar propuestas." };
+  if (!(await esOwnerDelPanel(adminId))) return { ok: false, error: "Solo el owner puede guardar propuestas." };
 
   const name = input.name.trim();
   if (!name) return { ok: false, error: "Escriba un nombre para la propuesta." };
@@ -100,7 +96,7 @@ export async function deleteProposal(id: string): Promise<{ ok: true } | { ok: f
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
-  if (!(await isOwner(service, adminId))) return { ok: false, error: "Solo el owner puede borrar propuestas." };
+  if (!(await esOwnerDelPanel(adminId))) return { ok: false, error: "Solo el owner puede borrar propuestas." };
   const { error } = await service.from("work_map_proposals").delete().eq("id", id);
   if (error) return { ok: false, error: "No se pudo borrar la propuesta." };
   await audit(service, adminId, "work_map_proposal_deleted", id);

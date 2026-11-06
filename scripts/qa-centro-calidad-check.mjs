@@ -14,7 +14,7 @@
 // V5.189 (owner, 2026-10-08 — plan §10.6): la homologación se ANULÓ. El CVA es el protocolo principal y un SCA 2004 vale lo mismo
 // por la equivalencia (`equivalencia.ts`): la recta y los vectores se LEEN del §10.6.
 
-import { readFileSync } from "node:fs";
+import { leeTexto } from "./texto-lf.mjs";
 import { RUEDA, DESCRIPTORES, normalizaRueda, descriptorLabel, rutaDe, familiaDe, ETAPAS_DE_LA_RUEDA, ETAPA_LABEL, INTENSIDAD, MARCA_POR_DEFECTO, ZONA_LABEL, zonaDeIntensidad, normalizaDetalle, marcaLabel, ajustaIntensidad, NOTA_MAX, alternaEtapa, etapasLabel, limpiaNota, normalizaEtapas, anotacionesDeMejora } from "../src/lib/catacion/rueda.ts";
 import { generar as generarRuedaDatos, leerDatosDeLaHerramienta } from "./build-rueda-datos.mjs";
 import { CVA, CVA_SECCIONES, SCA2004, computeCva, computeSca2004, contarScaTazas, normalizaScaTazas, EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, protocoloDelPunto, puntoDeLaPlanilla, equivalenteDeLaPlanilla, toLabEvaluation } from "../src/lib/arena/labEvaluation.ts";
@@ -26,7 +26,7 @@ import { estadoDelCircuito } from "../src/lib/ocp/circuito.ts";
 let ok = 0;
 const fallos = [];
 const check = (nombre, cond, detalle = "") => (cond ? ok++ : fallos.push(nombre + (detalle ? ` — ${detalle}` : "")));
-const lee = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
+const lee = (p) => leeTexto(new URL(`../${p}`, import.meta.url)); // con saltos LF en cualquier checkout
 const cuerpoDe = (src, nombre) => {
   const i = src.indexOf(`export async function ${nombre}(`);
   if (i < 0) return "";

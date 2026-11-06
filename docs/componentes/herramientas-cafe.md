@@ -169,6 +169,12 @@ La puerta `/herramientas/acceso` acepta `?siguiente=` (solo rutas de `/herramien
   `urlDeHerramienta`; la absoluta y canónica para compartir fuera del sitio, `urlPublicaDeHerramienta`; y el enlace de un trabajo,
   `enlaceDeTrabajo`, que el Home Menu ofrece como «Copiar enlace») y `entradaServidor.ts` (solo servidor, NO server action: resuelve la finca o el lote filtrando `producer_id`
   por la cuenta en la consulta; «no existe» y «no es suyo» dan el mismo aviso).
+- **Las cuentas de Mermas y CoGS, una fuente cada una** (F-01 / F-02, etapa 1, 2026-11-06): `src/lib/tools/mermas-ctc/calculo.ts`
+  (la V15 entera: cadena de mermas, costos de proceso, escalera de precio y el titular del cotizador de lotes) y
+  `src/lib/tools/cogs-verde/calculo.ts` (el núcleo de la V19: cantidades, compra, transformación, verde limpio, tostado, conteos y la suma).
+  Puros. Los HTML servidos aún llevan su copia dentro; `qa-mermas-paridad` y `qa-cogs-paridad` exigen que den lo mismo (en CoGS, el núcleo;
+  los bloques que entran sumados, desde la etapa 2).
+  `scripts/lib/extraerJs.mjs` recorta funciones de un HTML servido para correrlas en un `vm`.
 - `src/components/tools/` — `CoverFlow`, `ConchaHerramienta`, `SesionHerramienta` (Home Menu de trabajos),
   `BarraHerramienta`, `TallerBarra`, `ObtenerPlus`, `SolicitarHerramienta`, `ToolIcons`, `CapturaMiniatura`.
 - `src/components/services/{HerramientasLanding,CarruselHerramientas}.tsx`; `scripts/build-tool-shots.mjs`
@@ -206,6 +212,15 @@ V5.149: una sonda que revienta ya no aprueba en silencio) · `qa-tools-seo-check
 `qa-coffee-datasheet-check.mjs` (73; 61 desde la V6.6 y 12 del prellenado de TAR-121, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`: la herramienta renderiza la planilla del Centro y no copia fórmulas, las partes propias no duplican datos, el UID es único, la marca de la casa en la ficha, V1 → V2; hasta la V6.5 eran 1.340 sobre el HTML: catálogos generados al día,
 **paridad de las fórmulas SCA 2004 y CVA con la planilla de la plataforma** sobre 1.200 planillas, los dos métodos sin mezclar, tres idiomas
 completos, sin CDN) ·
+`qa-mermas-paridad.mjs` (239, F-01 etapa 1, `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`, puro: el cuerpo de las dos
+copias servidas de Mermas es el mismo, y las funciones de cálculo de CADA archivo servido, corridas en un `vm` con 7 casos inventados, dan lo mismo
+que `src/lib/tools/mermas-ctc/calculo.ts`, incluido el titular que guarda el cotizador de lotes) ·
+`qa-cogs-paridad.mjs` (434, F-02 etapa 1, Playwright SIN `next dev`: abre los dos archivos servidos de CoGS desde el disco, les pone 7 casos inventados,
+lee `window.__lastCalc` y exige lo mismo que `src/lib/tools/cogs-verde/calculo.ts` (regla V19) en el NÚCLEO: cantidades, compra, transformación,
+verde limpio, tostado, conteos y la suma final. Los bloques de empaque, exportación, transporte internacional, destino y última milla entran como
+el total de cada archivo: hasta la etapa 2 no se comparan, y un cambio dentro de ellos no lo hace fallar. De las tres reglas V19 que la V18 pública
+no tiene, solo ve la nº 1 (el manejo sin comprar pergamino): ahí compara la V18 con la fuente sin ese manejo, campo por campo, y lo avisa; las
+nº 2 y nº 3 viven dentro del empaque y las avisa como «no comprobadas en la etapa 1») ·
 `qa-cromatografia-check.mjs` (294, puro) · `qa-cromatografia-modelo.mjs` (manual, gasta: estabilidad del modelo; acepta
 `[idioma] [lab]`) ·
 `cromatografia-recorrido.mjs` y `cromatografia-calibrar.mjs` (manuales: recorrido visual y calibración de la compuerta).
@@ -236,6 +251,16 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 
 ## Pendientes
 
+- **F-01 / F-02 · una cuenta, una fuente** (2026-11-06, decisiones del owner del 6 nov: el cotizador de lotes abre el archivo público;
+  manda la V19; la fuente es el repo). **Hecho (etapa 1):** los dos módulos puros y los dos guardianes de paridad (Mapa de código, Guardianes);
+  ninguna copia cambió ni se retiró. Las dos copias de Mermas ya daban lo mismo. **Abierto:** (a) F-01 etapa 2: el cotizador de lotes
+  (`AppFrame.tsx`, componente `herramientas-internas`) abre `/tools/mermas-ctc/mermas-ctc.html` con el puente inerte y la copia privada queda
+  de respaldo con un interruptor; su retiro, tras dos semanas y el sí del owner; (b) F-02 etapa 2: pasar al módulo, fila por fila, los
+  bloques que hoy entran sumados (empaque, exportación, transporte internacional, destino, última milla) y un script que GENERE los dos
+  archivos desde la fuente (bloque entre marcas, como `build-coffee-datasheet.mjs`); (c) la V18 pública aún no tiene tres reglas de la V19
+  (el manejo comprando verde directo, costal y bolsa interior por número de costales, la estiba de madera): se corrige al reemplazar su
+  archivo por el generado, tras dos semanas y el sí del owner; mientras, `qa-cogs-paridad` lo avisa; (d) parámetros a `parametros.ts`.
+  Dueño: esta conversación (herramientas-cafe), con `herramientas-internas` para (a).
 - **TAR-121 · la herramienta del taller como MÓDULO** (2026-11-04, sesión nocturna en la nube; V6.18). Hecho: `?trabajo=` abre un trabajo guardado de la cuenta (por `abrirTrabajo`, que filtra `user_id`; uno ajeno o borrado cae al
   menú con el mismo aviso; abrirlo sella su `abierto_at`, como el clic del menú); `?finca=` / `?lote=` se resuelven contra la cuenta en el
   servidor y prellenan un trabajo NUEVO o «Abrir sin guardar» (nunca uno guardado; nunca crean filas al abrir el enlace: el menú propone el

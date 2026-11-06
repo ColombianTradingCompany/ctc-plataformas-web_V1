@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permisoDeEscritura, requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { isPanelOwner, leerPanelUser } from "@/lib/panel/panelUsers";
 
 export type BuzonActionResult = { ok: true } | { ok: false; error: string };
 
@@ -20,14 +21,17 @@ const BUZON_CONGELADO = true;
 // ⚠️ Esto decide DE QUIÉN es el correo, no QUÉ puede hacer con él. `requireActiveAdmin()` no mira el nivel: las
 // acciones que escriben piden además `permisoDeEscritura("lcp", clase)` (la consola del Buzón desde la V5.59). En la V5.57 se escaparon justo por
 // estar detrás de este ayudante y no de la compuerta a la vista — un viewer podía responder correos (V5.58).
+// La fila se lee con `leerPanelUser`. Si los permisos no se pueden leer, quien pide actúa como colaborador (solo su
+// propio correo): nunca como owner. Sin fila, owner (el `bcp_admin` de antes de `panel_users`).
 async function buzonIdentity() {
   const userId = await requireActiveAdmin();
   const service = createServiceRoleClient();
-  const [{ data: pu }, { data: prof }] = await Promise.all([
-    service.from("panel_users").select("is_owner, status, display_name").eq("profile_id", userId).maybeSingle(),
+  const [lectura, { data: prof }] = await Promise.all([
+    leerPanelUser(userId),
     service.from("profiles").select("email, full_name").eq("id", userId).maybeSingle(),
   ]);
-  const isOwner = pu ? pu.is_owner && pu.status === "active" : true;
+  const pu = lectura.ok ? lectura.row : null;
+  const isOwner = lectura.ok && isPanelOwner(lectura.row);
   return {
     userId,
     isOwner,

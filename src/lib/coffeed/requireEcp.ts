@@ -1,6 +1,6 @@
 import "server-only";
 import { createPanelSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
-import { getPanelUser, grantedConsoles, nivelDeConsola } from "@/lib/panel/panelUsers";
+import { leerPanelUser, grantedConsoles, nivelDeConsola } from "@/lib/panel/panelUsers";
 import { puede, type ClaseDeAccion } from "@/lib/panel/niveles";
 import { consolaDelModulo } from "@/lib/panel/consoles";
 
@@ -32,7 +32,9 @@ export async function coffeedGate(clase: ClaseDeAccion = "emite"): Promise<{ use
   const { data: profile } = await session.from("profiles").select("role").eq("id", user.id).single();
   if (profile?.role !== "bcp_admin") return null;
 
-  const row = await getPanelUser(user.id);
+  const lectura = await leerPanelUser(user.id);
+  if (!lectura.ok) return null; // sin permisos legibles, no se escribe
+  const row = lectura.row;
   if (row && row.status !== "active") return null;
   const consola = consolaDelModulo("coffeed");
   if (!consola) return null;

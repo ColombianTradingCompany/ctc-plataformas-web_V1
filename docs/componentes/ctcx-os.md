@@ -13,6 +13,12 @@
 > acciones y hechos, y su proyección al juego) y con la nota del primer módulo (`docs/componentes/ctcx-os/reuniones.md`). Es un
 > componente **de capa**: hoy no posee tablas (propuestas: `os_actas` y las metas, ver «Tablas que posee»); su código propio es
 > el de F2, que LEE y no escribe; abre las herramientas que ya existen, con contexto.
+>
+> **F3 · el cimiento de Acciones y Estafeta (2026-11-06, V6.22).** Dos módulos
+> nuevos de solo lectura, **apagados por defecto** (están en obra: fusionarlos no expone nada a medio hacer): Acciones
+> (hub 8 · Ejecución, F-23) y Estafeta (hub 7 · Directorios, F-27). Sus lectores de Notion devuelven «sin integración»
+> hasta que exista la integración de solo lectura del OS (E-4, decisión CON-28, que se crea en la sesión del owner), y sus
+> cifras dicen «Sin datos», nunca un cero. Ver «Superficies y rutas», «Mapa de código» y «Pendientes» (De F3).
 
 ## Qué es
 
@@ -163,7 +169,9 @@ Actions, cada cifra con su fuente y su «Abrir» a la pantalla de la consola due
 | `/os/m/hacienda` | **La Hacienda como módulo**: los diez hubs del Mapa CTC 0–9 (`src/lib/integraciones/dominios.ts`) como edificios de una hacienda isométrica; cada hub abre su hoja (el `Modal` de la casa, hoja inferior en el móvil) con sus piezas, sus fuentes, los módulos de su edificio y «Copiar contexto para Tailor» | **Se queda viva** (no redirige a `/os`): es la ruta del módulo para su enlace del rail, su interruptor, su `error.tsx` y los guardianes (`qa-os-check` H1/H2, `qa-nav-check`, `qa-entradas-check`), con el menor cambio. El dibujo es geometría pura (`haciendaArte.ts`, sin textos); bajo 760 px se oculta la capa de rótulos y la lista de los diez hubs (dos columnas en el móvil, cinco en escritorio) es el control en todo ancho |
 | `/os/m/almacen` | **El Almacén**: la franja del circuito del stock (por recibir · en stock · por declarar · en catálogo · vendido, en kg), los lotes por etapa (todas, también las vacías), los despachos y los contratos por estado, y «Los grados de la casa» (los cinco sellos de `GRADOS`) | Los lotes POR GRADO llegan con el pasaporte del lote (fase posterior); F2 no los cuenta |
 | `/os/m/taller` | **El Taller**: la salud del sistema — la versión, los crons de `registroCrons.ts` con su salud por latido, la cola de `integration_events` (totales y por hub) y las automatizaciones por etapa, con el rótulo **«Registro sin conciliar»** hasta que F1 concilie el registro con Make (crítica 25) | Solo la salud, que ve también GVB; el lado «Pedidos a Code» (solo el owner) será OTRO módulo (decisión 17) |
-| `/os/demo/[[...vista]]` | **El modo demostración**: las MISMAS vistas con un tablero inventado («Ejemplo»), para las capturas de revisión de identidad (blueprint §7.8); su Inicio es también el mapa, y quien «mira» no es el owner, así que el Modelo Económico dice «Solo el owner» | **Solo en local**: `OS_DEMO=1` y nunca `VERCEL_ENV=production` (`src/lib/os/demo/permitido.ts`); fuera de `(app)`, sin compuerta ni base; en Vercel es un 404. `OS_DEMO` no se define en Vercel (owner) |
+| `/os/m/estafeta` | **(F3, en obra, apagado por defecto) La Estafeta**, en el edificio 7 · Directorios (CANALES §4.2, F-27): las tres bandejas (Te toca · Esperando a otros · Por revisar; cada carta cuenta UNA vez, `bandejaDe`), las cartas en «Te toca» por hub con la más vieja, y el Libro de entrada y salida (lo más nuevo arriba, 50 en pantalla; «Enviado» solo con su prueba, si no «Por comprobar»). Solo punteros del registro «Correspondencia» de Notion: ni el texto, ni el asunto, ni la persona, ni ids. Sin botones salvo «Copiar contexto para Tailor» | Su lector (`leerCorrespondencia`) devuelve «sin integración» hasta CON-28: todo dice «Sin datos» con su nota, sin aviso. El HUD es el de la OS (lee el tablero). Encendido, se abre desde la hoja del hub 7; apagado, la hoja, Inicio y el rail dicen por qué. Los buzones con bandera en cada edificio, las cartas en la ficha del Personaje, el HUD de correo, los consejos y el recorrido van detrás de F4 |
+| `/os/m/acciones` | **(F3, en obra, apagado por defecto) Las Acciones**, en el edificio 8 · Ejecución (F-23): lo pendiente de hoy por hub, con las tareas de la plataforma (las MISMAS medidas del tablero: las de la Hacienda) al lado de las Tareas de Notion (abiertas, vencidas, esperando respuesta, y las que no tienen Área). Se unen en la vista, nunca en los datos | Su lector de Notion (`leerTareasDeNotion`) devuelve «sin integración» hasta CON-28: la mitad de Notion dice «Sin datos». No marca ni cierra nada. Las tareas de la plataforma todavía se cuentan como el Tablero (la casilla «Hecho» cuenta): contar sin la casilla es un paso de F-23 con `consolas` (Pendientes) |
+| `/os/demo/[[...vista]]` | **El modo demostración**: las MISMAS vistas con un tablero inventado («Ejemplo»), para las capturas de revisión de identidad (blueprint §7.8); su Inicio es también el mapa, y quien «mira» no es el owner, así que el Modelo Económico dice «Solo el owner». Desde F3 tiene también `/os/demo/estafeta` y `/os/demo/acciones`, con Notion «leído» (cartas y conteos inventados, armados por las MISMAS funciones), y enciende esos dos módulos para que la revisión vea su hoja | **Solo en local**: `OS_DEMO=1` y nunca `VERCEL_ENV=production` (`src/lib/os/demo/permitido.ts`); fuera de `(app)`, sin compuerta ni base; en Vercel es un 404. `OS_DEMO` no se define en Vercel (owner) |
 
 - **Layouts**: el RAÍZ `src/app/os/layout.tsx` (`data-theme="bcp"`, el Tailwind del panel, `noindex`; `qa-rutas-consolas` (h)); el de
   la consola `src/app/os/(app)/layout.tsx` (`requireConsoleAccess("os")` → `PanelShell` → `ProcedenciaProvider` → `data-os-juego`,
@@ -317,6 +325,37 @@ con `portada`; con la Hacienda apagada, las tarjetas).
 `src/app/robots.txt/route.ts` y `src/app/globals.css` (`--crema`) (de `plataforma`); `src/lib/herramientasInternas/entrada.ts`
 (de `herramientas-internas`).
 
+**F3 (2026-11-06) · Acciones y Estafeta, en obra** (`qa-os-check` F3):
+
+- `src/lib/os/fuentes.ts` — las piezas se parten en tres listas: `PIEZAS_DEL_TABLERO` (las de F2; `piezasMuertas` mira solo éstas),
+  `PIEZAS_DE_ACCIONES` y `PIEZAS_DE_ESTAFETA`. Nace la tercera forma de fuente, `notion:<base>#<propiedad>`, con
+  `BASES_DE_NOTION_DEL_OS` (la lista de E-4: nombres de base, nunca ids) y `describirFuente` («Plataforma › …» o «Notion › …», la
+  línea de «Ver fuentes»; la de F2 sale igual que antes). `SIN_INTEGRACION_NOTION` / `LecturaDeNotion<T>`: lo que devuelve un lector de
+  Notion mientras no exista la integración (no es un fallo, no deja aviso; nota `sin_integracion_notion`).
+- `src/lib/os/acciones.ts` (puro) — `armarAcciones(tablero, notion)`: por hub, las medidas de tareas del tablero tal cual y las de
+  Notion; los totales (`resumenDelHud` para la plataforma, `sumarMedidas` para Notion); `piezasMuertasDeAcciones`, `contextoDeAcciones`.
+  «Abiertas en Notion **con hub**» es la suma de las filas; las Tareas sin Área van aparte («En Notion sin hub»). La paridad de F-23
+  con Notion se escribe así: **Tareas abiertas en Notion = abiertas con hub + sin hub** (el guardián de paridad compara esa suma).
+- `src/lib/os/estafeta.ts` (puro) — `Carta` (fecha, canal, dirección, estado, hub y si tiene persona, responsable, motivo, evento y
+  mensaje: sin texto ni ids; sus campos son una lista blanca en `qa-os-check`), `bandejaDe` (una bandeja por carta), `estadoVisible`
+  («Enviado» solo con su prueba), `instanteDe` (las fechas se comparan por su instante, con `Z` o con desfase), `armarEstafeta`,
+  `piezasMuertasDeLaEstafeta`, `contextoDeLaEstafeta`; las listas `CANALES`, `DIRECCIONES`, `ESTADOS_DE_CARTA` (los 13 de CANALES §3.2) y
+  `BANDEJAS`.
+- `src/lib/os/lecturaNotion.ts` (server-only) — `leerTareasDeNotion` y `leerCorrespondencia`: hoy devuelven `SIN_INTEGRACION_NOTION`, sin
+  red, sin clave y sin base. Cambian en su propio paso cuando el owner cree la integración (CON-28).
+- `src/lib/os/textos/{es,en,idioma}.ts` (puros) — **una fuente por idioma** (pista de idiomas, CAN-29): el español primero, el inglés con
+  la MISMA forma (`TextosDelOs`), `textosDelOs()` pide el español mientras no exista el conmutador. Nombres nativos en español también en
+  inglés; «Checkout» igual en los dos. Las etiquetas Y los filtros («Ver fuentes») de las piezas de F3 salen de aquí (`piezas.*`,
+  `filtros.*`). Los textos de F2 siguen en sus vistas y pasan aquí con su sección.
+- Las rutas `src/app/os/(app)/m/{estafeta,acciones}/{layout,page,error}.tsx` (el patrón de F2: interruptor en layout Y página; los dos
+  `error.tsx` copian el de F2 con sus textos escritos en el archivo, como los de Hacienda, Almacén y Taller, y pasan a `textos/` todos
+  juntos con la pista de idiomas) y las
+  vistas `src/components/os/vistas/{Estafeta,Acciones}.tsx` (sin texto propio: todo de `textos/`). Tocados: `modulos.ts` (los dos en el
+  registro, `porDefecto: "apagado"`), `tablero.ts` (`piezasMuertas` sobre `PIEZAS_DEL_TABLERO`), `Cifra.tsx` y `Avisos.tsx` (la fuente
+  `notion:`, la nota y los dos avisos nuevos), `Inicio.tsx` (su lista de módulos), `demo/datos.ts` (`ACCIONES_DEMO`, `ESTAFETA_DEMO`) y la
+  ruta de la demostración. **Fuera del OS**: el rail de la OS en `src/lib/panel/consoles.ts` (de `consolas`, con su línea en
+  `ALINEACION.md` §3).
+
 - `docs/componentes/ctcx-os/atlas.md`: el atlas. `docs/componentes/ctcx-os/reuniones.md`: el primer módulo.
 
 ## Tablas que posee
@@ -345,7 +384,16 @@ Actions de su dueño**.
   real; privacidad probada con centinelas; `hechos.ts` es server-only y no escribe. Desde la V6.19 comparte utilidades
   (`columnasDe`, `quitarComentarios`, `listarArchivos`) con `qa-os-check` por `scripts/os-qa-comun.mjs`, que es una ayuda, no
   un guardián (no se corre solo).
-- **`qa-os-check.mjs`** (offline; V6.19; **659** comprobaciones al 2026-11-05, sobre 43 archivos del OS;
+- **`qa-os-check.mjs`** (offline; V6.19; **659** comprobaciones al 2026-11-05, sobre 43 archivos del OS; **816** sobre 57 al 2026-11-06,
+  con el grupo **F3**: Acciones y Estafeta nacen apagados, sus lectores de Notion devuelven «sin integración» sin red ni base y solo los
+  nombran su archivo y su página (y el guardián los LLAMA y exige «sin integración»), cada fuente `notion:` es de una base de E-4 y sin
+  enlace de consola, una carta lleva exactamente sus campos (lista blanca), las fechas del Libro se comparan por su instante,
+  los núcleos puros con datos inventados —una carta cuenta una vez, «Enviado» solo con su prueba, un registro leído y vacío son ceros,
+  sin integración es «Sin datos»—, los textos ES y EN con las mismas claves, «Checkout» igual en los dos y nunca «Ventanilla», y las dos
+  vistas sin texto propio (ni entre etiquetas, ni en un atributo como `aria-label`, ni en una expresión), las etiquetas y los filtros de
+  las piezas desde `textos/`; H12 cuenta las seis páginas que leen el tablero; tres excepciones con nombre, cada una de UNA línea exacta
+  de `en.ts`, dejan «Sent» en los dos estados del Libro y en la nota que los explica (no son botones; cualquier otra línea con «Sent»
+  salta);
   `node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/qa-os-check.mjs`). Lee `src/app/os`,
   `src/components/os` y `src/lib/os` y corre sus módulos puros contra datos inventados. Grupos: **A** el OS no escribe (ni base, ni
   Storage, ni `fetch`, ni eventos, ni Notion, ni acciones de otras consolas —tampoco por `import()` dinámico, ni escribiendo con
@@ -481,6 +529,14 @@ decisión abierta 12.
     servidor, que usen `cargarKr` y la OS, con su caso de paridad). Cambia el criterio de salida de F2: la Hacienda no cuenta aún el
     hub 1 por estado del circuito.
 
+**Las de F3 (2026-11-06).** Con su valor por defecto ya en el código:
+
+25. **Cuándo se encienden Acciones y Estafeta**: por defecto, **apagados** hasta que exista la integración de solo lectura de Notion
+    (CON-28) y el owner vea sus capturas con datos de verdad. Se encienden con la llave `os_modulos` (hoy por SQL en la sesión del owner;
+    con el PR1b, desde el BCP), y `qa-os-check` F3 se cambia en el mismo paso.
+26. **Los textos en inglés** (`src/lib/os/textos/en.ts`): borrador de Code Master. El owner los revisa antes de que exista el conmutador
+    ES/EN; mientras tanto nadie los ve.
+
 *(Las decisiones del blueprint de Code Master se pliegan aquí con la etiqueta «Propuesto · pendiente del sí del owner»;
 las que falten, cuando lleguen.)*
 
@@ -569,6 +625,31 @@ las que falten, cuando lleguen.)*
   `qa-ciclos-check` (2) fallan porque buscan un salto de línea LF literal en archivos que F2 no toca; en un checkout con LF pasan
   enteros (86, 313 y 146 al 2026-11-05). Se corren sobre LF antes de
   dar la compuerta por verde.
+
+**De F3 (2026-11-06, el cimiento de Acciones y Estafeta)** — V6.22:
+
+- ~~El esqueleto de los dos módulos~~ (registro apagado, rutas, demostración, núcleos puros, vistas, lectores con «sin integración» y
+  `qa-os-check` F3). **Falta, en este orden:**
+- **La integración de solo lectura de Notion** (CON-28 / E-4, **del owner**, en su sesión): «CTCx OS · lectura», compartida solo con
+  `BASES_DE_NOTION_DEL_OS` (y, para el Checkout, con «Ejecución de Redes», que no es de este paso); su clave en Vercel, nunca en el chat.
+- **«Correspondencia» en Notion** (CANALES §6, Paso 1; **del owner**, pendiente de CAN-1 a 4, 6 y 21): sin esa base la Estafeta no tiene
+  qué leer aunque exista la integración.
+- **Los dos lectores de verdad** en `lecturaNotion.ts` (Code Master, con la integración creada): caché de 5 minutos, solo las propiedades
+  que nombran las piezas (estado, fechas, Área y la presencia de sus llaves; nunca títulos, textos, personas ni direcciones), nunca lanzan;
+  las Tareas por Área necesitan que la base «Tareas» tenga esa propiedad (comprobarlo leyendo, no suponerlo). `qa-os-check` F3 cambia su
+  regla de «devuelve SIN_INTEGRACION_NOTION» por la lista de propiedades leídas, en el mismo paso.
+- **El guardián de paridad de lectura** (PLAN F3): los conteos del OS contra Notion y el OCP, a 5 minutos.
+- **Acciones sin la casilla** (F-23, con `consolas`): hoy las tareas de la plataforma cuentan como el Tablero (la casilla «Hecho» las
+  esconde); F-23 pide contarlas por su fuente. Necesita exponer en el tablero las `hechas` que ya cuenta `tareasPorHub`, o un lector propio
+  con la misma regla del PVC (H12).
+- **«Abrir donde se responde»** en cada carta del Libro (el enlace de la fila, a su canal o a la pantalla de la consola): llega con el
+  lector, revisando que ningún enlace lleve datos de una persona.
+- **Detrás de F4** (PLAN §5, la pista del OS va de una en una): los buzones con bandera en cada edificio, las cartas en la ficha del
+  Personaje, el HUD de correo, los consejos fijos del Tailor del juego y el recorrido de la Estafeta.
+- **Encender los dos módulos** (decisión 25, del owner) y sus capturas de la demostración: esta tanda no las tomó (sin `next build` ni
+  `next dev` en la sesión); se toman con Chrome sin interfaz contra `/os/demo/estafeta` y `/os/demo/acciones` antes del PR.
+- **La pista de idiomas** (CAN-29): pasar los textos de F2 (Inicio, Hacienda, Almacén, Taller, `Cifra`, `Avisos`, `ModuloApagado`) a
+  `textos/`, y el conmutador ES/EN; los textos en inglés, con la revisión del owner (decisión 26).
 
 ## Kick-off
 

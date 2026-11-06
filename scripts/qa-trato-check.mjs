@@ -12,6 +12,7 @@
 // oferta» lleva motivo, y la escalera de retiro del PVC plan (`compromiso.ts`) dice lo mismo que estos términos.
 
 import { readFileSync } from "node:fs";
+import { leeTexto } from "./texto-lf.mjs";
 import { execSync } from "node:child_process";
 import { enMora, esPastCrop, mesEnCurso, moraDelMes, moraDelTrato, renovacionDebida, retiro } from "../src/lib/trato/mesAMes.ts";
 import { decidirRecordatorioDeMora, MAX_RECORDATORIOS_MORA } from "../src/lib/trato/mora.ts";
@@ -27,7 +28,7 @@ import { simularTrato } from "../src/lib/trato/simulador.ts";
 let ok = 0;
 const fallos = [];
 const check = (nombre, cond, detalle = "") => (cond ? ok++ : fallos.push(nombre + (detalle ? ` — ${detalle}` : "")));
-const lee = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
+const lee = (p) => leeTexto(new URL(`../${p}`, import.meta.url)); // con saltos LF en cualquier checkout
 const plan = lee("docs/PLAN_CIRCUITO_DEL_LOTE.md");
 const paso = (n) => plan.match(new RegExp(`^\\| ${n} \\| (.+?) \\|`, "m"))?.[1] ?? "";
 const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
@@ -181,11 +182,11 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   const fn = (nombre, siguiente) => acciones.slice(acciones.indexOf(`export async function ${nombre}(`), acciones.indexOf(`export async function ${siguiente}(`));
   check("no existe una columna de mora: ni el código ni la migración escriben mora_estado", !/mora_estado/.test(acciones) && !/mora_estado/.test(lee("docs/migraciones/2026-09-24_trato_mes_a_mes.sql")));
   const ruptura = fn("declararRuptura", "descongelarCuenta");
-  check("decisión 6: la ruptura la declara SOLO el owner, con motivo", ruptura.includes("if (!(await esOwner(service, adminId))) return") && ruptura.includes("if (!motivo) return"));
+  check("decisión 6: la ruptura la declara SOLO el owner, con motivo", ruptura.includes("if (!(await esOwner(adminId))) return") && ruptura.includes("if (!motivo) return"));
   check("y `status: \"ruptura\"` se escribe únicamente ahí", (acciones.match(/\{ status: "ruptura"/g) ?? []).length === 1 && ruptura.includes('{ status: "ruptura"'));
   check("y congela la cuenta del productor en el mismo acto (Identidad, autorizada por el owner)", ruptura.includes('estado_cuenta: "congelada"'));
   const descongela = fn("descongelarCuenta", "recordHumidityReading");
-  check("descongelar también es del owner, con motivo", descongela.includes("esOwner(service, adminId)") && descongela.includes('estado_cuenta: "activa"') && descongela.includes("if (!motivo) return"));
+  check("descongelar también es del owner, con motivo", descongela.includes("if (!(await esOwner(adminId))) return") && descongela.includes('estado_cuenta: "activa"') && descongela.includes("if (!motivo) return"));
   const escritores = execSync("git ls-files src", { encoding: "utf8" }).split(/\r?\n/).filter((f) => /\.tsx?$/.test(f)).filter((f) => /estado_cuenta: "/.test(readFileSync(f, "utf8")));
   check("estado_cuenta lo escribe SOLO contractActions.ts (declarar ruptura · descongelar)", escritores.length === 1 && escritores[0] === "src/app/ocp/(app)/contractActions.ts", escritores.join(", "));
 

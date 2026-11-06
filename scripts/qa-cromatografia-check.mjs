@@ -26,6 +26,7 @@
 
 import { existsSync as existeEnDisco } from "node:fs";
 import { readFileSync } from "node:fs";
+import { leeTexto } from "./texto-lf.mjs";
 import vm from "node:vm";
 import {
   PROMPT_VERSION,
@@ -45,7 +46,8 @@ const check = (n, c, detalle) => {
   else fallos.push(detalle ? `${n}  → ${detalle}` : n);
 };
 const lee = (r) => readFileSync(new URL(`../${r}`, import.meta.url));
-const leeTxt = (r) => lee(r).toString("utf8");
+// Los BYTES (`lee`) para comparar copias idénticas; el TEXTO (`leeTxt`) con saltos LF en cualquier checkout.
+const leeTxt = (r) => leeTexto(new URL(`../${r}`, import.meta.url));
 
 // ── 1 · Reglas ────────────────────────────────────────────────────────────────
 const bytesServidor = lee("src/lib/tools/cromatografia/reglas.json");

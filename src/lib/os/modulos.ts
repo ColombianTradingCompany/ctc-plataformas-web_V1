@@ -18,6 +18,10 @@ import type { ClaseDeAccion } from "@/lib/panel/niveles";
 // Cada `clave` tiene su carpeta `src/app/os/(app)/m/<clave>/` y su enlace en el rail
 // de la OS (`CONSOLES.os.nav`); `qa-os-check` H1 lo exige en las dos direcciones. Desde
 // F4, todo módulo que escriba nace `porDefecto: "apagado"`: lo enciende el owner.
+// F3: Acciones (hub 8) y Estafeta (hub 7) también nacen APAGADOS aunque solo lean: están en obra
+// (sin la integración de Notion, decisión CON-28, no tienen qué enseñar). Fusionarlos no expone
+// nada a medio hacer: el rail, Inicio y la hoja de su edificio dicen «apagado» y por qué
+// (`qa-os-check` F3 vigila que sigan apagados hasta que el owner decida encenderlos).
 
 export const CLAVE_MODULOS_OS = "os_modulos";
 
@@ -42,6 +46,10 @@ export const MODULOS_OS = [
   { clave: "almacen", titulo: "Almacén", ruta: "/os/m/almacen", porDefecto: "encendido", soloOwner: false, clase: "lectura", edificio: "operacion_logistica" },
   // Almacén: hub 2 · Operación y Logística. Taller: hub 5 · Plataformas e IT (la salud del sistema, que ve también GVB). «Pedidos a Code» (solo el owner) será OTRO módulo.
   { clave: "taller", titulo: "Taller", ruta: "/os/m/taller", porDefecto: "encendido", soloOwner: false, clase: "lectura", edificio: "plataformas_it" },
+  // F3 (en obra, apagados por defecto). Estafeta: hub 7 · Directorios (la Estafeta y Palomar, CANALES §4.1). Acciones: hub 8 ·
+  // Ejecución (la sala de mando, F-23). Los nombres son nativos en español también en inglés (CAN-29).
+  { clave: "estafeta", titulo: "Estafeta", ruta: "/os/m/estafeta", porDefecto: "apagado", soloOwner: false, clase: "lectura", edificio: "directorios" },
+  { clave: "acciones", titulo: "Acciones", ruta: "/os/m/acciones", porDefecto: "apagado", soloOwner: false, clase: "lectura", edificio: "ejecucion" },
 ] as const satisfies readonly ModuloOs[];
 
 export type ClaveDeModulo = (typeof MODULOS_OS)[number]["clave"];

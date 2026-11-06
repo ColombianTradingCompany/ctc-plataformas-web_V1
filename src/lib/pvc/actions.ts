@@ -12,7 +12,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireConsoleWrite } from "@/lib/panel/requireConsoleWrite";
-import { getPanelUser, isPanelOwner } from "@/lib/panel/panelUsers";
+import { esOwnerDelPanel } from "@/lib/panel/panelUsers";
 import { PARAMS_V211, type PvcParams } from "./motor";
 import { crearVersionModelo, guardarVariablesDeEdicion, type VariablesDeEdicion } from "./servicio";
 import { validarCalendario } from "@/lib/trato/calendario";
@@ -25,7 +25,7 @@ import type { PvcResult } from "./tipos";
 export async function crearVersionModeloAction(version: string, params: Partial<PvcParams>, notes?: string): Promise<PvcResult> {
   const who = await requireConsoleWrite("ecp");
   if (!who) return { ok: false, error: "No se pudo ejecutar: o tu sesión del BCP ya no está activa (vuelve a iniciar sesión), o tu nivel en el BCP es de lectura y borradores y esta acción emite, publica, cobra, notifica o borra." };
-  if (!isPanelOwner(await getPanelUser(who.userId))) return { ok: false, error: "Registrar una versión del modelo es una decisión del owner." };
+  if (!(await esOwnerDelPanel(who.userId))) return { ok: false, error: "Registrar una versión del modelo es una decisión del owner." };
   const v = version.trim();
   if (!/^v\d+\.\d+(\.\d+)?$/.test(v)) return { ok: false, error: "La versión se escribe como v2.1.1." };
   const r = await crearVersionModelo({ version: v, params: { ...PARAMS_V211, ...params }, notes, userId: who.userId });
@@ -41,7 +41,7 @@ export async function crearVersionModeloAction(version: string, params: Partial<
 export async function guardarVariablesDeEdicionAction(id: string, v: VariablesDeEdicion): Promise<PvcResult> {
   const who = await requireConsoleWrite("ecp");
   if (!who) return { ok: false, error: "No se pudo ejecutar: o tu sesión ya no está activa (vuelve a iniciar sesión), o tu nivel es de lectura y borradores y esta acción emite." };
-  if (!isPanelOwner(await getPanelUser(who.userId))) return { ok: false, error: "Las variables de una edición del PVC las fija el owner." };
+  if (!(await esOwnerDelPanel(who.userId))) return { ok: false, error: "Las variables de una edición del PVC las fija el owner." };
   const malCal = validarCalendario({ desde: v.desde, ciclo1Hasta: v.ciclo1Hasta, hasta: v.hasta });
   if (malCal) return { ok: false, error: malCal };
   for (const g of ["black", "red", "blue", "gold"] as const) {
@@ -68,7 +68,7 @@ export async function guardarVariablesDeEdicionAction(id: string, v: VariablesDe
 export async function aprobarCorreccionAction(id: string): Promise<PvcResult> {
   const who = await requireConsoleWrite("ecp", "emite");
   if (!who) return { ok: false, error: "No se pudo ejecutar: o tu sesión ya no está activa (vuelve a iniciar sesión), o tu nivel es de lectura y borradores y esta acción emite." };
-  if (!isPanelOwner(await getPanelUser(who.userId))) return { ok: false, error: "Aprobar una corrección del PVC es una decisión del owner." };
+  if (!(await esOwnerDelPanel(who.userId))) return { ok: false, error: "Aprobar una corrección del PVC es una decisión del owner." };
   const r = await aprobarCorreccion(id, who.userId);
   if ("error" in r) return { ok: false, error: r.error };
   revalidatePath("/ecp/pvc");
@@ -80,7 +80,7 @@ export async function aprobarCorreccionAction(id: string): Promise<PvcResult> {
 export async function rechazarCorreccionAction(id: string, nota: string): Promise<PvcResult> {
   const who = await requireConsoleWrite("ecp", "emite");
   if (!who) return { ok: false, error: "No se pudo ejecutar: o tu sesión ya no está activa (vuelve a iniciar sesión), o tu nivel es de lectura y borradores y esta acción emite." };
-  if (!isPanelOwner(await getPanelUser(who.userId))) return { ok: false, error: "Rechazar una corrección del PVC es una decisión del owner." };
+  if (!(await esOwnerDelPanel(who.userId))) return { ok: false, error: "Rechazar una corrección del PVC es una decisión del owner." };
   if (nota.trim().length < 5) return { ok: false, error: "Escriba por qué se rechaza (queda en el registro)." };
   const r = await rechazarCorreccion(id, who.userId, nota.trim());
   if ("error" in r) return { ok: false, error: r.error };
@@ -96,7 +96,7 @@ export async function rechazarCorreccionAction(id: string, nota: string): Promis
 export async function prepararBorradorAction(): Promise<PvcResult> {
   const who = await requireConsoleWrite("ecp", "emite");
   if (!who) return { ok: false, error: "No se pudo ejecutar: o tu sesión ya no está activa (vuelve a iniciar sesión), o tu nivel es de lectura y borradores y esta acción emite." };
-  if (!isPanelOwner(await getPanelUser(who.userId))) return { ok: false, error: "Pedir el borrador del agente es una decisión del owner." };
+  if (!(await esOwnerDelPanel(who.userId))) return { ok: false, error: "Pedir el borrador del agente es una decisión del owner." };
   const r = await prepararBorrador({ hoy: hoyEnColombia(), porQuien: "owner", userId: who.userId });
   if ("error" in r) return { ok: false, error: r.error };
   revalidatePath("/ecp/pvc");

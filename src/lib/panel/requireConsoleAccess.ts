@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createPanelSessionClient } from "@/lib/supabase/server";
 import type { PanelConsoleKey } from "./consoles";
-import { getPanelUser, grantedConsoles, isPanelOwner, nivelDeConsola } from "./panelUsers";
+import { leerPanelUser, grantedConsoles, isPanelOwner, nivelDeConsola } from "./panelUsers";
 import type { ConsoleLevel } from "./niveles";
 
 export type PanelIdentity = {
@@ -41,7 +41,10 @@ async function leerIdentidad(): Promise<LecturaDeIdentidad> {
 
   if (profile?.role !== "bcp_admin") return { ok: false, destino: "/login" };
 
-  const row = await getPanelUser(user.id);
+  // 2026-11-06: si no se pueden leer los permisos, la consola no abre (al login). Solo «no hay fila» es el caso de antes de `panel_users`.
+  const lectura = await leerPanelUser(user.id);
+  if (!lectura.ok) return { ok: false, destino: "/login" };
+  const row = lectura.row;
   if (row && row.status !== "active") return { ok: false, destino: "/login" }; // suspended / not-yet-activated
   // Security follow-up: a fresh/reset temp password must be replaced before any
   // console is usable. The page does its own light auth (no loop through here).

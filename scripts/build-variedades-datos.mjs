@@ -13,6 +13,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import vm from "node:vm";
+import { aLf } from "./texto-lf.mjs";
 
 const HERRAMIENTA = "public/tools/mapa-variedades/mapa-variedades.html";
 const SALIDA = "src/lib/catacion/variedadesDatos.ts";
@@ -108,7 +109,8 @@ if (import.meta.url === `file:///${process.argv[1]?.replace(/\\/g, "/")}` || pro
   if (process.argv.includes("--check")) {
     let actual = "";
     try {
-      actual = readFileSync(ruta, "utf8");
+      // Con saltos LF: un checkout de Windows deja el archivo en CRLF y la salida se genera en LF (ver ./texto-lf.mjs).
+      actual = aLf(readFileSync(ruta, "utf8"));
     } catch {
       /* no existe */
     }

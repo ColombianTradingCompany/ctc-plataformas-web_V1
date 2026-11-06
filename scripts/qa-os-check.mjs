@@ -31,6 +31,13 @@
 //      del owner, `isOwner` desde la identidad del layout), la portada en el mapa y cada
 //      módulo abierto desde su edificio (H13), y las reglas del tablero probadas con
 //      datos inventados.
+//   F3. Los módulos en obra Acciones (hub 8) y Estafeta (hub 7): nacen APAGADOS, sus
+//      lectores de Notion devuelven «sin integración» (decisión CON-28) y nunca un cero, cada
+//      fuente `notion:` nombra una base de la lista E-4, sus núcleos puros se prueban con datos
+//      inventados (una carta cuenta una vez, «Enviado» solo con su prueba, las fechas por su instante),
+//      una carta lleva EXACTAMENTE sus campos (lista blanca) y sus textos viven en una fuente por idioma
+//      (ES y EN con la misma forma; las vistas no escriben texto propio, ni entre etiquetas, ni en un
+//      atributo, ni en una expresión; las etiquetas y los filtros de sus piezas salen de textos/).
 //
 // Las reglas se prueban a sí mismas (autoprueba): cada buscador recibe una muestra
 // mala y una buena, y si la mala no salta o la buena salta, el guardián falla. Así
@@ -49,7 +56,14 @@ import { createHash } from "node:crypto";
 import { join, posix } from "node:path";
 import { fileURLToPath } from "node:url";
 import { columnasDe, quitarComentarios, lineaDe, listarArchivos } from "./os-qa-comun.mjs";
-import { FUENTES, PIEZAS, enlaceVisible, consolaDelEnlace } from "../src/lib/os/fuentes.ts";
+import { FUENTES, PIEZAS, PIEZAS_DEL_TABLERO, PIEZAS_DE_ACCIONES, PIEZAS_DE_ESTAFETA, BASES_DE_NOTION_DEL_OS, SIN_INTEGRACION_NOTION, esSinIntegracionNotion, describirFuente, enlaceVisible, consolaDelEnlace } from "../src/lib/os/fuentes.ts";
+import { armarAcciones, piezasMuertasDeAcciones, contextoDeAcciones } from "../src/lib/os/acciones.ts";
+import { armarEstafeta, piezasMuertasDeLaEstafeta, contextoDeLaEstafeta, bandejaDe, estadoVisible, instanteDe, ESTADOS_DE_CARTA, CANALES, DIRECCIONES, BANDEJAS, CARTAS_EN_EL_LIBRO } from "../src/lib/os/estafeta.ts";
+// El lector es server-only: `ts-resolve` cambia `server-only` por un módulo vacío, así que aquí se LLAMA (F3).
+import { leerTareasDeNotion, leerCorrespondencia } from "../src/lib/os/lecturaNotion.ts";
+import { TEXTOS_ES } from "../src/lib/os/textos/es.ts";
+import { TEXTOS_EN } from "../src/lib/os/textos/en.ts";
+import { textosDelOs, IDIOMAS } from "../src/lib/os/textos/idioma.ts";
 import { MODULOS_OS, CLAVE_MODULOS_OS, MOTIVO_SIN_LECTURA, parsearModulos, modulosSinLectura } from "../src/lib/os/modulos.ts";
 import {
   hubDeTarea, hubDeTipo, hubDePieza, hubsConTareas, tareasPorHub, esTareaVencida, peorSalud,
@@ -57,7 +71,7 @@ import {
   sumarMedidas, resumenDelHud, contextoParaTailor, etiquetaDeClave, ordenDeClave,
   PVC_SOLO_OWNER, esPvcSoloOwner, esTareaDelPvc, esHechoDelPvc, TABLAS_DEL_PVC, hubsDelPvc,
 } from "../src/lib/os/tablero.ts";
-import { TABLERO_DEMO, IDENTIDAD_DEMO, LECTURAS_DEMO } from "../src/lib/os/demo/datos.ts";
+import { TABLERO_DEMO, IDENTIDAD_DEMO, LECTURAS_DEMO, ACCIONES_DEMO, ESTAFETA_DEMO } from "../src/lib/os/demo/datos.ts";
 import { FORMAS, TOKENS_DE_ARTE, VIEWBOX, HX, edificioArte, sueloArte, arbolesArte, matasArte, granosArte, iso, rotuloArte } from "../src/lib/os/haciendaArte.ts";
 import { CONSOLES, CONSOLE_ORDER, CONSOLAS_INVITABLES } from "../src/lib/panel/consoles.ts";
 import { TIPOS_DE_TAREA } from "../src/lib/panel/tareas.ts";
@@ -77,7 +91,8 @@ const existe = (rel) => existsSync(join(RAIZ, rel));
 
 const RAICES = ["src/app/os", "src/components/os", "src/lib/os"];
 const HECHOS = new Set(["src/lib/os/hechos.ts", "src/lib/os/hechosCatalogo.ts"]);
-const PUROS = ["src/lib/os/fuentes.ts", "src/lib/os/tablero.ts", "src/lib/os/modulos.ts", "src/lib/os/haciendaArte.ts", "src/lib/os/hechosCatalogo.ts"];
+const PUROS = ["src/lib/os/fuentes.ts", "src/lib/os/tablero.ts", "src/lib/os/modulos.ts", "src/lib/os/haciendaArte.ts", "src/lib/os/hechosCatalogo.ts",
+  "src/lib/os/acciones.ts", "src/lib/os/estafeta.ts", "src/lib/os/textos/es.ts", "src/lib/os/textos/en.ts", "src/lib/os/textos/idioma.ts"];
 
 const listados = listarArchivos(RAIZ, RAICES).filter((r) => /\.(ts|tsx|css|svg)$/.test(r) && existe(r));
 const OS = listados.map((ruta) => {
@@ -127,6 +142,26 @@ function cadenasDe(limpio) {
 const jsxDe = (limpio) => [...limpio.matchAll(/>([^<>{}]*[A-Za-zÁÉÍÓÚáéíóúÑñ¡¿][^<>{}]*)</g)].map((m) => ({ pos: m.index + 1, txt: m[1] }));
 /** Lo que lee una persona: cadenas y texto JSX. */
 const visibleDe = (a) => [...cadenasDe(a.limpio), ...(a.tsx ? jsxDe(a.limpio) : [])];
+/** Los atributos que una persona lee (o que lee su lector de pantalla). */
+const RE_ATRIBUTO_VISIBLE = /\b(?:aria-label|aria-description|aria-roledescription|aria-valuetext|aria-placeholder|title|alt|placeholder)\s*=\s*\{?\s*$/;
+/**
+ * (F3) El texto que una vista escribe por su cuenta: el JSX entre etiquetas, cualquier literal en un atributo visible
+ * (aria-label, title, alt, placeholder…) y cualquier otra cadena que parezca una frase (con espacio o con mayúscula, como
+ * `"Sin hub"` dentro de una expresión). No cuentan las rutas de import, las directivas, ni las clases, ids, roles y claves
+ * (minúsculas, sin espacio, o solo interpolaciones).
+ */
+function textoPropioDe(limpio) {
+  const out = [...jsxDe(limpio)];
+  for (const c of cadenasDe(limpio)) {
+    const antes = limpio.slice(Math.max(0, c.pos - 60), c.pos - 1);
+    if (/(?:\bfrom|\bimport)\s*\(?\s*$/.test(antes)) continue;
+    if (/^use (?:client|server)$/.test(c.txt)) continue;
+    const sin = c.txt.replace(/\$\{[^}]*\}/g, "");
+    if (!/[A-Za-zÁÉÍÓÚáéíóúÑñ]/.test(sin)) continue;
+    if (RE_ATRIBUTO_VISIBLE.test(antes) || /\s/.test(sin.trim()) || /[A-ZÁÉÍÓÚÑ¡¿]/.test(sin)) out.push({ pos: c.pos, txt: c.txt });
+  }
+  return out;
+}
 
 /** Busca todas las coincidencias de una expresión en un texto: [{ pos, txt }]. */
 const buscar = (re, texto) => [...texto.matchAll(new RegExp(re.source, re.flags.includes("g") ? re.flags : re.flags + "g"))].map((m) => ({ pos: m.index, txt: m[0] }));
@@ -314,13 +349,36 @@ check("autoprueba · quitar comentarios conserva las líneas", quitarComentarios
 // ── Pasada de las reglas por expresión sobre el OS ───────────────────────────
 
 /** Excepciones con nombre y porqué. Una que ya no casa con nada FALLA (sin entradas muertas). */
-const EXCEPCIONES = [];
+const EXCEPCIONES = [
+  // «Enviado» es un ESTADO del registro «Correspondencia» (Make lo pone con el número del mensaje, CANALES §3.2), no un botón que
+  // afirma: el núcleo solo lo pinta con su prueba (`estadoVisible`, probado en F3) y la Estafeta no tiene botones de envío.
+  // Cada excepción vale para UNA línea exacta (la hoja del estado), nunca para el archivo entero: en.ts es la fuente de todos
+  // los textos en inglés, botones incluidos, y cualquier otra línea con «Sent» sigue saltando.
+  { regla: "G1", archivo: "src/lib/os/textos/en.ts", linea: 'enviado: "Sent",', porque: "«Sent» es el estado «enviado» del Libro, no un botón" },
+  { regla: "G1", archivo: "src/lib/os/textos/en.ts", linea: 'enviado_a_mano: "Sent by hand (unverified)",', porque: "«Sent by hand (unverified)» es el estado «enviado_a_mano» del Libro, no un botón" },
+  { regla: "G1", archivo: "src/lib/os/textos/en.ts", linea: '"Newest first. «Sent» is shown only with the proof (the event number and the message number); without it, the letter says «To verify».",',
+    porque: "la nota del Libro (libroNota) NOMBRA el estado «Sent» entre comillas para explicar cuándo se pinta; no es un botón" },
+];
 const usadas = new Set();
-const exceptuado = (regla, ruta, txt) => {
-  const i = EXCEPCIONES.findIndex((e) => e.regla === regla && e.archivo === ruta && txt.includes(e.patron));
+/** La línea (sin sangría) donde cae una posición del código limpio. */
+const lineaEn = (limpio, pos) => (limpio.split("\n")[lineaDe(limpio, pos) - 1] ?? "").trim();
+const casaExcepcion = (e, regla, ruta, linea) => e.regla === regla && e.archivo === ruta && linea === e.linea;
+const exceptuado = (regla, a, pos) => {
+  const linea = lineaEn(a.limpio, pos);
+  const i = EXCEPCIONES.findIndex((e) => casaExcepcion(e, regla, a.ruta, linea));
   if (i >= 0) usadas.add(i);
   return i >= 0;
 };
+{
+  const [enviado] = EXCEPCIONES;
+  check("autoprueba · una excepción vale solo para su línea exacta (otra línea con «Sent» del mismo archivo salta)",
+    casaExcepcion(enviado, "G1", enviado.archivo, 'enviado: "Sent",') && !casaExcepcion(enviado, "G1", enviado.archivo, 'nadaSale: "Sent. Nothing leaves from here.",')
+    && !casaExcepcion(enviado, "G1", "src/components/os/vistas/Estafeta.tsx", 'enviado: "Sent",') && !casaExcepcion(enviado, "G2", enviado.archivo, 'enviado: "Sent",'));
+  const m = muestra('const t = {\n  enviado: "Sent",\n  nadaSale: "Sent. Nothing leaves",\n};');
+  const hs = hallarPalabras(m).filter((h) => h.txt === "Sent");
+  check("autoprueba · G1 ve «Sent» en las dos líneas de la muestra y la excepción reconoce solo la del estado",
+    hs.length === 2 && hs.filter((h) => casaExcepcion(enviado, "G1", enviado.archivo, lineaEn(m.limpio, h.pos))).length === 1);
+}
 
 const codigo = OS.filter((a) => !a.ruta.endsWith(".svg"));
 for (const r of REGLAS) {
@@ -332,7 +390,7 @@ for (const r of REGLAS) {
     if (r.permitidos?.includes(a.ruta)) continue;
     if (r.sobre === "visible" && a.css) continue;
     for (const h of hallar(r, a)) {
-      if (exceptuado(r.id, a.ruta, h.txt)) continue;
+      if (exceptuado(r.id, a, h.pos)) continue;
       hall++;
       check(`${r.id} · ${r.que}`, false, `${a.ruta}:${lineaDe(a.limpio, h.pos)} «${h.txt.slice(0, 60)}»`);
     }
@@ -344,7 +402,7 @@ for (const r of REGLAS) {
   for (const a of codigo) {
     if (a.hechos || a.css) continue;
     for (const h of hallarPalabras(a)) {
-      if (exceptuado("G1", a.ruta, h.txt)) continue;
+      if (exceptuado("G1", a, h.pos)) continue;
       if (h.p.startsWith("puntos") && a.ruta.endsWith("SelloGrado.tsx")) continue;
       hall++;
       check("G1 · palabras del vocabulario congelado", false, `${a.ruta}:${lineaDe(a.limpio, h.pos)} «${h.txt}» (${h.p})`);
@@ -584,6 +642,16 @@ const CONTEXTO = { sql: SQL, src: SRC_SIN_OS };
 
 check("C · FUENTES tiene una entrada por pieza, ni una más", Object.keys(FUENTES).length === PIEZAS.length && PIEZAS.every((p) => p in FUENTES));
 for (const [pieza, f] of Object.entries(FUENTES)) {
+  if (f.fuente.startsWith("notion:")) {
+    // F3: una propiedad de una base de Notion que leerá la integración de solo lectura del OS (CON-28). La base es de la lista E-4 y la
+    // pieza no tiene enlace de consola (Notion no es una pantalla de la plataforma); sin ids, solo nombres.
+    const [base, propiedad] = f.fuente.slice("notion:".length).split("#");
+    check(`C1 · «${pieza}»: la base de Notion «${base}» está en BASES_DE_NOTION_DEL_OS (E-4)`, BASES_DE_NOTION_DEL_OS.includes(base));
+    check(`C1 · «${pieza}»: nombra una propiedad`, !!propiedad && propiedad.trim() === propiedad && propiedad.length > 0);
+    check(`C1 · «${pieza}»: una pieza de Notion no tiene enlace de consola`, f.enlace === null);
+    check(`C1 · «${pieza}»: es de un módulo de F3`, PIEZAS_DE_ACCIONES.includes(pieza) || PIEZAS_DE_ESTAFETA.includes(pieza));
+    continue;
+  }
   if (f.fuente.startsWith("archivo:")) {
     const [ruta, fn] = f.fuente.slice("archivo:".length).split("#");
     const ok = existe(ruta) && new RegExp(`export\\s+(?:async\\s+)?function\\s+${fn}\\b|export\\s+const\\s+${fn}\\b`).test(leer(ruta));
@@ -813,7 +881,7 @@ for (const m of MODULOS_OS) {
   // H2b: la página corre EN PARALELO con su layout; si lee datos, mira el interruptor ella también.
   {
     const pag = existe(`${DIR_MODULOS}/${m.clave}/page.tsx`) ? quitarComentarios(leer(`${DIR_MODULOS}/${m.clave}/page.tsx`)) : "";
-    if (/@\/lib\/os\/(?:tableroServidor|lectura|hechos)\b|leerTablero|leerHechos/.test(pag)) {
+    if (/@\/lib\/os\/(?:tableroServidor|lectura|lecturaNotion|hechos)\b|leerTablero|leerHechos|leerTareasDeNotion|leerCorrespondencia/.test(pag)) {
       check(`H2b · «${m.clave}»: su página lee datos y llama antes a moduloEncendido("${m.clave}")`, pag.includes(`moduloEncendido("${m.clave}")`));
     }
   }
@@ -877,7 +945,7 @@ if (existe("src/lib/os/demo/datos.ts")) {
     check(`H6 · ${a.ruta} no importa la demo`, !/["']@\/lib\/os\/demo\//.test(a.limpio) && !/["']\.\/demo\//.test(a.limpio));
   }
   for (const a of codigo.filter((x) => x.ruta.startsWith("src/app/os/demo/"))) {
-    check(`H6 · ${a.ruta} no toca la base ni los lectores`, !/@\/lib\/supabase|@\/lib\/os\/(?:lectura|tableroServidor|interruptores|hechos)\b/.test(a.limpio));
+    check(`H6 · ${a.ruta} no toca la base ni los lectores`, !/@\/lib\/supabase|@\/lib\/os\/(?:lectura|lecturaNotion|tableroServidor|interruptores|hechos)\b/.test(a.limpio));
     if (a.ruta.endsWith("page.tsx")) check(`H6 · ${a.ruta} pasa por demoPermitido() y notFound()`, /demoPermitido\(\)/.test(a.limpio) && /notFound\(\)/.test(a.limpio));
   }
   const perm = existe("src/lib/os/demo/permitido.ts") ? leer("src/lib/os/demo/permitido.ts") : "";
@@ -1014,9 +1082,11 @@ check("autoprueba · H12 calla con la llamada buena, el import y la definición"
   // En TODO el código de la OS (no solo src/app/os): un ayudante de src/lib/os o src/components/os que llamara a leerTablero(true)
   // leería el PVC para cualquiera.
   const DEF_TABLERO = "src/lib/os/tableroServidor.ts";
-  const PAGINAS_CON_TABLERO = ["src/app/os/(app)/page.tsx", "src/app/os/(app)/m/almacen/page.tsx", "src/app/os/(app)/m/hacienda/page.tsx", "src/app/os/(app)/m/taller/page.tsx"];
+  const PAGINAS_CON_TABLERO = ["src/app/os/(app)/page.tsx", "src/app/os/(app)/m/almacen/page.tsx", "src/app/os/(app)/m/hacienda/page.tsx", "src/app/os/(app)/m/taller/page.tsx",
+    // F3: Acciones (las tareas de la plataforma son las del tablero) y Estafeta (el HUD).
+    "src/app/os/(app)/m/acciones/page.tsx", "src/app/os/(app)/m/estafeta/page.tsx"];
   const conTablero = codigo.filter((a) => /\bleerTablero\b/.test(a.limpio)).map((a) => a.ruta).sort();
-  check("H12 · leerTablero solo se nombra en tableroServidor.ts (su definición) y en las cuatro páginas de (app)",
+  check("H12 · leerTablero solo se nombra en tableroServidor.ts (su definición) y en las páginas de (app) que lo declaran",
     JSON.stringify(conTablero) === JSON.stringify([...PAGINAS_CON_TABLERO, DEF_TABLERO].sort()), conTablero.join(", "));
   check("H12 · tableroServidor.ts nombra leerTablero solo en su definición",
     (srv.match(/\bleerTablero\b/g) ?? []).length === 1 && /export const leerTablero = cache\(async \(isOwner: boolean\)/.test(srv));
@@ -1040,6 +1110,8 @@ check("autoprueba · H12 calla con la llamada buena, el import y la definición"
     MODULOS_OS.find((m) => m.clave === "hacienda")?.edificio === null
     && MODULOS_OS.find((m) => m.clave === "almacen")?.edificio === "operacion_logistica"
     && MODULOS_OS.find((m) => m.clave === "taller")?.edificio === "plataformas_it");
+  check("H13 · el registro (F3): Estafeta en el hub 7 · Directorios y Acciones en el hub 8 · Ejecución (CANALES §4.1, F-23, F-27)",
+    MODULOS_OS.find((m) => m.clave === "estafeta")?.edificio === "directorios" && MODULOS_OS.find((m) => m.clave === "acciones")?.edificio === "ejecucion");
   for (const m of MODULOS_OS) if (m.edificio !== null) check(`H13 · «${m.clave}»: su edificio es un hub del Mapa CTC`, DOMINIOS.some((d) => d.id === m.edificio));
   const ini = quitarComentarios(leer("src/components/os/vistas/Inicio.tsx"));
   check("H13 · Inicio pinta la Hacienda (portada) cuando su módulo está encendido, y las tarjetas si no",
@@ -1088,7 +1160,7 @@ check("T · los hubs que pueden tener tareas salen del catálogo", [...hubsConTa
 check("T · peorSalud ordena fallo > atrasada > parcial > sin corrida > al día",
   peorSalud(["ok", "parcial", "atrasada"]) === "atrasada" && peorSalud(["ok", "fallo"]) === "fallo" && peorSalud(["ok", "sin_corrida"]) === "sin_corrida" && peorSalud(["ok"]) === "ok" && peorSalud([]) === null);
 
-for (const p of PIEZAS) {
+for (const p of PIEZAS_DEL_TABLERO) {
   if (PIEZAS_POR_HUB.includes(p)) check(`T · «${p}» se reparte por hub (no tiene uno fijo)`, hubDePieza(p) === null);
   else check(`T · «${p}» tiene su hub en el catálogo`, hubDePieza(p) !== null);
 }
@@ -1309,6 +1381,216 @@ for (const d of DOMINIOS) {
 check("T · el suelo: una casilla por celda más los dos cantos", sueloArte().length === HX.N * HX.N + 2 && sueloArte().every((c) => dentro(c.d)));
 check("T · árboles, matas y granos dentro del lienzo", [...arbolesArte().flatMap((a) => a.caras), ...matasArte(), ...granosArte()].every((c) => TOKENS_DE_ARTE.includes(c.token)));
 check("T · iso(0,0) cae en el origen de la rejilla", iso(0, 0)[0] === HX.OX && iso(0, 0)[1] === HX.OY);
+
+// ── F3 · Acciones y Estafeta (en obra): apagados, sin Notion todavía, nunca un cero ──
+{
+  // El registro: nacen apagados, solo leen, no son del owner (los enciende el owner cuando decida).
+  for (const clave of ["estafeta", "acciones"]) {
+    const m = MODULOS_OS.find((x) => x.clave === clave);
+    check(`F3 · «${clave}» está en el registro`, !!m);
+    if (!m) continue;
+    check(`F3 · «${clave}» nace APAGADO (en obra: fusionar no expone nada a medio hacer)`, m.porDefecto === "apagado");
+    check(`F3 · «${clave}» solo lee y no es del owner`, m.clase === "lectura" && m.soloOwner === false);
+    check(`F3 · sin fila de os_modulos, «${clave}» sale apagado por defecto`, parsearModulos(null)[clave].encendido === false && parsearModulos(null)[clave].origen === "defecto");
+  }
+
+  // Las piezas: tres listas que no se pisan y que juntas son PIEZAS.
+  const juntas = [...PIEZAS_DEL_TABLERO, ...PIEZAS_DE_ACCIONES, ...PIEZAS_DE_ESTAFETA];
+  check("F3 · PIEZAS = tablero + Acciones + Estafeta, sin repetidas", juntas.length === PIEZAS.length && new Set(juntas).size === PIEZAS.length && juntas.every((p) => PIEZAS.includes(p)));
+  check("F3 · las piezas de Acciones y de la Estafeta salen de Notion (fuente notion:)", [...PIEZAS_DE_ACCIONES, ...PIEZAS_DE_ESTAFETA].every((p) => FUENTES[p].fuente.startsWith("notion:")));
+  check("F3 · describirFuente: una pieza de Notion dice «Notion», una de la plataforma dice «Plataforma» con su columna tal cual",
+    describirFuente("estafeta_te_toca").origen === TEXTOS_ES.origen.notion && describirFuente("lotes_por_etapa").origen === TEXTOS_ES.origen.plataforma && describirFuente("lotes_por_etapa").texto === "lots.stage");
+
+  // Los lectores de Notion: solo servidor, sin red, sin clave, sin base; hasta CON-28 devuelven «sin integración».
+  const LECTOR = "src/lib/os/lecturaNotion.ts";
+  const a = OS.find((x) => x.ruta === LECTOR);
+  check(`F3 · ${LECTOR} existe`, !!a);
+  if (a) {
+    check(`F3 · ${LECTOR} es server-only`, a.texto.startsWith('import "server-only";'));
+    check(`F3 · ${LECTOR} no lee la base, ni la red, ni el entorno (la integración llega con CON-28)`, !/\.from\(|createServiceRoleClient|\bfetch\s*\(|process\.env/.test(a.limpio));
+    const exportadas = [...a.limpio.matchAll(/export\s+(?:async\s+)?function\s+(\w+)/g)].map((m) => m[1]).sort();
+    check(`F3 · ${LECTOR} exporta los dos lectores`, JSON.stringify(exportadas) === JSON.stringify(["leerCorrespondencia", "leerTareasDeNotion"]), exportadas.join(", "));
+    // Apoyo textual: un `return` vigilado por lector. La prueba de verdad es la de abajo, que LLAMA a los lectores.
+    check(`F3 · cada lector de Notion devuelve SIN_INTEGRACION_NOTION hasta que exista la integración (CON-28), en el texto`,
+      (a.limpio.match(/return Promise\.resolve\(SIN_INTEGRACION_NOTION\);/g) ?? []).length === exportadas.length);
+  }
+  for (const [nombre, lector] of [["leerTareasDeNotion", leerTareasDeNotion], ["leerCorrespondencia", leerCorrespondencia]]) {
+    const r = await Promise.resolve().then(() => lector()).then((valor) => ({ valor }), (error) => ({ error }));
+    check(`F3 · ${nombre}() no lanza`, !("error" in r), String(r.error ?? ""));
+    check(`F3 · ${nombre}() devuelve SIN_INTEGRACION_NOTION al llamarlo (nunca un cero ni una lectura inventada, CON-28)`,
+      "valor" in r && esSinIntegracionNotion(r.valor) && r.valor === SIN_INTEGRACION_NOTION, JSON.stringify(r.valor ?? null));
+  }
+  for (const [lector, pagina] of [["leerTareasDeNotion", "src/app/os/(app)/m/acciones/page.tsx"], ["leerCorrespondencia", "src/app/os/(app)/m/estafeta/page.tsx"]]) {
+    const usan = codigo.filter((x) => new RegExp(`\\b${lector}\\b`).test(x.limpio)).map((x) => x.ruta).sort();
+    check(`F3 · ${lector} solo se nombra en su archivo y en su página`, JSON.stringify(usan) === JSON.stringify([LECTOR, pagina].sort()), usan.join(", "));
+  }
+  {
+    const pa = existe("src/app/os/(app)/m/acciones/page.tsx") ? quitarComentarios(leer("src/app/os/(app)/m/acciones/page.tsx")) : "";
+    const pe = existe("src/app/os/(app)/m/estafeta/page.tsx") ? quitarComentarios(leer("src/app/os/(app)/m/estafeta/page.tsx")) : "";
+    check("F3 · Acciones une el tablero (las tareas de la plataforma) y Notion con armarAcciones", /armarAcciones\(tablero, notion\)/.test(pa) && /leerTareasDeNotion\(\)/.test(pa));
+    check("F3 · la Estafeta arma lo leído de «Correspondencia» con armarEstafeta, a la hora del tablero", /armarEstafeta\(correspondencia, tablero\.leidoAt\)/.test(pe) && /leerCorrespondencia\(\)/.test(pe));
+  }
+
+  // Una carta no lleva texto, ni personas, ni ids: solo lo que la Estafeta cuenta y pinta.
+  {
+    const est = quitarComentarios(leer("src/lib/os/estafeta.ts"));
+    const tipo = (est.match(/export type Carta = \{[\s\S]*?\n\};/) ?? [""])[0];
+    check("F3 · el tipo Carta existe", tipo.length > 0);
+    // Lista BLANCA: un campo nuevo (con cualquier nombre) pide cambiar esta lista a propósito, mirando que no traiga texto,
+    // personas, ids ni enlaces.
+    const CAMPOS_DE_CARTA = ["fecha", "canal", "direccion", "estado", "hub", "conPersona", "conResponsable", "conMotivo", "conEvento", "conMensaje", "esperandoDesde"];
+    const camposDe = (t) => [...t.slice(t.indexOf("{") + 1, t.lastIndexOf("}")).matchAll(/(?:^|[;{\n])\s*(\w+)\s*\??\s*:/g)].map((m) => m[1]);
+    const igual = (xs) => JSON.stringify([...xs].sort()) === JSON.stringify([...CAMPOS_DE_CARTA].sort());
+    const campos = camposDe(tipo);
+    check("F3 · una carta lleva EXACTAMENTE sus campos (lista blanca: ni texto, ni personas, ni ids, ni enlaces)", igual(campos),
+      `sobran: ${campos.filter((c) => !CAMPOS_DE_CARTA.includes(c)).join(", ") || "—"}; faltan: ${CAMPOS_DE_CARTA.filter((c) => !campos.includes(c)).join(", ") || "—"}`);
+    const base = `export type Carta = {\n${CAMPOS_DE_CARTA.map((c) => `  ${c}: string;`).join("\n")}\n};`;
+    check("autoprueba · la lista blanca de Carta salta con un campo de más con otro nombre, con uno de menos y con dos en una línea",
+      igual(camposDe(base)) && !igual(camposDe(base.replace("};", "  remitente: string;\n};"))) && !igual(camposDe(base.replace("  fecha: string;\n", "")))
+      && !igual(camposDe(base.replace("  canal: string;", "  canal: string; remitente?: string;"))));
+  }
+
+  // Acciones con datos inventados.
+  const SIN = SIN_INTEGRACION_NOTION;
+  const accSin = armarAcciones(tb, SIN);
+  const notionDe = (x) => x.filas.flatMap((f) => [f.notion.abiertas, f.notion.vencidas, f.notion.esperando]);
+  check("F3 · Acciones sin la integración: cada cifra de Notion «Sin datos» con su nota, ninguna en cero",
+    [...notionDe(accSin), accSin.totales.notionAbiertas, accSin.totales.notionEsperando, accSin.totales.notionSinHub].every((m) => m.valor === null && m.notas?.includes("sin_integracion_notion")));
+  check("F3 · Acciones sin la integración: no es una lectura fallida (sin aviso) y lo dice", accSin.notion === "sin_integracion" && accSin.avisos.length === 0);
+  check("F3 · Acciones saca todas sus piezas (sin entradas muertas)", piezasMuertasDeAcciones(accSin).length === 0, piezasMuertasDeAcciones(accSin).join(","));
+  check("F3 · las tareas de la plataforma son las MISMAS medidas del tablero (sin copia ni recálculo)",
+    accSin.filas.every((f) => f.plataforma.abiertas === tb.edificios[f.dominio].abiertas && f.plataforma.vencidas === tb.edificios[f.dominio].vencidas)
+    && accSin.totales.plataformaAbiertas.valor === resumenDelHud(tb).abiertas.valor);
+  check("F3 · ninguna cifra de Acciones mezcla las dos fuentes (cada pieza es de la plataforma o de Notion)",
+    accSin.filas.every((f) => [f.plataforma.abiertas, f.plataforma.vencidas].every((m) => m.pieza.startsWith("tareas_")) && [f.notion.abiertas, f.notion.vencidas, f.notion.esperando].every((m) => m.pieza.startsWith("acciones_notion_"))));
+  const accLeida = armarAcciones(tb, { ok: true, valor: { porHub: { ejecucion: { abiertas: 3, vencidas: 1, esperando: 2 }, comercial: { abiertas: 1, vencidas: 0, esperando: 0 } }, sinHub: 2 }, fuentes: PIEZAS_DE_ACCIONES });
+  const fila = (x, d) => x.filas.find((f) => f.dominio === d);
+  check("F3 · Acciones con Notion leído: cuenta por hub, y un hub sin tareas en Notion es un cero de verdad",
+    fila(accLeida, "ejecucion").notion.abiertas.valor === 3 && fila(accLeida, "ejecucion").notion.esperando.valor === 2 && fila(accLeida, "archivo").notion.abiertas.valor === 0
+    && accLeida.totales.notionAbiertas.valor === 4 && accLeida.totales.notionSinHub.valor === 2 && accLeida.notion === "leida" && !notionDe(accLeida).some((m) => m.notas?.includes("sin_integracion_notion")));
+  const accMal = armarAcciones(tm, { ok: false, error: "lectura_tareas_notion", fuentes: PIEZAS_DE_ACCIONES });
+  check("F3 · Acciones con Notion fallido: aviso con sus fuentes, «Sin datos» sin la nota de la integración, y el aviso de las tareas de la plataforma",
+    accMal.notion === "fallida" && accMal.avisos.some((x) => x.error === "lectura_tareas_notion") && accMal.avisos.some((x) => x.error === "lectura_tareas")
+    && notionDe(accMal).every((m) => m.valor === null && !m.notas?.includes("sin_integracion_notion")));
+  check("F3 · el contexto de Acciones dice «sin la lectura de Notion», nunca un cero inventado",
+    contextoDeAcciones(accSin).includes(TEXTOS_ES.contexto.sinIntegracion) && !/Notion abiertas 0/.test(contextoDeAcciones(accSin)) && !contextoDeAcciones(accSin).includes(CANARIO));
+
+  // La Estafeta con datos inventados.
+  const C = (cambios = {}) => ({ fecha: "2026-11-05T10:00:00.000Z", canal: "gmail", direccion: "entra", estado: "te_toca", hub: "comercial",
+    conPersona: true, conResponsable: true, conMotivo: true, conEvento: false, conMensaje: false, esperandoDesde: null, ...cambios });
+  check("F3 · bandejaDe: lo cerrado va a «cerrada» aunque le falten llaves", ["cerrado", "no_escribir", "retirado"].every((e) => bandejaDe(C({ estado: e, conPersona: false, hub: null })) === "cerrada"));
+  check("F3 · bandejaDe: «Por revisar» = estado Revisar, o sin hub, persona, responsable o motivo (CANALES §3.2)",
+    bandejaDe(C({ estado: "revisar" })) === "revisar" && bandejaDe(C({ hub: null })) === "revisar" && bandejaDe(C({ conPersona: false })) === "revisar"
+    && bandejaDe(C({ conResponsable: false })) === "revisar" && bandejaDe(C({ conMotivo: false, estado: "esperando_respuesta" })) === "revisar");
+  check("F3 · bandejaDe: te toca, esperando y en curso con todas sus llaves",
+    bandejaDe(C()) === "te_toca" && bandejaDe(C({ estado: "esperando_respuesta" })) === "esperando" && bandejaDe(C({ estado: "propuesta" })) === "en_curso" && bandejaDe(C({ estado: "en_camino" })) === "en_curso");
+  check("F3 · cada estado del registro cae en una bandeja que existe", ESTADOS_DE_CARTA.every((e) => BANDEJAS.includes(bandejaDe(C({ estado: e })))));
+  check("F3 · «Enviado» solo con su prueba (el número del evento y el del mensaje); sin ella, «Por comprobar»",
+    estadoVisible(C({ estado: "enviado", conEvento: true, conMensaje: true })) === "enviado" && estadoVisible(C({ estado: "enviado", conEvento: true })) === "por_comprobar"
+    && estadoVisible(C({ estado: "enviado", conMensaje: true })) === "por_comprobar" && estadoVisible(C({ estado: "enviado" })) === "por_comprobar"
+    && ESTADOS_DE_CARTA.filter((e) => e !== "enviado").every((e) => estadoVisible(C({ estado: e })) === e));
+  const LEIDA = "2026-11-06T12:00:00.000Z";
+  const estSin = armarEstafeta(SIN, LEIDA);
+  const cifrasEst = (x) => [x.bandejas.teToca, x.bandejas.esperando, x.bandejas.revisar, x.libro.total, ...x.porHub.map((h) => h.teToca)];
+  check("F3 · la Estafeta sin la integración: todo «Sin datos» con su nota, sin cartas y sin aviso",
+    cifrasEst(estSin).every((m) => m.valor === null && m.notas?.includes("sin_integracion_notion")) && estSin.libro.cartas === null && estSin.avisos.length === 0 && estSin.notion === "sin_integracion"
+    && estSin.porHub.every((h) => h.masVieja === null) && estSin.porHub.length === DOMINIOS.length);
+  check("F3 · la Estafeta saca todas sus piezas (sin entradas muertas)", piezasMuertasDeLaEstafeta(estSin).length === 0, piezasMuertasDeLaEstafeta(estSin).join(","));
+  const cartas = [
+    C({ fecha: "2026-11-05T09:00:00.000Z" }), C({ fecha: "2026-11-03T09:00:00.000Z" }), C({ fecha: "2026-11-04T09:00:00.000Z", hub: "origen" }),
+    C({ estado: "esperando_respuesta" }), C({ conPersona: false }), C({ estado: "enviado", conEvento: true }), C({ estado: "cerrado" }), C({ estado: "propuesta" }),
+  ];
+  const estLeida = armarEstafeta({ ok: true, valor: cartas, fuentes: PIEZAS_DE_ESTAFETA }, LEIDA);
+  const cuenta = (b) => estLeida.libro.cartas.filter((c) => c.bandeja === b).length;
+  check("F3 · la Estafeta leída: cada carta cuenta UNA vez (las cinco bandejas suman el Libro)",
+    BANDEJAS.reduce((s, b) => s + cuenta(b), 0) === cartas.length && estLeida.libro.total.valor === cartas.length);
+  check("F3 · la Estafeta leída: te toca 3, esperando 1, por revisar 1",
+    estLeida.bandejas.teToca.valor === 3 && estLeida.bandejas.esperando.valor === 1 && estLeida.bandejas.revisar.valor === 1, JSON.stringify([estLeida.bandejas.teToca.valor, estLeida.bandejas.esperando.valor, estLeida.bandejas.revisar.valor]));
+  const buzon = (d) => estLeida.porHub.find((h) => h.dominio === d);
+  check("F3 · por hub: las de «Te toca» con la más vieja; un hub sin cartas es un cero de verdad, sin fecha",
+    buzon("comercial").teToca.valor === 2 && buzon("comercial").masVieja === "2026-11-03T09:00:00.000Z" && buzon("origen").teToca.valor === 1 && buzon("archivo").teToca.valor === 0 && buzon("archivo").masVieja === null);
+  check("F3 · el Libro: lo más nuevo arriba, y «Enviado» sin prueba se pinta «Por comprobar»",
+    estLeida.libro.cartas.every((c, i, xs) => i === 0 || instanteDe(xs[i - 1].fecha) >= instanteDe(c.fecha)) && estLeida.libro.cartas.some((c) => c.estado === "enviado" && c.visible === "por_comprobar"));
+  {
+    // 09:00 a las -05:00 son las 14:00Z: más NUEVA que las 10:00Z, aunque como texto vaya antes.
+    const CON_DESFASE = "2026-11-05T09:00:00.000-05:00";
+    const EN_Z = "2026-11-05T10:00:00.000Z";
+    const est = armarEstafeta({ ok: true, valor: [C({ fecha: EN_Z }), C({ fecha: CON_DESFASE })], fuentes: PIEZAS_DE_ESTAFETA }, LEIDA);
+    const com = est.porHub.find((h) => h.dominio === "comercial");
+    check("F3 · las fechas se comparan por su instante: con desfase horario, el Libro sigue con lo más nuevo arriba y «la más vieja» es la más vieja",
+      est.libro.cartas[0].fecha === CON_DESFASE && est.libro.cartas[1].fecha === EN_Z && com.masVieja === EN_Z, JSON.stringify([est.libro.cartas.map((c) => c.fecha), com.masVieja]));
+    check("F3 · una fecha ilegible cuenta como la más vieja (no rompe el orden)",
+      armarEstafeta({ ok: true, valor: [C({ fecha: "sin fecha" }), C({ fecha: EN_Z })], fuentes: PIEZAS_DE_ESTAFETA }, LEIDA).libro.cartas[0].fecha === EN_Z);
+  }
+  const muchas = Array.from({ length: CARTAS_EN_EL_LIBRO + 5 }, (_, i) => C({ fecha: `2026-10-${String((i % 28) + 1).padStart(2, "0")}T08:00:00.000Z` }));
+  const estMuchas = armarEstafeta({ ok: true, valor: muchas, fuentes: PIEZAS_DE_ESTAFETA }, LEIDA);
+  check("F3 · el Libro enseña como mucho CARTAS_EN_EL_LIBRO y cuenta todas", estMuchas.libro.cartas.length === CARTAS_EN_EL_LIBRO && estMuchas.libro.total.valor === muchas.length);
+  const estVacia = armarEstafeta({ ok: true, valor: [], fuentes: PIEZAS_DE_ESTAFETA }, LEIDA);
+  check("F3 · un registro leído y vacío son ceros de verdad (no «Sin datos»)", cifrasEst(estVacia).every((m) => m.valor === 0) && estVacia.libro.cartas.length === 0);
+  const estMal = armarEstafeta({ ok: false, error: "lectura_correspondencia", fuentes: PIEZAS_DE_ESTAFETA }, LEIDA);
+  check("F3 · «Correspondencia» fallida: un aviso, todo «Sin datos» sin la nota de la integración",
+    estMal.notion === "fallida" && estMal.avisos.length === 1 && estMal.avisos[0].error === "lectura_correspondencia" && cifrasEst(estMal).every((m) => m.valor === null && !m.notas?.includes("sin_integracion_notion")));
+  const ctxEst = contextoDeLaEstafeta(estLeida);
+  check("F3 · el contexto de la Estafeta lleva solo conteos (ni canales, ni fechas de cartas sueltas fuera de la más vieja)",
+    !Object.values(TEXTOS_ES.estafeta.canales).some((c) => ctxEst.includes(c)) && contextoDeLaEstafeta(estSin).includes(TEXTOS_ES.contexto.sinIntegracion));
+
+  // Los textos: una fuente por idioma, el español primero, la misma forma en los dos.
+  const hojas = (o, pre = "") => Object.entries(o).flatMap(([k, v]) => (typeof v === "string" ? [[`${pre}${k}`, v]] : hojas(v, `${pre}${k}.`)));
+  const es = new Map(hojas(TEXTOS_ES));
+  const en = new Map(hojas(TEXTOS_EN));
+  const soloEs = [...es.keys()].filter((k) => !en.has(k));
+  const soloEn = [...en.keys()].filter((k) => !es.has(k));
+  check("F3 · textos: ES y EN tienen exactamente las mismas claves", soloEs.length === 0 && soloEn.length === 0, [...soloEs, ...soloEn].join(", "));
+  check("F3 · textos: ninguna hoja vacía", [...es.values(), ...en.values()].every((v) => v.trim().length > 0));
+  check("F3 · textos: el español es el primero y el de por defecto", IDIOMAS[0] === "es" && textosDelOs() === TEXTOS_ES && textosDelOs("en") === TEXTOS_EN && TEXTOS_ES.idioma === "es" && TEXTOS_EN.idioma === "en");
+  check("F3 · textos: «Checkout» se llama igual en los dos idiomas (CAN-29)", [...es].every(([k, v]) => !/Checkout/.test(v) || /Checkout/.test(en.get(k) ?? "")));
+  {
+    let hall = 0;
+    for (const x of codigo) if (/Ventanilla/.test(x.limpio)) { hall++; check("F3 · nunca «Ventanilla»: es «Checkout» (CAN-29)", false, x.ruta); }
+    if (hall === 0) check("F3 · nunca «Ventanilla»: es «Checkout» (CAN-29)", true);
+  }
+  check("F3 · textos: los nombres nativos siguen en español en inglés (Acciones, Estafeta)", TEXTOS_EN.acciones.titulo === "Acciones" && TEXTOS_EN.estafeta.titulo === "Estafeta");
+  const etiquetas = (lista, grupo) => lista.every((k) => es.has(`estafeta.${grupo}.${k}`) && en.has(`estafeta.${grupo}.${k}`)) && [...es.keys()].filter((k) => k.startsWith(`estafeta.${grupo}.`)).length === lista.length;
+  check("F3 · textos: cada canal, dirección, estado y bandeja tiene su palabra en los dos idiomas (ni una de más)",
+    etiquetas(CANALES, "canales") && etiquetas(DIRECCIONES, "direcciones") && etiquetas(ESTADOS_DE_CARTA, "estados") && etiquetas(BANDEJAS, "bandejas"));
+  check("F3 · textos: cada pieza nueva tiene su etiqueta en los dos idiomas, y FUENTES lee la del español",
+    [...PIEZAS_DE_ACCIONES, ...PIEZAS_DE_ESTAFETA].every((p) => es.has(`piezas.${p}`) && en.has(`piezas.${p}`) && FUENTES[p].etiqueta === es.get(`piezas.${p}`)));
+  check("F3 · textos: cada pieza nueva tiene su filtro en los dos idiomas (ni uno de más), y FUENTES lee el del español",
+    [...PIEZAS_DE_ACCIONES, ...PIEZAS_DE_ESTAFETA].every((p) => es.has(`filtros.${p}`) && en.has(`filtros.${p}`) && FUENTES[p].filtro === es.get(`filtros.${p}`))
+    && [...es.keys()].filter((k) => k.startsWith("filtros.")).length === PIEZAS_DE_ACCIONES.length + PIEZAS_DE_ESTAFETA.length);
+  for (const v of ["src/components/os/vistas/Acciones.tsx", "src/components/os/vistas/Estafeta.tsx"]) {
+    const x = codigo.find((y) => y.ruta === v);
+    check(`F3 · ${v} existe`, !!x);
+    if (!x) continue;
+    const propios = textoPropioDe(x.limpio);
+    check(`F3 · ${v} no escribe texto propio (entre etiquetas, en un atributo ni en una expresión): todo sale de textos/ (una fuente por idioma)`,
+      propios.length === 0, propios.map((p) => `${lineaDe(x.limpio, p.pos)}: «${p.txt.trim()}»`).join(" | "));
+    check(`F3 · ${v} lee sus textos de textosDelOs()`, /textosDelOs\(\)/.test(x.limpio));
+  }
+  check("autoprueba · F3 ve un texto JSX escrito en una vista", jsxDe(quitarComentarios("const v = <p>Hola</p>;")).length === 1 && jsxDe(quitarComentarios("const v = <p>{t.hola}</p>;")).length === 0);
+  {
+    const ve = (txt) => textoPropioDe(quitarComentarios(txt)).length;
+    const malas = ['const v = <p>Hola</p>;', 'const v = <div aria-label="Hola" />;', 'const v = <div aria-label="hola" />;', 'const v = <img alt={"foto"} />;',
+      'const v = <td>{c.hub ? DOMINIO_LABEL[c.hub] : "Sin hub"}</td>;', 'const v = <p title={`Ver ${n}`} />;', 'const t = "las tareas por hub";'];
+    const mudas = malas.filter((m) => ve(m) === 0);
+    check("autoprueba · F3 ve el texto propio de una vista en un atributo y en una expresión, no solo entre etiquetas", mudas.length === 0, mudas.join(" | "));
+    const buena = '"use client";\nimport { Avisos } from "../Avisos";\nimport s from "../os.module.css";\n' +
+      'const v = <div className={`${s.a} ${s.b}`} id="os-acciones-hubs" role="region" aria-label={t.x} aria-labelledby="os-x" key={`${c.fecha}-${i}`}>{e.notion === "sin_integracion" && <p>{t.y}</p>}</div>;';
+    check("autoprueba · F3 calla con imports, clases, ids, roles, claves y atributos que leen de textos/", ve(buena) === 0, JSON.stringify(textoPropioDe(quitarComentarios(buena))));
+  }
+  {
+    const ini = quitarComentarios(leer("src/components/os/vistas/Inicio.tsx"));
+    check("F3 · Inicio describe los módulos nuevos con los textos de su idioma", /estafeta: textosDelOs\(\)\.modulos\.estafeta/.test(ini) && /acciones: textosDelOs\(\)\.modulos\.acciones/.test(ini));
+  }
+
+  // La demostración: Notion «leído», todo inventado y marcado.
+  check("F3 · la demostración de Acciones: Notion leído, sin avisos, cada cifra marcada demo",
+    ACCIONES_DEMO.notion === "leida" && ACCIONES_DEMO.avisos.length === 0 && [...notionDe(ACCIONES_DEMO), ...Object.values(ACCIONES_DEMO.totales)].every((m) => m.demo === true) && piezasMuertasDeAcciones(ACCIONES_DEMO).length === 0);
+  check("F3 · la demostración de la Estafeta: cartas inventadas, cada cifra marcada demo, y enseña «Por comprobar» y «Por revisar»",
+    ESTAFETA_DEMO.notion === "leida" && cifrasEst(ESTAFETA_DEMO).every((m) => m.demo === true) && (ESTAFETA_DEMO.libro.cartas ?? []).some((c) => c.visible === "por_comprobar")
+    && (ESTAFETA_DEMO.bandejas.revisar.valor ?? 0) > 0 && piezasMuertasDeLaEstafeta(ESTAFETA_DEMO).length === 0);
+  check("F3 · los contextos de la demostración se declaran inventados", contextoDeAcciones(ACCIONES_DEMO).includes(TEXTOS_ES.contexto.demo) && contextoDeLaEstafeta(ESTAFETA_DEMO).includes(TEXTOS_ES.contexto.demo));
+}
 
 // ── Las excepciones sin uso fallan ───────────────────────────────────────────
 EXCEPCIONES.forEach((e, i) => check(`excepciones · «${e.regla}» en ${e.archivo} sigue haciendo falta`, usadas.has(i), e.porque));

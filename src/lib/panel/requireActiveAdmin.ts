@@ -1,6 +1,6 @@
-import { createPanelSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
+import { createPanelSessionClient } from "@/lib/supabase/server";
 import { CONSOLES, type PanelConsoleKey } from "./consoles";
-import { getPanelUser, grantedConsoles, nivelDeConsola } from "./panelUsers";
+import { leerPanelUser, grantedConsoles, nivelDeConsola, PERMISOS_ILEGIBLES } from "./panelUsers";
 import { mensajeSoloLectura, puede, type ClaseDeAccion } from "./niveles";
 
 /**
@@ -20,9 +20,10 @@ export async function requireActiveAdmin(): Promise<string> {
   const { data: profile } = await session.from("profiles").select("role").eq("id", user.id).single();
   if (profile?.role !== "bcp_admin") throw new Error("No autorizado.");
 
-  const service = createServiceRoleClient();
-  const { data: pu } = await service.from("panel_users").select("status").eq("profile_id", user.id).maybeSingle();
-  if (pu && pu.status !== "active") throw new Error("No autorizado.");
+  // Si no se pueden leer los permisos, no se pasa: solo «no hay fila» es el caso de antes de `panel_users`.
+  const lectura = await leerPanelUser(user.id);
+  if (!lectura.ok) throw new Error("No autorizado.");
+  if (lectura.row && lectura.row.status !== "active") throw new Error("No autorizado.");
 
   return user.id;
 }
@@ -49,7 +50,9 @@ export async function permisoDeEscritura(
   clase: Exclude<ClaseDeAccion, "lectura"> = "emite",
 ): Promise<Permiso> {
   const userId = await requireActiveAdmin();
-  const row = await getPanelUser(userId);
+  const lectura = await leerPanelUser(userId);
+  if (!lectura.ok) return { ok: false, error: PERMISOS_ILEGIBLES };
+  const row = lectura.row;
   const consolas = Array.isArray(consola) ? consola : [consola];
   const concedidas = grantedConsoles(row);
   const vale = consolas.some((k) => concedidas.includes(k) && puede(nivelDeConsola(row, k), clase));

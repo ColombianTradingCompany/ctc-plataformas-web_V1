@@ -1,6 +1,6 @@
 import "server-only";
 import { createPanelSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
-import { getPanelUser, grantedConsoles, nivelDeConsola } from "./panelUsers";
+import { leerPanelUser, grantedConsoles, nivelDeConsola } from "./panelUsers";
 import type { PanelConsoleKey } from "./consoles";
 import { puede, type ClaseDeAccion } from "./niveles";
 
@@ -33,7 +33,9 @@ export async function requireConsoleWrite(
   const { data: profile } = await session.from("profiles").select("role").eq("id", user.id).maybeSingle();
   if (profile?.role !== "bcp_admin") return null;
 
-  const row = await getPanelUser(user.id);
+  const lectura = await leerPanelUser(user.id);
+  if (!lectura.ok) return null; // sin permisos legibles, no se escribe
+  const row = lectura.row;
   if (row && row.status !== "active") return null;
   if (!grantedConsoles(row).includes(consoleKey)) return null;
   if (!puede(nivelDeConsola(row, consoleKey), clase)) return null;

@@ -3,6 +3,7 @@
 import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
 import { createPanelSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
+import { esOwnerDelPanel } from "@/lib/panel/panelUsers";
 import { isPartnerSlug, type PartnerSlug } from "@/lib/partners/partners";
 import { sendTransactionalEmail } from "@/lib/email/leadEmails";
 import { buildPartnerInviteEmail, buildPartnerResetEmail } from "@/lib/email/partnerEmails";
@@ -19,10 +20,8 @@ async function requireOwner(): Promise<string> {
   if (!user) throw new Error("No autenticado.");
   const { data: profile } = await session.from("profiles").select("role").eq("id", user.id).single();
   if (profile?.role !== "bcp_admin") throw new Error("No autorizado.");
-  const service = createServiceRoleClient();
-  const { data: pu } = await service.from("panel_users").select("is_owner, status").eq("profile_id", user.id).maybeSingle();
-  const isOwner = pu ? pu.is_owner && pu.status === "active" : true;
-  if (!isOwner) throw new Error("Solo un owner puede gestionar credenciales de socios.");
+  // `esOwnerDelPanel`: owner activo, o el `bcp_admin` sin fila; si los permisos no se pueden leer, no es owner.
+  if (!(await esOwnerDelPanel(user.id))) throw new Error("Solo un owner puede gestionar credenciales de socios.");
   return user.id;
 }
 

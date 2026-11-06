@@ -19,6 +19,12 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.21] — 2026-11-06 (commit pendiente)
+
+- **Corregido**: **la ventana de login de Cherry Picked en la portada, Roast y X** salía transparente (sin tarjeta, sin bordes en los campos y sin el color del botón): `ProveedorDeCuenta` (`src/components/cherry-picked/sesion.tsx`) la pinta como hermana de la página, fuera del `data-theme="cherry-picked"` de cada portada. Ahora la ventana lleva su propio tema. Green no cambia (monta su ventana dentro de su tema). `qa-cp-sesion-check` lo vigila (34).
+
+---
+
 ## [V6.20] — 2026-11-06 (commit 443a55b)
 
 - **Cambiado**: **el Modelo Económico es solo del owner en todas las consolas** (decisión del owner del 5 nov; en la CTCx OS ya

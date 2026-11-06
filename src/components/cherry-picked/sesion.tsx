@@ -87,7 +87,12 @@ export function ProveedorDeCuenta({ children, destinoTrasEntrar = `${FAMILY_LINK
   return (
     <Ctx.Provider value={valor}>
       {children}
-      <LoginModal open={abierta} onClose={() => setAbierta(false)} />
+      {/* La ventana se pinta como hermana de la página, fuera del `data-theme="cherry-picked"` de cada portada
+          (la familia, Roast y X): sin su propio tema se quedaba sin tarjeta, sin bordes y sin el color del botón.
+          Green no pasa por aquí: monta su ventana dentro de su tema. */}
+      <div data-theme="cherry-picked">
+        <LoginModal open={abierta} onClose={() => setAbierta(false)} />
+      </div>
     </Ctx.Provider>
   );
 }

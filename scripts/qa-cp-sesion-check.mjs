@@ -47,6 +47,7 @@ const DATA = lee("src/components/cherry-picked/data.ts");
   }
   check("1 · `?login=1` abre la ventana sin sesión en la familia y en la tienda", SESION.includes('new URLSearchParams(window.location.search).get("login") === "1"') && TIENDA.includes('if (params.get("login") === "1") setLoginOpen(true);'));
   check("1 · `?cuenta=1` abre «Mi cuenta» en la tienda y «Mi cuenta» de la familia lleva allí", TIENDA.includes('if (params.get("cuenta") === "1") setView("profile");') && SESION.includes("href={`${FAMILY_LINKS.green}?cuenta=1`}"));
+  check("1 · la ventana de la familia lleva su propio tema: en sesion.tsx la LoginModal va dentro de un data-theme=\"cherry-picked\" (se pinta fuera del tema de cada portada)", /<div data-theme="cherry-picked">\s*<LoginModal /.test(SESION.replace(/\{\/\*[\s\S]*?\*\/\}/g, "")));
   check("1 · un login fuera de Green aterriza en Green", SESION.includes("destinoTrasEntrar = `${FAMILY_LINKS.green}?cuenta=1`") && SESION.includes("window.location.assign(destinoTrasEntrar)"));
   check("1 · CTC Home manda a comprar con la ventana abierta (`?login=1`) y lo explica", lee("src/components/ctc-home/SellBuyCtas.tsx").includes('const CP_URL = "https://cherry-picked.ctcexport.com/?login=1";'));
   check("1 · el callback de Google sigue aterrizando en la tienda", lee("src/app/cherry-picked/auth/callback/route.ts").includes("cherry-picked-green"));

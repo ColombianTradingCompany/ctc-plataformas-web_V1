@@ -316,3 +316,9 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - DATOS: ninguno.
 - Doc impact when wrapped: el nodo «Modelo Económico» del ECP pasa a solo-owner en sus aristas de lectura (ECP, BCP, OCP); la familia Cherry Picked gana dos vueltas de Google (Roast, X).
 (commit: 443a55b)
+
+## [2026-11-06] V6.21 · La ventana de login de Cherry Picked con su tema en la portada, Roast y X
+- ANN `src/components/cherry-picked/sesion.tsx` (la LoginModal dentro de `data-theme="cherry-picked"`), `scripts/qa-cp-sesion-check.mjs` (34).
+- DATOS: ninguno.
+- Doc impact when wrapped: ninguno en el mapa (estilo).
+(commit: pendiente)

@@ -331,4 +331,4 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - ANN docs: charters `herramientas-cafe` (+ `mermas-ctc`, `cogs-verde`), `herramientas-internas`, `ctcx-os`, `consolas`; `docs/ALINEACION.md` §3 (cuatro filas).
 - DATOS: ninguno.
 - Doc impact when wrapped: la OS gana dos nodos apagados (Acciones en Ejecución, Estafeta en Directorios) con arista de lectura a Notion; las calculadoras de Mermas y CoGS ganan su módulo fuente; la identidad de consola gana la salida «no se pudo leer».
-(commit: pendiente)
+(commit: 3e7092c)

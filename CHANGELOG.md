@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.22] — 2026-11-06 (commit pendiente)
+## [V6.22] — 2026-11-06 (commit 3e7092c)
 
 - **Añadido**: **Herramientas del Café · una cuenta, una fuente (F-01 y F-02, etapa 1).** La cuenta de la Calculadora de Mermas vive en
   un solo módulo, `src/lib/tools/mermas-ctc/calculo.ts`, y el núcleo de la Calculadora CoGS · Café verde en `src/lib/tools/cogs-verde/calculo.ts`,

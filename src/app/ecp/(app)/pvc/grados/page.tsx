@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { EscalaBoard } from "@/components/panel/pvc/EscalaBoard";
 import { edicionVigente } from "@/lib/pvc/servicio";
 import { scaDeUrl, triadaDeUrl, vueltaDeConsola, type Param } from "@/lib/herramientasInternas/entrada";
+import { exigirOwnerDelPvc } from "../soloDelOwner";
 
 export const metadata: Metadata = { title: "Grados · Modelo Económico · ECP", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -16,6 +17,7 @@ export const dynamic = "force-dynamic";
 // ese Punto y esa tríada y un «Volver». Los tres pasan por los analizadores PUROS de `herramientasInternas/entrada.ts`; lo
 // que no casa se ignora y la calculadora arranca como siempre (86 · CCC). Precargar no escribe nada.
 export default async function PvcGradosPage({ searchParams }: { searchParams: Promise<Record<string, Param>> }) {
+  await exigirOwnerDelPvc();
   const [vigente, q] = await Promise.all([edicionVigente(), searchParams]);
   const escalera = (vigente?.outputs?.escalera ?? []).map((e) => ({ banda: e.banda, cop: e.cop, mult: e.mult }));
   return (

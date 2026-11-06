@@ -8,6 +8,11 @@ import type { PvcEntradas, PvcParams, PvcSalida } from "./motor";
 // Las dos primeras son tablas service-role-only (RLS activa, cero políticas);
 // lo público sale SOLO por la vista `public_pvc_current`.
 
+/** Los `entity_type` con que el Modelo Económico escribe en `audit_log` (el servicio, el agente y la vigilancia del ciclo).
+ *  El Modelo Económico es solo del owner en todas las consolas (decisión del owner del 5 nov; V6.20): quien pinte la
+ *  auditoría a los demás deja fuera estos tipos. Un tipo nuevo del PVC entra aquí (lo vigila `qa-pvc-owner-check`). */
+export const TIPOS_DE_AUDITORIA_DEL_PVC = ["pvc_edition", "pvc_model_version", "pvc_correccion"] as const;
+
 export type PvcEditionStatus = "draft" | "computed" | "published" | "corrected" | "superseded";
 
 export type PvcModelVersion = {

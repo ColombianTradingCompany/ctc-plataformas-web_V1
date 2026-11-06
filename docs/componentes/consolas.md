@@ -182,6 +182,16 @@ ciclo; `docs/PLAN_CICLOS.md`) · **`qa-triage-catalogo-check.mjs`** (V5.196 — 
   `BCP_USER_ADMIN_PLAN.md` y después en el código. La clase se decide mirando **quién lee lo que la acción escribe**.
 - Escrituras del OCP: desde la V5.57 pasan por `permisoDeEscritura("ocp", clase)`, que SÍ mira consola y nivel; el
   `requireActiveAdmin()` grueso queda solo para las 16 lecturas (deuda del plan V5 §9, ahora acotada).
+- **El Modelo Económico es solo del owner en todas las consolas** (decisión del owner del 5 nov; V6.19 en la OS, V6.20 en el
+  resto). Además del `ownerOnly` del rail, todo `/ecp/pvc` pide la compuerta de `src/app/ecp/(app)/pvc/soloDelOwner.ts` (layout,
+  cada página y cada route handler), el Tablero de Ejecución llama a `cargarTareas(…, { conPvc: identity.isOwner })`, la casilla
+  de una tarea `pvc:*` la marca solo el owner (`setTaskState`, con `isPanelOwner`), la «Actividad reciente» del Panel del OCP deja
+  fuera, para quien no es el owner, los tipos de auditoría del PVC (`TIPOS_DE_AUDITORIA_DEL_PVC`) y el Panel del BCP lee las
+  ediciones solo tras `identity.isOwner ?` (sin el owner, `BcpKpis` pinta el precio de la Federación del día y «Solo el owner»).
+  Un tablero nuevo que pinte tareas `pvc:*`, filas de `audit_log` o cifras de una edición pasa la misma condición, con `isOwner`
+  de la identidad de su consola; lo que el PVC publica para operar (ofertas, compras, Triage, ventanas, la TRM de Empacado hasta
+  FOB) son las excepciones decididas del charter `herramientas-internas`. Lo vigila `qa-pvc-owner-check`, que guarda la lista
+  de quién lee el PVC y `audit_log` fuera del módulo y de la OS: uno nuevo falla hasta que se decide allí.
 
 ## Lo que este componente gobierna de los demás (la cara backstage)
 
@@ -199,6 +209,12 @@ ciclo; `docs/PLAN_CICLOS.md`) · **`qa-triage-catalogo-check.mjs`** (V5.196 — 
 
 ## Pendientes
 
+- **2026-11-06 · V6.20: el Modelo Económico, solo del owner en el ECP, el OCP y el BCP** (decisión del owner del 5 nov;
+  `ALINEACION` §3, fila del 2026-11-06). Hecho en código: `/ecp` pasa `{ conPvc: identity.isOwner }` y la casilla de una tarea
+  `pvc:*` es del owner; el Panel del BCP no lee las ediciones sin el owner. El Panel del OCP sigue con `cargarTareas(service)`:
+  solo pinta las tareas de `consola: "ocp"` y las `pvc:*` son del ECP; su «Actividad reciente» llega sin las filas del PVC a
+  quien no es el owner (lo vigila `qa-pvc-owner-check`). Queda verlo en la consola con una cuenta del equipo que no sea el owner (en la sesión del
+  owner: las consolas no se conducen en un navegador automático).
 - **2026-11-05 · V6.19: la quinta consola, la OS (F2 de CTCx OS).** Lo que deja a ESTE componente:
   (1) **La OS no se ofrece en la invitación de Usuarios**: el formulario, `EMPTY_LEVELS`, `hasAnyGrant` y `sanitizeConsoles` leen
   `CONSOLAS_INVITABLES` (`CONSOLE_ORDER` sin `os`); la lista de chips de cada fila sigue leyendo `CONSOLE_ORDER`, así que una llave

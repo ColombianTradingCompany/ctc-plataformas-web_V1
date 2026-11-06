@@ -23,9 +23,12 @@ export const dynamic = "force-dynamic";
 // Se ven TODAS aunque quien mira no tenga grant de la consola dueña: el tablero
 // es para saber qué hay, y el enlace ya lo para `requireConsoleAccess()` si no
 // puede entrar. Marcar la casilla sí pide nivel (borrador) en la dueña o aquí.
+//
+// La excepción son las tareas del Modelo Económico (`pvc:*`): solo del owner en todas las consolas (decisión del owner del
+// 5 nov; V6.20). Para los demás, `cargarTareas` ni lee su estado ni las arma — la misma regla que la CTCx OS.
 export default async function TableroDeEjecucionPage() {
   const identity = await requireConsoleAccess("ecp");
-  const { tareas } = await cargarTareas(createServiceRoleClient());
+  const { tareas } = await cargarTareas(createServiceRoleClient(), { conPvc: identity.isOwner });
   const pendientes = tareas.filter((t) => t.state === "tbd");
   const grupos = porConsola(tareas);
 

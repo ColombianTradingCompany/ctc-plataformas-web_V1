@@ -11,6 +11,8 @@
 import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { cargarTareas } from "@/lib/panel/tareasCarga";
+import { requireConsoleAccess } from "@/lib/panel/requireConsoleAccess";
+import { TIPOS_DE_AUDITORIA_DEL_PVC } from "@/lib/pvc/tipos";
 import { PanelTasks } from "@/components/panel/PanelTasks";
 import styles from "@/components/panel/shared.module.css";
 
@@ -26,7 +28,16 @@ const ENTITY_HREF: Record<string, string> = {
 };
 
 export default async function OcpHomePage() {
+  const identity = await requireConsoleAccess("ocp");
   const service = createServiceRoleClient();
+
+  // «Actividad reciente»: el Modelo Económico es solo del owner en todas las consolas (decisión del owner del 5 nov; V6.20),
+  // así que a los demás la lista les llega sin las filas del PVC. El filtro va antes del límite: la lista sigue teniendo 8.
+  // Lo vigila `qa-pvc-owner-check` (D).
+  const auditoria = service.from("audit_log").select("entity_type, entity_id, action, notes, created_at");
+  const actividad = (identity.isOwner ? auditoria : auditoria.not("entity_type", "in", `(${TIPOS_DE_AUDITORIA_DEL_PVC.join(",")})`))
+    .order("created_at", { ascending: false })
+    .limit(8);
 
   // Las tareas —y las filas de las que salen— vienen del motor compartido (`tareasCarga.ts`, V5.60):
   // el mismo que alimenta el Tablero de Ejecución del ECP. Aquí solo se piden los recuentos de los KPI.
@@ -41,7 +52,7 @@ export default async function OcpHomePage() {
       service.from("fincas").select("id", { count: "exact", head: true }),
       service.from("lots").select("id", { count: "exact", head: true }),
       service.from("humidity_readings").select("id", { count: "exact", head: true }),
-      service.from("audit_log").select("entity_type, entity_id, action, notes, created_at").order("created_at", { ascending: false }).limit(8),
+      actividad,
     ]);
   const { pendingFincas, flagged } = fuentes;
   const audit = (recentAudit as AuditRow[] | null) ?? [];

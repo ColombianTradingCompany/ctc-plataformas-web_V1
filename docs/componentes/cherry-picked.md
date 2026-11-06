@@ -19,6 +19,8 @@ que voltean) es la cara pública del catálogo; el catálogo con precios pide se
 | `/cherry-picked-green` | la tienda (`CherryPickedExperience.tsx`: catálogo por grado, carrito, checkout `place_order`, perfil, **`TyrianSection`** con la puja real, Coffeed, gadgets) |
 | `/cherry-picked-green/herramientas/[slug]` | la concha de Herramientas del Café en esta superficie |
 | `/cherry-picked-roast` · `/cherry-picked-x` | scaffolds + suscripción (`newsletter_subscribers`, fuentes `roast`/`x`) |
+| `/cherry-picked/auth/callback` · `/cherry-picked-roast/auth/callback` · `/cherry-picked-x/auth/callback` | la vuelta de Google de la portada, Roast y X (V6.20; Roast y X reexportan la de la portada): canjea el código y aterriza en Green con «Mi cuenta» (`?cuenta=1`) |
+| `/cherry-picked-green/auth/callback` | la vuelta de Google de la tienda: canjea y vuelve a la tienda |
 | `/caas` (`/co-create` → 308) | landing + formulario Clase B (pilar `cocreate` — la MARCA es CaaS, la CLAVE es cocreate) |
 | `/api/catalogo/sneak-peek` | la cinta (anon, `s-maxage=900`) |
 | `/docs/ficha/[lotId]` | desde la V5.198 solo redirige (308) al Dossier público de un lote de la vitrina, o 404 (la ficha técnica se retiró) |
@@ -30,6 +32,8 @@ que voltean) es la cara pública del catálogo; el catálogo con precios pide se
 - `src/components/cherry-picked/` — `CherryPickedExperience.tsx`, `TyrianSection.tsx` (subasta real, V5.24),
   `GradosSection`, `BlackSection`, `Cart`, `ProfileView`, `EnviosSection`, `LoginModal`, `i18n.ts` (EN · ES · DE),
   `data.ts` (`moqOf`, `importe` —antes `eur`, V5.52—, `fmt`, `ASSOC_BLACK_MOQ = 350`).
+- `src/lib/auth/callbackCherryPicked.ts` (V6.20, puro): `caminoCallbackCherryPicked(host, pathname)`, el camino de vuelta de Google de la
+  `LoginModal` según la superficie donde se abrió.
 - `src/components/cherry-picked-hub/HubLanding.tsx`, `cherry-picked-roast/`, `cherry-picked-x/`,
   `src/components/services/CaasLanding.tsx`.
 - `src/components/catalogo/SneakPeek.tsx` (montado en 7 superficies) y `RadarCvaTarjeta.tsx` (V5.198), `src/lib/catalogo/{sneakPeek,
@@ -57,7 +61,9 @@ con la cuenta de comprador de auditoría — ~~**hoy no corre**: las cuentas de 
 V5.98 la lee de `.env.local` (`QA_BUYER_EMAIL`, del nodo final) y se corre a mano porque escribe en producción; pide además un
 listado publicado y al 2026-10-10 hay 0, así que corre cuando el Triage declare el primero; `ALINEACION` §4.6) · `qa-ficha-publica-check.mjs` (desde la V5.198 vigila el
 **Dossier público**: la lista blanca con un dossier lleno de centinelas; desde la V5.202, que no salga nada de la finca) ·
-`qa-crm-interes-check.mjs` (fuentes de la lista de espera) · `qa-recuperacion-check.mjs` (puerta CP).
+`qa-crm-interes-check.mjs` (fuentes de la lista de espera) · `qa-recuperacion-check.mjs` (puerta CP) · `qa-cp-sesion-check.mjs` (la cuenta en la
+familia) · `qa-callbacks-google-check.mjs` (V6.20, 65: la vuelta de Google de cada ventana de login de la red, pasada por el proxy real en
+cada host donde se pinta).
 
 ## Reglas propias
 
@@ -78,6 +84,11 @@ listado publicado y al 2026-10-10 hay 0, así que corre cuando el Triage declare
   OCP y **no emite oferta** (la oferta al productor es COP/kg).
 - La etapa del CRM del comprador se **deduce** de los pedidos (0/1/2+), nunca se persiste.
 - Copy EN · ES · DE; la copia de los programas sale del diccionario compartido con la portada.
+- **Google vuelve a la superficie donde se abrió la ventana** (V6.20): la `LoginModal` se pinta en la portada, Green, Roast y X, y su
+  `redirectTo` es `${origin}` + `caminoCallbackCherryPicked(host, pathname)`, nunca un camino fijo. Mismo origen, porque el verificador PKCE
+  se escribió allí; y la base de esa superficie, porque el proxy antepone la base del subdominio a cualquier camino que no la lleve. En
+  producción la allowlist de Redirect URLs de Supabase lo cubre con el comodín de subdominios de la casa; en `localhost`, cada vuelta es
+  una entrada propia. Una superficie nueva de la familia: su base en `SUPERFICIES_CHERRY_PICKED`, su `auth/callback` y su fila en el guardián.
 
 ## Lo que las consolas gobiernan de este componente
 

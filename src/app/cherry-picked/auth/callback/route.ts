@@ -2,12 +2,19 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createSessionClient } from "@/lib/supabase/server";
 
-// A dónde vive la tienda. En producción es su subdominio propio, no un camino
-// del subdominio de la portada: `${origin}/cherry-picked-green` desde
-// `cherry-picked.ctcexport.com` TAMBIÉN sirve la tienda —el proxy compara el
-// camino con `startsWith('/cherry-picked')` y `/cherry-picked-green` pasa el
-// filtro por puro prefijo de cadena— pero deja al comprador en el hostname
-// equivocado, con una URL que no es la canónica de la tienda.
+// ── La vuelta de Google de la FAMILIA Cherry Picked (portada, Roast y X) ─────
+// Nació como el callback de la tienda y se quedó como red de seguridad cuando la
+// tienda se mudó a /cherry-picked-green (2026-08-11). Desde la V6.20 es la vuelta
+// de las tres superficies que no son la tienda: la ventana de login se pinta en
+// las cuatro y cada una vuelve a SU base (`lib/auth/callbackCherryPicked.ts`).
+// Roast y X reexportan este mismo GET desde su `auth/callback`.
+//
+// Como un login con contraseña hecho en esas tres superficies (`ProveedorDeCuenta`,
+// `components/cherry-picked/sesion.tsx`), aterriza en Green con «Mi cuenta» abierta
+// (`?cuenta=1`): el catálogo con precio vive allí.
+//
+// En producción la tienda es su subdominio propio, no un camino del origen que
+// llega aquí: se vuelve a su URL canónica.
 const GREEN =
   process.env.NODE_ENV === "production" ? "https://cherry-picked-green.ctcexport.com" : null;
 
@@ -23,9 +30,5 @@ export async function GET(request: NextRequest) {
     await sessionClient.auth.exchangeCodeForSession(code);
   }
 
-  // La tienda se mudó a /cherry-picked-green (2026-08-11) y su callback con
-  // ella. Esta ruta se queda como red de seguridad: un consentimiento de Google
-  // que salió con la URL vieja —una pestaña abierta desde antes del despliegue—
-  // sigue canjeando su código y aterriza donde ahora vive la tienda.
-  return NextResponse.redirect(GREEN ?? `${origin}/cherry-picked-green`);
+  return NextResponse.redirect(`${GREEN ?? `${origin}/cherry-picked-green`}?cuenta=1`);
 }

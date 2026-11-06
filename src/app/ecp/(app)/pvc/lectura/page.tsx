@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { LecturaBoard } from "@/components/panel/pvc/LecturaBoard";
 import { PARAMS_V211 } from "@/lib/pvc/motor";
 import { edicionProxima, edicionVigente, lecturaDeMercado, versionModeloVigente } from "@/lib/pvc/servicio";
+import { exigirOwnerDelPvc } from "../soloDelOwner";
 
 export const metadata: Metadata = { title: "Lectura de mercado · Modelo Económico · ECP", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -14,6 +15,7 @@ export const dynamic = "force-dynamic";
 // `kg_excelso` y `kg_g` salen de los parámetros de la versión vigente del
 // modelo, no de una constante: son decisiones del método (D2) y cambian con él.
 export default async function PvcLecturaPage() {
+  await exigirOwnerDelPvc();
   const [vigente, proxima, mercado, modelo] = await Promise.all([
     edicionVigente(), edicionProxima(), lecturaDeMercado(), versionModeloVigente(),
   ]);

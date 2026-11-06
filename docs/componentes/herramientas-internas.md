@@ -47,6 +47,16 @@ definición vigente» (LA que leen todas las superficies) y `/ecp/pvc/grados` es
 escala, que gobierna desde la V5.160, con su calculadora y lo que vale cada grado en la edición vigente; hasta TAR-124 su pestaña
 seguía diciendo «en validación»). La pestaña vacía «Modelo Económico» de Direccionamiento se retiró (308 → `/ecp/pvc`).
 
+**`/ecp/pvc` es solo del owner, entero** (V6.20; decisión del owner del 5 nov: el Modelo Económico es solo suyo en todas las
+consolas, como en la CTCx OS desde la V6.19). La compuerta vive en `src/app/ecp/(app)/pvc/soloDelOwner.ts` e `isOwner` sale de
+`requireConsoleAccess("ecp")` (= `isPanelOwner`, la misma fuente que las escrituras del PVC): el layout y cada página piden
+`exigirOwnerDelPvc()` como primera línea —quien no es el owner vuelve al Panel del ECP— y cada route handler (`tablero/embed`,
+`dossier/[version]/[file]`) responde 403 con `esOwnerDelPvc()`; `tablero/embed/publicar` ya pedía `isPanelOwner`. Fuera del módulo,
+lo mismo: el Tablero de Ejecución no arma las tareas `pvc:*` para los demás y su casilla la marca solo el owner (`setTaskState`),
+la «Actividad reciente» del Panel del OCP les llega sin las filas de auditoría del PVC (`TIPOS_DE_AUDITORIA_DEL_PVC`, en
+`src/lib/pvc/tipos.ts`) y el Panel del BCP solo les enseña el precio de la Federación del día (`ALINEACION` §3, fila del
+2026-11-06). Lo que el PVC **publica** para operar no cambia: ver «Reglas propias».
+
 ## Puertas de entrada (CTCx OS, 2026-11-05)
 
 Desde el 2026-11-05 el owner lleva la plataforma hacia **CTCx OS**: una concha de juego sobre la operación real, donde las
@@ -65,7 +75,8 @@ herramienta de este charter: qué registro abre, qué precarga y cómo vuelve. R
   la herramienta pinta «← Volver»; si no, no pinta nada (ya tiene su rail). Una superficie nueva de CTCx OS entra en
   `VUELTAS_PERMITIDAS` con una línea.
 - **Quién abre**: «ECP» = cualquier operador activo con el grant del ECP (también un `viewer`, que lee); «owner» = el rail solo se
-  lo muestra al owner y sus escrituras son del owner.
+  lo muestra al owner, sus escrituras son del owner y, desde la V6.20, sus páginas y route handlers también (los demás vuelven
+  a `/ecp` o reciben 403).
 
 | Herramienta | URL de entrada | Parámetros | Qué abre / precarga | Quién abre | Estado |
 |---|---|---|---|---|---|
@@ -132,7 +143,7 @@ Solo lee: `lots`, `lot_offers`, `purchase_contracts`, `lot_listings` (para saber
 
 `qa-entradas-check.mjs` (114 — las puertas de entrada: `?volver=`, `?unidad=`, `?sca=`, `?triada=`, y que la tabla de arriba diga lo que el código hace) ·
 `qa-pvc-motor.mjs` (49 — paridad con Python, tolerancia 1e-4) · `qa-pvc-tablero.mjs` (44 — marcadores `@@MODELO`) ·
-`qa-pvc-vigencia.mjs` (28) · `qa-pvc-lectura.mjs` (60 — el MOQ de compra y los tipos de mezcla, en el código Y en el plan §14.8) ·
+`qa-pvc-vigencia.mjs` (28) · `qa-pvc-owner-check.mjs` (79 — V6.20, el Modelo Económico solo del owner: la compuerta en el layout, en cada página y sus otros exports y en cada route handler de `/ecp/pvc` en cualquier forma de exportar un método, ningún archivo nuevo sin ella, el rail `ownerOnly`, `conPvc: identity.isOwner` en `/ecp`, la casilla de las tareas `pvc:*` solo del owner, el Panel del OCP solo con sus tareas y su «Actividad reciente» sin el PVC fuera del owner, el Panel del BCP sin ediciones fuera del owner, la lista de quién lee el PVC fuera del módulo y de quién lee `audit_log`; con autopruebas) · `qa-pvc-lectura.mjs` (60 — el MOQ de compra y los tipos de mezcla, en el código Y en el plan §14.8) ·
 `qa-pvc-escala.mjs` (70 — incluye la Base física y, desde TAR-124, el rótulo de la pestaña) · `qa-pvc-canales.mjs` (57) · `qa-pvc-compromiso.mjs` (31) ·
 `qa-grados-check.mjs` (48 — el contrato de grados) · `qa-definicion-check.mjs` · `qa-direccionamiento-check.mjs` ·
 `qa-anclas-check.mjs` · `qa-courier-check.mjs` (51 — el cálculo contra un acuerdo FICTICIO, la fuga cero por hash, el combustible derivado contra el historial de FedEx, el combustible provisional y el límite de paquete por medidas). `qa-empaque-fob-check.mjs` (47 — Empacado hasta FOB: el cálculo contra cuatro casos hechos a mano, que la máquina no vuelva, que el servidor recalcule y emita, la compuerta de la tabla). `qa-cotizador-puente-check.mjs` (39 — el puente AppFrame ↔ Mermas/CoGS: ids del DOM del titular logístico, funciones leídas por window, `state` por `globalDeLaApp`, los kg finales en kg, GLOBAL_KEYS declaradas; córrelo al reemplazar una calculadora). Y de la casa, porque el grupo vive en el rail del ECP: `qa-rutas-consolas.mjs`.
@@ -151,6 +162,18 @@ Solo lee: `lots`, `lot_offers`, `purchase_contracts`, `lot_listings` (para saber
   `ALINEACION` §3 y aviso previo a la superficie. **`lectura` ya cruzó esa línea (V5.87, fila de §3)**: las mezclas del OCP
   leen su MOQ de compra, la composición por grado y los tipos de mezcla — cambiar esas constantes cambia lo que el OCP admite,
   y va con su línea en §3 y `qa-compras` (§10) además de `qa-pvc-lectura`.
+- **El Modelo Económico es solo del owner en todas las consolas** (decisión del owner del 5 nov; V6.19 en la OS, V6.20 en el
+  ECP, el OCP y el BCP). Una página nueva bajo `/ecp/pvc` empieza por `await exigirOwnerDelPvc();` (y cualquier otra función
+  que exporte, como `generateMetadata`, también) y un route handler nuevo es `export async function MÉTODO` con `esOwnerDelPvc()`
+  y 403 (`soloDelOwner.ts`). Fuera del módulo, quien lea ediciones, insumos, parámetros, correcciones o el agente del PVC lo hace
+  solo con el owner (`isOwner` de la identidad de su consola), con estas excepciones decididas, que son lo que el PVC **publica
+  para operar** y siguen llegando a quien opera: la escalera y el calendario de la edición vigente en las **ofertas**, las
+  **compras**, el **Triage** y las **ventanas** del OCP (y las ventanas del trato del productor), la **TRM de la edición en
+  Empacado hasta FOB** y **`/api/pvc/current`** (la vista pública `public_pvc_current`). Lo mismo para la auditoría: quien pinte
+  `audit_log` a los demás deja fuera `TIPOS_DE_AUDITORIA_DEL_PVC`, y un tipo nuevo del PVC entra en esa lista. Lo vigila
+  `qa-pvc-owner-check`: guarda la lista de quién llama a los ocho lectores del PVC fuera de `/ecp/pvc`, `src/lib/pvc` y
+  `src/lib/os` (con lo que lee cada uno) y la de quién lee `audit_log` fuera de la OS; un lector nuevo falla hasta que se decide
+  ahí, con su línea en `ALINEACION` §3.
 - **Un modelo nuevo empieza por un brief**, no por una pantalla (`docs/componentes/briefs/README.md`): Procesamiento y
   Logística no tienen módulo, y antes de dárselo hay que decidir qué es dato versionado, qué es parámetro y qué es cálculo.
 - **Las consolas no se conducen en un navegador** (OTP real): se verifica por `tsc`/`eslint`/guardianes + SQL.
@@ -169,6 +192,11 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
 
 ## Pendientes
 
+- **2026-11-06 · V6.20 · el Modelo Económico, solo del owner en todas las consolas** (decisión del owner del 5 nov; hecho:
+  ver «Superficies y rutas» y `ALINEACION` §3). Queda: (a) **verlo en la consola** con una cuenta del equipo que no sea el owner
+  (las consolas no se conducen en un navegador automático: lo hace el owner, o se comprueba por SQL que esa cuenta no es
+  `is_owner`); (b) el enlace de texto a `/ecp/pvc` en Grados de Calidad (`GradosBoard`) se ve para todos y lleva a quien no es el
+  owner al Panel del ECP: ocultarlo es cosmético, solo si el owner lo pide.
 - **2026-11-05 · TAR-122 · Exportar la Definición de Contexto como Markdown** (sesión nocturna en la nube; V6.18). Botón «Exportar como Markdown» abajo a la derecha de la pestaña 1: guarda lo que haya en pantalla y descarga
   la ficha GUARDADA de `/ecp/direccionamiento/exportar` — generales, las cuatro unidades en el orden de `definicion.ts`, «(sin responder)»
   en lo vacío, y la memoria del sistema (los Grados) al final; sin quién editó. `?unidad=ctcx|kr|chp|ecosistema` (lista blanca; lo demás,

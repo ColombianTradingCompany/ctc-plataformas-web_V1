@@ -19,6 +19,44 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.20] — 2026-11-06 (commit pendiente)
+
+- **Cambiado**: **el Modelo Económico es solo del owner en todas las consolas** (decisión del owner del 5 nov; en la CTCx OS ya
+  lo era desde la V6.19). Todo `/ecp/pvc` —Ediciones, Lectura, Grados, Tablero, Parámetros, Dossier y sus route handlers— pide la
+  compuerta del owner (`src/app/ecp/(app)/pvc/soloDelOwner.ts`, con `isOwner` de la identidad de la consola ECP): el layout y cada
+  página la piden antes de leer y quien no es el owner vuelve al Panel del ECP; el tablero embebido y los documentos del dossier
+  responden 403 «El Modelo Económico es solo del owner.».
+- **Cambiado**: ECP · el Tablero de Ejecución arma las tareas del Modelo Económico (`pvc:*`) solo para el owner
+  (`cargarTareas(…, { conPvc: identity.isOwner })`), y la casilla de una tarea `pvc:*` la marca solo el owner (`setTaskState`,
+  con `isPanelOwner`, como las demás escrituras del PVC).
+- **Cambiado**: OCP · el Panel solo pinta sus propias tareas, y su «Actividad reciente» enseña las filas de auditoría del
+  Modelo Económico solo al owner: a los demás la lista les llega sin los tipos del PVC (`TIPOS_DE_AUDITORIA_DEL_PVC`, en
+  `src/lib/pvc/tipos.ts`), con sus 8 filas.
+- **Cambiado**: BCP · el Panel lee las ediciones del PVC solo para el owner. Los demás ven el precio de la Federación del día
+  (dato público de mercado, el mismo de la cinta de ctcexport.com y de las Anclas de mercado) y una tarjeta «Solo el owner»; la
+  insignia dice «Consola operativa».
+- **Añadido**: guardián **`qa-pvc-owner-check`** (79 comprobaciones: la compuerta en el layout, en cada página —también en sus
+  otros exports— y en cada route handler de `/ecp/pvc`, en cualquier forma de exportar un método; ningún archivo nuevo en el
+  módulo sin ella; el rail `ownerOnly`; `conPvc` en `/ecp`; el Panel del OCP solo con sus tareas y su «Actividad reciente» sin
+  el PVC fuera del owner; el Panel del BCP sin ediciones fuera del owner; la casilla de las tareas `pvc:*`; y la lista de quién
+  lee el PVC fuera del módulo, con lo que lee cada uno: un lector nuevo falla hasta que se decide; con autopruebas). Probado
+  rompiendo cada regla.
+- **Corregido**: **«Continuar con Google» en la portada, Roast y X de Cherry Picked** (F-17, etapa 0): la ventana de login de la
+  familia (`LoginModal`) se pinta en la portada, Green, Roast y X, y ahora vuelve de Google a la superficie donde se abrió. El
+  camino sale de `caminoCallbackCherryPicked(host, pathname)` (`src/lib/auth/callbackCherryPicked.ts`), en el mismo origen. Roast
+  y X estrenan su `auth/callback` (reexportan el de la portada), y la vuelta de la portada aterriza en Green con «Mi cuenta»
+  abierta (`?cuenta=1`), igual que un login con contraseña fuera de la tienda. La allowlist de Redirect URLs de Supabase no
+  cambia en producción.
+- **Añadido**: guardián **`qa-callbacks-google-check`** (65 comprobaciones: pasa la vuelta de Google de cada ventana de login
+  de la red por el proxy real, en el subdominio, en www y en `localhost`, y exige que llegue al `auth/callback` de su propia
+  superficie; lee el código sin comentarios). Probado rompiendo cada regla.
+- **Docs**: charters `herramientas-internas` (Superficies y rutas, Reglas propias, Guardianes, Pendientes), `consolas` (Reglas
+  propias, Pendientes), `ctcx-os` (Pendientes: el punto del Tablero de Ejecución, hecho) y `cherry-picked` (la tabla de rutas,
+  el mapa del código, Guardianes y la regla «Google vuelve a la superficie donde se abrió la ventana»); `ALINEACION` §3 (las dos
+  filas del 2026-11-06) y §3b (punto (e), hecho).
+
+---
+
 ## [V6.19] — 2026-11-05 (commit 5bdf3ec)
 
 - **Añadido**: **CTCx OS · fase F2, «el esqueleto de `/os`»** (charter `ctcx-os`): la **quinta consola interna**, `/os`, la última de

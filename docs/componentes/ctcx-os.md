@@ -529,8 +529,11 @@ las que falten, cuando lleguen.)*
   demostración).
 - **El PVC fuera de la OS, para `consolas`**: `cargarTareas` (`src/lib/panel/tareasCarga.ts`) tiene desde F2 la opción `conPvc`
   (por defecto `true`, así que el ECP, el OCP y la LCP no cambian). La OS la pasa con la condición del owner: para quien no es el
-  owner, ya no lee el estado del PVC (`propuestasPendientes`, `estadoDelAgente`). Lo que queda es de `consolas`: si el owner
-  quiere el PVC solo suyo también en el Tablero de Ejecución, basta con pasar `conPvc: isOwner` en `/ecp` (decisión del owner).
+  owner, ya no lee el estado del PVC (`propuestasPendientes`, `estadoDelAgente`). ~~Lo que queda es de `consolas`: si el owner
+  quiere el PVC solo suyo también en el Tablero de Ejecución, basta con pasar `conPvc: isOwner` en `/ecp` (decisión del owner).~~
+  **Hecho en la V6.20** (el owner lo decidió el 5 nov: el Modelo Económico es solo suyo en todas las consolas): `/ecp` pasa
+  `{ conPvc: identity.isOwner }`, `/ecp/pvc` entero pide la compuerta del owner y el Panel del BCP no lee las ediciones sin él
+  (`ALINEACION` §3, fila del 2026-11-06; guardián `qa-pvc-owner-check`).
 - **PR1b · el escritor del interruptor** (con `consolas`): `osModulosActions.ts` en el BCP (clase `emite`), su tarjeta en Manejo de
   Plataformas, la fila `platform_setting.os_modulo_cambiado` en `hechosCatalogo.ts` (convención de la crítica 15) y
   `revalidatePath("/os", "layout")`. `qa-os-check` H5 exige que lleguen juntos.

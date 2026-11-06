@@ -9,6 +9,7 @@ import { useLang, type Lang } from "./i18n";
 import styles from "./LoginModal.module.css";
 import { PasswordField } from "@/components/PasswordField";
 import { hrefRecuperar } from "@/lib/auth/puertas";
+import { caminoCallbackCherryPicked } from "@/lib/auth/callbackCherryPicked";
 
 // Kaffetal Regal es un subdominio en producción y una ruta en desarrollo (el mismo desdoblamiento que `PuertasDelPortal`).
 const KR_HREF = process.env.NODE_ENV === "production" ? "https://kaffetal-regal.ctcexport.com" : "/kaffetal-regal";
@@ -170,10 +171,11 @@ export function LoginModal({ open, onClose, contexto }: { open: boolean; onClose
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      // La tienda vive en /cherry-picked-green desde el 2026-08-11; el callback
-      // TIENE que colgar de ese mismo prefijo o el proxy del subdominio lo
-      // reescribe a una ruta que no existe. Ver app/cherry-picked-green/auth/.
-      options: { redirectTo: `${window.location.origin}/cherry-picked-green/auth/callback` },
+      // Esta ventana se pinta en las cuatro superficies de la familia (V6.20): la
+      // vuelta cuelga de la base de la superficie donde se abrió, en el mismo
+      // origen, o el proxy del subdominio la reescribe a una ruta que no existe.
+      // Ver `lib/auth/callbackCherryPicked.ts` y su guardián.
+      options: { redirectTo: `${window.location.origin}${caminoCallbackCherryPicked(window.location.host, window.location.pathname)}` },
     });
   }
 

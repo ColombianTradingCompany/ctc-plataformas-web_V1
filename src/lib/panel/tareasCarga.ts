@@ -45,9 +45,10 @@ function snippet(text: string, n = 60): string {
 }
 
 /**
- * `conPvc` (por defecto `true`, como hasta ahora para el ECP, el OCP y la LCP): en `false` no se lee el estado del Modelo
- * Económico (`propuestasPendientes`, `estadoDelAgente`) ni se arman las tareas `pvc:*`. Lo pasa la CTCx OS cuando quien mira
- * no es el owner (decisión del owner, 5 nov: el Modelo Económico es solo suyo).
+ * `conPvc` (por defecto `true`): en `false` no se lee el estado del Modelo Económico (`propuestasPendientes`,
+ * `estadoDelAgente`) ni se arman las tareas `pvc:*`. El Modelo Económico es solo del owner en todas las consolas (decisión
+ * del owner, 5 nov): la CTCx OS (V6.19) y el Tablero de Ejecución del ECP (V6.20) pasan `conPvc: isOwner`. El Panel del OCP
+ * usa el valor por defecto porque solo pinta las tareas de `consola: "ocp"` y las `pvc:*` son del ECP (`qa-pvc-owner-check`).
  */
 export async function cargarTareas(
   service: SupabaseClient,

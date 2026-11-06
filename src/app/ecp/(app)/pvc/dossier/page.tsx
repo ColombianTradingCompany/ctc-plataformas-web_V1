@@ -3,6 +3,7 @@ import styles from "@/components/panel/shared.module.css";
 import table from "@/components/cotizador/quotesTable.module.css";
 import { listarDossier } from "@/lib/pvc/dossier";
 import { edicionVigente } from "@/lib/pvc/servicio";
+import { exigirOwnerDelPvc } from "../soloDelOwner";
 
 export const metadata: Metadata = { title: "PVC · Dossier · ECP", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -13,6 +14,7 @@ const cop = (v: number | null) => (v == null ? "—" : new Intl.NumberFormat("es
 // reedita con los números de la edición publicada. Se sirve autenticado desde
 // docs/pvc/<versión>/ (ver lib/pvc/dossier.ts).
 export default async function PvcDossierPage() {
+  await exigirOwnerDelPvc();
   const [docs, vigente] = await Promise.all([listarDossier(), edicionVigente()]);
   const versiones = Array.from(new Set(docs.map((d) => d.version)));
   return (

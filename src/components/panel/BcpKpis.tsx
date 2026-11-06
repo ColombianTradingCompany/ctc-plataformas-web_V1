@@ -14,6 +14,11 @@ import type { PvcEdition } from "@/lib/pvc/tipos";
 // Todo sale de la edición VIGENTE por su ventana (V5.43) y de `market_anchors`.
 // Si no hay edición o no hay lectura del mercado, cada tarjeta lo dice en vez de
 // enseñar un cero.
+//
+// V6.20: las cifras del Modelo Económico son solo del owner en todas las consolas (decisión del owner del 5 nov). Para
+// los demás, la página no lee las ediciones (`pvc` llega en null) y aquí solo quedan el precio de la Federación del día
+// —dato público de mercado: el mismo que corre en la cinta de ctcexport.com y que guardan las Anclas de mercado, que no
+// son `ownerOnly`— y una tarjeta «Solo el owner». Lo vigila `qa-pvc-owner-check`.
 
 const cop0 = (v: number | null | undefined) =>
   v == null ? "—" : new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(v);
@@ -23,8 +28,16 @@ const day = (d: string | null | undefined) =>
   d ? new Date(d.length > 10 ? d : `${d}T12:00:00`).toLocaleDateString("es-CO", { day: "2-digit", month: "short" }) : "—";
 
 export function BcpKpis({
-  vigente, proxima, mercado,
-}: { vigente: PvcEdition | null; proxima: PvcEdition | null; mercado: LecturaMercado }) {
+  pvc: ediciones, mercado, conEcp,
+}: {
+  /** Las ediciones del Modelo Económico; null cuando quien mira no es el owner (la página no las leyó). */
+  pvc: { vigente: PvcEdition | null; proxima: PvcEdition | null } | null;
+  mercado: LecturaMercado;
+  /** ¿Puede abrir el ECP? Solo decide si la tarjeta de la Federación enlaza a las Anclas de mercado. */
+  conEcp: boolean;
+}) {
+  if (ediciones == null) return <KpisSinPvc mercado={mercado} conEcp={conEcp} />;
+  const { vigente, proxima } = ediciones;
   const pvc = vigente?.pvcCop ?? null;
   const multBlack = vigente?.outputs?.escalera?.find((e) => e.banda === "Black")?.mult ?? 1.15;
   const fnc = mercado.fncHoy;
@@ -77,6 +90,29 @@ export function BcpKpis({
               : "El PVC se publica 7–8 semanas antes de su fecha efectiva"}
           </div>
         </Link>
+      </div>
+    </div>
+  );
+}
+
+/** Quien no es el owner: el precio de la Federación del día (público) y el aviso del Modelo Económico. Ninguna cifra del PVC. */
+function KpisSinPvc({ mercado, conEcp }: { mercado: LecturaMercado; conEcp: boolean }) {
+  const fnc = (
+    <>
+      <div className={styles.kpiTop}><span className={styles.kpiK}>Precio de la Federación</span></div>
+      <span className={styles.kpiV} style={{ display: "block" }}>{mercado.fncHoy == null ? "—" : `${Math.round(mercado.fncHoy / 1000)}k`}</span>
+      <div className={styles.kpiSub}>
+        {mercado.fncHoy == null ? "Sin lectura del precio de la Federación" : <>{cop0(mercado.fncHoy)} por carga · lectura del {day(mercado.fncAsOf)}</>}
+      </div>
+    </>
+  );
+  return (
+    <div className={styles.kpiGrid}>
+      <div className={styles.kpiCard}>{conEcp ? <Link href="/ecp/anclas-mercado">{fnc}</Link> : fnc}</div>
+      <div className={styles.kpiCard}>
+        <div className={styles.kpiTop}><span className={styles.kpiK}>Modelo Económico</span></div>
+        <span className={styles.kpiV} style={{ display: "block", fontSize: 22 }}>Solo el owner</span>
+        <div className={styles.kpiSub}>Las cifras del PVC las ve solo el owner.</div>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { BcpKpis } from "@/components/panel/BcpKpis";
 import { ConsoleScaffold } from "@/components/panel/ConsoleScaffold";
 import { CONSOLES } from "@/lib/panel/consoles";
+import { requireConsoleAccess } from "@/lib/panel/requireConsoleAccess";
 import { edicionProxima, edicionVigente, lecturaDeMercado } from "@/lib/pvc/servicio";
 
 export const dynamic = "force-dynamic";
@@ -16,10 +17,16 @@ export const dynamic = "force-dynamic";
 // el mercado desde el corte y qué precio viene— y esta es la consola «Business». Enlazan al módulo,
 // allá. El Panel del ECP es otra cosa: el Tablero de Ejecución.
 // El índice de módulos sigue debajo — un tablero que no deja navegar es peor que un índice.
+//
+// V6.20: las cifras del Modelo Económico son solo del owner en todas las consolas (decisión del owner del 5 nov). Las
+// ediciones se leen SOLO con el owner; los demás ven el precio de la Federación del día (dato público de mercado) y
+// «Solo el owner». `isOwner` sale de la compuerta de la consola, la misma fuente que el layout. Lo vigila `qa-pvc-owner-check`.
 export default async function BcpHomePage() {
   const c = CONSOLES.bcp;
-  const [vigente, proxima, mercado] = await Promise.all([
-    edicionVigente(), edicionProxima(), lecturaDeMercado(),
+  const identity = await requireConsoleAccess("bcp");
+  const [pvc, mercado] = await Promise.all([
+    identity.isOwner ? Promise.all([edicionVigente(), edicionProxima()]).then(([vigente, proxima]) => ({ vigente, proxima })) : null,
+    lecturaDeMercado(),
   ]);
   return (
     <ConsoleScaffold
@@ -27,8 +34,8 @@ export default async function BcpHomePage() {
       name={c.name}
       accent={c.accent}
       intro="La consola del NEGOCIO: el Ecosistema de Valor —cada plataforma de la red, con el tablero de lo suyo— y la configuración del sistema. Con qué decide la casa (los modelos) y qué tiene pendiente está en el ECP; el pasaporte del lote, en el OCP; y lo que entra de fuera, en la LCP."
-      badge="Consola operativa · las cifras salen del Modelo Económico"
-      kpis={<BcpKpis vigente={vigente} proxima={proxima} mercado={mercado} />}
+      badge={identity.isOwner ? "Consola operativa · las cifras salen del Modelo Económico" : "Consola operativa"}
+      kpis={<BcpKpis pvc={pvc} mercado={mercado} conEcp={identity.consoles.includes("ecp")} />}
       modules={[
         // Ecosistema de Valor — cada plataforma de la red, con el tablero de lo SUYO (V5.60).
         { name: "Herramientas del Café", desc: "La disponibilidad de cada herramienta, el Plus, las solicitudes y su lista de espera.", built: true, href: "/bcp/herramientas" },

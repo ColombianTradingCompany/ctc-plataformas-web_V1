@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import styles from "@/components/panel/shared.module.css";
+import { exigirOwnerDelPvc } from "../soloDelOwner";
 
 export const metadata: Metadata = { title: "PVC · Tablero · ECP", robots: { index: false, follow: false } };
 
@@ -8,6 +9,7 @@ export const metadata: Metadata = { title: "PVC · Tablero · ECP", robots: { in
 // propio CSS y su propia lógica, y el iframe aísla las dos hojas de estilo —
 // el mismo criterio que las herramientas embebidas (lib/tools/catalog.ts).
 export default async function PvcTableroPage({ searchParams }: { searchParams: Promise<{ borrador?: string }> }) {
+  await exigirOwnerDelPvc();
   // V5.179: desde «Edición siguiente» se abre el tablero con el borrador del agente cargado.
   const { borrador } = await searchParams;
   const b = borrador && /^[0-9a-f-]{36}$/i.test(borrador) ? borrador : null;

@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import styles from "@/components/panel/shared.module.css";
 import { ParametrosBoard } from "@/components/panel/pvc/ParametrosBoard";
 import { listarVersionesModelo } from "@/lib/pvc/servicio";
+import { exigirOwnerDelPvc } from "../soloDelOwner";
 
 export const metadata: Metadata = { title: "PVC · Parámetros · ECP", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
 export default async function PvcParametrosPage() {
+  await exigirOwnerDelPvc();
   const versiones = await listarVersionesModelo();
   return (
     <>

@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
-import { consolasDeLaTarea, panelesDeLaTarea } from "@/lib/panel/tareas";
+import { getPanelUser, isPanelOwner } from "@/lib/panel/panelUsers";
+import { consolasDeLaTarea, panelesDeLaTarea, tipoDeLaTarea } from "@/lib/panel/tareas";
 
 // La casilla de una tarea derivada: «pendiente» ↔ «hecho». `item_key` es la clave sintética de la
 // tarea (`<tipo>:<id>`, ver `src/lib/panel/tareas.ts`); upsert, para que el primer clic sobre una
@@ -22,6 +23,10 @@ export async function setTaskState(
   if (!consolas.length) return { ok: false, error: "Esa tarea no existe." };
   const permiso = await permisoDeEscritura(consolas, "borrador");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  // Las tareas del Modelo Económico (`pvc:*`) son del owner, como todo el PVC (decisión del owner del 5 nov; V6.20): su
+  // casilla la marca solo él, con la misma fuente que las escrituras del PVC (`src/lib/pvc/actions.ts`). Lo vigila `qa-pvc-owner-check` (F).
+  if (tipoDeLaTarea(itemKey) === "pvc" && !isPanelOwner(await getPanelUser(permiso.userId)))
+    return { ok: false, error: "Marcar una tarea del Modelo Económico es una decisión del owner." };
   const adminId = permiso.userId;
   if (state !== "tbd" && state !== "done") return { ok: false, error: "Estado inválido." };
 

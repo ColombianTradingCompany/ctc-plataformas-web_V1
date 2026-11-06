@@ -308,3 +308,11 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - DATOS: ninguno en el despliegue. Tras él, en la sesión del owner: la llave `os` en `panel_users.consoles` (owner y GVB). La llave `platform_settings.os_modulos` no hace falta al lanzar (sin fila, los tres módulos encendidos).
 - Doc impact when wrapped: nodo nuevo «CTCx OS» como QUINTA consola detrás del login maestro (la última del conmutador), con aristas de SOLO LECTURA hacia las tareas derivadas (ECP), los contratos y despachos y la franja del stock (OCP), el Modelo Económico (ECP · PVC, sin precios), las automatizaciones, los latidos y la cola de la espina, y los hechos (`audit_log`, `integration_events`, `latidos`); su interruptor por módulo en `platform_settings`. Entrada de DICT: «CTCx OS · Puesto de mando» (Hacienda = los diez hubs del Mapa CTC; Almacén; Taller).
 (commit: 5bdf3ec)
+
+## [2026-11-06] V6.20 · El Modelo Económico solo del owner en todas las consolas, y la vuelta de Google de Cherry Picked
+- ADD `src/app/ecp/(app)/pvc/soloDelOwner.ts` (la compuerta del owner del módulo), `scripts/qa-pvc-owner-check.mjs` (79), `src/lib/auth/callbackCherryPicked.ts`, `src/app/cherry-picked-{roast,x}/auth/callback/route.ts` (reexportan el de la portada), `scripts/qa-callbacks-google-check.mjs` (65).
+- ANN `src/app/ecp/(app)/pvc/**` (layout, páginas y route handlers piden la compuerta), `src/app/ecp/(app)/page.tsx` (`conPvc: isOwner`), `src/components/panel/tareasActions.ts` (casilla `pvc:*` solo del owner), `src/app/ocp/(app)/page.tsx` y `src/lib/pvc/tipos.ts` (actividad reciente sin el PVC fuera del owner), `src/app/bcp/(app)/page.tsx` + `BcpKpis.tsx` (ediciones solo para el owner), `src/components/cherry-picked/LoginModal.tsx` y `src/app/cherry-picked/auth/callback/route.ts` (vuelta de Google a la superficie de origen).
+- ANN docs: charters `herramientas-internas`, `consolas`, `ctcx-os`, `cherry-picked`; `docs/ALINEACION.md` §3/§3b.
+- DATOS: ninguno.
+- Doc impact when wrapped: el nodo «Modelo Económico» del ECP pasa a solo-owner en sus aristas de lectura (ECP, BCP, OCP); la familia Cherry Picked gana dos vueltas de Google (Roast, X).
+(commit: pendiente)

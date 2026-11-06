@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.20] — 2026-11-06 (commit pendiente)
+## [V6.20] — 2026-11-06 (commit 443a55b)
 
 - **Cambiado**: **el Modelo Económico es solo del owner en todas las consolas** (decisión del owner del 5 nov; en la CTCx OS ya
   lo era desde la V6.19). Todo `/ecp/pvc` —Ediciones, Lectura, Grados, Tablero, Parámetros, Dossier y sus route handlers— pide la

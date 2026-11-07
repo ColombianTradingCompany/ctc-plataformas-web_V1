@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.23] — 2026-11-07 (commit pendiente)
+## [V6.23] — 2026-11-07 (commit 8781e01)
 
 - **Hito**: **los códigos CTC se guardan y son jerárquicos (TAR-149, decisión del owner del 6 nov).** Productor `CTC-P-XXX`, finca
   `CTC-F-XXXYY` (los 3 del productor + 2) y lote `CTC-L-XXXYYZZZZ` (los 5 de su primera finca registrada + 4), con el alfabeto Crockford

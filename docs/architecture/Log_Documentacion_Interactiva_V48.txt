@@ -340,4 +340,4 @@ Contexto abierto al cerrar V48 (2026-10-10) — plataforma V6.0:
 - ANN docs: `AGENTS.md`, `docs/ALINEACION.md` §1/§3, charters `kaffetal-regal`, `cherry-picked`, `herramientas-cafe`, `herramientas-internas`, `ctcx-os`, `secretaria`, `socios`.
 - DATOS: 19 productores, 14 fincas y 15 lotes con código; 51 códigos viejos (+ los del borrado nuclear) en el libro; 17 Fichas, 6 leads y 7 contratos ajustados; 9 inscripciones conservan su código ciego impreso.
 - Doc impact when wrapped: el nodo «Código del lote» deja de ser un cálculo y pasa a ser un dato de la base (libro + disparadores), con herencia productor → finca → lote; el portal gana la arista «segunda puerta» (3 lotes, hasta 2027-06-30); la Arena gana el código ciego.
-(commit: pendiente)
+(commit: 8781e01)

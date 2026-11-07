@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V6.24] — 2026-11-08 (commit pendiente)
+## [V6.24] — 2026-11-07 (commit 0e9e8eb)
 
 - **Hito**: **el código ciego de la cata es flotante (TAR-149, punto 4, decisión del owner del 7 nov).** El código que va en la bolsa de
   la muestra y que ve el Q-Grader pasa a ser 3 letras + 1 cifra al azar (`ctc_codigo_ciego`): nunca en secuencia, único para siempre (queda

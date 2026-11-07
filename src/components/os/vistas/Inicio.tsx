@@ -33,6 +33,7 @@ const QUE_HACE: Record<ClaveDeModulo, string> = {
   // F3 (en obra, apagados por defecto): sus textos viven en una fuente por idioma (`src/lib/os/textos/`).
   estafeta: textosDelOs().modulos.estafeta,
   acciones: textosDelOs().modulos.acciones,
+  rondas: textosDelOs().modulos.rondas,
 };
 
 const hubDe = (clave: ClaveDeModulo) => {

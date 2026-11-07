@@ -32,7 +32,7 @@ export type ModuloOs = {
   porDefecto: "encendido" | "apagado";
   /** El lado del Code Master: su enlace es `ownerOnly` y su página redirige a quien no es el owner. */
   soloOwner: boolean;
-  /** La clase más alta de lo que hace el módulo (F2: todo es lectura). */
+  /** La clase más alta de lo que hace el módulo (F2 y F3: lectura; Rondas: `emite`, por la acción de su dueño). */
   clase: ClaseDeAccion;
   /**
    * El edificio de la Hacienda desde cuya hoja se abre (rumbo del owner, 5 nov: el OS abre en el mapa y cada módulo se abre
@@ -50,6 +50,10 @@ export const MODULOS_OS = [
   // Ejecución (la sala de mando, F-23). Los nombres son nativos en español también en inglés (CAN-29).
   { clave: "estafeta", titulo: "Estafeta", ruta: "/os/m/estafeta", porDefecto: "apagado", soloOwner: false, clase: "lectura", edificio: "directorios" },
   { clave: "acciones", titulo: "Acciones", ruta: "/os/m/acciones", porDefecto: "apagado", soloOwner: false, clase: "lectura", edificio: "ejecucion" },
+  // Rondas (2026-11-07): el PRIMER módulo que escribe, y por eso nace APAGADO (regla de arriba). Escribe solo por la Server Action
+  // del dueño (`src/app/ocp/(app)/rondasActions.ts`, compuerta del OCP, clase `emite`); vive en el hub 1 · Origen (los productores,
+  // sus fincas y sus lotes). Cada ronda es una definición de `src/lib/os/rondas/definiciones.ts` (`/os/m/rondas/<slug>`).
+  { clave: "rondas", titulo: "Rondas", ruta: "/os/m/rondas", porDefecto: "apagado", soloOwner: false, clase: "emite", edificio: "origen" },
 ] as const satisfies readonly ModuloOs[];
 
 export type ClaveDeModulo = (typeof MODULOS_OS)[number]["clave"];

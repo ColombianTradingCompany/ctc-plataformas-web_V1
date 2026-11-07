@@ -145,8 +145,8 @@ check("los textos propios están en ES y EN, con las mismas claves", igual(Objec
 // ── 7. TAR-121 · el prellenado del taller (`?finca=` / `?lote=`) ─────────────────────────────────────────────────────
 {
   const REG = {
-    finca: { id: "x", referencia: "CTC-F-3F2504E0", nombre: "La Cumbre", municipio: "Pitalito", departamento: "Huila", altitud_m: 1650 },
-    lote: { referencia: "CTC-L-6BA7B810", nombre: "Mitaca 2026", variedad: "Castillo", proceso: "Lavado", altitud_m: null },
+    finca: { id: "x", referencia: "CTC-F-4MZ2P", nombre: "La Cumbre", municipio: "Pitalito", departamento: "Huila", altitud_m: 1650 },
+    lote: { referencia: "CTC-L-4MZ2P0K7Q", nombre: "Mitaca 2026", variedad: "Castillo", proceso: "Lavado", altitud_m: null },
   };
   const p = conPrefill(evaluacionVacia("es"), REG);
   const l = p.lotes[0];

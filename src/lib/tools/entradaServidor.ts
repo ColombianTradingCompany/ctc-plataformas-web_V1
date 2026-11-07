@@ -1,7 +1,6 @@
 import "server-only";
 
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
-import { ctcLotReference, fincaCode } from "@/components/kaffetal-regal/data";
 import { AVISO, combinarRegistro, type FincaPrefill, type LotePrefill, type RefRegistro, type RegistroPrefill } from "./entrada";
 
 // ── TAR-121 · `?finca=` y `?lote=` del taller, resueltos CONTRA LA CUENTA ──────────────────────────────────────────────────
@@ -17,9 +16,14 @@ import { AVISO, combinarRegistro, type FincaPrefill, type LotePrefill, type RefR
 //
 // No es una server action (sin la directiva de servidor): solo la llama la página del taller en el servidor. Así no queda un
 // endpoint que cualquiera pueda invocar con ids arbitrarios.
+//
+// V6.23 (TAR-149): una referencia se busca por su COLUMNA (`fincas.codigo`, `lots.public_code`), con el mismo filtro por dueño en
+// la misma consulta; nunca se calcula un código en memoria. Los códigos son únicos, así que la consulta trae uno o ninguno.
 
 type FilaFinca = {
   id: string;
+  // V6.23 (TAR-149): el código guardado de la finca.
+  codigo: string | null;
   producer_id: string;
   name: string;
   municipio: string | null;
@@ -31,6 +35,8 @@ type FilaFinca = {
 
 type FilaLote = {
   id: string;
+  // V6.23 (TAR-149): el código guardado del lote; null = sin finca.
+  public_code: string | null;
   name: string;
   ficha_variedad: string | null;
   ficha_proceso: string | null;
@@ -38,16 +44,16 @@ type FilaLote = {
   fincas: FilaFinca | FilaFinca[] | null;
 };
 
-const COLS_FINCA = "id, producer_id, name, municipio, departamento, pais, altitude_m";
-/** Un productor tiene decenas de lotes, no miles: buscar la referencia entre los SUYOS cabe en una consulta. */
-const MAX_FILAS = 500;
+const COLS_FINCA = "id, codigo, producer_id, name, municipio, departamento, pais, altitude_m";
+// Un id y un código son únicos: con dos filas pedidas, «una» es la respuesta y cualquier otra cosa no prellena nada.
+const MAX_FILAS = 2;
 
 const capitaliza = (s: string | null) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : null);
 
 function aFinca(f: FilaFinca): FincaPrefill {
   return {
     id: f.id,
-    referencia: fincaCode(f.id),
+    referencia: f.codigo,
     nombre: f.name,
     municipio: f.municipio,
     departamento: f.departamento,
@@ -84,11 +90,10 @@ export async function resolverEntrada(finca: RefRegistro | null, lote: RefRegist
   if (finca) {
     try {
       let q = service.from("fincas").select(COLS_FINCA).eq("producer_id", userId).neq("status", "rejected");
-      if (finca.tipo === "uuid") q = q.eq("id", finca.valor);
+      q = finca.tipo === "uuid" ? q.eq("id", finca.valor) : q.eq("codigo", finca.valor);
       const { data } = await q.limit(MAX_FILAS);
       const filas = (data as FilaFinca[] | null) ?? [];
-      const hit = finca.tipo === "uuid" ? filas : filas.filter((f) => fincaCode(f.id) === finca.valor);
-      if (hit.length === 1) fincaRes = aFinca(hit[0]);
+      if (filas.length === 1) fincaRes = aFinca(filas[0]);
     } catch {
       fincaRes = null;
     }
@@ -100,18 +105,17 @@ export async function resolverEntrada(finca: RefRegistro | null, lote: RefRegist
     try {
       let q = service
         .from("lots")
-        .select(`id, name, ficha_variedad, ficha_proceso, ficha_altitud_m, fincas(${COLS_FINCA})`)
+        .select(`id, public_code, name, ficha_variedad, ficha_proceso, ficha_altitud_m, fincas(${COLS_FINCA})`)
         .eq("producer_id", userId);
-      if (lote.tipo === "uuid") q = q.eq("id", lote.valor);
+      q = lote.tipo === "uuid" ? q.eq("id", lote.valor) : q.eq("public_code", lote.valor);
       const { data } = await q.limit(MAX_FILAS);
       const filas = (data as FilaLote[] | null) ?? [];
-      const hit = lote.tipo === "uuid" ? filas : filas.filter((l) => ctcLotReference(l.id) === lote.valor);
-      // Dos lotes de la MISMA cuenta con la misma referencia corta es ambiguo: mejor nada que el equivocado.
-      if (hit.length === 1) {
-        const l = hit[0];
+      // Uno o nada: mejor la herramienta vacía que el lote equivocado.
+      if (filas.length === 1) {
+        const l = filas[0];
         const f = Array.isArray(l.fincas) ? l.fincas[0] : l.fincas;
         loteRes = {
-          referencia: ctcLotReference(l.id),
+          referencia: l.public_code,
           nombre: l.name,
           variedad: capitaliza(l.ficha_variedad),
           proceso: capitaliza(l.ficha_proceso),

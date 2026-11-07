@@ -5,7 +5,9 @@ import { contraofertarSeleccion, respondToOffer } from "@/lib/ofertas/producerAc
 import { CARGA_KG, LUGAR_DE_ENTREGA_POR_DEFECTO } from "@/lib/trato/terminos";
 import { formatCop } from "@/lib/arena/inscriptions";
 import { REGION_DE_FLETE_LABEL } from "@/lib/trato/flete";
-import { ctcLotReference, type ProducerOffer } from "../data";
+import type { ProducerOffer } from "../data";
+import { codigoDelLote } from "../codigoDelLote";
+import { useCodigoDeLote } from "./CtcRef";
 import { FirmaDelContrato, type FirmaDelProductor } from "./FirmaDelContrato";
 import { useToast } from "@/components/Toast";
 
@@ -17,6 +19,8 @@ import { useToast } from "@/components/Toast";
 
 export function PropuestaSelection({ offer, onRefreshData }: { offer: ProducerOffer; onRefreshData: () => void }) {
   const { showToast } = useToast();
+  // V6.23 (TAR-149): el texto que se firma cita el código GUARDADO del lote (lo provee «Contratos y Compras», `CodigosDeLotes`).
+  const codigoLote = useCodigoDeLote(offer.lotId);
   const [modo, setModo] = useState<"ver" | "contraofertar" | "firmar" | "desistir">("ver");
   const [busy, setBusy] = useState(false);
   const [precio, setPrecio] = useState(String(Math.round(offer.pricePerKg)));
@@ -113,7 +117,7 @@ export function PropuestaSelection({ offer, onRefreshData }: { offer: ProducerOf
             calidad: null,
             flete: offer.flete,
             loteNombre: offer.lotName,
-            loteReferencia: ctcLotReference(offer.lotId),
+            loteReferencia: codigoDelLote(codigoLote),
             grado: offer.grade ?? "—",
             copKg: offer.pricePerKg,
             declaradoKg: kgN,

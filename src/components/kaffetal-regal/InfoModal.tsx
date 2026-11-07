@@ -8,7 +8,7 @@ import { checkFileSizeMb } from "@/lib/fileSize";
 import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import { FileDrop } from "./FileDrop";
 import { DEPARTAMENTOS_DE_COLOMBIA } from "@/lib/geo/departamentos";
-import { supplierCode, type GeneralInfo } from "./data";
+import type { GeneralInfo } from "./data";
 import styles from "./FincaModal.module.css";
 
 // V5.127 (owner): los 32 departamentos y Bogotá D.C. — antes, los 22 cafeteros de `DEP_MUNI`.
@@ -19,6 +19,8 @@ const DEPARTMENTS = DEPARTAMENTOS_DE_COLOMBIA;
 export type InfoEditorProps = {
   gi: GeneralInfo;
   userId: string | null;
+  /** V6.23 (TAR-149): el código GUARDADO del productor (`producer_profiles.codigo`, CTC-P-XXX); null = la cuenta aún no lo tiene. */
+  codigoProductor: string | null;
   onSave: (gi: GeneralInfo, opts?: { silent?: boolean }) => void;
   onUploadAvatar: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
   onUploadVideo: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
@@ -30,7 +32,7 @@ export type InfoEditorProps = {
 // del perfil ya cargado cada vez que se abre, sin efectos de resiembra que pisen lo que se escribe.
 export function InfoEditorBody({
   gi,
-  userId,
+  codigoProductor,
   onSave,
   onUploadAvatar,
   onUploadVideo,
@@ -125,9 +127,10 @@ export function InfoEditorBody({
     void up.run(() => onUploadGalleryPhoto(index, file, up.progress));
   }
 
+  // V6.23 (TAR-149): el QR y el nombre del archivo llevan el código GUARDADO del productor; sin código, no hay QR.
   async function exportQr() {
-    if (!userId) return;
-    const code = supplierCode(userId);
+    if (!codigoProductor) return;
+    const code = codigoProductor;
     const pngDataUrl = await QRCode.toDataURL(code, { width: 480, margin: 2 });
     const img = new window.Image();
     img.onload = () => {
@@ -148,7 +151,7 @@ export function InfoEditorBody({
     img.src = pngDataUrl;
   }
 
-  const code = userId ? supplierCode(userId) : "";
+  const code = codigoProductor ?? "";
 
   return (
     <>

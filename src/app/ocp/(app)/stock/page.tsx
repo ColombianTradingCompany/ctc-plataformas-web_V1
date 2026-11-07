@@ -18,7 +18,8 @@ export default async function StockCtcxPage({ searchParams }: { searchParams: Pr
   const service = createServiceRoleClient();
   const [stock, { data: lotesRaw }] = await Promise.all([
     cargarStock(service),
-    service.from("lots").select("id, name, fincas(name)").order("name").limit(2000),
+    // V6.23 (TAR-149): un lote sin finca no tiene código y no se ofrece aquí (owner: «This Lot does not show up listed»).
+    service.from("lots").select("id, name, fincas(name)").not("public_code", "is", null).order("name").limit(2000),
   ]);
   const uno = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? v[0] ?? null : v ?? null);
   const lotes: LoteOpcion[] = ((lotesRaw as unknown as { id: string; name: string; fincas: { name: string } | { name: string }[] | null }[] | null) ?? []).map((l) => ({

@@ -25,7 +25,8 @@ export type Lot = {
   cup: string; // tasting notes
   transparency?: { locked: number; reference: number }; // real producer-vs-market price, only when the listing opted in
   // ── V6.3 (objetivo 3 · tanda B, lo que no espera decisión del owner): la tarjeta habla el idioma de la vitrina ──
-  /** La referencia pública `CTC-L-XXXXXXXX` (la que busca «Find my Lot»); null si el lote aún no está en la vitrina. */
+  /** La referencia pública `CTC-L-…` (V6.23: el código guardado del lote, la que busca «Find my Lot»); null si el lote aún no está
+   *  en la vitrina. */
   referencia: string | null;
   /** El Punto que rige el grado (dos decimales) y su protocolo (CVA, el principal; SCA 2004 vale lo mismo); null sin evaluación. */
   punto: string | null;

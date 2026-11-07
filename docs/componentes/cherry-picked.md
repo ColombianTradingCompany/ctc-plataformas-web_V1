@@ -24,7 +24,7 @@ que voltean) es la cara pública del catálogo; el catálogo con precios pide se
 | `/caas` (`/co-create` → 308) | landing + formulario Clase B (pilar `cocreate` — la MARCA es CaaS, la CLAVE es cocreate) |
 | `/api/catalogo/sneak-peek` | la cinta (anon, `s-maxage=900`) |
 | `/docs/ficha/[lotId]` | desde la V5.198 solo redirige (308) al Dossier público de un lote de la vitrina, o 404 (la ficha técnica se retiró) |
-| `/ctcx-public-catalogue` · `/ctcx-public-catalogue/[codigo]` | «Find my Lot» y el **Dossier público** del lote por su referencia `CTC-L-XXXXXXXX` (V5.198; un código viejo `CTCX-…` redirige; V5.48, charter `plataforma`, nacida en `consolas` · OCP, **solo www**) |
+| `/ctcx-public-catalogue` · `/ctcx-public-catalogue/[codigo]` | «Find my Lot» y el **Dossier público** del lote por su referencia `CTC-L-…` (V5.198; desde la V6.23 el código GUARDADO del lote, `lots.public_code`; de los códigos viejos solo las 3 segundas puertas del catálogo Japan Pioneers redirigen, hasta el 30.06.2027; un `CTCX-…` ya no abre nada; V5.48, charter `plataforma`, nacida en `consolas` · OCP, **solo www**) |
 | `/api/catalogo/foto/[referencia]` | la foto de la tarjeta de un lote de la vitrina (V5.198; pasa por la vista, WebP 3:2) |
 
 ## Mapa de código
@@ -62,7 +62,8 @@ V5.98 la lee de `.env.local` (`QA_BUYER_EMAIL`, del nodo final) y se corre a man
 listado publicado y al 2026-10-10 hay 0, así que corre cuando el Triage declare el primero; `ALINEACION` §4.6) · `qa-ficha-publica-check.mjs` (desde la V5.198 vigila el
 **Dossier público**: la lista blanca con un dossier lleno de centinelas; desde la V5.202, que no salga nada de la finca) ·
 `qa-crm-interes-check.mjs` (fuentes de la lista de espera) · `qa-recuperacion-check.mjs` (puerta CP) · `qa-cp-sesion-check.mjs` (la cuenta en la
-familia) · `qa-callbacks-google-check.mjs` (V6.20, 65: la vuelta de Google de cada ventana de login de la red, pasada por el proxy real en
+familia) · `qa-codigos-ctc-check.mjs` (V6.23: la referencia es el código guardado, las segundas puertas y que ningún texto público
+explique su forma) · `qa-callbacks-google-check.mjs` (V6.20, 65: la vuelta de Google de cada ventana de login de la red, pasada por el proxy real en
 cada host donde se pinta).
 
 ## Reglas propias
@@ -102,6 +103,13 @@ cada host donde se pinta).
 | BCP · Herramientas del Café | gadgets y nivel Plus en la tienda | charter `herramientas-cafe` |
 
 ## Pendientes
+
+- **V6.23 · la referencia es el código guardado (TAR-149)**. Hecho: la vitrina lee el código por `codigo` (`COLUMNAS_VITRINA`,
+  `referencia:codigo`), un lote sin finca no tiene código y no sale; «Find my Lot», la cinta, el portal, el Hero y los textos públicos
+  (ES · EN · DE) ya no explican la forma del código (owner: «the syntax is not public but the IDs are visible»; lo vigila
+  `qa-codigos-ctc` §5); las 3 segundas puertas redirigen (308) hasta el 30.06.2027 y su Dossier lleva el aviso del código anterior;
+  la foto de una puerta se sirve sin redirigir. **Queda para el owner**: ¿la página «no encontramos ese lote» le dice a quien trae una
+  etiqueta de antes de noviembre de 2026 que el código pudo cambiar y que escriba a CTCx, o eso dice demasiado?
 
 - **V6.3 · el login y lo que ve el comprador con sesión** (owner, noche del 2026-10-10; ejecutado desde `consolas` con el owner —código
   de este componente—; `PLAN_V6_OBJETIVOS` §3 al día). Hecho: la cuenta en toda la familia (`sesion.tsx`; la cabecera de la portada, Roast y
@@ -246,8 +254,9 @@ cada host donde se pinta).
   `GD-F518` en la cinta, `GD-F0F9` en la tienda y `CTCX-V2DD-M24B` en el portal público. Sustituirlos por la columna es
   tanda **CP-3**; ojo a que un lote publicado siempre tiene código, y uno sin publicar no aparece en la vista. **Estado al
   2026-10-10** (nodo final): `codigoDeLote` **ya no existe** (solo lo nombran los comentarios de `src/lib/catalogo/codigoPublico.ts`);
-  desde la V5.100 el código del lote es `CTC-L-XXXXXXXX` y desde la V5.198–V5.199 esa **referencia es la dirección pública**: la
-  cinta, «Find my Lot» y el portal la usan (un `CTCX-…` viejo redirige). **Queda la tienda**: `listingCode` (`data.ts`) sigue
+  desde la V5.100 el código del lote es `CTC-L-…` y desde la V5.198–V5.199 esa **referencia es la dirección pública**: la
+  cinta, «Find my Lot» y el portal la usan. **V6.23 (TAR-149)**: el código es el GUARDADO y jerárquico (`CTC-L-XXXYYZZZZ`,
+  `lots.public_code`, contrato «Los códigos CTC» de `ALINEACION` §1); un `CTCX-…` viejo ya no redirige. **Queda la tienda**: `listingCode` (`data.ts`) sigue
   pintando «BK-XXXX» — pasarla a la referencia `CTC-L-` es la tanda B del objetivo 3 de `PLAN_V6_OBJETIVOS.md`.
 - **La ficha pública de un lote CTCx Selection se arregla EN LA VISTA, no en la página** (§14.7: la finca «visible como
   dato, no protagonista»). `public_lot_catalog` anula `finca_name` cuando `ctc_selection`, y tanto `/docs/ficha/[lotId]`

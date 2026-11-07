@@ -200,6 +200,21 @@
 }
 .portadaProducto { font-size: 46pt; color: var(--tinta); }
 .portadaSub { font-size: 11pt; margin: 3mm 0 0; color: var(--tinta-suave); }
+/* V6.23 (TAR-149) · el aviso de la segunda puerta (3 lotes del catálogo Japan Pioneers): código anterior, hasta cuándo, código nuevo. */
+.pinLegado {
+  display: inline-flex;
+  align-items: center;
+  gap: 2mm;
+  margin: 3mm 0 0;
+  padding: 1.5mm 3mm;
+  border: 1px solid var(--morado);
+  background: var(--morado-tinte);
+  color: var(--morado);
+  font-size: 8.5pt;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.pinLegado svg { flex: none; }
 .sello {
   display: grid;
   grid-template-columns: auto auto;

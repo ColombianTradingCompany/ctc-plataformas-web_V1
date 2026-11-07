@@ -149,7 +149,8 @@ const lee = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
 {
   const pagina = lee("src/app/ocp/(app)/asistencia/page.tsx");
   const tabla = lee("src/app/ocp/(app)/asistencia/AsistenciaTabla.tsx");
-  check("la página carga nombres y códigos de fincas y lotes y el estado del productor como /ocp/kr", pagina.includes("fincaCode(f.id)") && pagina.includes("ctcLotReference(l.id)") && pagina.includes("segmentProducer(") && pagina.includes("<AsistenciaTabla filas={filas} />"));
+  // V6.23 (TAR-149): los códigos son los GUARDADOS (`fincas.codigo`, `lots.public_code`); un lote sin finca no tiene código y no sale.
+  check("la página carga nombres y códigos GUARDADOS de fincas y lotes y el estado del productor como /ocp/kr", pagina.includes("codigo: codigoCtc(f.codigo)") && pagina.includes("l.public_code ? [{ nombre: l.name, codigo: l.public_code }] : []") && !/fincaCode\(|ctcLotReference\(/.test(pagina) && pagina.includes("segmentProducer(") && pagina.includes("<AsistenciaTabla filas={filas} />"));
   check("el buscador directo mira al productor y la búsqueda profunda (toggle) a sus fincas y lotes, diciendo dónde coincidió", tabla.includes('role="switch"') && tabla.includes("if (!profunda) return null;") && tabla.includes("f.fincas.filter((x) => [x.nombre, x.codigo, x.lugar]") && tabla.includes("f.lotes.filter((x) => [x.nombre, x.codigo]") && tabla.includes("Coincide en:"));
   check("los filtros: cuenta (de GESTION_LABEL), estado por casillas (de PRODUCER_SEGMENTS), departamento, con/sin finca y lote", tabla.includes("Object.keys(GESTION_LABEL)") && tabla.includes("PRODUCER_SEGMENTS.map((sg)") && tabla.includes('aria-label="Departamento"') && tabla.includes('"Finca ✅"') && tabla.includes('"Sin lote"'));
 }
@@ -319,7 +320,7 @@ const lee = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
   check("OCP · la marca va en el dominio compartido y la puede leer el navegador (es un rótulo, no un permiso)", acciones.includes("const domain = sharedCookieDomain(host);") && acciones.includes("httpOnly: false") && acciones.includes("maxAge: producerId ? SEGUNDOS_DE_LA_MARCA : 0"));
   check("KR · la franja se decide al cargar la sesión y al entrar (los dos caminos)", (kr.match(/setAsistida\(esSesionAsistida\(document\.cookie, uid\)\);/g) ?? []).length === 2);
   check("KR · al cerrar sesión la marca se borra y la franja se apaga", /event === "SIGNED_OUT"\) \{[\s\S]{0,260}document\.cookie = borradoDeLaMarca\(sharedCookieDomain\(window\.location\.hostname\)\);\s*setAsistida\(false\);/.test(kr));
-  check("KR · la franja dice el nombre y el código del productor, y «Salir» cierra la sesión", kr.includes("{asistida && userId && <FranjaAsistida nombre={") && kr.includes("codigo={supplierCode(userId)} onSalir={logout} />"));
+  check("KR · la franja dice el nombre y el código del productor, y «Salir» cierra la sesión", kr.includes("{asistida && userId && <FranjaAsistida nombre={") && kr.includes("codigo={codigoCtc(codigoProductor)} onSalir={logout} />") && !kr.includes("supplierCode("));
   const franja = lee("src/components/kaffetal-regal/FranjaAsistida.tsx"), css = lee("src/components/kaffetal-regal/FranjaAsistida.module.css");
   check("franja · dice «Sesión asistida» y se anuncia a un lector de pantalla", franja.includes("<b>Sesión asistida</b>") && franja.includes('role="status"'));
   check("franja · va fija por encima de todo y no sale en lo que se imprime", css.includes("position:fixed") && /z-index:40[01]/.test(css) && css.includes("@media print{.linea,.franja{display:none}}"));

@@ -43,8 +43,7 @@ import {
   type FincaCertificate,
   type Parcela,
   type EudrProducerAnswers,
-  ctcLotReferenceShort,
-  supplierCode,
+  codigoCtc,
   fincaSelfDeletable,
   isLotCommitted,
   pendingLotsOfFinca,
@@ -76,6 +75,8 @@ const STAGE_EXTRA = [
 
 type FincaRow = {
   id: string;
+  /** V6.23 (TAR-149): CTC-F-XXXYY, lo asigna la base al insertar (llega con el `select("*")`). */
+  codigo: string | null;
   name: string;
   status: Finca["status"];
   eudr_cert_shared: boolean | null;
@@ -123,6 +124,8 @@ type FincaRow = {
 
 type LotRow = {
   id: string;
+  /** V6.23 (TAR-149): EL código del lote (CTC-L-XXXYYZZZZ), lo asigna la base cuando el lote tiene finca; null = sin finca. */
+  public_code: string | null;
   finca_id: string | null;
   name: string;
   stage: string;
@@ -226,6 +229,7 @@ function dbFincaToFinca(
 ): Finca {
   return {
     id: row.id,
+    codigo: row.codigo ?? null,
     name: row.name,
     status: row.status ?? "pending_review",
     certShared: row.eudr_cert_shared ?? false,
@@ -299,6 +303,8 @@ function dbLotToLot(
     : STAGE_EXTRA[stageIdx];
   return {
     id: row.id,
+    // V6.23 (TAR-149): el código GUARDADO; al recibir su primera finca, la fila que vuelve del guardado ya lo trae.
+    codigo: row.public_code ?? null,
     name: row.name,
     finca: (row.finca_id && fincaNameById.get(row.finca_id)) || "—",
     fincaId: row.finca_id,
@@ -355,6 +361,9 @@ function Experience() {
   const [loginOpen, setLoginOpen] = useState(false);
 
   const [gi, setGi] = useState<GeneralInfo>(EMPTY_GI);
+  // V6.23 (TAR-149): el código del productor (CTC-P-XXX), `producer_profiles.codigo`, asignado por la base. null = la cuenta aún no
+  // tiene fila de productor (se le asigna al crearla).
+  const [codigoProductor, setCodigoProductor] = useState<string | null>(null);
   const [fincas, setFincas] = useState<Finca[]>([]);
   // F1 (2026-07-29): parcelas y certificados de finca — tablas propias con RLS
   // por dueño de la finca; ver docs/EUDR_RESTRUCTURE_PLAN.md.
@@ -419,7 +428,7 @@ function Experience() {
           supabase.from("profiles").select("full_name, phone").eq("id", uid).single(),
           supabase
             .from("producer_profiles")
-            .select("company_name, tax_id, cedula_cafetera, whatsapp_confirmed, country, department, avatar_asset_id, video_asset_id, gallery_asset_ids, club_member_since, estado_cuenta, estado_cuenta_motivo")
+            .select("codigo, company_name, tax_id, cedula_cafetera, whatsapp_confirmed, country, department, avatar_asset_id, video_asset_id, gallery_asset_ids, club_member_since, estado_cuenta, estado_cuenta_motivo")
             .eq("profile_id", uid)
             .single(),
           supabase.from("fincas").select("*").eq("producer_id", uid).order("created_at", { ascending: true }),
@@ -814,6 +823,7 @@ function Experience() {
         estadoCuenta: producerProfile?.estado_cuenta === "congelada" ? "congelada" : "activa",
         estadoCuentaMotivo: producerProfile?.estado_cuenta_motivo ?? null,
       });
+      setCodigoProductor(((producerProfile as { codigo?: string | null } | null)?.codigo ?? "").trim() || null);
       setUserName((profile?.full_name || "productor").split(" ")[0]);
       const ackByCommId = new Map<string, string>(
         ((ackRows as { comm_id: string; acknowledged_at: string }[] | null) ?? []).map((a) => [a.comm_id, a.acknowledged_at])
@@ -1377,7 +1387,8 @@ function Experience() {
         producer_id: userId,
         lot_id: lot.id,
         author_role: "producer",
-        context_label: `Ficha ${ctcLotReferenceShort(lot.id)}`,
+        // V6.23 (TAR-149): el código guardado del lote; un lote sin finca (sin código) se nombra por su nombre.
+        context_label: `Ficha ${lot.codigo ?? lot.name}`,
         note: body,
         created_by: userId,
       })
@@ -2115,14 +2126,14 @@ function Experience() {
 
   return (
     <div data-theme="kaffetal-regal">
-      {asistida && userId && <FranjaAsistida nombre={gi.agri !== "—" && gi.agri.trim() ? gi.agri : "productor sin nombre"} codigo={supplierCode(userId)} onSalir={logout} />}
+      {asistida && userId && <FranjaAsistida nombre={gi.agri !== "—" && gi.agri.trim() ? gi.agri : "productor sin nombre"} codigo={codigoCtc(codigoProductor)} onSalir={logout} />}
       {view === "landing" && <Landing onLogin={() => (userId ? setView("app") : setLoginOpen(true))} />}
 
       {view === "app" && (
         <AppDashboard
           userName={userName}
           asistida={asistida}
-          cuenta={userId ? supplierCode(userId) : ""}
+          cuenta={codigoProductor ?? ""}
           lots={lots}
           fincas={fincas}
           parcelas={parcelas}
@@ -2226,6 +2237,7 @@ function Experience() {
           onBack={() => setView("app")}
           gi={gi}
           userId={userId}
+          codigoProductor={codigoProductor}
           onSave={saveInfo}
           onUploadAvatar={uploadAvatar}
           onUploadVideo={uploadProducerVideo}

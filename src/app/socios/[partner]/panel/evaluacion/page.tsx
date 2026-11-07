@@ -6,7 +6,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { PARTNERS } from "@/lib/partners/partners";
 import { requirePartner } from "@/lib/partners/requirePartner";
 import { marcaLabel, normalizaDetalle, normalizaRueda } from "@/lib/catacion/rueda";
-import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
+import { codigoCtc } from "@/components/kaffetal-regal/data";
 import { puntoDeFila, rotuloDelPunto } from "@/lib/arena/punto";
 import { BUILD_SHA, VERSION_LABEL } from "@/lib/version";
 import { AnularAltaButton, DarDeAltaButton, VerPlanillaButton } from "./PlanillaCentro";
@@ -21,16 +21,20 @@ export const dynamic = "force-dynamic";
 // ── Centro de Calidad · Evaluación de Lotes (fase 4 del PLAN_CIRCUITO_DEL_LOTE, V5.81) ─────────
 // Folio 7, paso 11: «recibe baches; evalúa lote a lote, anónimos (solo UID), física y sensorialmente con la
 // Datasheet Tool, sin "01 Extrínsecos" ni la variedad (sesgo); da de alta cada lote individualmente».
-// ESTA PÁGINA NO LEE NOMBRES: ni productor, ni finca, ni variedad, ni ficha. Solo el bache, el código corto del
-// lote (el que va en la bolsa) y los gramos de la muestra que llegaron con el bache. `qa-centro-calidad-check`
+// ESTA PÁGINA NO LEE NOMBRES: ni productor, ni finca, ni variedad, ni ficha. Solo el bache, el código CIEGO de la
+// cata (el que va en la bolsa) y los gramos de la muestra que llegaron con el bache. `qa-centro-calidad-check`
 // lo vigila. Abre solo con la credencial `centro-calidad` activa y su módulo `evaluacion` encendido (BCP · Socios).
+//
+// V6.23 (TAR-149): el código que ve el Q-Grader es `arena_inscriptions.codigo_ciego` (QG- + 5 al azar; las inscripciones
+// anteriores conservan el que ya llevan impreso), NUNCA el código del lote: el del lote es jerárquico y con prefijos
+// compartidos el catador sabría qué muestras son hermanas (de la misma finca o del mismo productor).
 
 import { reporteDeFila } from "@/lib/evaluaciones/reporteReglas";
 import { separaNotasDevueltas } from "@/lib/evaluaciones/devolucion";
 import { urlsDeReportes } from "@/lib/evaluaciones/reporte";
 
 type BatchRow = { id: string; label: string; shipped_at: string | null; q_grader_name: string | null; status: string; cerrado_at: string | null };
-type InsRow = { lot_id: string; sondeo_batch_id: string | null; phase: string };
+type InsRow = { lot_id: string; sondeo_batch_id: string | null; phase: string; codigo_ciego: string | null };
 type EvalRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; cva_total: number | string | null; escala: string; rueda: unknown; rueda_detalle: unknown; created_at: string; reviewed_at: string | null; notes: string | null; submitted_by: string | null; codigo_interno: string | null; reference_asset_id: string | null; reference_file_name: string | null; physical_data: { planilla?: unknown } | null };
 // V5.92: el Punto con su procedencia. V5.189: CVA (el protocolo principal) o un SCA 2004 que vale lo mismo.
 const rotulo = (e: EvalRow) => {
@@ -70,7 +74,7 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
 
   const [{ data: insRaw }, { data: evalRaw }, { data: movRaw }] = batchIds.length
     ? await Promise.all([
-        service.from("arena_inscriptions").select("lot_id, sondeo_batch_id, phase").in("sondeo_batch_id", batchIds),
+        service.from("arena_inscriptions").select("lot_id, sondeo_batch_id, phase, codigo_ciego").in("sondeo_batch_id", batchIds),
         service
           .from("lot_evaluations")
           .select("id, lot_id, batch_id, status, sca_total, punto, cva_total, escala, rueda, rueda_detalle, created_at, reviewed_at, notes, submitted_by, codigo_interno, reference_asset_id, reference_file_name, physical_data")
@@ -154,7 +158,8 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
                 </summary>
                 <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
                   {lotes.map((l) => {
-                    const uid = ctcLotReferenceShort(l.lot_id);
+                    // V6.23 (TAR-149): el código CIEGO de la inscripción, el de la bolsa. Nunca el del lote.
+                    const uid = codigoCtc(l.codigo_ciego);
                     const propias = evaluaciones.filter((e) => e.lot_id === l.lot_id && e.batch_id === b.id);
                     const pendiente = propias.find((e) => e.status === "pending");
                     const devuelta = !pendiente ? propias.find((e) => e.status === "rejected") : null;

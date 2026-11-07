@@ -84,7 +84,7 @@ herramienta de este charter: qué registro abre, qué precarga y cómo vuelve. R
 | Definición de Contexto · exportar | `/ecp/direccionamiento/exportar` | `unidad` (lista blanca; otra cosa = 400) | descarga `.md` de la ficha guardada (esa unidad + generales + memoria) | ECP (lectura) | TAR-122 (en PR) |
 | Grados de Calidad · definición vigente | `/ecp/direccionamiento/grados` | `volver` | — (la escalera entera) | ECP | propuesto (`volver`) |
 | Escala de puntos · calculadora | `/ecp/pvc/grados` | `sca` (78–100, hasta 2 decimales, `.` o `,`) · `triada` (3 letras C/B/A: variedad·proceso·reconocimiento) · `volver` | la calculadora con ese Punto y esa tríada: grado, puntos y lo que vale en la edición vigente | owner (rail) | **hecho** (2026-11-05) |
-| Escala de puntos · desde un lote | `/ecp/pvc/grados` | `lote` = `CTC-L-XXXXXXXX` (la referencia pública, V5.198) | el Punto y la tríada **del lote** (los que ya pinta el informe del Centro, `triadaDelLote.ts`) | owner | propuesto: lee `lots` (solo lectura) y la Ficha; necesita SQL para verificarse |
+| Escala de puntos · desde un lote | `/ecp/pvc/grados` | `lote` = `CTC-L-XXXYYZZZZ` (la referencia pública, V5.198; desde la V6.23 el código guardado, `lots.public_code`) | el Punto y la tríada **del lote** (los que ya pinta el informe del Centro, `triadaDelLote.ts`) | owner | propuesto: lee `lots` (solo lectura) y la Ficha; necesita SQL para verificarse |
 | Tablero del modelo (PVC) | `/ecp/pvc/tablero` | `borrador` (uuid) | el borrador del agente (V5.179) | owner | existe |
 | Ediciones · Lectura · Parámetros · Dossier (PVC) | `/ecp/pvc[/lectura\|/parametros\|/dossier]` | `volver` | — | owner | propuesto (`volver`) |
 | Anclas de mercado | `/ecp/anclas-mercado` | `volver` | — | ECP | propuesto (`volver`) |

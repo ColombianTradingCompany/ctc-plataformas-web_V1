@@ -44,12 +44,14 @@ const rail = lee("src/lib/panel/consoles.ts");
 
 // ── 2. La doble confirmación ────────────────────────────────────────────────
 {
-  check("la frase es «BORRAR <código>»", fraseNuclear("CTC-L-ABCDEF12") === "BORRAR CTC-L-ABCDEF12" && fraseNuclear("CTC-F-00000000") === "BORRAR CTC-F-00000000");
+  check("la frase es «BORRAR <código>»", fraseNuclear("CTC-L-4MZ2P0K7Q") === "BORRAR CTC-L-4MZ2P0K7Q" && fraseNuclear("CTC-F-4MZ2P") === "BORRAR CTC-F-4MZ2P");
   check("1.ª confirmación: el inventario que da la base, el motivo y la casilla; sin los tres no se pasa a la segunda", boton.includes("inventarioNuclearAction(tipo, id)") && boton.includes("conteosOrdenados(inv.inventario.conteos)") && boton.includes("const puedeSeguir = !!inv && !bloqueado && motivo.trim().length >= MOTIVO_MINIMO && entiendo;") && boton.includes("disabled={!puedeSeguir}"));
   check("2.ª confirmación: el botón final solo se enciende con la frase exacta", boton.includes("const fraseOk = !!inv && frase.trim() === inv.frase;") && boton.includes("disabled={!fraseOk || cargando}") && boton.includes("confirmación {paso} de 2"));
   check("un bloqueo no deja ni empezar: se enseña el porqué y no hay botón de continuar", boton.includes("inv.inventario.bloqueos.map((b) => (") && boton.includes("{!bloqueado && ("));
-  check("el servidor vuelve a exigir el motivo, la casilla y la frase (lo que valida la pantalla no cuenta)", acciones.includes("if (motivo.length < MOTIVO_MINIMO)") && acciones.includes('if (formData.get("entiendo") !== "si")') && acciones.includes("if (frase !== fraseNuclear(codigo))") && MOTIVO_MINIMO >= 10);
-  check("el código de la frase lo calcula el servidor del id, no lo manda la pantalla", acciones.includes('const codigoDe = (tipo: TipoNuclear, id: string) => (tipo === "lote" ? ctcLotReference(id) : fincaCode(id));') && !/formData\.get\("codigo"\)/.test(acciones));
+  check("el servidor vuelve a exigir el motivo, la casilla y la frase (lo que valida la pantalla no cuenta)", acciones.includes("if (motivo.length < MOTIVO_MINIMO)") && acciones.includes('if (formData.get("entiendo") !== "si")') && acciones.includes("const esperada = fraseDe(tipo, codigo);") && acciones.includes("if (frase !== esperada)") && MOTIVO_MINIMO >= 10);
+  // V6.23 (TAR-149): el código ya no se deriva del id: el servidor lo LEE de la fila (`lots.public_code`, `fincas.codigo`). Un lote
+  // sin finca no tiene código y su frase es fija.
+  check("el código de la frase lo lee el servidor de la fila guardada, no lo manda la pantalla ni sale del id", acciones.includes('service.from("lots").select("public_code").eq("id", id)') && acciones.includes('service.from("fincas").select("codigo").eq("id", id)') && acciones.includes('"BORRAR LOTE SIN CÓDIGO"') && !/ctcLotReference|fincaCode|id\.slice\(/.test(acciones) && !/formData\.get\("codigo"\)/.test(acciones));
   // V5.135 (owner: «no veo el botón»): ARRIBA, junto al título, y una sola vez por vista.
   check("el botón está arriba, junto al título, en la vista del lote y en la de la finca cuando es la protagonista", /<h1 className=\{styles\.title\}>\{titulo\}<\/h1>\s*\{protagonista === "lote" && loteId && nombreLote && <BotonNuclear tipo="lote" id=\{loteId\} \/>\}\s*\{protagonista === "finca" && fincaId && nombreFinca && <BotonNuclear tipo="finca" id=\{fincaId\} \/>\}/.test(kr) && (kr.match(/<BotonNuclear /g) ?? []).length === 2);
 }
@@ -85,9 +87,9 @@ const rail = lee("src/lib/panel/consoles.ts");
 
 // ── 5. El aviso al productor ────────────────────────────────────────────────
 {
-  const lote = avisoAlProductor({ tipo: "lote", nombre: "Castillo 2026", codigo: "CTC-L-7E360302", lotes: [], productor: "Wilson" });
-  const finca = avisoAlProductor({ tipo: "finca", nombre: "La Primavera", codigo: "CTC-F-46D04770", lotes: ["A", "B"], productor: null });
-  check("dice qué se retiró, que fue CTCx de forma unilateral y por razones del sistema, y que no tiene que hacer nada", /Castillo 2026/.test(lote.nota) && /CTC-L-7E360302/.test(lote.nota) && /unilateral/.test(lote.nota) && /razones del sistema/.test(lote.nota) && /no requiere ninguna acción/.test(lote.nota) && /unilateral/.test(lote.text) && /razones del sistema/.test(lote.text));
+  const lote = avisoAlProductor({ tipo: "lote", nombre: "Castillo 2026", codigo: "CTC-L-4MZ2P0K7Q", lotes: [], productor: "Wilson" });
+  const finca = avisoAlProductor({ tipo: "finca", nombre: "La Primavera", codigo: "CTC-F-4MZ2P", lotes: ["A", "B"], productor: null });
+  check("dice qué se retiró, que fue CTCx de forma unilateral y por razones del sistema, y que no tiene que hacer nada", /Castillo 2026/.test(lote.nota) && /CTC-L-4MZ2P0K7Q/.test(lote.nota) && /unilateral/.test(lote.nota) && /razones del sistema/.test(lote.nota) && /no requiere ninguna acción/.test(lote.nota) && /unilateral/.test(lote.text) && /razones del sistema/.test(lote.text));
   check("el de una finca nombra sus lotes", /sus 2 lotes \(A, B\)/.test(finca.nota) && /una finca/.test(finca.subject) && /^Hola,/.test(finca.text));
   check("el aviso NO lleva el motivo interno (la función ni lo recibe)", !/motivo/i.test(lote.nota + lote.text) && avisoAlProductor.length === 1 && !servidor.includes("motivo: o.motivo,\n    lotes"));
   check("la nota queda en el hilo del productor SIN lote ni finca (ya no existen)", (() => { const i = servidor.indexOf('.from("producer_comm_log").insert({'); const bloque = servidor.slice(i, servidor.indexOf("});", i)); return i > 0 && bloque.includes("producer_id: archivo.producer_id,") && bloque.includes("note: aviso.nota,") && !/lot_id|finca_id/.test(bloque); })());

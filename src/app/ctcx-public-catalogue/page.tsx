@@ -28,7 +28,8 @@ export const generateMetadata = superficieConOverrides({
   title: "CTCx Public Catalogue · Find my Lot",
   description:
     // V5.202 (owner, 2026-10-10): el Dossier público dice la región, no la finca.
-    "Escriba la referencia de su lote (los ocho caracteres después de CTC-L-) y vea su Dossier público: región, variedad, proceso, altura, la taza en CVA y el grado CTCx. Los lotes que llegaron al Catálogo Activo.",
+    // V6.23 (TAR-149): sin explicar el formato del código («the syntax is not public»).
+    "Escriba el código de su lote (lo que va después de CTC-L-) y vea su Dossier público: región, variedad, proceso, altura, la taza en CVA y el grado CTCx. Los lotes que llegaron al Catálogo Activo.",
   siteName: "Colombian Trading Company",
   image: "ctcx-public-catalogue.jpg",
   imageAlt:

@@ -89,6 +89,7 @@ const T: Record<
     cta: string;
     portalAria: string;
     fmlEtiqueta: string;
+    fmlMarcador: string;
     fmlBuscar: string;
     fmlError: string;
     aria: string;
@@ -108,9 +109,11 @@ const T: Record<
     tail: "El catálogo completo se ve dentro de Cherry Picked.",
     cta: "Ver el catálogo completo",
     portalAria: "Find my Lot: el catálogo público de CTCx, donde cada lote se busca por su referencia",
-    fmlEtiqueta: "Referencia del lote: los ocho caracteres después de CTC-L-",
+    // V6.23 (TAR-149): sin explicar el formato (ni cuántos caracteres, ni cuáles).
+    fmlEtiqueta: "Código del lote: lo que va después de CTC-L-",
+    fmlMarcador: "código",
     fmlBuscar: "Buscar el lote",
-    fmlError: "Son ocho caracteres (cifras y letras de la A a la F) después de «CTC-L-».",
+    fmlError: "No reconocemos ese código: cópielo tal como aparece después de «CTC-L-».",
     aria: "Vistazo al Catálogo Activo de CTC",
     dossier: "Ver el Dossier del lote",
     proximamente: "Próximamente",
@@ -127,9 +130,10 @@ const T: Record<
     tail: "The full catalogue lives inside Cherry Picked.",
     cta: "See the full catalogue",
     portalAria: "Find my Lot: the CTCx public catalogue, where each lot is found by its reference",
-    fmlEtiqueta: "Lot reference: the eight characters after CTC-L-",
+    fmlEtiqueta: "Lot code: what follows CTC-L-",
+    fmlMarcador: "code",
     fmlBuscar: "Find the lot",
-    fmlError: "It is eight characters (digits and letters A to F) after «CTC-L-».",
+    fmlError: "We do not recognise that code: copy it exactly as it appears after «CTC-L-».",
     aria: "A peek at the CTC Active Catalogue",
     dossier: "See the lot dossier",
     proximamente: "Coming soon",
@@ -146,9 +150,10 @@ const T: Record<
     tail: "Der vollständige Katalog liegt in Cherry Picked.",
     cta: "Den ganzen Katalog ansehen",
     portalAria: "Find my Lot: der öffentliche CTCx-Katalog, in dem jedes Los über seine Referenz gefunden wird",
-    fmlEtiqueta: "Losreferenz: die acht Zeichen nach CTC-L-",
+    fmlEtiqueta: "Loscode: was nach CTC-L- folgt",
+    fmlMarcador: "Code",
     fmlBuscar: "Los suchen",
-    fmlError: "Es sind acht Zeichen (Ziffern und Buchstaben A bis F) nach «CTC-L-».",
+    fmlError: "Diesen Code erkennen wir nicht: Übernehmen Sie ihn genau so, wie er nach «CTC-L-» steht.",
     aria: "Ein Blick in den aktiven Katalog von CTC",
     dossier: "Los-Dossier ansehen",
     proximamente: "Demnächst",
@@ -353,9 +358,11 @@ function Tarjeta({
 
 /**
  * «Find my Lot» en el pie de la cinta (V5.199, owner 2026-10-10: «En la página de CTCx, KR y CP debe haber mención de "Find my
- * Lot" para ir a esta herramienta, con la cual debo escribir solo los 8 dígitos después de "CTC-L-"»). El acceso al portal y,
- * al lado, el campo con el prefijo FIJO: quien busca escribe los ocho caracteres y llega al Dossier público del lote. La navegación
+ * Lot" para ir a esta herramienta, con la cual debo escribir solo los […] dígitos después de "CTC-L-"»). El acceso al portal y,
+ * al lado, el campo con el prefijo FIJO: quien busca escribe lo que va detrás y llega al Dossier público del lote. La navegación
  * es ABSOLUTA contra la casa matriz (`PORTAL_HREF`): el portal solo responde en `www` y esta cinta vive en siete hosts.
+ * V6.23 (TAR-149): la referencia es el código GUARDADO del lote; ningún texto ni el marcador dicen cómo se arma («the syntax is not
+ * public»). `normalizaReferencia` acepta el código de hoy y, hasta el 30.06.2027, las 3 referencias viejas del catálogo Japan Pioneers.
  */
 function FindMyLot({ lang }: { lang: SneakPeekLang }) {
   const t = T[lang];
@@ -394,7 +401,7 @@ function FindMyLot({ lang }: { lang: SneakPeekLang }) {
           autoComplete="off"
           autoCapitalize="characters"
           spellCheck={false}
-          placeholder="XXXXXXXX"
+          placeholder={t.fmlMarcador}
           aria-label={t.fmlEtiqueta}
           aria-invalid={malo}
           aria-describedby={malo ? idError : undefined}

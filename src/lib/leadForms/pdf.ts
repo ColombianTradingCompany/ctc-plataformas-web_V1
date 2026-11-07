@@ -354,8 +354,10 @@ export async function pdfDeConfirmacion(lead: LeadDeEvento, opts: OpcionesDelPdf
   if (refs.length) {
     respuestas.push([
       t.lotes,
-      refs.map((code) => {
-        const lote = opts.lotes?.find((q) => q.code === code);
+      // V6.23 (TAR-149): con la referencia de HOY; un código viejo guardado se empareja por `guardado` (lo trae `lotesDeInteres`).
+      refs.map((guardado) => {
+        const lote = opts.lotes?.find((q) => (q.guardado ?? q.code) === guardado);
+        const code = lote?.code ?? guardado;
         return lote?.name ? `${lote.name} · ${code}` : code;
       }),
     ]);

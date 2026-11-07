@@ -201,7 +201,8 @@ export const COLORES = [
 export const colorPara = (seed: string) =>
   COLORES[[...seed].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORES.length];
 
-/** Código público de la ficha, derivado del id (como supplierCode en KR). */
+/** Código público de la ficha del Directorio, derivado del id. (No es un código CTC: los de productor, finca y lote se guardan
+ *  desde la V6.23, TAR-149, y nunca se derivan.) */
 export const codigoDirectorio = (id: string) =>
   "DC-" + id.replace(/-/g, "").slice(0, 8).toUpperCase();
 

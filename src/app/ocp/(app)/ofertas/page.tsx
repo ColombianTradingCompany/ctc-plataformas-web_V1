@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
-import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
+import { codigoCtc } from "@/components/kaffetal-regal/data";
 import { formatCop } from "@/lib/arena/inscriptions";
 import { calendarioDeLaEdicion, edicionProxima, edicionVigente, hoyEnColombia, lecturaDeMercado } from "@/lib/pvc/servicio";
 import { fechaLimitePvcSiguiente } from "@/lib/trato/modalidades";
@@ -46,6 +46,8 @@ const STATUS_LABEL: Record<string, string> = {
 type FincaMin = { name: string; municipio: string | null; departamento: string | null; pais: string | null; altitude_m: number | null };
 type LotRow = {
   id: string;
+  /** V6.23 (TAR-149): el código guardado del lote (las colas solo traen lotes con código). */
+  public_code: string | null;
   name: string;
   grade: string | null;
   producer_id: string;
@@ -88,8 +90,10 @@ export default async function OcpOfertasPage() {
   const [{ data: lotsRaw }, { data: offersRaw }, { data: liveContractsRaw }, { data: decisionesRaw }, edicion] = await Promise.all([
     service
       .from("lots")
-      .select("id, name, grade, producer_id, ficha_variedad, ficha_proceso, ficha_altitud_m, harvest_from, harvest_to, datasheet, fincas(name, municipio, departamento, pais, altitude_m)")
+      .select("id, public_code, name, grade, producer_id, ficha_variedad, ficha_proceso, ficha_altitud_m, harvest_from, harvest_to, datasheet, fincas(name, municipio, departamento, pais, altitude_m)")
       .eq("stage", "galardonado")
+      // V6.23 (TAR-149): un lote sin finca no tiene código y no se lista (owner: «This Lot does not show up listed»).
+      .not("public_code", "is", null)
       .order("created_at", { ascending: false }),
     service
       .from("lot_offers")
@@ -225,7 +229,7 @@ export default async function OcpOfertasPage() {
       proceso: [ds.base_processing || l.ficha_proceso, ds.special_processing].filter(Boolean).join(" + ") || null,
       altitud: l.ficha_altitud_m ?? finca?.altitude_m ?? null,
       cosecha: l.harvest_from && l.harvest_to ? `${fecha(l.harvest_from)} a ${fecha(l.harvest_to)}` : null,
-      referencia: ctcLotReferenceShort(l.id),
+      referencia: codigoCtc(l.public_code),
       existencia: existenciaDe(l.id),
     };
   };
@@ -241,7 +245,7 @@ export default async function OcpOfertasPage() {
           {l.name}
         </Link>
         <p className={styles.meta} style={{ margin: "2px 0 6px" }}>
-          {name(l.producer_id)} · {finca?.name ?? "—"} · <span className="mono">{ctcLotReferenceShort(l.id)}</span> ·{" "}
+          {name(l.producer_id)} · {finca?.name ?? "—"} · <span className="mono">{codigoCtc(l.public_code)}</span> ·{" "}
           <b style={{ color: `var(--t-${l.grade})` }}>{l.grade}</b>
         </p>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "flex-start" }}>

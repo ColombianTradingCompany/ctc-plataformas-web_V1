@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { supplierCode } from "@/components/kaffetal-regal/data";
+import { codigoCtc } from "@/components/kaffetal-regal/data";
 import { ActionForm } from "@/components/panel/ActionForm";
 import { crearProveedorDesacoplado, entregarCuentaDesacoplada } from "@/lib/asistencia/actions";
 import { GESTION_LABEL, type Gestion } from "@/lib/asistencia/desacoplado";
@@ -18,7 +18,8 @@ export const dynamic = "force-dynamic";
 // Lo que se cobra, se oferta o se compra a un desacoplado NO vive aquí: viaja con la 4b y el brief de Compras.
 
 type ProfileRow = { id: string; full_name: string | null; email: string | null; phone: string | null };
-type PPRow = { profile_id: string; company_name: string | null; department: string | null; gestion: Gestion | null; gestion_desde: string | null; entregado_at: string | null };
+// V6.23 (TAR-149): `codigo` = el CTC-P- guardado del productor (nunca calculado del id).
+type PPRow = { profile_id: string; company_name: string | null; department: string | null; gestion: Gestion | null; gestion_desde: string | null; entregado_at: string | null; codigo: string | null };
 
 const fecha = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" }) : "—");
 
@@ -26,7 +27,7 @@ export default async function DesacopladoPage() {
   const service = createServiceRoleClient();
   const { data: ppRaw } = await service
     .from("producer_profiles")
-    .select("profile_id, company_name, department, gestion, gestion_desde, entregado_at")
+    .select("profile_id, company_name, department, gestion, gestion_desde, entregado_at, codigo")
     .not("gestion", "is", null)
     .order("gestion_desde", { ascending: false });
   const gestionados = (ppRaw as PPRow[] | null) ?? [];
@@ -82,7 +83,7 @@ export default async function DesacopladoPage() {
                   <Link href={`/ocp/kr?productor=${g.profile_id}`} style={{ fontWeight: 700, textDecoration: "none", color: "var(--ink)" }}>
                     {p?.full_name || "Productor"}
                   </Link>
-                  <span className={styles.badge}>Pasaporte · {supplierCode(g.profile_id)}</span>
+                  <span className={styles.badge}>Pasaporte · {codigoCtc(g.codigo)}</span>
                   {g.gestion && <span className={`${styles.badge} ${g.gestion === "desacoplado" ? styles.badgeWarn : styles.badgeGood}`}>{GESTION_LABEL[g.gestion]}</span>}
                 </div>
                 <p className={styles.meta}>

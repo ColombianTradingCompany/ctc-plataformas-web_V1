@@ -4,8 +4,8 @@
 // finca o su lote, la página acepta además:
 //
 //   ?trabajo=<uuid>                         abre ese trabajo guardado — solo si es de la cuenta que entra
-//   ?finca=<uuid | CTC-F-XXXXXXXX>          prellena un trabajo nuevo con una finca DE la cuenta
-//   ?lote=<uuid | CTC-L-XXXXXXXX>           ídem con un lote de la cuenta (trae su finca)
+//   ?finca=<uuid | CTC-F-XXXYY>             prellena un trabajo nuevo con una finca DE la cuenta
+//   ?lote=<uuid | CTC-L-XXXYYZZZZ>          ídem con un lote de la cuenta (trae su finca)
 //   ?volver=/herramientas/…                 la vuelta, con la lista blanca de siempre (`vueltaSegura`)
 //
 // Este módulo es PURO (sin red, sin base): LEE y VALIDA la forma de los parámetros y ARMA el prellenado a partir de un
@@ -18,9 +18,13 @@
 //     es la misma acción, hecha por la persona dueña.)
 //   · No dice si un trabajo, una finca o un lote ajeno EXISTE: el aviso es el mismo para «no existe» y «no es suyo».
 //   · No prellena un trabajo GUARDADO: si llegan `?trabajo=` y `?lote=` juntos, manda el trabajo tal como se dejó.
+//
+// V6.23 (TAR-149): las referencias son los códigos GUARDADOS de la casa (`fincas.codigo`, `lots.public_code`), que asigna la base.
+// Aquí solo se lee su FORMA; el servidor los busca por su columna. Un código viejo de 8 hexadecimales ya no se entiende (la
+// herramienta abre vacía con su aviso de siempre), tampoco el de las segundas puertas del catálogo: esas son del portal público.
 
 import { CARPETAS_HERRAMIENTAS, type DatoFinca, type DatoLote, type EntradaHerramienta } from "./carpetas";
-import { normalizaReferencia } from "../catalogo/codigoPublico";
+import { ALFABETO, esReferencia, normalizaReferencia } from "../catalogo/codigoPublico";
 import { vueltaSegura } from "./volverSeguro";
 import { origenDeSuperficie, ROOT_DOMAIN } from "../red/subdominios";
 
@@ -64,12 +68,34 @@ export function esUuid(v: string): boolean {
   return UUID_RE.test(v);
 }
 
-/** `CTC-F-XXXXXXXX` (o los ocho hexadecimales sueltos) → canónica, o `null`. Misma forma que `fincaCode()` de KR. */
+/** Caracteres del código de una finca sin el prefijo (V6.23: los 3 del productor + 2 propios). */
+const LARGO_FINCA = 5;
+
+/** Las letras que se confunden con cifras al leer una etiqueta, y lo que se quiso decir. Es la regla CONGELADA de `AMBIGUOS` en
+ *  `codigoPublico.ts` (ninguna de las tres está en el alfabeto, así que nunca tapa un carácter legítimo). */
+const AMBIGUOS: Record<string, string> = { O: "0", I: "1", L: "1" };
+
+/**
+ * `CTC-F-XXXYY` (o los 5 caracteres sueltos) → canónica, o `null`. Perdona lo mismo que `normalizaReferencia`: minúsculas,
+ * espacios, guiones, el prefijo escrito o ausente y O, I, L leídas como cifras. No perdona largos ni caracteres fuera del alfabeto.
+ */
 export function normalizaReferenciaFinca(entrada: string): string | null {
   if (typeof entrada !== "string") return null;
   let limpio = entrada.toUpperCase().replace(/[^0-9A-Z]/g, "");
-  if (limpio.startsWith("CTCF") && limpio.length === 12) limpio = limpio.slice(4);
-  return /^[0-9A-F]{8}$/.test(limpio) ? `CTC-F-${limpio}` : null;
+  // El prefijo se quita ANTES de leer los ambiguos (como en `normalizaReferencia`).
+  if (limpio.startsWith("CTCF") && limpio.length === 4 + LARGO_FINCA) limpio = limpio.slice(4);
+  if (limpio.length !== LARGO_FINCA) return null;
+  const cuerpo = [...limpio].map((c) => AMBIGUOS[c] ?? c).join("");
+  return [...cuerpo].every((c) => ALFABETO.includes(c)) ? `CTC-F-${cuerpo}` : null;
+}
+
+/**
+ * `CTC-L-XXXYYZZZZ` (o los 9 caracteres sueltos) → canónica, o `null`. Es `normalizaReferencia` del portal SIN sus segundas
+ * puertas: un código viejo de 8 hexadecimales no es un lote de la cuenta aquí, aunque el portal todavía lo redirija.
+ */
+export function normalizaReferenciaLote(entrada: string): string | null {
+  const r = normalizaReferencia(entrada);
+  return r && esReferencia(r) ? r : null;
 }
 
 function refDe(v: string | null, normaliza: (s: string) => string | null): RefRegistro | null | undefined {
@@ -95,7 +121,7 @@ export function leerEntrada(sp: Record<string, Param>): EntradaTaller {
 
   const f = refDe(uno(sp.finca), normalizaReferenciaFinca);
   if (f === null || (f === undefined && sp.finca !== undefined)) avisos.push(AVISO.finca);
-  const l = refDe(uno(sp.lote), normalizaReferencia);
+  const l = refDe(uno(sp.lote), normalizaReferenciaLote);
   if (l === null || (l === undefined && sp.lote !== undefined)) avisos.push(AVISO.lote);
 
   return { volver, trabajo, finca: f ?? null, lote: l ?? null, avisos };
@@ -105,7 +131,8 @@ export function leerEntrada(sp: Record<string, Param>): EntradaTaller {
 
 export type FincaPrefill = {
   id: string;
-  referencia: string;
+  /** V6.23 (TAR-149): `fincas.codigo`, el código GUARDADO (CTC-F-XXXYY); `null` si la fila no lo tiene. */
+  referencia: string | null;
   nombre: string;
   municipio: string | null;
   departamento: string | null;
@@ -114,7 +141,9 @@ export type FincaPrefill = {
   altitud_m: number | null;
 };
 export type LotePrefill = {
-  referencia: string;
+  /** V6.23 (TAR-149): `lots.public_code`, el código GUARDADO (CTC-L-XXXYYZZZZ); `null` = lote sin finca, sin código (su dueño
+   *  lo abre por su uuid: un prellenado no escribe campos en blanco). */
+  referencia: string | null;
   nombre: string;
   variedad: string | null;
   proceso: string | null;
@@ -177,7 +206,7 @@ function valorFinca(f: FincaPrefill, d: DatoFinca): string {
     case "id":
       return f.id;
     case "referencia":
-      return f.referencia;
+      return f.referencia ?? "";
     case "nombre":
       return f.nombre;
     case "municipio":
@@ -195,7 +224,7 @@ function valorLote(l: LotePrefill, d: DatoLote): string {
   const f = l.finca;
   switch (d) {
     case "referencia":
-      return l.referencia;
+      return l.referencia ?? "";
     case "nombre":
       return l.nombre;
     case "variedad":

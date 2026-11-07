@@ -61,7 +61,9 @@ el buzón real, distinto del correo de acceso, que puede ser una etiqueta sin bu
 `estudio-contenido@ctcexport.com`, **`modulos`** jsonb — V5.81: `{evaluacion, procesamiento}`, lo conmuta el owner en
 `/bcp/socios/[nodo]`). Solo lee: `profiles`. Lo que el Estudio produce vive en `coffeed_*` (charter `coffeed`). El Centro de
 Calidad **escribe** `lot_evaluations` (procedencia `q_grader_batch`, `pending`; con `batch_id`, `escala`, `rueda`, `uid_anonimo`)
-por Server Action con el service role — la tabla es de `consolas`. Ningún otro nodo tiene tablas operativas todavía.
+por Server Action con el service role — la tabla es de `consolas`. **V6.23 (TAR-149)**: el Centro ve y escribe el código CIEGO de la
+inscripción (`arena_inscriptions.codigo_ciego`, `QG-` + 5 al azar; las de antes conservan el de su bolsa) como `uid_anonimo`, nunca
+el código del lote, que es jerárquico (contrato «Los códigos CTC» de `ALINEACION` §1; `qa-codigos-ctc` §4). Ningún otro nodo tiene tablas operativas todavía.
 
 ## Guardianes
 

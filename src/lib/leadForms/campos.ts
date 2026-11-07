@@ -7,6 +7,9 @@
 //
 // Nombres en inglés y en snake_case, como los pide la especificación (son los que ve el owner al exportar). Las preguntas
 // ADICIONALES de la casa van en `extra` (jsonb) con claves conocidas: un formulario futuro puede traer otras sin migrar.
+// V6.23: su único import es `codigoPublico`, también PURO (sin imports): la referencia de un lote se reconoce con la regla del portal.
+
+import { normalizaReferencia } from "@/lib/catalogo/codigoPublico";
 
 /** El bucket PRIVADO de las fotos de tarjeta y su tope (el mismo `file_size_limit` del bucket). Viven aquí, en el módulo puro,
  *  porque un archivo "use server" solo puede exportar funciones async y los leen el cliente y el servidor. */
@@ -48,8 +51,6 @@ export const CLAVES_EXTRA = ["grades_interest", "purchase_format", "certificatio
 export const VOLUMEN_KG_MIN = 100;
 export const VOLUMEN_KG_MAX = 10000;
 export const VOLUMEN_KG_PASO = 100;
-/** V6.5: una referencia pública de lote («CTC-L-» + 8 caracteres del alfabeto del portal). */
-export const REFERENCIA_RE = /^CTC-L-[0-9A-HJKMNP-TV-Z]{8}$/;
 export type ClaveExtra = (typeof CLAVES_EXTRA)[number];
 
 /** V6.4 (owner, 2026-10-11): el formulario va en DOS pasos. El paso 1 es «Quién eres» + «Qué sigue» y se guarda al enviarlo; el paso 2
@@ -261,7 +262,10 @@ export function limpiarExtra(v: unknown, tipo: string, wants: readonly string[] 
     if (Number.isFinite(kg) && kg >= VOLUMEN_KG_MIN) out.volume_kg = Math.min(VOLUMEN_KG_MAX, Math.round(kg / VOLUMEN_KG_PASO) * VOLUMEN_KG_PASO);
   }
   if (Array.isArray(raw.lots_of_interest)) {
-    const lotes = [...new Set(raw.lots_of_interest.filter((x): x is string => typeof x === "string").map((x) => x.trim().toUpperCase()).filter((x) => REFERENCIA_RE.test(x)))].slice(0, 12);
+    // V6.5: solo referencias de lote, canónicas y sin repetidos. V6.23 (TAR-149): con la MISMA regla del portal
+    // (`normalizaReferencia`, ya no una expresión aparte que decía 8 caracteres): el código guardado de hoy o, hasta el 30.06.2027,
+    // una de las 3 referencias viejas con segunda puerta (el catálogo Japan Pioneers). Lo demás se cae en silencio.
+    const lotes = [...new Set(raw.lots_of_interest.filter((x): x is string => typeof x === "string").map((x) => normalizaReferencia(x)).filter((x): x is string => !!x))].slice(0, 12);
     if (lotes.length) out.lots_of_interest = lotes;
   }
   if (wants.includes("other")) {
@@ -413,8 +417,10 @@ export function csvDeLeads(filas: readonly LeadDeEvento[]): string {
 
 // ── V6.5 (owner, 2026-10-12) ─────────────────────────────────────────────────────────────────────────────────────────────────
 /** Un lote de la vitrina tal como lo ofrece el formulario («¿qué lote te llamó la atención?»): la referencia pública, el nombre
- *  GENERADO por la vista (nunca la finca) y el grado. Los carga `vitrina.ts` (servidor) de la misma cinta pública. */
-export type LoteParaElegir = { code: string; name: string; grade: string };
+ *  GENERADO por la vista (nunca la finca) y el grado. Los carga `vitrina.ts` (servidor) de la misma cinta pública.
+ *  V6.23 (TAR-149): `guardado` = el código tal como quedó en el lead (`extra.lots_of_interest`), cuando no es el de hoy: un lead
+ *  guardado antes del paso C lleva el código VIEJO, y `lotesDeInteres` lo traduce por el libro; `code` es siempre el de hoy. */
+export type LoteParaElegir = { code: string; name: string; grade: string; guardado?: string };
 
 /** Los valores del paso 2 de un lead, en la forma que prellena el formulario (modo complemento y la vuelta por la cookie). */
 export type ValoresDelPaso2 = {

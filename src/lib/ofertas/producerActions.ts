@@ -17,7 +17,7 @@ import { fleteDeLaFila } from "@/lib/trato/flete";
 import { guardarExistencia } from "@/lib/kaffetal/existencia";
 import { sendTransactionalEmail } from "@/lib/email/leadEmails";
 import { origenDeSuperficie } from "@/lib/red/subdominios";
-import { ctcLotReference, supplierCode } from "@/components/kaffetal-regal/data";
+import { codigosDeLaFila, codigosVigentes, columnasDeCodigos, COLUMNAS_DE_CODIGOS, type CodigosGuardados } from "@/lib/trato/codigosDelContrato";
 import { cargarOferta, crearContratoDeOferta, operadorDeLaAsistida, requireProducer, validarAceptacion, type Aceptable, type DeclaracionDelProductor } from "./aceptacion";
 
 // ── La respuesta del productor a una oferta (V5.18 · con declaración desde la V5.83 · por ventanas desde la V5.175) ──────────
@@ -57,8 +57,21 @@ function validarFirma(firma: FirmaDeAceptacion | undefined):
   return { ok: true, nombre, documento: { tipo: documento.tipo, numero: documento.numero }, bytes };
 }
 
+// ── V6.23 (owner, 2026-11-06, TAR-149) · los códigos del texto ────────────────────────────────────────────────────────────
+// El texto cita el código GUARDADO del lote (y, en el provisional, el de la cuenta): un contrato que nace lo lee de las filas
+// (`codigosVigentes`) y lo guarda en el MISMO insert que su huella (`Nacimiento.codigos`, `aceptacion.ts`); uno que ya existe se rearma SIEMPRE con los que guardó (`codigosDeLaFila`), para que
+// su huella siga coincidiendo. Un lote sin finca no tiene código: no firma hasta que se le asigne la finca.
+const SIN_CODIGO_DE_LOTE = "Este lote aún no tiene código CTC: asígnele su finca en la Ficha del lote y vuelva a intentarlo.";
+const SIN_CODIGO_DE_CUENTA = "La cuenta del productor aún no tiene código CTC: escríbale a CTCx para revisarla.";
+const SIN_CODIGOS_DEL_CONTRATO = "A este contrato le falta el código de su lote o de su cuenta: escríbale a CTCx para revisarlo.";
+
 /** Los datos del texto de una aceptación (los mismos que la pantalla le enseñó a quien acepta). */
-function datosDeAceptacion(a: Aceptable, quien: { nombre: string; documento: string | null } | null, provisional: DatosDelContrato["provisional"]): DatosDelContrato {
+function datosDeAceptacion(
+  a: Aceptable,
+  quien: { nombre: string; documento: string | null } | null,
+  provisional: DatosDelContrato["provisional"],
+  loteReferencia: string,
+): DatosDelContrato {
   const { offer, cond } = a;
   return {
     tipo: a.esSelection ? "selection" : "cherry_picked",
@@ -72,7 +85,7 @@ function datosDeAceptacion(a: Aceptable, quien: { nombre: string; documento: str
     productorNombre: quien?.nombre ?? "—",
     productorDocumento: quien?.documento ?? null,
     loteNombre: a.lot?.name ?? "—",
-    loteReferencia: ctcLotReference(offer.lot_id),
+    loteReferencia,
     grado: offer.grade_snapshot ?? "—",
     copKg: a.copKgTrato,
     declaradoKg: a.lockedKg ?? 0,
@@ -127,6 +140,9 @@ export async function respondToOffer(
   const val = await validarAceptacion(service, auth.userId, offer, declaracion);
   if (!val.ok) return { ok: false, message: val.message };
   const a = val.a;
+  // V6.23 (TAR-149): el código del lote que cita el texto, leído de su fila (antes de subir la firma: sin código no hay contrato).
+  const codigos = await codigosVigentes(service, offer.lot_id, auth.userId);
+  if (!codigos.lote) return { ok: false, message: SIN_CODIGO_DE_LOTE };
 
   // V5.168 · LA FIRMA DEL PRODUCTOR: aceptar es firmar. Se valida y se guarda ANTES de crear el contrato (si la imagen no se
   // puede guardar, no nace un contrato sin firma). El texto firmado es el que arma `textoDelContrato` con estos mismos datos —
@@ -134,7 +150,7 @@ export async function respondToOffer(
   const f = validarFirma(firma);
   if (!f.ok) return { ok: false, message: f.message };
   const documento = documentoDelFirmante(f.documento.tipo, f.documento.numero);
-  const texto = textoDelContrato(datosDeAceptacion(a, { nombre: f.nombre, documento }, null));
+  const texto = textoDelContrato(datosDeAceptacion(a, { nombre: f.nombre, documento }, null, codigos.lote));
   const huella = createHash("sha256").update(texto, "utf8").digest("hex");
   // V5.190: en una SESIÓN ASISTIDA la firma con la mano es del productor, presente; queda sellada con el operador de consola.
   const operador = await operadorDeLaAsistida(auth.userId);
@@ -155,6 +171,7 @@ export async function respondToOffer(
     provisional: null,
     textoVersion: CONTRATO_VERSION,
     textoSha256: huella,
+    codigos,
     actor: auth.userId,
     notaAuditoria: `Nace de la oferta ${offer.kind} aceptada y FIRMADA por el productor (${f.nombre}, texto ${CONTRATO_VERSION}, sha256 ${huella.slice(0, 12)}…)${operador ? ` · firmada en una sesión asistida (operador de consola ${operador.userId})` : ""} · ${formatCop(a.copKgTrato)}/kg${a.lockedKg ? ` · ${a.lockedKg} kg` : ""}${ventanaDe(a)}.`,
   });
@@ -198,15 +215,20 @@ export async function aceptarProvisionalmente(offerId: string, declaracion: Decl
   const val = await validarAceptacion(service, auth.userId, offer, declaracion);
   if (!val.ok) return { ok: false, message: val.message };
   const a = val.a;
+  // V6.23 (TAR-149): el texto provisional cita el código del lote y el de la cuenta, leídos de sus filas.
+  const codigos = await codigosVigentes(service, offer.lot_id, auth.userId);
+  if (!codigos.lote) return { ok: false, message: SIN_CODIGO_DE_LOTE };
+  if (!codigos.productor) return { ok: false, message: SIN_CODIGO_DE_CUENTA };
   // La fecha del texto sale del MISMO instante que se guarda (`provisional_at` = a.now): la página del contrato la recalcula de ahí.
-  const provisional = { responsable: nombre, fecha: diaEnColombia(a.now), cuenta: supplierCode(auth.userId), ratificado: null };
-  const texto = textoDelContrato(datosDeAceptacion(a, null, provisional));
+  const provisional = { responsable: nombre, fecha: diaEnColombia(a.now), cuenta: codigos.productor, ratificado: null };
+  const texto = textoDelContrato(datosDeAceptacion(a, null, provisional, codigos.lote));
   const huella = createHash("sha256").update(texto, "utf8").digest("hex");
   const r = await crearContratoDeOferta(service, a, {
     firmante: null,
     provisional: { responsable: nombre, operador: operador.userId },
     textoVersion: CONTRATO_VERSION,
     textoSha256: huella,
+    codigos,
     actor: operador.userId,
     notaAuditoria: `Aceptado PROVISIONALMENTE por CTCx en una sesión asistida, en favor del productor (grupo de Pioneros) · responsable: ${nombre} · operador de consola ${operador.userId} · vigente desde ya, sin firma del productor (la ratifica él) · texto ${CONTRATO_VERSION}, sha256 ${huella.slice(0, 12)}… · ${formatCop(a.copKgTrato)}/kg · ${a.lockedKg} kg${ventanaDe(a)}.`,
   });
@@ -240,10 +262,11 @@ export async function aceptarProvisionalmente(offerId: string, declaracion: Decl
 // una sesión asistida: es su firma), puede ajustar la cantidad declarada —dentro del mínimo, de lo que le queda al lote y de lo que ya
 // se vendió o retiró— y el texto pasa a nombrarlo con su nombre y su documento, con la fecha de la ratificación y la huella nueva.
 
-type FilaRatificable = FilaDelContrato & { lots: { name: string; producer_id: string } | { name: string; producer_id: string }[] | null };
+// V6.23 (TAR-149): con los códigos que guardó su texto (`texto_codigo_lote` / `texto_codigo_productor`): la ratificación los REUSA.
+type FilaRatificable = FilaDelContrato & CodigosGuardados & { lots: { name: string; producer_id: string } | { name: string; producer_id: string }[] | null };
 
 async function cargarRatificable(service: ReturnType<typeof createServiceRoleClient>, userId: string, contractId: string): Promise<{ ok: true; c: FilaRatificable; lote: { name: string; producer_id: string } } | { ok: false; message: string }> {
-  const { data } = await service.from("purchase_contracts").select(COLUMNAS_DEL_CONTRATO).eq("id", contractId).maybeSingle();
+  const { data } = await service.from("purchase_contracts").select(`${COLUMNAS_DEL_CONTRATO}, ${COLUMNAS_DE_CODIGOS}`).eq("id", contractId).maybeSingle();
   const c = data as FilaRatificable | null;
   const lote = c ? ((Array.isArray(c.lots) ? c.lots[0] : c.lots) ?? null) : null;
   if (!c || !lote || lote.producer_id !== userId) return { ok: false, message: "Contrato no encontrado." };
@@ -281,11 +304,14 @@ export async function previsualizarRatificacion(contractId: string): Promise<Vis
   const r = await cargarRatificable(service, auth.userId, contractId);
   if (!r.ok) return r;
   const lim = await limitesDeRatificacion(service, r.c);
+  // V6.23 (TAR-149): los códigos con que nació el texto provisional, no los de hoy.
+  const codigos = await codigosDeLaFila(service, r.c, auth.userId);
+  if (!codigos.lote || !codigos.productor) return { ok: false, message: SIN_CODIGOS_DEL_CONTRATO };
   // El nombre y el documento los escribe el productor en la pantalla (los que trae la fila, «—» y null, se pisan allí).
   const datos: Omit<DatosDelContrato, "productorNombre" | "productorDocumento"> = datosDeLaFila(r.c, {
     loteNombre: r.lote.name,
-    loteReferencia: ctcLotReference(r.c.lot_id),
-    cuenta: supplierCode(auth.userId),
+    loteReferencia: codigos.lote,
+    cuenta: codigos.productor,
     firmante: null,
     ratificadoEl: hoyEnColombia(),
   });
@@ -312,6 +338,9 @@ export async function ratificarContrato(contractId: string, declaradoKg: number,
   if (!v.ok) return { ok: false, message: v.motivo };
   const f = validarFirma(firma);
   if (!f.ok) return { ok: false, message: f.message };
+  // V6.23 (TAR-149): la ratificación reusa los códigos con que nació el texto provisional (y los vuelve a guardar con la huella).
+  const codigos = await codigosDeLaFila(service, c, auth.userId);
+  if (!codigos.lote || !codigos.productor) return { ok: false, message: SIN_CODIGOS_DEL_CONTRATO };
   const documento = documentoDelFirmante(f.documento.tipo, f.documento.numero);
   const sinRetiro = !v.conRetiro;
   const retiroLibrePct = sinRetiro ? 0 : c.ventana_tipo === "ciclo" ? RETIRO_LIBRE_CICLO_PCT : RETIRO_LIBRE_EXTENDIDA_PCT;
@@ -321,8 +350,8 @@ export async function ratificarContrato(contractId: string, declaradoKg: number,
   const texto = textoDelContrato(
     datosDeLaFila(c, {
       loteNombre: lote.name,
-      loteReferencia: ctcLotReference(c.lot_id),
-      cuenta: supplierCode(auth.userId),
+      loteReferencia: codigos.lote,
+      cuenta: codigos.productor,
       firmante: { nombre: f.nombre, documento },
       ratificadoEl,
       declaradoKg: kg,
@@ -351,6 +380,7 @@ export async function ratificarContrato(contractId: string, declaradoKg: number,
       retiro_libre_pct: retiroLibrePct,
       contract_text_version: CONTRATO_VERSION,
       contract_text_sha256: huella,
+      ...columnasDeCodigos(codigos),
     })
     .eq("id", c.id)
     .is("ratificado_at", null)

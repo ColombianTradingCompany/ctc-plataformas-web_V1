@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { InfoEditorBody, type InfoEditorProps } from "./InfoModal";
-import { supplierCode } from "./data";
 import styles from "./FichaView.module.css";
 
 // ── V5.107 (owner, 2026-09-30): «en KR, editar Información general también debe tener pantalla completa» ─────────
@@ -27,7 +26,8 @@ export function InfoView({ onBack, ...editor }: { onBack: () => void } & InfoEdi
             <Image className={styles.krl} src="/images/shared/kaffetal-regal-logo.png" alt="Kaffetal Regal" width={1254} height={1254} />
             <span>
               <span className={styles.name}>Información general</span>
-              <span className={styles.by}>CTCx · Pasaporte del Productor{editor.userId ? ` · ${supplierCode(editor.userId)}` : ""}</span>
+              {/* V6.23 (TAR-149): el código GUARDADO del productor (`producer_profiles.codigo`). */}
+              <span className={styles.by}>CTCx · Pasaporte del Productor{editor.codigoProductor ? ` · ${editor.codigoProductor}` : ""}</span>
             </span>
           </a>
           <button className="btn btn-sm" style={{ marginLeft: "auto" }} onClick={onBack}>

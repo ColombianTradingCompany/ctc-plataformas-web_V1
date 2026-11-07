@@ -76,8 +76,8 @@ cambia el otro, y `qa-taller-entrada-check` comprueba que cada campo declarado e
 |---|---|---|---|---|
 | `volver` | ruta relativa que empieza por `/herramientas` | destino del botón «Volver» de la cinta | todos | `/herramientas/taller` (la rejilla) |
 | `trabajo` | el id de un trabajo guardado (uuid de `tool_sessions`) | abre ESE trabajo, tal como se dejó | el dueño del trabajo, en una herramienta con memoria que su cuenta abre | el Home Menu, con un aviso; ajeno y borrado dan el mismo |
-| `finca` | `CTC-F-XXXXXXXX` (la referencia de KR) o su uuid | prellena un trabajo NUEVO (o «Abrir sin guardar») con esa finca | el productor dueño de la finca | la herramienta abre vacía, con un aviso |
-| `lote` | `CTC-L-XXXXXXXX` (la referencia de KR) o su uuid | prellena un trabajo nuevo con el lote **y su finca** | el productor dueño del lote | ídem |
+| `finca` | `CTC-F-XXXYY` (el código GUARDADO de la finca, `fincas.codigo`, V6.23) o su uuid | prellena un trabajo NUEVO (o «Abrir sin guardar») con esa finca | el productor dueño de la finca | la herramienta abre vacía, con un aviso |
+| `lote` | `CTC-L-XXXYYZZZZ` (el código GUARDADO del lote, `lots.public_code`, V6.23) o su uuid; un código viejo, ni siquiera el de una segunda puerta del portal, no vale | prellena un trabajo nuevo con el lote **y su finca** | el productor dueño del lote | ídem |
 
 Reglas que no cambian con la herramienta:
 
@@ -99,21 +99,21 @@ Reglas que no cambian con la herramienta:
 
 | Herramienta | `id` | Nivel | Parámetros | Qué prellenan `?finca=` / `?lote=` | Ejemplo |
 |---|---|---|---|---|---|
-| Calculadora de mermas · Detallada | `mermas-ctc` | default | `volver` · `trabajo` · `finca` · `lote` | «Notas para el reporte»: la línea del lote (referencia · nombre · variedad · proceso · finca) o la de la finca (nombre · municipio, departamento · altitud) | `/taller/mermas-ctc?lote=CTC-L-XXXXXXXX` |
-| CTCx Coffee Datasheet Tool | `coffee-datasheet` | default | `volver` · `trabajo` · `finca` · `lote` | El lote en curso: nombre; Caracterización Extrínseca: país, región, municipio, finca, altitud; B1: variedad y proceso. Solo lo que esté vacío | `/taller/coffee-datasheet?lote=CTC-L-XXXXXXXX` |
-| Lector de Cromatografía de Suelo | `cromatografia-suelo` | **plus** | `volver` · `trabajo` · `finca` · `lote` | «Su finca» (y con ella departamento, municipio y altitud, como si la persona la eligiera); variedad del lote | `/taller/cromatografia-suelo?finca=CTC-F-XXXXXXXX` |
-| Ficha de café verde | `green-datasheet` | default | `volver` · `trabajo` · `finca` · `lote` | Nombre del producto (el del lote), finca, departamento, municipio y altitud (msnm) | `/taller/green-datasheet?lote=CTC-L-XXXXXXXX` |
+| Calculadora de mermas · Detallada | `mermas-ctc` | default | `volver` · `trabajo` · `finca` · `lote` | «Notas para el reporte»: la línea del lote (referencia · nombre · variedad · proceso · finca) o la de la finca (nombre · municipio, departamento · altitud) | `/taller/mermas-ctc?lote=CTC-L-XXXYYZZZZ` |
+| CTCx Coffee Datasheet Tool | `coffee-datasheet` | default | `volver` · `trabajo` · `finca` · `lote` | El lote en curso: nombre; Caracterización Extrínseca: país, región, municipio, finca, altitud; B1: variedad y proceso. Solo lo que esté vacío | `/taller/coffee-datasheet?lote=CTC-L-XXXYYZZZZ` |
+| Lector de Cromatografía de Suelo | `cromatografia-suelo` | **plus** | `volver` · `trabajo` · `finca` · `lote` | «Su finca» (y con ella departamento, municipio y altitud, como si la persona la eligiera); variedad del lote | `/taller/cromatografia-suelo?finca=CTC-F-XXXYY` |
+| Ficha de café verde | `green-datasheet` | default | `volver` · `trabajo` · `finca` · `lote` | Nombre del producto (el del lote), finca, departamento, municipio y altitud (msnm) | `/taller/green-datasheet?lote=CTC-L-XXXYYZZZZ` |
 | Disco Agtron | `agtron` | default | `volver` · `trabajo` · `finca` · `lote` | El nombre del trabajo nuevo | `/taller/agtron?trabajo=<id del trabajo>` |
-| Calculadora logística de café | `calculadora-logistica` | default | ídem | El nombre del trabajo nuevo | `/taller/calculadora-logistica?lote=CTC-L-XXXXXXXX` |
-| Rueda del Café | `catacion` | default | ídem | El nombre del trabajo nuevo | `/taller/catacion?lote=CTC-L-XXXXXXXX` |
-| Calculadora CoGS · Café verde | `cogs-verde` | **plus** | ídem | El nombre del trabajo nuevo | `/taller/cogs-verde?lote=CTC-L-XXXXXXXX` |
+| Calculadora logística de café | `calculadora-logistica` | default | ídem | El nombre del trabajo nuevo | `/taller/calculadora-logistica?lote=CTC-L-XXXYYZZZZ` |
+| Rueda del Café | `catacion` | default | ídem | El nombre del trabajo nuevo | `/taller/catacion?lote=CTC-L-XXXYYZZZZ` |
+| Calculadora CoGS · Café verde | `cogs-verde` | **plus** | ídem | El nombre del trabajo nuevo | `/taller/cogs-verde?lote=CTC-L-XXXYYZZZZ` |
 | Cool PDF | `cool-pdf` | default | ídem | El nombre del trabajo nuevo | `/taller/cool-pdf?trabajo=<id del trabajo>` |
-| Costo de empaque por kilo | `costo-empaque` | default | ídem | El nombre del trabajo nuevo | `/taller/costo-empaque?lote=CTC-L-XXXXXXXX` |
+| Costo de empaque por kilo | `costo-empaque` | default | ídem | El nombre del trabajo nuevo | `/taller/costo-empaque?lote=CTC-L-XXXYYZZZZ` |
 | La fórmula de calidad del café | `formula-calidad` | default | ídem | El nombre del trabajo nuevo | `/taller/formula-calidad` |
 | Gulliver · 7 días a Tokio | `gulliver` | **plus** | ídem | El nombre del trabajo nuevo | `/taller/gulliver?trabajo=<id del trabajo>` |
-| Coffee Varieties Map | `mapa-variedades` | default | ídem | El nombre del trabajo nuevo | `/taller/mapa-variedades?lote=CTC-L-XXXXXXXX` |
-| Calculadora de mermas · Rápida | `mermas-rapida` | default | ídem | El nombre del trabajo nuevo | `/taller/mermas-rapida?lote=CTC-L-XXXXXXXX` |
-| Generador de códigos QR | `qr` | default | ídem | El nombre del trabajo nuevo | `/taller/qr?lote=CTC-L-XXXXXXXX` |
+| Coffee Varieties Map | `mapa-variedades` | default | ídem | El nombre del trabajo nuevo | `/taller/mapa-variedades?lote=CTC-L-XXXYYZZZZ` |
+| Calculadora de mermas · Rápida | `mermas-rapida` | default | ídem | El nombre del trabajo nuevo | `/taller/mermas-rapida?lote=CTC-L-XXXYYZZZZ` |
+| Generador de códigos QR | `qr` | default | ídem | El nombre del trabajo nuevo | `/taller/qr?lote=CTC-L-XXXYYZZZZ` |
 | El viaje del café | `viaje-cafe` | default | ídem | El nombre del trabajo nuevo | `/taller/viaje-cafe` |
 | Defectos del Café | `defectos-cafe` | default | `volver` | — (sin memoria: ni trabajos ni prellenado) | `/taller/defectos-cafe?volver=/herramientas/taller` |
 | Navegador de Incoterms® 2020 | `incoterms` | **plus** *(fila de `tools` creada y nivel puesto por el owner el 2026-10-29; lo cuenta ColombianTradingCompany/ctc-plataformas-web_V1#32)* | `volver` | — (sin memoria) | `/taller/incoterms` |
@@ -250,6 +250,11 @@ nº 2 y nº 3 viven dentro del empaque y las avisa como «no comprobadas en la e
 cualquiera de esos campos se ve en las tres superficies al instante — sin desplegar.
 
 ## Pendientes
+
+- **V6.23 · el prellenado por el código guardado (TAR-149)**. Hecho: `?finca=CTC-F-XXXYY` y `?lote=CTC-L-XXXYYZZZZ` se buscan por la
+  columna (`fincas.codigo`, `lots.public_code`) en la MISMA consulta que el filtro del dueño, y solo prellenan si sale exactamente una
+  fila (`entradaServidor.ts`); `normalizaReferenciaLote` no abre segundas puertas; un registro sin código no escribe la referencia
+  en ningún campo. Vectores nuevos en `qa-taller-entrada` §4 y en `qa-tools-prefill-conformance` (manual, con Playwright).
 
 - **F-01 / F-02 · una cuenta, una fuente** (2026-11-06, decisiones del owner del 6 nov: el cotizador de lotes abre el archivo público;
   manda la V19; la fuente es el repo). **Hecho (etapa 1):** los dos módulos puros y los dos guardianes de paridad (Mapa de código, Guardianes);

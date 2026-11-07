@@ -27,6 +27,7 @@
 import { readFileSync } from "node:fs";
 import { dossierPublico } from "../src/lib/kaffetal/dossierPublico.ts";
 import { textoDeMarcaPublica } from "../src/lib/kaffetal/blindaje.ts";
+import { PUERTA_HASTA, hoyEnBogota } from "../src/lib/catalogo/codigoPublico.ts";
 import { IMAGEN_DE_ORIGEN_POR_DEFECTO } from "../src/lib/imagenDeOrigen.ts";
 import { fotosAprobadasEnOrden, fotosPublicasDelLote } from "../src/lib/catalogo/fotosPublicas.ts";
 
@@ -65,7 +66,7 @@ const finca = {
 const completo = {
   lang: "es",
   lot: {
-    id: "lote-1", name: "PRIVADO_lote", reference: "CTC-L-ABCD1234", publicCode: "PRIVADO_codigo_viejo", productName: "PRIVADO_producto", species: "Arabica",
+    id: "lote-1", name: "PRIVADO_lote", reference: "CTC-L-4MZ2P0K7Q", publicCode: "PRIVADO_codigo_viejo", productName: "PRIVADO_producto", species: "Arabica",
     // V5.202 (nodo final): la variedad y el proceso los ESCRIBE el productor: una variedad que no es canónica («Castillo PRIVADO_finca»,
     // como si alguien escribiera la finca junto a la variedad) y un proceso especial libre no salen; «gesha» sale con su nombre canónico.
     variety: "Gesha", variedades: [{ nombre: "gesha", pct: 60 }, { nombre: "Castillo PRIVADO_finca", pct: 40 }], process: "Lavado + PRIVADO_proceso_especial", altitudeM: 1794, harvestFrom: null, harvestTo: null, archetype: null,
@@ -98,8 +99,10 @@ const completo = {
   qrSvg: "<svg/>",
   generatedOn: "2026-10-10T00:00:00Z",
   blindaje: { puedeImprimir: false, marca: "PRIVADO_marca_con_el_productor" },
+  // V6.23 (TAR-149): el aviso de la segunda puerta pasa, pero SOLO sus dos campos.
+  puertaDeLegado: { anterior: "CTC-L-7E360302", hasta: "2027-06-30", PRIVADO_extra: "PRIVADO_extra" },
 };
-const OPC = { url: "/ctcx-public-catalogue/CTC-L-ABCD1234", volver: "/ctcx-public-catalogue", ctcx: null, nombre: "PUBLICO_nombre" };
+const OPC = { url: "/ctcx-public-catalogue/CTC-L-4MZ2P0K7Q", volver: "/ctcx-public-catalogue", ctcx: null, nombre: "PUBLICO_nombre" };
 
 // ── 1. Ni un centinela privado sobrevive a la proyección ───────────────────
 {
@@ -111,7 +114,8 @@ const OPC = { url: "/ctcx-public-catalogue/CTC-L-ABCD1234", volver: "/ctcx-publi
   check("ni lo que el productor declaró (no se exhibe su diferencia con lo medido)", !json.includes("99.11") && !json.includes("999") && pub.lot.declarado.noSabe.length === 0);
   check("y sí sale lo que debe salir: nombre público, región, la foto aprobada, taza, lectura, certificado sin número, el mapa regional", ["PUBLICO_nombre", "PUBLICO_departamento", "PUBLICO_foto_lote_1", "PUBLICO_mapa_regional", "PUBLICO_comentario", "PUBLICO_perfil", "PUBLICO_lectura", "PUBLICO_certificado", "PUBLICO_sello", "PUBLICO_b3"].every((k) => json.includes(k)));
   check("UNA sola finca (la que se enseña), sin el código interno", pub.fincas.length === 1 && pub.fincas[0].code === "" && pub.fincas[0].id === "");
-  check("el documento sabe que es público: su dirección y la vuelta a «Find my Lot»", pub.publico?.url === "/ctcx-public-catalogue/CTC-L-ABCD1234" && pub.publico.volver === "/ctcx-public-catalogue");
+  check("el documento sabe que es público: su dirección y la vuelta a «Find my Lot»", pub.publico?.url === "/ctcx-public-catalogue/CTC-L-4MZ2P0K7Q" && pub.publico.volver === "/ctcx-public-catalogue");
+  check("V6.23 · la segunda puerta pasa con sus DOS campos (el código anterior y hasta cuándo), nada más", JSON.stringify(pub.puertaDeLegado) === JSON.stringify({ anterior: "CTC-L-7E360302", hasta: "2027-06-30" }) && dossierPublico({ ...completo, puertaDeLegado: null }, OPC).puertaDeLegado === null);
 
   // V5.202: lo que llevaba al productor.
   const f = pub.fincas[0];
@@ -130,9 +134,9 @@ const OPC = { url: "/ctcx-public-catalogue/CTC-L-ABCD1234", volver: "/ctcx-publi
   // La marca de agua PÚBLICA (V5.202): «necesita mantener el Watermark».
   const m = pub.blindaje.marca;
   check("NO se imprime (owner, V5.201: se consulta en línea)", pub.blindaje.puedeImprimir === false);
-  check("V5.202 · lleva marca de agua: la PÚBLICA, con el catálogo, la referencia y «Se compra solo a través de CTCx»", m.includes("CTCx Public Catalogue") && m.includes("CTC-L-ABCD1234") && m.includes("Se compra solo a través de CTCx") && m.includes("ctcexport.com") && m.includes("2026-10-10") && !m.includes("PRIVADO_"));
+  check("V5.202 · lleva marca de agua: la PÚBLICA, con el catálogo, la referencia y «Se compra solo a través de CTCx»", m.includes("CTCx Public Catalogue") && m.includes("CTC-L-4MZ2P0K7Q") && m.includes("Se compra solo a través de CTCx") && m.includes("ctcexport.com") && m.includes("2026-10-10") && !m.includes("PRIVADO_"));
   const en = dossierPublico({ ...completo, lang: "en" }, OPC).blindaje.marca;
-  check("V5.202 · y en inglés, «Sourced only through CTCx»", en.includes("CTCx Public Catalogue") && en.includes("CTC-L-ABCD1234") && en.includes("Sourced only through CTCx"));
+  check("V5.202 · y en inglés, «Sourced only through CTCx»", en.includes("CTCx Public Catalogue") && en.includes("CTC-L-4MZ2P0K7Q") && en.includes("Sourced only through CTCx"));
 }
 
 // ── 1b. Las fotos del lote: una, ninguna (V5.202) ──────────────────────────
@@ -146,14 +150,18 @@ const OPC = { url: "/ctcx-public-catalogue/CTC-L-ABCD1234", volver: "/ctcx-publi
   const json = JSON.stringify(ninguna);
   check("V5.202 · SIN fotos del lote: la portada no cae a la foto de la finca ni a la imagen del grado del dossier completo", ninguna.fincas[0].fotoUrl === null && ninguna.imagenGrado.porDefecto === true && !json.includes("PRIVADO_foto_finca") && !json.includes("PRIVADO_imagen_grado"));
   const sinNombre = dossierPublico(completo, { ...OPC, nombre: "  " });
-  check("V5.202 · sin nombre público, el título es la referencia (nunca el nombre del lote)", sinNombre.lot.name === "CTC-L-ABCD1234" && sinNombre.lot.productName === null);
+  check("V5.202 · sin nombre público, el título es la referencia (nunca el nombre del lote)", sinNombre.lot.name === "CTC-L-4MZ2P0K7Q" && sinNombre.lot.productName === null);
 }
 
 // ── 1c. La marca pública no tiene dónde poner un nombre (V5.202) ────────────
 {
   const fuente = lee("src/lib/kaffetal/blindaje.ts");
   check("V5.202 · `textoDeMarcaPublica` recibe SOLO la referencia, la fecha y el idioma", fuente.includes('export function textoDeMarcaPublica(o: { referencia: string; fecha: Date | string; lang?: "es" | "en" }): string {'));
-  check("V5.202 · y una «referencia» que no tiene forma de referencia no entra en la marca", !textoDeMarcaPublica({ referencia: "PRIVADO_Finca Los Pinos", fecha: "2026-10-10", lang: "es" }).includes("PRIVADO_") && textoDeMarcaPublica({ referencia: "CTC-L-016DF280", fecha: "2026-10-10", lang: "es" }) === "CTCx Public Catalogue · CTC-L-016DF280 · Se compra solo a través de CTCx · ctcexport.com · 2026-10-10");
+  check("V5.202 · y una «referencia» que no tiene forma de referencia no entra en la marca", !textoDeMarcaPublica({ referencia: "PRIVADO_Finca Los Pinos", fecha: "2026-10-10", lang: "es" }).includes("PRIVADO_") && textoDeMarcaPublica({ referencia: "CTC-L-4MZ2P0K7Q", fecha: "2026-10-10", lang: "es" }) === "CTCx Public Catalogue · CTC-L-4MZ2P0K7Q · Se compra solo a través de CTCx · ctcexport.com · 2026-10-10");
+  // V6.23 (TAR-149): una referencia VIEJA solo entra si es una segunda puerta y sigue abierta (un PDF del catálogo ya enviado). La
+  // comprobación sigue valiendo después del 30.06.2027: desde ese día la puerta cerrada también se cae.
+  const puerta = textoDeMarcaPublica({ referencia: "CTC-L-016DF280", fecha: "2026-10-10", lang: "es" }).includes("CTC-L-016DF280");
+  check("V6.23 · una referencia vieja sin segunda puerta no entra; una puerta, solo mientras esté abierta", !textoDeMarcaPublica({ referencia: "CTC-L-ABCD1234", fecha: "2026-10-10", lang: "es" }).includes("CTC-L-ABCD1234") && puerta === (hoyEnBogota() <= PUERTA_HASTA));
 }
 
 // ── 2. D3.1: un lote de CTCx Selection se enseña a nombre de CTCx, sin nada de la finca ──
@@ -177,7 +185,8 @@ const OPC = { url: "/ctcx-public-catalogue/CTC-L-ABCD1234", volver: "/ctcx-publi
   const PUROS = ["./blindaje", "@/lib/imagenDeOrigen", "@/lib/catalogo/nombrePublico", "@/lib/catalogo/vitrinaVista"];
   const valores = [...fuente.matchAll(/^import (?!type )[^\n]* from "([^"]+)";/gm)].map((x) => x[1]);
   const importsDe = (r) => [...lee(r).matchAll(/^import (?!type )[^\n]* from "([^"]+)";/gm)].map((x) => x[1]);
-  check(`es un módulo PURO (tipos, la marca, la imagen por defecto, el nombre público y la vista)${valores.length ? ` (${valores.join(", ")})` : ""}`, valores.every((x) => PUROS.includes(x)) && !/^import (?!type )/m.test(lee("src/lib/kaffetal/blindaje.ts")) && !/^import /m.test(lee("src/lib/imagenDeOrigen.ts")) && !/^import /m.test(lee("src/lib/catalogo/vitrinaVista.ts")));
+  // V6.23 (TAR-149): la marca importa UN valor, el normalizador de la referencia (`codigoPublico.ts`), que a su vez no importa nada.
+  check(`es un módulo PURO (tipos, la marca, la imagen por defecto, el nombre público y la vista)${valores.length ? ` (${valores.join(", ")})` : ""}`, valores.every((x) => PUROS.includes(x)) && JSON.stringify(importsDe("src/lib/kaffetal/blindaje.ts")) === JSON.stringify(["@/lib/catalogo/codigoPublico"]) && !/^import /m.test(lee("src/lib/catalogo/codigoPublico.ts")) && !/^import /m.test(lee("src/lib/imagenDeOrigen.ts")) && !/^import /m.test(lee("src/lib/catalogo/vitrinaVista.ts")));
   check("y el nombre público solo importa datos (la Ficha, el Mapa de Variedades y su emparejador, sin imports de valor)", JSON.stringify(importsDe("src/lib/catalogo/nombrePublico.ts").sort()) === JSON.stringify(["@/components/kaffetal-regal/ficha/fichaData", "@/lib/catacion/variedades", "@/lib/catacion/variedadesDatos"]) && importsDe("src/components/kaffetal-regal/ficha/fichaData.ts").length === 0 && importsDe("src/lib/catacion/variedadesDatos.ts").length === 0 && JSON.stringify(importsDe("src/lib/catacion/variedades.ts")) === JSON.stringify(["./variedadesDatos"]));
   check("queda escrito por qué es lista blanca", lee("src/lib/kaffetal/dossierPublico.ts").includes("LISTA BLANCA, NO NEGRA"));
 }
@@ -195,10 +204,13 @@ const OPC = { url: "/ctcx-public-catalogue/CTC-L-ABCD1234", volver: "/ctcx-publi
   check("V5.202 · y con el nombre PÚBLICO de la vista (no el del lote)", vitrina.includes("return dossierPublico(datos, { url: rutaDelLote(referencia), volver: RUTA_PORTAL, ctcx, nombre: fila.nombre });"));
   check("V5.202 · la foto de la tarjeta es del LOTE: la vitrina ni lee la foto de perfil de la finca", !sinComentarios(vitrina).includes("profile_photo_asset_id") && vitrina.includes('.select("datasheet->b4_files_foto")'));
   check("V5.202 · y es la primera que CTCx APROBÓ (la misma regla que la portada del Dossier público)", vitrina.includes("const [asset] = await fotosPublicasDelLote(service, fila.lot_id, fotosB4(fila2?.b4_files_foto));"));
-  check("un código viejo (CTCX) se resuelve contra la vista pública del catálogo, NUNCA contra `lots`", vitrina.includes('anon.from("public_lot_catalog").select("lot_id").eq("public_code", codigo)') && !/from\("lots"\)[\s\S]{0,200}public_code/.test(vitrina));
+  // V6.23 (TAR-149): un código ANTERIOR solo abre por una segunda puerta del libro `codigos_ctc`, y la referencia nueva tiene que
+  // asomar por la vista; ni una consulta a `lots` por su código.
+  check("un código anterior se resuelve SOLO por una segunda puerta del libro y la vista, NUNCA contra `lots`", vitrina.includes('.from("codigos_ctc")') && vitrina.includes('.gte("puerta_hasta", hoyEnBogota())') && vitrina.includes("return (await filaDeLaVitrina(nueva)) ? nueva : null;") && !/from\("lots"\)[\s\S]{0,200}public_code/.test(vitrina));
   check("la página del portal pinta el dossier que devuelve la compuerta, o 404", pagina.includes("const datos = await dossier(c.codigo, lang);\n  if (!datos) notFound();\n  return <DossierCtcx d={datos} />;"));
   check("y no toca la base por su cuenta", !/createServiceRoleClient|createEphemeralClient|\.from\("/.test(sinComentarios(pagina)));
-  check("la ficha técnica vieja (`/docs/ficha/[lotId]`) ya no sirve nada: redirige al dossier de un lote de la vitrina, o 404", vieja.includes("const fila = await filaDeLaVitrina(ctcLotReference(lotId));") && vieja.includes("if (!fila || fila.lot_id !== lotId) notFound();") && vieja.includes("permanentRedirect(") && !/datasheet|createServiceRoleClient/.test(sinComentarios(vieja)));
+  // V6.23 (TAR-149): ya no deriva la referencia del id: busca la fila de la vitrina por `lot_id` (cliente anónimo) y lee su código.
+  check("la ficha técnica vieja (`/docs/ficha/[lotId]`) ya no sirve nada: redirige al dossier de un lote de la vitrina, o 404", vieja.includes('.select("lot_id, referencia:codigo").eq("lot_id", lotId.toLowerCase())') && vieja.includes("const anon = createEphemeralClient();") && vieja.includes("if (!fila || !fila.referencia || fila.lot_id !== lotId.toLowerCase()) notFound();") && vieja.includes("permanentRedirect(") && !/datasheet|createServiceRoleClient|ctcLotReference/.test(sinComentarios(vieja)));
   check("la proyección de la ficha (`fichaPublica.ts`) y el paquete (`PaquetePublico.tsx`) se retiraron", !(await import("node:fs")).existsSync(new URL("../src/lib/catalogo/fichaPublica.ts", import.meta.url)) && !(await import("node:fs")).existsSync(new URL("../src/components/catalogo/PaquetePublico.tsx", import.meta.url)));
 
   // El cargador en modo público no lee al productor ni arma el mapa de los cafetales, y el pin regional va al departamento.
@@ -219,8 +231,10 @@ const OPC = { url: "/ctcx-public-catalogue/CTC-L-ABCD1234", volver: "/ctcx-publi
   check("V5.202 · cargador público: de las fotos del lote, solo las que CTCx APROBÓ y como mucho UNA (la portada)", datos.includes("const fotosDelLote = publico ? (await fotosPublicasDelLote(service, lot.id, b4)).slice(0, 1) : b4.slice(0, 2);"));
   check("V5.202 · cargador público: ni firma la foto de perfil de las fincas ni la pone en la finca", datos.includes("...(publico ? [] : origen.map((x) => x.f.profile_photo_asset_id))") && datos.includes("fotoUrl: !publico && f.profile_photo_asset_id ?"));
   check("V5.202 · cargador: las fotos del LOTE viajan aparte (las únicas que enseña el público)", datos.includes("fotosDelLote: fotosDelLote.map((id) => urls.get(id)).filter((u): u is string => !!u),"));
-  check("el QR del dossier lleva a la dirección pública SOLO si el lote está en la vitrina", datos.includes('service.from("public_lot_vitrina").select("referencia").eq("lot_id", lotId).maybeSingle()') && datos.includes("const catalogoUrl = referenciaPublica ? `${SITIO}${rutaDelLote(referenciaPublica)}` : null;"));
-  check("el Dossier del productor sigue con SU marca (referencia, su nombre, «Uso exclusivo con CTCx»)", datos.includes("marca: textoDeMarca({ referencia: ctcLotReference(lot.id), productor: producer?.fullName ?? null, fecha: new Date(), lang }),"));
+  check("el QR del dossier lleva a la dirección pública SOLO si el lote está en la vitrina", datos.includes('service.from("public_lot_vitrina").select("referencia:codigo").eq("lot_id", lotId).maybeSingle()') && datos.includes("const catalogoUrl = referenciaPublica ? `${SITIO}${rutaDelLote(referenciaPublica)}` : null;"));
+  // V6.23 (TAR-149): la referencia de la marca es el código GUARDADO del lote (un lote sin finca no tiene, y la marca va sin él).
+  check("el Dossier del productor sigue con SU marca (referencia, su nombre, «Uso exclusivo con CTCx»)", datos.includes('marca: textoDeMarca({ referencia: lot.public_code ?? "", productor: producer?.fullName ?? null, fecha: new Date(), lang }),') && !datos.includes("ctcLotReference"));
+  check("V6.23 · la segunda puerta del Dossier sale del libro: el código anterior del lote, no vigente y con la puerta abierta hoy", datos.includes('.from("codigos_ctc")') && /\.gte\("puerta_hasta", hoyEnBogota\(\)\)/.test(datos));
 
   // V5.202: si una foto no se puede preparar, en público NO sale la URL firmada del original (trae su EXIF y el uid en la ruta).
   const { fotoParaImprimir } = await import("../src/lib/kaffetal/dossierDatos.ts");

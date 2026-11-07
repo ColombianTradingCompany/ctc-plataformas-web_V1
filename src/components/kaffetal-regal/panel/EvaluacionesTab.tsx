@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { GRADES, ctcLotReference, ctcLotReferenceShort, type Finca, type Lot } from "../data";
+import { GRADES, type Finca, type Lot } from "../data";
+import { codigoDelLote } from "../codigoDelLote";
 import { lotEudrStatus } from "@/lib/eudr";
 import { EVALUATION_FEE_COP, formatCop, dueFor } from "@/lib/arena/inscriptions";
 import { SUBVENCION_KR_PCT } from "@/lib/arena/subvencion";
@@ -112,7 +113,8 @@ export function EvaluacionesTab({
               Total a pagar hoy: <b style={{ fontSize: 20 }}>{formatCop(totalDueCop)}</b>
               {paymentsDue.length > 1 && <> por {paymentsDue.length} facturas</>}
             </div>
-            <DondePagar carril={carril} referencia={paymentsDue.map((l) => ctcLotReferenceShort(l.id)).join(" · ")} />
+            {/* V6.23 (TAR-149): la referencia del pago es el código GUARDADO de cada lote (el productor ve el suyo, no el de la cata). */}
+            <DondePagar carril={carril} referencia={paymentsDue.map((l) => codigoDelLote(l.codigo)).join(" · ")} />
             <ol style={{ margin: "2px 0 0 18px", fontSize: 13, color: "var(--muted)", lineHeight: 1.8 }}>
               <li>Pague el <b>total de su factura de cobro</b> — una transferencia por factura.</li>
               <li>Escriba en el mensaje del pago la <b>referencia de su lote</b>.</li>
@@ -182,7 +184,7 @@ function CardHead({ lot, onVerLotes }: { lot: Lot; onVerLotes?: () => void }) {
         )}
       </div>
       <div className="mono" style={{ fontSize: 11, color: "var(--muted)", overflowWrap: "anywhere", margin: "3px 0 2px" }}>
-        <CtcRef id={lot.id} />
+        <CtcRef codigo={lot.codigo} />
       </div>
       <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 8 }}>Finca: {lot.finca}</div>
     </>
@@ -247,7 +249,7 @@ function SolicitudCard({
       emitidaAt: ins.facturaEmitidaAt,
       productor: productorNombre,
       lote: lot.name,
-      codigoLote: ctcLotReferenceShort(lot.id),
+      codigoLote: codigoDelLote(lot.codigo),
       tarifaCop: ins.amountCop,
       subvencionPct: ins.discountPct,
       totalCop: ins.amountDueCop,
@@ -344,7 +346,7 @@ function SolicitudCard({
             status={ins.status}
             facturaRef={ins.facturaRef}
             facturaEmitidaAt={ins.facturaEmitidaAt}
-            referencia={ctcLotReferenceShort(lot.id)}
+            referencia={codigoDelLote(lot.codigo)}
             carril={carril}
             onVerFactura={verFactura}
           />
@@ -371,7 +373,7 @@ function SolicitudCard({
 
           {!lot.sampleShippedAt ? (
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
-              <button className="btn btn-sm" onClick={() => openShipmentInstructions(ctcLotReference(lot.id), ctcLotReferenceShort(lot.id))}>
+              <button className="btn btn-sm" onClick={() => openShipmentInstructions(codigoDelLote(lot.codigo), codigoDelLote(lot.codigo))}>
                 Instrucciones de envío (2 kg · contra entrega)
               </button>
               <button

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
-import { ctcLotReference, fincaCode } from "@/components/kaffetal-regal/data";
+import { SIN_CODIGO } from "@/components/kaffetal-regal/data";
 import { ejecutarBorradoNuclear, inventarioNuclear } from "@/lib/ocp/borradoNuclear";
 import { MOTIVO_MINIMO, fraseNuclear, type InventarioNuclear, type TipoNuclear } from "@/lib/ocp/borradoNuclearTexto";
 
@@ -17,16 +17,35 @@ import { MOTIVO_MINIMO, fraseNuclear, type InventarioNuclear, type TipoNuclear }
 
 const esTipo = (v: unknown): v is TipoNuclear => v === "lote" || v === "finca";
 const esUuid = (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
-const codigoDe = (tipo: TipoNuclear, id: string) => (tipo === "lote" ? ctcLotReference(id) : fincaCode(id));
+
+// ── V6.23 (TAR-149) · la frase usa el código GUARDADO ─────────────────────────────────────────────────────────────────
+// El código del lote es `lots.public_code` y el de la finca `fincas.codigo`; nada se deriva del uuid. Un lote sin finca no tiene
+// código: su frase es fija («BORRAR LOTE SIN CÓDIGO») y el archivo lo guarda como «Sin código».
+type Service = ReturnType<typeof createServiceRoleClient>;
+
+/** El código guardado del lote o la finca; null si no tiene (un lote sin finca) o ya no existe. */
+async function codigoGuardado(service: Service, tipo: TipoNuclear, id: string): Promise<string | null> {
+  const { data } =
+    tipo === "lote"
+      ? await service.from("lots").select("public_code").eq("id", id).maybeSingle()
+      : await service.from("fincas").select("codigo").eq("id", id).maybeSingle();
+  const fila = data as { public_code?: string | null; codigo?: string | null } | null;
+  const codigo = (tipo === "lote" ? fila?.public_code : fila?.codigo)?.trim();
+  return codigo || null;
+}
+
+/** La frase de la segunda confirmación: «BORRAR <código>», o la fija del registro sin código. */
+const fraseDe = (tipo: TipoNuclear, codigo: string | null) => (codigo ? fraseNuclear(codigo) : tipo === "lote" ? "BORRAR LOTE SIN CÓDIGO" : "BORRAR FINCA SIN CÓDIGO");
 
 export async function inventarioNuclearAction(tipo: string, id: string): Promise<{ ok: true; inventario: InventarioNuclear; codigo: string; frase: string } | { ok: false; error: string }> {
   const permiso = await permisoDeEscritura("ocp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   if (!esTipo(tipo) || !esUuid(id)) return { ok: false, error: "Petición inválida." };
-  const r = await inventarioNuclear(createServiceRoleClient(), tipo, id);
+  const service = createServiceRoleClient();
+  const r = await inventarioNuclear(service, tipo, id);
   if (!r.ok) return r;
-  const codigo = codigoDe(tipo, id);
-  return { ok: true, inventario: r.inventario, codigo, frase: fraseNuclear(codigo) };
+  const codigo = await codigoGuardado(service, tipo, id);
+  return { ok: true, inventario: r.inventario, codigo: codigo ?? SIN_CODIGO, frase: fraseDe(tipo, codigo) };
 }
 
 export async function borradoNuclearAction(tipo: string, id: string, formData: FormData): Promise<{ ok: true; archivoId: string; avisos: string[] } | { ok: false; error: string }> {
@@ -36,17 +55,19 @@ export async function borradoNuclearAction(tipo: string, id: string, formData: F
 
   const motivo = String(formData.get("motivo") ?? "").trim();
   const frase = String(formData.get("frase") ?? "").trim();
-  const codigo = codigoDe(tipo, id);
+  const service = createServiceRoleClient();
+  const codigo = await codigoGuardado(service, tipo, id);
+  const esperada = fraseDe(tipo, codigo);
   if (motivo.length < MOTIVO_MINIMO) return { ok: false, error: `Escriba el motivo del borrado (al menos ${MOTIVO_MINIMO} caracteres): queda en el archivo.` };
   if (formData.get("entiendo") !== "si") return { ok: false, error: "Marque la casilla: el borrado es irreversible y el productor recibe un aviso." };
-  if (frase !== fraseNuclear(codigo)) return { ok: false, error: `La frase no coincide. Escriba exactamente: ${fraseNuclear(codigo)}` };
+  if (frase !== esperada) return { ok: false, error: `La frase no coincide. Escriba exactamente: ${esperada}` };
 
-  const service = createServiceRoleClient();
   const { data: admin } = await service.from("profiles").select("full_name, email").eq("id", permiso.userId).maybeSingle();
   const r = await ejecutarBorradoNuclear(service, {
     tipo,
     id,
-    codigo,
+    // El archivo exige un código: el guardado, o «Sin código» para el lote sin finca.
+    codigo: codigo ?? SIN_CODIGO,
     adminId: permiso.userId,
     adminNombre: (admin as { full_name: string | null; email: string | null } | null)?.full_name ?? (admin as { email: string | null } | null)?.email ?? null,
     motivo,

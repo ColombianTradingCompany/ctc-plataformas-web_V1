@@ -50,7 +50,8 @@ export default async function OcpHomePage() {
       service.from("arena_inscriptions").select("id", { count: "exact", head: true }),
       service.from("lot_evaluations").select("id", { count: "exact", head: true }).eq("source", "producer_claim").eq("status", "pending"),
       service.from("fincas").select("id", { count: "exact", head: true }),
-      service.from("lots").select("id", { count: "exact", head: true }),
+      // V6.23 (TAR-149): solo los lotes con código; el lote sin finca no cuenta (owner: «This Lot does not show up listed»).
+      service.from("lots").select("id", { count: "exact", head: true }).not("public_code", "is", null),
       service.from("humidity_readings").select("id", { count: "exact", head: true }),
       actividad,
     ]);

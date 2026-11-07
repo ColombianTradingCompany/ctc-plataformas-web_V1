@@ -48,6 +48,8 @@ const sinComentarios = (t) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/
 const LIB = lee("src/lib/catalogo/sneakPeek.ts");
 const VISTA = lee("src/lib/catalogo/vitrinaVista.ts");
 const VITRINA = lee("src/lib/catalogo/vitrina.ts");
+// V6.23 (TAR-149): la vista VIGENTE y `nombre_publico_lote` los rehacen ahora los pasos A y C de los códigos CTC (§2b); las
+// funciones de variedad y proceso siguen siendo las de aquí. Lo de abajo vigila la base de la V5.202 sobre la que se rehicieron.
 // V5.202: la vista vigente es la de `2026-10-10_vitrina_sin_finca.sql` (`create or replace` sobre la de `_vitrina_publica.sql`, tras
 // la revisión del nodo final: antes era drop + create y obligaba a un orden frágil de despliegue). Se miran sus secciones —(0) las
 // funciones, (1) la vitrina, (2) el catálogo, (3) `place_order`— sin los comentarios SQL ni los `comment on …` (cuentan la historia
@@ -95,8 +97,11 @@ check("la vista se llama `public_lot_vitrina` y vive en un módulo sin imports",
 check("la cinta lee ESA vista con el cliente anónimo", LIB.includes("createEphemeralClient()") && LIB.includes("supabase.from(VISTA_VITRINA).select(COLUMNAS_VITRINA)"));
 check("y no lee `lots`, `fincas` ni el catálogo de la tienda", !LIB.includes('.from("lots")') && !LIB.includes('.from("fincas")') && !LIB.includes('.from("lot_listings")') && !LIB.includes('.from("public_transparency_pricing")'));
 {
-  const columnas = /COLUMNAS_VITRINA =\s*"([^"]+)"/.exec(VISTA)?.[1].split(",").map((c) => c.trim()) ?? [];
+  // V6.23 (TAR-149): una columna puede ir con alias PostgREST (`referencia:codigo`): cuenta el nombre con que llega.
+  const crudas = /COLUMNAS_VITRINA =\s*"([^"]+)"/.exec(VISTA)?.[1].split(",").map((c) => c.trim()) ?? [];
+  const columnas = crudas.map((c) => c.split(":")[0]);
   check(`las columnas de la vista son de exhibición (${columnas.length})`, columnas.length >= 15 && columnas.includes("referencia") && columnas.includes("en_catalogo") && columnas.includes("tiene_foto"));
+  check("V6.23 · la referencia se lee de la columna del código GUARDADO (`referencia:codigo`), que vale entre el paso A y el C", crudas.includes("referencia:codigo") && !crudas.includes("referencia"));
   // V5.202: tampoco la finca, el municipio, la vereda ni la historia: llevan al productor.
   const malas = columnas.filter((c) => /datasheet|lat|lng|poligono|polygon|producer|productor|nit|precio|price|fob|kg|ancla|op_pct|phone|email|finca|municipio|vereda|historia/i.test(c));
   check(`y ninguna es privada, comercial ni lleva al productor${malas.length ? ` (${malas.join(", ")})` : ""}`, malas.length === 0);
@@ -146,6 +151,49 @@ check("V5.203 · vista: una compra ANULADA no hace del lote uno de CTCx Selectio
 // para que el código desplegado (el viejo, que pide `finca_name` y `municipio`, y el nuevo) lea la vista antes y después.
 check("V5.202 · vista: `create or replace` (nada de drop) con sus 18 columnas en el MISMO orden, y la lee anon SOLO en lectura, con los MISMOS permisos de la V5.198", SQL.startsWith("create or replace view public.public_lot_vitrina as") && !/drop view/i.test(SQL_TODO) && enOrden(SQL.slice(SQL.indexOf("\nselect\n")), ["as lot_id,", "as referencia,", "as nombre,", "l.grade,", "as variedad,", "as proceso,", "as altitud_m,", "as punto,", "as protocolo,", "as finca_name,", "as municipio,", "f.departamento,", "as pais,", "as ctc_selection,", "as ctcx_imagen_path,", "as en_catalogo,", "as desde,", "as tiene_foto\nfrom"]) && SQL.includes("revoke all on public.public_lot_vitrina from public, anon, authenticated;") && SQL.includes("grant select on public.public_lot_vitrina to anon, authenticated, service_role;") && lee("docs/migraciones/2026-10-10_vitrina_publica.sql").includes("revoke all on public.public_lot_vitrina from public, anon, authenticated;\ngrant select on public.public_lot_vitrina to anon, authenticated, service_role;"));
 check("V5.202 · la migración va en UNA transacción y empieza comprobando lo que necesita (V5.203 `anulada_at` y `lot_fotos_publicas`)", /^begin;$/m.test(SQL_TODO) && /^commit;$/m.test(SQL_TODO) && SQL_TODO.indexOf("begin;") < SQL_TODO.indexOf("create or replace function") && SQL_TODO.includes("column_name = 'anulada_at'") && SQL_TODO.includes("to_regclass('public.lot_fotos_publicas') is null") && SQL_NUEVA.includes("se puede aplicar ANTES o DESPUÉS de desplegar") && SQL_NUEVA.includes("PENDIENTE (limpieza futura"));
+
+// ── 2b. V6.23 (TAR-149) · la vista VIGENTE la definen los pasos A y C de los códigos CTC ─────────────────────────────────────
+// `2026-11-07_codigos_ctc_a_ampliar.sql` (paso A) y `_c_cambiar.sql` (paso C, después del despliegue) rehacen `public_lot_vitrina`
+// con `create or replace` y redefinen `nombre_publico_lote`. Vienen en el formato de `pg_get_viewdef` (mayúsculas, casts, sin
+// `public.`), así que se normalizan antes de mirar. Las garantías de la V5.202 tienen que seguir en las DOS, y además: `codigo` (el
+// código guardado) va AL FINAL, lo que no tiene código no sale, y `referencia` pasa al código nuevo SOLO en el paso C.
+{
+  const MIG_A = lee("docs/migraciones/2026-11-07_codigos_ctc_a_ampliar.sql");
+  const MIG_C = lee("docs/migraciones/2026-11-07_codigos_ctc_c_cambiar.sql");
+  const vistaDe = (t) => {
+    const s = sinComentariosSql(t);
+    const i = s.indexOf("create or replace view public.public_lot_vitrina as");
+    return i < 0 ? "" : s.slice(i, s.indexOf(";", i));
+  };
+  const normaliza = (t) => t.toLowerCase().replace(/::(text|lot_stage|lot_grade|evaluation_status|contract_status)\b/g, "").replace(/\bpublic\./g, "").replace(/\s+/g, " ").replace(/\( /g, "(").replace(/ \)/g, ")");
+  const A = normaliza(vistaDe(MIG_A));
+  const C = normaliza(vistaDe(MIG_C));
+  const REF_VIEJA = `'ctc-l-' || upper("left"(replace(l.id, '-', ''), 8)) as referencia,`;
+  const COLUMNAS_EN_ORDEN = ["as lot_id,", "as referencia,", "as nombre,", "l.grade,", "as variedad,", "as proceso,", "as altitud_m,", "as punto,", "as protocolo,", "null as finca_name,", "null as municipio,", "f.departamento,", "as pais,", "as ctc_selection,", "as ctcx_imagen_path,", "as en_catalogo,", "as desde,", "as tiene_foto,", "l.public_code as codigo from lots l"];
+  for (const [paso, V] of [["A", A], ["C", C]]) {
+    check(`V6.23 · paso ${paso}: la vista se rehace con create or replace, las 18 columnas en el MISMO orden y \`codigo\` AL FINAL`, V.length > 500 && V.startsWith("create or replace view public_lot_vitrina as") && enOrden(V.slice(V.indexOf(" select l.id as lot_id")), COLUMNAS_EN_ORDEN));
+    check(`V6.23 · paso ${paso}: los mismos lotes de la V5.202 y ninguno sin código`, V.endsWith("where l.stage = 'galardonado' and l.grade is not null and l.grade <> 'tyrian' and l.public_code is not null and (ct.lot_id is not null or d.lot_id is not null or s.lot_id is not null)") && V.includes("c.status = 'active' and c.ventana_tipo is not null") && V.includes("cf.estado = 'declarada'") && V.includes("p.anulada_at is null and not p.comprometido") && V.includes("cp.destino = 'selection' and cp.anulada_at is null") && V.includes("join fincas f on f.id = l.finca_id"));
+    const claves = [...V.matchAll(/l\.datasheet -> '([a-z0-9_]+)'/g)].map((m) => m[1]);
+    check(`V6.23 · paso ${paso}: nada lleva al productor (ni finca, ni municipio, ni foto de perfil, ni texto libre del datasheet)`, !/\bf\.(name|municipio|vereda)\b/.test(V) && !V.includes("profile_photo_asset_id") && !/product_name|\bl\.name\b/.test(V) && claves.length >= 2 && claves.every((k) => k === "b4_files_foto") && !/->>/.test(V.replace(/foto\.v ->> 'assetid'|r\.punto ->> 'protocolofuente'/g, "")));
+    check(`V6.23 · paso ${paso}: la foto es solo la del LOTE aprobada (join INTERNO) y el nombre es el generado`, V.includes("cm.lot_id is null and (exists (") && V.includes("join lot_fotos_publicas fp on fp.lot_id = l.id and fp.asset_id = lower(btrim(foto.v ->> 'assetid'))") && !/(left|right|full|cross) join lot_fotos_publicas/.test(V) && V.includes("nombre_publico_lote(l.id, l.datasheet, l.ficha_variedad, l.ficha_proceso, f.departamento, f.pais, l.harvest_to, l.harvest_from, l.created_at) as nombre,") && V.includes("l.ficha_altitud_m / 100 * 100 as altitud_m,"));
+  }
+  check("V6.23 · paso A: `referencia` sigue siendo el código VIEJO (lo lee la V6.22 desplegada); paso C: pasa al guardado", A.includes(` l.id as lot_id, ${REF_VIEJA}`) && C.includes(" l.id as lot_id, l.public_code as referencia,") && !C.includes("replace(l.id"));
+  check("V6.23 · y entre A y C la vista no cambia nada más", A.replace(REF_VIEJA, "l.public_code as referencia,") === C);
+  check("V6.23 · ni un drop, y cada paso en UNA transacción", !/drop view/i.test(MIG_A + MIG_C) && /^begin;$/m.test(MIG_A) && /^commit;$/m.test(MIG_A) && /^begin;$/m.test(MIG_C) && /^commit;$/m.test(MIG_C));
+  // `nombre_publico_lote`: misma firma (las vistas y `place_order` no cambian), mismo cuerpo que la V5.202 y un respaldo que ya no
+  // deriva un código del uuid (TS dice lo mismo en `nombrePublico.ts`).
+  const cuerpoDelNombre = (t) => {
+    const s = sinComentariosSql(t);
+    const i = s.indexOf("create or replace function public.nombre_publico_lote(");
+    const j = s.indexOf("select coalesce(", i);
+    return i < 0 || j < 0 ? "" : s.slice(j, s.indexOf("$", j)).replace(/\s+/g, " ").trim();
+  };
+  const nombreV5202 = cuerpoDelNombre(SQL_NUEVA);
+  const nombreA = cuerpoDelNombre(MIG_A);
+  const sinRespaldo = (t) => t.slice(0, t.lastIndexOf("), '") + 4);
+  check("V6.23 · `nombre_publico_lote`: misma firma, estable y con search_path vacío", MIG_A.includes("create or replace function public.nombre_publico_lote(p_lot_id uuid, p_datasheet jsonb, p_ficha_variedad text, p_ficha_proceso text, p_departamento text, p_pais text, p_harvest_to date, p_harvest_from date, p_creado timestamp with time zone)") && /stable parallel safe\s+set search_path to ''/.test(MIG_A));
+  check("V6.23 · `nombre_publico_lote`: el MISMO cuerpo de la V5.202 y el respaldo «Café de Colombia» (ya no deriva un código del uuid)", nombreA.length > 300 && sinRespaldo(nombreA) === sinRespaldo(nombreV5202) && nombreA.endsWith("), 'Café de Colombia' )") && !nombreA.includes("CTC-L-") && lee("src/lib/catalogo/nombrePublico.ts").includes('"Café de Colombia"'));
+}
 
 // ── 3. Las rutas públicas ────────────────────────────────────────────────────
 check("la ruta sirve el payload de la librería", RUTA_API.includes("getSneakPeekPayload"));

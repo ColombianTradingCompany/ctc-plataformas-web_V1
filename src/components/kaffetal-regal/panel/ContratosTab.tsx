@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { CONTRACT_STATUS_LABEL, GRADES, ctcLotReference, type DespachoDelTrato, type GeneralInfo, type Lot, type ProducerContract, type ProducerOffer } from "../data";
+import { CONTRACT_STATUS_LABEL, GRADES, type DespachoDelTrato, type GeneralInfo, type Lot, type ProducerContract, type ProducerOffer } from "../data";
 import { aceptarProvisionalmente, previsualizarOferta, registrarExistencia, respondToOffer, type VistaPreviaDeOferta } from "@/lib/ofertas/producerActions";
 import { cancelarPorDespacho, pasarALaVentanaSiguiente, pedirProrroga, previsualizarRetiro, registrarDespacho, retirarDelTrato } from "@/lib/trato/producerActions";
 import { formatCop } from "@/lib/arena/inscriptions";
@@ -17,7 +17,8 @@ import { PropuestaSelection } from "./PropuestaSelection";
 import { GlosarioDelTrato } from "./GlosarioDelTrato";
 import { RatificarContrato } from "./RatificarContrato";
 import { useToast } from "@/components/Toast";
-import { CtcRef } from "./CtcRef";
+import { CodigosDeLotes, CtcRef, CtcRefDeLote, useCodigoDeLote } from "./CtcRef";
+import { codigoDelLote } from "../codigoDelLote";
 import styles from "../AppDashboard.module.css";
 
 // ── Contratos y Compras (V5.18 · aceptar con claridad V5.83 · por VENTANAS de ciclos desde la V5.175) ─────────────────────────
@@ -66,8 +67,11 @@ export function ContratosTab({
   const conOfertaAbierta = new Set(offers.filter((o) => o.status === "emitida" || o.status === "contraofertada").map((o) => o.lotId));
   const conContrato = new Set(contracts.map((c) => c.lotId));
   const rumboASubasta = lots.filter((l) => l.stage === 8 && l.grade === "Tyrian" && !conOfertaAbierta.has(l.id) && !conContrato.has(l.id));
+  // V6.23 (TAR-149): las ofertas y los contratos solo traen el id del lote; su código GUARDADO sale de los lotes del productor.
+  const codigosDeLotes = useMemo(() => new Map(lots.map((l) => [l.id, l.codigo])), [lots]);
 
   return (
+    <CodigosDeLotes.Provider value={codigosDeLotes}>
     <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 12 }}>
       {cuentaCongelada && (
         <div className={styles.alist} style={{ border: "1.5px solid var(--accent)", borderRadius: 10, padding: "10px 14px", background: "var(--paper)", lineHeight: 1.6 }}>
@@ -153,7 +157,7 @@ export function ContratosTab({
               <div key={l.id} style={{ border: `1.5px solid ${GRADES.Tyrian}`, borderRadius: 10, padding: "12px 14px", background: "var(--paper)" }}>
                 <b style={{ fontSize: 14 }}>{l.name}</b>
                 <div className="mono" style={{ fontSize: 11, color: "var(--muted)", margin: "3px 0" }}>
-                  <CtcRef id={l.id} />
+                  <CtcRef codigo={l.codigo} />
                 </div>
                 <div style={{ fontSize: 13, color: "var(--muted)" }}>
                   <b style={{ color: GRADES.Tyrian }}>Grado Tyrian</b> — rumbo a subasta. CTCx corre la puja y el <b>mejor postor</b> le llegará aquí
@@ -166,6 +170,7 @@ export function ContratosTab({
         <OfferList offers={abiertas("subasta")} historial={historial("subasta")} vacio={rumboASubasta.length ? "" : "Sin lotes Tyrian por ahora — es la rareza más alta de la escala."} onRefreshData={onRefreshData} />
       </section>
     </div>
+    </CodigosDeLotes.Provider>
   );
 }
 
@@ -190,7 +195,7 @@ function ContratoPorVentana({ contract: c, cuentaCongelada, onRefreshData, asist
   return (
     <div className={styles.fincarow} style={{ marginTop: 10 }}>
       <h5>
-        <CtcRef id={c.lotId} /> · {c.lotName} {c.grade && <b style={{ color: GRADES[c.grade] }}>· {c.grade}</b>}
+        <CtcRefDeLote lotId={c.lotId} /> · {c.lotName} {c.grade && <b style={{ color: GRADES[c.grade] }}>· {c.grade}</b>}
       </h5>
       {/* V5.190 (owner): un contrato que CTCx aceptó PROVISIONALMENTE en una sesión asistida: vigente, y el productor lo ratifica. */}
       {porRatificar && (
@@ -211,6 +216,7 @@ function ContratoPorVentana({ contract: c, cuentaCongelada, onRefreshData, asist
           {ratificando && !asistida && (
             <RatificarContrato
               contractId={c.id}
+              lotId={c.lotId}
               onCancelar={() => setRatificando(false)}
               onListo={() => {
                 setRatificando(false);
@@ -583,7 +589,7 @@ function ContratoPorMeses({ contract: c, oferta }: { contract: ProducerContract;
   return (
     <div className={styles.fincarow} style={{ marginTop: 10 }}>
       <h5>
-        <CtcRef id={c.lotId} /> · {c.lotName} {c.grade && <b style={{ color: GRADES[c.grade] }}>· {c.grade}</b>}
+        <CtcRefDeLote lotId={c.lotId} /> · {c.lotName} {c.grade && <b style={{ color: GRADES[c.grade] }}>· {c.grade}</b>}
       </h5>
       <div className={styles.sub}>
         Estado: <b>{CONTRACT_STATUS_LABEL[c.status]}</b>
@@ -707,6 +713,8 @@ function ExistenciaForm({ lotId, onGuardada }: { lotId: string; onGuardada: () =
 // hoy (`previsualizarOferta`), la calculadora y la firma. Botones abajo a la derecha, apilados — la regla de la casa.
 function OfferCard({ offer, onRefreshData, asistida = false, cuenta = "" }: { offer: ProducerOffer; onRefreshData: () => void; asistida?: boolean; cuenta?: string }) {
   const { showToast } = useToast();
+  // V6.23 (TAR-149): el texto que se firma cita el código GUARDADO del lote (el mismo que lee el servidor al firmar).
+  const codigoLote = useCodigoDeLote(offer.lotId);
   const [busy, setBusy] = useState(false);
   // V5.190: el error del último intento de firmar se queda junto al botón (el aviso fugaz no bastaba: «carga, pero no hace nada»).
   const [errorFirma, setErrorFirma] = useState<string | null>(null);
@@ -778,7 +786,7 @@ function OfferCard({ offer, onRefreshData, asistida = false, cuenta = "" }: { of
         <div style={{ minWidth: 0, flex: 1 }}>
           <b style={{ fontSize: 14 }}>{offer.lotName}</b>
           <div className="mono" style={{ fontSize: 11, color: "var(--muted)", margin: "3px 0 6px" }}>
-            <CtcRef id={offer.lotId} />
+            <CtcRefDeLote lotId={offer.lotId} />
           </div>
           <div className={styles.chips}>
             <span className={styles.datachip}>{offer.esRenovacion ? "Renovación" : KIND_LABEL[offer.kind]}</span>
@@ -887,7 +895,7 @@ function OfferCard({ offer, onRefreshData, asistida = false, cuenta = "" }: { of
                 calidad: abierta?.calidad ?? null,
                 flete: offer.flete,
                 loteNombre: offer.lotName,
-                loteReferencia: ctcLotReference(offer.lotId),
+                loteReferencia: codigoDelLote(codigoLote),
                 grado: offer.grade ?? "—",
                 copKg: abierta ? abierta.precioKg : offer.pricePerKg,
                 declaradoKg: decision?.kg ?? offer.quantityKg ?? 0,

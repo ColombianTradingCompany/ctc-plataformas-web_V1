@@ -48,8 +48,8 @@ export function leadsDeEjemplo(formKey: string): { titulo: string; lead: LeadPar
         timing: "lt_3m",
         wants: ["sample_pack", "lot_list", "lcl_batch", "other"],
         master_roaster_interest: true,
-        // V6.5: la necesidad de volumen, un lote de la vitrina (referencia inventada) y «otro».
-        extra: { grades_interest: ["blue", "gold"], purchase_format: "bags", certifications: ["jas_organic"], volume_period: "monthly", volume_kg: 600, lots_of_interest: ["CTC-L-7K3M9P2Q"], wants_other: "the roasting notes of the samples" },
+        // V6.5: la necesidad de volumen, un lote de la vitrina (referencia inventada) y «otro». V6.23: con la forma del código de hoy.
+        extra: { grades_interest: ["blue", "gold"], purchase_format: "bags", certifications: ["jas_organic"], volume_period: "monthly", volume_kg: 600, lots_of_interest: ["CTC-L-7K3M9P2QW"], wants_other: "the roasting notes of the samples" },
       },
     },
     {

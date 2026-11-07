@@ -7,6 +7,8 @@ import type { ChequeosSolicitados } from "@/lib/eudrAtributos";
 
 export type Finca = {
   id: string;
+  /** V6.23 (TAR-149): `fincas.codigo`, CTC-F-XXXYY, asignado por la base. Se enseña con `codigoCtc`; nunca se calcula. */
+  codigo: string | null;
   name: string;
   // CTC review state (finca_status enum). Drives whether the producer can
   // self-delete the finca vs. must request changes from CTC -- see
@@ -189,6 +191,9 @@ export type CompletionPoint = { pct: number; recordedAt: string };
 
 export type Lot = {
   id: string;
+  /** V6.23 (TAR-149): `lots.public_code`, CTC-L-XXXYYZZZZ, asignado por la base cuando el lote tiene finca; null = sin finca,
+   *  sin código y fuera de toda lista pública. Se enseña con `codigoCtc`; nunca se calcula. */
+  codigo: string | null;
   name: string;
   finca: string; // finca display name (for the "Finca: X" line)
   fincaId: string | null; // real FK -- use this, not the name, to match a lot to its finca
@@ -547,29 +552,22 @@ export const GRADE_TO_DB: Record<NonNullable<Lot["grade"]>, string> = {
   Tyrian: "tyrian",
 };
 
-// V5.100 (owner, 2026-09-30): el código del lote es `CTC-L-XXXXXXXX` en TODAS partes — la misma forma que el del productor
-// (`CTC-P-…`) y el de la finca (`CTC-F-…`), derivado igual de su uuid, sin columna. Sustituye al `CTC_` + 32 hex «largo» y a los 7
-// hex «cortos» que iban en el paquete y en el UID anónimo del Q-Grader. Las dos funciones devuelven lo mismo: se conservan los
-// dos nombres porque decenas de sitios los llaman; la «corta» es la que va impresa y la «larga» la que se guarda en la Ficha.
-export function ctcLotReference(id: string) {
-  return "CTC-L-" + id.replace(/-/g, "").slice(0, 8).toUpperCase();
-}
+// ── V6.23 (owner, 2026-11-06, TAR-149) · los códigos CTC se GUARDAN y son jerárquicos ───────────────────────────────────────
+// Hasta la V6.22 (desde la V5.100) `CTC-P-`, `CTC-F-` y `CTC-L-` se derivaban aquí de los 8 primeros caracteres del uuid, sin
+// columna. Ya no: cada código lo asigna la BASE una sola vez y vive en su columna —`producer_profiles.codigo` (CTC-P-XXX),
+// `fincas.codigo` (CTC-F-XXXYY) y `lots.public_code` (CTC-L-XXXYYZZZZ)—, con el libro `codigos_ctc` detrás
+// (`docs/migraciones/2026-11-07_codigos_ctc_a_ampliar.sql`). La aplicación NUNCA calcula un código ni lee en su prefijo una finca o
+// un productor: lo LEE de la fila y lo enseña con `codigoCtc`. Un lote sin finca no tiene código (null). Lo vigila
+// `qa-codigos-ctc-check` (nada deriva `CTC-[PFL]-` de un id). La cata a ciegas usa otro código (`arena_inscriptions.codigo_ciego`),
+// nunca el del lote: con prefijos compartidos el catador sabría qué muestras son hermanas.
 
-/** El mismo código (`CTC-L-XXXXXXXX`): es lo que va en el paquete de muestra y en la planilla anónima del Q-Grader. */
-export function ctcLotReferenceShort(id: string) {
-  return ctcLotReference(id);
-}
+/** Lo que se enseña donde un registro no tiene código (hoy: un lote sin finca). */
+export const SIN_CODIGO = "Sin código";
 
-export function supplierCode(id: string) {
-  return "CTC-P-" + id.replace(/-/g, "").slice(0, 8).toUpperCase();
-}
-
-// Human-readable finca identifier, same shape as supplierCode (CTC-P-...) and
-// derived the same way from the finca's uuid -- no extra column needed. Shown
-// on the producer's finca card, in the finca modal, and on every BCP finca
-// surface so a specific predio can be referenced unambiguously.
-export function fincaCode(id: string) {
-  return "CTC-F-" + id.replace(/-/g, "").slice(0, 8).toUpperCase();
+/** El código CTC que se enseña: el GUARDADO en la fila, o «Sin código». Nunca lo calcula. */
+export function codigoCtc(codigo: string | null | undefined): string {
+  const c = (codigo ?? "").trim();
+  return c || SIN_CODIGO;
 }
 
 // Processing infrastructure/machinery a finca may have -- a producer-declared

@@ -10,8 +10,13 @@
 
 export const VISTA_VITRINA = "public_lot_vitrina";
 
+/** V6.23 (TAR-149): la columna de la vista que lleva el código GUARDADO del lote (`lots.public_code`, CTC-L-XXXYYZZZZ). El paso A
+ *  de la migración la añade al final de la vista; el paso C pone `referencia` igual a ella. El código la lee SIEMPRE por aquí (y la
+ *  entrega como `referencia`), así que funciona entre los dos pasos. Filtrar una referencia: `.eq(COLUMNA_CODIGO, referencia)`. */
+export const COLUMNA_CODIGO = "codigo";
+
 export const COLUMNAS_VITRINA =
-  "lot_id, referencia, nombre, grade, variedad, proceso, altitud_m, punto, protocolo, departamento, pais, ctc_selection, ctcx_imagen_path, en_catalogo, desde, tiene_foto";
+  "lot_id, referencia:codigo, nombre, grade, variedad, proceso, altitud_m, punto, protocolo, departamento, pais, ctc_selection, ctcx_imagen_path, en_catalogo, desde, tiene_foto";
 
 export type FilaVitrina = {
   lot_id: string;

@@ -157,10 +157,12 @@ check("confirmar el recibo no escribe fila_arena", !acciones.includes('stage: "f
 // V5.80: el recibo pasa por `src/lib/muestras/recibo.ts` (filas de muestras + marca, una acción), que es quien avanza la solicitud a la fila.
 check("y avanza la inscripción a la fila", acciones.includes("recibirMuestra(service, { lotId, adminId })") && lee("src/lib/muestras/recibo.ts").includes("avanzarAFilaSiCompleta(service, r.lotId)"));
 
-// V5.100 (owner, 2026-09-30): el código del lote es CTC-L-XXXXXXXX en todas partes — una sola fuente y ningún resto de «7 caracteres».
+// V5.100 (owner, 2026-09-30): el código del lote es CTC-L- en todas partes — una sola fuente y ningún resto de «7 caracteres».
+// V6.23 (TAR-149): la fuente ya no es una función que lo deriva del uuid: es la COLUMNA (`lots.public_code`, asignada por la base);
+// `data.ts` solo lo enseña (`codigoCtc`, «Sin código» si falta). La regla completa la vigila `qa-codigos-ctc-check`.
 {
   const data = lee("src/components/kaffetal-regal/data.ts");
-  check("el código del lote es CTC-L- + 8 hex del uuid, en una sola fuente (la corta devuelve lo mismo)", data.includes('return "CTC-L-" + id.replace(/-/g, "").slice(0, 8).toUpperCase();') && data.includes("return ctcLotReference(id);") && !data.includes('"CTC_"'));
+  check("el código del lote es el GUARDADO: data.ts no lo deriva del id, solo lo enseña (codigoCtc / «Sin código»)", data.includes("export function codigoCtc(codigo: string | null | undefined): string {") && data.includes('export const SIN_CODIGO = "Sin código";') && !/function (ctcLotReference|ctcLotReferenceShort|supplierCode|fincaCode)\b/.test(data) && !/"CTC-[PFL]-"\s*\+/.test(data) && !data.includes('"CTC_"'));
   check("ni la Ficha ni las instrucciones de envío hablan ya de «7 caracteres»", !/7 (dígitos|caracteres)/.test(lee("src/components/kaffetal-regal/ficha/panes/PaneA1.tsx")) && !/7 caracteres/.test(lee("src/components/kaffetal-regal/ficha/shipmentInstructionsPrint.ts")));
 }
 
@@ -208,7 +210,7 @@ check("y avanza la inscripción a la fila", acciones.includes("recibirMuestra(se
   check("V5.192 · el Dossier, junto a las fichas del lote (UID · Visa · grado), abre la página del dossier en Kaffetal Regal",
     seccion.includes("href={`${origenDeSuperficie(\"/kaffetal-regal\")}/kaffetal-regal/dossier/${lot.id}`}") &&
     seccion.indexOf("/kaffetal-regal/dossier/${lot.id}") > seccion.indexOf("<EudrStatusBadge status={eudrStatus} />") &&
-    seccion.indexOf("/kaffetal-regal/dossier/${lot.id}") < seccion.indexOf("<ProducerContactLine producer={producer} />"));
+    seccion.indexOf("/kaffetal-regal/dossier/${lot.id}") < seccion.indexOf("<ProducerContactLine producer={producer} codigo={productorCodigo} />"));
 }
 
 if (fallos.length) {

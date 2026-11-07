@@ -14,7 +14,7 @@ import { countryRiskFor, fincaEudrStatus, lotEudrStatus, type EudrStatus, type F
 import { fincaEudrFieldsDe } from "@/lib/ocp/fincaEudr";
 import { deriveArchetype, deriveClaims, composicionDeVariedades, ARCHETYPE_LABEL, type ContributionInput } from "@/lib/lotComposition";
 import { ORIGIN_CERTS, INTL_CERTS, type FichaFormData } from "@/components/kaffetal-regal/ficha/fichaData";
-import { ctcLotReference, fincaCode } from "@/components/kaffetal-regal/data";
+import { SIN_CODIGO, codigoCtc } from "@/components/kaffetal-regal/data";
 import { GRADO_POR_ID, esGradoValido, gradoDelLote, type Grado } from "@/lib/grados/definicion";
 import { evaluacionQueRige } from "@/lib/evaluations";
 import { rowToLotFicha, type FichaTecnicaData } from "@/lib/fichas/tipos";
@@ -26,7 +26,7 @@ import { conjeturasDelLote, lecturaDeLaRueda, type Conjetura, type LecturaDeLaRu
 import { fichaDeVariedad, rangoDeAltitud, GRANO_LABEL } from "@/lib/catacion/variedades";
 import { IMAGEN_DE_ORIGEN_POR_DEFECTO } from "@/lib/imagenDeOrigen";
 import { ESTADOS_DE_CONTRATO_FIRMADO, textoDeMarca } from "@/lib/kaffetal/blindaje";
-import { rutaDelLote } from "@/lib/catalogo/codigoPublico";
+import { hoyEnBogota, rutaDelLote } from "@/lib/catalogo/codigoPublico";
 import { fotosB4, fotosPublicasDelLote } from "@/lib/catalogo/fotosPublicas";
 
 export type { Lang };
@@ -37,6 +37,7 @@ export type CriterioEudr = { id: "deforestacion" | "legal" | "tenencia" | "geo" 
 
 export type DossierFincaCtcx = {
   id: string;
+  /** V6.23 (TAR-149): el código GUARDADO de la finca (`fincas.codigo`, CTC-F-…), o «Sin código» / «No code». Nunca se deriva. */
   code: string;
   name: string;
   vereda: string | null;
@@ -67,7 +68,10 @@ export type DossierCtcxData = {
   lot: {
     id: string;
     name: string;
+    /** V6.23 (TAR-149): el código GUARDADO del lote (`lots.public_code`, CTC-L-…), el mismo que enseña la vitrina; un lote sin finca
+     *  no tiene código y aquí dice «Sin código» / «No code». Nunca se deriva del uuid. */
     reference: string;
+    /** `lots.public_code` tal cual (null = sin código). Desde la V6.23 es la misma columna que `reference`; el público lo deja en null. */
     publicCode: string | null;
     productName: string | null;
     species: string | null;
@@ -132,10 +136,17 @@ export type DossierCtcxData = {
   /** V5.198 · el Dossier PÚBLICO (CTCx Public Catalogue): su dirección y la de vuelta a «Find my Lot». Lo pone SOLO
    *  `dossierPublico()` (`lib/kaffetal/dossierPublico.ts`); con él, el documento omite la Visa, la mejora y lo privado. */
   publico?: { url: string; volver: string } | null;
+  /** V6.23 (TAR-149, owner: «add a notification pin on their dossiers»): solo los 3 lotes del catálogo Japan Pioneers, ya enviado a
+   *  compradores, cuya referencia VIEJA sigue abriendo (segunda puerta) hasta `hasta` (AAAA-MM-DD, incluido). El documento pinta un
+   *  aviso con el código anterior, la fecha y el código nuevo. Sale del libro `codigos_ctc` (service role); null para todos los demás.
+   *  Va también en el Dossier público: el código anterior ya es público (va impreso en el catálogo enviado). */
+  puertaDeLegado?: { anterior: string; hasta: string } | null;
 };
 
 type FincaRow = {
   id: string;
+  /** V6.23 (TAR-149): el código guardado de la finca (CTC-F-…). */
+  codigo: string | null;
   name: string | null;
   municipio: string | null;
   departamento: string | null;
@@ -163,7 +174,7 @@ type FincaRow = {
 };
 
 const FINCA_COLS =
-  "id, name, municipio, departamento, pais, status, eudr_cert_shared, hectares, vereda, altitude_m, eudr_lat, eudr_lng, eudr_polygon_geojson, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, eudr_planting_date, eudr_production_system, eudr_local_infra, history_text, characteristics_text, profile_photo_asset_id";
+  "id, codigo, name, municipio, departamento, pais, status, eudr_cert_shared, hectares, vereda, altitude_m, eudr_lat, eudr_lng, eudr_polygon_geojson, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, eudr_planting_date, eudr_production_system, eudr_local_infra, history_text, characteristics_text, profile_photo_asset_id";
 
 const numero = (v: unknown): number | null => {
   const x = Number(String(v ?? "").replace(",", "."));
@@ -171,6 +182,11 @@ const numero = (v: unknown): number | null => {
 };
 
 const SITIO = "https://www.ctcexport.com";
+
+/** V6.23 (TAR-149): el código CTC que enseña el documento: el GUARDADO en la fila (`codigoCtc`), o «Sin código» / «No code» en el
+ *  idioma del dossier (hoy, solo un lote sin finca). Nunca se calcula. */
+const codigoDelDocumento = (codigo: string | null | undefined, lang: Lang): string =>
+  (codigo ?? "").trim() ? codigoCtc(codigo) : lang === "en" ? "No code" : SIN_CODIGO;
 
 /** Los textos de las herramientas usan rayas largas; el documento no (guía de diseño): se vuelven comas. */
 const sinRaya = (v: string) => v.replace(/\s*—\s*/g, ", ").replace(/,\s*([.,])/g, "$1").trim();
@@ -326,7 +342,7 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
   const camposDe = (f: FincaRow): FincaEudrFields => fincaEudrFieldsDe(f as unknown as Parameters<typeof fincaEudrFieldsDe>[0]);
   const fincaIds = origen.map((x) => x.f.id);
 
-  const [producers, { data: perfilRaw }, { data: certRaw }, { data: fichaRaw }, { data: evalRaw }, { data: parcelasRaw }, { data: firmadosRaw }, { data: vitrinaRaw }] = await Promise.all([
+  const [producers, { data: perfilRaw }, { data: certRaw }, { data: fichaRaw }, { data: evalRaw }, { data: parcelasRaw }, { data: firmadosRaw }, { data: vitrinaRaw }, { data: puertaRaw }] = await Promise.all([
     publico ? Promise.resolve(new Map() as Awaited<ReturnType<typeof fetchProducerContacts>>) : fetchProducerContacts(service, [lot.producer_id]),
     publico ? Promise.resolve({ data: null }) : service.from("producer_profiles").select("company_name, avatar_asset_id, gallery_asset_ids").eq("profile_id", lot.producer_id).maybeSingle(),
     fincaIds.length
@@ -340,7 +356,18 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
     fincaIds.length ? service.from("finca_parcelas").select("finca_id, name, area_ha, lat, lng, polygon_geojson, position").in("finca_id", fincaIds).order("position") : Promise.resolve({ data: [] }),
     service.from("purchase_contracts").select("id").eq("lot_id", lotId).in("status", [...ESTADOS_DE_CONTRATO_FIRMADO]).limit(1),
     // V5.198: si el lote está en la vitrina (llegó al Triage), su Dossier público existe y el QR lleva a él.
-    service.from("public_lot_vitrina").select("referencia").eq("lot_id", lotId).maybeSingle(),
+    service.from("public_lot_vitrina").select("referencia:codigo").eq("lot_id", lotId).maybeSingle(),
+    // V6.23 (TAR-149): la segunda puerta del lote, si la tiene y sigue abierta (hora de Bogotá): solo los 3 del catálogo Japan Pioneers.
+    service
+      .from("codigos_ctc")
+      .select("codigo, puerta_hasta")
+      .eq("entidad_id", lotId)
+      .eq("tipo", "lote")
+      .eq("vigente", false)
+      .gte("puerta_hasta", hoyEnBogota())
+      .order("puerta_hasta", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   const perfil = perfilRaw as { company_name: string | null; avatar_asset_id: string | null; gallery_asset_ids: string[] | null } | null;
@@ -363,7 +390,7 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
     const lng = numero(f.eudr_lng);
     return {
       id: f.id,
-      code: fincaCode(f.id),
+      code: codigoDelDocumento(f.codigo, lang),
       name: f.name ?? "—",
       vereda: f.vereda,
       municipio: f.municipio,
@@ -457,6 +484,9 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
   const referenciaPublica = (vitrinaRaw as { referencia: string } | null)?.referencia ?? null;
   const catalogoUrl = referenciaPublica ? `${SITIO}${rutaDelLote(referenciaPublica)}` : null;
   const qrSvg = catalogoUrl ? await QRCode.toString(catalogoUrl, { type: "svg", margin: 0, color: { dark: "#17121F", light: "#00000000" } }) : null;
+  // V6.23 (TAR-149): la segunda puerta (el código anterior y hasta cuándo abre); solo si el lote tiene hoy su código nuevo.
+  const puerta = puertaRaw as { codigo: string; puerta_hasta: string | null } | null;
+  const puertaDeLegado = puerta?.codigo && puerta.puerta_hasta && lot.public_code ? { anterior: puerta.codigo, hasta: puerta.puerta_hasta } : null;
 
   return {
     producerId: lot.producer_id,
@@ -464,7 +494,7 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
     lot: {
       id: lot.id,
       name: lot.name,
-      reference: ctcLotReference(lot.id),
+      reference: codigoDelDocumento(lot.public_code, lang),
       publicCode: lot.public_code,
       productName: ds.product_name || null,
       species: ds.species || null,
@@ -548,7 +578,9 @@ export async function cargarDossier(service: SupabaseClient, lotId: string, lang
       ? { puedeImprimir: false, marca: "" } // V5.201: el público no se imprime (owner); `dossierPublico()` fija su marca PÚBLICA (V5.202)
       : {
           puedeImprimir: (((firmadosRaw as { id: string }[] | null) ?? []).length) > 0,
-          marca: textoDeMarca({ referencia: ctcLotReference(lot.id), productor: producer?.fullName ?? null, fecha: new Date(), lang }),
+          // V6.23 (TAR-149): el código GUARDADO del lote; un lote sin código va sin él (la marca omite lo vacío).
+          marca: textoDeMarca({ referencia: lot.public_code ?? "", productor: producer?.fullName ?? null, fecha: new Date(), lang }),
         },
+    puertaDeLegado,
   };
 }

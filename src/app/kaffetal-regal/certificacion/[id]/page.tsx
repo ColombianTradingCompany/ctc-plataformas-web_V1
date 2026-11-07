@@ -7,13 +7,12 @@ import { EudrDossierDoc, type DossierFinca } from "@/components/kaffetal-regal/E
 import { dossierParcelasAndCerts } from "@/lib/dossierExtras";
 import { impresionDelProductor } from "@/lib/kaffetal/blindajeServidor";
 import { textoDeMarca } from "@/lib/kaffetal/blindaje";
-import { fincaCode } from "@/components/kaffetal-regal/data";
 import type { Metadata } from "next";
 import { tituloDeFinca } from "@/lib/kaffetal/tituloDeDocumento";
 
 type CommRow = { id: string; note: string; created_at: string; author_role: string };
 
-const DOSSIER_COLUMNS = `id, name, producer_id, status, vereda, municipio, departamento, pais, hectares, eudr_lat, eudr_lng, eudr_polygon_geojson,
+const DOSSIER_COLUMNS = `id, codigo, name, producer_id, status, vereda, municipio, departamento, pais, hectares, eudr_lat, eudr_lng, eudr_polygon_geojson,
   eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types,
   eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_legal_docs_asset_id, eudr_legal_docs_filename,
   eudr_sustainability_tags, eudr_sustainability_notes, eudr_evidence_files, eudr_sustainability_files, eudr_cert_shared, eudr_local_infra,
@@ -88,7 +87,7 @@ export default async function ProducerCertPage({ params }: { params: Promise<{ i
       legalDocUrl={finca.eudr_legal_docs_asset_id ? urlMap.get(finca.eudr_legal_docs_asset_id) : undefined}
       urlByAsset={Object.fromEntries(urlMap)}
       comms={(commsData as CommRow[] | null) ?? []}
-      blindaje={{ puedeImprimir: impresion.fincas.has(finca.id), marca: textoDeMarca({ referencia: fincaCode(finca.id), productor: producer?.fullName ?? null, fecha: new Date() }) }}
+      blindaje={{ puedeImprimir: impresion.fincas.has(finca.id), marca: textoDeMarca({ referencia: finca.codigo ?? "", productor: producer?.fullName ?? null, fecha: new Date() }) }}
     />
   );
 }

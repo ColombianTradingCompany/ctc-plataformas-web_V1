@@ -2,7 +2,8 @@
 
 import { fechaParaElProductor } from "@/lib/trato/fechas";
 import { useState } from "react";
-import { ctcLotReferenceShort, type Finca, type FeedbackNote, type Lot, type ProducerContract } from "./data";
+import type { Finca, FeedbackNote, Lot, ProducerContract } from "./data";
+import { codigoDelLote } from "./codigoDelLote";
 import appStyles from "./AppDashboard.module.css";
 import styles from "./RetroalimentacionPanel.module.css";
 
@@ -282,7 +283,7 @@ function ComposeThreadModal({
             <option value="">— Elija un lote —</option>
             {lots.map((l) => (
               <option key={l.id} value={l.id}>
-                {l.name} · {ctcLotReferenceShort(l.id)}
+                {l.name} · {codigoDelLote(l.codigo)}
               </option>
             ))}
           </select>
@@ -302,7 +303,7 @@ function ComposeThreadModal({
             <option value="">— Elija un contrato —</option>
             {contracts.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.lotName} · {ctcLotReferenceShort(c.lotId)}
+                {c.lotName} · {codigoDelLote(lots.find((l) => l.id === c.lotId)?.codigo)}
               </option>
             ))}
           </select>

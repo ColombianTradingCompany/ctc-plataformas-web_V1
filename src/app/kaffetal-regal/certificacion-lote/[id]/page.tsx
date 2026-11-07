@@ -4,7 +4,6 @@ import { lotEudrStatus, type FincaEudrFields } from "@/lib/eudr";
 import { LotEudrCertDoc, type CertLot, type CertFinca } from "@/components/kaffetal-regal/LotEudrCertDoc";
 import { deriveClaims, deriveArchetype, ARCHETYPE_LABEL, type ContributionInput } from "@/lib/lotComposition";
 import { ORIGIN_CERTS, INTL_CERTS } from "@/components/kaffetal-regal/ficha/fichaData";
-import { ctcLotReference } from "@/components/kaffetal-regal/data";
 import { impresionDelProductor } from "@/lib/kaffetal/blindajeServidor";
 import { textoDeMarca } from "@/lib/kaffetal/blindaje";
 import type { Metadata } from "next";
@@ -15,6 +14,8 @@ type CommRow = { id: string; note: string; created_at: string; author_role: stri
 
 type FincaJoin = {
   id: string;
+  /** V6.23 (TAR-149): el código GUARDADO de la finca (`fincas.codigo`). */
+  codigo: string | null;
   name: string | null;
   hectares: string | number | null;
   vereda: string | null;
@@ -95,11 +96,11 @@ export default async function LotEudrCertPage({ params }: { params: Promise<{ id
   const { data } = await service
     .from("lots")
     .select(
-      `id, name, producer_id, ficha_variedad, ficha_proceso, ficha_altitud_m, harvest_from, harvest_to, dds_reference, dds_verification_code, dds_filed_at,
+      `id, public_code, name, producer_id, ficha_variedad, ficha_proceso, ficha_altitud_m, harvest_from, harvest_to, dds_reference, dds_verification_code, dds_filed_at,
        eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_country, eudr_country_risk, eudr_chain_complexity,
        eudr_product_risk, eudr_product_risk_factors, eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme,
        eudr_risk_level, eudr_mitigation_actions, eudr_mitigation_effective, eudr_mitigation_responsible,
-       fincas(id, name, hectares, vereda, municipio, departamento, pais, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, status, eudr_cert_shared)`
+       fincas(id, codigo, name, hectares, vereda, municipio, departamento, pais, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, status, eudr_cert_shared)`
     )
     .eq("id", id)
     .single();
@@ -112,7 +113,7 @@ export default async function LotEudrCertPage({ params }: { params: Promise<{ id
   type ContribJoin = { weight_kg: number | string | null; fincas: FincaJoin | FincaJoin[] | null };
   const { data: contribRaw } = await service
     .from("lot_contributions")
-    .select("weight_kg, fincas(id, name, hectares, vereda, municipio, departamento, pais, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, status, eudr_cert_shared)")
+    .select("weight_kg, fincas(id, codigo, name, hectares, vereda, municipio, departamento, pais, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, status, eudr_cert_shared)")
     .eq("lot_id", id);
   const contribJoins = (((contribRaw as ContribJoin[] | null) ?? []))
     .map((r) => ({ f: (Array.isArray(r.fincas) ? r.fincas[0] : r.fincas) as FincaJoin | null, kg: r.weight_kg != null ? Number(r.weight_kg) : null }))
@@ -130,7 +131,7 @@ export default async function LotEudrCertPage({ params }: { params: Promise<{ id
   ]);
   const producer = producers.get(lot.producer_id);
   const certFincas: CertFinca[] = originJoins.map((x) => ({
-    id: x.f.id, name: x.f.name ?? "—", municipio: x.f.municipio, departamento: x.f.departamento, pais: x.f.pais,
+    id: x.f.id, codigo: x.f.codigo, name: x.f.name ?? "—", municipio: x.f.municipio, departamento: x.f.departamento, pais: x.f.pais,
   }));
 
   // F2: claims derivados — el Sello imprime SOLO los sellos al 100% (cobertura
@@ -171,7 +172,7 @@ export default async function LotEudrCertPage({ params }: { params: Promise<{ id
       archetypeLabel={archetype ? ARCHETYPE_LABEL[archetype] : null}
       harvestWindow={lot.harvest_from && lot.harvest_to ? `${lot.harvest_from} → ${lot.harvest_to}` : null}
       dds={lot.dds_reference ? { reference: lot.dds_reference, verificationCode: lot.dds_verification_code, filedAt: lot.dds_filed_at } : null}
-      blindaje={{ puedeImprimir: impresion.lotes.has(lot.id), marca: textoDeMarca({ referencia: ctcLotReference(lot.id), productor: producer?.fullName ?? null, fecha: new Date() }) }}
+      blindaje={{ puedeImprimir: impresion.lotes.has(lot.id), marca: textoDeMarca({ referencia: lot.public_code ?? "", productor: producer?.fullName ?? null, fecha: new Date() }) }}
     />
   );
 }

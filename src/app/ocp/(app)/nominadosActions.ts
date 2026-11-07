@@ -18,7 +18,6 @@ import { currentSeason, lotSeasonCount, MAX_SEASONS_PER_LOT } from "@/lib/arena/
 import { saldoDe } from "@/lib/muestras/particion";
 import { anularRecibo } from "@/lib/muestras/recibo";
 import { normalizaDetalle, normalizaRueda } from "@/lib/catacion/rueda";
-import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { GRADOS, redondeaPuntaje } from "@/lib/grados/definicion";
 import { REEVALUACION, TARIFA_EVALUACION_COP } from "@/lib/trato/terminos";
 
@@ -50,9 +49,11 @@ export async function postularOnBehalf(lotId: string, existenciaKg?: number): Pr
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
-  const { data: lot } = await service.from("lots").select("id, name, stage, producer_id, existencia_cps_kg").eq("id", lotId).maybeSingle();
+  const { data: lot } = await service.from("lots").select("id, name, stage, producer_id, existencia_cps_kg, public_code").eq("id", lotId).maybeSingle();
   if (!lot) return { ok: false, error: "Lote no encontrado." };
   if (lot.stage !== "apto") return { ok: false, error: "Solo un lote Apto puede postularse." };
+  // V6.23 (TAR-149): un lote sin finca no tiene código y no sale en las colas de evaluación.
+  if (!lot.public_code) return { ok: false, error: "Este lote no tiene finca (ni código): asígnele una antes de postularlo." };
   const existencia = existenciaKg != null ? existenciaValida(existenciaKg) : lot.existencia_cps_kg != null ? Number(lot.existencia_cps_kg) : null;
   if (existencia == null) return { ok: false, error: EXISTENCIA_REQUERIDA };
   const { data: existing } = await service.from("arena_inscriptions").select("id").eq("lot_id", lotId).maybeSingle();
@@ -631,7 +632,7 @@ export async function recordEvaluationVerdict(
 
   const { data: ins } = await service
     .from("arena_inscriptions")
-    .select("id, phase, status, amount_due_cop, producer_id, sondeo_batch_id, sondeo_evaluation, reevaluaciones, grado_previo, lots(name, stage, datasheet)")
+    .select("id, phase, status, amount_due_cop, producer_id, sondeo_batch_id, sondeo_evaluation, reevaluaciones, grado_previo, codigo_ciego, lots(name, stage, datasheet)")
     .eq("lot_id", lotId)
     .maybeSingle();
   if (!ins || ins.phase !== "sondeo") return { ok: false, error: "Este lote no está en evaluación." };
@@ -751,7 +752,9 @@ export async function recordEvaluationVerdict(
         cva_total: cvaDelPunto(puntoEfectivo),
         rueda: normalizaRueda(lastEval.rueda),
         rueda_detalle: normalizaDetalle(lastEval.rueda_detalle, normalizaRueda(lastEval.rueda)), // V5.133
-        uid_anonimo: ctcLotReferenceShort(lotId),
+        // V6.23 (TAR-149): el UID anónimo es el código CIEGO de la cata (`arena_inscriptions.codigo_ciego`), el mismo de la bolsa
+        // del Q-Grader; nunca el código del lote, cuyos prefijos dirían qué muestras son hermanas.
+        uid_anonimo: (ins.codigo_ciego as string | null) ?? null,
         physical_data: {
           fa_start: lastEval.fa_start,
           fa_green_remainder: lastEval.fa_green_remainder,
@@ -924,6 +927,10 @@ export async function reevaluar(lotId: string, formData: FormData): Promise<Resu
       grado_previo: lot.grade,
       reevaluacion_previa: previa,
       reevaluacion_acuerdo: acuerdo,
+      // V6.23 (TAR-149): la re-evaluación se cata con un código ciego NUEVO. `null` le pide a la base uno fresco
+      // (`zz_arena_inscriptions_codigo_ciego`): el Q-Grader no reconoce la muestra que ya calificó. Las evaluaciones anteriores
+      // conservan su `uid_anonimo` como historia.
+      codigo_ciego: null,
     })
     .eq("id", ins.id);
   if (error) return { ok: false, error: "No se pudo abrir la re-evaluación: " + error.message };

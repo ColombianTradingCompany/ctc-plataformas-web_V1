@@ -6,14 +6,17 @@ import { validarDeclaracion } from "@/lib/trato/minimos";
 import { RETIRO_LIBRE_CICLO_PCT, RETIRO_LIBRE_EXTENDIDA_PCT } from "@/lib/trato/ventanas";
 import { useToast } from "@/components/Toast";
 import { FirmaDelContrato, type FirmaDelProductor } from "./FirmaDelContrato";
+import { useCodigoDeLote } from "./CtcRef";
 
 // ── V5.190 (owner, 2026-10-08) · «Ratificar y firmar» un contrato que CTCx aceptó provisionalmente ──────────────────────────
 // El productor lo ratifica desde SU cuenta: lee el texto (ya con su nombre, su documento y la fecha de hoy), puede ajustar la cantidad
 // declarada —el mínimo de la ventana, lo que le queda al lote y lo que ya se vendió o retiró— y firma con el dedo. El precio, la
 // ventana y las demás condiciones no cambian. La acción (`ratificarContrato`) vuelve a validar todo y guarda la huella nueva.
 
-export function RatificarContrato({ contractId, onListo, onCancelar }: { contractId: string; onListo: () => void; onCancelar: () => void }) {
+export function RatificarContrato({ contractId, lotId, onListo, onCancelar }: { contractId: string; lotId: string; onListo: () => void; onCancelar: () => void }) {
   const { showToast } = useToast();
+  // V6.23 (TAR-149): el texto se ratifica con el código del lote con que CTCx lo aceptó; si hoy el lote tiene otro, se dice.
+  const codigoDeHoy = useCodigoDeLote(lotId);
   const [vista, setVista] = useState<VistaDeRatificacion | null>(null);
   const [kg, setKg] = useState("");
   const [busy, setBusy] = useState(false);
@@ -97,6 +100,11 @@ export function RatificarContrato({ contractId, onListo, onCancelar }: { contrac
             {problema ??
               `Hoy: ${vista.actualKg} kg · mínimo de su ventana ${vista.minimoKg} kg${vista.disponibleKg != null ? ` · el lote admite hasta ${vista.disponibleKg} kg` : ""}${vista.movidoKg > 0 ? ` · ya vendido o retirado ${vista.movidoKg} kg` : ""}.`}
           </span>
+          {codigoDeHoy && codigoDeHoy !== vista.datos.loteReferencia && (
+            <span style={{ fontSize: 11.5, color: "var(--muted)" }}>
+              El texto cita el código con que CTCx aceptó el contrato ({vista.datos.loteReferencia}); hoy su lote es {codigoDeHoy}. Es el mismo lote.
+            </span>
+          )}
         </label>
       }
     />

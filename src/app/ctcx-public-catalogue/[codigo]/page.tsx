@@ -1,15 +1,15 @@
 import { cache } from "react";
 import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
-import { normalizaCodigo, normalizaReferencia, rutaDelLote } from "@/lib/catalogo/codigoPublico";
-import { cargaDossierPublico, filaDeLaVitrina, referenciaDeCodigoViejo } from "@/lib/catalogo/vitrina";
+import { esReferenciaVieja, normalizaCodigo, normalizaReferencia, rutaDelLote } from "@/lib/catalogo/codigoPublico";
+import { cargaDossierPublico, filaDeLaVitrina, referenciaDeCodigoAnterior } from "@/lib/catalogo/vitrina";
 import { regionDeLaVitrina, tramoDeAltitud } from "@/lib/catalogo/vitrinaVista";
 import { metadatosDeSuperficie } from "@/lib/seo/openGraph";
 import { DossierCtcx } from "@/components/kaffetal-regal/dossier/DossierCtcx";
 
 export const dynamic = "force-dynamic";
 
-// El lote en el CTCx Public Catalogue: su DOSSIER PÚBLICO (V5.198), resuelto por su referencia `CTC-L-XXXXXXXX`.
+// El lote en el CTCx Public Catalogue: su DOSSIER PÚBLICO (V5.198), resuelto por su referencia `CTC-L-…` (V6.23: el código guardado del lote).
 //
 // V5.198 (owner, 2026-10-10): «El Datasheet va a ser reemplazado por una versión simplificada del Dossier que omite los enlaces
 // al pasaporte y la visa» y «Find my Lot […] debo escribir solo los 8 dígitos después de "CTC-L-"; ya deben ser encontrados los
@@ -21,21 +21,30 @@ export const dynamic = "force-dynamic";
 // llega al documento es la proyección de `dossierPublico()` (lista blanca, `qa-ficha-publica`). Y la referencia NO es una
 // credencial (`lib/catalogo/codigoPublico.ts`, nota 1): lo que se enseña con ella es lo que cualquiera puede ver.
 //
-// Un código VIEJO (`CTCX-…`, impreso desde la V5.48) se resuelve contra la vista pública del catálogo —nunca contra `lots`— y
-// redirige con 308 a la referencia. Una referencia mal escrita (minúsculas, sin guiones) también se canoniza con 308.
+// V6.23 (TAR-149): la referencia es el código GUARDADO del lote (`CTC-L-` + 9). Un código ANTERIOR solo abre algo por una segunda
+// puerta (las 3 referencias viejas del catálogo Japan Pioneers, hasta el 30.06.2027): `referenciaDeCodigoAnterior` lo resuelve en el
+// libro `codigos_ctc` y redirige con 308 a la referencia nueva. Cualquier otro código viejo (`CTC-L-` + 8 hexadecimales sin puerta,
+// o un `CTCX-` de la V5.48) responde 404. Una referencia mal escrita (minúsculas, sin guiones) también se canoniza con 308.
 // `force-dynamic` y sin `generateStaticParams`: un lote entra al Triage sin desplegar.
 
 type Canonico = { tipo: "lote" | "viejo"; codigo: string } | null;
 
-/** Lo que la ruta entiende del segmento: una referencia (`CTC-L-…`, o sus ocho caracteres) o un código viejo (`CTCX-…`). */
+/** Lo que la ruta entiende del segmento: una referencia (`CTC-L-…`, o sus 9 caracteres), o un código ANTERIOR: una referencia vieja
+ *  con segunda puerta abierta (`normalizaReferencia` solo deja pasar esas) o un `CTCX-…` de la V5.48. */
 function canonico(segmento: string): Canonico {
-  const s = decodeURIComponent(segmento);
+  let s: string;
+  try {
+    s = decodeURIComponent(segmento);
+  } catch {
+    return null;
+  }
   if (/^\s*ctcx/i.test(s)) {
     const viejo = normalizaCodigo(s);
     return viejo ? { tipo: "viejo", codigo: viejo } : null;
   }
   const referencia = normalizaReferencia(s);
-  return referencia ? { tipo: "lote", codigo: referencia } : null;
+  if (!referencia) return null;
+  return { tipo: esReferenciaVieja(referencia) ? "viejo" : "lote", codigo: referencia };
 }
 
 const fila = cache(filaDeLaVitrina);
@@ -74,9 +83,9 @@ export default async function DossierPublicoPage({ params, searchParams }: { par
   const c = canonico(codigo);
   if (!c) notFound();
   if (c.tipo === "viejo") {
-    const referencia = await referenciaDeCodigoViejo(c.codigo);
+    const referencia = await referenciaDeCodigoAnterior(c.codigo);
     if (!referencia) notFound();
-    permanentRedirect(rutaDelLote(referencia));
+    permanentRedirect(`${rutaDelLote(referencia)}${lang === "en" ? "?lang=en" : ""}`);
   }
   if (c.codigo !== codigo) permanentRedirect(`${rutaDelLote(c.codigo)}${lang === "en" ? "?lang=en" : ""}`);
 

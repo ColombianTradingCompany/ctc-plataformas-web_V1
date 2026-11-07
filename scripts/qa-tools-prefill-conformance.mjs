@@ -27,8 +27,8 @@ import { construirPrefill } from "../src/lib/tools/entrada.ts";
 const PUB = fileURLToPath(new URL("../public", import.meta.url));
 const TIPOS = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".jpg": "image/jpeg", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".woff": "font/woff" };
 
-const FINCA = { id: "99999999-2222-3333-4444-555555555555", referencia: "CTC-F-99999999", nombre: "El Roble", municipio: "Garzón", departamento: "Huila", altitud_m: 1500 };
-const LOTE = { referencia: "CTC-L-6BA7B810", nombre: "Mitaca 2026", variedad: "Castillo", proceso: "Lavado", altitud_m: 1720, finca: FINCA };
+const FINCA = { id: "99999999-2222-3333-4444-555555555555", referencia: "CTC-F-4MZ7R", nombre: "El Roble", municipio: "Garzón", departamento: "Huila", altitud_m: 1500 };
+const LOTE = { referencia: "CTC-L-4MZ7R2K9Q", nombre: "Mitaca 2026", variedad: "Castillo", proceso: "Lavado", altitud_m: 1720, finca: FINCA };
 const REGISTRO = { finca: FINCA, lote: LOTE };
 const FINCAS_API = {
   disponible: true,

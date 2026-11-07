@@ -4,7 +4,6 @@ import { ActionForm } from "@/components/panel/ActionForm";
 import { kgDelPedido, KILO_CTCX, MOTIVO_LABEL, PARTICION_KG, PEDIDO_STATUS_LABEL, saldoDe, TIPO_LABEL, trillaDelKilo, type EstadoDePedidoDeMuestra, type MotivoDeSalida, type TipoDeMuestra } from "@/lib/muestras/particion";
 import { DIAS_REVISION_ALMACENAJE, KG_REVISION_ALMACENAJE } from "@/lib/muestras/almacenaje";
 import { revisionesDeAlmacenaje } from "@/lib/muestras/almacenajeCarga";
-import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { agregarMuestraAlPedido, anotarRevisionDeAlmacenaje, anotarSalidaDeMuestra, crearBodega, guardarBodega, marcarPedidoEnviado, trillarMuestraCtcx, ubicarMuestra } from "../muestrasActions";
 import styles from "@/components/panel/shared.module.css";
 
@@ -19,6 +18,11 @@ export const dynamic = "force-dynamic";
 // vive solo en este comentario, H15). EL SALDO SE DERIVA (`saldoDe`): recibido − Σ salidas. El recibo vive en Solicitudes de Evaluación.
 // Pestañas: qué hay y dónde (por lote, con su bodega) · bodegas (V5.89: responsable, dirección, capacidad en muestras de 1 kg,
 // estado; la ocupación se deriva) · revisión de almacenaje a los 90 días (V5.88, derivada) · pedidos de muestra (V5.88).
+//
+// V6.23 (TAR-149) · DOS códigos, rotulados. Esta página es de CTCx y enseña el código del LOTE (`lots.public_code`); un lote sin
+// finca no tiene código y no se lista. La bolsa de «Evaluación Q-Grader» es la que viaja al Centro de Calidad: lleva SOLO el código
+// CIEGO de la cata (`arena_inscriptions.codigo_ciego`), y así se rotula aquí («bolsa del Q-Grader»). El código del lote nunca va
+// en esa bolsa: sus prefijos le dirían al catador qué muestras son hermanas.
 
 type MuestraRow = {
   id: string;
@@ -31,8 +35,9 @@ type MuestraRow = {
   notas: string | null;
   bodega_id: string | null;
   origen_muestra_id: string | null;
-  lots: { name: string; producer_id: string } | { name: string; producer_id: string }[] | null;
+  lots: LotJoin | LotJoin[] | null;
 };
+type LotJoin = { name: string; producer_id: string; public_code: string | null };
 type MovRow = { id: string; muestra_id: string; kg: number; motivo: MotivoDeSalida; destino: string | null; fecha: string; notas: string | null; pedido_id: string | null };
 type PedidoRow = { id: string; buyer_id: string; status: EstadoDePedidoDeMuestra; created_at: string; preparado_at: string | null; enviado_at: string | null; guia: string | null; notas_ctc: string | null };
 type BodegaRow = { id: string; nombre: string; responsable: string | null; direccion: string | null; capacidad_muestras: number | null; estado: "activa" | "pendiente" | "inactiva"; notas: string | null };
@@ -44,14 +49,28 @@ const g = (kg: number | string) => Math.round(Number(kg) * 1000);
 export default async function GestionDeMuestrasPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const { tab } = await searchParams;
   const service = createServiceRoleClient();
-  const [{ data: muestrasRaw }, { data: movRaw }, { data: pedidosRaw }, { data: bodegasRaw }, revisiones] = await Promise.all([
-    service.from("muestras").select("id, lot_id, tipo, kg, recibida_at, ubicacion, custodio, notas, bodega_id, origen_muestra_id, lots(name, producer_id)").order("recibida_at", { ascending: false }),
+  const [{ data: muestrasRaw }, { data: movRaw }, { data: pedidosRaw }, { data: bodegasRaw }, revisionesTodas] = await Promise.all([
+    service.from("muestras").select("id, lot_id, tipo, kg, recibida_at, ubicacion, custodio, notas, bodega_id, origen_muestra_id, lots(name, producer_id, public_code)").order("recibida_at", { ascending: false }),
     service.from("muestra_movimientos").select("id, muestra_id, kg, motivo, destino, fecha, notas, pedido_id").order("fecha", { ascending: false }),
     service.from("sample_pack_orders").select("id, buyer_id, status, created_at, preparado_at, enviado_at, guia, notas_ctc").order("created_at", { ascending: false }),
     service.from("bodegas_muestras").select("id, nombre, responsable, direccion, capacidad_muestras, estado, notas").order("estado").order("nombre"),
     revisionesDeAlmacenaje(service),
   ]);
-  const muestras = (muestrasRaw as MuestraRow[] | null) ?? [];
+  // V6.23 (TAR-149): solo las muestras de lotes con código (con finca); el código del lote, leído de su fila.
+  const loteDe = (m: MuestraRow) => (Array.isArray(m.lots) ? m.lots[0] : m.lots) ?? null;
+  const muestras = ((muestrasRaw as MuestraRow[] | null) ?? []).filter((m) => !!loteDe(m)?.public_code);
+  const codigoDeLote = new Map<string, string>();
+  for (const m of muestras) codigoDeLote.set(m.lot_id, loteDe(m)!.public_code!);
+  // Las revisiones de almacenaje vienen de otra carga: su código se lee aparte, y la que no tenga no se lista.
+  const sinCodigoLeido = [...new Set(revisionesTodas.map((r) => r.lotId))].filter((id) => !codigoDeLote.has(id));
+  const [{ data: codigosRevRaw }, { data: ciegosRaw }] = await Promise.all([
+    sinCodigoLeido.length ? service.from("lots").select("id, public_code").in("id", sinCodigoLeido) : Promise.resolve({ data: [] }),
+    // El código CIEGO de cada lote (el de la bolsa del Q-Grader), de su solicitud de evaluación.
+    codigoDeLote.size ? service.from("arena_inscriptions").select("lot_id, codigo_ciego").in("lot_id", [...codigoDeLote.keys()]) : Promise.resolve({ data: [] }),
+  ]);
+  for (const l of (codigosRevRaw as { id: string; public_code: string | null }[] | null) ?? []) if (l.public_code) codigoDeLote.set(l.id, l.public_code);
+  const revisiones = revisionesTodas.filter((r) => codigoDeLote.has(r.lotId));
+  const ciegoDe = new Map(((ciegosRaw as { lot_id: string; codigo_ciego: string | null }[] | null) ?? []).flatMap((c) => (c.codigo_ciego ? [[c.lot_id, c.codigo_ciego] as const] : [])));
   const movimientos = (movRaw as MovRow[] | null) ?? [];
   const pedidos = (pedidosRaw as PedidoRow[] | null) ?? [];
   const bodegas = (bodegasRaw as BodegaRow[] | null) ?? [];
@@ -72,7 +91,7 @@ export default async function GestionDeMuestrasPage({ searchParams }: { searchPa
   const saldoDeMuestra = (m: MuestraRow) => saldoDe(Number(m.kg), salidasDe(m.id));
   const porLote = new Map<string, MuestraRow[]>();
   for (const m of muestras) porLote.set(m.lot_id, [...(porLote.get(m.lot_id) ?? []), m]);
-  const lotName = (m: MuestraRow) => ((Array.isArray(m.lots) ? m.lots[0] : m.lots)?.name ?? "Lote");
+  const lotName = (m: MuestraRow) => loteDe(m)?.name ?? "Lote";
   const muestraById = new Map(muestras.map((m) => [m.id, m]));
   const revisionDe = new Map(revisiones.map((r) => [r.lotId, r]));
   const debidas = revisiones.filter((r) => r.lectura.debida);
@@ -218,7 +237,7 @@ export default async function GestionDeMuestrasPage({ searchParams }: { searchPa
                 <b style={{ fontSize: 14 }}>
                   <Link href={`/ocp/kr?lote=${r.lotId}`}>{r.lotName}</Link>
                 </b>
-                <span className="mono">{ctcLotReferenceShort(r.lotId)}</span>
+                <span className="mono">{codigoDeLote.get(r.lotId)}</span>
                 <span className={styles.badgeWarn}>debida</span>
                 <span className={styles.meta}>
                   catado el {fecha(r.evaluadaAt)} · hace {r.lectura.diasDesdeCatacion} días
@@ -346,7 +365,7 @@ export default async function GestionDeMuestrasPage({ searchParams }: { searchPa
                   <b style={{ fontSize: 14 }}>
                     <Link href={`/ocp/kr?lote=${lotId}`}>{lotName(ms[0])}</Link>
                   </b>
-                  <span className="mono">{ctcLotReferenceShort(lotId)}</span>
+                  <span className="mono" title="El código del lote (CTCx y el productor)">{codigoDeLote.get(lotId)}</span>
                   <span className={styles.meta}>recibida {fecha(ms[ms.length - 1].recibida_at)}</span>
                   {rev && (
                     <span className={rev.lectura.debida ? styles.badgeWarn : styles.meta}>
@@ -375,6 +394,12 @@ export default async function GestionDeMuestrasPage({ searchParams }: { searchPa
                         <tr key={m.id} style={{ borderTop: "1px solid var(--line)", verticalAlign: "top" }}>
                           <td style={{ padding: "6px" }}>
                             <b>{TIPO_LABEL[m.tipo]}</b>
+                            {/* V6.23 (TAR-149): la bolsa que viaja al Centro lleva SOLO el código ciego, nunca el del lote. */}
+                            {m.tipo === "evaluacion" && (
+                              <div className={styles.meta} title="El único código que va en esta bolsa: el Q-Grader cata a ciegas">
+                                bolsa del Q-Grader: <b className="mono">{ciegoDe.get(m.lot_id) ?? "sin solicitud de evaluación"}</b>
+                              </div>
+                            )}
                             {origen && <div className={styles.meta}>del {TIPO_LABEL[origen.tipo].toLowerCase()}</div>}
                             {m.notas && <div className={styles.meta}>{m.notas}</div>}
                           </td>

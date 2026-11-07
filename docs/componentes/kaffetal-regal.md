@@ -65,6 +65,7 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 `qa-reportado-productor-check.mjs` (**45**) · `qa-evaluaciones-check.mjs` (**50**, lado productor + vocabulario) ·
 `qa-ofertas-check.mjs` (36, `respondToOffer`) · `qa-fichas-check.mjs` (31, panes B2/B3) ·
 `qa-solicitudes-kr-check.mjs` (22) · `qa-visa-check.mjs` (97) · `qa-area-check.mjs` (55, con `--import ./scripts/ts-resolve.mjs`) · `qa-claims-check.mjs` ·
+`qa-codigos-ctc-check.mjs` (V6.23, 76, con `ts-resolve`: los códigos guardados, nada derivado de un id, la cata a ciegas, los contratos) ·
 `qa-recuperacion-check.mjs` (puerta KR).
 
 ## Reglas propias
@@ -99,10 +100,17 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   pop-ups `FincaModal` e `InfoModal` no existen: sus archivos conservan el nombre y solo exportan el cuerpo del editor. En KR solo quedan
   pop-ups para entrar, confirmar un borrado, pedir revisión de datos y las instrucciones de envío. `qa-kr-ficha` vigila las tres reglas.
 
-- **El código del lote es `CTC-L-XXXXXXXX`** (owner, 2026-09-30, V5.100): la misma forma que `CTC-P-` (productor) y `CTC-F-` (finca),
-  derivado del uuid en `src/components/kaffetal-regal/data.ts` (`ctcLotReference` = `ctcLotReferenceShort`); es lo que va en el
-  paquete de muestra, en la factura, en el UID anónimo del Q-Grader y en `datasheet.ctc_uid`. El `CTCX-XXXX-XXXX` público del catálogo
-  (`lots.public_code`) es OTRO código y no cambió. Las 13 fichas guardadas con el `CTC_` viejo se reescribieron por SQL.
+- **Los códigos se GUARDAN y son jerárquicos** (owner, 2026-11-06, TAR-149, V6.23; contrato «Los códigos CTC» de `ALINEACION` §1):
+  productor `CTC-P-XXX` (`producer_profiles.codigo`), finca `CTC-F-XXXYY` (`fincas.codigo`) y lote `CTC-L-XXXYYZZZZ`
+  (`lots.public_code`, heredado de su PRIMERA finca). Los asigna la base; el panel los LEE de la fila y los enseña con `codigoCtc`
+  (`data.ts`) — `ctcLotReference`, `ctcLotReferenceShort`, `supplierCode` y `fincaCode` (V5.100, derivados del uuid) ya no existen.
+  Un lote sin finca no tiene código: el productor lo ve con «Sin código: asígnele una finca» (`codigoDelLote.ts`), no puede firmar
+  su oferta hasta tenerla y no sale en ninguna lista. El código del lote va en la factura, la referencia de pago, las instrucciones
+  de envío, el Dossier y `datasheet.ctc_uid` (la Ficha lo escribe al guardar; un código viejo pasa a `ctc_uid_anterior`); el
+  Q-Grader NO lo ve: la cata usa el código ciego de la inscripción (`codigo_ciego`). Los contratos se rearman con los códigos de
+  su texto (`purchase_contracts.texto_codigo_*`, `src/lib/trato/codigosDelContrato.ts`) para que su huella siga valiendo.
+  `PerfilTab` enseña el código de proveedor. Lo vigila `qa-codigos-ctc`. (Historia: de la V5.100 a la V6.22 el código salía de
+  los 8 primeros caracteres del uuid, y `lots.public_code` guardaba el `CTCX-` del catálogo, que ya no se acuña.)
 
 - **El productor nunca escribe un grado ni un estado más allá de `ficha_completa`**: lo hace el OCP.
 - **La barra del lote son DOS líneas y su segunda línea NO se calcula aquí**: `estadoDelCircuito()`
@@ -152,6 +160,13 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
+- **V6.23 · los códigos guardados (TAR-149): lo que espera al owner.** (1) Resuelto: dice «Sin código: asígnele una finca», de
+  usted como el resto del panel. (2) La bolsa interior de 2 kg: las instrucciones de envío le piden al productor el código del
+  LOTE, y esa bolsa llega al panel de cata; por defecto CTCx la rotula con el código ciego al recibir la muestra (el OCP enseña
+  «Bolsa del Q-Grader»): ¿o el rótulo del productor pasa al código ciego desde la inscripción? (3) Los 7 contratos que ya existían
+  citan el código viejo en su texto para siempre (su huella); la página y la ratificación dicen en una línea que hoy es otro. Y el
+  nombre del PDF del contrato lleva el código de hoy, no el del texto: ¿cuál? (4) El Dossier privado de un lote sin finca dice «Sin
+  código» / «No code» y su marca de agua va sin código: ¿bien así?
 - **Para kaffetal-regal (de la V5.203)**: `src/components/kaffetal-regal/panel/PerfilTab.tsx` decide «CTCx Selection» con su propia regla
   (contrato directa/Black con un mes pagado); el OCP usa `lib/compras/selection.ts` (compra con destino selection y no anulada).
   Unificarlas.

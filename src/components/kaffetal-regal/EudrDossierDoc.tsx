@@ -1,5 +1,5 @@
 import { fechaParaElProductor } from "@/lib/trato/fechas";
-import { fincaCode, LOCAL_INFRA } from "./data";
+import { codigoCtc, LOCAL_INFRA } from "./data";
 import { countryRiskFor, deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, PRODUCT_RISK_QUESTIONS } from "@/lib/eudr";
 import { PrintButton } from "./PrintButton";
 import { MarcaDeAgua } from "./blindaje/MarcaDeAgua";
@@ -44,6 +44,8 @@ type KeyedFiles = Record<string, { assetId: string; fileName: string }>;
 
 export type DossierFinca = {
   id: string;
+  /** V6.23 (TAR-149): `fincas.codigo`, el código GUARDADO de la finca. Cada ruta que pinta el Pasaporte lo pide en su SELECT. */
+  codigo: string | null;
   name: string;
   status: string;
   vereda: string | null;
@@ -210,7 +212,7 @@ export function EudrDossierDoc({
             <h1 style={{ fontSize: 26, margin: "4px 0 2px" }}>Pasaporte EUDR de la Finca · Debida Diligencia</h1>
             <p style={{ color: "#555", margin: "0 0 4px" }}>Reglamento (UE) 2023/1115 · Documento generado el {fechaParaElProductor(new Date().toISOString())}</p>
             <p style={{ margin: 0, fontWeight: 700 }}>
-              {finca.name} · {fincaCode(finca.id)}
+              {finca.name} · {codigoCtc(finca.codigo)}
               {finca.status === "approved" ? " · APROBADA" : ` · ${finca.status}`}
             </p>
           </div>

@@ -8,10 +8,14 @@ import styles from "./catalogoPublico.module.css";
 
 // «Find my Lot» · el buscador del portal público (V5.48; V5.199 por la REFERENCIA del lote).
 //
-// V5.199 (owner, 2026-10-10): «"Find my Lot" […] con la cual debo escribir solo los 8 dígitos después de "CTC-L-"». El prefijo va
-// FIJO delante del campo y quien busca escribe solo los ocho caracteres que el lote lleva en la etiqueta de la muestra y en su
-// Dossier. Si pega la referencia entera (con «CTC-L-»), el campo se queda con los ocho. Encuentra los lotes que llegaron al Triage
-// de Catálogo Activo (la vista `public_lot_vitrina`), estén o no declarados todavía.
+// V5.199 (owner, 2026-10-10): «"Find my Lot" […] con la cual debo escribir solo los […] dígitos después de "CTC-L-"». El prefijo va
+// FIJO delante del campo y quien busca escribe solo lo que el lote lleva detrás en la etiqueta de la muestra y en su Dossier. Si
+// pega la referencia entera (con «CTC-L-»), el campo se queda con lo de detrás. Encuentra los lotes que llegaron al Triage de
+// Catálogo Activo (la vista `public_lot_vitrina`), estén o no declarados todavía.
+//
+// V6.23 (TAR-149): la referencia es el código GUARDADO del lote. El owner: «the syntax is not public but the IDs are visible» —
+// ningún texto de aquí dice cuántos caracteres lleva ni de qué alfabeto (y el marcador no lo insinúa). El campo acepta el código de
+// hoy y, hasta el 30.06.2027, las 3 referencias viejas del catálogo Japan Pioneers: las dos cosas las decide `normalizaReferencia`.
 //
 // POR QUÉ VALIDA EN EL CLIENTE Y NO EN UNA SERVER ACTION. `normalizaReferencia()` es una función PURA: decir «eso no es una
 // referencia» no necesita ni base de datos ni red, y con una Server Action cada errata costaría un POST y un re-render. Además la
@@ -22,26 +26,27 @@ import styles from "./catalogoPublico.module.css";
 // la barra de direcciones llega igual. La compuerta de verdad no está aquí: está en la vista que consulta la ruta de destino.
 
 const T: Record<Lang, { etiqueta: string; marcador: string; boton: string; ayuda: string; error: string }> = {
+  // V6.23 (TAR-149): sin explicar el formato (ni cuántos caracteres, ni cuáles): el código se copia tal como viene.
   es: {
-    etiqueta: "Referencia del lote: los ocho caracteres después de CTC-L-",
-    marcador: "XXXXXXXX",
+    etiqueta: "Código del lote: lo que va después de CTC-L-",
+    marcador: "código del lote",
     boton: "Buscar",
-    ayuda: "Escriba los ocho caracteres que siguen a «CTC-L-» en la etiqueta de la muestra o en el Dossier del lote. Da igual si van en minúsculas.",
-    error: "Esa referencia no está completa: son ocho caracteres (cifras y letras de la A a la F) después de «CTC-L-».",
+    ayuda: "Escriba el código del lote, lo que va después de «CTC-L-» en la etiqueta de la muestra o en el Dossier. Da igual si va en minúsculas.",
+    error: "No reconocemos ese código. Cópielo tal como aparece después de «CTC-L-» en la etiqueta de la muestra o en el Dossier del lote.",
   },
   en: {
-    etiqueta: "Lot reference: the eight characters after CTC-L-",
-    marcador: "XXXXXXXX",
+    etiqueta: "Lot code: what follows CTC-L-",
+    marcador: "lot code",
     boton: "Search",
-    ayuda: "Type the eight characters that follow «CTC-L-» on the sample label or in the lot's Dossier. Lower case is fine.",
-    error: "That reference is not complete: it is eight characters (digits and letters A to F) after «CTC-L-».",
+    ayuda: "Type the lot code, what follows «CTC-L-» on the sample label or in the lot's Dossier. Lower case is fine.",
+    error: "We do not recognise that code. Copy it exactly as it appears after «CTC-L-» on the sample label or in the lot's Dossier.",
   },
   de: {
-    etiqueta: "Losreferenz: die acht Zeichen nach CTC-L-",
-    marcador: "XXXXXXXX",
+    etiqueta: "Loscode: was nach CTC-L- folgt",
+    marcador: "Loscode",
     boton: "Suchen",
-    ayuda: "Geben Sie die acht Zeichen ein, die auf dem Probenetikett oder im Dossier des Loses auf «CTC-L-» folgen. Kleinbuchstaben sind kein Problem.",
-    error: "Diese Referenz ist unvollständig: Es sind acht Zeichen (Ziffern und Buchstaben A bis F) nach «CTC-L-».",
+    ayuda: "Geben Sie den Loscode ein, also was auf dem Probenetikett oder im Dossier des Loses auf «CTC-L-» folgt. Kleinbuchstaben sind kein Problem.",
+    error: "Diesen Code erkennen wir nicht. Übernehmen Sie ihn genau so, wie er auf dem Probenetikett oder im Dossier des Loses nach «CTC-L-» steht.",
   },
 };
 

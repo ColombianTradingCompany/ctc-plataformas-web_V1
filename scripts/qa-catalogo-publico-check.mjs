@@ -56,12 +56,13 @@ const sinComentarios = (t) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/
 const RUTA = "/ctcx-public-catalogue";
 
 // ── 1. El alfabeto ─────────────────────────────────────────────────────────
-// Crockford base32. La MISMA cadena está en `public.ctc_public_code()`, que es
-// quien acuña; si una cambia sin la otra, el generador produce códigos que el
-// normalizador rechaza y «Find my Lot» deja de encontrar lo que sí existe. El
-// DDL no vive en el repo (se aplica con `apply_migration`), así que lo que se
-// puede comprobar desde aquí es la FORMA — y que quede escrito dónde está la
-// otra mitad.
+// Crockford base32. La MISMA cadena está en la base, que es quien acuña: hasta
+// la V6.22 en `public.ctc_public_code()` (los `CTCX-`), desde la V6.23 en
+// `public.ctc_cuerpo_aleatorio()` (los códigos CTC guardados). Si una cambia sin
+// la otra, el generador produce códigos que el normalizador rechaza y «Find my
+// Lot» deja de encontrar lo que sí existe. Aquí se comprueba la FORMA y que
+// quede escrito dónde está la otra mitad; que las dos cadenas sean IGUALES lo
+// comprueba `qa-codigos-ctc-check` contra la migración.
 check("el alfabeto tiene 32 caracteres", ALFABETO.length === 32);
 check("sin caracteres repetidos", new Set(ALFABETO).size === 32);
 check("sin I, L, O ni U (las que se confunden al leer una etiqueta)", !/[ILOU]/.test(ALFABETO));
@@ -70,7 +71,7 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
 
 {
   const fuente = lee("src/lib/catalogo/codigoPublico.ts");
-  check("queda escrito que la otra mitad es `ctc_public_code()`", fuente.includes("ctc_public_code()"));
+  check("queda escrito que la otra mitad es `ctc_cuerpo_aleatorio()` (V6.23)", fuente.includes("ctc_cuerpo_aleatorio()"));
   check("y que el mapeo de ambiguos está CONGELADO", /CONGELADO/.test(fuente));
   check("y que el código NO es una credencial", /NO ES UNA CREDENCIAL/.test(fuente));
 }
@@ -145,27 +146,31 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
 }
 
 // ── 5b. La REFERENCIA del lote, dirección pública desde la V5.198 ──────────
-// Owner, 2026-10-10: «Find my Lot […] debo escribir solo los 8 dígitos después de "CTC-L-"». La referencia SÍ sale del id del
-// lote (`ctcLotReference`: sus ocho primeros caracteres hexadecimales) — es la que el lote ya lleva impresa en el paquete de
-// muestra y en el Dossier. El código viejo de arriba sigue sin derivarse de nada y su ruta redirige a la referencia.
+// Owner, 2026-10-10: «Find my Lot […] debo escribir solo los […] dígitos después de "CTC-L-"». V6.23 (owner, 2026-11-06, TAR-149):
+// la referencia ya no sale del id: es el código GUARDADO del lote (`lots.public_code`, `CTC-L-` + 9 del alfabeto), el mismo que va
+// en el Dossier y en el OCP. Las 3 referencias viejas del catálogo Japan Pioneers abren aún por su segunda puerta; las fechas de esa
+// puerta, la herencia y el resto de la regla los vigila `qa-codigos-ctc-check`. El código viejo `CTCX-` sigue sin derivarse de nada.
 {
-  const ref = "CTC-L-7E360302";
+  const ref = "CTC-L-4MZ2P0K7Q";
+  const antes = new Date("2026-11-06T12:00:00Z");
   check("el prefijo fijo del buscador es «CTC-L-»", PREFIJO_REFERENCIA === "CTC-L-");
   check("ida y vuelta de la referencia canónica", normalizaReferencia(ref) === ref);
-  check("minúsculas", normalizaReferencia("ctc-l-7e360302") === ref);
-  check("solo los ocho caracteres (lo que se escribe en el buscador)", normalizaReferencia("7e360302") === ref && normalizaReferencia(" 7E36 0302 ") === ref);
-  check("sin guiones", normalizaReferencia("CTCL7E360302") === ref);
-  check("O se lee como cero, I y L como uno (ninguna es hexadecimal)", normalizaReferencia("7E36O3O2") === ref && normalizaReferencia("1I1L0000") === "CTC-L-11110000");
-  check("el prefijo se quita ANTES de leer los ambiguos (la L de «CTCL» no es un uno)", normalizaReferencia("ctcl00000001") === "CTC-L-00000001");
-  for (const [nombre, entrada] of [["corto", "7E36030"], ["largo", "7E3603021"], ["no hexadecimal", "7E36030G"], ["vacío", ""], ["un código viejo", "CTCX-2345-6789"]]) {
-    check(`la referencia rechaza ${nombre}`, normalizaReferencia(entrada) === null);
+  check("minúsculas", normalizaReferencia("ctc-l-4mz2p0k7q") === ref);
+  check("solo el código (lo que se escribe en el buscador)", normalizaReferencia("4mz2p0k7q") === ref && normalizaReferencia(" 4MZ2P 0K7Q ") === ref);
+  check("sin guiones", normalizaReferencia("CTCL4MZ2P0K7Q") === ref);
+  check("O se lee como cero, I y L como uno (ninguna está en el alfabeto)", normalizaReferencia("4MZ2PoK7Q") === ref && normalizaReferencia("1I1L00000") === "CTC-L-111100000");
+  check("el prefijo se quita ANTES de leer los ambiguos (la L de «CTCL» no es un uno)", normalizaReferencia("ctcl000000001") === "CTC-L-000000001");
+  for (const [nombre, entrada] of [["corto", "4MZ2P0K7"], ["largo", "4MZ2P0K7Q1"], ["con U (fuera del alfabeto)", "4MZ2P0K7U"], ["vacío", ""], ["un código viejo CTCX-", "CTCX-2345-6789"], ["una referencia vieja sin segunda puerta", "CTC-L-00AB12CD"]]) {
+    check(`la referencia rechaza ${nombre}`, normalizaReferencia(entrada, antes) === null);
   }
+  check("una segunda puerta abierta se entiende (la ruta la redirige)", normalizaReferencia("ctc-l-7e360302", antes) === "CTC-L-7E360302" && normalizaReferencia("7E360302", antes) === "CTC-L-7E360302");
   check("rechaza lo que no sea texto", normalizaReferencia(undefined) === null && normalizaReferencia(12345678) === null);
   check("la ruta del lote la arma el módulo", rutaDelLote(ref) === `${RUTA}/${ref}`);
-  // V5.199: el campo deja solo los ocho (el prefijo va fijo delante): pegar la referencia entera, o con guiones, se queda en el cuerpo.
-  check("el campo se queda con los ocho caracteres aunque peguen la referencia entera", cuerpoDeReferencia("ctc-l-7e360302") === "7E360302" && cuerpoDeReferencia("CTCL 7E36-0302") === "7E360302" && cuerpoDeReferencia("7e360302ff") === "7E360302" && cuerpoDeReferencia("7e36") === "7E36");
-  const ficha = lee("src/components/kaffetal-regal/data.ts");
-  check("es la MISMA referencia que el lote lleva en el paquete de muestra y el Dossier (`ctcLotReference`)", /return "CTC-L-" \+ id\.replace\(\/-\/g, ""\)\.slice\(0, 8\)\.toUpperCase\(\);/.test(ficha));
+  // V5.199: el campo deja solo el cuerpo (el prefijo va fijo delante): pegar la referencia entera, con guiones o con ESPACIOS, se
+  // queda en el cuerpo (V6.23: los espacios entre «CTC», «L» y el código también se quitan).
+  check("el campo se queda con el código aunque peguen la referencia entera", cuerpoDeReferencia("ctc-l-4mz2p0k7q") === "4MZ2P0K7Q" && cuerpoDeReferencia("CTCL 4MZ2P-0K7Q") === "4MZ2P0K7Q" && cuerpoDeReferencia("CTC L 4MZ2P0K7Q") === "4MZ2P0K7Q" && cuerpoDeReferencia("  ctc-l-4mz2p0k7q") === "4MZ2P0K7Q" && cuerpoDeReferencia("4mz2p0k7qff") === "4MZ2P0K7Q" && cuerpoDeReferencia("4mz2") === "4MZ2");
+  const vista = lee("src/lib/catalogo/vitrinaVista.ts");
+  check("es la MISMA referencia que el Dossier y el OCP: la vitrina la lee de la columna guardada (`referencia:codigo`)", vista.includes('export const COLUMNA_CODIGO = "codigo";') && vista.includes("lot_id, referencia:codigo, nombre,") && lee("src/lib/catalogo/vitrina.ts").includes(".eq(COLUMNA_CODIGO, referencia)"));
 }
 
 // ── 6. La ruta SOLO-www y sus DOS lectores ─────────────────────────────────
@@ -223,8 +228,9 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
   check("cada lote firma su canonical completo (su referencia)", /route: rutaDelLote\(lote\.referencia\)/.test(paquete));
   check("y devuelve {} para un código desconocido", /if \(!lote\) return \{\};/.test(paquete));
   check("lee la vista con el cliente anónimo (en `lib/catalogo/vitrina.ts`)", /createEphemeralClient\(\)/.test(lee("src/lib/catalogo/vitrina.ts")) && /from "@\/lib\/catalogo\/vitrina"/.test(paquete));
-  check("una referencia mal escrita y un código viejo se canonizan con 308, nunca con 307", paquete.includes("permanentRedirect(rutaDelLote(referencia));") && paquete.includes("permanentRedirect(`${rutaDelLote(c.codigo)}") && !/[^t]\bredirect\(/.test(paquete));
-  check("un código viejo solo si EMPIEZA por CTCX (ocho caracteres sueltos son una referencia)", paquete.includes("if (/^\\s*ctcx/i.test(s)) {"));
+  // V6.23 (TAR-149): un código ANTERIOR solo se resuelve por una segunda puerta (`referenciaDeCodigoAnterior`, el libro de códigos).
+  check("una referencia mal escrita y un código anterior con segunda puerta se canonizan con 308, nunca con 307", paquete.includes("const referencia = await referenciaDeCodigoAnterior(c.codigo);") && paquete.includes("permanentRedirect(`${rutaDelLote(referencia)}") && paquete.includes("permanentRedirect(`${rutaDelLote(c.codigo)}") && !/[^t]\bredirect\(/.test(paquete));
+  check("un código viejo solo si EMPIEZA por CTCX (un código suelto, sin CTCX, es una referencia)", paquete.includes("if (/^\\s*ctcx/i.test(s)) {"));
   check("y el lote comparte la tarjeta del portal", paquete.includes('image: "ctcx-public-catalogue.jpg"'));
 
   // `generateMetadata` NO puede redirigir ni lanzar 404: Next la ejecuta aparte
@@ -392,7 +398,7 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
   check("la cinta enlaza el portal", cinta.includes("PORTAL_HREF"));
   // V5.199 (owner): «En la página de CTCx, KR y CP debe haber mención de "Find my Lot" […] con la cual debo escribir solo los 8
   // dígitos después de "CTC-L-"». La cinta está en las tres familias: su pie lleva el campo, y sin tarjetas se queda solo él.
-  check("«Find my Lot» en el pie de la cinta: el prefijo fijo, los ocho caracteres y la navegación ABSOLUTA al Dossier público", cinta.includes("function FindMyLot({ lang }: { lang: SneakPeekLang })") && cinta.includes("{PREFIJO_REFERENCIA}") && cinta.includes("setValor(cuerpoDeReferencia(e.target.value));") && cinta.includes("const referencia = normalizaReferencia(valor);") && cinta.includes("const destino = new URL(`${PORTAL_HREF}/${referencia}${lang === \"es\" ? \"\" : \"?lang=en\"}`, window.location.href);") && cinta.includes("window.location.assign(destino.href);") && (cinta.match(/<FindMyLot lang=\{lang\} \/>/g) ?? []).length === 2);
+  check("«Find my Lot» en el pie de la cinta: el prefijo fijo, el código y la navegación ABSOLUTA al Dossier público", cinta.includes("function FindMyLot({ lang }: { lang: SneakPeekLang })") && cinta.includes("{PREFIJO_REFERENCIA}") && cinta.includes("setValor(cuerpoDeReferencia(e.target.value));") && cinta.includes("const referencia = normalizaReferencia(valor);") && cinta.includes("const destino = new URL(`${PORTAL_HREF}/${referencia}${lang === \"es\" ? \"\" : \"?lang=en\"}`, window.location.href);") && cinta.includes("window.location.assign(destino.href);") && (cinta.match(/<FindMyLot lang=\{lang\} \/>/g) ?? []).length === 2);
   for (const [n, f] of [["CTC Home", "src/components/ctc-home/SneakPeekHome.tsx"], ["Kaffetal Regal", "src/components/kaffetal-regal/Landing.tsx"], ["Cherry Picked (tienda)", "src/components/cherry-picked/CherryPickedExperience.tsx"], ["Cherry Picked (hub)", "src/components/cherry-picked-hub/HubLanding.tsx"]]) {
     check(`${n} monta la cinta (y con ella «Find my Lot»)`, lee(f).includes("<SneakPeek"));
   }
@@ -409,7 +415,7 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
 // ── 12. «Find my Lot» por la referencia (V5.199) ──────────────────────────
 {
   const buscador = lee("src/components/catalogo/BuscadorDeLote.tsx");
-  check("el buscador del portal lleva «CTC-L-» fijo y pide solo los ocho caracteres", buscador.includes("{PREFIJO_REFERENCIA}") && buscador.includes("setValor(cuerpoDeReferencia(e.target.value));") && buscador.includes("const referencia = normalizaReferencia(valor);") && buscador.includes("router.push(`${rutaDelLote(referencia)}"));
+  check("el buscador del portal lleva «CTC-L-» fijo y pide solo el código", buscador.includes("{PREFIJO_REFERENCIA}") && buscador.includes("setValor(cuerpoDeReferencia(e.target.value));") && buscador.includes("const referencia = normalizaReferencia(valor);") && buscador.includes("router.push(`${rutaDelLote(referencia)}"));
   check("y ya no pide el código viejo `CTCX-…`", !/normalizaCodigo|rutaDelCodigo|CTCX-XXXX/.test(buscador));
   const landing = lee("src/components/catalogo/CatalogoPublicoLanding.tsx");
   check("la landing dice que aparecen los lotes del Catálogo Activo, no solo los publicados (los tres idiomas)", !landing.includes("Solo aparecen los lotes publicados") && !landing.includes("Only published lots appear") && !landing.includes("Es erscheinen nur veröffentlichte Lose") && landing.includes("llegaron al Catálogo Activo") && landing.includes("reached the Active Catalogue") && landing.includes("den aktiven Katalog erreicht haben"));
@@ -444,7 +450,10 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
   check("V5.202 · `public_lot_catalog` (la lee anon) se reemplaza con las mismas columnas y la finca y el municipio a null", catalogo.length > 200 && catalogo.includes("null::text as finca_name,") && catalogo.includes("null::text as municipio,") && !/\bf\.name\b|f\.municipio/.test(catalogo.replace(/--[^\n]*/g, "")));
   // V5.202 (nodo final): anon tenía TODOS los privilegios sobre esta vista (no podía escribir solo porque tiene joins).
   check("V5.202 · `public_lot_catalog`: anon y authenticated solo LEEN (revoke all + grant select)", catalogo.includes("revoke all on public.public_lot_catalog from public, anon, authenticated;\ngrant select on public.public_lot_catalog to anon, authenticated, service_role;"));
-  check("V5.202 · y un código viejo se sigue resolviendo por esa vista (`lot_id`), sin leer la finca", lee("src/lib/catalogo/vitrina.ts").includes('anon.from("public_lot_catalog").select("lot_id").eq("public_code", codigo)'));
+  // V6.23 (TAR-149): un código anterior ya no se resuelve por `public_lot_catalog`: solo por una segunda puerta abierta del libro
+  // `codigos_ctc` (service role), y la referencia nueva tiene que asomar por la vista pública.
+  const vitrina = sinComentarios(lee("src/lib/catalogo/vitrina.ts"));
+  check("V6.23 · un código anterior solo abre por una segunda puerta del libro, y después tiene que asomar por la vitrina", vitrina.includes('.from("codigos_ctc")') && vitrina.includes('.gte("puerta_hasta", hoyEnBogota())') && vitrina.includes('.eq("vigente", false)') && vitrina.includes("return (await filaDeLaVitrina(nueva)) ? nueva : null;") && !vitrina.includes("public_lot_catalog"));
 }
 
 if (fallos.length) {

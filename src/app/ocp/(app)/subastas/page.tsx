@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
-import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
+import { codigoCtc } from "@/components/kaffetal-regal/data";
 import { kgPorFraccion, subastaVencida, type AuctionStatus, type MembershipTier } from "@/lib/subastas/tipos";
 import { CatalogoTabs } from "../catalogo/CatalogoTabs";
 import { AbrirSubastaForm, SubastaCard, type SubastaAdmin } from "./SubastasClient";
@@ -14,7 +14,7 @@ import styles from "@/components/panel/shared.module.css";
 // la adjudica. Adjudicar informa; la oferta al productor (COP/kg) se registra
 // después en Ofertas («Registrar mejor postor»), como en V5.18.
 
-type LotRow = { id: string; name: string; grade: string | null; producer_id: string; fincas: { name: string } | { name: string }[] | null };
+type LotRow = { id: string; public_code: string | null; name: string; grade: string | null; producer_id: string; fincas: { name: string } | { name: string }[] | null };
 type AuctionRow = {
   id: string;
   lot_id: string;
@@ -37,7 +37,8 @@ type BidRow = { id: string; auction_id: string; fraccion: number; buyer_id: stri
 export default async function OcpSubastasPage() {
   const service = createServiceRoleClient();
   const [{ data: lotsRaw }, { data: auctionsRaw }] = await Promise.all([
-    service.from("lots").select("id, name, grade, producer_id, fincas(name)").eq("stage", "galardonado").eq("grade", "tyrian").order("created_at", { ascending: false }),
+    // V6.23 (TAR-149): un lote sin finca no tiene código y no se lista (owner: «This Lot does not show up listed»).
+    service.from("lots").select("id, public_code, name, grade, producer_id, fincas(name)").eq("stage", "galardonado").eq("grade", "tyrian").not("public_code", "is", null).order("created_at", { ascending: false }),
     service
       .from("lot_auctions")
       .select("id, lot_id, status, fracciones, kg_total, precio_salida_eur_kg, incremento_eur_kg, tier_minimo, ends_at, lot_name, finca_name, score, notes, created_at, adjudicated_at")
@@ -130,7 +131,7 @@ export default async function OcpSubastasPage() {
                 <div key={l.id} className={styles.miniCard}>
                   <Link href={`/ocp/kr?lote=${l.id}`} style={{ fontWeight: 700, color: "var(--ink)", textDecoration: "none" }}>{l.name}</Link>
                   <p className={styles.meta} style={{ margin: "2px 0 6px" }}>
-                    {name(l.producer_id)} · {finca?.name ?? "—"} · <span className="mono">{ctcLotReferenceShort(l.id)}</span> · <b style={{ color: "var(--t-tyrian)" }}>tyrian</b>
+                    {name(l.producer_id)} · {finca?.name ?? "—"} · <span className="mono">{codigoCtc(l.public_code)}</span> · <b style={{ color: "var(--t-tyrian)" }}>tyrian</b>
                   </p>
                   <AbrirSubastaForm lotId={l.id} lotName={l.name} />
                 </div>

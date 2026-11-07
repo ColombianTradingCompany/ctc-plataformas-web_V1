@@ -1,11 +1,14 @@
 // Instrucciones de envío de muestra como HTML imprimible con marca CTC.
 // Sistema de DOS CAPAS: la transportadora exige por ley los datos reales del
 // remitente (Capa 2, exterior), pero la cata en la Arena es a ciegas -- CTC
-// recibe el paquete, registra el cumplimiento, destruye la capa exterior con
-// los datos personales y le pasa al panel únicamente la bolsa interior
-// anónima (Capa 1), marcada solo con el código del lote. La página cierra con
+// recibe el paquete, registra el cumplimiento con el código del lote de la
+// bolsa interior (Capa 1), destruye la capa exterior con los datos personales
+// y marca la porción que va a la cata con su código de cata. La página cierra con
 // una etiqueta RECORTABLE (~1/4 de página, borde punteado + tijeras) para
 // pegar con cinta sobre la bolsa interior.
+// V6.23 (owner, 2026-11-06, TAR-149): el código de esta etiqueta es el GUARDADO del lote (`Lot.codigo`), que comparte su comienzo
+// con los lotes de la misma finca. Por eso la cata usa OTRO código: lo que ve el Q-Grader es el código ciego de la inscripción
+// (`arena_inscriptions.codigo_ciego`), nunca el del lote.
 
 const ADDRESS = "CTCx · Cra. 4 #8N-30, vía Guatiguará, casa 205, conjunto campestre Santillana · Piedecuesta, Santander, Colombia";
 
@@ -43,8 +46,8 @@ function layersDiagram(short: string): string {
       <tspan x="452" dy="0">Al llegar, CTCx registra su</tspan>
       <tspan x="452" dy="14">envío, <tspan font-weight="bold">destruye la capa</tspan></tspan>
       <tspan x="452" dy="14"><tspan font-weight="bold">exterior</tspan> con sus datos y</tspan>
-      <tspan x="452" dy="14">pasa al panel solo la bolsa</tspan>
-      <tspan x="452" dy="14">interior anónima.</tspan>
+      <tspan x="452" dy="14">marca la porción de la cata</tspan>
+      <tspan x="452" dy="14">con un código de cata propio.</tspan>
       <tspan x="452" dy="18" font-style="italic" fill="#5C6459">Nadie en la cata sabrá</tspan>
       <tspan x="452" dy="13" font-style="italic" fill="#5C6459">que es suyo.</tspan>
     </text>
@@ -109,7 +112,7 @@ export function shipmentInstructionsHtml(lotCode: string, shortRef: string): str
       <h3>Capa 1 · El empaque interior (el anónimo)</h3>
       <p><b>El empaque:</b> una bolsa plástica tipo <b>Ziploc gruesa</b> o de polietileno sellada al calor, completamente limpia (el café verde absorbe olores). Adentro: los 2 kg de pergamino seco, <b>representativos del lote entero</b> (no los seleccione).</p>
       <p><b>Para qué los usa CTCx (uso exclusivo):</b> 1 kg en cuatro porciones de 250 g —una la cata el Q-Grader de inmediato y tres quedan de reserva para revisiones—, y 1 kg que se trilla para ensayos internos (verde al vacío y tostado). Las muestras para compradores no salen de aquí.</p>
-      <p><b>La identificación:</b> péguele la etiqueta recortable de abajo — <b>solo el código del lote</b>. Sin logos, sin su nombre real.</p>
+      <p><b>La identificación:</b> péguele la etiqueta recortable de abajo — <b>solo el código del lote</b>. Sin logos, sin su nombre real. Con ese código CTCx registra su muestra al llegar; la porción que va a la cata lleva otro código, el de la cata.</p>
     </div>
     <div class="layer">
       <h3>Capa 2 · El empaque exterior (el oficial)</h3>
@@ -130,7 +133,7 @@ export function shipmentInstructionsHtml(lotCode: string, shortRef: string): str
       <span class="tag">Muestra · Kaffetal Regal · Evaluación de Lotes</span>
       <span class="bigcode">${markedCode}</span>
       <span class="sub">2 kg café pergamino seco</span>
-      <span class="blindTag">Evaluación anónima · Solo el código del lote</span>
+      <span class="blindTag">Evaluación anónima · Sin su nombre</span>
     </div>
   </div>
 

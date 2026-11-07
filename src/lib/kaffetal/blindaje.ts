@@ -8,7 +8,10 @@
 //     documentos de una finca, con un contrato firmado de un lote que salga de esa finca.
 //   · Sin contrato: sin botón, y la página bloquea copiar, el menú contextual y los atajos de imprimir y guardar; si se imprime
 //     desde el navegador, sale un aviso en vez del documento. Una captura de pantalla no se puede impedir: para eso está la marca.
-// PURO (lo leen el servidor, los componentes y `qa-trato-check`).
+// PURO (lo leen el servidor, los componentes y `qa-trato-check`). V6.23: su único import es `codigoPublico`, también puro (sin
+// imports), para reconocer una referencia con la MISMA regla que el portal.
+
+import { esPuertaAbierta, esReferencia } from "@/lib/catalogo/codigoPublico";
 
 /** Los estados de un contrato que cuentan como «firmado» (CTCx ya firmó: `signed_at`). */
 export const ESTADOS_DE_CONTRATO_FIRMADO = ["active", "reconditioning", "completed", "renovado"] as const;
@@ -25,13 +28,15 @@ export function textoDeMarca(o: { referencia: string; productor: string | null; 
 }
 
 /** V5.202 (owner, 2026-10-10): el Dossier público «necesita mantener el Watermark y omitir info que haga fácil circumventar a CTCx
- *  para llegar al Productor». Su marca NO nombra a nadie: solo el catálogo, la referencia (y solo si tiene la forma `CTC-L-` + 8
- *  hexadecimales: nada más puede colarse por ahí), que se compra a través de CTCx, el sitio y la fecha de consulta. No recibe
- *  nombre de persona ni de finca, a propósito: no tiene dónde ponerlos. El español lleva verbo, a la par del inglés (nodo final,
- *  2026-10-10): «Se compra solo a través de CTCx». */
+ *  para llegar al Productor». Su marca NO nombra a nadie: solo el catálogo, la referencia (y solo si tiene forma de referencia: nada
+ *  más puede colarse por ahí), que se compra a través de CTCx, el sitio y la fecha de consulta. No recibe nombre de persona ni de
+ *  finca, a propósito: no tiene dónde ponerlos. El español lleva verbo, a la par del inglés (nodo final, 2026-10-10): «Se compra
+ *  solo a través de CTCx».
+ *  V6.23 (TAR-149): «forma de referencia» = el código guardado de hoy (`esReferencia`) o una de las 3 referencias viejas con segunda
+ *  puerta mientras siga abierta (`esPuertaAbierta`: un PDF ya enviado del catálogo Japan Pioneers). Todo lo demás se cae. */
 export function textoDeMarcaPublica(o: { referencia: string; fecha: Date | string; lang?: "es" | "en" }): string {
   const f = new Date(o.fecha).toISOString().slice(0, 10);
-  const ref = /^CTC-L-[0-9A-F]{8}$/.test(o.referencia) ? o.referencia : null;
+  const ref = esReferencia(o.referencia) || esPuertaAbierta(o.referencia) ? o.referencia : null;
   const solo = o.lang === "en" ? "Sourced only through CTCx" : "Se compra solo a través de CTCx";
   return ["CTCx Public Catalogue", ref, solo, "ctcexport.com", f].filter(Boolean).join(" · ");
 }

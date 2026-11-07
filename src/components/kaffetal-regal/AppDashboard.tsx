@@ -61,7 +61,8 @@ export function AppDashboard({
   userName: string;
   /** V5.190: la sesión la abrió CTCx desde el OCP («Entrar como el productor»): habilita la aceptación provisional. */
   asistida: boolean;
-  /** V5.190: el código del productor (CTC-P-…), que nombra al Productor en un contrato provisional. */
+  /** V5.190: el código del productor (CTC-P-…), que nombra al Productor en un contrato provisional. V6.23 (TAR-149): el GUARDADO
+   *  (`producer_profiles.codigo`); "" mientras la cuenta no lo tenga. También lo enseña la portada (Perfil). */
   cuenta: string;
   lots: Lot[];
   fincas: Finca[];
@@ -156,6 +157,7 @@ export function AppDashboard({
         {tab === "perfil" && (
           <PerfilTab
             gi={gi}
+            codigoProductor={cuenta}
             fincas={fincas}
             lots={lots}
             parcelas={parcelas}

@@ -32,7 +32,8 @@ const EN = {
   c2k: "Declared with a price",
   c3k: "Current window",
   c4k: "Find my Lot",
-  c4v: "CTC-L- + 8 characters",
+  // V6.23 (TAR-149): sin explicar el formato del código (ni cuántos caracteres, ni cuáles).
+  c4v: "CTC-L- + lot code",
   loading: "…",
 };
 
@@ -55,7 +56,7 @@ const T: Record<Lang, typeof EN> = {
     c2k: "Declarados con precio",
     c3k: "Ventana vigente",
     c4k: "Find my Lot",
-    c4v: "CTC-L- + 8 caracteres",
+    c4v: "CTC-L- + código del lote",
     loading: "…",
   },
   de: {
@@ -75,7 +76,7 @@ const T: Record<Lang, typeof EN> = {
     c2k: "Mit Preis deklariert",
     c3k: "Aktuelles Fenster",
     c4k: "Find my Lot",
-    c4v: "CTC-L- + 8 Zeichen",
+    c4v: "CTC-L- + Loscode",
     loading: "…",
   },
 };

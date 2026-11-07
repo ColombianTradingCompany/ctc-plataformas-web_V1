@@ -1,5 +1,5 @@
 import { HS_CODES } from "../fichaData";
-import { ctcLotReference } from "../../data";
+import { codigoDelLote } from "../../codigoDelLote";
 import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
 
@@ -12,8 +12,9 @@ export function PaneA1({ data, onChange, lot }: PaneProps) {
     onChange({ product_type: value, hs_code: match ? match[1] : "" });
   }
 
-  // V5.100: el código se deriva del lote (CTC-L-XXXXXXXX); `data.ctc_uid` lo guarda igual al salvar.
-  const ref = ctcLotReference(lot.id);
+  // V6.23 (TAR-149): el código GUARDADO del lote (lo asigna CTCx al tener finca); `data.ctc_uid` lo guarda igual al salvar. El
+  // Q-Grader no lo ve: la cata a ciegas lleva su propio código.
+  const ref = lot.codigo;
 
   return (
     <div className={styles.fsec}>
@@ -27,7 +28,14 @@ export function PaneA1({ data, onChange, lot }: PaneProps) {
           <label>Nombre del Producto</label>
           <input value={data.product_name} onChange={(e) => onChange({ product_name: e.target.value })} placeholder="Ej. Colombia Santander Gesha Natural" />
           <p className={styles.fexample} style={{ marginTop: 4 }}>
-            Lote <span className="mono"><b>{ref}</b></span> — es el código del lote: va marcado en el paquete de muestra y en la planilla anónima del Q-Grader.
+            {ref ? (
+              <>
+                Lote <span className="mono"><b>{ref}</b></span> — es el código del lote: va marcado en el paquete de muestra. En la cata a ciegas el
+                Q-Grader ve otro código, no este.
+              </>
+            ) : (
+              <>Lote <b>{codigoDelLote(null)}</b> (en A2). El código del lote aparece aquí en cuanto el lote tenga su finca.</>
+            )}
           </p>
         </div>
         <div className={styles.ff}>

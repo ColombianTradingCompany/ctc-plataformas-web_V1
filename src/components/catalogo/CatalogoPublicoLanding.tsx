@@ -52,7 +52,8 @@ const T: Record<
   // V5.202 (owner, 2026-10-10): el Dossier público omite lo que lleva al productor; el expediente dice la REGIÓN, no la finca.
   es: {
     tag: "CTCx · Catálogo público",
-    sub: "Escriba la referencia de su lote —los ocho caracteres después de «CTC-L-»— y vea su Dossier público: origen, variedad, proceso, altura, taza y grado. Sin cuenta y sin registro.",
+    // V6.23 (TAR-149): sin explicar el formato del código (ni cuántos caracteres, ni cuáles).
+    sub: "Escriba el código de su lote —lo que va después de «CTC-L-»— y vea su Dossier público: origen, variedad, proceso, altura, taza y grado. Sin cuenta y sin registro.",
     altCesta: "Cesta de cerezas de café dibujada a línea, con las palabras Flavour, Quality y Traceability.",
     pieCesta: "Sabor, calidad y trazabilidad — las tres cosas que un código de lote tiene que poder demostrar.",
     queTag: "Qué es este portal",
@@ -75,7 +76,7 @@ const T: Record<
   },
   en: {
     tag: "CTCx · Public catalogue",
-    sub: "Type your lot reference (the eight characters after «CTC-L-») and see its public Dossier: origin, variety, process, altitude, cup and grade. No account, no sign-up.",
+    sub: "Type your lot code (what follows «CTC-L-») and see its public Dossier: origin, variety, process, altitude, cup and grade. No account, no sign-up.",
     altCesta: "Line drawing of a basket of coffee cherries, with the words Flavour, Quality and Traceability.",
     pieCesta: "Flavour, quality and traceability — the three things a lot code has to be able to prove.",
     queTag: "What this portal is",
@@ -98,7 +99,7 @@ const T: Record<
   },
   de: {
     tag: "CTCx · Öffentlicher Katalog",
-    sub: "Geben Sie die Referenz Ihres Loses ein (die acht Zeichen nach «CTC-L-») und sehen Sie sein öffentliches Dossier: Herkunft, Varietät, Aufbereitung, Höhe, Tasse und Grad. Ohne Konto, ohne Anmeldung.",
+    sub: "Geben Sie den Code Ihres Loses ein (was nach «CTC-L-» folgt) und sehen Sie sein öffentliches Dossier: Herkunft, Varietät, Aufbereitung, Höhe, Tasse und Grad. Ohne Konto, ohne Anmeldung.",
     altCesta: "Strichzeichnung eines Korbes mit Kaffeekirschen, mit den Wörtern Flavour, Quality und Traceability.",
     pieCesta: "Geschmack, Qualität und Rückverfolgbarkeit — die drei Dinge, die eine Losnummer belegen können muss.",
     queTag: "Was dieses Portal ist",

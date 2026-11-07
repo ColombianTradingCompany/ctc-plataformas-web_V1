@@ -3,7 +3,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { fincaEudrStatus } from "@/lib/eudr";
 import { fincaCenter } from "@/lib/earthKml";
 import { seasonLabel, type Season } from "@/lib/arena/seasons";
-import { ctcLotReferenceShort, fincaCode, supplierCode } from "@/components/kaffetal-regal/data";
+import { codigoCtc, SIN_CODIGO } from "@/components/kaffetal-regal/data";
+import { codigosAnteriores } from "@/lib/codigos/servidor";
 import { infoGeneralComplete, PRODUCER_SEGMENTS, segmentProducer, type ProducerSegment } from "@/lib/bcp/producerSegments";
 import { fincaEudrFieldsDe, type FilaDeFincaParaLaVisa } from "@/lib/ocp/fincaEudr";
 import { ESTADO_DE_CONTRATO, ESTADO_DE_OFERTA, etapaDelLote, evaDelLote, fichaHecha, gradoLabel } from "@/lib/ocp/etapas";
@@ -25,6 +26,15 @@ import type { EudrStatus } from "@/lib/eudr";
 // Son lecturas LIGERAS (nada de `datasheet` ni de los `eudr_*` del expediente):
 // lo pesado lo pide la vista completa, y solo del lote, la finca o el productor
 // que se abre.
+//
+// V6.23 (TAR-149) · los códigos se LEEN de su fila (`producer_profiles.codigo`, `fincas.codigo`, `lots.public_code`), nunca se
+// calculan. Un lote sin finca no tiene código y, dice el owner, «This Lot does not show up listed»: no sale en la tabla, ni en sus
+// contadores, ni en el mapa. Solo la carga de la sección del PRODUCTOR (con `productorId`) lo trae, con el rótulo `LOTE_SIN_CODIGO`,
+// para que CTCx pueda ayudarle a completarlo o borrar el borrador. El buscador encuentra también el código ANTERIOR de cada registro
+// (el libro `codigos_ctc`), sin enseñarlo nunca como vigente.
+
+/** Lo que se enseña en lugar del código de un lote sin finca (solo en la sección del productor). */
+export const LOTE_SIN_CODIGO = `${SIN_CODIGO} · falta la finca`;
 
 export type Tono = "good" | "bad" | "warn" | "muted";
 
@@ -73,6 +83,9 @@ export type KrFila = {
   temporadaLabel: string | null;
   oferta: { label: string; tono: Tono } | null;
   trato: { label: string; tono: Tono; contratoId: string } | null;
+  /** V6.23 (TAR-149): los códigos ANTERIORES del productor, la finca y el lote de la fila, separados por espacios. Solo para el
+   *  buscador (quien aún teclea un código viejo encuentra el registro); NUNCA se enseña. Vacío fuera de la tabla. */
+  codigosAnteriores: string;
 };
 
 type ProfileRow = { id: string; full_name: string | null; email: string | null; phone: string | null; created_at: string; role: string | null };
@@ -85,15 +98,19 @@ type PPRow = {
   country: string | null;
   department: string | null;
   gestion: Gestion | null;
+  codigo: string | null;
 };
 type FincaRow = FilaDeFincaParaLaVisa & {
   id: string;
   producer_id: string;
+  codigo: string | null;
   pais: string | null;
   eudr_polygon_geojson: { lat: number; lng: number }[] | null;
 };
 type LotRow = {
   id: string;
+  /** V6.23 (TAR-149): el código del lote; null = sin finca (no se lista). */
+  public_code: string | null;
   name: string;
   producer_id: string;
   finca_id: string | null;
@@ -116,23 +133,26 @@ const tonoDeLaVisa = (tone: string): Tono => (tone === "ok" ? "good" : tone === 
 
 // V5.106: con `productorId`, la MISMA derivación (etapa, circuito, Pasaporte, muestra, oferta, trato) para un solo productor —
 // lo que la vista completa del productor pinta en sus pestañas—, leyendo solo sus filas de las tablas grandes.
+// V6.23 (TAR-149): con `productorId` la carga es la de la SECCIÓN DEL PRODUCTOR, el único sitio del OCP donde salen también sus
+// lotes sin finca (sin código). La tabla (sin `productorId`) nunca los trae.
 export async function cargarKr(service: SupabaseClient, opciones: { productorId?: string } = {}): Promise<{
   filas: KrFila[];
   temporadas: { id: string; label: string }[];
 }> {
   const { productorId } = opciones;
+  const conLotesSinCodigo = !!productorId;
   // `.match({})` no añade filtro alguno: así la misma consulta sirve para todos y para uno (sin genéricos sobre el builder).
   const soloDe = (columna: string): Record<string, string> => (productorId ? { [columna]: productorId } : {});
   const [{ data: pRaw }, { data: ppRaw }, { data: fRaw }, { data: lRaw }, { data: iRaw }, { data: oRaw }, { data: cRaw }, { data: sRaw }, { data: aRaw }, { data: evRaw }, { data: cmRaw }, { data: coRaw }] =
     await Promise.all([
       service.from("profiles").select("id, full_name, email, phone, created_at, role").match(soloDe("id")).order("created_at", { ascending: true }),
-      service.from("producer_profiles").select("profile_id, company_name, tax_id, cedula_cafetera, avatar_asset_id, country, department, gestion").match(soloDe("profile_id")),
+      service.from("producer_profiles").select("profile_id, company_name, tax_id, cedula_cafetera, avatar_asset_id, country, department, gestion, codigo").match(soloDe("profile_id")),
       service
           .from("fincas")
           .select(
-            "id, producer_id, name, status, hectares, vereda, municipio, departamento, pais, eudr_lat, eudr_lng, eudr_polygon_geojson, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, eudr_cert_shared"
+            "id, producer_id, codigo, name, status, hectares, vereda, municipio, departamento, pais, eudr_lat, eudr_lng, eudr_polygon_geojson, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, eudr_cert_shared"
           ).match(soloDe("producer_id")).order("created_at", { ascending: true }),
-      service.from("lots").select("id, name, producer_id, finca_id, stage, intake_step, grade, source, season_id, sample_shipped_at, sample_2kg_confirmed_at").match(soloDe("producer_id")).order("created_at", { ascending: false }),
+      service.from("lots").select("id, public_code, name, producer_id, finca_id, stage, intake_step, grade, source, season_id, sample_shipped_at, sample_2kg_confirmed_at").match(soloDe("producer_id")).order("created_at", { ascending: false }),
       service.from("arena_inscriptions").select("lot_id, producer_id, phase, status, sondeo_batch_id, sondeo_result, decision_comercial").match(soloDe("producer_id")),
       service.from("lot_offers").select("lot_id, status, emitted_at").match(soloDe("producer_id")).order("emitted_at", { ascending: false }),
       service.from("purchase_contracts").select("id, lot_id, status"),
@@ -162,7 +182,9 @@ export async function cargarKr(service: SupabaseClient, opciones: { productorId?
   const perfiles = (pRaw as ProfileRow[] | null) ?? [];
   const pp = new Map(((ppRaw as PPRow[] | null) ?? []).map((r) => [r.profile_id, r]));
   const fincas = (fRaw as FincaRow[] | null) ?? [];
+  // V6.23 (TAR-149): el estado del productor se deriva de TODOS sus lotes; las filas, solo de los que tienen código.
   const lotes = (lRaw as LotRow[] | null) ?? [];
+  const listados = conLotesSinCodigo ? lotes : lotes.filter((l) => !!l.public_code);
   const inscripciones = (iRaw as InsRow[] | null) ?? [];
   const temporadas = (sRaw as Season[] | null) ?? [];
   const temporadaPorId = new Map(temporadas.map((s) => [s.id, s]));
@@ -183,8 +205,10 @@ export async function cargarKr(service: SupabaseClient, opciones: { productorId?
   for (const f of fincas) fincasDe.set(f.producer_id, [...(fincasDe.get(f.producer_id) ?? []), f]);
   const lotesDe = new Map<string, LotRow[]>();
   for (const l of lotes) lotesDe.set(l.producer_id, [...(lotesDe.get(l.producer_id) ?? []), l]);
+  const listadosDe = new Map<string, LotRow[]>();
+  for (const l of listados) listadosDe.set(l.producer_id, [...(listadosDe.get(l.producer_id) ?? []), l]);
   const lotesDeFinca = new Map<string, LotRow[]>();
-  for (const l of lotes) if (l.finca_id) lotesDeFinca.set(l.finca_id, [...(lotesDeFinca.get(l.finca_id) ?? []), l]);
+  for (const l of listados) if (l.finca_id) lotesDeFinca.set(l.finca_id, [...(lotesDeFinca.get(l.finca_id) ?? []), l]);
   const fincaPorId = new Map(fincas.map((f) => [f.id, f]));
   // El origen de un lote puede venir por DOS sitios: `lots.finca_id` (la finca declarada) o los APORTES
   // (`lot_contributions`, F2 del 2026-07-29: un lote de varias fincas). Sin mirar los aportes, un lote
@@ -194,7 +218,7 @@ export async function cargarKr(service: SupabaseClient, opciones: { productorId?
     aportesDe.set(a.lot_id, [...(aportesDe.get(a.lot_id) ?? []), a.finca_id]);
   }
   for (const [loteId, ids] of aportesDe) {
-    for (const fid of ids) lotesDeFinca.set(fid, [...(lotesDeFinca.get(fid) ?? []), ...lotes.filter((l) => l.id === loteId && l.finca_id !== fid)]);
+    for (const fid of ids) lotesDeFinca.set(fid, [...(lotesDeFinca.get(fid) ?? []), ...listados.filter((l) => l.id === loteId && l.finca_id !== fid)]);
   }
 
   // Un «productor» es cualquier cuenta con HUELLA de productor —perfil de productor, o fincas o lotes
@@ -205,11 +229,22 @@ export async function cargarKr(service: SupabaseClient, opciones: { productorId?
   );
   const etiquetaDelSegmento = (id: string) => PRODUCER_SEGMENTS.find((s) => s.id === id)?.label ?? "";
 
+  // V6.23 (TAR-149): los códigos anteriores, solo para el buscador de la tabla (la sección del productor no busca).
+  const anteriores = productorId
+    ? new Map<string, string>()
+    : await anterioresPorTandas(service, [...productores.map((p) => p.id), ...fincas.map((f) => f.id), ...listados.map((l) => l.id)]);
+  const anterioresDe = (...ids: (string | null)[]) =>
+    ids
+      .map((id) => (id ? anteriores.get(id) : undefined))
+      .filter(Boolean)
+      .join(" ");
+
   const filas: KrFila[] = [];
   for (const p of productores) {
     const perfil = pp.get(p.id);
     const susFincas = fincasDe.get(p.id) ?? [];
     const susLotes = lotesDe.get(p.id) ?? [];
+    const susListados = listadosDe.get(p.id) ?? [];
     const segmentoId = segmentProducer({
       joinedAt: p.created_at,
       infoComplete: infoGeneralComplete({
@@ -232,7 +267,7 @@ export async function cargarKr(service: SupabaseClient, opciones: { productorId?
     const delProductor = {
       productorId: p.id,
       productorNombre: p.full_name || p.email || "Productor",
-      productorCodigo: supplierCode(p.id),
+      productorCodigo: codigoCtc(perfil?.codigo),
       productorEmail: p.email,
       segmento,
       segmentoId,
@@ -252,7 +287,7 @@ export async function cargarKr(service: SupabaseClient, opciones: { productorId?
       return {
         fincaId: f.id,
         fincaNombre: f.name || "Finca",
-        fincaCodigo: fincaCode(f.id),
+        fincaCodigo: codigoCtc(f.codigo),
         fincaLugar: [f.municipio, f.pais || f.departamento].filter(Boolean).join(", "),
         visa: { label: estado.label, tono: f.status === "rejected" ? ("bad" as Tono) : tonoDeLaVisa(estado.tone) },
         pasaporte: estado.code,
@@ -276,7 +311,7 @@ export async function cargarKr(service: SupabaseClient, opciones: { productorId?
       return {
         loteId: l.id,
         loteNombre: l.name,
-        loteRef: ctcLotReferenceShort(l.id),
+        loteRef: l.public_code ?? LOTE_SIN_CODIGO,
         etapa: l.stage,
         etapaLabel: etapaDelLote(l.stage),
         ficha: fichaHecha(l.stage, l.intake_step),
@@ -319,25 +354,35 @@ export async function cargarKr(service: SupabaseClient, opciones: { productorId?
       };
     };
 
-    // 1. sus lotes, cada uno con su finca (un lote sin finca declarada también sale)
-    for (const l of susLotes) {
+    // 1. sus lotes con código, cada uno con su finca (V6.23: el lote sin finca ya no sale aquí; solo en la sección del productor)
+    for (const l of susListados) {
       const aportes = [...new Set(aportesDe.get(l.id) ?? [])];
       const f = fincaPorId.get(l.finca_id ?? aportes[0] ?? "");
       const origen = f ? deLaFinca(f) : sinFinca;
       // Varias fincas: la fila enseña la primera y DICE cuántas son; el detalle del lote las lista todas.
       const otras = aportes.filter((id) => id !== f?.id).length;
       if (f && otras > 0) origen.fincaNombre = `${origen.fincaNombre} + ${otras} más`;
-      filas.push({ clave: `lote:${l.id}`, ...delProductor, ...origen, ...delLote(l) });
+      filas.push({ clave: `lote:${l.id}`, ...delProductor, ...origen, ...delLote(l), codigosAnteriores: anterioresDe(p.id, f?.id ?? null, l.id) });
     }
     // 2. sus fincas sin ningún lote
     for (const f of susFincas) {
       if ((lotesDeFinca.get(f.id)?.length ?? 0) > 0) continue;
-      filas.push({ clave: `finca:${f.id}`, ...delProductor, ...deLaFinca(f), ...sinLote });
+      filas.push({ clave: `finca:${f.id}`, ...delProductor, ...deLaFinca(f), ...sinLote, codigosAnteriores: anterioresDe(p.id, f.id) });
     }
-    // 3. y él mismo, si no tiene ni finca ni lote
-    if (!susFincas.length && !susLotes.length) filas.push({ clave: `prod:${p.id}`, ...delProductor, ...sinFinca, ...sinLote });
+    // 3. y él mismo, si no tiene ni finca ni lote listado
+    if (!susFincas.length && !susListados.length) filas.push({ clave: `prod:${p.id}`, ...delProductor, ...sinFinca, ...sinLote, codigosAnteriores: anterioresDe(p.id) });
   }
 
   const asc = [...temporadas].sort((a, b) => a.year - b.year || String(a.kind).localeCompare(String(b.kind)));
   return { filas, temporadas: asc.map((s) => ({ id: s.id, label: seasonLabel(s) })) };
+}
+
+// V6.23 (TAR-149): `codigosAnteriores` filtra por ids en la URL; por tandas, para que la lista de la tabla entera no la desborde.
+async function anterioresPorTandas(service: SupabaseClient, ids: string[]): Promise<Map<string, string>> {
+  const unicos = [...new Set(ids)];
+  const TANDA = 150;
+  const tandas: string[][] = [];
+  for (let i = 0; i < unicos.length; i += TANDA) tandas.push(unicos.slice(i, i + TANDA));
+  const mapas = await Promise.all(tandas.map((t) => codigosAnteriores(service, t)));
+  return new Map(mapas.flatMap((m) => [...m]));
 }

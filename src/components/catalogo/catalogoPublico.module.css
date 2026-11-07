@@ -146,7 +146,7 @@
   padding: 0 26px;
 }
 
-/* V5.199 · el prefijo «CTC-L-» va FIJO dentro del campo: quien busca escribe solo los ocho caracteres. El borde y el foco pasan
+/* V5.199 · el prefijo «CTC-L-» va FIJO dentro del campo: quien busca escribe solo lo que va detrás. El borde y el foco pasan
    del campo a su envoltorio, para que prefijo y caracteres se lean como una sola referencia. */
 .entradaConPrefijo {
   flex: 1 1 250px;

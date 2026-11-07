@@ -25,6 +25,10 @@ const ES = {
   fotoFinca: "Finca",
   // V5.202 (owner): en el Dossier público la foto de la portada es del LOTE, nunca de la finca.
   fotoLote: "Foto del lote",
+  // V6.23 (TAR-149, owner: «add a notification pin on their dossiers»): el aviso de la segunda puerta de los 3 lotes del catálogo
+  // Japan Pioneers. `hasta` llega como AAAA-MM-DD.
+  puertaDeLegadoAria: "Aviso de cambio de código",
+  puertaDeLegado: (anterior: string, hasta: string, nuevo: string) => `Código anterior ${anterior} · válido hasta el ${hasta.split("-").reverse().join(".")} · código nuevo ${nuevo}`,
   // Origen
   origenTitulo: "De dónde viene este café",
   cafetales: "Cafetales del lote",
@@ -246,6 +250,9 @@ const EN: Textos = {
   referencia: "Reference",
   fotoFinca: "Farm",
   fotoLote: "Lot photo",
+  puertaDeLegadoAria: "Code change notice",
+  puertaDeLegado: (anterior: string, hasta: string, nuevo: string) =>
+    `Previous code ${anterior} · valid until ${new Date(`${hasta}T12:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })} · new code ${nuevo}`,
   origenTitulo: "Where this coffee comes from",
   cafetales: "The lot's coffee plots",
   ubicacion: "Location",

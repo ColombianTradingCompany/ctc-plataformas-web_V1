@@ -144,7 +144,9 @@ de Notion con `ctc_id` huérfano. En Notion no hay guardián: la disciplina es e
   2026-10-10) desde las filas «Para `secretaria`» de `ALINEACION` §3, que nombran a este componente y no llegaron a su charter. Antes de
   F1, decidir qué se espeja de: **(a)** notas del productor nuevas o con forma nueva — `revision_almacenaje`, que habla de la reserva CPS (V5.94), la solicitud
   que nace `postulated` con la coinversión del 30 % (V5.95), `signed` con `notes` (V5.97: la firma del contrato avisa), el
-  `context_label` «Ficha CTC-L-…» (V5.100: el código del lote es `CTC-L-XXXXXXXX`), notas con `seccion` y adjunto (V5.124), la nota
+  `context_label` «Ficha CTC-L-…» (V5.100; desde la V6.23 el código del lote es el GUARDADO, `CTC-L-XXXYYZZZZ` en `lots.public_code`,
+  y los registros viejos siguen con el código anterior: el libro `codigos_ctc` los traduce; un espejo que una por código usa ese
+  libro, nunca un código calculado), notas con `seccion` y adjunto (V5.124), la nota
   «Solicitud de chequeo» de la finca (V5.128) y la nota «retirado por CTCx» **sin `lot_id` ni `finca_id`** (V5.134); **(b)** lo que
   DESAPARECE: un productor borrado por inactividad sale del espejo en el siguiente barrido (V5.103), y un lote o una finca pueden
   borrarse con todo su circuito (V5.134: copia en `borrados_nucleares`; ningún id guardado se puede dar por vivo); **(c)** las mezclas

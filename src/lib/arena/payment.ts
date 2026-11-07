@@ -50,7 +50,8 @@ export function carrilConfigurado(c: CarrilDePago): boolean {
 
 /**
  * La referencia que el productor escribe en el pago para que CTC lo concilie.
- * Se usa el código corto del lote — es lo que ya va en el paquete de la muestra.
+ * Se usa el código GUARDADO del lote (`lots.public_code`), el que el productor ve en su panel. V6.23 (TAR-149): nunca el código
+ * ciego de la cata (`arena_inscriptions.codigo_ciego`), que es solo del laboratorio y de CTCx.
  */
 export function paymentReferenceFor(lotRefShort: string): string {
   return lotRefShort;

@@ -112,11 +112,13 @@ export async function addLotToSession(sessionId: string, formData: FormData): Pr
   const lotId = String(formData.get("lot_id") ?? "");
   const [{ data: sess }, { data: lot }] = await Promise.all([
     service.from("arena_sessions").select("id").eq("id", sessionId).maybeSingle(),
-    service.from("lots").select("id, name, stage").eq("id", lotId).maybeSingle(),
+    service.from("lots").select("id, name, stage, public_code").eq("id", lotId).maybeSingle(),
   ]);
   if (!sess) return { ok: false, error: "Sesión no encontrada." };
   if (!lot) return { ok: false, error: "Elija un café." };
   if (lot.stage !== "galardonado") return { ok: false, error: "A una sesión solo entran cafés GALARDONADOS." };
+  // V6.23 (TAR-149): un lote sin código (sin finca) no entra en ninguna lista; la misma regla que el selector de la sesión.
+  if (!lot.public_code) return { ok: false, error: "Ese café no tiene código CTC: primero necesita su finca." };
 
   const { error } = await service.from("arena_session_lots").insert({ arena_session_id: sessionId, lot_id: lotId });
   if (error) return { ok: false, error: "Ese café ya está en la sesión." };

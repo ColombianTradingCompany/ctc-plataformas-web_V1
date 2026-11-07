@@ -36,8 +36,8 @@
 //    bolsa ya impresa), ni de `datasheet.ctc_uid` — ese identificador es privado
 //    (estaba en `NUNCA_PUBLICOS` de la ficha pública que la V5.198 reemplazó por el
 //    Dossier público), y un identificador privado que se vuelve público es una
-//    puerta de un solo sentido. (La REFERENCIA de abajo sí sale del id: decisión
-//    del owner del 2026-10-10, ver su bloque.)
+//    puerta de un solo sentido. (La REFERENCIA de abajo es, desde la V6.23, el
+//    código GUARDADO y jerárquico del lote, `lots.public_code`: ver su bloque.)
 //
 // Módulo PURO a propósito: sin `server-only`, sin imports. El formulario de
 // «Find my Lot» es un componente de cliente y necesita importar
@@ -46,12 +46,14 @@
 // módulo `server-only` arrastra Supabase al navegador.
 
 /** Crockford base32: sin I, L, O ni U — las cuatro que se confunden al leer una
- *  etiqueta. La MISMA cadena está en `public.ctc_public_code()`, que es quien
- *  acuña; si una cambia sin la otra, el generador produce códigos que el
- *  normalizador rechaza. Lo vigila `qa-catalogo-publico-check.mjs`. */
+ *  etiqueta. V6.23: la MISMA cadena está en `public.ctc_cuerpo_aleatorio()`, que es
+ *  quien acuña los códigos CTC (`2026-11-07_codigos_ctc_a_ampliar.sql`); si una
+ *  cambia sin la otra, la base acuña códigos que el normalizador rechaza. Lo vigila
+ *  `qa-codigos-ctc-check.mjs`. (`ctc_public_code()` ya no acuña `CTCX-`.) */
 export const ALFABETO = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
-/** Cuántos caracteres de alfabeto lleva un código, sin el prefijo ni los guiones. */
+/** Cuántos caracteres de alfabeto lleva un código VIEJO `CTCX-` (V5.48), sin el prefijo ni los guiones. CONGELADO: no es el
+ *  largo de la referencia de hoy (`LARGO_REFERENCIA`, abajo). */
 export const LARGO_CUERPO = 8;
 
 const PREFIJO = "CTCX";
@@ -125,41 +127,94 @@ export function rutaDelCodigo(codigo: string): string {
 }
 
 // ── V5.198 (owner, 2026-10-10) · la REFERENCIA del lote es su dirección pública ─────────────────────────────────────────
-// «"Find my Lot" […] con la cual debo escribir solo los 8 dígitos después de "CTC-L-"; ya deben ser encontrados los lotes que ya
-// están en el Triage». La referencia `CTC-L-XXXXXXXX` es la que el lote YA lleva en el paquete de muestra, en la planilla del
-// Q-Grader, en el Dossier y en el OCP (`ctcLotReference`: los ocho primeros caracteres hexadecimales de su id, en mayúsculas).
-// Desde la V5.198 es la dirección del lote en el portal; el código `CTCX-XXXX-XXXX` de arriba (V5.48) queda como dirección VIEJA
-// que la ruta redirige a la nueva. Sigue valiendo la nota 1 de la cabecera: la referencia NO es una credencial — la vista
-// `public_lot_vitrina` la expone a `anon`, y lo que se enseña con ella es lo que cualquiera puede ver.
+// «"Find my Lot" […] con la cual debo escribir solo los […] dígitos después de "CTC-L-"». La referencia es la dirección del lote en el
+// portal y lo que va en el paquete de muestra, el Dossier y el OCP. Sigue valiendo la nota 1 de la cabecera: la referencia NO es una
+// credencial — la vista `public_lot_vitrina` la expone a `anon`, y lo que se enseña con ella es lo que cualquiera puede ver.
+//
+// ── V6.23 (owner, 2026-11-06, TAR-149) · la referencia es el código GUARDADO y jerárquico ──────────────────────────────────
+// Ya no se deriva del uuid (eso era la V5.100). Es `lots.public_code`: `CTC-L-` + los 5 caracteres de la finca + 4 al azar, en
+// el alfabeto de arriba: 9 caracteres. Lo asigna la BASE (`codigos_ctc`, `docs/migraciones/2026-11-07_codigos_ctc_a_ampliar.sql`)
+// y la aplicación NUNCA lo calcula ni lee en él una finca o un productor (un prefijo dice dónde NACIÓ el registro, no de quién es
+// hoy). El owner: «the syntax is not public but the IDs are visible» — ninguna pantalla explica cómo se arma.
+//
+// LA SEGUNDA PUERTA (owner, punto 5 de TAR-149): los 3 lotes del catálogo Japan Pioneers, ya enviado a compradores, conservan su
+// referencia VIEJA (8 hexadecimales) como una dirección que lleva (308) a la nueva, HASTA el 30.06.2027 incluido (hora de Bogotá).
+// La fuente de verdad es el libro (`codigos_ctc.puerta_hasta`, que resuelve `lib/catalogo/vitrina.ts`); esta lista solo deja que el
+// buscador, la marca de agua y el formulario la acepten al teclearla o al leerla de un PDF ya enviado. `qa-codigos-ctc-check` exige
+// que diga lo mismo que la migración. Ninguna otra referencia vieja abre nada.
 
-/** El prefijo de la referencia, fijo en el buscador: quien busca solo escribe los ocho caracteres. */
+/** El prefijo de la referencia, fijo en el buscador: quien busca solo escribe lo que va detrás. */
 export const PREFIJO_REFERENCIA = "CTC-L-";
 
-/** Lo que se confunde al leer una etiqueta impresa. Ninguno es hexadecimal, así que no tapa un carácter legítimo. */
-const AMBIGUOS_HEX: Record<string, string> = { O: "0", I: "1", L: "1" };
+/** Caracteres del código del lote, sin el prefijo (V6.23: 5 de la finca + 4 propios). */
+export const LARGO_REFERENCIA = 9;
 
-/**
- * Lleva lo que teclearon a la referencia canónica `CTC-L-XXXXXXXX` (hexadecimal en mayúsculas), o `null` si no lo es. Perdona
- * minúsculas, espacios, guiones y el prefijo escrito o ausente; no perdona longitudes (la ruta canoniza con un 308 permanente).
- */
-export function normalizaReferencia(entrada: string): string | null {
-  if (typeof entrada !== "string") return null;
-  let limpio = entrada.toUpperCase().replace(/[^0-9A-Z]/g, "");
-  // El prefijo se quita ANTES de leer los ambiguos: «CTCL» lleva una L que no es un uno.
-  if (limpio.startsWith("CTCL") && limpio.length === 4 + LARGO_CUERPO) limpio = limpio.slice(4);
-  if (limpio.length !== LARGO_CUERPO) return null;
-  const cuerpo = [...limpio].map((c) => AMBIGUOS_HEX[c] ?? c).join("");
-  return /^[0-9A-F]{8}$/.test(cuerpo) ? `${PREFIJO_REFERENCIA}${cuerpo}` : null;
+/** Caracteres de una referencia VIEJA (V5.100, hexadecimal). Solo las segundas puertas la usan. */
+const LARGO_REFERENCIA_VIEJA = 8;
+
+/** Las 3 referencias viejas con segunda puerta (TAR-149, punto 5). La MISMA lista y la misma fecha están en la migración. */
+export const PUERTAS_DE_LEGADO = ["CTC-L-7E360302", "CTC-L-016DF280", "CTC-L-FDA6B795"] as const;
+
+/** Último día (incluido, hora de Bogotá) en que las segundas puertas abren. Después, la Tarea de retiro las quita. */
+export const PUERTA_HASTA = "2027-06-30";
+
+/** Hoy en Bogotá, `AAAA-MM-DD` (las puertas cierran por fecha colombiana, no por la del servidor). */
+export function hoyEnBogota(ahora: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota", year: "numeric", month: "2-digit", day: "2-digit" }).format(ahora);
 }
 
-/** V5.199: lo que queda en el campo de «Find my Lot» mientras se escribe: en mayúsculas, sin el prefijo si lo pegaron entero,
- *  sin guiones ni espacios y nunca más de ocho caracteres (el prefijo va FIJO delante del campo). */
+/** `true` si la cadena es una referencia VIEJA (`CTC-L-` + 8 hexadecimales), tenga o no puerta. */
+export function esReferenciaVieja(referencia: string): boolean {
+  return /^CTC-L-[0-9A-F]{8}$/.test(referencia);
+}
+
+/** `true` si es una de las 3 referencias viejas con segunda puerta y la puerta sigue abierta. */
+export function esPuertaAbierta(referencia: string, ahora: Date = new Date()): boolean {
+  return (PUERTAS_DE_LEGADO as readonly string[]).includes(referencia) && hoyEnBogota(ahora) <= PUERTA_HASTA;
+}
+
+/** `true` si la cadena YA es una referencia nueva canónica (`CTC-L-` + 9 del alfabeto). */
+export function esReferencia(referencia: string): boolean {
+  return new RegExp(`^CTC-L-[${ALFABETO}]{${LARGO_REFERENCIA}}$`).test(referencia);
+}
+
+/**
+ * Lleva lo que teclearon (o lo que trae un enlace) a una referencia canónica, o `null`:
+ *   · 9 caracteres → `CTC-L-XXXXXXXXX`, la referencia de hoy;
+ *   · 8 hexadecimales → la referencia VIEJA, SOLO si es una de las 3 segundas puertas y sigue abierta (la ruta la redirige).
+ * Perdona minúsculas, espacios, guiones, el prefijo escrito o ausente y las tres letras que se confunden con cifras (O, I, L);
+ * no perdona longitudes (la ruta canoniza con un 308 permanente).
+ */
+export function normalizaReferencia(entrada: string, ahora: Date = new Date()): string | null {
+  if (typeof entrada !== "string") return null;
+  let limpio = entrada.toUpperCase().replace(/[^0-9A-Z]/g, "");
+  // El prefijo se quita ANTES de leer los ambiguos: «CTCL» lleva una L que no es un uno. Ningún cuerpo empieza por «CTCL» (la L
+  // no está en el alfabeto) y ningún productor recibe «CTC» (reservado en la migración).
+  if (limpio.startsWith("CTCL") && (limpio.length === 4 + LARGO_REFERENCIA || limpio.length === 4 + LARGO_REFERENCIA_VIEJA)) {
+    limpio = limpio.slice(4);
+  }
+  const cuerpo = [...limpio].map((c) => AMBIGUOS[c] ?? c).join("");
+  if (cuerpo.length === LARGO_REFERENCIA) {
+    // Un cuerpo que empieza por «CTC» no es de ningún lote (el prefijo de productor CTC está reservado): es otro código tecleado
+    // en el buscador («CTC-F-…», «CTCX…»). Se rechaza aquí, en vez de canonizarlo con un 308 hacia una dirección que no existe.
+    if (cuerpo.startsWith("CTC")) return null;
+    return [...cuerpo].every((c) => EN_ALFABETO.has(c)) ? `${PREFIJO_REFERENCIA}${cuerpo}` : null;
+  }
+  if (cuerpo.length === LARGO_REFERENCIA_VIEJA && /^[0-9A-F]{8}$/.test(cuerpo)) {
+    const vieja = `${PREFIJO_REFERENCIA}${cuerpo}`;
+    return esPuertaAbierta(vieja, ahora) ? vieja : null;
+  }
+  return null;
+}
+
+/** Lo que queda en el campo de «Find my Lot» mientras se escribe: en mayúsculas, sin el prefijo si lo pegaron entero, sin guiones
+ *  ni espacios y nunca más de 9 caracteres (el prefijo va FIJO delante del campo). */
 export function cuerpoDeReferencia(entrada: string): string {
   return entrada
     .toUpperCase()
     .replace(/^\s*CTC[\s-]*L[\s-]*/, "")
     .replace(/[^0-9A-Z]/g, "")
-    .slice(0, LARGO_CUERPO);
+    .slice(0, LARGO_REFERENCIA);
 }
 
 /** La URL pública de un lote por su referencia (el Dossier público), relativa. Se absolutiza igual que `RUTA_PORTAL`. */

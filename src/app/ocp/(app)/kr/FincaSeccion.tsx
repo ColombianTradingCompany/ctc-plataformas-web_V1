@@ -6,7 +6,8 @@ import { fincaEudrFieldsDe, vaciosDeLaDeclaracion } from "@/lib/ocp/fincaEudr";
 import { etapaDelLote } from "@/lib/ocp/etapas";
 import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
-import { fincaCode } from "@/components/kaffetal-regal/data";
+import { codigoCtc } from "@/components/kaffetal-regal/data";
+import { codigosDeProductores } from "@/lib/codigos/servidor";
 import { daneCodeFor } from "@/lib/daneCodes";
 import { leerChequeosSolicitados } from "@/lib/eudrAtributos";
 import { EudrStatusBadge } from "@/components/kaffetal-regal/EudrStatusBadge";
@@ -24,6 +25,8 @@ type LotRow = { id: string; name: string; finca_id: string | null; stage: string
 
 type FincaRow = {
   id: string;
+  /** V6.23 (TAR-149): `fincas.codigo`, asignado por la base. */
+  codigo: string | null;
   name: string;
   producer_id: string;
   status: string;
@@ -137,7 +140,7 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
     // A single literal string (not runtime-concatenated) -- see the note on
     // the lots query in ../lotes/page.tsx for why that distinction matters.
     .select(
-      `id, name, producer_id, status, vereda, municipio, departamento, pais, hectares, altitude_m, history_text, characteristics_text, profile_photo_asset_id, video_asset_id,
+      `id, codigo, name, producer_id, status, vereda, municipio, departamento, pais, hectares, altitude_m, history_text, characteristics_text, profile_photo_asset_id, video_asset_id,
        requires_eudr_polygon, eudr_polygon_geojson, eudr_lat, eudr_lng,
        eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types,
        eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_legal_docs_asset_id, eudr_legal_docs_filename,
@@ -161,9 +164,11 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
     ...Object.values(leerChequeosSolicitados(f.eudr_chequeo_solicitudes)).map((v) => v.assetId),
     ...(f.eudr_chequeo_files ?? []).map((v) => v.assetId),
   ]);
-  const [signedUrls, producers, { data: comms }, { data: lotsRaw }, { data: parcelasRaw }, { data: certsRaw }] = await Promise.all([
+  const [signedUrls, producers, codigosProd, { data: comms }, { data: lotsRaw }, { data: parcelasRaw }, { data: certsRaw }] = await Promise.all([
     signedKaffetalMediaUrls(service, allAssetIds),
     fetchProducerContacts(service, fincaRows.map((f) => f.producer_id)),
+    // V6.23 (TAR-149): el CTC-P- guardado del productor, para su línea de contacto.
+    codigosDeProductores(service, fincaRows.map((f) => f.producer_id)),
     service
       .from("producer_comm_log")
       .select("id, finca_id, context_label, note, created_at, author_role, seccion, adjunto_asset_id, adjunto_filename")
@@ -262,7 +267,7 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
                     <div>
                       <FincaPanel
                         data={{
-                          code: fincaCode(finca.id),
+                          code: codigoCtc(finca.codigo),
                           photoUrl: finca.profile_photo_asset_id ? signedUrls.get(finca.profile_photo_asset_id) ?? null : null,
                           videoUrl: finca.video_asset_id ? signedUrls.get(finca.video_asset_id) ?? null : null,
                           locationLine: `${finca.municipio}, ${finca.pais || finca.departamento} · ${finca.hectares} ha${finca.requires_eudr_polygon ? " · requiere polígono EUDR" : ""}`,
@@ -309,11 +314,11 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
                         header={
                           <>
                             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 4 }}>
-                              <span className={styles.badge}>{fincaCode(finca.id)}</span>
+                              <span className={styles.badge}>{codigoCtc(finca.codigo)}</span>
                               <span className={styles[short.cls]}>{short.label}</span>
                               <EudrStatusBadge status={status} />
                             </div>
-                            <ProducerContactLine producer={producer} />
+                            <ProducerContactLine producer={producer} codigo={codigosProd.get(finca.producer_id)} />
                           </>
                         }
                         generalActions={
@@ -383,6 +388,7 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
                         eudrSection={
                           <FincaEudrEditor
                             fincaId={finca.id}
+                            fincaCodigo={codigoCtc(finca.codigo)}
                             fincaName={finca.name}
                             producerId={finca.producer_id}
                             values={finca}

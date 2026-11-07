@@ -5,7 +5,9 @@ import Image from "next/image";
 import { useToast } from "@/components/Toast";
 import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
 import { fincaEudrStatus, lotEudrStatus, resolveContributionFincas, countryRiskFor, deriveChainComplexity, deriveProductRisk } from "@/lib/eudr";
-import { ctcLotReference, ctcLotReferenceShort, type Finca, type Lot } from "./data";
+import type { Finca, Lot } from "./data";
+import { codigoDelLote } from "./codigoDelLote";
+import { esReferenciaVieja } from "@/lib/catalogo/codigoPublico";
 import { EMPTY_FICHA, num, B1_OPTIONAL_FIELDS, deriveCertSchemes, seedContributions, seedProcesos, especieDelLote, variedadDominante, type FichaFormData } from "./ficha/fichaData";
 import { computeFactor, computeMesh, computeSca, factorDesdeAlmendra, varietyTotal } from "./ficha/fichaCalculations";
 import { FichaNav, type PaneId } from "./ficha/FichaNav";
@@ -220,7 +222,9 @@ export function FichaView({
       razon_social: gi.razon !== "—" ? gi.razon : "",
       nit_rut: gi.nit !== "—" ? gi.nit : "",
       productor: gi.agri !== "—" ? gi.agri : "",
-      ctc_uid: ctcLotReference(lot.id),
+      // V6.23 (TAR-149): lo que la vista de la Ficha enseña como «CTC UID» es el código GUARDADO del lote (vacío sin finca). Lo que se
+      // ESCRIBE en `datasheet.ctc_uid` lo decide `conCodigoDelLote` al guardar, con el lote de ese momento.
+      ctc_uid: lot.codigo ?? "",
       country: base.country || gi.country,
       region_dep: base.region_dep || gi.department,
       eudr_custody_stages: lot.eudrCustodyStages,
@@ -262,6 +266,9 @@ export function FichaView({
   // Calidad (`LabEvalEditor`): una fórmula, no dos. El grano sano sigue siendo la base del factor de rendimiento.
   const mesh = useMemo(() => computeMesh(data, factor.remainder), [data, factor.remainder]);
   const sca = useMemo(() => computeSca(data), [data]);
+  // V6.23 (TAR-149): la vista de la Ficha enseña el código GUARDADO de hoy (el lote lo recibe al guardar su primera finca, después
+  // de que el formulario se sembró).
+  const dataParaVista = useMemo(() => ({ ...data, ctc_uid: lot.codigo ?? "" }), [data, lot.codigo]);
   const vTotal = useMemo(() => varietyTotal(data), [data]);
 
   // F2: el origen del lote son los APORTES de A2.
@@ -376,6 +383,26 @@ export function FichaView({
     return "\n\n" + lista.join("\n") + cola;
   }
 
+  // ── V6.23 (owner, 2026-11-06, TAR-149) · el código del lote en la Ficha guardada ─────────────────────────────────────────
+  // `datasheet.ctc_uid` = el código GUARDADO del lote en ESTE momento (lo recibe al guardar su primera finca, así que no se toma del
+  // estado del formulario, que se sembró al abrir). Sin código (lote sin finca) no se escribe: queda lo que la Ficha guardada ya
+  // tuviera. Un `ctc_uid_anterior` que ya exista no se toca; si no existe y el código guardado era uno viejo que hoy se reemplaza,
+  // pasa ahí (lo mismo que hace el paso C de la migración con las Fichas que no se vuelvan a guardar).
+  function conCodigoDelLote(d: FichaFormData): FichaFormData {
+    const guardado = (lot.datasheet ?? null) as Record<string, unknown> | null;
+    const previo = typeof guardado?.ctc_uid === "string" ? guardado.ctc_uid.trim() : "";
+    const anterior =
+      guardado?.ctc_uid_anterior != null
+        ? guardado.ctc_uid_anterior
+        : lot.codigo && previo && previo !== lot.codigo && esReferenciaVieja(previo)
+          ? previo
+          : null;
+    const ctcUid = lot.codigo ?? (previo || null);
+    const resto: Omit<FichaFormData, "ctc_uid"> & { ctc_uid?: string } = { ...d };
+    delete resto.ctc_uid;
+    return { ...resto, ...(anterior != null ? { ctc_uid_anterior: anterior } : {}), ...(ctcUid ? { ctc_uid: ctcUid } : {}) } as FichaFormData;
+  }
+
   function buildUpdate(source: FichaFormData, intakeStep?: number): FichaSaveUpdate {
     const topVariety = source.varieties.find((v) => num(v.pct) > 0);
     // ── V5.65 · las tres PROYECCIONES de B1 ──────────────────────────────────
@@ -389,12 +416,12 @@ export function FichaView({
     // copias de lectura — no dos verdades.
     const dominante = variedadDominante(source.varieties);
     const especieDerivada = especieDelLote(source.varieties);
-    const proyectado: FichaFormData = {
+    const proyectado: FichaFormData = conCodigoDelLote({
       ...source,
       species: especieDerivada || source.species,
       base_processing: dominante?.base?.trim() || source.base_processing,
       special_processing: dominante?.special?.trim() || source.special_processing,
-    };
+    });
     return {
       name: source.product_name.trim() || undefined,
       finca: source.estate || undefined,
@@ -646,7 +673,7 @@ export function FichaView({
       </div>
 
       <div className={`wrap ${styles.fichaMain}`}>
-        <p className="eyebrow">Lote <span className="mono">{ctcLotReference(lot.id)}</span></p>
+        <p className="eyebrow">Lote <span className="mono">{codigoDelLote(lot.codigo)}</span></p>
         <h1 style={{ marginTop: 8 }}>Cuéntenos todo sobre este café</h1>
         <p style={{ color: "var(--muted)", marginTop: 10, maxWidth: "64ch" }}>
           Esta ficha es la hoja de vida de su lote: la leen el panel de la Arena y, después, los tostadores en
@@ -697,7 +724,7 @@ export function FichaView({
               )}
               {active === "ficha" && (
                 <>
-                  <FichaPreview data={data} factor={factor} mesh={mesh} sca={sca} varTotal={vTotal} scorings={lot.scaScorings} puedeImprimir={impresionHabilitada} referencia={lot.id} />
+                  <FichaPreview data={dataParaVista} factor={factor} mesh={mesh} sca={sca} varTotal={vTotal} scorings={lot.scaScorings} puedeImprimir={impresionHabilitada} referencia={lot.codigo} />
                   {/* V5.143 (owner): «debajo de Ficha (vista final) debe haber un botón nuevo». */}
                   {effectiveIntakeStep >= 4 && (
                     <div style={{ marginTop: 14 }}>
@@ -831,8 +858,8 @@ export function FichaView({
           setShowShipmentModal(false);
           onBack();
         }}
-        lotCode={ctcLotReference(lot.id)}
-        shortRef={ctcLotReferenceShort(lot.id)}
+        lotCode={codigoDelLote(lot.codigo)}
+        shortRef={codigoDelLote(lot.codigo)}
         visa={lotIsEudrReady ? "lista" : "pendiente_finca"}
       />
     </div>

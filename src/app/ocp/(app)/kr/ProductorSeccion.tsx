@@ -1,11 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { supplierCode, ctcLotReferenceShort, fincaCode } from "@/components/kaffetal-regal/data";
+import { codigoCtc } from "@/components/kaffetal-regal/data";
 import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { PHASE_LABEL, type InscriptionPhase } from "@/lib/arena/inscriptions";
 import { infoGeneralComplete, PRODUCER_SEGMENTS, segmentProducer } from "@/lib/bcp/producerSegments";
 import { estadoDeFinca, etapaDelLote, ESTADO_DE_CONTRATO } from "@/lib/ocp/etapas";
 import { ProducerPanel, type ProducerData, type ModuleStat } from "./ProducerPanel";
-import { cargarKr } from "./carga";
+import { cargarKr, LOTE_SIN_CODIGO } from "./carga";
 import type { Gestion } from "@/lib/asistencia/desacoplado";
 import { esCorreoDePrueba } from "@/lib/email/cuentasDePrueba";
 import { proximoPaso } from "@/lib/inactividad/reglas";
@@ -20,6 +20,10 @@ import styles from "@/components/panel/shared.module.css";
 //
 // La diferencia de fondo es de COSTE: la página vieja leía los perfiles, fincas, lotes, inscripciones,
 // contratos y notas de TODOS para pintar un tablero; esto lee los de UNO.
+//
+// V6.23 (TAR-149): los códigos se leen de su fila. Un lote SIN FINCA no tiene código y no sale en ninguna lista del OCP (owner:
+// «This Lot does not show up listed»). Este es el ÚNICO sitio de la consola donde se ve: en la pestaña Lotes de su productor,
+// rotulado «Sin código · falta la finca», para que CTCx pueda ayudarle a completarlo o borrar el borrador.
 
 type ProfileRow = { id: string; full_name: string | null; email: string | null; phone: string | null; created_at: string; role: string | null };
 type PPRow = {
@@ -35,9 +39,10 @@ type PPRow = {
   whatsapp_confirmed: boolean | null;
   club_member_since: string | null;
   gestion: Gestion | null;
+  codigo: string | null;
 };
-type FincaRow = { id: string; name: string; status: string; vereda: string | null; municipio: string | null; departamento: string | null; hectares: number | string | null; altitude_m: number | string | null; created_at: string };
-type LotRow = { id: string; name: string; stage: string; intake_step: number };
+type FincaRow = { id: string; codigo: string | null; name: string; status: string; vereda: string | null; municipio: string | null; departamento: string | null; hectares: number | string | null; altitude_m: number | string | null; created_at: string };
+type LotRow = { id: string; public_code: string | null; name: string; stage: string; intake_step: number };
 type InsRow = { lot_id: string; phase: string; status: string; sondeo_result: string | null; sondeo_score: number | string | null; decision_comercial: string | null; amount_due_cop: number | string | null; created_at: string };
 type CertRow = { finca_id: string; status: string; scheme: string };
 type ContractRow = { id: string; lot_id: string; status: string; signed_at: string | null; quantity_frozen_kg: number | string | null; price_per_kg_locked: number | string | null; freeze_months: number | null };
@@ -50,11 +55,11 @@ export async function ProductorSeccion({ service, productorId }: { service: Supa
     service.from("profiles").select("id, full_name, email, phone, created_at, role").eq("id", productorId).maybeSingle(),
     service
       .from("producer_profiles")
-      .select("profile_id, company_name, tax_id, cedula_cafetera, avatar_asset_id, video_asset_id, gallery_asset_ids, country, department, whatsapp_confirmed, club_member_since, gestion")
+      .select("profile_id, codigo, company_name, tax_id, cedula_cafetera, avatar_asset_id, video_asset_id, gallery_asset_ids, country, department, whatsapp_confirmed, club_member_since, gestion")
       .eq("profile_id", productorId)
       .maybeSingle(),
-    service.from("fincas").select("id, name, status, vereda, municipio, departamento, hectares, altitude_m, created_at").eq("producer_id", productorId).order("created_at", { ascending: true }),
-    service.from("lots").select("id, name, stage, intake_step").eq("producer_id", productorId).order("created_at", { ascending: false }),
+    service.from("fincas").select("id, codigo, name, status, vereda, municipio, departamento, hectares, altitude_m, created_at").eq("producer_id", productorId).order("created_at", { ascending: true }),
+    service.from("lots").select("id, public_code, name, stage, intake_step").eq("producer_id", productorId).order("created_at", { ascending: false }),
     service.from("arena_inscriptions").select("lot_id, phase, status, sondeo_result, sondeo_score, decision_comercial, amount_due_cop, created_at").eq("producer_id", productorId).order("created_at", { ascending: false }),
     service
       .from("producer_comm_log")
@@ -65,7 +70,8 @@ export async function ProductorSeccion({ service, productorId }: { service: Supa
     service.from("producer_inactividad").select("protegida, protegida_motivo, recordatorio_at, aviso_at, ultimo_error").eq("profile_id", productorId).maybeSingle(),
     // V5.106: las certificaciones de sus fincas (para el vistazo de cada finca)…
     service.from("finca_certificates").select("finca_id, status, scheme"),
-    // …y la MISMA derivación de /ocp/kr (etapa, circuito, Pasaporte, muestra, oferta, trato), solo de este productor.
+    // …y la MISMA derivación de /ocp/kr (etapa, circuito, Pasaporte, muestra, oferta, trato), solo de este productor — con sus
+    // lotes sin código (V6.23: con `productorId`, `cargarKr` los trae; solo se ven aquí).
     cargarKr(service, { productorId }),
   ]);
 
@@ -133,7 +139,7 @@ export async function ProductorSeccion({ service, productorId }: { service: Supa
 
   const data: ProducerData = {
     id: p.id,
-    supplierCode: supplierCode(p.id),
+    codigoProductor: codigoCtc(pp?.codigo),
     fullName: p.full_name ?? "",
     companyName: pp?.company_name ?? null,
     email: p.email,
@@ -176,7 +182,7 @@ export async function ProductorSeccion({ service, productorId }: { service: Supa
       return {
         id: f.id,
         name: f.name,
-        codigo: fincaCode(f.id),
+        codigo: codigoCtc(f.codigo),
         lugar: [f.vereda, f.municipio, f.departamento].filter(Boolean).join(" · "),
         hectareas: num(f.hectares),
         altitud: num(f.altitude_m),
@@ -193,7 +199,8 @@ export async function ProductorSeccion({ service, productorId }: { service: Supa
       return {
         id: l.id,
         name: l.name,
-        ref: ctcLotReferenceShort(l.id),
+        ref: l.public_code ?? LOTE_SIN_CODIGO,
+        sinCodigo: !l.public_code,
         fincaNombre: fila?.fincaNombre ?? null,
         stageLabel: etapaDelLote(l.stage),
         ficha: fila?.ficha ?? null,
@@ -208,7 +215,7 @@ export async function ProductorSeccion({ service, productorId }: { service: Supa
     }),
     arena: arena.map((i) => ({
       lotId: i.lot_id,
-      lotName: lotePorId.get(i.lot_id)?.name ?? ctcLotReferenceShort(i.lot_id),
+      lotName: lotePorId.get(i.lot_id)?.name ?? "Lote",
       phaseLabel: PHASE_LABEL[i.phase as InscriptionPhase] ?? i.phase,
       sondeoAprobado: i.sondeo_result === "aprobado",
       pago: i.status,

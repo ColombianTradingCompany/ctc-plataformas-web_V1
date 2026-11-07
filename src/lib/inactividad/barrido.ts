@@ -5,7 +5,6 @@ import { esCorreoDePrueba } from "@/lib/email/cuentasDePrueba";
 import { origenDeSuperficie } from "@/lib/red/subdominios";
 import { hrefRecuperar } from "@/lib/auth/puertas";
 import { infoGeneralComplete, segmentProducer } from "@/lib/bcp/producerSegments";
-import { supplierCode } from "@/components/kaffetal-regal/data";
 import { decidirPasoDeInactividad, DIA_MS, DIAS_ENTRE_PASOS, type HechosDeInactividad } from "./reglas";
 import { construirAvisoDeBorrado, construirRecordatorioDeCuenta } from "./correos";
 import { borrarCuentaDeProductor } from "./borrarCuenta";
@@ -16,6 +15,11 @@ import { borrarCuentaDeProductor } from "./borrarCuenta";
 // paso deja rastro en `audit_log` y en `producer_inactividad`; el correo sale por el remitente único, y el sello del
 // paso se escribe SOLO si el correo salió (si falla, `ultimo_error` lo guarda y el lunes siguiente se reintenta).
 // Idempotente: cada sello mueve el reloj, así que correrlo dos veces el mismo día no manda dos correos.
+// V6.23 (TAR-149): la cuenta se nombra en el rastro con su código GUARDADO (`producer_profiles.codigo`, CTC-P-XXX), nunca con
+// uno calculado del id. Una cuenta sin fila en `producer_profiles` no tiene código: se nombra por su id.
+
+/** Cómo se nombra una cuenta en el rastro y en los errores: su código CTC-P-, o su id si no tiene. */
+const rotuloDeCuenta = (codigo: string | null | undefined, id: string) => codigo || `sin código (${id})`;
 
 const FASES_ACTIVAS = new Set(["postulacion", "sondeo", "fila", "arena", "sesion"]);
 const enlaceKr = () => `${origenDeSuperficie("/kaffetal-regal")}/kaffetal-regal`;
@@ -26,7 +30,7 @@ type Resumen = { ok: true; recordadas: number; avisadas: number; borradas: numbe
 export async function correrBarridoDeInactividad(service: SupabaseClient, ahora = new Date()): Promise<Resumen> {
   const [{ data: pRaw }, { data: ppRaw }, { data: fRaw }, { data: lRaw }, { data: iRaw }, { data: eRaw }] = await Promise.all([
     service.from("profiles").select("id, full_name, email, phone, created_at, role").eq("role", "producer"),
-    service.from("producer_profiles").select("profile_id, company_name, tax_id, cedula_cafetera, avatar_asset_id, country, department, gestion"),
+    service.from("producer_profiles").select("profile_id, codigo, company_name, tax_id, cedula_cafetera, avatar_asset_id, country, department, gestion"),
     service.from("fincas").select("id, producer_id, status"),
     service.from("lots").select("id, producer_id, stage, intake_step"),
     service.from("arena_inscriptions").select("producer_id, phase"),
@@ -76,8 +80,8 @@ export async function correrBarridoDeInactividad(service: SupabaseClient, ahora 
     };
     const paso = decidirPasoDeInactividad(hechos, ahora.getTime());
     if (paso === "nada") continue;
-    const r = await ejecutarPaso(service, paso, { id: p.id, nombre: p.full_name || "caficultor", correo: p.email }, hechos, ahora);
-    if (!r.ok) resumen.errores.push(`${supplierCode(p.id)}: ${r.error}`);
+    const r = await ejecutarPaso(service, paso, { id: p.id, codigo: perfil?.codigo ?? null, nombre: p.full_name || "caficultor", correo: p.email }, hechos, ahora);
+    if (!r.ok) resumen.errores.push(`${rotuloDeCuenta(perfil?.codigo, p.id)}: ${r.error}`);
     else if (paso === "recordatorio") resumen.recordadas++;
     else if (paso === "aviso") resumen.avisadas++;
     else if (paso === "borrado") resumen.borradas++;
@@ -89,7 +93,7 @@ export async function correrBarridoDeInactividad(service: SupabaseClient, ahora 
 async function ejecutarPaso(
   service: SupabaseClient,
   paso: "reinicio" | "recordatorio" | "aviso" | "borrado",
-  p: { id: string; nombre: string; correo: string | null },
+  p: { id: string; codigo: string | null; nombre: string; correo: string | null },
   h: HechosDeInactividad,
   ahora: Date
 ): Promise<{ ok: true } | { ok: false; error: string }> {
@@ -113,7 +117,7 @@ async function ejecutarPaso(
     }
     await rastro(
       "cuenta_borrada_por_inactividad",
-      `Cuenta ${supplierCode(p.id)} (${r.correo ?? "sin correo"}) borrada por el barrido: recordatorio ${h.recordatorioAt?.slice(0, 10)} · aviso ${h.avisoAt?.slice(0, 10)} · sin finca ni lote.`
+      `Cuenta ${rotuloDeCuenta(p.codigo, p.id)} (${r.correo ?? "sin correo"}) borrada por el barrido: recordatorio ${h.recordatorioAt?.slice(0, 10)} · aviso ${h.avisoAt?.slice(0, 10)} · sin finca ni lote.`
     );
     return { ok: true };
   }

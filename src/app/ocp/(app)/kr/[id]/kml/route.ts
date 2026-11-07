@@ -1,7 +1,7 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireConsoleAccess } from "@/lib/panel/requireConsoleAccess";
 import { buildFincaKml } from "@/lib/earthKml";
-import { fincaCode } from "@/components/kaffetal-regal/data";
+import { codigoCtc } from "@/components/kaffetal-regal/data";
 
 // Sirve el archivo de Google Earth (.kml) de una finca, autogenerado con su
 // punto, su polígono EUDR y la ficha de datos — para el análisis de imágenes
@@ -23,7 +23,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   const service = createServiceRoleClient();
   const { data: finca } = await service
     .from("fincas")
-    .select("id, name, producer_id, municipio, departamento, hectares, eudr_lat, eudr_lng, eudr_polygon_geojson, eudr_planting_date, eudr_production_system")
+    .select("id, codigo, name, producer_id, municipio, departamento, hectares, eudr_lat, eudr_lng, eudr_polygon_geojson, eudr_planting_date, eudr_production_system")
     .eq("id", id)
     .maybeSingle();
   if (!finca) return new Response("Finca no encontrada.", { status: 404, headers: { "cache-control": "private, no-store" } });
@@ -36,7 +36,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 
   const kml = buildFincaKml({
     name: finca.name,
-    code: fincaCode(finca.id),
+    // V6.23 (TAR-149): el código GUARDADO de la finca (`fincas.codigo`), nunca calculado del id.
+    code: codigoCtc(finca.codigo as string | null),
     producerName: producer?.full_name ?? null,
     municipio: finca.municipio,
     departamento: finca.departamento,

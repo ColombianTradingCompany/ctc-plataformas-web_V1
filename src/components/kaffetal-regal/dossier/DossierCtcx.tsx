@@ -25,7 +25,7 @@
 
 import Link from "next/link";
 import { Big_Shoulders } from "next/font/google";
-import { Bean, Bug, Check, Clock, Coffee, Droplets, Grid3x3, Mountain, Scale, Sprout, TriangleAlert, X } from "lucide-react";
+import { Bean, Bug, Check, Clock, Coffee, Droplets, Grid3x3, Mountain, Pin, Scale, Sprout, TriangleAlert, X } from "lucide-react";
 import type { DossierCtcxData, EstadoCriterio } from "@/lib/kaffetal/dossierDatos";
 import { CTC_LEGAL_LINE } from "@/lib/legal";
 import { NIVELES, ORDEN_TRIADA, letras } from "@/lib/pvc/escala";
@@ -247,6 +247,14 @@ export function DossierCtcx({ d }: { d: DossierCtcxData }) {
                   {d.lot.reference}
                 </span>
               </p>
+              {/* V6.23 (TAR-149, owner: «add a notification pin on their dossiers»): los 3 lotes del catálogo Japan Pioneers dicen su
+                  código anterior, hasta cuándo sigue abriendo y su código nuevo; en el del productor y en el público. */}
+              {d.puertaDeLegado ? (
+                <p className={s.pinLegado} role="note" aria-label={t.puertaDeLegadoAria}>
+                  <Pin size={12} strokeWidth={2.5} aria-hidden />
+                  <span>{t.puertaDeLegado(d.puertaDeLegado.anterior, d.puertaDeLegado.hasta, d.lot.reference)}</span>
+                </p>
+              ) : null}
             </div>
             <div className={s.sello}>
               {g.grado ? (

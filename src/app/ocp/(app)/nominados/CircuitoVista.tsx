@@ -9,7 +9,7 @@ import type { FacturaData } from "@/lib/arena/factura";
 import { TIPO_LABEL, type TipoDeMuestra } from "@/lib/muestras/particion";
 import { marcaLabel, normalizaDetalle, normalizaRueda } from "@/lib/catacion/rueda";
 import { puntoDeFila, rotuloDelPunto } from "@/lib/arena/punto";
-import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
+import { codigoCtc } from "@/components/kaffetal-regal/data";
 import type { FichaFormData } from "@/components/kaffetal-regal/ficha/fichaData";
 import { estadoDeFinca, fichaHecha, PASOS_DE_LA_FICHA } from "@/lib/ocp/etapas";
 import { centrosConEvaluacion, createSondeoBatch } from "../nominadosActions";
@@ -47,6 +47,13 @@ import styles from "@/components/panel/shared.module.css";
 //
 // Es UNA carga y UN componente con tres vistas, no tres páginas copiadas: todas leen las mismas solicitudes,
 // y un lote pasa de una a otra en cuanto se confirma lo que faltaba.
+//
+// V6.23 (TAR-149) · DOS códigos, rotulados:
+//   · el del LOTE (`lots.public_code`), para CTCx y el productor (la factura lo lleva). Un lote sin finca no tiene código y no
+//     sale en estas listas (owner: «This Lot does not show up listed»);
+//   · el CIEGO de la cata (`arena_inscriptions.codigo_ciego`): el ÚNICO que va en la bolsa de la muestra que viaja al Centro de
+//     Calidad y en lo que ve el Q-Grader. Los baches (lo que se empaca para el Centro) lo enseñan como «bolsa del Q-Grader».
+//     Nunca se le manda al Centro el código del lote: sus prefijos dirían qué muestras son hermanas.
 
 export type VistaDelCircuito = "solicitudes" | "a-evaluar" | "en-evaluacion";
 
@@ -54,6 +61,8 @@ type FincaJoin = { name: string; municipio: string | null; departamento: string 
 // V5.117: la solicitud trae la Ficha del lote (resumen + datasheet) para desplegarla en acordeón sin salir de la tabla.
 type LotJoin = {
   id: string;
+  /** V6.23 (TAR-149): el código del lote; null = sin finca (no se lista). */
+  public_code: string | null;
   name: string;
   producer_id: string;
   stage: string;
@@ -106,6 +115,12 @@ function EnlaceAlLote({ id, nombre, suave = false }: { id: string; nombre: strin
 }
 
 /** V5.162: fecha y hora, para el log de devoluciones. */
+/** V6.23 (TAR-149): la Ficha que se enseña lleva el código GUARDADO del lote (`lots.public_code`), no su copia `ctc_uid`, que puede
+ *  faltar (el lote recibió su finca después de cerrar la Ficha) o ser la vieja hasta que corra el paso C de la migración. */
+function fichaConCodigo(l: Pick<LotJoin, "datasheet" | "public_code">): Partial<FichaFormData> | null {
+  return l.datasheet ? { ...l.datasheet, ctc_uid: l.public_code ?? "" } : null;
+}
+
 const fechaHora = (iso: string) => new Date(iso).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" });
 
 export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
@@ -117,7 +132,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
     service
       .from("arena_inscriptions")
       .select(
-        "*, lots(id, name, producer_id, stage, intake_step, source, sample_shipped_at, sample_2kg_confirmed_at, ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_puntaje_estimado, ficha_notas_cata, datasheet, fincas(name, municipio, departamento, status, eudr_cert_shared))"
+        "*, lots(id, public_code, name, producer_id, stage, intake_step, source, sample_shipped_at, sample_2kg_confirmed_at, ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_puntaje_estimado, ficha_notas_cata, datasheet, fincas(name, municipio, departamento, status, eudr_cert_shared))"
       )
       // Los galardonados solo se cargan por sus reembolsos pendientes (re-evaluación que subió de grado, V5.82).
       .in("phase", ["postulacion", "sondeo", "fila", "retirado", "galardonado"]),
@@ -129,10 +144,17 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
     service.from("partner_accounts").select("profile_id, org_name").eq("node_type", "centro-calidad"),
   ]);
 
-  const inscriptions = ((insRaw as (ArenaInscription & { lots: LotJoin | LotJoin[] | null })[] | null) ?? []).map((i) => ({
-    ...i,
-    lot: (Array.isArray(i.lots) ? i.lots[0] : i.lots) as LotJoin | null,
-  }));
+  // V6.23 (TAR-149): solo las solicitudes de lotes CON código (con finca); `codigo_ciego` viene en el `*` de la inscripción.
+  const inscriptions = ((insRaw as (ArenaInscription & { codigo_ciego?: string | null; lots: LotJoin | LotJoin[] | null })[] | null) ?? [])
+    .map((i) => ({
+      ...i,
+      lot: (Array.isArray(i.lots) ? i.lots[0] : i.lots) as LotJoin | null,
+    }))
+    .filter((i) => !!i.lot?.public_code);
+  /** El código del lote (CTCx y el productor). */
+  const codigoDelLote = (i: { lot: LotJoin | null }) => codigoCtc(i.lot?.public_code);
+  /** El código ciego: lo único que va en la bolsa del Q-Grader. */
+  const codigoCiego = (i: { codigo_ciego?: string | null }) => i.codigo_ciego ?? "—";
   const batches = (batchesRaw as BatchRow[] | null) ?? [];
   const campaigns = ((campaignsRaw as { id: string; name: string; discount_pct: number }[] | null) ?? []).map((c) => ({ id: c.id, name: c.name, pct: c.discount_pct }));
   const nombreDelCentro = new Map(((centrosRaw as { profile_id: string; org_name: string }[] | null) ?? []).map((c) => [c.profile_id, c.org_name]));
@@ -195,7 +217,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
           emitidaAt: i.factura_emitida_at,
           productor: name(i.producer_id),
           lote: i.lot!.name,
-          codigoLote: ctcLotReferenceShort(i.lot_id),
+          codigoLote: codigoDelLote(i),
           tarifaCop: i.amount_cop,
           subvencionPct: i.discount_pct,
           subvencionNombre: campaigns.find((c) => c.id === i.subvencion_id)?.name ?? null,
@@ -288,7 +310,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
             {/* Aquí NO es enlace: el renglón entero abre el acordeón (V5.118), y dentro está «Abrir la vista completa del lote». */}
             <b>{i.lot!.name}</b>
             <span className={styles.meta} style={{ margin: 0 }}>
-              {name(i.producer_id)} · <span className="mono">{ctcLotReferenceShort(i.lot_id)}</span> · código <span className="mono">{i.entry_code ?? "—"}</span>
+              {name(i.producer_id)} · <span className="mono">{codigoDelLote(i)}</span> · código <span className="mono">{i.entry_code ?? "—"}</span>
               {` · solicitada ${fecha(i.postulated_at)}`}
             </span>
           </div>
@@ -410,7 +432,10 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
               <div key={i.id} className={styles.card} style={{ flexDirection: "column", alignItems: "stretch" }}>
                 <EnlaceAlLote id={i.lot_id} nombre={i.lot!.name} />
                 <p className={styles.meta}>
-                  {name(i.producer_id)} · <span className="mono">{ctcLotReferenceShort(i.lot_id)}</span> · pago {i.status} · recibida {fecha(i.lot!.sample_2kg_confirmed_at)}
+                  {name(i.producer_id)} · lote <span className="mono">{codigoDelLote(i)}</span> · pago {i.status} · recibida {fecha(i.lot!.sample_2kg_confirmed_at)}
+                </p>
+                <p className={styles.meta} title="El único código que va en la bolsa que viaja al Centro de Calidad">
+                  Bolsa del Q-Grader: <b className="mono">{codigoCiego(i)}</b>
                 </p>
                 {muestraLinea(i.lot_id) && <p className={styles.meta}>Muestra: {muestraLinea(i.lot_id)}</p>}
               </div>
@@ -454,7 +479,10 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
                     {batchLots(b).map((i) => (
                       <p key={i.id} className={styles.meta} style={{ margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
                         <span style={{ flex: 1 }}>
-                          <EnlaceAlLote id={i.lot_id} nombre={i.lot!.name} suave /> · {name(i.producer_id)} · <span className="mono">{ctcLotReferenceShort(i.lot_id)}</span>
+                          <EnlaceAlLote id={i.lot_id} nombre={i.lot!.name} suave /> · {name(i.producer_id)} · lote <span className="mono">{codigoDelLote(i)}</span> ·{" "}
+                          <span title="El único código que va en la bolsa que viaja al Centro de Calidad">
+                            bolsa del Q-Grader <b className="mono">{codigoCiego(i)}</b>
+                          </span>
                         </span>
                         <RemoveFromBatchButton lotId={i.lot_id} />
                       </p>
@@ -480,7 +508,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
     <div>
       <h1 className={styles.title}>Lotes en Evaluación</h1>
       <p className={styles.subtitle}>
-        Los baches en manos del <b>Centro de Calidad</b>: cada lote se evalúa anónimo (solo su código), física y sensorialmente.
+        Los baches en manos del <b>Centro de Calidad</b>: cada lote se evalúa anónimo (solo su código ciego, el de la bolsa), física y sensorialmente.
         Hasta que el Centro tenga su módulo (fase 4), CTCx registra aquí las planillas y el veredicto del Q-Grader. Los soportes, el
         escáner y el set de Fichas de cada lote están en su vista completa (<Link href="/ocp/kr">Productores, Fincas y Lotes</Link>). Con el veredicto, el lote pasa a{" "}
         <Link href="/ocp/ofertas">Pendiente de Oferta</Link>; el que no supera sale con reembolso del 80 %.
@@ -506,8 +534,11 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
                 return (
                   <div key={i.id} style={{ borderTop: "1px dashed var(--line)", paddingTop: 6 }}>
                     <p className={styles.meta} style={{ margin: 0 }}>
-                      <EnlaceAlLote id={i.lot_id} nombre={i.lot!.name} /> · {name(i.producer_id)} ·{" "}
-                      <span className="mono">{ctcLotReferenceShort(i.lot_id)}</span>
+                      <EnlaceAlLote id={i.lot_id} nombre={i.lot!.name} /> · {name(i.producer_id)} · lote{" "}
+                      <span className="mono">{codigoDelLote(i)}</span> ·{" "}
+                      <span title="El único código que ve el Q-Grader: el de la bolsa y su planilla">
+                        bolsa del Q-Grader <b className="mono">{codigoCiego(i)}</b>
+                      </span>
                     </p>
                     {pendiente ? (
                       // V5.81: el Q-Grader ya lo dio de alta — CTCx confirma o devuelve; no teclea otra planilla.
@@ -539,7 +570,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
                             reporte: (() => { const rep = reporteDeFila(pendiente); return rep ? { fileName: rep.fileName, url: urlDeReporte.get(rep.assetId) ?? null } : null; })(),
                           }}
                           b1={b1DelLote(i.lot!)}
-                          ficha={i.lot!.datasheet ?? null}
+                          ficha={fichaConCodigo(i.lot!)}
                           devoluciones={(altasPorLote.get(i.lot_id) ?? [])
                             .filter((a) => a.status === "rejected")
                             .sort((a, b) => (b.reviewed_at ?? b.created_at).localeCompare(a.reviewed_at ?? a.created_at))
@@ -560,7 +591,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
                             lotId={i.lot_id}
                             lotName={i.lot!.name}
                             evaluations={toLabEvaluationList(i.sondeo_evaluation)}
-                            ficha={i.lot!.datasheet ?? null}
+                            ficha={fichaConCodigo(i.lot!)}
                             resultFilename={i.sondeo_result_filename ?? null}
                             qGraderName={b.q_grader_name ?? ""}
                           />

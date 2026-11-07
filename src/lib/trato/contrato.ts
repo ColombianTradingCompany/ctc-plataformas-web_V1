@@ -29,6 +29,8 @@ export type DatosDelContrato = {
   productorNombre: string;
   productorDocumento: string | null;
   loteNombre: string;
+  /** V6.23 (TAR-149): el código del lote CON QUE SE ARMA EL TEXTO: el que el contrato guardó (`texto_codigo_lote`) o, si nace, el
+   *  vigente (`lots.public_code`). Lo resuelve `codigosDelContrato.ts`; aquí solo se cita. */
   loteReferencia: string;
   grado: string;
   copKg: number;
@@ -49,7 +51,7 @@ export type DatosDelContrato = {
   temporada: string | null;
   /** V5.190: la aceptación PROVISIONAL de CTCx en una sesión asistida (solo Cherry Picked). `fecha` y `ratificado` son días de Colombia
    *  (AAAA-MM-DD); `cuenta` es el código del productor (CTC-P-…), que no cambia. Sin `ratificado`, el texto no lleva ni su nombre ni su
-   *  documento. */
+   *  documento. V6.23 (TAR-149): `cuenta` es el código con que nació el texto (`texto_codigo_productor`), también al ratificar. */
   provisional?: { responsable: string; fecha: string; cuenta: string; ratificado: string | null } | null;
 };
 

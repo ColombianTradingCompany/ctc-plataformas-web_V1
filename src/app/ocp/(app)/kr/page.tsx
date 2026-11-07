@@ -145,7 +145,8 @@ export default async function KrPage({ searchParams }: { searchParams: Promise<P
         tiene lote y el productor que aún no tiene finca, que son a los que hay que acompañar. Con <b>Ver fincas</b>, una fila por finca y
         el filtro de Pasaporte. El estado del productor (Marchitando, Nuevos, Primíparos, Establecidos, Activos) se filtra por casillas, y
         bajo su código va el correo con el que entra. Cada celda abre la vista completa de lo que nombra; la pestaña <b>Mapa</b> pinta lo
-        mismo que esté filtrado.
+        mismo que esté filtrado. Un lote <b>sin finca</b> no tiene código y no sale aquí: se ve, marcado, en la pestaña Lotes de su
+        productor. El buscador encuentra también por un código anterior.
       </p>
 
       {!filas.length ? (

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { TIPO_NUCLEAR_LABEL, conteosOrdenados, type TipoNuclear } from "@/lib/ocp/borradoNuclearTexto";
-import { supplierCode } from "@/components/kaffetal-regal/data";
+import { codigosDeProductores } from "@/lib/codigos/servidor";
 import styles from "@/components/panel/shared.module.css";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +11,8 @@ export const dynamic = "force-dynamic";
 // deja aquí una fila: quién lo hizo, cuándo, el motivo interno, qué se borró tabla por tabla, qué pasó con los archivos y
 // cómo se le avisó al productor. La instantánea completa (todas las filas borradas, en JSON) se descarga por operación.
 // Es SOLO lectura: de aquí no se restaura ni se borra nada. La tabla es `borrados_nucleares` (service-role-only).
+// V6.23 (TAR-149): el código del lote o la finca es el que quedó escrito al borrar; el del productor se lee de su fila (si la
+// cuenta ya no existe, no se enseña ninguno).
 
 type Fila = {
   id: string;
@@ -44,6 +46,7 @@ export default async function ArchivoDeBorradosPage({ searchParams }: { searchPa
     .select("id, tipo, codigo, nombre, producer_id, productor_nombre, productor_email, motivo, conteos, archivos, archivos_borrados_at, archivos_error, aviso_nota, aviso_comm_at, aviso_email_estado, aviso_email_error, ejecutado_por_nombre, ejecutado_at")
     .order("ejecutado_at", { ascending: false });
   const filas = (data as Fila[] | null) ?? [];
+  const codigosProd = await codigosDeProductores(service, filas.map((f) => f.producer_id ?? ""));
 
   return (
     <div>
@@ -69,7 +72,7 @@ export default async function ArchivoDeBorradosPage({ searchParams }: { searchPa
                   <span className="mono" style={{ fontSize: 12 }}>{f.codigo}</span>
                   <span className={styles.meta}>
                     {f.productor_nombre ?? "Productor"}
-                    {f.producer_id ? ` · ${supplierCode(f.producer_id)}` : ""} · {fechaHora(f.ejecutado_at)} · por {f.ejecutado_por_nombre ?? "—"} · {total} registro(s)
+                    {f.producer_id && codigosProd.has(f.producer_id) ? ` · ${codigosProd.get(f.producer_id)}` : ""} · {fechaHora(f.ejecutado_at)} · por {f.ejecutado_por_nombre ?? "—"} · {total} registro(s)
                   </span>
                 </summary>
 

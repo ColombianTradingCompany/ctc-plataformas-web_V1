@@ -1,5 +1,5 @@
 import { fechaParaElProductor } from "@/lib/trato/fechas";
-import { ctcLotReference, ctcLotReferenceShort, fincaCode } from "./data";
+import { codigoCtc } from "./data";
 import { PRODUCT_RISK_QUESTIONS } from "@/lib/eudr";
 import { PrintButton } from "./PrintButton";
 import { MarcaDeAgua } from "./blindaje/MarcaDeAgua";
@@ -20,6 +20,8 @@ const RISK_LEVEL_LABEL: Record<string, string> = { insignificante: "Insignifican
 
 export type CertLot = {
   id: string;
+  /** V6.23 (TAR-149): `lots.public_code`, el código GUARDADO del lote (null = sin finca, sin código). */
+  public_code: string | null;
   name: string;
   ficha_variedad: string | null;
   ficha_proceso: string | null;
@@ -41,7 +43,8 @@ export type CertLot = {
   eudr_mitigation_responsible: string | null;
 };
 
-export type CertFinca = { id: string; name: string; municipio: string | null; departamento: string | null; pais?: string | null };
+/** V6.23 (TAR-149): `codigo` = `fincas.codigo`, el código GUARDADO de la finca. */
+export type CertFinca = { id: string; codigo: string | null; name: string; municipio: string | null; departamento: string | null; pais?: string | null };
 
 const yesNo = (v: boolean | null) => (v === true ? "Sí" : v === false ? "No" : "Sin definir");
 
@@ -115,10 +118,10 @@ export function LotEudrCertDoc({
             <p style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "#3C0A86", margin: 0 }}>Colombian Trading Company · CTCx</p>
             <h1 style={{ fontSize: 26, margin: "4px 0 2px" }}>Visa EUDR del Lote</h1>
             <p style={{ color: "#555", margin: "0 0 4px" }}>Reglamento (UE) 2023/1115 · Documento generado el {fechaParaElProductor(new Date().toISOString())}</p>
+            {/* V6.23 (TAR-149): el código GUARDADO del lote, una sola vez (la línea «larga» de debajo repetía el mismo desde la V5.100). */}
             <p style={{ margin: 0, fontWeight: 700 }}>
-              {lot.name} · <span style={{ fontFamily: "monospace" }}>{ctcLotReferenceShort(lot.id)}</span>
+              {lot.name} · <span style={{ fontFamily: "monospace" }}>{codigoCtc(lot.public_code)}</span>
             </p>
-            <p style={{ margin: "2px 0 0", fontSize: 11, color: "#555", fontFamily: "monospace", overflowWrap: "anywhere" }}>{ctcLotReference(lot.id)}</p>
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element -- local public asset */}
           <img src="/docs/eudr/sello-eudr-voluntario.png" alt="Sello EUDR Voluntario CTC" style={{ width: 110, height: "auto", flex: "0 0 auto" }} />
@@ -143,12 +146,12 @@ export function LotEudrCertDoc({
               "Finca(s) de origen",
               fincas.length ? (
                 <>
-                  {fincas.map((f) => `${f.name} (${fincaCode(f.id)}) · ${f.municipio ?? "—"}, ${f.pais || f.departamento || "—"}`).join(" · ")}
+                  {fincas.map((f) => `${f.name} (${codigoCtc(f.codigo)}) · ${f.municipio ?? "—"}, ${f.pais || f.departamento || "—"}`).join(" · ")}
                   {/* V5.169 (owner): desde la Visa del lote, el Pasaporte EUDR de cada finca de origen. */}
                   <span className="no-print" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 4, fontWeight: 400 }}>
                     {fincas.map((f) => (
                       <a key={f.id} href={`/kaffetal-regal/certificacion/${f.id}`} style={{ color: "#3C0A86" }}>
-                        Ver el Pasaporte EUDR de {f.name} ({fincaCode(f.id)}) →
+                        Ver el Pasaporte EUDR de {f.name} ({codigoCtc(f.codigo)}) →
                       </a>
                     ))}
                   </span>

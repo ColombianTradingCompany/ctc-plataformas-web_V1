@@ -1,5 +1,5 @@
-import { normalizaReferencia } from "@/lib/catalogo/codigoPublico";
-import { fotoDeLaVitrina } from "@/lib/catalogo/vitrina";
+import { esReferenciaVieja, normalizaReferencia } from "@/lib/catalogo/codigoPublico";
+import { fotoDeLaVitrina, referenciaDeCodigoAnterior } from "@/lib/catalogo/vitrina";
 
 // ── La foto de la tarjeta de un lote de la vitrina (V5.198) ──────────────────────────────────────────────────────────────
 // Las fotos de las fincas y de los lotes viven en un bucket PRIVADO (`kaffetal-media`). La cinta del Catálogo Activo se ve sin
@@ -11,13 +11,19 @@ import { fotoDeLaVitrina } from "@/lib/catalogo/vitrina";
 // productor. sharp la re-codifica, así que tampoco viajan sus metadatos (EXIF, GPS). Tras la revisión del nodo final, solo una foto
 // que CTCx APROBÓ (`lot_fotos_publicas`), y la caché del CDN baja de un día a 10 minutos (más una hora sirviendo la vieja mientras
 // se renueva): retirar una foto, o que el lote pase a CTCx Selection, se nota en minutos y no al día siguiente.
+// V6.23 (TAR-149): la referencia es el código GUARDADO del lote. Una referencia VIEJA solo sirve si es una de las 3 segundas puertas
+// (catálogo Japan Pioneers, hasta el 30.06.2027; `normalizaReferencia` deja pasar solo esas): se resuelve en el libro
+// (`referenciaDeCodigoAnterior`) y se sirve la foto de la referencia nueva AQUÍ MISMO, sin redirigir: un 308 lo guardaría el
+// navegador para siempre, y la puerta cierra. Cualquier otro código viejo responde 404.
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 20;
 
 export async function GET(_req: Request, { params }: { params: Promise<{ referencia: string }> }) {
-  const referencia = normalizaReferencia((await params).referencia);
-  if (!referencia) return new Response("No encontrado", { status: 404 });
+  const tecleada = normalizaReferencia((await params).referencia);
+  if (!tecleada) return new Response("No encontrado", { status: 404 });
+  const referencia = esReferenciaVieja(tecleada) ? await referenciaDeCodigoAnterior(tecleada) : tecleada;
+  if (!referencia) return new Response("No encontrado", { status: 404, headers: { "cache-control": "public, s-maxage=600" } });
   const foto = await fotoDeLaVitrina(referencia);
   if (!foto) return new Response("No encontrado", { status: 404, headers: { "cache-control": "public, s-maxage=600" } });
   return new Response(new Uint8Array(foto), {

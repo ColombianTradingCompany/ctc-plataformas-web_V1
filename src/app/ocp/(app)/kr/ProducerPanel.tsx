@@ -39,7 +39,10 @@ export type ProducerFinca = {
 export type ProducerLote = {
   id: string;
   name: string;
+  /** V6.23 (TAR-149): el código guardado del lote, o «Sin código · falta la finca». */
   ref: string;
+  /** V6.23: el lote no tiene finca ni código. No sale en ninguna lista del OCP; aquí sí, marcado, para ayudar a completarlo. */
+  sinCodigo: boolean;
   fincaNombre: string | null;
   stageLabel: string;
   ficha: boolean[] | null;
@@ -82,7 +85,8 @@ export type ModuleStat = { count: number | null; state: "ok" | "issue" | "empty"
 
 export type ProducerData = {
   id: string;
-  supplierCode: string;
+  /** V6.23 (TAR-149): `producer_profiles.codigo` (CTC-P-), leído de la fila; «Sin código» si falta. */
+  codigoProductor: string;
   fullName: string;
   companyName: string | null;
   email: string | null;
@@ -192,7 +196,7 @@ export function ProducerPanel({ data }: { data: ProducerData }) {
             {/* El "Pasaporte del Productor": su identidad de proveedor (modelo
                 Pasaporte/Visa/Sello, 2026-07-24). */}
             <span className={styles.badge} title="Pasaporte del Productor — su identidad de proveedor CTC">
-              Pasaporte · {data.supplierCode}
+              Pasaporte · {data.codigoProductor}
             </span>
             {data.gestion && <span className={`${styles.badge} ${data.gestion === "desacoplado" ? styles.badgeWarn : styles.badgeGood}`}>{GESTION_LABEL[data.gestion]}</span>}
             <span className={styles.badge}>{data.segmentLabel}</span>
@@ -280,7 +284,16 @@ export function ProducerPanel({ data }: { data: ProducerData }) {
             <li key={l.id} style={tarjeta}>
               <div style={cabeceraTarjeta}>
                 <Link href={`/ocp/kr?lote=${l.id}`} style={enlace}>{l.name}</Link>
-                <span className="mono" style={{ fontSize: 11, color: "var(--muted)" }}>{l.ref}</span>
+                {l.sinCodigo ? (
+                  <span
+                    className={`${styles.badge} ${styles.badgeWarn}`}
+                    title="Sin finca no hay código: este lote no sale en ninguna lista del OCP hasta que el productor le asigne su finca"
+                  >
+                    {l.ref}
+                  </span>
+                ) : (
+                  <span className="mono" style={{ fontSize: 11, color: "var(--muted)" }}>{l.ref}</span>
+                )}
                 <span className={styles.badge}>{l.stageLabel}</span>
                 <Chip v={l.circuito} />
                 {l.gradoLabel && (

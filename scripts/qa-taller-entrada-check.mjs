@@ -25,6 +25,7 @@ import {
   esSelectorSimple,
   etiquetaDe,
   normalizaReferenciaFinca,
+  normalizaReferenciaLote,
   urlDeHerramienta,
   siguienteSeguro,
   rutaDeAcceso,
@@ -97,30 +98,33 @@ for (const [nombre, v] of [
 }
 
 // ── 4. ?finca= y ?lote= : uuid o referencia de la casa ────────────────────────────────────────────────────────────────
+// V6.23 (TAR-149): la referencia es el código GUARDADO: finca `CTC-F-` + 5, lote `CTC-L-` + 9, del alfabeto Crockford. Un código
+// viejo (8 hexadecimales, derivado del uuid) ya no prellena nada, ni siquiera el de una segunda puerta del portal.
 {
-  const f = leerEntrada({ finca: "ctc-f-1a2b3c4d" }).finca;
-  check("finca por referencia se canoniza", f?.tipo === "referencia" && f.valor === "CTC-F-1A2B3C4D");
-  check("finca: los ocho hex sueltos valen", normalizaReferenciaFinca("1a2b3c4d") === "CTC-F-1A2B3C4D");
-  check("finca: largo distinto no vale", normalizaReferenciaFinca("1a2b3c4") === null && normalizaReferenciaFinca("CTC-F-1A2B3C4D5") === null);
-  check("finca: no hexadecimal no vale", normalizaReferenciaFinca("CTC-F-ZZZZZZZZ") === null);
+  const f = leerEntrada({ finca: "ctc-f-4mz2p" }).finca;
+  check("finca por referencia se canoniza", f?.tipo === "referencia" && f.valor === "CTC-F-4MZ2P");
+  check("finca: los cinco caracteres sueltos valen, con O, I y L leídas como cifras", normalizaReferenciaFinca("4mz2p") === "CTC-F-4MZ2P" && normalizaReferenciaFinca("CTC F oil2z") === "CTC-F-0112Z");
+  check("finca: largo distinto no vale (ni el código viejo de 8)", normalizaReferenciaFinca("4mz2") === null && normalizaReferenciaFinca("CTC-F-4MZ2P0") === null && normalizaReferenciaFinca("CTC-F-1A2B3C4D") === null);
+  check("finca: fuera del alfabeto no vale", normalizaReferenciaFinca("CTC-F-UUUUU") === null);
   const fu = leerEntrada({ finca: U }).finca;
   check("finca por uuid", fu?.tipo === "uuid" && fu.valor === U);
-  const l = leerEntrada({ lote: "CTC-L-00ab12cd" }).lote;
-  check("lote por referencia se canoniza", l?.tipo === "referencia" && l.valor === "CTC-L-00AB12CD");
+  const l = leerEntrada({ lote: "ctc-l-4mz2p0k7q" }).lote;
+  check("lote por referencia se canoniza", l?.tipo === "referencia" && l.valor === "CTC-L-4MZ2P0K7Q");
+  check("lote: el código viejo no vale, tampoco el de una segunda puerta del portal", normalizaReferenciaLote("CTC-L-00AB12CD") === null && normalizaReferenciaLote("CTC-L-7E360302") === null && leerEntrada({ lote: "CTC-L-7E360302" }).avisos.includes(AVISO.lote));
   const lu = leerEntrada({ lote: U }).lote;
   check("lote por uuid", lu?.tipo === "uuid" && lu.valor === U);
   const mal = leerEntrada({ finca: "la cumbre", lote: "CTCX-ABCD-EFGH" });
   check("finca ilegible: nada y aviso", mal.finca === null && mal.avisos.includes(AVISO.finca));
   check("el código CTCX- viejo no es un lote de la cuenta", mal.lote === null && mal.avisos.includes(AVISO.lote));
-  const rep = leerEntrada({ lote: ["CTC-L-00AB12CD", "CTC-L-11111111"] });
+  const rep = leerEntrada({ lote: ["CTC-L-4MZ2P0K7Q", "CTC-L-4MZ2P0K7R"] });
   check("lote repetido es ambiguo: nada y aviso", rep.lote === null && rep.avisos.includes(AVISO.lote));
   check("los avisos no nombran ids", !JSON.stringify(Object.values(AVISO)).match(/[0-9a-f]{8}-/i));
 }
 
 // ── 5. El prellenado: mínimo privilegio ──────────────────────────────────────────────────────────────────────────────
-const FINCA = { id: U, referencia: "CTC-F-3F2504E0", nombre: "La Cumbre", municipio: "Pitalito", departamento: "Huila", altitud_m: 1650 };
-const LOTE = { referencia: "CTC-L-6BA7B810", nombre: "Mitaca 2026", variedad: "Castillo", proceso: "Lavado", altitud_m: null, finca: FINCA };
-const OTRA = { ...FINCA, id: U2, referencia: "CTC-F-6BA7B810", nombre: "El Roble", municipio: "Garzón" };
+const FINCA = { id: U, referencia: "CTC-F-4MZ2P", nombre: "La Cumbre", municipio: "Pitalito", departamento: "Huila", altitud_m: 1650 };
+const LOTE = { referencia: "CTC-L-4MZ2P0K7Q", nombre: "Mitaca 2026", variedad: "Castillo", proceso: "Lavado", altitud_m: null, finca: FINCA };
+const OTRA = { ...FINCA, id: U2, referencia: "CTC-F-4MZ7R", nombre: "El Roble", municipio: "Garzón" };
 {
   check("sin registro no hay prellenado", construirPrefill("mermas-ctc", null) === null);
   check("registro vacío tampoco", construirPrefill("mermas-ctc", { finca: null, lote: null }) === null);
@@ -130,15 +134,15 @@ const OTRA = { ...FINCA, id: U2, referencia: "CTC-F-6BA7B810", nombre: "El Roble
 
   const m = construirPrefill("mermas-ctc", { finca: FINCA, lote: LOTE });
   check("mermas-ctc: un solo campo (las notas), aunque lo pidan lote y finca", m?.campos.length === 1 && m.campos[0].sel === "#notes");
-  check("mermas-ctc: el lote manda sobre la finca en el mismo campo", m?.campos[0].valor.startsWith("CTC-L-6BA7B810 · Mitaca 2026"));
+  check("mermas-ctc: el lote manda sobre la finca en el mismo campo", m?.campos[0].valor.startsWith("CTC-L-4MZ2P0K7Q · Mitaca 2026"));
   check("mermas-ctc: la línea del lote nombra su finca", m?.campos[0].valor.includes("Finca La Cumbre"));
   check("mermas-ctc: no pidió el registro, no lo recibe", m?.registro === null);
   const mf = construirPrefill("mermas-ctc", { finca: FINCA, lote: null });
   check("mermas-ctc con solo finca: la línea de la finca", mf?.campos[0].valor === "Finca La Cumbre · Pitalito, Huila · 1650 m");
 
-  check("la etiqueta del lote es nombre · referencia", etiquetaDe({ finca: FINCA, lote: LOTE }) === "Mitaca 2026 · CTC-L-6BA7B810");
+  check("la etiqueta del lote es nombre · referencia", etiquetaDe({ finca: FINCA, lote: LOTE }) === "Mitaca 2026 · CTC-L-4MZ2P0K7Q");
   check("la etiqueta cabe en el techo de crearTrabajo (80)", etiquetaDe({ finca: null, lote: { ...LOTE, nombre: "x".repeat(200) } }).length <= 80);
-  check("la línea del lote omite los datos vacíos", construirPrefill("mermas-ctc", { finca: null, lote: { ...LOTE, nombre: "", variedad: null, proceso: null, finca: null } })?.campos[0].valor === "CTC-L-6BA7B810");
+  check("la línea del lote omite los datos vacíos", construirPrefill("mermas-ctc", { finca: null, lote: { ...LOTE, nombre: "", variedad: null, proceso: null, finca: null } })?.campos[0].valor === "CTC-L-4MZ2P0K7Q");
   // camposDe, directo: un dato vacío no escribe un campo en blanco; un selector repetido o no simple, tampoco.
   const c = camposDe(
     { lote: { variedad: "#var", nombre: "#nom", proceso: "#a b" }, finca: { municipio: "#mun", nombre: "#nom" } },
@@ -155,7 +159,7 @@ const OTRA = { ...FINCA, id: U2, referencia: "CTC-F-6BA7B810", nombre: "El Roble
   const igual = combinarRegistro(FINCA, LOTE);
   check("lote + su propia finca: sin aviso", igual.registro?.finca?.id === FINCA.id && igual.avisos.length === 0);
   const sinFincaDelLote = combinarRegistro(OTRA, { ...LOTE, finca: null });
-  check("lote sin finca conocida + finca: la del enlace llena los campos de finca, la línea del lote no inventa finca", sinFincaDelLote.registro?.finca?.id === OTRA.id && sinFincaDelLote.avisos.length === 0 && construirPrefill("mermas-ctc", sinFincaDelLote.registro)?.campos[0].valor === "CTC-L-6BA7B810 · Mitaca 2026 · Castillo · Lavado");
+  check("lote sin finca conocida + finca: la del enlace llena los campos de finca, la línea del lote no inventa finca", sinFincaDelLote.registro?.finca?.id === OTRA.id && sinFincaDelLote.avisos.length === 0 && construirPrefill("mermas-ctc", sinFincaDelLote.registro)?.campos[0].valor === "CTC-L-4MZ2P0K7Q · Mitaca 2026 · Castillo · Lavado");
   check("solo el lote: su finca llena la finca", combinarRegistro(null, LOTE).registro?.finca?.id === FINCA.id);
   check("solo la finca", combinarRegistro(FINCA, null).registro?.finca?.id === FINCA.id && combinarRegistro(FINCA, null).registro?.lote === null);
   check("nada resuelto, nada", combinarRegistro(null, null).registro === null);
@@ -196,18 +200,18 @@ check("una herramienta desconocida no tiene contrato", entradaDe("no-existe") ==
 
 // ── 7. La URL de entrada: la escribe y la lee el mismo contrato ──────────────────────────────────────────────────────
 {
-  const url = urlDeHerramienta("mermas-ctc", { lote: "CTC-L-6BA7B810", volver: "/herramientas/taller" });
+  const url = urlDeHerramienta("mermas-ctc", { lote: "CTC-L-4MZ2P0K7Q", volver: "/herramientas/taller" });
   check("la URL cuelga del taller", url.startsWith("/herramientas/taller/mermas-ctc?"));
   const sp = Object.fromEntries(new URL(url, "https://x.test").searchParams);
   const e = leerEntrada(sp);
-  check("ida y vuelta: el lote", e.lote?.valor === "CTC-L-6BA7B810");
+  check("ida y vuelta: el lote", e.lote?.valor === "CTC-L-4MZ2P0K7Q");
   check("ida y vuelta: la vuelta", e.volver === "/herramientas/taller");
   check("el slug va codificado", urlDeHerramienta("a b/c").startsWith("/herramientas/taller/a%20b%2Fc"));
   check("sin parámetros no hay «?»", urlDeHerramienta("qr") === "/herramientas/taller/qr");
 
   // La entrada que se comparte fuera del sitio: absoluta, en el host de Herramientas y sin la base.
   check("el mapa de la red sigue llevando herramientas → /herramientas", SUBDOMAIN_ROUTES.herramientas === "/herramientas");
-  check("la URL pública es la canónica del host de Herramientas", urlPublicaDeHerramienta("mermas-ctc", { lote: "CTC-L-6BA7B810" }) === "https://herramientas.ctcexport.com/taller/mermas-ctc?lote=CTC-L-6BA7B810");
+  check("la URL pública es la canónica del host de Herramientas", urlPublicaDeHerramienta("mermas-ctc", { lote: "CTC-L-4MZ2P0K7Q" }) === "https://herramientas.ctcexport.com/taller/mermas-ctc?lote=CTC-L-4MZ2P0K7Q");
   check("y su `volver` sigue siendo una ruta con base (la lista blanca la lee igual)", new URL(urlPublicaDeHerramienta("qr", { volver: "/herramientas/taller" })).searchParams.get("volver") === "/herramientas/taller");
   check("el enlace de un trabajo desde la red es el canónico", enlaceDeTrabajo("qr", U, "https://kaffetal-regal.ctcexport.com") === `https://herramientas.ctcexport.com/taller/qr?trabajo=${U}`);
   check("en local o en una vista previa, el del host donde se está", enlaceDeTrabajo("qr", U, "http://localhost:3000") === `http://localhost:3000/herramientas/taller/qr?trabajo=${U}`);
@@ -284,7 +288,7 @@ check("una herramienta desconocida no tiene contrato", entradaDe("no-existe") ==
 
 // ── 9. La puerta que devuelve a la herramienta (`?siguiente=`) ───────────────────────────────────────────────────────
 {
-  const t = "/herramientas/taller/mermas-ctc?lote=CTC-L-6BA7B810&volver=%2Fherramientas%2Ftaller";
+  const t = "/herramientas/taller/mermas-ctc?lote=CTC-L-4MZ2P0K7Q&volver=%2Fherramientas%2Ftaller";
   check("siguiente: una herramienta del taller con sus parámetros vale", siguienteSeguro(t) === t);
   check("siguiente: la rejilla vale", siguienteSeguro("/herramientas/taller") === "/herramientas/taller");
   for (const [nombre, v] of [
@@ -320,7 +324,7 @@ check("una herramienta desconocida no tiene contrato", entradaDe("no-existe") ==
   // anidados: lo que lee el callback es exactamente la herramienta, y su contexto no se mezcla con el de la de dentro.
   {
     const { RequestCookies } = createRequire(import.meta.url)("next/dist/compiled/@edge-runtime/cookies");
-    const dentro = urlDeHerramienta("green-datasheet", { trabajo: U, lote: "CTC-L-6BA7B810" });
+    const dentro = urlDeHerramienta("green-datasheet", { trabajo: U, lote: "CTC-L-4MZ2P0K7Q" });
     const fuera = urlDeHerramienta("mermas-ctc", { volver: dentro });
     const leido = new RequestCookies(new Headers({ cookie: `${COOKIE_SIGUIENTE}=${encodeURIComponent(fuera)}` })).get(COOKIE_SIGUIENTE)?.value;
     const destino = siguienteSeguro(leido ?? null);

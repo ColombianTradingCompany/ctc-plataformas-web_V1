@@ -37,7 +37,8 @@ import {
 } from "@/lib/eudr";
 import { deriveCertSchemes, MESH, SCA_ATTRS, type FichaFormData } from "@/components/kaffetal-regal/ficha/fichaData";
 import { computeFactor, computeSca, type ScaFields } from "@/components/kaffetal-regal/ficha/fichaCalculations";
-import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
+import { codigosDeProductores } from "@/lib/codigos/servidor";
+import { LOTE_SIN_CODIGO } from "./carga";
 import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { fetchProducerContacts, type ProducerContact } from "@/lib/bcpProducers";
 import { EudrStatusBadge } from "@/components/kaffetal-regal/EudrStatusBadge";
@@ -70,6 +71,8 @@ type FincaJoin = {
 
 type LotRow = {
   id: string;
+  /** V6.23 (TAR-149): el código del lote, asignado por la base; null = sin finca, sin código. */
+  public_code: string | null;
   name: string;
   producer_id: string;
   finca_id: string | null;
@@ -144,7 +147,7 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
       // for its compile-time column parsing to work -- otherwise it falls back to a
       // GenericStringError type and every field access below breaks.
       .select(
-        `id, name, producer_id, finca_id, dds_reference, stage, intake_step, grade, source, season_id, updated_at, sample_shipped_at, sample_2kg_confirmed_at, eva_no_apto_reason, eva_checklist, video_asset_id, datasheet, harvest_from, harvest_to,
+        `id, public_code, name, producer_id, finca_id, dds_reference, stage, intake_step, grade, source, season_id, updated_at, sample_shipped_at, sample_2kg_confirmed_at, eva_no_apto_reason, eva_checklist, video_asset_id, datasheet, harvest_from, harvest_to,
          ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_notas_cata, ficha_puntaje_estimado,
          eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_country, eudr_country_risk, eudr_chain_complexity,
          eudr_product_risk, eudr_product_risk_factors,
@@ -246,8 +249,10 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
     return a ? ARCHETYPE_LABEL[a] : null;
   };
 
-  const [producers, { data: comms }, { data: inscriptionRows }, signedUrls] = await Promise.all([
+  const [producers, codigosProd, { data: comms }, { data: inscriptionRows }, signedUrls] = await Promise.all([
     fetchProducerContacts(service, lotRows.map((l) => l.producer_id)),
+    // V6.23 (TAR-149): el CTC-P- guardado del productor, para su línea de contacto.
+    codigosDeProductores(service, lotRows.map((l) => l.producer_id)),
     service
       .from("producer_comm_log")
       .select("id, lot_id, context_label, note, created_at, author_role")
@@ -255,7 +260,7 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
       .order("created_at", { ascending: false }),
     service
       .from("arena_inscriptions")
-      .select("lot_id, status")
+      .select("lot_id, status, codigo_ciego")
       .in("lot_id", lotRows.map((l) => l.id)),
     signedKaffetalMediaUrls(service, assetIds),
   ]);
@@ -284,9 +289,13 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
   }
   const inscriptionSettledByLot = new Map<string, boolean>();
   const postulatedLots = new Set<string>();
-  for (const i of (inscriptionRows as { lot_id: string; status: string }[] | null) ?? []) {
+  // V6.23 (TAR-149): el código CIEGO de la cata (`arena_inscriptions.codigo_ciego`): el que va en la bolsa del Q-Grader. CTCx ve
+  // los dos, rotulados; el Centro de Calidad solo el ciego.
+  const codigoCiegoByLot = new Map<string, string>();
+  for (const i of (inscriptionRows as { lot_id: string; status: string; codigo_ciego: string | null }[] | null) ?? []) {
     inscriptionSettledByLot.set(i.lot_id, i.status === "pagado" || i.status === "exento");
     postulatedLots.add(i.lot_id);
+    if (i.codigo_ciego) codigoCiegoByLot.set(i.lot_id, i.codigo_ciego);
   }
   const commsByLot = new Map<string, CommRow[]>();
   for (const c of (comms as CommRow[] | null) ?? []) {
@@ -368,6 +377,8 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
         fichas={ordenaFichas(fichasByLot.get(lot.id) ?? [])}
         lot={lot}
         producer={producers.get(lot.producer_id)}
+        productorCodigo={codigosProd.get(lot.producer_id) ?? null}
+        codigoCiego={codigoCiegoByLot.get(lot.id) ?? null}
         comms={commsByLot.get(lot.id) ?? []}
         signedUrls={signedUrls}
         referencias={referencias}
@@ -437,6 +448,8 @@ const CERT_KEY_LABEL: Record<string, string> = {
 function LotCard({
   lot,
   producer,
+  productorCodigo,
+  codigoCiego,
   comms,
   signedUrls,
   showConfirmReceipt,
@@ -453,6 +466,10 @@ function LotCard({
 }: {
   lot: LotRow;
   producer: ProducerContact | undefined;
+  /** V6.23 (TAR-149): `producer_profiles.codigo` del dueño del lote. */
+  productorCodigo: string | null;
+  /** V6.23: el código ciego de la cata (`arena_inscriptions.codigo_ciego`), si el lote pidió evaluación. */
+  codigoCiego: string | null;
   comms: CommRow[];
   signedUrls: Map<string, string>;
   showConfirmReceipt: boolean;
@@ -664,7 +681,22 @@ function LotCard({
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
-        <span className={`${styles.badge} mono`}>{ctcLotReferenceShort(lot.id)}</span>
+        {lot.public_code ? (
+          <span className={`${styles.badge} mono`} title="El código del lote (CTCx, el productor y el comprador)">{lot.public_code}</span>
+        ) : (
+          <span
+            className={`${styles.badge} ${styles.badgeWarn}`}
+            title="Sin finca no hay código: el lote no sale en ninguna lista del OCP hasta que el productor le asigne su finca"
+          >
+            {LOTE_SIN_CODIGO}
+          </span>
+        )}
+        {/* V6.23 (TAR-149): el código CIEGO es el único que ve el Q-Grader (va en su bolsa); aquí, solo para CTCx, junto al del lote. */}
+        {codigoCiego && (
+          <span className={`${styles.badge} mono`} title="Código ciego de la cata: el único que va en la bolsa y en la planilla del Q-Grader">
+            Cata a ciegas · {codigoCiego}
+          </span>
+        )}
         <EudrStatusBadge status={eudrStatus} />
         {lot.grade && <span className={styles.badge}>{GRADE_LABEL[lot.grade] ?? lot.grade}</span>}
         {/* V5.192 (owner): «el Dossier completo debe también ser accesible desde aquí, al lado de las fichas». Vive en Kaffetal Regal y
@@ -681,7 +713,7 @@ function LotCard({
         </a>
         {lot.source === "bcp_manual_entry" && <span className={styles.badge}>registrado por BCP</span>}
       </div>
-      <ProducerContactLine producer={producer} />
+      <ProducerContactLine producer={producer} codigo={productorCodigo} />
       <p className={styles.meta}>Finca: {lot.fincas?.name ?? "—"}</p>
 
       {referencias.length > 0 && (

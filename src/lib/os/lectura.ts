@@ -280,9 +280,10 @@ export async function leerLotesPorEtapa(service: SupabaseClient): Promise<Lectur
   const fuentes = PIEZAS_DEL_LECTOR.lotes;
   try {
     const etapas = Object.keys(ETAPA_DEL_LOTE);
+    // V6.23 (TAR-149): un lote sin finca no tiene código y no se cuenta (igual que el inicio del OCP, al que lleva «Abrir»).
     const [porEtapa, total] = await Promise.all([
-      Promise.all(etapas.map((e) => contar(service.from("lots").select("id", { count: "exact", head: true }).eq("stage", e)))),
-      contar(service.from("lots").select("id", { count: "exact", head: true })),
+      Promise.all(etapas.map((e) => contar(service.from("lots").select("id", { count: "exact", head: true }).eq("stage", e).not("public_code", "is", null)))),
+      contar(service.from("lots").select("id", { count: "exact", head: true }).not("public_code", "is", null)),
     ]);
     if (total === null || porEtapa.some((n) => n === null)) return mal("lectura_lotes", fuentes);
     const out: Partial<Record<string, number>> = {};

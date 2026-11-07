@@ -19,7 +19,7 @@ import { FincaMapPicker, type ParcelaEnMapa } from "./FincaMapPicker";
 import { FieldInfo } from "./ficha/panes/FieldInfo";
 import { ChequeosCtcx, type SolicitudDeChequeos } from "./ChequeosCtcx";
 import { ORIGIN_CERTS, INTL_CERTS, CERT_INFO } from "./ficha/fichaData";
-import { exigePoligono, fincaCode, LOCAL_INFRA, type Finca, type FincaCertificate, type GeneralInfo, type Parcela } from "./data";
+import { codigoCtc, exigePoligono, LOCAL_INFRA, type Finca, type FincaCertificate, type GeneralInfo, type Parcela } from "./data";
 import styles from "./FincaModal.module.css";
 
 // Etiqueta humana de cada esquema del catálogo (A3 + A4 de la Ficha).
@@ -458,6 +458,7 @@ export function FincaEditorBody({
 
   const previewFinca: Finca = {
     id: finca?.id ?? "",
+    codigo: finca?.codigo ?? null,
     name,
     status: finca?.status ?? "pending_review",
     certShared: finca?.certShared ?? false,
@@ -595,6 +596,8 @@ export function FincaEditorBody({
     setSaving(true);
     const ok = await onSave({
       id: finca?.id ?? "",
+      // V6.23 (TAR-149): solo viaja con el tipo; saveFinca() no lo escribe (lo asigna la base y no se cambia).
+      codigo: finca?.codigo ?? null,
       name: trimmedName,
       // Carried for the Finca type only -- saveFinca() never writes these
       // (CTC-managed); the producer can't change their own review/share state.
@@ -688,7 +691,7 @@ export function FincaEditorBody({
         {finca ? `${soloLectura ? "Revisar" : "Editar"} finca · ${finca.name}` : "Registrar finca nueva"}
         <AutosaveChip status={autosaveStatus} />
       </h3>
-      {finca && <p className="mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: -4 }}>{fincaCode(finca.id)}</p>}
+      {finca && <p className="mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: -4 }}>{codigoCtc(finca.codigo)}</p>}
       <p>Cada finca se identifica una sola vez y queda disponible para asociar sus cafés. Su debida diligencia EUDR (la «Visa» del predio) vive aquí y todos los lotes que salgan de esta finca la heredan.</p>
 
       {/* Estado EUDR de la finca -- persistente sobre las tres pestañas. */}

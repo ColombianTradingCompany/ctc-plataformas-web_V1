@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
-import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { ActionForm } from "@/components/panel/ActionForm";
 import { emitCampaignCodes, revokeCampaignCode } from "../../../subvencionesActions";
 import styles from "@/components/panel/shared.module.css";
@@ -13,7 +12,9 @@ export const dynamic = "force-dynamic";
 // asignados a un productor o anónimos para entregar en mano, y enseña quién usó cada uno.
 
 type CodeRow = { id: string; code: string; created_at: string; assigned_to: string | null; redeemed_at: string | null; lot_id: string | null; revoked_at: string | null };
-type LotRow = { id: string; producer_id: string | null; fincas: { name: string } | { name: string }[] | null };
+// V6.23 (TAR-149): `public_code` = el código guardado del lote. Un lote sin finca no tiene código y no se lista: el uso del código de
+// subvención se sigue viendo, pero lleva a su productor (donde ese lote sí se ve), no al lote.
+type LotRow = { id: string; public_code: string | null; producer_id: string | null; fincas: { name: string } | { name: string }[] | null };
 const fincaNameOf = (l: LotRow | undefined) => {
   const f = l && (Array.isArray(l.fincas) ? l.fincas[0] : l.fincas);
   return f?.name ?? "—";
@@ -40,7 +41,7 @@ export default async function CampanaDeSubvencionPage({ params }: { params: Prom
 
   const redeemedLotIds = [...new Set(codes.map((c) => c.lot_id).filter((x): x is string => !!x))];
   const { data: lotRows } = redeemedLotIds.length
-    ? await service.from("lots").select("id, producer_id, fincas(name)").in("id", redeemedLotIds)
+    ? await service.from("lots").select("id, public_code, producer_id, fincas(name)").in("id", redeemedLotIds)
     : { data: [] as LotRow[] };
   const lots = (lotRows as LotRow[] | null) ?? [];
   const lotMap = new Map(lots.map((l) => [l.id, l]));
@@ -125,9 +126,13 @@ export default async function CampanaDeSubvencionPage({ params }: { params: Prom
                   {lot ? (
                     <>
                       {/* V5.126 (owner): «Usado por» lleva al LOTE que lo usó, no solo a su productor. */}
-                      <Link href={`/ocp/kr?lote=${lot.id}`} className="mono" style={{ color: "var(--primary)", fontWeight: 700 }}>
-                        Lote {ctcLotReferenceShort(lot.id)} →
-                      </Link>
+                      {lot.public_code ? (
+                        <Link href={`/ocp/kr?lote=${lot.id}`} className="mono" style={{ color: "var(--primary)", fontWeight: 700 }}>
+                          Lote {lot.public_code} →
+                        </Link>
+                      ) : (
+                        <span>un lote sin código (falta la finca)</span>
+                      )}
                       <span>· Finca {fincaNameOf(lot)}</span>
                       <span>·</span>
                       <Link href={`/ocp/kr?productor=${lot.producer_id}`} style={{ color: "var(--primary)", fontWeight: 700 }}>

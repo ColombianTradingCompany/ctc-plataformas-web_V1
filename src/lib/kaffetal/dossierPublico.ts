@@ -22,6 +22,8 @@
 // en la lista canónica y con su nombre canónico, el proceso solo del enum de la Ficha (texto libre del productor: lo desconocido
 // se omite); la altitud en tramos de 100 m; fuera también el empaque al vacío; y un lote de CTCx Selection vuelve a enseñar la
 // descripción de su perfil (texto de CTCx), bajo un rótulo propio.
+// V6.23 (TAR-149): la referencia es el código GUARDADO del lote, y los 3 lotes del catálogo Japan Pioneers llevan además el aviso de
+// su segunda puerta (`puertaDeLegado`: el código anterior y hasta cuándo abre), que la lista blanca deja pasar a propósito.
 // PURO (tipos, la marca y la imagen por defecto, y dos módulos de datos: el nombre público y la vista): lo prueba el guardián con
 // un dossier lleno de centinelas.
 
@@ -147,5 +149,9 @@ export function dossierPublico(d: DossierCtcxData, o: { url: string; volver: str
     // V5.201 (owner, 2026-10-10): el Dossier público no se imprime ni se guarda en PDF (se consulta en línea).
     // V5.202 (owner, 2026-10-10): «necesita mantener el Watermark»: la marca PÚBLICA, que no nombra al productor ni a la finca.
     blindaje: { puedeImprimir: false, marca: textoDeMarcaPublica({ referencia: d.lot.reference, fecha: d.generatedOn, lang: d.lang }) },
+    // V6.23 (TAR-149, owner: «add a notification pin on their dossiers»): el aviso de la segunda puerta de los 3 lotes del catálogo
+    // Japan Pioneers. Sale a propósito: el código anterior ya es público (va impreso en el catálogo enviado a compradores). Solo esos
+    // dos campos, copiados uno a uno.
+    puertaDeLegado: d.puertaDeLegado ? { anterior: d.puertaDeLegado.anterior, hasta: d.puertaDeLegado.hasta } : null,
   };
 }

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
-import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
+import { codigoCtc } from "@/components/kaffetal-regal/data";
 import { GRADO_LABEL } from "@/lib/ocp/etapas";
 import { evaluacionQueRige } from "@/lib/evaluations";
 import { ActionForm } from "@/components/panel/ActionForm";
@@ -17,9 +17,14 @@ export const dynamic = "force-dynamic";
 // grado se marca y se puede cambiar aquí (`elegirEvaluacionQueRige`). «Nueva apreciación» abre la
 // planilla B2 · B3 (`LabEvalEditor`, la misma de la Ficha) — la Datasheet interna completa llega en la
 // fase 4 del plan.
+//
+// V6.23 (TAR-149): esta página es del EQUIPO CTCx (consola BCP: nombra al productor y enlaza el OCP), no de un catador ni de un
+// jurado. Por eso cada café se nombra con el código GUARDADO del lote (`lots.public_code`), no con el código ciego de la cata
+// (`arena_inscriptions.codigo_ciego`, que es solo del Centro de Calidad y de la bolsa de la muestra). Un lote sin código (sin
+// finca) no se ofrece para agregar: no sale en ninguna lista hasta tener finca.
 
 type SessionRow = { id: string; name: string | null; created_at: string };
-type LotRow = { id: string; name: string; grade: string | null; stage: string; producer_id: string };
+type LotRow = { id: string; public_code: string | null; name: string; grade: string | null; stage: string; producer_id: string };
 type EvalRow = {
   id: string;
   lot_id: string;
@@ -45,13 +50,13 @@ export default async function ArenaSessionPage({ params }: { params: Promise<{ s
 
   const [{ data: rosterRaw }, { data: galardonadosRaw }] = await Promise.all([
     service.from("arena_session_lots").select("lot_id, added_at").eq("arena_session_id", sessionId).order("added_at", { ascending: true }),
-    service.from("lots").select("id, name, grade, stage, producer_id").eq("stage", "galardonado").order("name"),
+    service.from("lots").select("id, public_code, name, grade, stage, producer_id").eq("stage", "galardonado").order("name"),
   ]);
   const rosterIds = ((rosterRaw as { lot_id: string }[] | null) ?? []).map((r) => r.lot_id);
   const galardonados = (galardonadosRaw as LotRow[] | null) ?? [];
   const lotePorId = new Map(galardonados.map((l) => [l.id, l]));
   const roster = rosterIds.map((id) => lotePorId.get(id)).filter((l): l is LotRow => !!l);
-  const candidatos = galardonados.filter((l) => !rosterIds.includes(l.id));
+  const candidatos = galardonados.filter((l) => !rosterIds.includes(l.id) && !!l.public_code);
 
   const { data: evRaw } = rosterIds.length
     ? await service
@@ -98,7 +103,7 @@ export default async function ArenaSessionPage({ params }: { params: Promise<{ s
                 </option>
                 {candidatos.map((l) => (
                   <option key={l.id} value={l.id}>
-                    {l.name} · {l.grade ? GRADO_LABEL[l.grade] ?? l.grade : "sin grado"} · {ctcLotReferenceShort(l.id)}
+                    {l.name} · {l.grade ? GRADO_LABEL[l.grade] ?? l.grade : "sin grado"} · {codigoCtc(l.public_code)}
                   </option>
                 ))}
               </select>
@@ -125,7 +130,7 @@ export default async function ArenaSessionPage({ params }: { params: Promise<{ s
                       <span className={styles.badge}>{l.grade ? GRADO_LABEL[l.grade] ?? l.grade : "sin grado"}</span>
                     </h3>
                     <p className={styles.meta}>
-                      {ctcLotReferenceShort(l.id)} · {productores.get(l.producer_id)?.fullName ?? "Productor"}
+                      {codigoCtc(l.public_code)} · {productores.get(l.producer_id)?.fullName ?? "Productor"}
                     </p>
                   </div>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>

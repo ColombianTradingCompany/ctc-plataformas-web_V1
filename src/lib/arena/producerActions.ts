@@ -41,13 +41,15 @@ export async function postularLote(lotId: string, campaignCode?: string, notaSol
 
   const { data: lot } = await service
     .from("lots")
-    .select("id, name, stage, producer_id, existencia_cps_kg")
+    .select("id, name, stage, producer_id, existencia_cps_kg, public_code")
     .eq("id", lotId)
     .maybeSingle();
   if (!lot || lot.producer_id !== auth.userId) return { ok: false, message: "Lote no encontrado." };
   if (lot.stage !== "apto") {
     return { ok: false, message: "Solo un lote declarado Apto por CTCx puede solicitar evaluación." };
   }
+  // V6.23 (TAR-149): un lote sin finca no tiene código y no sale en ninguna lista del OCP; sin esto quedaría cobrado y sin cola.
+  if (!lot.public_code) return { ok: false, message: "Asígnele una finca a este lote antes de solicitar la evaluación." };
   const existencia = existenciaKg != null ? existenciaValida(existenciaKg) : lot.existencia_cps_kg != null ? Number(lot.existencia_cps_kg) : null;
   if (existencia == null) return { ok: false, message: EXISTENCIA_REQUERIDA };
   const { data: existing } = await service.from("arena_inscriptions").select("id").eq("lot_id", lotId).maybeSingle();

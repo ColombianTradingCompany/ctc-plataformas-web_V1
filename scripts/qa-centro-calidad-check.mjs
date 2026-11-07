@@ -55,7 +55,10 @@ const gate = lee("src/lib/partners/requirePartner.ts");
     check(`la pantalla del Centro no lee «${p}»`, !paginaCodigo.includes(p));
     check(`ni sus acciones`, !accionesCodigo.includes(p));
   }
-  check("el Centro identifica el lote solo por su código corto (uid_anonimo)", pagina.includes("ctcLotReferenceShort(l.lot_id)") && acciones.includes("uid_anonimo: ctcLotReferenceShort(lotId)"));
+  // V6.23 (TAR-149): el Q-Grader ve el código CIEGO de la inscripción (`arena_inscriptions.codigo_ciego`), nunca el del lote: el del
+  // lote es jerárquico y le diría qué muestras son hermanas. El mismo código ciego es el `uid_anonimo` del alta.
+  check("el Centro identifica la muestra solo por su código CIEGO (codigo_ciego → uid_anonimo), nunca por el del lote", pagina.includes('select("lot_id, sondeo_batch_id, phase, codigo_ciego")') && pagina.includes("const uid = codigoCtc(l.codigo_ciego);") && acciones.includes('select("id, phase, sondeo_batch_id, codigo_ciego")') && acciones.includes("uid_anonimo: bache.codigoCiego") && !/public_code|ctcLotReference|supplierCode|fincaCode/.test(paginaCodigo + accionesCodigo));
+  check("y la OCP escribe el mismo código ciego cuando registra a mano", nominados.includes("uid_anonimo: (ins.codigo_ciego") && !nominados.includes("ctcLotReference"));
   check("y la pantalla dice que es a ciegas", /a ciegas/.test(pagina) || /a ciegas/.test(planilla));
 }
 
@@ -418,7 +421,7 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("código interno: arriba a la derecha del título, PLEGADO; un botón lo despliega y con borrador llega abierto", planilla.includes("{codigoAbierto ? (") && planilla.indexOf("{codigoAbierto ? (") < planilla.indexOf("<LabEvalEditor") && planilla.includes("useState(!!borrador?.codigoInterno)") && planilla.includes("onClick={() => setCodigoAbierto(true)}") && planilla.includes("{tx.codigoBoton}") && planilla.includes("maxLength={80}"));
   check("código interno: vacío se vuelve a plegar; el botón existe en los dos idiomas", planilla.includes("if (!codigoInterno.trim()) setCodigoAbierto(false);") && PLANILLA_TXT("Usar mi código interno (opcional)") && PLANILLA_TXT("Use my internal code (optional)"));
   check("código interno: viaja con el alta y con el borrador, limpio", reg.includes("codigo_interno: codigoLimpio(codigoInterno)") && borr.includes("codigo_interno: codigoLimpio(codigoInterno)") && acciones.includes('.replace(/\\s+/g, " ").trim().slice(0, 80)'));
-  check("código interno: es del laboratorio — el código de CTCx sigue siendo el que identifica el lote", reg.includes("uid_anonimo: ctcLotReferenceShort(lotId)") && acta.includes("add column if not exists codigo_interno text"));
+  check("código interno: es del laboratorio — el código de CTCx sigue siendo el que identifica el lote", reg.includes("uid_anonimo: bache.codigoCiego") && acta.includes("add column if not exists codigo_interno text"));
   check("código interno: lo ven el Centro en su lista y CTCx en «Lotes en Evaluación»", pagina.includes("su código:") && lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").includes("código del laboratorio:"));
 
   // Comentarios y humedad del verde
@@ -642,7 +645,7 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   check("tríada · del lote: la variedad DOMINANTE (en empate, la primera) y su proceso; fuera del catálogo cae a C con el porqué", letras(gesha.triada) === "ACC" && letras(mezcla.triada) === "BCC" && /dominante/.test(mezcla.variedad.por) && triadaDeLaFicha({ varieties: [{ name: "Inventada", pct: "100" }] }).variedad.por.includes("catálogo semilla") && letras(triadaDeLaFicha(null).triada) === "CCC");
   check("tríada · los puntos salen de la escala (ACC a 86 ≈ 1540 × 1,0854; CCC a 86 = 1540)", puntosCtc(86, gesha.triada).puntos === Math.round(1540 * (1 + ((2500 / 1990 - 1) / 6) * 2)) && puntosCtc(86, { variedad: "C", proceso: "C", reconocimiento: "C" }).puntos === 1540);
   const ocpUi = lee("src/app/ocp/(app)/nominados/NominadosClient.tsx").replace(/\r\n/g, "\n");
-  check("informe · la Ficha Técnica COMPLETA de solo lectura (mismo renderizador que la Vista de Ficha), abierta por defecto", ocpUi.includes("<FichaCompletaLectura datasheet={ficha} />") && ocpUi.includes("const [verFicha, setVerFicha] = useState(true);") && lee("src/components/bcp/FichaCompletaLectura.tsx").includes("renderFichaHtml(data, factor, mesh, sca, varietyTotal(data)") && lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").includes("ficha={i.lot!.datasheet ?? null}"));
+  check("informe · la Ficha Técnica COMPLETA de solo lectura (mismo renderizador que la Vista de Ficha), abierta por defecto", ocpUi.includes("<FichaCompletaLectura datasheet={ficha} />") && ocpUi.includes("const [verFicha, setVerFicha] = useState(true);") && lee("src/components/bcp/FichaCompletaLectura.tsx").includes("renderFichaHtml(data, factor, mesh, sca, varietyTotal(data)") && lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").includes("ficha={fichaConCodigo(i.lot!)}") && lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").includes('ctc_uid: l.public_code ?? ""'));
   check("informe · la tríada A·B·C por parámetro, con la elegida encendida, los puntos y la MISMA curva del Modelo Económico", ocpUi.includes("<TriadaDelLote ficha={ficha} sca={alta.punto?.valor ?? null} ajuste={ajuste} />") && lee("src/components/bcp/TriadaDelLote.tsx").includes("{NIVELES.map((n) => (") && lee("src/components/bcp/TriadaDelLote.tsx").includes('<CurvaDeEscala t={d.triada} sca={sca} puntos={r.puntos} />') && lee("src/components/panel/pvc/EscalaBoard.tsx").includes('import { CurvaDeEscala } from "./CurvaDeEscala";'));
 }
 
@@ -653,7 +656,7 @@ const gate = lee("src/lib/partners/requirePartner.ts");
   const { existsSync } = await import("node:fs");
   check("informe · la franja SCA se retiró (no existe el componente ni se importa) y la tríada es LA regla del grado", !existsSync(new URL("../src/components/bcp/FranjaDeGrados.tsx", import.meta.url)) && !ocpUi.includes("FranjaDeGrados") && ocpUi.includes("El grado · El Punto y la Tríada") && !ocpUi.includes("todavía no gobierna") && !tri.includes("gradoHoy"));
   check("informe · el grado del alta se decide con la tríada de la Ficha y el botón lo dice", ocpUi.includes("const triada = triadaDeLaFicha(ficha).triada;") && ocpUi.includes("decidirPorPunto(alta.punto, triada, ajuste)") && ocpUi.includes("× tríada <span className=\"mono\">"));
-  check("«Registrar a mano» previsualiza con la tríada y pasa la tríada al editor", ocpUi.includes("gradoDelLote(puntaje, triada).grado") && ocpUi.includes("triada={triada} />") && lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").includes("ficha={i.lot!.datasheet ?? null}"));
+  check("«Registrar a mano» previsualiza con la tríada y pasa la tríada al editor", ocpUi.includes("gradoDelLote(puntaje, triada).grado") && ocpUi.includes("triada={triada} />") && lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").includes("ficha={fichaConCodigo(i.lot!)}"));
   check("el Centro sigue sin ver el grado (ocultaGrado) y sin tríada el editor no lo deriva", lee("src/components/bcp/LabEvalEditor.tsx").includes("const decision = punto && triada ? decidirPorPunto(punto, triada) : null;"));
 }
 

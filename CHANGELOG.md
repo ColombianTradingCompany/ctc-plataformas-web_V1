@@ -19,6 +19,35 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.23] — 2026-11-07 (commit pendiente)
+
+- **Hito**: **los códigos CTC se guardan y son jerárquicos (TAR-149, decisión del owner del 6 nov).** Productor `CTC-P-XXX`, finca
+  `CTC-F-XXXYY` (los 3 del productor + 2) y lote `CTC-L-XXXYYZZZZ` (los 5 de su primera finca registrada + 4), con el alfabeto Crockford
+  (cifras y mayúsculas sin I, L, O ni U). Los asigna la base una sola vez (libro `codigos_ctc`, asignadores `ctc_codigo_*` y disparadores
+  `zz_*`) y no se recalculan nunca; la aplicación ya no deriva ningún código del uuid (`codigoCtc` en `src/components/kaffetal-regal/data.ts`).
+  `lots.public_code` (la columna de la V5.48) pasa a ser EL código del lote y `CTCX-` deja de acuñarse. Un lote sin finca no tiene código y no
+  sale en ninguna lista pública ni del OCP (salvo dentro de la sección de su productor) hasta que se le asigne una. Ningún productor nuevo
+  recibe `7E3`, `016`, `FDA` ni `CTC`.
+- **Cambiado**: **el portal del Catálogo Activo, Find my Lot, la foto, la marca de agua y los formularios de leads** leen el código de 9
+  caracteres. Los tres lotes del catálogo Japan Pioneers conservan una «segunda puerta» hasta el 30.06.2027: su dirección vieja
+  (`CTC-L-7E360302`, `CTC-L-016DF280`, `CTC-L-FDA6B795`) redirige (308) a la nueva, y su Dossier lleva un pin con el código anterior y el
+  nuevo. Cualquier otro código viejo da «no encontrado». Find my Lot ya no explica el formato.
+- **Añadido**: **la cata a ciegas con su propio código** (`arena_inscriptions.codigo_ciego`): las inscripciones de hoy conservan el que ya
+  llevan impreso sus bolsas; las nuevas reciben `QG-` + 5 al azar, sin relación con el lote, y una re-evaluación recibe uno fresco (default
+  construido; el punto 4 de TAR-149 sigue pendiente del sí del owner).
+- **Cambiado**: **los contratos guardan los códigos con los que se armó su texto** (`texto_codigo_lote`, `texto_codigo_productor`) y lo
+  rearman con ellos: la huella SHA-256 de los 7 contratos sigue coincidiendo. Panel del productor, ratificación y PDF los usan.
+- **Datos**: dos pasos de migración. `docs/migraciones/2026-11-07_codigos_ctc_a_ampliar.sql` (antes del despliegue, aditivo): 19
+  productores, 14 fincas y 15 lotes con su código; la tabla viejo → nuevo con los 51 códigos derivados del uuid y los del borrado nuclear,
+  reservados para siempre; las 3 puertas; `public_lot_catalog` deja `public_code` en null. `docs/migraciones/2026-11-07_codigos_ctc_c_cambiar.sql`
+  (después del despliegue): la vitrina con `referencia` = el código nuevo; 17 Fichas y 6 leads reescritos con el código anterior al lado
+  (`ctc_uid_anterior`, `lots_of_interest_anterior`). Ensayados contra los datos reales en una transacción deshecha antes de aplicarlos.
+- **Añadido**: guardián `qa-codigos-ctc-check` (76); 13 guardianes re-apuntados al código guardado.
+- **Docs**: `AGENTS.md` (la regla de los códigos visibles al día con la decisión del owner), `docs/ALINEACION.md` §1 y §3, charters
+  `kaffetal-regal`, `cherry-picked`, `herramientas-cafe`, `herramientas-internas`, `ctcx-os`, `secretaria` y `socios`.
+
+---
+
 ## [V6.22] — 2026-11-06 (commit 3e7092c)
 
 - **Añadido**: **Herramientas del Café · una cuenta, una fuente (F-01 y F-02, etapa 1).** La cuenta de la Calculadora de Mermas vive en

@@ -106,8 +106,10 @@ export function variedadesPublicas(varieties: unknown, fichaVariedad: string | n
   return una ? [una] : [];
 }
 
-/** La referencia pública de un lote (`CTC-L-` + los 8 primeros hexadecimales del id), sin importar `data.ts`. */
-const referenciaDe = (lotId: string) => `CTC-L-${lotId.replace(/-/g, "").slice(0, 8).toUpperCase()}`;
+/** V6.23 (TAR-149): el respaldo del nombre público cuando no hay ni café ni región ni año (no se alcanza en la práctica: la región
+ *  siempre resuelve). Antes derivaba un código del uuid; ya no se deriva ningún código. Es el MISMO respaldo de
+ *  `public.nombre_publico_lote` (`docs/migraciones/2026-11-07_codigos_ctc_a_ampliar.sql`). */
+const NOMBRE_DE_RESPALDO = "Café de Colombia";
 
 const anioDe = (iso: string | null | undefined): string | null => {
   if (!iso) return null;
@@ -132,5 +134,5 @@ export function nombrePublicoDelLote(o: {
   const region = (o.departamento ?? "").trim() || (o.pais ?? "").trim() || "Colombia";
   const anio = anioDe(o.harvestTo) ?? anioDe(o.harvestFrom) ?? anioDe(o.creado);
   const nombre = [cafe, [region, anio].filter(Boolean).join(" ")].filter(Boolean).join(" · ");
-  return nombre || referenciaDe(o.lotId);
+  return nombre || NOMBRE_DE_RESPALDO;
 }

@@ -166,7 +166,9 @@ export function KrTabla({
       }
       if (segmentos.size > 0 && !segmentos.has(f.segmentoId)) return false;
       if (q) {
-        const pajar = [f.productorNombre, f.productorCodigo, f.fincaNombre, f.fincaCodigo, f.fincaLugar, f.loteNombre, f.loteRef]
+        // V6.23 (TAR-149): también el código ANTERIOR del productor, la finca o el lote (quien aún teclea uno viejo lo encuentra); la
+        // fila enseña siempre el vigente.
+        const pajar = [f.productorNombre, f.productorCodigo, f.fincaNombre, f.fincaCodigo, f.fincaLugar, f.loteNombre, f.loteRef, f.codigosAnteriores]
           .filter(Boolean)
           .join(" ")
           .toLocaleLowerCase("es-CO");

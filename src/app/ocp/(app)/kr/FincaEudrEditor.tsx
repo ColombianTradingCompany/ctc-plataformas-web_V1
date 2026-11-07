@@ -9,7 +9,7 @@ import { BarraArea, Coordenada, Documento, Fichas, LineaDeTiempo, SiNo } from ".
 import { createClient } from "@/lib/supabase/client";
 import { uploadKaffetalMediaWithProgress } from "@/lib/kaffetalMedia";
 import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
-import { LOCAL_INFRA, fincaCode } from "@/components/kaffetal-regal/data";
+import { LOCAL_INFRA } from "@/components/kaffetal-regal/data";
 import { CERT_REGISTRY } from "@/lib/certRegistry";
 import { DEPARTAMENTOS_DE_COLOMBIA, PAISES_FUERA_DE_COLOMBIA } from "@/lib/geo/departamentos";
 import { AREAS_DE_LEGISLACION, SOSTENIBILIDAD_Y_ENFOQUE_SOCIAL, chequeosPendientes, claveDeChequeo, leerChequeosSolicitados } from "@/lib/eudrAtributos";
@@ -130,10 +130,11 @@ export type FincaEudrValues = {
 // GeoJSON estándar (RFC 7946) en vez del JSON casero de antes: es el formato
 // que acepta TRACES (el sistema de la UE para la declaración EUDR) y cualquier
 // SIG. El casero no tenía ningún consumidor, así que no se pierde nada.
-function downloadGeoJson(fincaId: string, fincaName: string, values: FincaEudrValues, parcelas: BcpParcela[]) {
+// V6.23 (TAR-149): el código de la finca llega GUARDADO (`fincas.codigo`, vía `fincaCodigo`); ya no se calcula del id.
+function downloadGeoJson(fincaCodigo: string, fincaName: string, values: FincaEudrValues, parcelas: BcpParcela[]) {
   const payload = buildFincaGeoJson({
     name: fincaName,
-    code: fincaCode(fincaId),
+    code: fincaCodigo,
     lat: values.eudr_lat,
     lng: values.eudr_lng,
     polygon: values.eudr_polygon_geojson,
@@ -285,6 +286,7 @@ function SubTabBar({ tab, setTab, porChequear = 0 }: { tab: SubTab; setTab: (t: 
 
 export function FincaEudrEditor({
   fincaId,
+  fincaCodigo,
   fincaName,
   producerId,
   values,
@@ -296,6 +298,8 @@ export function FincaEudrEditor({
   certificates,
 }: {
   fincaId: string;
+  /** V6.23 (TAR-149): el código guardado de la finca (`fincas.codigo`), ya con `codigoCtc`. */
+  fincaCodigo: string;
   fincaName: string;
   producerId: string;
   values: FincaEudrValues;
@@ -535,7 +539,7 @@ export function FincaEudrEditor({
             <a className="btn btn-sm" href={`/ocp/kr/${fincaId}/kml`}>
               Archivo Google Earth (.kml) ⤓
             </a>
-            <button type="button" className="btn btn-sm" onClick={() => downloadGeoJson(fincaId, fincaName, values, parcelas)}>
+            <button type="button" className="btn btn-sm" onClick={() => downloadGeoJson(fincaCodigo, fincaName, values, parcelas)}>
               GeoJSON (.geojson) ⤓
             </button>
           </>

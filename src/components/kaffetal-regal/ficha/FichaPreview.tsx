@@ -8,7 +8,6 @@ import styles from "../FichaView.module.css";
 import { MarcaDeAgua } from "../blindaje/MarcaDeAgua";
 import { Blindaje } from "../blindaje/Blindaje";
 import { AVISO_SIN_CONTRATO, textoDeMarca } from "@/lib/kaffetal/blindaje";
-import { ctcLotReference } from "../data";
 import { nombreDeArchivo } from "@/lib/kaffetal/nombreDeArchivo";
 
 type Factor = { start: number; remainder: number; yieldLoss: number; healthy: number; yieldFactor: number | null };
@@ -34,12 +33,12 @@ export function FichaPreview({
   scorings?: ScaScoringExport[];
   /** V5.168 · el blindaje: descargar e imprimir solo con contrato firmado; la marca de agua siempre. */
   puedeImprimir?: boolean;
-  /** El id del lote (la marca de agua lleva su referencia CTC-L). */
-  referencia?: string;
+  /** V6.23 (TAR-149): el código GUARDADO del lote (`Lot.codigo`); lo llevan la marca de agua y el nombre del archivo. null = sin código. */
+  referencia?: string | null;
 }) {
   // Fecha fija por render del documento (la marca dice cuándo se generó la vista); se calcula una vez.
   const [generada] = useState(() => new Date().toISOString());
-  const marca = textoDeMarca({ referencia: referencia ? ctcLotReference(referencia) : "Ficha Técnica", productor: data.productor || null, fecha: generada });
+  const marca = textoDeMarca({ referencia: referencia || "Ficha Técnica", productor: data.productor || null, fecha: generada });
   const inner = useMemo(
     () => renderFichaHtml(data, factor, mesh, sca, varTotal, sca.total > 0 ? spiderSvgString(sca.values) : "", scorings),
     [data, factor, mesh, sca, varTotal, scorings]
@@ -48,7 +47,7 @@ export function FichaPreview({
   // V5.169: al imprimir, el título (= el nombre del PDF) lleva el nombre general y el código del lote.
   function imprimir() {
     const antes = document.title;
-    document.title = nombreDeArchivo(["Ficha Técnica", data.product_name || null, referencia ? ctcLotReference(referencia) : null]);
+    document.title = nombreDeArchivo(["Ficha Técnica", data.product_name || null, referencia || null]);
     window.print();
     document.title = antes;
   }
@@ -56,7 +55,7 @@ export function FichaPreview({
   function downloadHtml() {
     const doc = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>CTCx · ${data.product_name || "Ficha Técnica"}</title><style>${FICHA_PREVIEW_CSS} body{background:#fff;padding:20px}</style></head><body><div style="position:relative">${inner}${marcaHtml(marca)}</div></body></html>`;
     const name = (data.product_name || "Ficha_Tecnica").replace(/[^\w\-\sáéíóúÁÉÍÓÚ]/g, "").trim().replace(/\s+/g, "_").slice(0, 55);
-    const codigo = referencia ? ctcLotReference(referencia) : null;
+    const codigo = referencia || null;
     const blob = new Blob([doc], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

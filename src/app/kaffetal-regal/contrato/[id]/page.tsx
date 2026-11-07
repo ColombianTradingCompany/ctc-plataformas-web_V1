@@ -5,8 +5,8 @@ import { CONTRATO_VERSION, clausulasDelContrato, textoDelContrato } from "@/lib/
 import { COLUMNAS_DEL_CONTRATO, datosDeLaFila, type FilaDelContrato } from "@/lib/trato/contratoDeFila";
 import { AVISO_SIN_CONTRATO, contratoFirmado, textoDeMarca } from "@/lib/kaffetal/blindaje";
 import { documentoDelFirmante, esTipoDeDocumento } from "@/lib/trato/documento";
-import { ctcLotReference, supplierCode } from "@/components/kaffetal-regal/data";
-import { CONTRACT_STATUS_LABEL } from "@/components/kaffetal-regal/data";
+import { CONTRACT_STATUS_LABEL, codigoCtc } from "@/components/kaffetal-regal/data";
+import { codigosDelTexto, codigosVigentes, COLUMNAS_DE_CODIGOS, type CodigosGuardados } from "@/lib/trato/codigosDelContrato";
 import { MarcaDeAgua } from "@/components/kaffetal-regal/blindaje/MarcaDeAgua";
 import { Blindaje } from "@/components/kaffetal-regal/blindaje/Blindaje";
 import { PrintButton } from "@/components/kaffetal-regal/PrintButton";
@@ -26,6 +26,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 // V5.190: un contrato que CTCx aceptó PROVISIONALMENTE en una sesión asistida se ve aquí antes de la ratificación —con el texto
 // provisional, su huella y quién lo aceptó por CTCx— y, ratificado, con la firma del productor y la fecha de la ratificación. Los
 // datos salen de `datosDeLaFila` (`contratoDeFila.ts`), el mismo armador de la ratificación.
+// V6.23 (owner, 2026-11-06, TAR-149): el texto se rearma con los códigos que el contrato GUARDÓ al nacer (`texto_codigo_lote` /
+// `texto_codigo_productor`, ver `codigosDelContrato.ts`): así la huella de los contratos anteriores a los códigos guardados sigue
+// coincidiendo. La cabecera y la marca de agua llevan el código de HOY del lote; si el texto cita otro, se dice debajo.
 
 function gate(message: string) {
   return (
@@ -52,8 +55,8 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
   if (!user) return gate("Inicie sesión para ver su contrato.");
 
   const service = createServiceRoleClient();
-  const { data: raw } = await service.from("purchase_contracts").select(COLUMNAS_DEL_CONTRATO).eq("id", id).maybeSingle();
-  const c = raw as FilaDelContrato | null;
+  const { data: raw } = await service.from("purchase_contracts").select(`${COLUMNAS_DEL_CONTRATO}, ${COLUMNAS_DE_CODIGOS}`).eq("id", id).maybeSingle();
+  const c = raw as (FilaDelContrato & CodigosGuardados) | null;
   const lote = c ? ((Array.isArray(c.lots) ? c.lots[0] : c.lots) ?? null) : null;
   if (!c || !lote || lote.producer_id !== user.id) return gate("No encontramos este contrato en su cuenta.");
   if (!c.producer_signed_at && !c.provisional_at) return gate("Este contrato es anterior a la firma digital: lo encuentra en «Contratos y Compras».");
@@ -61,8 +64,16 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
     c.producer_signer_doc_numero && esTipoDeDocumento(c.producer_signer_doc_tipo) ? documentoDelFirmante(c.producer_signer_doc_tipo, c.producer_signer_doc_numero) : null;
   // Firmado (o ratificado) por el productor: su nombre y su documento entran al texto y a la huella. Provisional sin ratificar: no.
   const firmante = c.producer_signed_at && c.producer_signer_name ? { nombre: c.producer_signer_name, documento: documentoFirmante } : null;
+  // V6.23 (TAR-149): los códigos de HOY (cabecera y marca de agua) y los del TEXTO (los que guardó el contrato; los de hoy si no tiene).
+  const hoy = await codigosVigentes(service, c.lot_id, lote.producer_id);
+  const delTexto = codigosDelTexto(c, hoy);
   // V5.175: la ventana, el saco, el mínimo, la calidad y (V5.177) el Flete a CTCx, tal como quedaron guardados al firmar (la huella los cita).
-  const datos = datosDeLaFila(c, { loteNombre: lote.name, loteReferencia: ctcLotReference(c.lot_id), cuenta: supplierCode(lote.producer_id), firmante });
+  const datos = datosDeLaFila(c, { loteNombre: lote.name, loteReferencia: codigoCtc(delTexto.lote), cuenta: codigoCtc(delTexto.productor), firmante });
+  // Los códigos que el texto cita y que hoy son otros (la cuenta solo la cita el texto provisional).
+  const codigosRenovados = [
+    delTexto.lote && hoy.lote && delTexto.lote !== hoy.lote ? `${delTexto.lote} (hoy ${hoy.lote})` : null,
+    datos.provisional && delTexto.productor && hoy.productor && delTexto.productor !== hoy.productor ? `${delTexto.productor} (hoy ${hoy.productor})` : null,
+  ].filter((x): x is string => Boolean(x));
   const provisionalSinRatificar = Boolean(c.provisional_at) && !c.ratificado_at;
   const huella = createHash("sha256").update(textoDelContrato(datos), "utf8").digest("hex");
   // Un contrato firmado con un texto de otra versión conserva su huella; aquí se dice, no se compara a ciegas.
@@ -73,7 +84,7 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
 
   return (
     <div style={{ position: "relative", background: "#fff", color: "#17121F", maxWidth: 820, margin: "0 auto", padding: "28px 36px 40px", fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif", fontSize: 13.5, lineHeight: 1.55 }}>
-      <MarcaDeAgua texto={textoDeMarca({ referencia: ctcLotReference(c.lot_id), productor: c.producer_signer_name ?? supplierCode(lote.producer_id), fecha: new Date() })} />
+      <MarcaDeAgua texto={textoDeMarca({ referencia: codigoCtc(hoy.lote), productor: c.producer_signer_name ?? codigoCtc(hoy.productor), fecha: new Date() })} />
       <Blindaje puedeImprimir={puedeImprimir} aviso={AVISO_SIN_CONTRATO.es} />
       <style>{`@media print { .no-print { display: none !important } }`}</style>
       <div className="no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
@@ -85,8 +96,13 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
           <div style={{ fontSize: 11, letterSpacing: ".06em", color: "#5B5568" }}>CTCx · KAFFETAL REGAL</div>
           <h1 style={{ fontSize: 22, margin: "2px 0" }}>Contrato de suministro · {lote.name}</h1>
           <div style={{ fontSize: 12, color: "#5B5568" }}>
-            {ctcLotReference(c.lot_id)} · {CONTRACT_STATUS_LABEL[c.status as keyof typeof CONTRACT_STATUS_LABEL] ?? c.status}
+            {codigoCtc(hoy.lote)} · {CONTRACT_STATUS_LABEL[c.status as keyof typeof CONTRACT_STATUS_LABEL] ?? c.status}
           </div>
+          {codigosRenovados.length > 0 && (
+            <div style={{ fontSize: 11.5, color: "#5B5568", marginTop: 2 }}>
+              El texto cita los códigos con que se aceptó: {codigosRenovados.join(" · ")}. El contrato es el mismo.
+            </div>
+          )}
         </div>
         {/* eslint-disable-next-line @next/next/no-img-element -- documento imprimible */}
         <img src="/tools/assets/ctcx-logo.png" alt="Colombian Trading Company" style={{ height: 40, width: "auto" }} />
@@ -100,7 +116,7 @@ export default async function ContratoPage({ params }: { params: Promise<{ id: s
         {provisionalSinRatificar ? (
           <div style={{ borderTop: "1px solid #17121F", paddingTop: 8 }}>
             <b>Pendiente de la ratificación del Productor</b>
-            <div style={{ fontSize: 12.5 }}>{supplierCode(lote.producer_id)}</div>
+            <div style={{ fontSize: 12.5 }}>{codigoCtc(delTexto.productor)}</div>
             <div style={{ fontSize: 12, color: "#5B5568" }}>
               Aceptado provisionalmente por CTCx el {fecha(c.provisional_at)} en una sesión asistida (responsable: {c.provisional_responsable}). El Productor lo ratifica
               y firma desde su cuenta.

@@ -67,11 +67,14 @@ export function fraseDeVolumen(extra: Record<string, unknown> | null | undefined
     : `You indicated an estimated need of ${cuanto}: with that we size which lots and which format suit you (bags, pallet, consolidated shipment or container).`;
 }
 
-/** Los lotes marcados, por su nombre público y su referencia (sin nombre si ya salieron de la vitrina). */
+/** Los lotes marcados, por su nombre público y su referencia (sin nombre si ya salieron de la vitrina).
+ *  V6.23 (TAR-149): con la referencia de HOY. Un lead guardado antes del paso C lleva el código viejo; `lotesDeInteres` lo trae
+ *  traducido y con el guardado en `guardado`, y aquí se empareja por él. */
 function listaDeLotes(extra: Record<string, unknown> | null | undefined, lotes: LoteParaElegir[] | undefined): string[] {
   const refs = Array.isArray(extra?.lots_of_interest) ? (extra!.lots_of_interest as string[]) : [];
-  return refs.map((code) => {
-    const lote = lotes?.find((q) => q.code === code);
+  return refs.map((guardado) => {
+    const lote = lotes?.find((q) => (q.guardado ?? q.code) === guardado);
+    const code = lote?.code ?? guardado;
     return lote?.name ? `${lote.name} (${code})` : code;
   });
 }

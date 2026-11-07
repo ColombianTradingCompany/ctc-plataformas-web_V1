@@ -12,20 +12,21 @@ import styles from "./catalogoPublico.module.css";
 // el lote todavía no está. Ahora lo dice, en los tres idiomas, y le deja el buscador y las puertas del portal a mano. Sigue
 // respondiendo 404 (lo pinta `not-found.tsx` de la ruta): para un buscador, una referencia que no existe no es una página.
 
+// V6.23 (TAR-149): sin explicar el formato del código (ni cuántos caracteres, ni cuáles): «revise el código» y nada más.
 const T: Record<Lang, { titulo: string; texto: string; cierre: string }> = {
   es: {
     titulo: "No encontramos ese lote",
-    texto: "Revise los ocho caracteres que siguen a «CTC-L-» en la etiqueta o en el Dossier. Si el lote todavía está en evaluación, aparecerá aquí cuando llegue al Catálogo Activo de CTCx.",
+    texto: "Revise el código que sigue a «CTC-L-» en la etiqueta o en el Dossier. Si el lote todavía está en evaluación, aparecerá aquí cuando llegue al Catálogo Activo de CTCx.",
     cierre: "¿Buscaba otra cosa?",
   },
   en: {
     titulo: "We could not find that lot",
-    texto: "Check the eight characters that follow «CTC-L-» on the label or in the Dossier. If the lot is still being evaluated, it will appear here once it reaches the CTCx Active Catalogue.",
+    texto: "Check the code that follows «CTC-L-» on the label or in the Dossier. If the lot is still being evaluated, it will appear here once it reaches the CTCx Active Catalogue.",
     cierre: "Looking for something else?",
   },
   de: {
     titulo: "Dieses Los haben wir nicht gefunden",
-    texto: "Prüfen Sie die acht Zeichen nach «CTC-L-» auf dem Etikett oder im Dossier. Wenn das Los noch bewertet wird, erscheint es hier, sobald es den aktiven Katalog von CTCx erreicht.",
+    texto: "Prüfen Sie den Code nach «CTC-L-» auf dem Etikett oder im Dossier. Wenn das Los noch bewertet wird, erscheint es hier, sobald es den aktiven Katalog von CTCx erreicht.",
     cierre: "Suchen Sie etwas anderes?",
   },
 };

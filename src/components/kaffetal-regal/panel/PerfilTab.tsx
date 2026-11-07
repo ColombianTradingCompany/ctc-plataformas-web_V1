@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { imagenDeOrigen } from "@/lib/imagenDeOrigen";
-import { GRADES, STAGES, ctcLotReference, ctcLotReferenceShort, fincaCode, fincaSelfDeletable, isLotCommitted, type Finca, type GeneralInfo, type Lot, type Parcela, type ProducerContract, type ProducerOffer } from "../data";
+import { GRADES, STAGES, codigoCtc, fincaSelfDeletable, isLotCommitted, type Finca, type GeneralInfo, type Lot, type Parcela, type ProducerContract, type ProducerOffer } from "../data";
 import { ShipmentInstructionsModal } from "../ficha/ShipmentInstructionsModal";
 import { mapPreviewUrl, fincaEudrStatus, lotEudrStatus, type EudrStatus, type ParcelaGeoFields } from "@/lib/eudr";
 import { EudrStatusBadge } from "../EudrStatusBadge";
@@ -12,6 +12,7 @@ import { LotKanbanStepper } from "../LotKanbanStepper";
 import { enMora } from "@/lib/trato/mesAMes";
 import { esCompraEnFirme } from "@/lib/compras/reglas";
 import { CtcRef } from "./CtcRef";
+import { codigoDelLote } from "../codigoDelLote";
 import type { PanelDrill } from "./panelTabs";
 import styles from "../AppDashboard.module.css";
 
@@ -22,6 +23,7 @@ import styles from "../AppDashboard.module.css";
 // vive en KaffetalExperience porque participa de la pila del botón "Atrás".
 export function PerfilTab({
   gi,
+  codigoProductor = "",
   fincas,
   lots,
   parcelas,
@@ -41,6 +43,8 @@ export function PerfilTab({
   contracts,
 }: {
   gi: GeneralInfo;
+  /** V6.23 (TAR-149): el código GUARDADO del productor (`producer_profiles.codigo`, CTC-P-XXX); "" = la cuenta aún no lo tiene. */
+  codigoProductor?: string;
   fincas: Finca[];
   lots: Lot[];
   parcelas: Parcela[];
@@ -136,7 +140,7 @@ export function PerfilTab({
           <h5 style={{ margin: 0 }}>{f.name}</h5>
           <EudrStatusBadge status={fincaStatusOf(f)} />
         </div>
-        <div className="mono" style={{ fontSize: 10, color: "var(--muted)", overflowWrap: "anywhere" }}>{fincaCode(f.id)}</div>
+        <div className="mono" style={{ fontSize: 10, color: "var(--muted)", overflowWrap: "anywhere" }}>{codigoCtc(f.codigo)}</div>
         <div className={styles.sub}>
           {f.vereda} · {f.mun}<br />
           {f.pais || f.depto} · {f.alt} msnm · {f.ha} ha
@@ -198,8 +202,8 @@ export function PerfilTab({
       <ShipmentInstructionsModal
         open
         onClose={() => setAvisoLote(null)}
-        lotCode={ctcLotReference(l.id)}
-        shortRef={ctcLotReferenceShort(l.id)}
+        lotCode={codigoDelLote(l.codigo)}
+        shortRef={codigoDelLote(l.codigo)}
         visa={visaDelLote(l).documento ? "lista" : "pendiente_finca"}
       />
     ) : null;
@@ -252,7 +256,7 @@ export function PerfilTab({
             </h4>
           )}
           <div className="mono" style={{ fontSize: 11, color: "var(--muted)", overflowWrap: "anywhere" }}>
-            <CtcRef id={l.id} />
+            <CtcRef codigo={l.codigo} />
           </div>
           <div className={styles.sub}>Finca: {l.finca} · {l.extra}</div>
           {l.stage === 2 && !l.inscription && (
@@ -310,7 +314,7 @@ export function PerfilTab({
       <div className={styles.lotCard} style={{ ["--lc" as string]: col } as React.CSSProperties} key={l.id}>
         <h5 style={{ margin: 0 }}>{l.name}</h5>
         <div className="mono" style={{ fontSize: 10, color: "var(--muted)", overflowWrap: "anywhere" }}>
-          <CtcRef id={l.id} />
+          <CtcRef codigo={l.codigo} />
         </div>
         <div className={styles.sub}>Finca: {l.finca}</div>
         <div className={styles.chips}>
@@ -399,6 +403,13 @@ export function PerfilTab({
             Razón social: <b>{gi.razon}</b><br />
             NIT / CC: <b>{gi.nit}</b><br />
             Agricultor: <b>{gi.agri}</b>
+            {/* V6.23 (TAR-149): el código de proveedor GUARDADO (el mismo del Pasaporte del Productor y su QR). */}
+            {codigoProductor && (
+              <>
+                <br />
+                Código de proveedor: <b className="mono">{codigoProductor}</b>
+              </>
+            )}
             {/* El correo de la cuenta, a la vista sin abrir el modal (owner,
                 2026-09-20): es a donde CTCx le escribe. */}
             {gi.email && (

@@ -53,8 +53,9 @@ export type SneakPeekGrade = Exclude<GradoId, "tyrian">;
 export type SneakPeekNota = { id: string; intensidad: number };
 
 export type SneakPeekLot = {
-  /** La referencia que ve el comprador y que busca «Find my Lot»: `CTC-L-XXXXXXXX`. Es también la clave de la tarjeta (V5.202: el
-   *  `lot_id` ya no viaja al navegador). */
+  /** La referencia que ve el comprador y que busca «Find my Lot»: `CTC-L-…`. Es también la clave de la tarjeta (V5.202: el
+   *  `lot_id` ya no viaja al navegador). V6.23 (TAR-149): es el código GUARDADO del lote (la vista lo entrega por `codigo`, ver
+   *  `COLUMNAS_VITRINA`); un lote sin finca no tiene código y no sale en la vitrina. */
   code: string;
   /** El nombre PÚBLICO que genera la vista (V5.202): variedades + proceso · región + año, sin la finca. */
   name: string;

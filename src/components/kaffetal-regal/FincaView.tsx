@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { FincaEditorBody, type FincaEditorProps } from "./FincaModal";
-import { fincaCode, type Finca } from "./data";
+import { codigoCtc, type Finca } from "./data";
 import styles from "./FichaView.module.css";
 
 // ── V5.102 (owner, 2026-09-30): «editar una finca con la misma interfaz de pantalla completa que los Lotes» ──────────
@@ -31,7 +31,7 @@ export function FincaView({ finca, onBack, ...editor }: { finca: Finca | null; o
             <Image className={styles.krl} src="/images/shared/kaffetal-regal-logo.png" alt="Kaffetal Regal" width={1254} height={1254} />
             <span>
               <span className={styles.name}>{finca ? "Mi Finca" : "Finca nueva"}</span>
-              <span className={styles.by}>CTCx · Pasaporte EUDR del predio{finca ? ` · ${fincaCode(finca.id)}` : ""}</span>
+              <span className={styles.by}>CTCx · Pasaporte EUDR del predio{finca ? ` · ${codigoCtc(finca.codigo)}` : ""}</span>
             </span>
           </a>
           <button className="btn btn-sm" style={{ marginLeft: "auto" }} onClick={onBack}>

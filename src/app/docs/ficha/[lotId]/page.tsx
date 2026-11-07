@@ -1,6 +1,6 @@
 import { notFound, permanentRedirect } from "next/navigation";
-import { ctcLotReference } from "@/components/kaffetal-regal/data";
-import { filaDeLaVitrina } from "@/lib/catalogo/vitrina";
+import { createEphemeralClient } from "@/lib/supabase/server";
+import { VISTA_VITRINA } from "@/lib/catalogo/vitrinaVista";
 import { RUTA_PORTAL, rutaDelLote } from "@/lib/catalogo/codigoPublico";
 import { origenDeSuperficie } from "@/lib/red/subdominios";
 
@@ -11,6 +11,8 @@ export const dynamic = "force-dynamic";
 // Esta dirección se conserva porque se repartió (cuelga de `/docs`, que el proxy excluye, y la cinta la enlazó desde siete
 // superficies): un lote que está en la vitrina redirige con 308 a su Dossier público; cualquier otro, 404. La compuerta es la
 // misma vista (`public_lot_vitrina`, cliente anónimo): esta ruta no lee nada más.
+// V6.23 (TAR-149): la referencia ya no se deriva del uuid. Se busca la fila de la vitrina POR `lot_id` y se lee su código GUARDADO
+// (`referencia:codigo`, la columna que el paso A añade a la vista). Un lote sin código no está en la vitrina: 404.
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -20,7 +22,9 @@ const BASE_DEL_PORTAL = process.env.NODE_ENV === "development" ? "" : origenDeSu
 export default async function FichaRetiradaPage({ params }: { params: Promise<{ lotId: string }> }) {
   const { lotId } = await params;
   if (!UUID.test(lotId)) notFound();
-  const fila = await filaDeLaVitrina(ctcLotReference(lotId));
-  if (!fila || fila.lot_id !== lotId) notFound();
+  const anon = createEphemeralClient();
+  const { data } = await anon.from(VISTA_VITRINA).select("lot_id, referencia:codigo").eq("lot_id", lotId.toLowerCase()).maybeSingle();
+  const fila = data as { lot_id: string; referencia: string | null } | null;
+  if (!fila || !fila.referencia || fila.lot_id !== lotId.toLowerCase()) notFound();
   permanentRedirect(`${BASE_DEL_PORTAL}${rutaDelLote(fila.referencia)}`);
 }

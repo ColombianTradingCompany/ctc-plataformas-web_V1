@@ -6,7 +6,6 @@ import { getPartnerIdentity } from "@/lib/partners/requirePartner";
 import { erroresDePlanilla, factorDeLaPlanilla, labEvaluationHasData, labEvaluationScaData, protocoloDelPunto, puntoDeLaPlanilla, toLabEvaluation, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import { cvaDelPunto, rotuloDelPunto } from "@/lib/arena/punto";
 import { normalizaDetalle, normalizaRueda } from "@/lib/catacion/rueda";
-import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { columnasDeReporte, prepararSubidaDeReporte, registrarReporteSubido, type MetaDeReporte } from "@/lib/evaluaciones/reporte";
 import type { ReporteAdjunto } from "@/lib/evaluaciones/reporteReglas";
 
@@ -20,6 +19,9 @@ import type { ReporteAdjunto } from "@/lib/evaluaciones/reporteReglas";
 // La compuerta es la del socio (`getPartnerIdentity("centro-calidad")` + el módulo `evaluacion` activo), no una
 // consola: estas acciones no viven en `src/app/<consola>/` y `qa-centro-calidad-check` las vigila.
 // Devuelven resultado — nunca lanzan (lección V12).
+//
+// V6.23 (TAR-149): el «código» del alta (`lot_evaluations.uid_anonimo`) es el código CIEGO de la inscripción
+// (`arena_inscriptions.codigo_ciego`, el de la bolsa que tiene el Q-Grader), nunca el código del lote, que es jerárquico.
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -39,13 +41,17 @@ async function identidadConModulo() {
 /** El código interno de la muestra en el laboratorio: texto corto, del evaluador (V5.144). */
 const codigoLimpio = (v: unknown): string | null => (typeof v === "string" && v.trim() ? v.replace(/\s+/g, " ").trim().slice(0, 80) : null);
 
-/** El bache de ESTE lote, si está en manos de esta credencial. Nada más se lee del lote. */
-async function bacheEnMisManos(service: ReturnType<typeof createServiceRoleClient>, lotId: string, userId: string): Promise<{ ok: true; batchId: string } | { ok: false; error: string }> {
-  const { data: ins } = await service.from("arena_inscriptions").select("id, phase, sondeo_batch_id").eq("lot_id", lotId).maybeSingle();
+/** El bache de ESTE lote, si está en manos de esta credencial, y el código ciego de su inscripción. Nada más se lee del lote. */
+async function bacheEnMisManos(
+  service: ReturnType<typeof createServiceRoleClient>,
+  lotId: string,
+  userId: string
+): Promise<{ ok: true; batchId: string; codigoCiego: string | null } | { ok: false; error: string }> {
+  const { data: ins } = await service.from("arena_inscriptions").select("id, phase, sondeo_batch_id, codigo_ciego").eq("lot_id", lotId).maybeSingle();
   if (!ins || ins.phase !== "sondeo" || !ins.sondeo_batch_id) return { ok: false, error: "Este lote no está en un Bache de Evaluación." };
   const { data: batch } = await service.from("sondeo_batches").select("id, status, centro_calidad_account_id").eq("id", ins.sondeo_batch_id).maybeSingle();
   if (!batch || batch.status !== "en_centro" || batch.centro_calidad_account_id !== userId) return { ok: false, error: "Ese bache no está en manos de su Centro." };
-  return { ok: true, batchId: batch.id as string };
+  return { ok: true, batchId: batch.id as string, codigoCiego: (ins.codigo_ciego as string | null) ?? null };
 }
 
 // ── V5.144 (owner, 2026-10-02) · «Guardar y terminar más tarde» ────────────────────────────────────────────────────────
@@ -94,6 +100,8 @@ export async function registrarEvaluacion(lotId: string, raw: LabEvaluation, not
   // Solo un lote de un bache EN el Centro y asignado a ESTA credencial. Nada más se lee del lote.
   const bache = await bacheEnMisManos(service, lotId, identity.userId);
   if (!bache.ok) return bache;
+  // V6.23 (TAR-149): sin código ciego no hay con qué atar la planilla a la bolsa. La base lo asigna a toda inscripción.
+  if (!bache.codigoCiego) return { ok: false, error: "Esta muestra no tiene su código de cata. Pídalo a CTC antes de darla de alta." };
   const batch = { id: bache.batchId };
   const { count: yaRegistrada } = await service
     .from("lot_evaluations")
@@ -140,7 +148,7 @@ export async function registrarEvaluacion(lotId: string, raw: LabEvaluation, not
     cva_total: cvaDelPunto(punto),
     rueda: normalizaRueda(ev.rueda),
     rueda_detalle: normalizaDetalle(ev.rueda_detalle, normalizaRueda(ev.rueda)), // V5.133: etapa e intensidad por marca
-    uid_anonimo: ctcLotReferenceShort(lotId),
+    uid_anonimo: bache.codigoCiego, // V6.23 (TAR-149): el código CIEGO de la bolsa, nunca el del lote
     q_grader_reference: identity.contactName?.trim() || identity.orgName,
     notes: notas.trim() || null,
     codigo_interno: codigoLimpio(codigoInterno), // V5.144: el código de la muestra en el laboratorio

@@ -241,13 +241,14 @@
 .portal:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 
 /* V5.199 · «Find my Lot»: el acceso al portal y, al lado, el campo con «CTC-L-» fijo y la flecha que busca. Mismo alto táctil
-   (44 px) que el botón del portal, para que se lean como una sola pieza. */
+   (44 px) que el botón del portal, para que se lean como una sola pieza.
+   V6.23 (TAR-149): el código del lote es más largo; el campo pasa de 11ch a 12ch para que quepa entero sin desplazarse. */
 .fml{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
 .fmlCampo{display:inline-flex;align-items:center;height:44px;padding:0 4px 0 15px;border:1px solid var(--line);border-radius:999px;background:var(--card)}
 .fmlCampo:focus-within{outline:2px solid var(--primary);outline-offset:2px}
 .fmlCampo[data-invalido]{border-color:var(--red,#c4402f)}
 .fmlPrefijo{font-family:var(--font-spline-mono),monospace;font-size:13px;letter-spacing:.08em;color:var(--muted);user-select:none}
-.fmlEntrada{width:11ch;height:100%;padding:0 6px 0 1px;border:0;background:transparent;font-family:var(--font-spline-mono),monospace;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+.fmlEntrada{width:12ch;height:100%;padding:0 6px 0 1px;border:0;background:transparent;font-family:var(--font-spline-mono),monospace;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
 .fmlEntrada:focus-visible{outline:none}
 .fmlEntrada::placeholder{color:var(--muted);opacity:.5;letter-spacing:.08em}
 .fmlBoton{display:grid;place-items:center;width:36px;height:36px;padding:0;border:0;border-radius:50%;background:var(--primary);color:#fff;font-size:16px;cursor:pointer}

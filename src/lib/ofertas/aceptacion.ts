@@ -17,6 +17,7 @@ import { plazoDelSaco } from "@/lib/trato/despachos";
 import { hoyEnColombia } from "@/lib/pvc/servicio";
 import { fechaParaElProductor } from "@/lib/trato/fechas";
 import { fleteDeLaFila } from "@/lib/trato/flete";
+import { columnasDeCodigos, type CodigosDelTexto } from "@/lib/trato/codigosDelContrato";
 import { condicionesDeFirma, type CondicionesDeFirma, type OfertaParaVentana } from "./ventanaDeOferta";
 
 type Servicio = ReturnType<typeof createServiceRoleClient>;
@@ -166,6 +167,8 @@ export type Nacimiento = {
   provisional: { responsable: string; operador: string } | null;
   textoVersion: string;
   textoSha256: string;
+  /** V6.23 (TAR-149): los códigos con que se armó el texto; se guardan en la MISMA escritura que su huella. */
+  codigos: CodigosDelTexto;
   /** Quién queda en `audit_log.performed_by`. */
   actor: string;
   notaAuditoria: string;
@@ -223,6 +226,7 @@ export async function crearContratoDeOferta(service: Servicio, a: Aceptable, n: 
       provisional_sha256: n.provisional ? n.textoSha256 : null,
       contract_text_version: n.textoVersion,
       contract_text_sha256: n.textoSha256,
+      ...columnasDeCodigos(n.codigos),
     })
     .select("id")
     .single();

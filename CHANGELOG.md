@@ -19,6 +19,48 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V6.24] — 2026-11-08 (commit pendiente)
+
+- **Hito**: **el código ciego de la cata es flotante (TAR-149, punto 4, decisión del owner del 7 nov).** El código que va en la bolsa de
+  la muestra y que ve el Q-Grader pasa a ser 3 letras + 1 cifra al azar (`ctc_codigo_ciego`): nunca en secuencia, único para siempre (queda
+  en el libro `codigos_ctc`, tipo `ciego`, y no se vuelve a emitir) y sin pistas: sus letras nunca son las de un productor (vigente o no),
+  ni `FDA` (el comienzo de la segunda puerta que sigue pública) ni `CTC`, y ningún productor nuevo recibe las letras de un código ciego ya
+  emitido; los dos asignadores se turnan con el mismo candado de transacción. Dos muestras en juego nunca reciben códigos vecinos (un solo
+  carácter distinto) y una re-evaluación recibe uno nuevo que tampoco se parece a los que ya tuvo. Los `QG-` y los `CTC-L-` de 8 que ya
+  van impresos en sus bolsas siguen valiendo.
+- **Añadido**: **el catador ve el código del lote cuando CTC confirma o devuelve su alta.** En Evaluación de Lotes (Centro de Calidad)
+  cada muestra enseña su código ciego y, cuando ESE catador ya le dio el alta con el código de hoy y CTC la confirmó o se la devolvió,
+  también el código del lote. Un alta en espera todavía no lo enseña: el catador puede anularla y rehacerla, y lo que rehace sigue a
+  ciegas. La compuerta vive en el servidor (`src/lib/arena/codigoCiego.ts`: `lotesConAlta`, `altaPropia`, `ESTADOS_DE_ALTA`): antes, el
+  código del lote no se lee, y el navegador nombra cada muestra solo por su código ciego (las acciones del Centro la buscan por él y el
+  reporte del Q-Grader se sube a la carpeta de la muestra). Un alta que CTC devuelve se rehace con el lote ya conocido (aceptado por el owner).
+- **Cambiado**: `rutaDeReporte`, `prepararSubidaDeReporte` y `registrarReporteSubido` reciben una carpeta (el lote, desde el OCP; la
+  muestra ciega, desde el Centro), y `codigosAnteriores` deja fuera los códigos ciegos del libro.
+- **Cambiado**: en Evaluación de Lotes las muestras de cada bache salen en el orden de su código ciego (al azar), no en el de la
+  inscripción, y los kilos y el borrador de cada muestra son los de su bache: una re-evaluación no suma los kilos ni abre el borrador del
+  ciclo anterior, y `reevaluar` (OCP) borra ese borrador junto con el código ciego. «Evaluar mi Café» le dice al productor que la cata va
+  «con un código de cata propio, sin su nombre ni el de su finca».
+- **Cambiado**: en «Lotes en Evaluación» (OCP), la bolsa del Q-Grader de cada muestra del bache y el informe del Centro dicen
+  que, al registrar el veredicto o enviar el alta de vuelta, el Q-Grader verá el código del lote de esa muestra.
+- **Datos**: `docs/migraciones/2026-11-08_codigo_ciego_flotante.sql` (va después de los pasos A y C de la V6.23; sin aplicar): el libro
+  acepta el tipo `ciego` y asienta los `QG-` de hoy; `ctc_codigo_ciego(p_inscripcion)` y el asignador de productores con la exclusión
+  cruzada; el formato nuevo de `arena_inscriptions.codigo_ciego`; y la regla del hueco: un `QG-` sin muestra recibida, sin bache y sin
+  evaluación recibe un flotante, los demás lo conservan, y la migración avisa de cada uno al aplicarse (hoy se esperan 0). Además, la
+  sesión del productor lee `arena_inscriptions` por columnas, todas menos `codigo_ciego`, y `lot_evaluations` por columnas, todas menos
+  `uid_anonimo`, donde el alta copia ese mismo código (`anon`, ninguna de las dos): su panel ya pedía listas sin ellos, su reclamo de
+  oficialización inserta sin pedir nada de vuelta, y la migración lo comprueba al final. Las 9 inscripciones de hoy no cambian: las 8
+  evaluadas ya enseñan su código del lote y la abierta conserva su bolsa. Ensayada en una base en memoria junto con los pasos A y C (108
+  comprobaciones).
+- **Añadido**: `qa-codigos-ctc-check` §9 y §9f (128: el formato, las exclusiones, el candado compartido, la regla del hueco, la compuerta
+  del alta, que no cuenta un alta en espera, el orden de las muestras, lo que «Lotes en Evaluación» le dice a CTCx y la lectura por
+  columnas de las dos tablas: fuera del service role, cada consulta de `arena_inscriptions` y `lot_evaluations` va por una lista
+  escrita, sin «*», sin `.select()` vacío y sin tablas embebidas con `(*)`, también en un conteo); `qa-centro-calidad-check` (317: el orden,
+  los kilos y el borrador por bache) y `qa-os-check` B4 re-apuntados al código flotante.
+- **Docs**: `AGENTS.md`, `docs/ALINEACION.md` §1 y §3, `docs/HANDOFF.md`, `docs/PLAN_CIRCUITO_DEL_LOTE.md` §7, charters `socios`,
+  `kaffetal-regal`, `ctcx-os` (y su atlas) y `cherry-picked`.
+
+---
+
 ## [V6.23] — 2026-11-07 (commit 8781e01)
 
 - **Hito**: **los códigos CTC se guardan y son jerárquicos (TAR-149, decisión del owner del 6 nov).** Productor `CTC-P-XXX`, finca

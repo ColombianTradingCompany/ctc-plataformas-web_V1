@@ -19,20 +19,27 @@ const nombreSeguro = (fileName: string) =>
     .replace(/[^a-zA-Z0-9._-]+/g, "_")
     .slice(-80) || "reporte";
 
-/** La ruta en Storage del reporte de UN lote: por lote, nunca por productor (la evaluación es a ciegas). */
-export function rutaDeReporte(lotId: string, fileName: string): string {
-  return `evaluaciones/${lotId}/q-grader/${Date.now()}-${nombreSeguro(fileName)}`;
+/** La ruta en Storage del reporte, por CARPETA: el lote (lo que sube el OCP) o la muestra ciega (lo que sube el Centro de
+ *  Calidad, `carpetaDeMuestraCiega`). Nunca por productor: la evaluación es a ciegas. */
+export function rutaDeReporte(carpeta: string, fileName: string): string {
+  return `evaluaciones/${carpeta}/q-grader/${Date.now()}-${nombreSeguro(fileName)}`;
+}
+
+/** V6.24 (TAR-149, punto 4): la carpeta de lo que sube el Centro de Calidad lleva el código CIEGO de la muestra, no el id del lote:
+ *  la ruta vuelve al navegador del catador para la subida, y en él solo vive el código de la cata. */
+export function carpetaDeMuestraCiega(codigoCiego: string): string {
+  return `ciego/${codigoCiego}`;
 }
 
 /** Firma la subida. Devuelve la ruta y el token para `putSignedUrlWithProgress`. */
 export async function prepararSubidaDeReporte(
   service: Service,
-  lotId: string,
+  carpeta: string,
   meta: MetaDeReporte
 ): Promise<{ ok: true; path: string; token: string } | { ok: false; error: string }> {
   const motivo = motivoDeRechazo(meta);
   if (motivo) return { ok: false, error: motivo };
-  const path = rutaDeReporte(lotId, meta.fileName);
+  const path = rutaDeReporte(carpeta, meta.fileName);
   const { data, error } = await service.storage.from(BUCKET_REPORTES).createSignedUploadUrl(path);
   if (error || !data) return { ok: false, error: "No se pudo preparar la subida del reporte." };
   return { ok: true, path, token: data.token };
@@ -41,12 +48,12 @@ export async function prepararSubidaDeReporte(
 /** Subido el archivo, lo registra en `media_assets`. Comprueba que el objeto exista: nadie registra un adjunto que no subió. */
 export async function registrarReporteSubido(
   service: Service,
-  args: { lotId: string; path: string; meta: MetaDeReporte; uploadedBy: string }
+  args: { carpeta: string; path: string; meta: MetaDeReporte; uploadedBy: string }
 ): Promise<{ ok: true; reporte: ReporteAdjunto } | { ok: false; error: string }> {
   const motivo = motivoDeRechazo(args.meta);
   if (motivo) return { ok: false, error: motivo };
-  const prefijo = `evaluaciones/${args.lotId}/q-grader/`;
-  if (!args.path.startsWith(prefijo) || args.path.includes("..")) return { ok: false, error: "La ruta del reporte no es de este lote." };
+  const prefijo = `evaluaciones/${args.carpeta}/q-grader/`;
+  if (!args.path.startsWith(prefijo) || args.path.includes("..")) return { ok: false, error: "La ruta del reporte no es de esta muestra." };
   const nombre = args.path.slice(prefijo.length);
   const { data: lista, error: listaError } = await service.storage.from(BUCKET_REPORTES).list(prefijo.slice(0, -1), { search: nombre, limit: 5 });
   if (listaError || !lista?.some((o) => o.name === nombre)) return { ok: false, error: "El archivo no llegó a Storage. Vuelva a adjuntarlo." };

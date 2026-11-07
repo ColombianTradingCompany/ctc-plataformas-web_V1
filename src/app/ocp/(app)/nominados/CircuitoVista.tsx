@@ -52,7 +52,7 @@ import styles from "@/components/panel/shared.module.css";
 //   · el del LOTE (`lots.public_code`), para CTCx y el productor (la factura lo lleva). Un lote sin finca no tiene código y no
 //     sale en estas listas (owner: «This Lot does not show up listed»);
 //   · el CIEGO de la cata (`arena_inscriptions.codigo_ciego`): el ÚNICO que va en la bolsa de la muestra que viaja al Centro de
-//     Calidad y en lo que ve el Q-Grader. Los baches (lo que se empaca para el Centro) lo enseñan como «bolsa del Q-Grader».
+//     Calidad y lo único que ve el Q-Grader mientras cata (V6.24: el del lote, solo cuando CTC confirma o devuelve su alta). Los baches (lo que se empaca para el Centro) lo enseñan como «bolsa del Q-Grader».
 //     Nunca se le manda al Centro el código del lote: sus prefijos dirían qué muestras son hermanas.
 
 export type VistaDelCircuito = "solicitudes" | "a-evaluar" | "en-evaluacion";
@@ -536,7 +536,7 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
                     <p className={styles.meta} style={{ margin: 0 }}>
                       <EnlaceAlLote id={i.lot_id} nombre={i.lot!.name} /> · {name(i.producer_id)} · lote{" "}
                       <span className="mono">{codigoDelLote(i)}</span> ·{" "}
-                      <span title="El único código que ve el Q-Grader: el de la bolsa y su planilla">
+                      <span title="Código ciego de la cata: el de la bolsa y la planilla del Q-Grader. Cuando CTC confirma o devuelve su alta, el Q-Grader ve también el código del lote.">
                         bolsa del Q-Grader <b className="mono">{codigoCiego(i)}</b>
                       </span>
                     </p>

@@ -290,7 +290,8 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
   const inscriptionSettledByLot = new Map<string, boolean>();
   const postulatedLots = new Set<string>();
   // V6.23 (TAR-149): el código CIEGO de la cata (`arena_inscriptions.codigo_ciego`): el que va en la bolsa del Q-Grader. CTCx ve
-  // los dos, rotulados; el Centro de Calidad solo el ciego.
+  // los dos, rotulados; el Centro de Calidad solo el ciego hasta que CTC confirma o devuelve su alta (V6.24: después ve también el
+  // del lote, `lotesConAlta`).
   const codigoCiegoByLot = new Map<string, string>();
   for (const i of (inscriptionRows as { lot_id: string; status: string; codigo_ciego: string | null }[] | null) ?? []) {
     inscriptionSettledByLot.set(i.lot_id, i.status === "pagado" || i.status === "exento");
@@ -691,7 +692,7 @@ function LotCard({
             {LOTE_SIN_CODIGO}
           </span>
         )}
-        {/* V6.23 (TAR-149): el código CIEGO es el único que ve el Q-Grader (va en su bolsa); aquí, solo para CTCx, junto al del lote. */}
+        {/* V6.23 (TAR-149): el código CIEGO es el único que ve el Q-Grader mientras cata (va en su bolsa); aquí, solo para CTCx, junto al del lote. */}
         {codigoCiego && (
           <span className={`${styles.badge} mono`} title="Código ciego de la cata: el único que va en la bolsa y en la planilla del Q-Grader">
             Cata a ciegas · {codigoCiego}

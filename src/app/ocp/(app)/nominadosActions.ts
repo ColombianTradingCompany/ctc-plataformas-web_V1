@@ -561,7 +561,7 @@ export async function confirmarReporteQGraderOcp(lotId: string, path: string, me
   const permiso = await permisoDeEscritura("ocp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const service = createServiceRoleClient();
-  return registrarReporteSubido(service, { lotId, path, meta, uploadedBy: permiso.userId });
+  return registrarReporteSubido(service, { carpeta: lotId, path, meta, uploadedBy: permiso.userId });
 }
 
 /** Añade UNA planilla B2/B3 al lote (pueden registrarse varias por lote —
@@ -934,6 +934,9 @@ export async function reevaluar(lotId: string, formData: FormData): Promise<Resu
     })
     .eq("id", ins.id);
   if (error) return { ok: false, error: "No se pudo abrir la re-evaluación: " + error.message };
+  // V6.24 (TAR-149, punto 4): el borrador que el Centro de Calidad dejó a medias en el ciclo anterior se va con él. La muestra nueva
+  // llega con otro código ciego y empieza con la planilla vacía.
+  await service.from("evaluacion_borradores").delete().eq("lot_id", lotId);
   // El lote vuelve a Apto (conserva su grado hasta el veredicto nuevo) y la muestra hay que mandarla otra vez.
   await service.from("lots").update({ stage: "apto" }).eq("id", lotId);
   await anularRecibo(service, lotId, adminId, `Re-evaluación acordada: ${acuerdo}`);

@@ -6,8 +6,9 @@ import { getPartnerIdentity } from "@/lib/partners/requirePartner";
 import { erroresDePlanilla, factorDeLaPlanilla, labEvaluationHasData, labEvaluationScaData, protocoloDelPunto, puntoDeLaPlanilla, toLabEvaluation, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import { cvaDelPunto, rotuloDelPunto } from "@/lib/arena/punto";
 import { normalizaDetalle, normalizaRueda } from "@/lib/catacion/rueda";
-import { columnasDeReporte, prepararSubidaDeReporte, registrarReporteSubido, type MetaDeReporte } from "@/lib/evaluaciones/reporte";
+import { carpetaDeMuestraCiega, columnasDeReporte, prepararSubidaDeReporte, registrarReporteSubido, type MetaDeReporte } from "@/lib/evaluaciones/reporte";
 import type { ReporteAdjunto } from "@/lib/evaluaciones/reporteReglas";
+import { esCodigoCiego } from "@/lib/arena/codigoCiego";
 
 // ── Centro de Calidad · Evaluación de Lotes (fase 4 del PLAN_CIRCUITO_DEL_LOTE, V5.81) ─────────
 // Folio 7, paso 11: el Q-Grader recibe baches, evalúa lote a lote —ANÓNIMOS (solo el código), física y
@@ -22,6 +23,8 @@ import type { ReporteAdjunto } from "@/lib/evaluaciones/reporteReglas";
 //
 // V6.23 (TAR-149): el «código» del alta (`lot_evaluations.uid_anonimo`) es el código CIEGO de la inscripción
 // (`arena_inscriptions.codigo_ciego`, el de la bolsa que tiene el Q-Grader), nunca el código del lote, que es jerárquico.
+// V6.24 (TAR-149, punto 4): el navegador del catador nombra cada muestra SOLO por ese código ciego (flotante, `codigoCiego.ts`):
+// las acciones lo reciben y buscan aquí, en el servidor, la inscripción, su lote y su bache. El id del lote no viaja al navegador.
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -41,32 +44,34 @@ async function identidadConModulo() {
 /** El código interno de la muestra en el laboratorio: texto corto, del evaluador (V5.144). */
 const codigoLimpio = (v: unknown): string | null => (typeof v === "string" && v.trim() ? v.replace(/\s+/g, " ").trim().slice(0, 80) : null);
 
-/** El bache de ESTE lote, si está en manos de esta credencial, y el código ciego de su inscripción. Nada más se lee del lote. */
+/** La muestra con ESTE código ciego, si su bache está en manos de esta credencial: su lote (para escribir en el servidor) y su
+ *  bache. Nada más se lee del lote. */
 async function bacheEnMisManos(
   service: ReturnType<typeof createServiceRoleClient>,
-  lotId: string,
+  muestra: string,
   userId: string
-): Promise<{ ok: true; batchId: string; codigoCiego: string | null } | { ok: false; error: string }> {
-  const { data: ins } = await service.from("arena_inscriptions").select("id, phase, sondeo_batch_id, codigo_ciego").eq("lot_id", lotId).maybeSingle();
+): Promise<{ ok: true; lotId: string; batchId: string; codigoCiego: string } | { ok: false; error: string }> {
+  if (!esCodigoCiego(muestra)) return { ok: false, error: "Esa muestra no está en un Bache de Evaluación." };
+  const { data: ins } = await service.from("arena_inscriptions").select("id, lot_id, phase, sondeo_batch_id, codigo_ciego").eq("codigo_ciego", muestra).maybeSingle();
   if (!ins || ins.phase !== "sondeo" || !ins.sondeo_batch_id) return { ok: false, error: "Este lote no está en un Bache de Evaluación." };
   const { data: batch } = await service.from("sondeo_batches").select("id, status, centro_calidad_account_id").eq("id", ins.sondeo_batch_id).maybeSingle();
   if (!batch || batch.status !== "en_centro" || batch.centro_calidad_account_id !== userId) return { ok: false, error: "Ese bache no está en manos de su Centro." };
-  return { ok: true, batchId: batch.id as string, codigoCiego: (ins.codigo_ciego as string | null) ?? null };
+  return { ok: true, lotId: ins.lot_id as string, batchId: batch.id as string, codigoCiego: ins.codigo_ciego as string };
 }
 
 // ── V5.144 (owner, 2026-10-02) · «Guardar y terminar más tarde» ────────────────────────────────────────────────────────
 // La planilla a medio llenar se guarda en `evaluacion_borradores` (una por lote y credencial) y se retoma después, en
 // este u otro equipo. Un borrador NO es un alta: no tiene puntaje ni estado, CTCx no lo ve y no pide que la planilla esté
 // completa. Se borra al dar de alta el lote.
-export async function guardarBorrador(lotId: string, raw: LabEvaluation, notas: string, codigoInterno: string, reporte: ReporteAdjunto | null = null): Promise<Result> {
+export async function guardarBorrador(muestra: string, raw: LabEvaluation, notas: string, codigoInterno: string, reporte: ReporteAdjunto | null = null): Promise<Result> {
   const auth = await identidadConModulo();
   if (!auth.ok) return auth;
   const service = createServiceRoleClient();
-  const bache = await bacheEnMisManos(service, lotId, auth.identity.userId);
+  const bache = await bacheEnMisManos(service, muestra, auth.identity.userId);
   if (!bache.ok) return bache;
   const { error } = await service.from("evaluacion_borradores").upsert(
     {
-      lot_id: lotId,
+      lot_id: bache.lotId,
       account_id: auth.identity.userId,
       batch_id: bache.batchId,
       planilla: toLabEvaluation(raw),
@@ -83,7 +88,7 @@ export async function guardarBorrador(lotId: string, raw: LabEvaluation, notas: 
 }
 
 /** «Dar de alta» un lote: la planilla del Q-Grader queda registrada, pendiente de la confirmación de CTCx. */
-export async function registrarEvaluacion(lotId: string, raw: LabEvaluation, notas: string, codigoInterno = "", reporte: ReporteAdjunto | null = null): Promise<Result> {
+export async function registrarEvaluacion(muestra: string, raw: LabEvaluation, notas: string, codigoInterno = "", reporte: ReporteAdjunto | null = null): Promise<Result> {
   const auth = await identidadConModulo();
   if (!auth.ok) return auth;
   const { identity } = auth;
@@ -97,11 +102,10 @@ export async function registrarEvaluacion(lotId: string, raw: LabEvaluation, not
   if (!punto) return { ok: false, error: "La planilla no está completa: " + erroresDePlanilla(ev).join(" ") };
   const puntaje = punto.valor;
 
-  // Solo un lote de un bache EN el Centro y asignado a ESTA credencial. Nada más se lee del lote.
-  const bache = await bacheEnMisManos(service, lotId, identity.userId);
+  // Solo una muestra de un bache EN el Centro y asignado a ESTA credencial. Nada más se lee del lote.
+  const bache = await bacheEnMisManos(service, muestra, identity.userId);
   if (!bache.ok) return bache;
-  // V6.23 (TAR-149): sin código ciego no hay con qué atar la planilla a la bolsa. La base lo asigna a toda inscripción.
-  if (!bache.codigoCiego) return { ok: false, error: "Esta muestra no tiene su código de cata. Pídalo a CTC antes de darla de alta." };
+  const lotId = bache.lotId;
   const batch = { id: bache.batchId };
   const { count: yaRegistrada } = await service
     .from("lot_evaluations")
@@ -188,20 +192,21 @@ export async function anularRegistro(evaluationId: string): Promise<Result> {
 // ── V5.151 (owner, 2026-10-05) · el reporte original del Q-Grader, adjunto a la planilla (opcional) ───────────────────
 // Dos pasos: firmar la subida (el archivo va del navegador a Storage) y, subido, registrarlo. Ambos con la compuerta
 // del Centro y el bache en sus manos — nadie firma una subida para un lote ajeno.
-export async function prepararReporteQGrader(lotId: string, meta: MetaDeReporte): Promise<{ ok: true; path: string; token: string } | { ok: false; error: string }> {
+export async function prepararReporteQGrader(muestra: string, meta: MetaDeReporte): Promise<{ ok: true; path: string; token: string } | { ok: false; error: string }> {
   const auth = await identidadConModulo();
   if (!auth.ok) return auth;
   const service = createServiceRoleClient();
-  const bache = await bacheEnMisManos(service, lotId, auth.identity.userId);
+  const bache = await bacheEnMisManos(service, muestra, auth.identity.userId);
   if (!bache.ok) return bache;
-  return prepararSubidaDeReporte(service, lotId, meta);
+  // V6.24: la ruta vuelve al navegador para la subida: lleva la carpeta del código ciego, no el id del lote.
+  return prepararSubidaDeReporte(service, carpetaDeMuestraCiega(bache.codigoCiego), meta);
 }
 
-export async function confirmarReporteQGrader(lotId: string, path: string, meta: MetaDeReporte): Promise<{ ok: true; reporte: ReporteAdjunto } | { ok: false; error: string }> {
+export async function confirmarReporteQGrader(muestra: string, path: string, meta: MetaDeReporte): Promise<{ ok: true; reporte: ReporteAdjunto } | { ok: false; error: string }> {
   const auth = await identidadConModulo();
   if (!auth.ok) return auth;
   const service = createServiceRoleClient();
-  const bache = await bacheEnMisManos(service, lotId, auth.identity.userId);
+  const bache = await bacheEnMisManos(service, muestra, auth.identity.userId);
   if (!bache.ok) return bache;
-  return registrarReporteSubido(service, { lotId, path, meta, uploadedBy: auth.identity.userId });
+  return registrarReporteSubido(service, { carpeta: carpetaDeMuestraCiega(bache.codigoCiego), path, meta, uploadedBy: auth.identity.userId });
 }

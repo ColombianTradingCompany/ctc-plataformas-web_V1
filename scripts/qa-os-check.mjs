@@ -234,8 +234,9 @@ const REGLAS = [
     malo: 'const t = "Margen del 25 % sobre US$ 3"; const u = "Precio 12.000 COP la carga"; const v = "70 kg";', bueno: 'const w = "100%"; const t = "Sin datos"; const k = "Kilos por recibir";' },
   { id: "B3", que: "los grados no se redefinen", sobre: "limpio", re: /\[\s*["']black["']\s*,\s*["']red["']|\bBANDAS_PUNTOS\b|\bGRADO_HEX\b|from\s+["']@\/lib\/grados\/escala["']/, malo: 'const g = ["black", "red", "blue"];', bueno: 'import { GRADOS } from "@/lib/grados/definicion";' },
   // V6.23 (TAR-149): los códigos CTC guardados son jerárquicos y más cortos (productor CTC-P- + 3, finca CTC-F- + 5, lote CTC-L- + 9,
-  // en Crockford) y conviven con los viejos de 8 hexadecimales; la cata a ciegas usa QG- + 5. B4 los caza todos.
-  { id: "B4", que: "ninguna referencia real (código CTC de productor, finca o lote, viejo o guardado; código ciego QG; CF, COT, TAR, OBJ, HIT)", sobre: "limpio", re: /CTC-[PFL]-[0-9A-HJKMNP-TV-Z]{3,9}(?![0-9A-Z])|\bQG-[0-9A-HJKMNP-TV-Z]{5}(?![0-9A-Z])|\bCF-\d{4}-\d{4}\b|\bCOT-\d|\bTAR-\d+|\bOBJ-\d+|\bHIT-\d+/, malo: 'const r = "CTC-L-3FA9C21B"; const s = "CTC-L-7KQ2M9XZ"; const o = "OBJ-10";', bueno: 'const r = "CTC-L-EJEMPLO1"; const p = "CTC-P-EJEMPLO1"; const f = "CTC-F-EJEMPLO1"; const o = "OBJ-EJ-1";' },
+  // en Crockford) y conviven con los viejos de 8 hexadecimales; la cata a ciegas usó QG- + 5 en la V6.23 y desde la V6.24 usa el
+  // código flotante (3 letras + 1 cifra; los QG- impresos siguen valiendo). B4 los caza todos.
+  { id: "B4", que: "ninguna referencia real (código CTC de productor, finca o lote, viejo o guardado; código ciego flotante o QG; CF, COT, TAR, OBJ, HIT)", sobre: "limpio", re: /CTC-[PFL]-[0-9A-HJKMNP-TV-Z]{3,9}(?![0-9A-Z])|\bQG-[0-9A-HJKMNP-TV-Z]{5}(?![0-9A-Z])|(?<![\w-])[A-HJKMNP-TV-Z]{3}[0-9](?![\w-])|\bCF-\d{4}-\d{4}\b|\bCOT-\d|\bTAR-\d+|\bOBJ-\d+|\bHIT-\d+/, malo: 'const r = "CTC-L-3FA9C21B"; const s = "CTC-L-7KQ2M9XZ"; const o = "OBJ-10";', bueno: 'const r = "CTC-L-EJEMPLO1"; const p = "CTC-P-EJEMPLO1"; const f = "CTC-F-EJEMPLO1"; const o = "OBJ-EJ-1";' },
   { id: "B5", que: "ningún correo (salvo @ejemplo.invalid)", sobre: "limpio", re: /[A-Za-z0-9._%+-]+@(?!ejemplo\.invalid\b)[A-Za-z0-9-]+\.[A-Za-z][A-Za-z.]+/, malo: 'const c = "alguien@ctcexport.com";', bueno: 'const c = "ana@ejemplo.invalid"; import x from "@/lib/x";' },
   { id: "B6", que: "ningún UUID (salvo la familia de dígitos repetidos)", sobre: "limpio", re: /\b(?!(\d)\1{7}-\1{4}-4\1{3}-8\1{3}-\1{12}\b)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i, malo: 'const u = "3f2a9c1e-7b4d-4e2a-9c1b-5d6e7f8a9b0c";', bueno: 'const u = "11111111-1111-4111-8111-111111111111";' },
   { id: "B7", que: "ningún ID de Notion, Make o Drive", sobre: "limpio", re: /\b[0-9a-f]{32}\b|hook\.[\w.]*make\.com|drive\.google\.com\/[^"'\s]*\/d\//i, malo: 'const n = "1f2e3d4c5b6a79881f2e3d4c5b6a7988";', bueno: 'const n = "Registro del sistema";' },
@@ -329,9 +330,9 @@ check("autoprueba · B1 caza las tres formas (inicio, joroba, _)", hallar(REGLAS
 {
   // V6.23 (TAR-149): cada forma de código real, una por una (la muestra mala de arriba salta con una sola).
   const b4 = REGLAS.find((r) => r.id === "B4");
-  const reales = ["CTC-L-3FA9C21B", "CTC-L-7KQ2M9XZ", "CTC-L-4MZ2P0K7Q", "CTC-F-4MZ2P", "CTC-F-46D04770", "CTC-P-4MZ", "CTC-P-1A2B3C4D", "QG-7KQ2M"];
+  const reales = ["CTC-L-3FA9C21B", "CTC-L-7KQ2M9XZ", "CTC-L-4MZ2P0K7Q", "CTC-F-4MZ2P", "CTC-F-46D04770", "CTC-P-4MZ", "CTC-P-1A2B3C4D", "QG-7KQ2M", "KRW7"];
   const sueltos = reales.filter((c) => hallar(b4, muestra(`const r = "${c}";`)).length === 0);
-  check(`autoprueba · B4 caza cada forma de código real (lote 8 y 9, finca 5 y 8, productor 3 y 8, ciego)${sueltos.length ? ` — se le escapan: ${sueltos.join(", ")}` : ""}`, sueltos.length === 0);
+  check(`autoprueba · B4 caza cada forma de código real (lote 8 y 9, finca 5 y 8, productor 3 y 8, ciego QG y flotante)${sueltos.length ? ` — se le escapan: ${sueltos.join(", ")}` : ""}`, sueltos.length === 0);
 }
 {
   const regla = (id) => REGLAS.find((r) => r.id === id);

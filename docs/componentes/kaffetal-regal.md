@@ -65,7 +65,7 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 `qa-reportado-productor-check.mjs` (**45**) · `qa-evaluaciones-check.mjs` (**50**, lado productor + vocabulario) ·
 `qa-ofertas-check.mjs` (36, `respondToOffer`) · `qa-fichas-check.mjs` (31, panes B2/B3) ·
 `qa-solicitudes-kr-check.mjs` (22) · `qa-visa-check.mjs` (97) · `qa-area-check.mjs` (55, con `--import ./scripts/ts-resolve.mjs`) · `qa-claims-check.mjs` ·
-`qa-codigos-ctc-check.mjs` (V6.23, 76, con `ts-resolve`: los códigos guardados, nada derivado de un id, la cata a ciegas, los contratos) ·
+`qa-codigos-ctc-check.mjs` (128 en la V6.24, con `ts-resolve`: los códigos guardados, nada derivado de un id, la cata a ciegas, los contratos; §9 el código flotante y la compuerta del alta; §9f el código ciego no se lee con la sesión del productor, ni en `arena_inscriptions` ni en `lot_evaluations`: fuera del service role, cada consulta de las dos tablas va por una lista escrita, sin «*», sin `.select()` vacío y sin embebidas con `(*)`) ·
 `qa-recuperacion-check.mjs` (puerta KR).
 
 ## Reglas propias
@@ -107,7 +107,12 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   Un lote sin finca no tiene código: el productor lo ve con «Sin código: asígnele una finca» (`codigoDelLote.ts`), no puede firmar
   su oferta hasta tenerla y no sale en ninguna lista. El código del lote va en la factura, la referencia de pago, las instrucciones
   de envío, el Dossier y `datasheet.ctc_uid` (la Ficha lo escribe al guardar; un código viejo pasa a `ctc_uid_anterior`); el
-  Q-Grader NO lo ve: la cata usa el código ciego de la inscripción (`codigo_ciego`). Los contratos se rearman con los códigos de
+  Q-Grader no lo ve mientras cata: la cata usa el código ciego de la inscripción (`codigo_ciego`, flotante desde la V6.24), y el código
+  del lote le aparece solo cuando CTC confirma o devuelve el alta que él dio a esa muestra (`lotesConAlta`, charter `socios`). El panel
+  del productor no lee el código ciego: desde la V6.24 su sesión lee `arena_inscriptions` por columnas, todas menos `codigo_ciego`, y
+  `lot_evaluations` por columnas, todas menos `uid_anonimo` (el mismo código, que el alta copia a la evaluación), así que una columna
+  nueva que el panel necesite de cualquiera de las dos pide su propio `grant select (…) to authenticated` en su migración
+  (`qa-codigos-ctc` §9f; el reclamo de oficialización inserta sin pedir columnas de vuelta). Los contratos se rearman con los códigos de
   su texto (`purchase_contracts.texto_codigo_*`, `src/lib/trato/codigosDelContrato.ts`) para que su huella siga valiendo.
   `PerfilTab` enseña el código de proveedor. Lo vigila `qa-codigos-ctc`. (Historia: de la V5.100 a la V6.22 el código salía de
   los 8 primeros caracteres del uuid, y `lots.public_code` guardaba el `CTCX-` del catálogo, que ya no se acuña.)
@@ -163,7 +168,11 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 - **V6.23 · los códigos guardados (TAR-149): lo que espera al owner.** (1) Resuelto: dice «Sin código: asígnele una finca», de
   usted como el resto del panel. (2) La bolsa interior de 2 kg: las instrucciones de envío le piden al productor el código del
   LOTE, y esa bolsa llega al panel de cata; por defecto CTCx la rotula con el código ciego al recibir la muestra (el OCP enseña
-  «Bolsa del Q-Grader»): ¿o el rótulo del productor pasa al código ciego desde la inscripción? (3) Los 7 contratos que ya existían
+  «Bolsa del Q-Grader»): ¿o el rótulo del productor pasa al código ciego desde la inscripción? (V6.24: el código ciego es flotante,
+  3 letras + 1 cifra, y la migración de la V6.24 toma el RECIBO de la muestra como la señal de que la bolsa ya está rotulada. Desde la
+  V6.24 el productor no lee el código ciego, ni en su panel ni con su sesión: ni en `arena_inscriptions` (`codigo_ciego`) ni en
+  `lot_evaluations` (`uid_anonimo`, donde el alta lo copia). Si el owner elige que lo rotule él, su panel tendrá que leerlo por el
+  servidor, y su lectura por columnas no cambia.) (3) Los 7 contratos que ya existían
   citan el código viejo en su texto para siempre (su huella); la página y la ratificación dicen en una línea que hoy es otro. Y el
   nombre del PDF del contrato lleva el código de hoy, no el del texto: ¿cuál? (4) El Dossier privado de un lote sin finca dice «Sin
   código» / «No code» y su marca de agua va sin código: ¿bien así?

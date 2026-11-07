@@ -168,9 +168,11 @@ cada host donde se pinta).
 - **V5.199 · «Find my Lot» por la referencia, en CTC, KR y CP** (owner, 2026-10-10; ejecutado desde WRAP-COMMIT-PUSH). El pie de
   la cinta (`SneakPeek.tsx`, `FindMyLot`) y el buscador del portal (`BuscadorDeLote.tsx`) llevan «CTC-L-» fijo; el campo lo limpia
   `cuerpoDeReferencia` y la referencia la valida `normalizaReferencia` (`lib/catalogo/codigoPublico.ts`). La página de «no
-  encontrado» es `ctcx-public-catalogue/[codigo]/not-found.tsx`. Abierto: una muestra que el Centro de Calidad cata a ciegas lleva la
+  encontrado» es `ctcx-public-catalogue/[codigo]/not-found.tsx`. ~~Abierto: una muestra que el Centro de Calidad cata a ciegas lleva la
   misma referencia; un lote que ya está en el Triage y vuelve a catarse (recata) deja de ser anónimo para quien lo busque en el
-  portal. Si eso importa, la recata debería llevar un código propio (decisión del owner).
+  portal. Si eso importa, la recata debería llevar un código propio (decisión del owner).~~ Resuelto en la V6.23/V6.24 (TAR-149, punto
+  4): la cata usa su propio código ciego, flotante, y cada recata recibe uno nuevo (`arena_inscriptions.codigo_ciego`, contrato «Los
+  códigos CTC» de ALINEACION §1).
 - **V5.198 · la vitrina real y el Dossier público** (owner, 2026-10-10; ejecutado desde WRAP-COMMIT-PUSH). La cinta lee
   `public_lot_vitrina` (los lotes que llegaron al Triage) y ya no tiene mock; el reverso pinta la telaraña del CVA, las notas con su
   ícono (`components/catacion/IconosDeSabor.tsx`) y el botón al Dossier público, que reemplazó a la ficha técnica. Abierto: (1) el

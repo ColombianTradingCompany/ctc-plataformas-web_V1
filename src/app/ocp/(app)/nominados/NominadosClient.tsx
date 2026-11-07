@@ -689,6 +689,11 @@ export function ConfirmarCentroControls({
                     ? <>Punto <b>{puntaje}</b> × tríada <span className="mono">{`${triada.variedad}${triada.proceso}${triada.reconocimiento}`}</span>{ajuste > 0 && <> + {ajuste} ajuste CTCx</>} → Grado <b style={{ color: grado.hex }}>{grado.nombre}</b> (derivado — los puntos mandan).</>
                     : <>Punto <b>{puntaje}</b> con tríada <span className="mono">{`${triada.variedad}${triada.proceso}${triada.reconocimiento}`}</span>: los puntos no llegan a Black (un café común entra desde 82) — registre «No supera».</>}
             </p>
+            {/* V6.24 (TAR-149, punto 4): la decisión de CTC es la que le enseña al Q-Grader el código del lote en su panel (la compuerta
+                `lotesConAlta` cuenta las altas confirmadas o devueltas). Lo dice aquí, antes de los botones que lo hacen. */}
+            <p className={styles.meta} style={{ margin: "0 0 6px" }}>
+              Al registrar el veredicto o enviar esta alta de vuelta, el Q-Grader verá el código del lote de esta muestra.
+            </p>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
               {/* V5.164 (owner): «el resumen es muchas veces innecesario y está muy lejos del botón» — opcional y AQUÍ, al lado.
                   Si se deja vacío, el productor recibe un resumen por defecto con el grado y el Punto. */}

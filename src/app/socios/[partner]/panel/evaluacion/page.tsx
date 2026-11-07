@@ -7,6 +7,7 @@ import { PARTNERS } from "@/lib/partners/partners";
 import { requirePartner } from "@/lib/partners/requirePartner";
 import { marcaLabel, normalizaDetalle, normalizaRueda } from "@/lib/catacion/rueda";
 import { codigoCtc } from "@/components/kaffetal-regal/data";
+import { altaPropia, lotesConAlta } from "@/lib/arena/codigoCiego";
 import { puntoDeFila, rotuloDelPunto } from "@/lib/arena/punto";
 import { BUILD_SHA, VERSION_LABEL } from "@/lib/version";
 import { AnularAltaButton, DarDeAltaButton, VerPlanillaButton } from "./PlanillaCentro";
@@ -28,6 +29,16 @@ export const dynamic = "force-dynamic";
 // V6.23 (TAR-149): el código que ve el Q-Grader es `arena_inscriptions.codigo_ciego` (QG- + 5 al azar; las inscripciones
 // anteriores conservan el que ya llevan impreso), NUNCA el código del lote: el del lote es jerárquico y con prefijos
 // compartidos el catador sabría qué muestras son hermanas (de la misma finca o del mismo productor).
+//
+// V6.24 (TAR-149, punto 4, owner 2026-11-07): el código ciego es FLOTANTE (3 letras + 1 cifra al azar, `src/lib/arena/codigoCiego.ts`;
+// siguen valiendo el QG- y el CTC-L- de las bolsas ya impresas) y el catador ve el código REAL del lote (`lots.public_code`) después
+// de darle el alta a esa muestra, cuando CTC ya la confirmó o se la devolvió. La compuerta vive AQUÍ, en el servidor: `lotesConAlta`
+// dice qué lotes ya tienen un alta de ESTE catador, con el código ciego de hoy y decidida por CTC, y solo de esos se pide el código a
+// la base. Antes el código real no se lee, así que no llega al navegador de ninguna forma; un alta en espera se puede anular y lo que
+// la reemplace sigue a ciegas. Y el navegador nombra cada muestra solo por su código ciego: ni el id del lote ni el de la
+// inscripción viajan (las acciones resuelven la muestra en el servidor). Las muestras salen ordenadas por ese código, que es al azar
+// (no por el orden en que se inscribieron), y los gramos y el borrador de cada fila son los de ESTE bache: una re-evaluación no trae
+// nada del ciclo anterior.
 
 import { reporteDeFila } from "@/lib/evaluaciones/reporteReglas";
 import { separaNotasDevueltas } from "@/lib/evaluaciones/devolucion";
@@ -35,7 +46,7 @@ import { urlsDeReportes } from "@/lib/evaluaciones/reporte";
 
 type BatchRow = { id: string; label: string; shipped_at: string | null; q_grader_name: string | null; status: string; cerrado_at: string | null };
 type InsRow = { lot_id: string; sondeo_batch_id: string | null; phase: string; codigo_ciego: string | null };
-type EvalRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; cva_total: number | string | null; escala: string; rueda: unknown; rueda_detalle: unknown; created_at: string; reviewed_at: string | null; notes: string | null; submitted_by: string | null; codigo_interno: string | null; reference_asset_id: string | null; reference_file_name: string | null; physical_data: { planilla?: unknown } | null };
+type EvalRow = { id: string; lot_id: string; batch_id: string | null; status: string; sca_total: number | string | null; punto: unknown; cva_total: number | string | null; escala: string; rueda: unknown; rueda_detalle: unknown; created_at: string; reviewed_at: string | null; notes: string | null; submitted_by: string | null; uid_anonimo: string | null; codigo_interno: string | null; reference_asset_id: string | null; reference_file_name: string | null; physical_data: { planilla?: unknown } | null };
 // V5.92: el Punto con su procedencia. V5.189: CVA (el protocolo principal) o un SCA 2004 que vale lo mismo.
 const rotulo = (e: EvalRow) => {
   const p = puntoDeFila(e);
@@ -53,6 +64,10 @@ const semillaDeDevuelta = (e: EvalRow) => ({
 });
 
 const fecha = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString("es-CO") : "—");
+
+/** V6.24: la clave de una muestra en esta página: el bache Y el lote. Un lote re-evaluado vuelve al Centro en otro bache con otro
+ *  código ciego; lo de su ciclo anterior (kilos, borrador) queda en su bache y no se mezcla con la muestra de hoy. Solo en el servidor. */
+const muestraDelBache = (batchId: string | null, lotId: string) => `${batchId ?? "-"}|${lotId}`;
 
 export default async function EvaluacionDeLotesPage({ params }: { params: Promise<{ partner: string }> }) {
   const { partner } = await params;
@@ -74,10 +89,10 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
 
   const [{ data: insRaw }, { data: evalRaw }, { data: movRaw }] = batchIds.length
     ? await Promise.all([
-        service.from("arena_inscriptions").select("lot_id, sondeo_batch_id, phase, codigo_ciego").in("sondeo_batch_id", batchIds),
+        service.from("arena_inscriptions").select("lot_id, sondeo_batch_id, phase, codigo_ciego").in("sondeo_batch_id", batchIds).order("codigo_ciego"),
         service
           .from("lot_evaluations")
-          .select("id, lot_id, batch_id, status, sca_total, punto, cva_total, escala, rueda, rueda_detalle, created_at, reviewed_at, notes, submitted_by, codigo_interno, reference_asset_id, reference_file_name, physical_data")
+          .select("id, lot_id, batch_id, status, sca_total, punto, cva_total, escala, rueda, rueda_detalle, created_at, reviewed_at, notes, submitted_by, uid_anonimo, codigo_interno, reference_asset_id, reference_file_name, physical_data")
           .in("batch_id", batchIds)
           .eq("source", "q_grader_batch")
           .order("created_at", { ascending: false }),
@@ -86,22 +101,29 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
     : [{ data: [] }, { data: [] }, { data: [] }];
   const inscripciones = (insRaw as InsRow[] | null) ?? [];
   // V5.144: lo que este evaluador dejó a medias («Guardar y terminar más tarde»). Solo los SUYOS.
+  // V6.24: por bache Y lote (`muestraDelBache`): el borrador de un ciclo anterior del mismo lote no se abre en la muestra de hoy.
   const { data: borrRaw } = batchIds.length
-    ? await service.from("evaluacion_borradores").select("lot_id, planilla, notas, codigo_interno, updated_at, reference_asset_id, reference_file_name").eq("account_id", identity.userId).in("batch_id", batchIds)
+    ? await service.from("evaluacion_borradores").select("lot_id, batch_id, planilla, notas, codigo_interno, updated_at, reference_asset_id, reference_file_name").eq("account_id", identity.userId).in("batch_id", batchIds)
     : { data: [] };
   const borradores = new Map(
-    ((borrRaw as { lot_id: string; planilla: unknown; notas: string | null; codigo_interno: string | null; updated_at: string; reference_asset_id: string | null; reference_file_name: string | null }[] | null) ?? []).map((b) => [
-      b.lot_id,
+    ((borrRaw as { lot_id: string; batch_id: string | null; planilla: unknown; notas: string | null; codigo_interno: string | null; updated_at: string; reference_asset_id: string | null; reference_file_name: string | null }[] | null) ?? []).map((b) => [
+      muestraDelBache(b.batch_id, b.lot_id),
       { planilla: b.planilla, notas: b.notas, codigoInterno: b.codigo_interno, guardadoEl: b.updated_at, reporte: reporteDeFila(b) },
     ])
   );
   const evaluaciones = (evalRaw as EvalRow[] | null) ?? [];
+  // V6.24: el código REAL, solo de los lotes con un alta de ESTE catador, con el código ciego de hoy y ya confirmada o devuelta por
+  // CTC (`ESTADOS_DE_ALTA`; un alta en espera no cuenta). De ningún otro se lee.
+  const conAlta = lotesConAlta(inscripciones, evaluaciones, identity.userId);
+  const { data: realesRaw } = conAlta.length ? await service.from("lots").select("id, public_code").in("id", conAlta) : { data: [] };
+  const codigoReal = new Map(((realesRaw as { id: string; public_code: string | null }[] | null) ?? []).map((r) => [r.id, r.public_code]));
   // V5.151: el reporte original adjunto a cada alta, con URL firmada para abrirlo.
   const urlDeReporte = await urlsDeReportes(service, evaluaciones.map((e) => e.reference_asset_id));
-  const kgPorLote = new Map<string, number>();
+  // V6.24: los kilos que llegaron con ESTE bache para esa muestra (`muestraDelBache`): una re-evaluación no suma los del ciclo anterior.
+  const kgPorMuestra = new Map<string, number>();
   for (const m of (movRaw as MovRow[] | null) ?? []) {
     const lot = (Array.isArray(m.muestras) ? m.muestras[0] : m.muestras)?.lot_id;
-    if (lot) kgPorLote.set(lot, (kgPorLote.get(lot) ?? 0) + Number(m.kg));
+    if (lot) kgPorMuestra.set(muestraDelBache(m.batch_id, lot), (kgPorMuestra.get(muestraDelBache(m.batch_id, lot)) ?? 0) + Number(m.kg));
   }
 
   return (
@@ -127,8 +149,8 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
           <div>
             <h1 style={{ fontFamily: "var(--font-fraunces), serif", fontSize: 24, color: "var(--primary-deep)" }}>Baches en el Centro</h1>
             <p className={styles.orgLine}>
-              Q-Grader: {identity.contactName || identity.orgName}. Cada lote llega anónimo —solo su código— y se da de alta uno a uno; CTC confirma el
-              resultado y deriva el grado.
+              Q-Grader: {identity.contactName || identity.orgName}. Cada lote llega anónimo —solo el código de su muestra— y se da de alta uno a uno.
+              CTC confirma el resultado y deriva el grado; cuando CTC confirme o le devuelva el alta, verá también el código del lote.
             </p>
           </div>
         </div>
@@ -157,20 +179,27 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
                   <span className={styles.orgLine} aria-hidden>▾</span>
                 </summary>
                 <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
-                  {lotes.map((l) => {
+                  {lotes.map((l, i) => {
                     // V6.23 (TAR-149): el código CIEGO de la inscripción, el de la bolsa. Nunca el del lote.
                     const uid = codigoCtc(l.codigo_ciego);
+                    // V6.24: el código real, solo con un alta de ESTE catador que CTC ya decidió (la misma compuerta que decidió qué leer).
+                    const real = altaPropia(l, evaluaciones, identity.userId) ? (codigoReal.get(l.lot_id) ?? null) : null;
                     const propias = evaluaciones.filter((e) => e.lot_id === l.lot_id && e.batch_id === b.id);
                     const pendiente = propias.find((e) => e.status === "pending");
                     const devuelta = !pendiente ? propias.find((e) => e.status === "rejected") : null;
                     const confirmada = propias.find((e) => e.status === "accepted");
-                    const kg = kgPorLote.get(l.lot_id);
-                    const borrador = borradores.get(l.lot_id) ?? null;
+                    const kg = kgPorMuestra.get(muestraDelBache(b.id, l.lot_id));
+                    const borrador = borradores.get(muestraDelBache(b.id, l.lot_id)) ?? null;
                     // El código interno del laboratorio: el del alta, o el que va en el borrador.
                     const codigoInterno = (pendiente ?? confirmada ?? devuelta)?.codigo_interno ?? borrador?.codigoInterno ?? null;
                     return (
-                      <div key={l.lot_id} style={{ borderTop: "1px dashed var(--line)", paddingTop: 8, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                      <div key={l.codigo_ciego ?? `muestra-${i}`} style={{ borderTop: "1px dashed var(--line)", paddingTop: 8, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
                         <span className="mono" style={{ fontWeight: 700, fontSize: 15 }}>{uid}</span>
+                        {real && (
+                          <span className={styles.orgLine} title="El código del lote: lo ve cuando CTC confirma o le devuelve el alta de esta muestra">
+                            · lote <span className="mono">{codigoCtc(real)}</span>
+                          </span>
+                        )}
                         <span className={styles.orgLine}>{kg ? `${kg} kg de muestra` : "muestra de evaluación"}</span>
                         {codigoInterno && (
                           <span className={styles.orgLine} title="Su código interno de la muestra">
@@ -232,7 +261,7 @@ export default async function EvaluacionDeLotesPage({ params }: { params: Promis
                                 .filter((e) => e.status === "rejected")
                                 .sort((a, b) => (b.reviewed_at ?? b.created_at).localeCompare(a.reviewed_at ?? a.created_at))
                                 .map((e) => ({ fecha: new Date(e.reviewed_at ?? e.created_at).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" }), motivo: separaNotasDevueltas(e.notes).motivo ?? "(sin motivo)" }));
-                              return <DarDeAltaButton key={semilla?.guardadoEl ?? "nuevo"} lotId={l.lot_id} uid={uid} borrador={semilla} devoluciones={devoluciones} />;
+                              return <DarDeAltaButton key={semilla?.guardadoEl ?? "nuevo"} muestra={l.codigo_ciego ?? ""} uid={uid} borrador={semilla} devoluciones={devoluciones} />;
                             })()}
                           </>
                         )}

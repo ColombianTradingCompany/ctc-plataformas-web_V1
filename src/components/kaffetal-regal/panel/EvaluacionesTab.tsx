@@ -415,7 +415,7 @@ function FilaCard({ lot }: { lot: Lot }) {
       {phase === "sondeo" && (
         <div style={{ fontSize: 13, color: "var(--muted)" }}>
           Su lote está en un <b>Bache de Evaluación</b> en manos del <b>Q-Grader</b> del Centro de Calidad, evaluado a ciegas
-          (solo su código). El resultado —puntaje, Grado CTCx y feedback— le llegará aquí y a su feed.
+          (con un código de cata propio, sin su nombre ni el de su finca). El resultado —puntaje, Grado CTCx y feedback— le llegará aquí y a su feed.
         </div>
       )}
       {/* Fases de la Arena vieja (legado defensivo): ningún veredicto nuevo las

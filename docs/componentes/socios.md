@@ -17,7 +17,7 @@ Los socios son un **tier de identidad aparte**: `profiles.role = 'partner'` + un
 
 | Nodo (`slug`) | Rol | Sella en el pasaporte | Panel hoy |
 |---|---|---|---|
-| **Centro de Calidad** (`centro-calidad`) | trilla, monitoreo y selección óptica · pergamino → verde | merma + humedad + verde liberado | **Evaluación de Lotes construido (V5.81)**: `panel/evaluacion` — los baches `en_centro` a su nombre, cada lote anónimo (solo el código), planilla SCA o CVA + factor + mallas + rueda, «dar de alta» → `lot_evaluations` pendiente que CTCx confirma; módulos activables desde BCP (`modulos`). Procesamiento de Lotes: scaffold (Etapa 3) |
+| **Centro de Calidad** (`centro-calidad`) | trilla, monitoreo y selección óptica · pergamino → verde | merma + humedad + verde liberado | **Evaluación de Lotes construido (V5.81)**: `panel/evaluacion` — los baches `en_centro` a su nombre, cada lote anónimo (solo su código ciego; el del lote, cuando CTC confirma o devuelve su alta — V6.24), planilla SCA o CVA + factor + mallas + rueda, «dar de alta» → `lot_evaluations` pendiente que CTCx confirma; módulos activables desde BCP (`modulos`). Procesamiento de Lotes: scaffold (Etapa 3) |
 | **Agente de Carga** (`agente-carga`) | flete internacional · Colombia → Europa | booking + BL + ETA | scaffold (Lotes listos · Booking · Documentos · Tracking) |
 | **Agente de Nacionalización** (`agente-nacionalizacion`) | aduana en destino · importación en la UE | nacionalizado + DDS enlazada | scaffold (Contenedores en tránsito · Expediente aduanero · Liquidación · Liberación) |
 | **Master Roaster** (`master-roaster`) | el pivote de destino · bodega, tueste, empaque, última milla | recepción + tueste + despacho | scaffold (Contenedor en camino · Bodega · Desconsolidación y ruta · Cola de tueste · Empaque y despacho) |
@@ -62,14 +62,22 @@ el buzón real, distinto del correo de acceso, que puede ser una etiqueta sin bu
 `/bcp/socios/[nodo]`). Solo lee: `profiles`. Lo que el Estudio produce vive en `coffeed_*` (charter `coffeed`). El Centro de
 Calidad **escribe** `lot_evaluations` (procedencia `q_grader_batch`, `pending`; con `batch_id`, `escala`, `rueda`, `uid_anonimo`)
 por Server Action con el service role — la tabla es de `consolas`. **V6.23 (TAR-149)**: el Centro ve y escribe el código CIEGO de la
-inscripción (`arena_inscriptions.codigo_ciego`, `QG-` + 5 al azar; las de antes conservan el de su bolsa) como `uid_anonimo`, nunca
-el código del lote, que es jerárquico (contrato «Los códigos CTC» de `ALINEACION` §1; `qa-codigos-ctc` §4). Ningún otro nodo tiene tablas operativas todavía.
+inscripción (`arena_inscriptions.codigo_ciego`) como `uid_anonimo`, nunca el código del lote, que es jerárquico (contrato «Los códigos
+CTC» de `ALINEACION` §1; `qa-codigos-ctc` §4). **V6.24 (TAR-149, punto 4)**: el código ciego es FLOTANTE (3 letras + 1 cifra al azar,
+`src/lib/arena/codigoCiego.ts`; los `QG-` y los `CTC-L-` + 8 ya impresos siguen valiendo) y el catador ve el código del lote
+(`lots.public_code`) solo cuando CTC confirma o devuelve el alta que le dio a esa muestra (`qa-codigos-ctc` §9). El código ciego que el
+alta copia a `uid_anonimo` no lo lee la sesión del productor: `lot_evaluations` se le lee por columnas, todas menos esa (paso 4b de la
+migración de la V6.24, §9f). Ningún otro nodo tiene
+tablas operativas todavía.
 
 ## Guardianes
 
-**`qa-centro-calidad-check.mjs`** (65 en la V5.81; 313 al 2026-10-10 — el paso 11 del folio: la pantalla y las acciones del Centro no leen productor,
+**`qa-centro-calidad-check.mjs`** (65 en la V5.81; 317 en la V6.24 — el paso 11 del folio: la pantalla y las acciones del Centro no leen productor,
 finca, variedad ni ficha; el módulo se activa por credencial y el Q-Grader firma con su contacto; registrar ≠ confirmar; la
-fórmula del CVA y la rueda única). Lo tocan también `qa-recuperacion-check.mjs` (las cinco puertas de socio) y
+fórmula del CVA y la rueda única; las muestras en el orden de su código ciego, con los kilos y el borrador de su bache).
+**`qa-codigos-ctc-check.mjs`** (128 en la V6.24, con `ts-resolve`: §4 la página y las acciones del Centro por el código ciego, sin el
+id del lote en el navegador; §9 el formato flotante, la compuerta del alta, que no cuenta un alta en espera, y los textos del OCP; §9f el código ciego no
+se lee con la sesión del productor, ni en `arena_inscriptions` ni en `lot_evaluations`, y fuera del service role cada consulta de las dos tablas va por una lista escrita). Lo tocan también `qa-recuperacion-check.mjs` (las cinco puertas de socio) y
 `qa-rutas-consolas` (el rail de `/bcp/socios`).
 
 ## Reglas propias
@@ -83,8 +91,14 @@ fórmula del CVA y la rueda única). Lo tocan también `qa-recuperacion-check.mj
   no de operación — lo único que escribe (V5.81) son los **módulos** que activa una credencial del Centro de Calidad,
   porque eso es configuración de la credencial.
 - **El Centro de Calidad evalúa a ciegas**: su pantalla y sus acciones no leen productor, finca, variedad ni ficha — solo el
-  bache, el código corto del lote y los gramos de la muestra (`qa-centro-calidad`). Registrar ≠ confirmar: el Q-Grader da de
+  bache, el código ciego de la muestra y sus gramos (`qa-centro-calidad`). Registrar ≠ confirmar: el Q-Grader da de
   alta, CTCx confirma el veredicto en el OCP.
+- **El código del lote, solo después del alta y de la decisión de CTC** (V6.24): la página lo lee de la base únicamente para las muestras
+  con un alta de ESE catador, con el código ciego de hoy y ya confirmada o devuelta por CTC (`lotesConAlta`); antes, ni se lee. Un alta
+  en espera no lo enseña: el catador puede anularla y lo que rehaga sigue a ciegas (una devuelta se rehace con el lote conocido, como
+  aceptó el owner). El navegador del catador nombra cada muestra solo por su código ciego, en el orden de ese código (al azar): ningún
+  componente de cliente, clave ni ruta de Storage lleva el id del lote, y los kilos y el borrador de cada muestra son los de su bache (una
+  re-evaluación no trae los del ciclo anterior) (`qa-codigos-ctc` §4, `qa-centro-calidad`).
 - Máxima lectura narrativa, **cero acceso al dinero** para el Estudio (vision board): ningún panel de
   socio ve precios, contratos ni datos comerciales del productor — si algún día uno los necesita, es una
   vista `SECURITY DEFINER` estrecha, nunca una política ancha.
@@ -100,6 +114,16 @@ fórmula del CVA y la rueda única). Lo tocan también `qa-recuperacion-check.mj
 
 ## Pendientes
 
+- **V6.24 · el código ciego flotante y el código del lote tras el alta** (owner, 2026-11-07, TAR-149 punto 4). Hecho: la migración
+  `docs/migraciones/2026-11-08_codigo_ciego_flotante.sql` (sin aplicar; va después de los pasos A y C de la V6.23), la compuerta del alta
+  en la página del Centro y las acciones por código ciego. Resuelto en la revisión: el código del lote aparece cuando CTC confirma o
+  devuelve el alta, no mientras espera (así anular y rehacer sigue a ciegas); el código ciego que el alta copia a
+  `lot_evaluations.uid_anonimo` tampoco lo lee la sesión del productor (paso 4b, como `arena_inscriptions.codigo_ciego`); y «Lotes en
+  Evaluación» (OCP) dice en la bolsa del Q-Grader y en el informe del Centro que confirmar o devolver el alta le enseña al catador el
+  código del lote. **Queda, para el owner**: (1) una devuelta se rehace con el
+  lote conocido (lo aceptó); si un día prefiere que también se rehaga a ciegas, basta con que la compuerta cuente solo las confirmadas
+  (`ESTADOS_DE_ALTA = ["accepted"]` en `codigoCiego.ts`). (2) Nadie lo ha conducido con la credencial real del Centro.
+  (3) La rotulación de la bolsa sigue a mano al recibir la muestra (charter `kaffetal-regal`, pendiente V6.23 (2)).
 - **V6 · objetivo 1, tanda E: la narrativa de los nodos** (owner, 2026-10-10, al declarar la V6.0; `docs/PLAN_V6_OBJETIVOS.md` §1,
   dueño de la tanda `plataforma`, con este componente para `partners.ts`). Es **SO-1** del plan de narrativa: `partners.ts` presenta al
   Centro de Calidad sin el CIR de Santander y como quien defiende «la calidad que la Arena certificó» (desde la V5.81 evalúa él), al

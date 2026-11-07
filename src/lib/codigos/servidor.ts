@@ -54,7 +54,8 @@ export async function codigosAnteriores(service: SupabaseClient, ids: readonly s
   const unicos = [...new Set(ids.filter(Boolean))];
   const mapa = new Map<string, string>();
   if (unicos.length === 0) return mapa;
-  const { data, error } = await service.from("codigos_ctc").select("entidad_id, codigo").eq("vigente", false).in("entidad_id", unicos);
+  // V6.24: el libro guarda también los códigos ciegos de la cata (tipo `ciego`, por inscripción); esos no son un código del registro.
+  const { data, error } = await service.from("codigos_ctc").select("entidad_id, codigo").eq("vigente", false).neq("tipo", "ciego").in("entidad_id", unicos);
   if (error) return mapa;
   for (const r of (data ?? []) as { entidad_id: string; codigo: string }[]) {
     if (!mapa.has(r.entidad_id)) mapa.set(r.entidad_id, r.codigo);

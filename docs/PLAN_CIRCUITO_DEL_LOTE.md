@@ -284,7 +284,7 @@ evento» pasa de RETIRAR a **REHACER** (fase 1: limpiar sesiones y jornada; la i
 |---|---|
 | Un precio real sale de una banda equivocada (mayúscula/minúscula, rangos del motor) | `pvcParaGrado` es la única puerta; `qa-pvc-precio` reproduce la escalera publicada grado por grado y exige `RANGOS` = `definicion.ts` |
 | Un guardián copia la cifra del código y afirma en verde una regla equivocada (V5.53, V5.54) | Todas las cifras de `terminos.ts` se comprueban contra §0 de ESTE documento |
-| El Q-Grader ve la variedad o el nombre del productor | `qa-centro-calidad-check`: la consulta del bache selecciona SOLO las columnas anónimas; el UID es `ctcLotReferenceShort` |
+| El Q-Grader ve la variedad o el nombre del productor | `qa-centro-calidad-check` y `qa-codigos-ctc-check` §4/§9: la consulta del bache selecciona SOLO las columnas anónimas; el UID es el código ciego (`arena_inscriptions.codigo_ciego`, flotante desde la V6.24) y el código del lote se lee solo cuando CTC confirma o devuelve el alta de ese catador |
 | Un productor acepta sin declarar cantidad (guard antes que pantalla) | La declaración es obligatoria SOLO para ofertas con `terms_version`; ~~la fase 6 sale con las cuentas de prueba~~ la fase 6 salió en la V5.83 sin conducirse y se conduce en la Etapa 2 (Asistencia · Desacoplado; las cuentas de prueba se eliminaron el 2026-09-25) |
 | Se pierde algo al retirar la Arena | Tablas dormidas; 308; `git revert` por fase; el wrap V47 es la foto del antes |
 | El socio escribe fuera de su bache | `requirePartner` + el bache lleva `centro_calidad_account_id`; RLS cero políticas, Server Actions con service role |

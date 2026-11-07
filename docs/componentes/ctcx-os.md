@@ -401,7 +401,7 @@ Actions de su dueño**.
   Actions); lee solo tablas declaradas y escritas como literal (un `.from(variable)` falla), nunca `select("*")`; `stock_partidas` solo se cuenta; cada select lleva `count: "exact"` o
   acaba en `.maybeSingle()`; ninguna columna de persona, de texto libre ni de salida del PVC; y de los módulos de la plataforma que
   también escriben importa solo las funciones de lectura de una LISTA (crítica 8). **B** ninguna constante de negocio ni dato real
-  (cifras con nombre de negocio, importes con la moneda delante o detrás, kilos, cargas y sacos escritos, grados redefinidos, los códigos CTC de productor, finca y lote viejos y guardados —V6.23— y el ciego `QG-`, correos, UUID, ids de Notion/Make/Drive,
+  (cifras con nombre de negocio, importes con la moneda delante o detrás, kilos, cargas y sacos escritos, grados redefinidos, los códigos CTC de productor, finca y lote viejos y guardados —V6.23— y el ciego, flotante —V6.24— o `QG-`, correos, UUID, ids de Notion/Make/Drive,
   coordenadas, teléfonos), con la exención exacta de `demo/datos.ts`; B9 lee una lista local de centinelas SOLO de la variable
   `OS_CENTINELAS` (crítica 23; sin ella avisa y no falla, e imprime el número del centinela, nunca el término). **C** cada pieza
   apunta a una columna o función que existe y a una pantalla que existe, y el tablero las saca todas; solo `Cifra` formatea. **D/E/F**

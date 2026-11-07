@@ -17,6 +17,15 @@
 //   5. Ninguna página pública explica cómo se arma el código («the syntax is not public but the IDs are visible»).
 //   6. El libro solo lo lee el servidor con el service role; la vitrina se lee por la columna del código guardado.
 //   7. Un contrato guarda los códigos con que se armó su texto, en la misma escritura que su huella.
+//   9. V6.24 (TAR-149, punto 4, owner 2026-11-07): el código ciego es FLOTANTE — 3 letras + 1 cifra al azar, único para siempre en
+//      el libro (tipo `ciego`), nunca con las letras de un productor, ni FDA ni CTC, y ningún productor nuevo con las letras de un
+//      código ciego (los dos asignadores se turnan con el mismo candado). El Q-Grader ve el código REAL del lote solo después de
+//      darle el alta a esa muestra y de que CTC la confirme o se la devuelva (un alta en espera no lo enseña: se puede anular): antes
+//      no se lee en el servidor, y el navegador nombra la muestra solo por su código ciego, en el orden de ese código (al azar). Y el
+//      código ciego no se lee con la sesión del productor ni con la anónima: `authenticated` lee `arena_inscriptions` por columnas,
+//      todas menos `codigo_ciego`, y `lot_evaluations` por columnas, todas menos `uid_anonimo` (el mismo código, copiado al alta);
+//      por eso, fuera del service role, cada consulta de esas dos tablas va por una lista escrita (ni «*», ni `.select()` vacío, ni
+//      una tabla embebida con `(*)`) (`docs/migraciones/2026-11-08_codigo_ciego_flotante.sql`, `src/lib/arena/codigoCiego.ts`).
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
@@ -35,6 +44,7 @@ import {
   normalizaReferencia,
 } from "../src/lib/catalogo/codigoPublico.ts";
 import { normalizaReferenciaFinca, normalizaReferenciaLote } from "../src/lib/tools/entrada.ts";
+import { ESTADOS_DE_ALTA, FORMATO_CIEGO_FLOTANTE, FORMATO_CODIGO_CIEGO, LETRAS_CIEGO, altaPropia, esCodigoCiego, esCodigoFlotante, lotesConAlta } from "../src/lib/arena/codigoCiego.ts";
 
 let ok = 0;
 const fallos = [];
@@ -61,7 +71,9 @@ function archivos(dir) {
 
 const MIG_A = lee("docs/migraciones/2026-11-07_codigos_ctc_a_ampliar.sql");
 const MIG_C = lee("docs/migraciones/2026-11-07_codigos_ctc_c_cambiar.sql");
+const MIG_F = lee("docs/migraciones/2026-11-08_codigo_ciego_flotante.sql");
 const SQL_A = sinComentariosSql(MIG_A);
+const SQL_F = sinComentariosSql(MIG_F);
 const FUENTES = archivos("src").map((ruta) => ({ ruta, codigo: sinComentarios(lee(ruta)) }));
 
 // ── 1. Ningún código CTC se deriva de un id ────────────────────────────────────────────────────────────────────────────────
@@ -124,6 +136,10 @@ function derivaciones(codigo) {
   check(`1 · nada en src/ deriva un código CTC-L-/CTC-P-/CTC-F- de un id (${FUENTES.length} archivos)${culpables.length ? ` — ${culpables.slice(0, 6).join(" | ")}` : ""}`, FUENTES.length > 300 && culpables.length === 0);
   const ciego = FUENTES.filter((f) => /["'`]QG-["'`]?\s*\+|QG-\$\{/.test(f.codigo)).map((f) => f.ruta);
   check(`1 · y nada arma un código ciego QG- (lo asigna la base)${ciego.length ? ` — ${ciego.join(", ")}` : ""}`, ciego.length === 0);
+  // V6.24: tampoco el flotante. Las letras del código ciego solo las nombra el módulo que lo VALIDA, que no sortea nada.
+  const conLetras = FUENTES.filter((f) => /\bLETRAS_CIEGO\b/.test(f.codigo) && f.ruta !== "src/lib/arena/codigoCiego.ts").map((f) => f.ruta);
+  const modulo = sinComentarios(lee("src/lib/arena/codigoCiego.ts"));
+  check(`1 · y nada arma un código ciego flotante: \`LETRAS_CIEGO\` no sale de su módulo, que no sortea${conLetras.length ? ` — ${conLetras.join(", ")}` : ""}`, conLetras.length === 0 && !/Math\.random|crypto|randomUUID/.test(modulo));
   const data = sinComentarios(lee("src/components/kaffetal-regal/data.ts"));
   check("1 · data.ts solo ENSEÑA el código guardado (codigoCtc, «Sin código»)", data.includes("export function codigoCtc(codigo: string | null | undefined): string {") && data.includes('export const SIN_CODIGO = "Sin código";'));
   check("1 · el panel del productor dice qué le falta a un lote sin finca, en vez de un código", lee("src/components/kaffetal-regal/codigoDelLote.ts").includes('export const SIN_CODIGO_LOTE = "Sin código: asígnele una finca";'));
@@ -223,11 +239,28 @@ function derivaciones(codigo) {
 {
   const pagina = sinComentarios(lee("src/app/socios/[partner]/panel/evaluacion/page.tsx"));
   const acciones = sinComentarios(lee("src/app/socios/[partner]/panel/evaluacionActions.ts"));
+  const planilla = sinComentarios(lee("src/app/socios/[partner]/panel/evaluacion/PlanillaCentro.tsx"));
   const delLote = /public_code|ctcLotReference|codigoDelLote|from\("lots"\)\.select\([^)]*codigo|codigos_ctc|producer_profiles/;
-  check("4 · la pantalla del Q-Grader lee el código CIEGO de la inscripción, y nada del código del lote", pagina.includes('select("lot_id, sondeo_batch_id, phase, codigo_ciego")') && pagina.includes("codigoCtc(l.codigo_ciego)") && !delLote.test(pagina));
-  check("4 · y sus acciones también: el alta lleva el código ciego", acciones.includes('select("id, phase, sondeo_batch_id, codigo_ciego")') && acciones.includes("uid_anonimo: bache.codigoCiego") && !delLote.test(acciones));
+  // V6.24: la página lee el código REAL una sola vez, y solo de los lotes que `lotesConAlta` devuelve (los que ESTE catador ya dio
+  // de alta con el código ciego de hoy). Fuera de esa lectura, nada del código del lote.
+  const LECTURA_REAL = 'const conAlta = lotesConAlta(inscripciones, evaluaciones, identity.userId);\n  const { data: realesRaw } = conAlta.length ? await service.from("lots").select("id, public_code").in("id", conAlta) : { data: [] };';
+  const MAPA_REAL = "const codigoReal = new Map(((realesRaw as { id: string; public_code: string | null }[] | null) ?? []).map((r) => [r.id, r.public_code]));";
+  const sinLectura = pagina.replace(LECTURA_REAL, "").replace(MAPA_REAL, "");
+  check("4 · la pantalla del Q-Grader lee el código CIEGO de la inscripción, y el del lote SOLO tras la compuerta del alta", pagina.includes('select("lot_id, sondeo_batch_id, phase, codigo_ciego").in("sondeo_batch_id", batchIds).order("codigo_ciego")') && pagina.includes("codigoCtc(l.codigo_ciego)") && pagina.includes(LECTURA_REAL) && pagina.includes(MAPA_REAL) && !delLote.test(sinLectura));
+  check("4 · y lo enseña solo en la fila que pasa la compuerta (`altaPropia` de ESTE catador)", pagina.includes("const real = altaPropia(l, evaluaciones, identity.userId) ? (codigoReal.get(l.lot_id) ?? null) : null;") && pagina.includes("codigoCtc(real)") && /uid_anonimo, codigo_interno/.test(pagina));
+  check("4 · y sus acciones también: buscan la muestra por su código ciego y el alta lleva ese código", acciones.includes('select("id, lot_id, phase, sondeo_batch_id, codigo_ciego").eq("codigo_ciego", muestra)') && acciones.includes("if (!esCodigoCiego(muestra))") && acciones.includes("uid_anonimo: bache.codigoCiego") && !delLote.test(acciones));
+  // El navegador nombra la muestra SOLO por su código ciego: ni el id del lote (que el catador vería junto al código real tras el
+  // alta, y reconocería en una re-evaluación) ni ninguna ruta de Storage con él.
+  const alCliente = [...pagina.matchAll(/<(DarDeAltaButton|VerPlanillaButton|AnularAltaButton|PestanasDeBaches)\b[^>]*>/g)].map((m) => m[0]);
+  check(`4 · ningún componente de cliente recibe el id del lote, y ninguna clave lo lleva (${alCliente.length} montajes)`, alCliente.length >= 3 && !alCliente.some((m) => /lot_id|lotId/.test(m)) && !/key=\{l\.lot_id\}/.test(pagina) && pagina.includes('muestra={l.codigo_ciego ?? ""}') && !/lotId/.test(planilla));
+  // V6.24: las muestras salen en el orden de su código ciego (al azar), no en el que se inscribieron: dos muestras de un productor
+  // enviadas juntas no quedan una al lado de la otra. Y lo de un ciclo anterior del mismo lote (kilos, borrador) no llega a la muestra
+  // de hoy: la página los busca por bache Y lote.
+  check("4 · las muestras del bache salen ordenadas por su código ciego, y kilos y borrador son los de ESE bache", pagina.includes('.order("codigo_ciego")') && pagina.includes('const muestraDelBache = (batchId: string | null, lotId: string) => `${batchId ?? "-"}|${lotId}`;') && pagina.includes("kgPorMuestra.get(muestraDelBache(b.id, l.lot_id))") && pagina.includes("borradores.get(muestraDelBache(b.id, l.lot_id))") && !/kgPorLote|borradores\.get\(l\.lot_id\)/.test(pagina));
+  check("4 · la subida del reporte del Centro usa la carpeta del código ciego, no la del lote", acciones.includes("prepararSubidaDeReporte(service, carpetaDeMuestraCiega(bache.codigoCiego), meta)") && acciones.includes("carpeta: carpetaDeMuestraCiega(bache.codigoCiego)") && lee("src/lib/evaluaciones/reporte.ts").includes("return `ciego/${codigoCiego}`;"));
   // Toda escritura de `uid_anonimo` en src/ sale del código ciego.
-  const escrituras = FUENTES.flatMap((f) => [...f.codigo.matchAll(/uid_anonimo\s*:\s*([^,\n}]+)/g)].map((m) => ({ ruta: f.ruta, valor: m[1].trim() })));
+  // (Una anotación de tipo — `uid_anonimo: string | null`, V6.24 la lee para la compuerta del alta — no es una escritura.)
+  const escrituras = FUENTES.flatMap((f) => [...f.codigo.matchAll(/uid_anonimo\s*:\s*([^,\n}]+)/g)].map((m) => ({ ruta: f.ruta, valor: m[1].trim() }))).filter((e) => !/^string\b/.test(e.valor));
   const malas = escrituras.filter((e) => !/codigo_ciego|codigoCiego/.test(e.valor));
   check(`4 · toda escritura de uid_anonimo sale del código ciego (${escrituras.length})${malas.length ? ` — ${malas.map((m) => `${m.ruta}: ${m.valor}`).join(" | ")}` : ""}`, escrituras.length >= 2 && malas.length === 0);
   check("4 · la base asigna el código ciego al azar, sin relación con el lote, y las inscripciones de antes conservan el de su bolsa", SQL_A.includes("create or replace function public.ctc_codigo_ciego()") && SQL_A.includes("create trigger zz_arena_inscriptions_codigo_ciego before insert or update on public.arena_inscriptions") && /set codigo_ciego = 'CTC-L-' \|\| upper\(left\(replace\(lot_id::text, '-', ''\), 8\)\)\s+where codigo_ciego is null;/.test(SQL_A) && SQL_A.indexOf("set codigo_ciego = 'CTC-L-'") < SQL_A.indexOf("create trigger zz_arena_inscriptions_codigo_ciego"));
@@ -300,6 +333,216 @@ function derivaciones(codigo) {
   check("8 · un lote solo cuelga de una finca de su productor", SQL_A.includes("raise exception 'Esa finca no es del productor del lote.';"));
   check("8 · la vitrina deja fuera lo que no tiene código (pasos A y C)", [MIG_A, MIG_C].every((m) => /AND l\.public_code IS NOT NULL\s+AND \(ct\.lot_id IS NOT NULL OR d\.lot_id IS NOT NULL OR s\.lot_id IS NOT NULL\);/.test(m)));
   check("8 · `ctc_public_code()` ya no acuña CTCX-: se niega", /create or replace function public\.ctc_public_code\(\)[\s\S]*?raise exception 'Este lote no tiene código CTC: asígnele su finca[^']*';\s*end;/.test(SQL_A));
+}
+
+// ── 9. El código ciego flotante (V6.24, TAR-149 punto 4) ───────────────────────────────────────────────────────────────
+{
+  const fn = SQL_F.slice(SQL_F.indexOf("create function public.ctc_codigo_ciego("), SQL_F.indexOf("create or replace function public.ctc_codigo_productor("));
+  const prod = SQL_F.slice(SQL_F.indexOf("create or replace function public.ctc_codigo_productor("), SQL_F.indexOf("create or replace function public.zz_arena_inscriptions_codigo_ciego("));
+  const lista = (m) => (m ? [...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1]).sort() : []);
+
+  // 9a · El formato: la aplicación y la base dicen lo mismo.
+  const letrasSql = /letras constant text := '([^']+)';/.exec(fn)?.[1] ?? null;
+  check(`9 · LETRAS_CIEGO es la MISMA cadena que sortea \`ctc_codigo_ciego\` (${letrasSql ?? "no encontrada"})`, letrasSql === LETRAS_CIEGO);
+  check("9 · y son las 22 letras del alfabeto de los códigos (el mismo sin sus cifras); 3 letras y 1 cifra al azar", LETRAS_CIEGO === [...ALFABETO].filter((c) => /[A-Z]/.test(c)).join("") && LETRAS_CIEGO.length === 22 && fn.includes("for i in 1..3 loop") && fn.includes("pg_catalog.random() * 22") && fn.includes("v_codigo := v_letras || pg_catalog.floor(pg_catalog.random() * 10)::int::text;"));
+  const expande = (clase) => clase.replace(/(.)-(.)/g, (_, a, b) => Array.from({ length: b.charCodeAt(0) - a.charCodeAt(0) + 1 }, (_, i) => String.fromCharCode(a.charCodeAt(0) + i)).join(""));
+  check("9 · la clase [A-HJKMNP-TV-Z] son exactamente esas 22 letras", expande("A-HJKMNP-TV-Z") === LETRAS_CIEGO);
+  const CHECK_NUEVO = "check (codigo_ciego ~ '^([A-HJKMNP-TV-Z]{3}[0-9]|QG-[0-9A-HJKMNP-TV-Z]{5}|CTC-L-[0-9A-F]{8})$')";
+  check("9 · el CHECK de la base: el flotante, y siguen valiendo el QG- y el CTC-L- + 8; la unicidad se queda", SQL_F.includes("drop constraint arena_inscriptions_codigo_ciego_formato,") && SQL_F.includes(CHECK_NUEVO) && !/arena_inscriptions_codigo_ciego_key/.test(SQL_F));
+  check("9 · y FORMATO_CODIGO_CIEGO / FORMATO_CIEGO_FLOTANTE son el mismo patrón", CHECK_NUEVO.includes(FORMATO_CODIGO_CIEGO.source.replace("(?:", "(")) && FORMATO_CIEGO_FLOTANTE.source === "^[A-HJKMNP-TV-Z]{3}[0-9]$");
+  const validos = ["KRW7", "ZZZ0", "ABC9", "QG-7KQ2M", "CTC-L-D4D0C4E3"];
+  const invalidos = ["KRW", "KRW77", "KR7W", "IKR7", "KRL7", "OKR7", "UKR7", "krw7", " KRW7", "QG-7KQ2", "CTC-L-4MZ2P0K7Q", "CTC-L-d4d0c4e3", "CTC-P-KRW", null, 7];
+  const malV = validos.filter((v) => !esCodigoCiego(v));
+  const malI = invalidos.filter((v) => esCodigoCiego(v));
+  check(`9 · esCodigoCiego acepta las tres formas y nada más${malV.length || malI.length ? ` — ${[...malV, ...malI].join(", ")}` : ""}`, malV.length === 0 && malI.length === 0);
+  check("9 · esCodigoFlotante: solo el de la V6.24", esCodigoFlotante("KRW7") && !esCodigoFlotante("QG-7KQ2M") && !esCodigoFlotante("CTC-L-D4D0C4E3") && !esCodigoFlotante("KRWI"));
+
+  // 9b · Sin pistas, en los dos sentidos.
+  const cuerpos = PUERTAS_DE_LEGADO.map((p) => p.slice(PREFIJO_REFERENCIA.length, PREFIJO_REFERENCIA.length + 3));
+  const reservadasCiego = [...cuerpos.filter((t) => [...t].every((c) => LETRAS_CIEGO.includes(c))), "CTC"].sort();
+  const enFlotante = lista(/continue when v_letras = any \(array\[([^\]]*)\]\);/.exec(fn));
+  check(`9 · el flotante nunca lleva las letras del comienzo de una segunda puerta ni CTC (${enFlotante.join(", ")})`, JSON.stringify(enFlotante) === JSON.stringify(reservadasCiego) && enFlotante.includes("FDA"));
+  check("9 · ni las 3 letras de un productor, vigente o no", fn.includes("continue when exists (select 1 from public.codigos_ctc c where c.codigo = 'CTC-P-' || v_letras);"));
+  check("9 · único para siempre: lo que está en el libro no vuelve a salir, y todo código emitido entra al libro", fn.includes("continue when exists (select 1 from public.codigos_ctc c where c.codigo = v_codigo);") && /insert into public\.codigos_ctc \(codigo, tipo, entidad_id, vigente, nota\)\s+values \(v_codigo, 'ciego', p_inscripcion, p_inscripcion is not null,/.test(fn) && SQL_F.includes("check (tipo in ('productor', 'finca', 'lote', 'ciego'))"));
+  check("9 · ninguna muestra en juego tiene un vecino, ni una re-evaluación el de un código que ya tuvo", fn.includes("where a.phase in ('postulacion', 'fila', 'sondeo')") && (fn.match(/<= 1\)/g) ?? []).length === 2 && fn.includes("c.tipo = 'ciego' and c.entidad_id = p_inscripcion"));
+  check("9 · y al revés: ningún productor nuevo toma las 3 letras de un código ciego", prod.includes("continue when exists (select 1 from public.codigos_ctc c where c.tipo = 'ciego' and left(c.codigo, 3) = v_cuerpo);"));
+  const reservadosProd = lista(/continue when v_cuerpo = any \(array\[([^\]]*)\]\);/.exec(prod));
+  const reservadosA = lista(/continue when v_cuerpo = any \(array\[([^\]]*)\]\);/.exec(SQL_A));
+  check(`9 · el asignador de productores conserva los prefijos reservados de la V6.23 (${reservadosProd.join(", ")})`, reservadosProd.length === 4 && JSON.stringify(reservadosProd) === JSON.stringify(reservadosA));
+  const CANDADO = "perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtext('codigos_ctc:tres_letras'));";
+  check("9 · los dos asignadores de 3 caracteres se turnan con el MISMO candado de transacción", fn.includes(CANDADO) && prod.includes(CANDADO) && (SQL_F.match(/pg_advisory_xact_lock/g) ?? []).length === 2);
+
+  // 9c · Permisos y firma, como la V6.23.
+  const funciones = [...SQL_F.matchAll(/create (?:or replace )?function public\.(\w+)\(/g)].map((m) => m[1]);
+  const bloques = SQL_F.split(/create (?:or replace )?function /).slice(1);
+  check(`9 · toda función de la migración lleva \`search_path\` vacío y es security definer (${funciones.join(", ")})`, funciones.length === 3 && bloques.every((b) => b.includes("security definer") && b.includes("set search_path = ''")));
+  const concesiones = [...SQL_F.matchAll(/\bgrant\b[^;\n]*/gi)].map((g) => g[0]);
+  const CONCESIONES_9F = ["grant select (%s) on public.arena_inscriptions to authenticated', v_columnas)", "grant select (%s) on public.lot_evaluations to authenticated', v_columnas)"];
+  check(`9 · y ninguna queda al alcance de anon ni authenticated (las únicas concesiones son las dos lecturas por columnas, 9f: ${concesiones.length})`, ["public.ctc_codigo_ciego(uuid)", "public.ctc_codigo_productor(uuid)", "public.zz_arena_inscriptions_codigo_ciego()"].every((f) => SQL_F.includes(`revoke all on function ${f} from public, anon, authenticated;`)) && JSON.stringify(concesiones) === JSON.stringify(CONCESIONES_9F) && !/grant[^;]*on function/i.test(SQL_F));
+  check("9 · `ctc_codigo_ciego` cambia de firma (la inscripción, opcional) y el disparador le pasa la suya", SQL_F.includes("drop function public.ctc_codigo_ciego();") && SQL_F.includes("create function public.ctc_codigo_ciego(p_inscripcion uuid default null)") && SQL_F.includes("new.codigo_ciego := public.ctc_codigo_ciego(new.id);"));
+
+  // 9d · La regla del hueco y lo que la migración no toca.
+  check("9 · la regla del hueco: solo se recodifica un QG- en postulación sin muestra recibida, sin bache y sin evaluación; cada QG- se avisa", SQL_F.includes("update _qg set recodifica = (fase = 'postulacion' and not en_bache and not muestra_recibida and evaluaciones = 0);") && SQL_F.includes("l.sample_2kg_confirmed_at is not null as muestra_recibida") && /raise notice 'Código ciego %/.test(SQL_F) && /set codigo_ciego = null\s+from _qg q\s+where q\.inscripcion_id = a\.id\s+and q\.recodifica;/.test(SQL_F));
+  const marcan = FUENTES.filter((f) => /update\(\{[^}]*sample_2kg_confirmed_at\s*:\s*(?!null)/.test(f.codigo)).map((f) => f.ruta);
+  check(`9 · la señal de la bolsa rotulada (el recibo de la muestra) la escribe solo recibo.ts${marcan.length !== 1 ? ` — ${marcan.join(", ")}` : ""}`, marcan.length === 1 && marcan[0] === "src/lib/muestras/recibo.ts");
+  check("9 · la migración empieza comprobando la V6.23 (pasos A y C) y se niega a correr dos veces", SQL_F.trimStart().startsWith("begin;") && SQL_F.trimEnd().endsWith("commit;") && MIG_F.includes("Falta el libro `codigos_ctc`") && MIG_F.includes("referencia = código nuevo") && MIG_F.includes("esta migración ya se aplicó"));
+  check("9 · y no reescribe ninguna evaluación (su uid_anonimo es la historia de la cata)", !/update public\.lot_evaluations/i.test(SQL_F) && SQL_F.includes("where e.uid_anonimo is distinct from u.uid_anonimo"));
+
+  // 9e · La compuerta del código real (pura): solo el alta de ESTE catador, con el código ciego de HOY, y confirmada o devuelta por
+  // CTC. Un alta en espera no enseña nada: el catador puede anularla, y la cata que la reemplace sigue a ciegas.
+  const yo = "catador-1";
+  const m = { lot_id: "L1", sondeo_batch_id: "B1", codigo_ciego: "KRW7" };
+  // Por defecto un alta CONFIRMADA (la que enseña el código), para que cada caso negativo pruebe solo lo que cambia.
+  const alta = (x = {}) => ({ lot_id: "L1", batch_id: "B1", status: "accepted", submitted_by: yo, uid_anonimo: "KRW7", ...x });
+  const casos = [
+    ["sin alta, no", [], false],
+    ["su alta en espera de CTC, NO (se puede anular y rehacer; el código llega cuando CTC decide)", [alta({ status: "pending" })], false],
+    ["confirmada, sí", [alta({ status: "accepted" })], true],
+    ["devuelta, sí (se rehace con el lote conocido)", [alta({ status: "rejected" })], true],
+    ["el alta de OTRO catador, no", [alta({ submitted_by: "catador-2" })], false],
+    ["un alta con el código de una evaluación anterior, no", [alta({ uid_anonimo: "QG-7KQ2M" })], false],
+    ["un alta de otro bache, no", [alta({ batch_id: "B0" })], false],
+    ["un alta de otro lote, no", [alta({ lot_id: "L2" })], false],
+    ["un estado que no es alta, no", [alta({ status: "borrador" })], false],
+  ];
+  for (const [nombre, altas, esperado] of casos) check(`9 · compuerta del código real · ${nombre}`, altaPropia(m, altas, yo) === esperado);
+  check("9 · compuerta · sin código ciego, sin bache o sin catador, nunca", !altaPropia({ ...m, codigo_ciego: null }, [alta({ uid_anonimo: null })], yo) && !altaPropia({ ...m, sondeo_batch_id: null }, [alta({ batch_id: null })], yo) && !altaPropia(m, [alta({ submitted_by: "" })], ""));
+  const varias = [m, { lot_id: "L2", sondeo_batch_id: "B1", codigo_ciego: "PNT3" }, { ...m }];
+  check("9 · lotesConAlta devuelve solo los lotes con alta propia, sin repetir", JSON.stringify(lotesConAlta(varias, [alta()], yo)) === '["L1"]' && lotesConAlta(varias, [], yo).length === 0);
+  check("9 · los estados que enseñan el código del lote: confirmada y devuelta, nunca en espera", JSON.stringify([...ESTADOS_DE_ALTA].sort()) === '["accepted","rejected"]' && !ESTADOS_DE_ALTA.includes("pending"));
+  // Anular un alta en espera y rehacerla: ni antes ni después de anular aparece el código del lote; una devuelta sí (el trato aceptado).
+  const ciclo = [[alta({ status: "pending" })], [], [alta({ status: "rejected" }), alta({ status: "pending" })]];
+  check("9 · compuerta · alta en espera → anulada → nada; devuelta y rehecha → el código, como aceptó el owner", ciclo.map((a) => altaPropia(m, a, yo)).join() === "false,false,true");
+  const paginaE = sinComentarios(lee("src/app/socios/[partner]/panel/evaluacion/page.tsx"));
+  const accionesE = sinComentarios(lee("src/app/socios/[partner]/panel/evaluacionActions.ts"));
+  check("9 · anular sigue siendo solo para un alta en espera (y en espera la compuerta no enseña el código)", paginaE.includes("<AnularAltaButton evaluationId={pendiente.id} />") && accionesE.includes('if (row.status !== "pending") return { ok: false, error: "CTC ya decidió sobre esta alta; no se puede anular." };'));
+  // Lo que CTCx lee en «Lotes en Evaluación» (OCP): su decisión sobre el alta es la que le enseña al catador el código del lote. Lo
+  // dice la bolsa del Q-Grader de cada muestra del bache, y el informe del Centro antes de los botones que deciden.
+  const vistaOcp = sinComentarios(lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx"));
+  const clienteOcp = sinComentarios(lee("src/app/ocp/(app)/nominados/NominadosClient.tsx"));
+  const iniInforme = clienteOcp.indexOf("export function ConfirmarCentroControls(");
+  const informe = clienteOcp.slice(iniInforme, clienteOcp.indexOf("\nexport function", iniInforme + 1));
+  const AVISO_INFORME = "Al registrar el veredicto o enviar esta alta de vuelta, el Q-Grader verá el código del lote de esta muestra.";
+  check("9 · el OCP dice que confirmar o devolver el alta le enseña al catador el código del lote (la bolsa del Q-Grader y el informe del Centro)", vistaOcp.includes('title="Código ciego de la cata: el de la bolsa y la planilla del Q-Grader. Cuando CTC confirma o devuelve su alta, el Q-Grader ve también el código del lote."') && !vistaOcp.includes("El único código que ve el Q-Grader") && iniInforme >= 0 && informe.includes(AVISO_INFORME) && informe.indexOf(AVISO_INFORME) < informe.indexOf('recordEvaluationVerdict(lotId, "aprobado"') && informe.indexOf(AVISO_INFORME) < informe.indexOf("Enviar de vuelta al Centro para revisión"));
+}
+
+// ── 9f. El código ciego no se lee con la sesión del productor (V6.24) ───────────────────────────────────────────────────────
+// La política `arena_inscriptions_select_own` deja al productor leer SUS inscripciones con su sesión. El código de la cata no es
+// suyo: la migración deja a `authenticated` leer la tabla por columnas (todas menos `codigo_ciego`) y a `anon` ninguna, y comprueba
+// al final que así quedó. Y ninguna consulta con la sesión del usuario (cliente del navegador o de sesión) pide esa columna.
+{
+  const pasoSql = SQL_F.slice(SQL_F.indexOf("revoke select on public.arena_inscriptions from anon, authenticated;"));
+  check("9f · la migración quita la lectura de la tabla entera a anon y authenticated, y la de codigo_ciego a todos", pasoSql.startsWith("revoke select on public.arena_inscriptions from anon, authenticated;") && pasoSql.includes("revoke select (codigo_ciego) on public.arena_inscriptions from public, anon, authenticated;"));
+  check("9f · y a authenticated le da todas las demás columnas, una por una (las que la tabla tenga al aplicarse)", pasoSql.includes("and c.attname <> 'codigo_ciego';") && pasoSql.includes("not c.attisdropped") && pasoSql.includes("execute pg_catalog.format('grant select (%s) on public.arena_inscriptions to authenticated', v_columnas);"));
+  check("9f · y lo comprueba al final: ni authenticated ni anon leen el código ciego, anon no lee la tabla y el productor conserva el resto", SQL_F.includes("pg_catalog.has_column_privilege('authenticated', 'public.arena_inscriptions', 'codigo_ciego', 'select')") && SQL_F.includes("pg_catalog.has_column_privilege('anon', 'public.arena_inscriptions', 'codigo_ciego', 'select')") && SQL_F.includes("pg_catalog.has_any_column_privilege('anon', 'public.arena_inscriptions', 'select')") && SQL_F.includes("and not pg_catalog.has_column_privilege('authenticated', 'public.arena_inscriptions', c.attname::text, 'select')"));
+
+  // El mismo código viaja a `lot_evaluations.uid_anonimo` con el alta (`evaluacionActions.ts`; «Registrar a mano» del OCP), y la
+  // política `lot_evaluations_select_own_lot` deja al productor leer las evaluaciones de SUS lotes: la misma lectura por columnas,
+  // todas menos `uid_anonimo`, y `anon` ninguna.
+  const pasoEval = SQL_F.slice(SQL_F.indexOf("revoke select on public.lot_evaluations from anon, authenticated;"));
+  check("9f · lot_evaluations: la migración quita la lectura de la tabla entera a anon y authenticated, y la de uid_anonimo a todos", SQL_F.includes("revoke select on public.lot_evaluations from anon, authenticated;") && pasoEval.includes("revoke select (uid_anonimo) on public.lot_evaluations from public, anon, authenticated;"));
+  check("9f · lot_evaluations: y a authenticated le da todas las demás columnas, una por una (las que la tabla tenga al aplicarse)", pasoEval.includes("where c.attrelid = 'public.lot_evaluations'::regclass and c.attnum > 0 and not c.attisdropped") && pasoEval.includes("and c.attname <> 'uid_anonimo';") && pasoEval.includes("execute pg_catalog.format('grant select (%s) on public.lot_evaluations to authenticated', v_columnas);"));
+  check("9f · lot_evaluations: y lo comprueba al final (ni authenticated ni anon leen uid_anonimo, anon no lee la tabla, el productor conserva el resto)", SQL_F.includes("pg_catalog.has_column_privilege('authenticated', 'public.lot_evaluations', 'uid_anonimo', 'select')") && SQL_F.includes("pg_catalog.has_column_privilege('anon', 'public.lot_evaluations', 'uid_anonimo', 'select')") && SQL_F.includes("pg_catalog.has_any_column_privilege('anon', 'public.lot_evaluations', 'select')") && SQL_F.includes("and not pg_catalog.has_column_privilege('authenticated', 'public.lot_evaluations', c.attname::text, 'select')"));
+  // La aplicación: con la lectura por columnas, Postgres mira el permiso de CADA columna que una consulta nombra, la use o no. «*»,
+  // un `.select()` sin lista (son todas las columnas), un conteo con «*» (también con `head: true`: PostgREST arma la misma consulta),
+  // una tabla embebida con `(*)` y un `.insert()`/`.update()` que pide la fila de vuelta sin lista nombran la columna del código ciego.
+  // Por eso, fuera del service role, cada lectura de estas dos tablas va por una lista escrita sin esa columna. Se mira en todo
+  // archivo con un cliente que no es el service role (el del navegador, los de sesión del servidor, el efímero con la clave pública)
+  // y en toda consulta cuyo cliente no se llama `service` (un ayudante que recibe el cliente de quien lo llama). Cada sentencia va
+  // hasta el siguiente `.from(` o `;`; una lista que no se puede leer aquí (una variable, un `${…}`, una suma) cuenta como abierta.
+  const KE = "src/components/kaffetal-regal/KaffetalExperience.tsx";
+  const COLUMNA_CIEGA = { arena_inscriptions: "codigo_ciego", lot_evaluations: "uid_anonimo" };
+  const CLIENTE_NO_SERVICE = /@\/lib\/supabase\/client["']|\bcreate(?:Session|PanelSession|PartnerSession|Ephemeral|Server|Browser)Client\(|\bimport\s*\{[^}]*\bcreateClient\b[^}]*\}\s*from\s*["']@supabase\/supabase-js["']/;
+  const nombra = (tabla, cols) => /\*|\$\{/.test(cols) || new RegExp(`\\b${COLUMNA_CIEGA[tabla]}\\b`).test(cols);
+  /** Lo de dentro de los paréntesis que abren en `i`, sin los grupos anidados (una tabla embebida dentro de otra), o null. */
+  const dentroDe = (t, i) => {
+    for (let j = i, prof = 1; j < t.length; j++) {
+      if (t[j] === "(") prof++;
+      else if (t[j] === ")" && --prof === 0) {
+        let s = t.slice(i, j);
+        while (/\([^()]*\)/.test(s)) s = s.replace(/\([^()]*\)/g, "");
+        return s;
+      }
+    }
+    return null;
+  };
+  /** Las sentencias y las tablas embebidas que se miran en un texto de código, y las que no van por una lista escrita. */
+  function lecturasAbiertas(codigo) {
+    const conSesion = CLIENTE_NO_SERVICE.test(codigo);
+    const receptores = [...codigo.matchAll(/([\w$]+|\))\s*\.from\(/g)].map((m) => ({ i: m.index, quien: m[1] }));
+    const sentencias = [];
+    const culpables = [];
+    let embebidas = 0;
+    for (const m of codigo.matchAll(/([\w$]+|\))\s*\.from\(\s*["'`](arena_inscriptions|lot_evaluations)["'`]\s*\)/g)) {
+      if (!conSesion && m[1] === "service") continue;
+      const resto = codigo.slice(m.index + m[0].length);
+      const cortes = [resto.indexOf(".from("), resto.indexOf(";")].filter((i) => i >= 0);
+      const texto = resto.slice(0, cortes.length ? Math.min(...cortes) : resto.length);
+      sentencias.push({ tabla: m[2], texto });
+      for (const s of texto.matchAll(/\.select\(\s*(?:(?:"([^"]*)"|'([^']*)'|`([^`$]*)`)\s*(?=[,)]))?/g)) {
+        const cols = s[1] ?? s[2] ?? s[3] ?? null;
+        if (cols === null || !cols.trim() || nombra(m[2], cols)) culpables.push(`${m[2]} .select(${cols === null ? "sin lista escrita" : `"${cols}"`})`);
+      }
+    }
+    for (const m of codigo.matchAll(/\b(arena_inscriptions|lot_evaluations)(?:!\w+)?\s*\(/g)) {
+      const quien = receptores.filter((r) => r.i < m.index).at(-1)?.quien ?? null;
+      if (!conSesion && quien === "service") continue;
+      embebidas++;
+      const dentro = dentroDe(codigo, m.index + m[0].length);
+      if (dentro === null || nombra(m[1], dentro)) culpables.push(`${m[1]}(${dentro ?? "…"}) embebida`);
+    }
+    return { sentencias, embebidas, culpables };
+  }
+  {
+    // Autoprueba: cada forma de pedir la columna sin nombrarla salta (también por una variable o un ayudante); lo que el panel del
+    // productor hace hoy, y lo del service role, calla.
+    const NAV = 'import { createClient } from "@/lib/supabase/client";\nconst supabase = createClient();\n';
+    const malos = [
+      NAV + 'await supabase.from("arena_inscriptions").select("*");',
+      NAV + 'await supabase.from("arena_inscriptions").select();',
+      NAV + 'await supabase.from("lot_evaluations").select("*", { count: "exact", head: true });',
+      NAV + "await supabase.from('lot_evaluations').select('id, uid_anonimo');",
+      NAV + 'await supabase\n  .from("arena_inscriptions")\n  .select(\n    "lot_id, status, codigo_ciego"\n  );',
+      NAV + 'await supabase.from("arena_inscriptions").select(COLUMNAS);',
+      NAV + 'await supabase.from("arena_inscriptions").select("lot_id, " + extra);',
+      NAV + 'await supabase.from("lot_evaluations").insert({ lot_id }).select();',
+      NAV + 'await supabase.from("arena_inscriptions").update({ nota_solicitud: t }).eq("id", id).select("*").single();',
+      NAV + 'await supabase.from("lots").select("id, arena_inscriptions(*)");',
+      NAV + 'await supabase.from("lots").select("id, evs:lot_evaluations!inner(*)");',
+      NAV + 'await supabase.from("lots").select("id, lot_evaluations(id, uid_anonimo)");',
+      NAV + "await supabase.from(\"lots\").select(`id, arena_inscriptions(${cols})`);",
+      'const s = await createSessionClient();\nawait s.from("lot_evaluations").select("*");',
+      'const db = createEphemeralClient();\nawait db.from("lots").select("id, arena_inscriptions(codigo_ciego)");',
+      'export async function lee(db: SupabaseClient) {\n  return db.from("arena_inscriptions").select("*");\n}',
+    ];
+    const buenos = [
+      NAV + 'await supabase.from("lot_evaluations").select("id, lot_id, sca_total, rueda").order("created_at");',
+      NAV + 'await supabase.from("arena_inscriptions").select("id", { count: "exact", head: true });',
+      NAV + 'const { error } = await supabase.from("lot_evaluations").insert({ lot_id: lotId, source: "producer_claim" });',
+      NAV + 'await supabase.from("lots").select("*");',
+      NAV + 'await supabase.from("lots").delete().eq("id", id).select("id");',
+      NAV + 'await supabase.from("lots").select("id, arena_inscriptions(lot_id, status, lots(*))");',
+      NAV + 'await supabase.from("lots").select("id, arena_inscriptions!inner()").eq("arena_inscriptions.phase", "fila");',
+      'const service = createServiceRoleClient();\nawait service.from("arena_inscriptions").select("*, lots(id)");',
+      'const service = createServiceRoleClient();\nawait service.from("lots").select("id, arena_inscriptions(*)");',
+    ];
+    const sinSaltar = malos.filter((m) => lecturasAbiertas(m).culpables.length === 0);
+    const ruidosos = buenos.filter((b) => lecturasAbiertas(b).culpables.length > 0);
+    check(`9f · autoprueba: el detector salta con las ${malos.length} formas de pedir la columna sin nombrarla${sinSaltar.length ? ` — se le escapan: ${sinSaltar.map((m) => m.replace(NAV, "").replace(/\s+/g, " ")).join(" | ")}` : ""}`, sinSaltar.length === 0);
+    check(`9f · autoprueba: y calla con las listas escritas y con el service role${ruidosos.length ? ` — salta con: ${ruidosos.map((b) => b.replace(NAV, "").replace(/\s+/g, " ")).join(" | ")}` : ""}`, ruidosos.length === 0);
+  }
+  const lecturas = FUENTES.map((f) => ({ ruta: f.ruta, ...lecturasAbiertas(f.codigo) }));
+  const abiertas = lecturas.flatMap((l) => l.culpables.map((c) => `${l.ruta}: ${c}`));
+  const nSentencias = lecturas.reduce((n, l) => n + l.sentencias.length, 0);
+  const nEmbebidas = lecturas.reduce((n, l) => n + l.embebidas, 0);
+  const ke = lecturas.find((l) => l.ruta === KE)?.sentencias ?? [];
+  const leeKe = (tabla) => ke.some((s) => s.tabla === tabla && /^\s*\.select\(/.test(s.texto));
+  check(`9f · fuera del service role, cada lectura de arena_inscriptions y lot_evaluations va por una lista escrita sin el código ciego: ni la columna, ni «*», ni \`.select()\` sin lista, ni una tabla embebida con (*) (${nSentencias} sentencias, ${nEmbebidas} embebidas)${abiertas.length ? ` — ${abiertas.slice(0, 6).join(" | ")}` : ""}`, abiertas.length === 0 && leeKe("arena_inscriptions") && leeKe("lot_evaluations"));
+  check("9f · el reclamo de oficialización del productor inserta en lot_evaluations sin pedir la fila de vuelta", ke.some((s) => s.tabla === "lot_evaluations" && /^\s*\.insert\(/.test(s.texto) && !/\.select\(/.test(s.texto)));
+  // Lo de arriba deja pasar lo que va por `service`: ese nombre es solo del cliente del service role.
+  const SERVICE_AJENO = /\b(?:const|let|var)\s+service\b[^=;]*=\s*(?:await\s+)?(?:create(?:Session|PanelSession|PartnerSession|Ephemeral|Server|Browser)Client|createClient)\(/;
+  const ajenos = FUENTES.filter((f) => SERVICE_AJENO.test(f.codigo)).map((f) => f.ruta);
+  check(`9f · y \`service\` solo nombra al cliente del service role${ajenos.length ? ` — ${ajenos.join(", ")}` : ""}`, ajenos.length === 0 && SERVICE_AJENO.test("const service = await createSessionClient();") && SERVICE_AJENO.test("let service: SupabaseClient = createClient();") && !SERVICE_AJENO.test("const service = createServiceRoleClient();"));
 }
 
 if (fallos.length) {

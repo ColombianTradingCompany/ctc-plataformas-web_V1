@@ -18,7 +18,7 @@ import styles from "../../socios.module.css";
 const TXT: Record<IdiomaDePlanilla, { muestra: string; ciegas: string; notas: string; notasPh: string; falta: string; deriva: string; dando: string; dar: string; cancelar: string; codigo: string; codigoBoton: string; codigoPh: string; codigoAyuda: string; despues: string; guardando: string; guardado: string; continuar: string }> = {
   es: {
     muestra: "Muestra",
-    ciegas: "Evaluación a ciegas: solo el código. Al dar de alta, CTC recibe la planilla y confirma el resultado.",
+    ciegas: "Evaluación a ciegas: solo el código de la muestra. Al dar de alta, CTC recibe la planilla y confirma el resultado; cuando CTC la confirme o se la devuelva, usted verá el código del lote.",
     notas: "Notas para CTC (opcional)",
     notasPh: "Observaciones del Q-Grader…",
     falta: "Complete la planilla de la vista elegida para poder dar de alta.",
@@ -37,7 +37,7 @@ const TXT: Record<IdiomaDePlanilla, { muestra: string; ciegas: string; notas: st
   },
   en: {
     muestra: "Sample",
-    ciegas: "Blind evaluation: the code only. When you submit it, CTC receives the sheet and confirms the result.",
+    ciegas: "Blind evaluation: the sample code only. When you submit it, CTC receives the sheet and confirms the result; once CTC confirms or returns it, you will see the lot code.",
     notas: "Notes for CTC (optional)",
     notasPh: "Q-Grader remarks…",
     falta: "Fill in the sheet for the chosen view to be able to submit it.",
@@ -78,7 +78,7 @@ function useAction() {
 /** V5.144: lo que quedó guardado con «Guardar y terminar más tarde» (`evaluacion_borradores`). */
 export type BorradorDeEvaluacion = { planilla: unknown; notas: string | null; codigoInterno: string | null; guardadoEl: string; reporte?: ReporteAdjunto | null };
 
-export function DarDeAltaButton({ lotId, uid, borrador, devoluciones = [] }: { lotId: string; uid: string; borrador?: BorradorDeEvaluacion | null; /** V5.162: los comentarios con que CTC devolvió este lote (log al final). */ devoluciones?: { fecha: string; motivo: string }[] }) {
+export function DarDeAltaButton({ muestra, uid, borrador, devoluciones = [] }: { /** V6.24: el código CIEGO de la muestra, lo único que la nombra en el navegador. */ muestra: string; uid: string; borrador?: BorradorDeEvaluacion | null; /** V5.162: los comentarios con que CTC devolvió este lote (log al final). */ devoluciones?: { fecha: string; motivo: string }[] }) {
   const { pending, error, run } = useAction();
   const [open, setOpen] = useState(false);
   // La planilla arranca con el borrador, si lo hay: el evaluador retoma donde quedó.
@@ -144,8 +144,8 @@ export function DarDeAltaButton({ lotId, uid, borrador, devoluciones = [] }: { l
             <AdjuntoReporteQGrader
               value={reporte}
               onChange={(r) => { setReporte(r); setGuardado(false); }}
-              preparar={(meta) => prepararReporteQGrader(lotId, meta)}
-              confirmar={(path, meta) => confirmarReporteQGrader(lotId, path, meta)}
+              preparar={(meta) => prepararReporteQGrader(muestra, meta)}
+              confirmar={(path, meta) => confirmarReporteQGrader(muestra, path, meta)}
               disabled={pending}
               lang={lang}
             />
@@ -158,7 +158,7 @@ export function DarDeAltaButton({ lotId, uid, borrador, devoluciones = [] }: { l
                 disabled={pending || puntaje == null}
                 onClick={() =>
                   run(
-                    () => registrarEvaluacion(lotId, ev, notas, codigoInterno, reporte),
+                    () => registrarEvaluacion(muestra, ev, notas, codigoInterno, reporte),
                     () => {
                       setOpen(false);
                       setEv(EMPTY_LAB_EVALUATION);
@@ -175,7 +175,7 @@ export function DarDeAltaButton({ lotId, uid, borrador, devoluciones = [] }: { l
               <button
                 className="btn btn-sm"
                 disabled={pending || (!labEvaluationHasData(ev) && !notas.trim() && !codigoInterno.trim() && !reporte)}
-                onClick={() => run(() => guardarBorrador(lotId, ev, notas, codigoInterno, reporte), () => { setGuardado(true); setOpen(false); })}
+                onClick={() => run(() => guardarBorrador(muestra, ev, notas, codigoInterno, reporte), () => { setGuardado(true); setOpen(false); })}
               >
                 {pending ? tx.guardando : tx.despues}
               </button>

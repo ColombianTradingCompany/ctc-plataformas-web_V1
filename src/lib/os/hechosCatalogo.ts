@@ -308,6 +308,9 @@ export const ACCIONES: Readonly<Record<string, ReglaDeAccion>> = {
   "producer_profile.cuenta_descongelada":   { efectos: [sube("felicidad")] },
   "directorio_profile.aceptar":             { efectos: [sube("felicidad")] },
   "directorio_profile.rechazar":            { efectos: [baja("felicidad")] },
+  // Rondas (2026-11-07): un contacto anotado desde una ronda de la OS (`src/app/ocp/(app)/rondasActions.ts`). Solo cuenta: el
+  // peso en una barra lo decide el owner (regla propia 4); lo que el productor contestó vive en `ronda_contactos`, no aquí.
+  "producer.ronda_contacto_registrado":     { efectos: [] },
   // Módulos
   "tool.version_publicada":                 { efectos: [sube("realizacion")] },
 };

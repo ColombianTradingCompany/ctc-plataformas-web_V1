@@ -351,7 +351,8 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
     home: "/os",
     // F2 (el esqueleto): Inicio y tres módulos de solo lectura. Sin enlaces `ownerOnly`: el lado del
     // Code Master («Pedidos a Code») no tiene página todavía. F3: Estafeta y Acciones, en obra y
-    // apagados por defecto (su página dice «apagado» y por qué hasta que el owner los encienda).
+    // apagados por defecto (su página dice «apagado» y por qué hasta que el owner los encienda). Rondas (2026-11-07):
+    // el primer módulo que escribe (por la acción del OCP), también apagado por defecto.
     nav: [
       {
         links: [
@@ -361,6 +362,7 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           { href: "/os/m/taller", label: "Taller" },
           { href: "/os/m/estafeta", label: "Estafeta" },
           { href: "/os/m/acciones", label: "Acciones" },
+          { href: "/os/m/rondas", label: "Rondas" },
         ],
       },
     ],

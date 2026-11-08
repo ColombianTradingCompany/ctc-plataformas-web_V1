@@ -5,11 +5,15 @@ import { PVC_SOLO_OWNER, armarTablero, tareasPorHub, type LecturasDelTablero, ty
 import { PIEZAS, PIEZAS_DE_ACCIONES, PIEZAS_DE_ESTAFETA, type PiezaId } from "../fuentes";
 import { armarAcciones, type Acciones, type TareasDeNotion } from "../acciones";
 import { armarEstafeta, type Carta, type Estafeta } from "../estafeta";
+import { RONDAS } from "../rondas/definiciones";
+import { armarRonda, type RondaArmada } from "../rondas/nucleo";
+import type { Contacto, LoteDeObjetivo, Objetivo } from "../rondas/tipos";
 
 // ── CTCx OS · los datos de la demostración (V6.19, F2) · PURO, TODO INVENTADO ─
 // Lo que pinta `/os/demo` (solo en local, con OS_DEMO=1) para las capturas de revisión de identidad.
 // NADA de aquí es de la red: cifras redondas inventadas, nombres con «Ejemplo», ninguna referencia de
-// lote real, ningún correo, ninguna finca, ningún precio. Los crons son los del registro del código
+// lote real, ningún correo, ninguna finca real (las de la ronda se llaman «Finca Ejemplo»), ningún precio, ningún teléfono que
+// exista (el de la ronda es todo ceros). Los crons son los del registro del código
 // (`CRONS`, públicos en el repo), con una salud inventada.
 // El tablero se arma con la MISMA función que el de verdad (`armarTablero`), así que la demostración
 // enseña exactamente las piezas, los «Sin datos» y las notas que enseñaría la OS; después, cada cifra
@@ -142,3 +146,119 @@ export const IDENTIDAD_DEMO: { nombre: string; consolas: readonly PanelConsoleKe
   consolas: ["bcp", "ecp", "ocp", "lcp", "os"],
   isOwner: false,
 };
+
+// ── Rondas (2026-11-07): tres productores inventados, armados por la MISMA `armarRonda` que la OS de verdad ──
+const fichaSecciones = (completa: boolean): LoteDeObjetivo["fichaSecciones"] => ({ a1: true, a2: completa, a3: completa, a5: completa, b1: true });
+const OBJETIVOS_EJEMPLO: Objetivo[] = [
+  {
+    productorId: "productor-ejemplo-1",
+    codigo: "CTC-P-EJEMPLO1",
+    nombre: "Productor Ejemplo Uno",
+    nombreCorto: "Productor",
+    empresa: "Empresa Ejemplo",
+    telefono: "000000000000",
+    whatsappConfirmado: false,
+    lotes: [
+      {
+        id: "lote-ejemplo-1",
+        nombre: "Lote Ejemplo Uno",
+        codigo: "CTC-L-EJEMPLO1",
+        etapa: "borrador",
+        grado: null,
+        muestraEnviada: false,
+        muestraRecibida: false,
+        existenciaKg: null,
+        fichaPct: 22,
+        fichaSecciones: fichaSecciones(false),
+        finca: { id: "finca-ejemplo-1", nombre: "Finca Ejemplo Uno", codigo: "CTC-F-EJEMPLO1", estado: "pending_review", conPoligono: false },
+      },
+      {
+        id: "lote-ejemplo-2",
+        nombre: "Lote Ejemplo Dos",
+        codigo: "CTC-L-EJEMPLO2",
+        etapa: "galardonado",
+        grado: "red",
+        muestraEnviada: true,
+        muestraRecibida: true,
+        existenciaKg: 1200,
+        fichaPct: 89,
+        fichaSecciones: fichaSecciones(true),
+        finca: { id: "finca-ejemplo-2", nombre: "Finca Ejemplo Dos", codigo: "CTC-F-EJEMPLO2", estado: "approved", conPoligono: false },
+      },
+    ],
+  },
+  {
+    productorId: "productor-ejemplo-2",
+    codigo: "CTC-P-EJEMPLO2",
+    nombre: "Productora Ejemplo Dos",
+    nombreCorto: "Productora",
+    empresa: null,
+    telefono: "000000000000",
+    whatsappConfirmado: true,
+    lotes: [
+      {
+        id: "lote-ejemplo-3",
+        nombre: "Lote Ejemplo Tres",
+        codigo: null,
+        etapa: "borrador",
+        grado: null,
+        muestraEnviada: false,
+        muestraRecibida: false,
+        existenciaKg: null,
+        fichaPct: null,
+        fichaSecciones: { a1: false, a2: false, a3: false, a5: false, b1: false },
+        finca: null,
+      },
+    ],
+  },
+  {
+    productorId: "productor-ejemplo-3",
+    codigo: "CTC-P-EJEMPLO3",
+    nombre: "Productor Ejemplo Tres",
+    nombreCorto: "Productor",
+    empresa: null,
+    telefono: null,
+    whatsappConfirmado: true,
+    lotes: [
+      {
+        id: "lote-ejemplo-4",
+        nombre: "Lote Ejemplo Cuatro",
+        codigo: "CTC-L-EJEMPLO4",
+        etapa: "galardonado",
+        grado: "blue",
+        muestraEnviada: true,
+        muestraRecibida: true,
+        existenciaKg: 800,
+        fichaPct: 100,
+        fichaSecciones: fichaSecciones(true),
+        finca: { id: "finca-ejemplo-4", nombre: "Finca Ejemplo Cuatro", codigo: "CTC-F-EJEMPLO4", estado: "approved", conPoligono: true },
+      },
+    ],
+  },
+];
+const CONTACTOS_EJEMPLO: Contacto[] = [
+  {
+    id: "contacto-ejemplo-1",
+    productorId: "productor-ejemplo-2",
+    resultado: "volver_a_llamar",
+    volverEl: "2026-11-10",
+    nota: "Nota de ejemplo: pidió que lo llamen después del mediodía.",
+    respuestas: { lotes: {}, productor: {} },
+    aplicadas: {},
+    registradoPor: "Equipo Ejemplo",
+    registradoAt: "2026-11-06T16:00:00.000Z",
+  },
+  {
+    id: "contacto-ejemplo-2",
+    productorId: "productor-ejemplo-3",
+    resultado: "alcanzado",
+    volverEl: null,
+    nota: "Nota de ejemplo: lo piensa con su familia.",
+    respuestas: { lotes: { "lote-ejemplo-4": { existencia_kg: 800, terminos: "sin_decidir" } }, productor: {} },
+    aplicadas: { "lote-ejemplo-4.existencia_kg": "ok" },
+    registradoPor: "Equipo Ejemplo",
+    registradoAt: "2026-11-07T14:00:00.000Z",
+  },
+];
+/** La primera ronda, con Personajes y bitácora inventados (la bitácora «leída»). */
+export const RONDA_DEMO: RondaArmada = armarRonda(RONDAS[0], OBJETIVOS_EJEMPLO, CONTACTOS_EJEMPLO, "leidos", "Persona Ejemplo");

@@ -6,10 +6,12 @@ import { Acciones } from "@/components/os/vistas/Acciones";
 import { Almacen } from "@/components/os/vistas/Almacen";
 import { Estafeta } from "@/components/os/vistas/Estafeta";
 import { Hacienda } from "@/components/os/vistas/Hacienda";
+import { Ronda } from "@/components/os/vistas/Ronda";
+import { Rondas } from "@/components/os/vistas/Rondas";
 import { InicioVista } from "@/components/os/vistas/Inicio";
 import { Taller } from "@/components/os/vistas/Taller";
 import { demoPermitido } from "@/lib/os/demo/permitido";
-import { ACCIONES_DEMO, ESTAFETA_DEMO, IDENTIDAD_DEMO, TABLERO_DEMO } from "@/lib/os/demo/datos";
+import { ACCIONES_DEMO, ESTAFETA_DEMO, IDENTIDAD_DEMO, RONDA_DEMO, TABLERO_DEMO } from "@/lib/os/demo/datos";
 import { parsearModulos } from "@/lib/os/modulos";
 import s from "@/components/os/os.module.css";
 import "@/components/os/identidad/os-tokens.css";
@@ -30,17 +32,20 @@ const VISTAS = [
   { clave: "taller", titulo: "Taller" },
   { clave: "estafeta", titulo: "Estafeta" },
   { clave: "acciones", titulo: "Acciones" },
+  { clave: "rondas", titulo: "Rondas" },
 ] as const;
 
 export default async function OsDemoPage({ params }: { params: Promise<{ vista?: string[] }> }) {
   if (!demoPermitido()) notFound();
   const { vista } = await params;
-  if (vista && vista.length > 1) notFound();
+  // Rondas tiene una vista más: la ronda de la demostración, `/os/demo/rondas/<slug>` (la única con dos segmentos).
+  const enUnaRonda = vista?.length === 2 && vista[0] === "rondas" && vista[1] === RONDA_DEMO.slug;
+  if (vista && vista.length > 1 && !enUnaRonda) notFound();
   const clave = vista?.[0];
   if (clave !== undefined && !VISTAS.some((v) => v.clave === clave)) notFound();
-  // Los valores por defecto del registro, salvo los dos de F3 (en obra, apagados por defecto en la OS de verdad): la
+  // Los valores por defecto del registro, salvo los dos de F3 y Rondas (apagados por defecto en la OS de verdad): la
   // demostración los enciende para que la revisión vea su hoja y su vista. No lee la base.
-  const modulos = parsearModulos({ version: 1, modulos: { estafeta: { encendido: true }, acciones: { encendido: true } } });
+  const modulos = parsearModulos({ version: 1, modulos: { estafeta: { encendido: true }, acciones: { encendido: true }, rondas: { encendido: true } } });
 
   return (
     <ProcedenciaProvider consolas={IDENTIDAD_DEMO.consolas} isOwner={IDENTIDAD_DEMO.isOwner} nombre={IDENTIDAD_DEMO.nombre}>
@@ -62,6 +67,8 @@ export default async function OsDemoPage({ params }: { params: Promise<{ vista?:
         {clave === "taller" && <Taller tablero={TABLERO_DEMO} version="V0.0-EJEMPLO" sha="ejemplo" />}
         {clave === "estafeta" && <Estafeta estafeta={ESTAFETA_DEMO} />}
         {clave === "acciones" && <Acciones acciones={ACCIONES_DEMO} />}
+        {clave === "rondas" && !enUnaRonda && <Rondas base="/os/demo" />}
+        {enUnaRonda && <Ronda ronda={RONDA_DEMO} demo volver="/os/demo/rondas" />}
       </main>
     </ProcedenciaProvider>
   );

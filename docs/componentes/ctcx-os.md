@@ -19,6 +19,15 @@
 > (hub 8 · Ejecución, F-23) y Estafeta (hub 7 · Directorios, F-27). Sus lectores de Notion devuelven «sin integración»
 > hasta que exista la integración de solo lectura del OS (E-4, decisión CON-28, que se crea en la sesión del owner), y sus
 > cifras dicen «Sin datos», nunca un cero. Ver «Superficies y rutas», «Mapa de código» y «Pendientes» (De F3).
+>
+> **Rondas · el primer módulo que escribe (2026-11-07, rama `os/rondas`, sin número de versión hasta fusionar).** Pedido del
+> owner: una vuelta de contacto con los productores que GVB abre en el teléfono (`/os/m/rondas/<slug>`), con «Abrir WhatsApp»
+> (un enlace `wa.me` con el mensaje escrito: la persona lo envía ella misma, nada sale solo) y «Registrar respuesta» (escribe
+> por la Server Action del OCP, con su compuerta). Es un **arquetipo**: un solo componente pinta cualquier ronda y cada ronda es
+> una DEFINICIÓN (`src/lib/os/rondas/definiciones.ts`); la primera es «Completar fichas y disponibilidad». Nace **apagado**
+> (como todo módulo que escribe). Su bitácora, `ronda_contactos`, tiene la migración ESCRITA y **sin aplicar**
+> (`docs/migraciones/2026-11-07_ronda_contactos.sql`). Ver «Superficies y rutas», «Mapa de código», la regla propia 5, las
+> decisiones 27–31 y «Pendientes» (De Rondas).
 
 ## Qué es
 
@@ -87,6 +96,7 @@ Lo que el owner fijó el 5 de noviembre. Manda sobre lo que diga en contra el re
 | **Recibo** | la recepción de un despacho | `contract_despachos` (`recibido_at`, `peso_kg`, `humedad_pct`, `aw`, `pago_despacho_cop` · `pago_recepcion_cop`: el 60/40) |
 | **Cuenta** | un lead o un cliente en el embudo | `leads`, `quotes`, `sample_pack_orders`, `buyer_profiles`; Notion «Clientes». **Choca:** Cuenta (juego) ≠ cuenta de usuario / cuenta congelada (`producer_profiles.estado_cuenta`, `ALINEACION.md` §1); ver la decisión 7 |
 | **Parcela** | el terreno de una finca | `finca_parcelas` (`lat`, `lng`, `polygon_geojson`) y los campos EUDR de `fincas` |
+| **Ronda** | una vuelta de contacto con un grupo de Personajes (hoy, productores): a quién, qué le falta a cada uno, qué se le escribe y qué se anota (2026-11-07). No es una «Misión» (ésa es un Objetivo) | `src/lib/os/rondas/definiciones.ts` (las definiciones) y `ronda_contactos` (la bitácora; migración sin aplicar) |
 | **Módulo** | una herramienta para una parte del trabajo | hoy, las rutas de las consolas; mañana `/os/m/<clave>` (propuesto) |
 | **Casilla** | un lugar del mapa: una celda H3 de resolución 10 | **no existe** (ver el atlas, §5) |
 | **Barras de victoria** | financiera · felicidad · realización | **no existen**: se derivan de los hechos (abajo) |
@@ -171,6 +181,8 @@ Actions, cada cifra con su fuente y su «Abrir» a la pantalla de la consola due
 | `/os/m/taller` | **El Taller**: la salud del sistema — la versión, los crons de `registroCrons.ts` con su salud por latido, la cola de `integration_events` (totales y por hub) y las automatizaciones por etapa, con el rótulo **«Registro sin conciliar»** hasta que F1 concilie el registro con Make (crítica 25) | Solo la salud, que ve también GVB; el lado «Pedidos a Code» (solo el owner) será OTRO módulo (decisión 17) |
 | `/os/m/estafeta` | **(F3, en obra, apagado por defecto) La Estafeta**, en el edificio 7 · Directorios (CANALES §4.2, F-27): las tres bandejas (Te toca · Esperando a otros · Por revisar; cada carta cuenta UNA vez, `bandejaDe`), las cartas en «Te toca» por hub con la más vieja, y el Libro de entrada y salida (lo más nuevo arriba, 50 en pantalla; «Enviado» solo con su prueba, si no «Por comprobar»). Solo punteros del registro «Correspondencia» de Notion: ni el texto, ni el asunto, ni la persona, ni ids. Sin botones salvo «Copiar contexto para Tailor» | Su lector (`leerCorrespondencia`) devuelve «sin integración» hasta CON-28: todo dice «Sin datos» con su nota, sin aviso. El HUD es el de la OS (lee el tablero). Encendido, se abre desde la hoja del hub 7; apagado, la hoja, Inicio y el rail dicen por qué. Los buzones con bandera en cada edificio, las cartas en la ficha del Personaje, el HUD de correo, los consejos y el recorrido van detrás de F4 |
 | `/os/m/acciones` | **(F3, en obra, apagado por defecto) Las Acciones**, en el edificio 8 · Ejecución (F-23): lo pendiente de hoy por hub, con las tareas de la plataforma (las MISMAS medidas del tablero: las de la Hacienda) al lado de las Tareas de Notion (abiertas, vencidas, esperando respuesta, y las que no tienen Área). Se unen en la vista, nunca en los datos | Su lector de Notion (`leerTareasDeNotion`) devuelve «sin integración» hasta CON-28: la mitad de Notion dice «Sin datos». No marca ni cierra nada. Las tareas de la plataforma todavía se cuentan como el Tablero (la casilla «Hecho» cuenta): contar sin la casilla es un paso de F-23 con `consolas` (Pendientes) |
+| `/os/m/rondas` | **(2026-11-07, apagado por defecto) Las Rondas**, en el edificio 1 · Origen: la lista de las rondas que existen (una por definición), cada una con «Abrir la ronda». No lee la base | El primer módulo de clase `emite`. Encendido, se abre desde la hoja del hub 1 y desde Inicio; apagado, la hoja, Inicio y el rail dicen por qué |
+| `/os/m/rondas/<slug>` | **Una ronda**, móvil primero y sin arte: la cabecera (para qué, por qué importa, «N de M productores hechos»: hecho = su último contacto dice «Lo alcancé») y una tarjeta por productor con su código guardado, sus lotes (código guardado, finca, grado, avance de la Ficha) y lo que le falta a cada lote, «Abrir WhatsApp» (`wa.me/<número>?text=<mensaje>`: saludo firmado por quien mira, cada lote con sus pedidos, lo del productor; se envía a mano), «Ver el mensaje», «Registrar respuesta» (cómo fue: Lo alcancé · No contesta · Volver a llamar el <fecha>, la nota, y SOLO los campos de los pedidos que le aplican) y la bitácora con quién y cuándo | Lee con `leerRonda` (solo servidor). Escribe SOLO por `registrarRespuestaDeRonda` (`src/app/ocp/(app)/rondasActions.ts`, compuerta `permisoDeEscritura("ocp", "emite")`): quien registra necesita la llave `ocp` a nivel `admin`, además de `os`. Sin la tabla `ronda_contactos` la ronda se pinta igual y el formulario dice que no guarda |
 | `/os/demo/[[...vista]]` | **El modo demostración**: las MISMAS vistas con un tablero inventado («Ejemplo»), para las capturas de revisión de identidad (blueprint §7.8); su Inicio es también el mapa, y quien «mira» no es el owner, así que el Modelo Económico dice «Solo el owner». Desde F3 tiene también `/os/demo/estafeta` y `/os/demo/acciones`, con Notion «leído» (cartas y conteos inventados, armados por las MISMAS funciones), y enciende esos dos módulos para que la revisión vea su hoja | **Solo en local**: `OS_DEMO=1` y nunca `VERCEL_ENV=production` (`src/lib/os/demo/permitido.ts`); fuera de `(app)`, sin compuerta ni base; en Vercel es un 404. `OS_DEMO` no se define en Vercel (owner) |
 
 - **Layouts**: el RAÍZ `src/app/os/layout.tsx` (`data-theme="bcp"`, el Tailwind del panel, `noindex`; `qa-rutas-consolas` (h)); el de
@@ -356,6 +368,35 @@ con `portada`; con la Hacienda apagada, las tarjetas).
   ruta de la demostración. **Fuera del OS**: el rail de la OS en `src/lib/panel/consoles.ts` (de `consolas`, con su línea en
   `ALINEACION.md` §3).
 
+**Rondas (2026-11-07) · el arquetipo de contacto, el primer módulo que escribe** (`qa-os-check` R):
+
+- `src/lib/os/rondas/tipos.ts` (puro) — la forma de una ronda: `DefinicionDeRonda` (slug, título, propósito, por qué, hub, QUIÉN —un
+  `Selector` de `SELECTORES`, con su filtro opcional—, los `Pedido` —qué falta, por lote o del productor, con `aplica`, `detalle`,
+  su línea del `mensaje` y los campos que lo contestan—, los `Campo` y la plantilla del mensaje) y `Destino`: un campo va por una
+  ACCIÓN DUEÑA de la lista cerrada `ACCIONES_DE_RONDA` (hoy solo `registrarExistenciaOcp`) o queda DICHO en la bitácora con la
+  pantalla donde lo aplica su dueño (`aplicarEn`).
+- `src/lib/os/rondas/definiciones.ts` (puro) — `RONDAS` y `rondaPorSlug`. La ronda 1, «Completar fichas y disponibilidad» (owner, 7 nov):
+  los productores con lotes; pedidos «Enviar la muestra» (sin `sample_2kg_confirmed_at`), «Completar la Ficha» (lotes en `borrador`, con
+  las secciones A1 · A2 · A3 · A5 · B1 que faltan, leídas por PRESENCIA: lectura aproximada, la Ficha de KR manda), «Mapa EUDR de la
+  finca» (sin polígono, o el lote sin finca), «Disponibilidad y precio» (kilos, precio que pide, términos A/B y, si está galardonado, la
+  venta anticipada entre un saco y una carga para kits) y «Confirmar su WhatsApp». `TERMINOS_AB`: **PENDIENTE, los define el owner**;
+  mientras lo estén el mensaje no los nombra. La muestra y la carga salen de `src/lib/trato/terminos.ts` (ninguna cifra escrita).
+- `src/lib/os/rondas/nucleo.ts` (puro) — `armarRonda` (las tarjetas, el orden, «hecho»), `mensajeDe`, `normalizarTelefono` y
+  `enlaceDeWhatsapp` (el ÚNICO sitio con `wa.me`), `anotadoDe` y `validarEntrada` (la usan el formulario y el escritor).
+- `src/lib/os/rondas/lectura.ts` (server-only, solo lectura) — `leerRonda`: el ÚNICO archivo del OS que lee personas (el nombre del lote
+  y de la finca; el contacto por `fetchProducerContacts` de `src/lib/bcpProducers.ts`, el mismo lector del OCP), con una lista blanca
+  EXACTA de tablas y columnas en `qa-os-check` (R4). Del datasheet, solo cinco rutas JSON; de la finca, si tiene polígono, nunca sus
+  coordenadas.
+- Rutas `src/app/os/(app)/m/rondas/{layout,page,error}.tsx` y `[slug]/page.tsx` (el patrón de F2: el interruptor en layout Y página);
+  vistas `src/components/os/vistas/{Rondas,Ronda}.tsx` y el formulario `src/components/os/rondas/RegistrarRespuesta.tsx` (cliente; la
+  ÚNICA importación de una Server Action en el OS), con `rondas.module.css` (solo tokens de la casa). Textos en `textos/{es,en}.ts`
+  (`rondas.*`, `modulos.rondas`); lo propio de cada ronda, en su definición.
+- **Fuera del OS**: el escritor `src/app/ocp/(app)/rondasActions.ts` (de `consolas` · OCP, con su línea en `ALINEACION.md` §3): compuerta
+  del OCP clase `emite`, valida contra la definición, llama a `registrarExistenciaOcp` para los kilos, y deja `ronda_contactos` y su fila
+  `producer · ronda_contacto_registrado` en `audit_log` (en `hechosCatalogo.ts`, sin efecto en las barras). El rail de la OS
+  (`src/lib/panel/consoles.ts`) gana «Rondas». La demostración tiene `/os/demo/rondas` y `/os/demo/rondas/completar-fichas`
+  (`RONDA_DEMO` en `demo/datos.ts`).
+
 - `docs/componentes/ctcx-os/atlas.md`: el atlas. `docs/componentes/ctcx-os/reuniones.md`: el primer módulo.
 
 ## Tablas que posee
@@ -376,6 +417,14 @@ Actions de su dueño**.
   pide), su `entity_type` entra en `hechosCatalogo.ts` en la misma tanda (regla propia 2). Qué texto guarda el acta y qué
   viaja por la espina es la decisión abierta 11.
 - **Las metas (`os_metas`) y el interruptor por módulo**: claves de `platform_settings`, no tablas nuevas.
+
+**Rondas (2026-11-07) · migración ESCRITA, SIN APLICAR** (la aplica el owner con `apply_migration`, antes de encender el módulo):
+**`ronda_contactos`** (`docs/migraciones/2026-11-07_ronda_contactos.sql`), la bitácora de las rondas: una fila por contacto (ronda,
+productor, resultado, volver el, nota, lo dicho en `respuestas`, lo escrito en su registro dueño en `aplicadas`, quién y cuándo).
+Inmutable (guard trigger), RLS sin políticas, sin permisos para anon/authenticated; el productor no la ve. La escribe SOLO el escritor
+del OCP; la lee `leerRonda`. Hace falta porque lo que un productor dice por teléfono no tenía dónde vivir: `producer_comm_log` es el
+hilo que VE el productor, `audit_log` guarda el hecho y no lo dicho, y un precio pedido o unos términos son una PROPUESTA (guardarraíl
+8), no una oferta ni un contrato.
 
 ## Guardianes
 
@@ -422,6 +471,17 @@ Actions de su dueño**.
   demostración, y el PVC con y sin el owner: «Solo el owner», sin aviso, sin valor, la nota `sin_el_pvc` solo en su hub). Cada buscador se prueba a sí mismo con una muestra mala y una buena. **Vigila también código de fuera** (por eso
   su línea en §3): un control textual de paridad con el filtro de crons de `AutomatizacionesBoard.tsx` y un cable trampa sobre el
   bucle de `tareasCarga.ts` que crea las tareas `despacho:vencido:*`.
+- **`qa-os-check` R · Rondas** (2026-11-07; **961** comprobaciones sobre 69 archivos): nace apagado y `emite`; el escritor del OCP
+  (compuerta primero, valida contra la definición y mira la bitácora antes de escribir, solo `insert` en `ronda_contactos` y
+  `audit_log`, ninguna otra acción que las de `ACCIONES_DE_RONDA`, nada de eventos, correo, red ni WhatsApp); nada sale solo (sin
+  `fetch`, `window.open` ni `location`; `wa.me` solo en el núcleo; «Abrir WhatsApp» es un `<a href>`); el lector con su lista blanca
+  exacta; solo el formulario importa la acción (excepción con nombre a A5 y a A10) y solo el lector lee contactos (el lector no pasa
+  por A11: su lista blanca es más estricta; una excepción de una línea a B2 por la columna `sample_2kg_confirmed_at`); las páginas
+  miran el interruptor; las definiciones coherentes (cada campo de un pedido existe, cada acción es de la lista, cada `aplicarEn` es
+  una pantalla que existe); los términos A/B PENDIENTES fuera del mensaje; el núcleo probado con datos inventados (qué pedido aplica,
+  la Ficha que falta, la venta anticipada solo a galardonados, el mensaje y su enlace, «hecho», `validarEntrada` y sus ocho
+  rechazos); las vistas sin texto propio; la migración con RLS sin políticas e inmutable; y la demostración. H1 admite desde aquí un
+  módulo `emite` si nace apagado; H4 deja al escritor importar solo `definiciones` y `nucleo`.
 - Se reutilizan los que ya existen: `qa-rutas-consolas` (556; layout raíz (h) de `os`), `qa-niveles-check` (38), `qa-nav-check` (29;
   recorre `CONSOLE_ORDER` y comprueba que es igual a las claves de `CONSOLES`), `qa-entradas-check` (114; `/os` en
   `VUELTAS_PERMITIDAS`), `qa-encoding-check` y `qa-grados-check` (58).
@@ -443,6 +503,11 @@ Actions de su dueño**.
    sale al webhook y gasta una operación).
 3. **Las barras se calculan al leer**, nunca se guardan.
 4. **Los pesos y las metas son del owner**: este componente propone dirección y medida, no valor.
+5. **Antes de construir una pantalla nueva para recoger datos** (de productores o de cualquier Personaje), mire si una
+   **definición de Ronda** (`src/lib/os/rondas/definiciones.ts`) la cubre; si no, **añada una definición** en vez de una
+   pantalla. Un campo que tenga escritor dueño va por esa acción (con su compuerta, añadiéndola a `ACCIONES_DE_RONDA` y al
+   escritor `rondasActions.ts`); uno que no, queda dicho en la bitácora con la pantalla donde lo aplica su dueño. Nada sale
+   solo: el mensaje se abre en WhatsApp y lo envía una persona (owner, 2026-11-07; también en `AGENTS.md`).
 
 ## Lo que las consolas gobiernan de este componente
 
@@ -536,6 +601,24 @@ decisión abierta 12.
     con el PR1b, desde el BCP), y `qa-os-check` F3 se cambia en el mismo paso.
 26. **Los textos en inglés** (`src/lib/os/textos/en.ts`): borrador de Code Master. El owner los revisa antes de que exista el conmutador
     ES/EN; mientras tanto nadie los ve.
+
+**Las de Rondas (2026-11-07).** Con su valor por defecto ya en el código:
+
+27. **Los términos A y B** de la disponibilidad (A: el café se queda en la bodega del productor; B: pasa a la bodega de CTCx; en cada
+    caso CTCx busca el negocio bajo esos términos): **sin definir**. Están en `TERMINOS_AB` como «PENDIENTE: términos A/B — los define el
+    owner»; el formulario los ofrece con esa marca y el mensaje de WhatsApp NO los nombra hasta que el owner escriba su texto y ponga
+    `definidos: true` (`qa-os-check` R7 cambia en el mismo paso).
+28. **El saco de la venta anticipada** («un saco, ~65 kg»): la casa no tiene esa cifra (el saco del PVC es de 70 kg de CPS, del Modelo
+    Económico, solo del owner; el de la firma va de 70 a 200 kg). Por defecto el mensaje dice «entre un saco y una carga» con la carga de
+    `terminos.ts`; si el owner quiere la cifra, va en `src/lib/trato/terminos.ts` (su dueño) y la definición la lee.
+29. **El PVC en la ronda**: el precio que pide el productor se anota como propuesta; compararlo con el PVC y el grado (aceptarlo o pedir un
+    ajuste) es del owner, en el Modelo Económico, que es solo suyo (decisión 14 y V6.20). Por eso la ronda **no enseña el PVC** (ni a GVB).
+30. **«Hecho»** = el último contacto del productor en la ronda dice «Lo alcancé» (se habló con él y se anotó). Alternativa: hecho = sin
+    pedidos pendientes. El owner decide.
+31. **Aplicar lo dicho** (lo que queda en la bitácora sin escritor dueño): la fecha de envío de la muestra (la marca de recibida la pone
+    Gestión de Muestras), el mapa o su enlace (editor EUDR de la finca), el precio, los términos y la venta anticipada (Ofertas y Compras),
+    y el WhatsApp confirmado (`producer_profiles.whatsapp_confirmed`, que hoy solo escribe el productor desde KR). Por defecto lo aplica
+    una persona en la pantalla dueña; cada escritor nuevo del lado de CTCx es de `consolas` (§3b).
 
 *(Las decisiones del blueprint de Code Master se pliegan aquí con la etiqueta «Propuesto · pendiente del sí del owner»;
 las que falten, cuando lleguen.)*
@@ -650,6 +733,24 @@ las que falten, cuando lleguen.)*
   `next dev` en la sesión); se toman con Chrome sin interfaz contra `/os/demo/estafeta` y `/os/demo/acciones` antes del PR.
 - **La pista de idiomas** (CAN-29): pasar los textos de F2 (Inicio, Hacienda, Almacén, Taller, `Cifra`, `Avisos`, `ModuloApagado`) a
   `textos/`, y el conmutador ES/EN; los textos en inglés, con la revisión del owner (decisión 26).
+
+**De Rondas (2026-11-07)** — rama `os/rondas`, sin fusionar:
+
+- **Revisión del owner** de la rama y su vista previa (la consola real pide contraseña y código: se revisa con las capturas de
+  `/os/demo/rondas/completar-fichas`, solo en local con `OS_DEMO=1`).
+- **Aplicar la migración** `docs/migraciones/2026-11-07_ronda_contactos.sql` (sesión del owner, `apply_migration`, sus (A) y (C)).
+- **Encenderla** (decisión del owner, sesión del owner; hasta el PR1b no hay pantalla): un `upsert` de la llave `os_modulos` de
+  `platform_settings` con `{"version":1,"modulos":{"rondas":{"encendido":true,"motivo":null}}}` (los módulos que la llave no nombra
+  siguen con su valor por defecto) y su fila en `audit_log` (`platform_setting` · `os_modulo_cambiado`, convención de la decisión 18).
+- **La llave de GVB**: para VER la ronda, `os`; para GUARDAR, además `ocp` a nivel `admin` (la compuerta es la del OCP). Una lectura de
+  solo lectura del 2026-11-07 encontró dos filas activas de `panel_users` con `os: admin` y `ocp: admin` (una es la del owner); que la
+  otra sea la de GVB lo confirma el owner. Desde aquí no se concede nada.
+- **Decisiones 27–31** (los términos A/B, el saco, el PVC, «hecho», aplicar lo dicho).
+- **Los escritores que faltan, con `consolas`** (§3b): lo dicho en la bitácora a la vista en el OCP (la ficha del productor) y, si el
+  owner quiere, escritores del lado de CTCx para `whatsapp_confirmed` y la fecha de envío de la muestra; cada uno entra en
+  `ACCIONES_DE_RONDA` y en el escritor, y su campo cambia de `contacto` a `accion` en la definición.
+- **La Ficha que falta** se lee por presencia de cinco secciones (lectura aproximada): si el owner quiere la regla exacta de KR, su
+  cálculo (hoy dentro de `FichaView.tsx`) tiene que salir a una función pura de `kaffetal-regal` que lean los dos.
 
 ## Kick-off
 

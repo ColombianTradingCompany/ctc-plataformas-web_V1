@@ -38,6 +38,13 @@
 //      una carta lleva EXACTAMENTE sus campos (lista blanca) y sus textos viven en una fuente por idioma
 //      (ES y EN con la misma forma; las vistas no escriben texto propio, ni entre etiquetas, ni en un
 //      atributo, ni en una expresión; las etiquetas y los filtros de sus piezas salen de textos/).
+//   R. Rondas (2026-11-07), el PRIMER módulo que escribe, con su régimen propio y estrecho (las reglas de
+//      arriba siguen valiendo para todo lo demás): nace APAGADO y con clase `emite`; escribe SOLO por el
+//      escritor del OCP (`src/app/ocp/(app)/rondasActions.ts`, compuerta del OCP), que es la ÚNICA acción que
+//      importa el OS y solo desde el formulario; su lector es el ÚNICO archivo del OS que lee nombres y
+//      teléfonos, con una lista blanca exacta de tablas y columnas; nada se envía solo (el WhatsApp es un
+//      enlace `wa.me` que la persona abre); los términos A/B siguen PENDIENTES y el mensaje no los nombra; y
+//      el arquetipo es uno: cada ronda es una definición, probada aquí con datos inventados.
 //
 // Las reglas se prueban a sí mismas (autoprueba): cada buscador recibe una muestra
 // mala y una buena, y si la mala no salta o la buena salta, el guardián falla. Así
@@ -71,7 +78,10 @@ import {
   sumarMedidas, resumenDelHud, contextoParaTailor, etiquetaDeClave, ordenDeClave,
   PVC_SOLO_OWNER, esPvcSoloOwner, esTareaDelPvc, esHechoDelPvc, TABLAS_DEL_PVC, hubsDelPvc,
 } from "../src/lib/os/tablero.ts";
-import { TABLERO_DEMO, IDENTIDAD_DEMO, LECTURAS_DEMO, ACCIONES_DEMO, ESTAFETA_DEMO } from "../src/lib/os/demo/datos.ts";
+import { TABLERO_DEMO, IDENTIDAD_DEMO, LECTURAS_DEMO, ACCIONES_DEMO, ESTAFETA_DEMO, RONDA_DEMO } from "../src/lib/os/demo/datos.ts";
+import { RONDAS, rondaPorSlug, TERMINOS_AB, SECCIONES_DE_FICHA } from "../src/lib/os/rondas/definiciones.ts";
+import { armarRonda, mensajeDe, enlaceDeWhatsapp, normalizarTelefono, validarEntrada, anotadoDe, numeroDe } from "../src/lib/os/rondas/nucleo.ts";
+import { ACCIONES_DE_RONDA, SELECTORES, RESULTADOS } from "../src/lib/os/rondas/tipos.ts";
 import { FORMAS, TOKENS_DE_ARTE, VIEWBOX, HX, edificioArte, sueloArte, arbolesArte, matasArte, granosArte, iso, rotuloArte } from "../src/lib/os/haciendaArte.ts";
 import { CONSOLES, CONSOLE_ORDER, CONSOLAS_INVITABLES } from "../src/lib/panel/consoles.ts";
 import { TIPOS_DE_TAREA } from "../src/lib/panel/tareas.ts";
@@ -92,7 +102,27 @@ const existe = (rel) => existsSync(join(RAIZ, rel));
 const RAICES = ["src/app/os", "src/components/os", "src/lib/os"];
 const HECHOS = new Set(["src/lib/os/hechos.ts", "src/lib/os/hechosCatalogo.ts"]);
 const PUROS = ["src/lib/os/fuentes.ts", "src/lib/os/tablero.ts", "src/lib/os/modulos.ts", "src/lib/os/haciendaArte.ts", "src/lib/os/hechosCatalogo.ts",
-  "src/lib/os/acciones.ts", "src/lib/os/estafeta.ts", "src/lib/os/textos/es.ts", "src/lib/os/textos/en.ts", "src/lib/os/textos/idioma.ts"];
+  "src/lib/os/acciones.ts", "src/lib/os/estafeta.ts", "src/lib/os/textos/es.ts", "src/lib/os/textos/en.ts", "src/lib/os/textos/idioma.ts",
+  "src/lib/os/rondas/tipos.ts", "src/lib/os/rondas/definiciones.ts", "src/lib/os/rondas/nucleo.ts"];
+
+// ── Rondas (R): los nombres de su régimen, en un solo sitio ─────────────────────
+/** El formulario de Rondas: el ÚNICO archivo del OS que importa una Server Action, y solo ésta. */
+const FORMULARIO_DE_RONDAS = "src/components/os/rondas/RegistrarRespuesta.tsx";
+const ESCRITOR_DE_RONDAS = "src/app/ocp/(app)/rondasActions.ts";
+const ACCION_DE_RONDAS = { spec: "@/app/ocp/(app)/rondasActions", nombres: ["registrarRespuestaDeRonda"] };
+/** El lector de Rondas: el ÚNICO archivo del OS que lee personas (nombre del lote y de la finca; el contacto, por `fetchProducerContacts`). */
+const LECTOR_DE_RONDAS = "src/lib/os/rondas/lectura.ts";
+/** Su lista blanca EXACTA: tabla → columnas (un alias `x:col->k` cuenta por su columna). Ni una tabla ni una columna más. */
+const TABLAS_DE_RONDAS = {
+  lots: ["id", "producer_id", "finca_id", "public_code", "name", "stage", "grade", "sample_shipped_at", "sample_2kg_confirmed_at", "existencia_cps_kg", "datasheet"],
+  fincas: ["id", "codigo", "name", "status", "eudr_polygon_geojson", "eudr_polygon"],
+  ficha_completion_snapshots: ["lot_id", "completion_pct", "recorded_at"],
+  producer_profiles: ["profile_id", "codigo"],
+  ronda_contactos: ["id", "producer_id", "resultado", "volver_el", "nota", "respuestas", "aplicadas", "registrado_por", "registrado_at"],
+  profiles: ["id", "full_name"],
+};
+/** Lo que el escritor del OCP puede importar del OS (puro, nada más). */
+const DEL_OS_PARA_EL_ESCRITOR = ["@/lib/os/rondas/definiciones", "@/lib/os/rondas/nucleo"];
 
 const listados = listarArchivos(RAIZ, RAICES).filter((r) => /\.(ts|tsx|css|svg)$/.test(r) && existe(r));
 const OS = listados.map((ruta) => {
@@ -365,6 +395,12 @@ const EXCEPCIONES = [
   // Cada excepción vale para UNA línea exacta (la hoja del estado), nunca para el archivo entero: en.ts es la fuente de todos
   // los textos en inglés, botones incluidos, y cualquier otra línea con «Sent» sigue saltando.
   { regla: "G1", archivo: "src/lib/os/textos/en.ts", linea: 'enviado: "Sent",', porque: "«Sent» es el estado «enviado» del Libro, no un botón" },
+  // R: la ÚNICA Server Action que importa el OS (el escritor de Rondas en el OCP, con su compuerta), desde el formulario de Rondas.
+  { regla: "A5", archivo: "src/components/os/rondas/RegistrarRespuesta.tsx", linea: 'import { registrarRespuestaDeRonda } from "@/app/ocp/(app)/rondasActions";',
+    porque: "el formulario de Rondas guarda por la acción del OCP (regla propia 1: el módulo llama a la Server Action del dueño); A10 y R4 vigilan que sea solo ésa" },
+  // R: el NOMBRE de una columna (`lots.sample_2kg_confirmed_at`) en el select del lector de Rondas, no un peso escrito.
+  { regla: "B2", archivo: "src/lib/os/rondas/lectura.ts", linea: '"id, producer_id, finca_id, public_code, name, stage, grade, sample_shipped_at, sample_2kg_confirmed_at, existencia_cps_kg, ficha_a1:datasheet->>product_name, ficha_a2:datasheet->contributions, ficha_a3_premios:datasheet->>awards, ficha_a3_origen:datasheet->>about_origin, ficha_b1:datasheet->varieties",',
+    porque: "«2kg» es parte del nombre de la columna lots.sample_2kg_confirmed_at, no un peso escrito" },
   { regla: "G1", archivo: "src/lib/os/textos/en.ts", linea: 'enviado_a_mano: "Sent by hand (unverified)",', porque: "«Sent by hand (unverified)» es el estado «enviado_a_mano» del Libro, no un botón" },
   { regla: "G1", archivo: "src/lib/os/textos/en.ts", linea: '"Newest first. «Sent» is shown only with the proof (the event number and the message number); without it, the letter says «To verify».",',
     porque: "la nota del Libro (libroNota) NOMBRA el estado «Sent» entre comillas para explicar cuándo se pinta; no es un botón" },
@@ -474,7 +510,7 @@ check("autoprueba · A9b salta con una tabla en una variable o en una plantilla"
   problemasDeTablas('const TAB = "leads"; service.from(TAB).select("id", { count: "exact", head: true })').length > 0 && problemasDeTablas("service.from(`leads`).select(\"id\")").length > 0);
 check("autoprueba · A9b no confunde Array.from con una tabla", problemasDeTablas("const xs = Array.from({ length: 3 }, (_, i) => i);").length === 0);
 check("autoprueba · A9b calla con lo declarado", problemasDeTablas('service.from("lots").select("stage"); service.from("platform_settings").select("value").eq("key", CLAVE_MODULOS_OS).maybeSingle()').length === 0);
-for (const a of codigo.filter((x) => x.ruta.startsWith("src/lib/os/"))) for (const p of problemasDeTablas(a.limpio)) check(`A9 · ${p}`, false, a.ruta);
+for (const a of codigo.filter((x) => x.ruta.startsWith("src/lib/os/") && x.ruta !== LECTOR_DE_RONDAS)) for (const p of problemasDeTablas(a.limpio)) check(`A9 · ${p}`, false, a.ruta);
 check("A9 · src/lib/os lee solo tablas declaradas", true);
 
 /** A11: los selects escritos en src/lib/os no piden datos de personas ni textos libres (las funciones reusadas los leen y el OS no los pinta). */
@@ -489,7 +525,8 @@ function columnasMalas(limpio) {
 }
 check("autoprueba · A11 salta con un nombre", columnasMalas('service.from("profiles").select("id, full_name")').length === 1);
 check("autoprueba · A11 calla con conteos y estados", columnasMalas('service.from("lots").select("id", { count: "exact", head: true }); service.from("latidos").select("clave, inicio, fin, estado")').length === 0);
-for (const a of codigo.filter((x) => x.ruta.startsWith("src/lib/os/") && !x.hechos)) for (const p of columnasMalas(a.limpio)) check(`A11 · ${p}`, false, a.ruta);
+// El lector de Rondas no pasa por A11: su régimen (R4) es más estricto, una lista blanca EXACTA de tablas y columnas.
+for (const a of codigo.filter((x) => x.ruta.startsWith("src/lib/os/") && !x.hechos && x.ruta !== LECTOR_DE_RONDAS)) for (const p of columnasMalas(a.limpio)) check(`A11 · ${p}`, false, a.ruta);
 check("A11 · src/lib/os no pide nombres, notas, errores ni salidas del PVC", true);
 
 /**
@@ -534,6 +571,10 @@ const IMPORTS_PERMITIDOS = {
   "@/lib/pvc/servicio": ["edicionVigente", "edicionProxima", "hoyEnColombia"],
   "@/lib/pvc/vigilancia": ["propuestasPendientes"],
   "@/lib/pvc/agente": ["estadoDelAgente"],
+  // Rondas (R): el contacto del productor, por el MISMO lector que la línea de contacto del OCP (solo lo importa LECTOR_DE_RONDAS),
+  // y dos términos de la casa para el mensaje (la muestra y la carga: así ninguna cifra se escribe en el OS).
+  "@/lib/bcpProducers": ["fetchProducerContacts"],
+  "@/lib/trato/terminos": ["CARGA_KG", "MUESTRA_EVALUACION_KG"],
   // puros: todo
   "@/lib/panel/consoles": "*",
   "@/lib/panel/tareas": "*",
@@ -580,6 +621,12 @@ function problemasDeImports(ruta, limpio) {
       continue;
     }
     if (spec.startsWith("@/components/")) { if (!COMPONENTES_PERMITIDOS.some((x) => x.test(spec))) p.push(`componente no declarado: ${spec}`); continue; }
+    if (spec === ACCION_DE_RONDAS.spec && ruta === FORMULARIO_DE_RONDAS) {
+      // R: la ÚNICA Server Action que el OS importa (el escritor de Rondas, compuerta del OCP), solo desde el formulario y por su nombre.
+      if (soloTipo) continue;
+      for (const n of nombres) if (!ACCION_DE_RONDAS.nombres.includes(n)) p.push(`de ${spec} solo se importa ${ACCION_DE_RONDAS.nombres.join(", ")} (no «${n}»)`);
+      continue;
+    }
     if (spec.startsWith("@/app/")) { if (!APP_PERMITIDOS.some((x) => x.test(spec))) p.push(`importa de otra parte de la app: ${spec}`); continue; }
     if (spec.startsWith("@/") || spec.startsWith("src/")) { p.push(`importación no declarada: ${spec}`); continue; }
     if (spec.startsWith(".")) continue;
@@ -608,6 +655,10 @@ check("autoprueba · A10 salta con un import() dinámico de una acción de otra 
 check("autoprueba · A10 salta con un import() dinámico de un módulo de lectura (lo traería entero)", problemasDeImports("src/lib/os/x.ts", 'const m = await import("@/lib/pvc/vigilancia");').length > 0);
 check("autoprueba · A10 salta con un import() sin ruta literal", problemasDeImports("src/lib/os/x.ts", "const m = await import(ruta);").length > 0);
 check("autoprueba · A10 calla con un import() dinámico de dentro del OS", problemasDeImports("src/components/os/x.tsx", 'const H = await import("./vistas/Hacienda"); const F = await import("@/lib/os/fuentes");').length === 0);
+check("autoprueba · A10 (R) deja al formulario de Rondas importar SOLO su acción, y a nadie más",
+  problemasDeImports(FORMULARIO_DE_RONDAS, 'import { registrarRespuestaDeRonda } from "@/app/ocp/(app)/rondasActions";').length === 0
+    && problemasDeImports(FORMULARIO_DE_RONDAS, 'import { registrarRespuestaDeRonda, otra } from "@/app/ocp/(app)/rondasActions";').length > 0
+    && problemasDeImports("src/components/os/vistas/Ronda.tsx", 'import { registrarRespuestaDeRonda } from "@/app/ocp/(app)/rondasActions";').length > 0);
 check("autoprueba · A10 calla con lecturas y tipos", problemasDeImports("src/lib/os/x.ts", 'import { propuestasPendientes, type PropuestaDeCorreccion } from "@/lib/pvc/vigilancia";\nimport type { StockCargado } from "@/lib/stock/servidor";\nimport { FUENTES } from "./fuentes";').length === 0);
 for (const a of codigo.filter((x) => !x.css)) for (const p of problemasDeImports(a.ruta, a.limpio)) check(`A10 · ${p}`, false, a.ruta);
 check("A10 · el OS importa solo lo declarado (lecturas, puros, su chrome)", true);
@@ -882,7 +933,8 @@ for (const m of MODULOS_OS) {
   check(`H1 · «${m.clave}»: tiene carpeta en ${DIR_MODULOS}`, carpetas.includes(m.clave));
   const enlace = railOs.find((l) => l.href === m.ruta);
   check(`H1 · «${m.clave}»: está en el rail de la OS con su título`, !!enlace && enlace.label === m.titulo, enlace?.label ?? "sin enlace");
-  check(`H1 · «${m.clave}»: clase de F2 = lectura`, m.clase === "lectura");
+  // Desde Rondas (R): un módulo que escribe (por la acción de su dueño) nace APAGADO; los demás siguen siendo de lectura.
+  check(`H1 · «${m.clave}»: clase lectura, o un módulo que escribe y nace apagado`, m.clase === "lectura" || (m.clase === "emite" && m.porDefecto === "apagado"));
   check(`H2 · «${m.clave}»: tiene layout.tsx y error.tsx`, existe(`${DIR_MODULOS}/${m.clave}/layout.tsx`) && existe(`${DIR_MODULOS}/${m.clave}/error.tsx`));
   if (existe("src/lib/os/interruptores.ts")) {
     const lay = existe(`${DIR_MODULOS}/${m.clave}/layout.tsx`) ? quitarComentarios(leer(`${DIR_MODULOS}/${m.clave}/layout.tsx`)) : "";
@@ -916,7 +968,7 @@ check("H1 · Inicio es exacto (no se enciende en los módulos)", railOs.find((l)
     for (const m of t.matchAll(/from\s+["']([^"']+)["']|import\s*\(\s*["']([^"']+)["']\s*\)/g)) {
       const spec = especificador(r, m[1] ?? m[2]);
       if (!/^@\/(?:lib|components|app)\/os(?:\/|$)/.test(spec)) continue;
-      const permitido = spec === "@/lib/os/modulos" && r.startsWith("src/app/bcp/");
+      const permitido = (spec === "@/lib/os/modulos" && r.startsWith("src/app/bcp/")) || (r === ESCRITOR_DE_RONDAS && DEL_OS_PARA_EL_ESCRITOR.includes(spec));
       if (!permitido) { hall++; check("H4 · nadie de fuera importa el OS", false, `${r} → ${spec}`); }
     }
   }
@@ -1600,6 +1652,210 @@ check("T · iso(0,0) cae en el origen de la rejilla", iso(0, 0)[0] === HX.OX && 
     ESTAFETA_DEMO.notion === "leida" && cifrasEst(ESTAFETA_DEMO).every((m) => m.demo === true) && (ESTAFETA_DEMO.libro.cartas ?? []).some((c) => c.visible === "por_comprobar")
     && (ESTAFETA_DEMO.bandejas.revisar.valor ?? 0) > 0 && piezasMuertasDeLaEstafeta(ESTAFETA_DEMO).length === 0);
   check("F3 · los contextos de la demostración se declaran inventados", contextoDeAcciones(ACCIONES_DEMO).includes(TEXTOS_ES.contexto.demo) && contextoDeLaEstafeta(ESTAFETA_DEMO).includes(TEXTOS_ES.contexto.demo));
+}
+
+// ── R · Rondas (2026-11-07): el primer módulo que escribe, con su régimen estrecho ──
+{
+  // R1 · el registro: nace apagado, escribe por su dueño, vive en el hub 1 · Origen.
+  const m = MODULOS_OS.find((x) => x.clave === "rondas");
+  check("R1 · «rondas» está en el registro", !!m);
+  if (m) {
+    check("R1 · «rondas» nace APAGADO, con clase emite, no es del owner y vive en el hub 1 · Origen",
+      m.porDefecto === "apagado" && m.clase === "emite" && m.soloOwner === false && m.edificio === "origen");
+    check("R1 · sin fila de os_modulos, «rondas» sale apagado por defecto", parsearModulos(null).rondas.encendido === false && parsearModulos(null).rondas.origen === "defecto");
+  }
+
+  // R2 · el escritor (OCP): compuerta primero, valida contra la definición, escribe solo la bitácora y su rastro, no envía nada.
+  check(`R2 · ${ESCRITOR_DE_RONDAS} existe`, existe(ESCRITOR_DE_RONDAS));
+  if (existe(ESCRITOR_DE_RONDAS)) {
+    const t = leer(ESCRITOR_DE_RONDAS);
+    const l = quitarComentarios(t);
+    const fn = l.slice(l.indexOf("export async function registrarRespuestaDeRonda"));
+    check("R2 · el escritor es un archivo de Server Actions", /^\s*["']use server["'];/.test(t));
+    check("R2 · lo primero que hace es la compuerta del OCP, clase emite", /^[^{]*\{\s*const permiso = await permisoDeEscritura\(\s*["']ocp["']\s*,\s*["']emite["']\s*\);/.test(fn));
+    check("R2 · exporta solo registrarRespuestaDeRonda (y tipos)", [...l.matchAll(/export\s+(?:async\s+)?(?:function|const|let|var)\s+(\w+)/g)].map((x) => x[1]).join() === "registrarRespuestaDeRonda");
+    check("R2 · valida contra la definición y mira la bitácora ANTES de escribir nada",
+      l.includes("validarEntrada(def, entrada,") && l.indexOf('from("ronda_contactos").select(') > 0 && l.indexOf('from("ronda_contactos").select(') < l.indexOf("ACCIONES[e.accion]") && l.indexOf("validarEntrada(") < l.indexOf("ACCIONES[e.accion]"));
+    const accs = (l.match(/const ACCIONES = \{([^}]*)\}/)?.[1] ?? "").split(",").map((x) => x.trim()).filter(Boolean).sort();
+    check("R2 · cada acción de ACCIONES_DE_RONDA tiene su escritor dueño, y ninguna más", accs.join() === [...ACCIONES_DE_RONDA].sort().join(), accs.join());
+    const escrituras = [...l.matchAll(/\.from\(\s*["']([a-z_]+)["']\s*\)\s*\.(insert|update|upsert|delete)\(/g)].map((x) => `${x[1]}.${x[2]}`).sort();
+    check("R2 · escribe por su cuenta solo la bitácora y su rastro (insert en ronda_contactos y audit_log)", escrituras.join() === "audit_log.insert,ronda_contactos.insert", escrituras.join());
+    check("R2 · ninguna otra escritura (update, upsert, delete, rpc) ni Storage", !/\.(?:update|upsert|delete|rpc)\s*\(|\.storage\b/.test(l));
+    check("R2 · deja su fila producer · ronda_contacto_registrado, y la acción está en el catálogo de los hechos",
+      /entity_type:\s*["']producer["']/.test(l) && /action:\s*["']ronda_contacto_registrado["']/.test(l) && "producer.ronda_contacto_registrado" in ACCIONES);
+    check("R2 · no envía nada: ni eventos, ni correo, ni red, ni WhatsApp", !/emitEvent|sendTransactionalEmail|resend|\bfetch\s*\(|wa\.me|api\.whatsapp/i.test(l));
+    check("R2 · un rechazo devuelve { ok: false, error } (nunca lanza)", !/\bthrow\b/.test(l));
+  }
+
+  // R3 · nada sale solo: ningún archivo de Rondas hace red, abre ventanas ni navega; el wa.me se arma solo en el núcleo puro.
+  const deRondas = codigo.filter((a) => a.ruta.includes("/rondas/") || a.ruta.includes("/rondas.") || /\/vistas\/Rondas?\.tsx$/.test(a.ruta));
+  check("R3 · los archivos de Rondas están (núcleo, lector, rutas, vistas, formulario, estilos)", deRondas.length >= 12, String(deRondas.length));
+  for (const a of deRondas) {
+    check(`R3 · ${a.ruta}: no envía ni navega solo (sin fetch, window.open, location, emitEvent, correo)`,
+      !/\bfetch\s*\(|window\.open|\blocation\s*(?:\.|=)|emitEvent|sendTransactionalEmail/.test(a.limpio));
+  }
+  check("R3 · el enlace wa.me se arma SOLO en el núcleo puro", deRondas.filter((a) => /wa\.me/.test(a.limpio)).map((a) => a.ruta).join() === "src/lib/os/rondas/nucleo.ts");
+  const vistaRonda = codigo.find((a) => a.ruta === "src/components/os/vistas/Ronda.tsx");
+  check("R3 · «Abrir WhatsApp» es un enlace que la persona pulsa (<a href> a otra pestaña), no un botón que envía",
+    !!vistaRonda && /<a\s[^>]*href=\{t\.enlaceWhatsapp\}[^>]*target="_blank"/.test(vistaRonda.limpio));
+
+  // R4 · el lector: server-only, una lista blanca EXACTA de tablas y columnas; solo él lee contactos; solo el formulario importa la acción.
+  const lector = codigo.find((a) => a.ruta === LECTOR_DE_RONDAS);
+  check(`R4 · ${LECTOR_DE_RONDAS} existe y es server-only`, !!lector && lector.texto.startsWith('import "server-only";'));
+  if (lector) {
+    const malas = [];
+    for (const x of lector.limpio.matchAll(/\.from\(\s*["']([a-z_]+)["']\s*\)\s*\.select\(\s*["'`]([^"'`]*)["'`]/g)) {
+      const cols = TABLAS_DE_RONDAS[x[1]];
+      if (!cols) { malas.push(`tabla ${x[1]}`); continue; }
+      for (const item of x[2].split(",").map((c) => c.trim()).filter(Boolean)) {
+        const col = item.replace(/^\w+:/, "").split("->")[0].trim();
+        if (!cols.includes(col)) malas.push(`${x[1]}.${col}`);
+      }
+    }
+    const froms = [...lector.limpio.matchAll(/\.from\(/g)].length;
+    const conSelect = [...lector.limpio.matchAll(/\.from\(\s*["'][a-z_]+["']\s*\)\s*\.select\(\s*["'`]/g)].length;
+    check("R4 · el lector lee solo su lista blanca exacta de tablas y columnas", malas.length === 0, malas.join(", "));
+    check("R4 · cada .from() del lector es una tabla literal seguida de su select", froms === conSelect && froms > 0, `${conSelect}/${froms}`);
+    check("R4 · el datasheet nunca entero: solo rutas JSON con alias", !/(?:^|[\s,"'`])datasheet\s*(?:[,"'`]|$)/m.test(lector.limpio));
+    check("R4 · el lector nunca escribe", !/\.(?:insert|update|upsert|delete|rpc)\s*\(/.test(lector.limpio));
+  }
+  const conContactos = codigo.filter((a) => /@\/lib\/bcpProducers/.test(a.limpio)).map((a) => a.ruta);
+  check("R4 · solo el lector de Rondas lee el contacto de las personas (fetchProducerContacts)", conContactos.join() === LECTOR_DE_RONDAS, conContactos.join());
+  const conAccion = codigo.filter((a) => /["']@\/app\/(?:bcp|ecp|ocp|lcp)\/[^"']*(?<!\.css)["']/.test(a.limpio)).map((a) => a.ruta);
+  check("R4 · solo el formulario de Rondas importa una acción de otra consola (la del OCP)", conAccion.join() === FORMULARIO_DE_RONDAS, conAccion.join());
+
+  // R5 · las páginas miran el interruptor antes de leer.
+  for (const r of ["src/app/os/(app)/m/rondas/page.tsx", "src/app/os/(app)/m/rondas/[slug]/page.tsx"]) {
+    const t = existe(r) ? quitarComentarios(leer(r)) : "";
+    const i = t.indexOf('await moduloEncendido("rondas")');
+    check(`R5 · ${r} mira el interruptor antes de leer y, apagado, no pinta nada`,
+      i > 0 && /if \(!estado\.encendido\) return null;/.test(t) && (t.indexOf("leerRonda(") < 0 || t.indexOf("leerRonda(") > i));
+  }
+
+  // R6 · las definiciones: el arquetipo es uno y cada ronda es datos coherentes.
+  const slugs = RONDAS.map((d) => d.slug);
+  check("R6 · hay rondas, cada una con un slug único y bien formado", slugs.length > 0 && new Set(slugs).size === slugs.length && slugs.every((x) => /^[a-z0-9-]{2,60}$/.test(x)));
+  check("R6 · rondaPorSlug encuentra cada ronda y nada más", slugs.every((x) => rondaPorSlug(x)?.slug === x) && rondaPorSlug("no-existe") === null);
+  for (const d of RONDAS) {
+    check(`R6 · «${d.slug}»: su selector existe y su hub es del Mapa CTC`, SELECTORES.includes(d.quien.selector) && DOMINIOS.some((x) => x.id === d.hub));
+    const claves = d.campos.map((c) => `${c.nivel}.${c.clave}`);
+    check(`R6 · «${d.slug}»: cada campo es único por nivel`, new Set(claves).size === claves.length);
+    for (const p of d.pedidos) for (const c of p.campos) check(`R6 · «${d.slug}» · «${p.clave}»: el campo «${c}» existe en su nivel`, d.campos.some((x) => x.clave === c && x.nivel === p.nivel));
+    for (const c of d.campos) {
+      if (c.guarda.tipo === "accion") {
+        check(`R6 · «${d.slug}» · «${c.clave}»: va por una acción dueña de la lista, es un número de lote`, ACCIONES_DE_RONDA.includes(c.guarda.accion) && c.tipo === "numero" && c.nivel === "lote");
+      } else {
+        check(`R6 · «${d.slug}» · «${c.clave}»: queda en la bitácora y su dueño lo aplica en una pantalla que existe (${c.guarda.aplicarEn})`,
+          c.guarda.registro === "ronda_contactos.respuestas" && tienePagina(c.guarda.aplicarEn));
+      }
+      if (c.tipo === "opcion") check(`R6 · «${d.slug}» · «${c.clave}»: una opción tiene sus valores`, (c.opciones ?? []).length >= 2);
+    }
+  }
+
+  // R7 · los términos A/B: PENDIENTES (los define el owner) y el mensaje no los nombra mientras lo estén.
+  const r1 = rondaPorSlug("completar-fichas");
+  check("R7 · la ronda 1 «completar-fichas» existe", !!r1);
+  if (!TERMINOS_AB.definidos) {
+    check("R7 · los términos A/B están marcados PENDIENTE en la definición (texto y marca) y en sus avisos",
+      /^PENDIENTE: términos A\/B — los define el owner/.test(TERMINOS_AB.marca) && TERMINOS_AB.a.texto.startsWith("PENDIENTE") && TERMINOS_AB.b.texto.startsWith("PENDIENTE")
+        && !!r1 && (r1.pendientes ?? []).includes(TERMINOS_AB.marca) && r1.campos.find((c) => c.clave === "terminos")?.ayuda === TERMINOS_AB.marca);
+  }
+
+  // R8 · el núcleo puro, con datos inventados.
+  check("R8 · normalizarTelefono: celular de 10 dígitos con el 57, con indicativo tal cual, lo demás sin enlace",
+    normalizarTelefono("300 000 0000") === "573000000000" && normalizarTelefono("(+57) 300-000-0000") === "573000000000" && normalizarTelefono("12345") === null && normalizarTelefono(null) === null);
+  const enlace = enlaceDeWhatsapp("3000000000", "Hola & adiós\nlínea");
+  check("R8 · enlaceDeWhatsapp abre wa.me con el texto codificado (y nada sin número)",
+    enlace === `https://wa.me/573000000000?text=${encodeURIComponent("Hola & adiós\nlínea")}` && enlaceDeWhatsapp("", "x") === null);
+  check("R8 · numeroDe lee como en Colombia y rechaza lo que no es positivo",
+    numeroDe("5.000") === 5000 && numeroDe("2,5") === 2.5 && numeroDe("-3") === null && numeroDe("abc") === null && numeroDe("0") === null);
+  if (r1) {
+    const lote = (id, extra) => ({ id, nombre: `Lote ${id}`, codigo: null, etapa: "borrador", grado: null, muestraEnviada: false, muestraRecibida: false, existenciaKg: null, fichaPct: null,
+      fichaSecciones: { a1: true, a2: false, a3: false, a5: false, b1: true }, finca: null, ...extra });
+    const conFinca = (poligono) => ({ id: "f", nombre: "Finca F", codigo: null, estado: "approved", conPoligono: poligono });
+    const P1 = { productorId: "p1", codigo: null, nombre: "Persona Uno", nombreCorto: "Persona", empresa: null, telefono: "3000000000", whatsappConfirmado: false,
+      lotes: [lote("l1", {}), lote("l2", { etapa: "galardonado", grado: "red", muestraEnviada: true, muestraRecibida: true, fichaSecciones: { a1: true, a2: true, a3: true, a5: true, b1: true }, finca: conFinca(true) })] };
+    const P2 = { productorId: "p2", codigo: null, nombre: "Persona Dos", nombreCorto: "Persona", empresa: null, telefono: null, whatsappConfirmado: true,
+      lotes: [lote("l3", { etapa: "ficha_completa", muestraEnviada: true, finca: conFinca(false) })] };
+    const a0 = armarRonda(r1, [P1, P2], [], "leidos", "Quien Escribe");
+    const tj = (a, id) => a.tarjetas.find((t) => t.productorId === id);
+    const pedidosDe = (a, p, l) => tj(a, p).lotes.find((x) => x.id === l).pedidos.map((x) => x.clave).join();
+    const camposDe = (a, p, l) => tj(a, p).lotes.find((x) => x.id === l).campos.map((x) => x.clave);
+    check("R8 · cada pedido aplica solo cuando falta (muestra, Ficha en borrador, mapa sin polígono o sin finca, disponibilidad, WhatsApp)",
+      pedidosDe(a0, "p1", "l1") === "muestra,ficha,mapa_eudr,disponibilidad" && pedidosDe(a0, "p1", "l2") === "disponibilidad" && pedidosDe(a0, "p2", "l3") === "muestra,mapa_eudr,disponibilidad"
+        && tj(a0, "p1").pedidosDelProductor.map((x) => x.clave).join() === "whatsapp" && tj(a0, "p2").pedidosDelProductor.length === 0);
+    check("R8 · la Ficha dice qué secciones faltan",
+      (tj(a0, "p1").lotes.find((x) => x.id === "l1").pedidos.find((x) => x.clave === "ficha")?.detalle ?? []).join("|") === [SECCIONES_DE_FICHA.a2, SECCIONES_DE_FICHA.a3, SECCIONES_DE_FICHA.a5].join("|"));
+    check("R8 · la venta anticipada solo se pregunta a un lote galardonado",
+      camposDe(a0, "p1", "l2").includes("venta_anticipada") && camposDe(a0, "p1", "l2").includes("venta_anticipada_kg") && !camposDe(a0, "p1", "l1").includes("venta_anticipada"));
+    check("R8 · el formulario trae solo los campos de lo que aplica", camposDe(a0, "p1", "l2").join() === "existencia_kg,precio_cop_kg,terminos,venta_anticipada,venta_anticipada_kg");
+    check("R8 · sin bitácora nadie está hecho; el total son los Personajes del selector", a0.total === 2 && a0.hechos === 0 && a0.tarjetas.every((t) => t.estado === "sin_contacto"));
+    const msg = tj(a0, "p1").mensaje;
+    check("R8 · el mensaje saluda, firma quien escribe, nombra cada lote con lo que le falta y lo del productor",
+      msg.startsWith(r1.mensaje.saludo("Persona", "Quien Escribe")) && msg.includes("Lote l1") && msg.includes("Lote l2") && msg.endsWith(r1.mensaje.cierre) && msg.includes(r1.pedidos.find((p) => p.clave === "whatsapp").mensaje({ objetivo: P1, lote: null, anotado: {} })));
+    check("R8 · el enlace de la tarjeta lleva ESE mensaje; sin teléfono, no hay enlace",
+      tj(a0, "p1").enlaceWhatsapp === enlaceDeWhatsapp("3000000000", msg) && tj(a0, "p2").enlaceWhatsapp === null);
+    if (!TERMINOS_AB.definidos) check("R8 · ningún mensaje lleva un texto PENDIENTE (los términos A/B no se mandan a medio decidir)", a0.tarjetas.every((t) => !/PENDIENTE/.test(t.mensaje)));
+    const c = (id, p, resultado, at, respuestas = { lotes: {}, productor: {} }) => ({ id, productorId: p, resultado, volverEl: resultado === "volver_a_llamar" ? "2026-11-10" : null, nota: null, respuestas, aplicadas: {}, registradoPor: null, registradoAt: at });
+    const bit = [
+      c("c1", "p1", "volver_a_llamar", "2026-11-06T10:00:00Z"),
+      c("c2", "p1", "alcanzado", "2026-11-07T10:00:00Z", { lotes: { l2: { precio_cop_kg: 1000 } }, productor: { whatsapp_confirmado: "si" } }),
+      c("c3", "p2", "no_contesta", "2026-11-07T11:00:00Z"),
+    ];
+    const a1 = armarRonda(r1, [P1, P2], bit, "leidos", "Quien Escribe");
+    check("R8 · hecho = el ÚLTIMO contacto dice «alcanzado»; lo dicho cierra su pedido",
+      a1.hechos === 1 && tj(a1, "p1").estado === "hecho" && tj(a1, "p2").estado === "no_contesta" && pedidosDe(a1, "p1", "l2") === "" && tj(a1, "p1").pedidosDelProductor.length === 0 && tj(a1, "p1").historial.length === 2);
+    check("R8 · lo anotado se suma de lo viejo a lo nuevo, campo por campo",
+      JSON.stringify(anotadoDe([c("x", "p", "alcanzado", "2026-11-02", { lotes: { l: { a: 1, b: 2 } }, productor: {} }), c("y", "p", "alcanzado", "2026-11-01", { lotes: { l: { a: 9 } }, productor: { w: "si" } })]))
+        === JSON.stringify({ lotes: { l: { a: 1, b: 2 } }, productor: { w: "si" } }));
+    const v = (e) => validarEntrada(r1, { ronda: r1.slug, productorId: "p1", ...e }, ["l1", "l2"]);
+    const okv = v({ resultado: "alcanzado", lotes: { l1: { existencia_kg: "1.200", precio_cop_kg: "" } }, productor: { whatsapp_confirmado: "si" } });
+    check("R8 · validarEntrada: lo que tiene acción dueña va por ella (la existencia), lo demás a la bitácora",
+      okv.ok && okv.valor.porAccion.length === 1 && okv.valor.porAccion[0].accion === "registrarExistenciaOcp" && okv.valor.porAccion[0].valor === 1200
+        && okv.valor.respuestas.lotes.l1.existencia_kg === 1200 && !("precio_cop_kg" in okv.valor.respuestas.lotes.l1) && okv.valor.respuestas.productor.whatsapp_confirmado === "si");
+    const rechaza = [
+      v({ resultado: "alcanzado", lotes: { ajeno: { existencia_kg: "10" } } }),
+      v({ resultado: "alcanzado", lotes: { l1: { inventado: "x" } } }),
+      v({ resultado: "no_contesta", lotes: { l1: { existencia_kg: "10" } } }),
+      v({ resultado: "volver_a_llamar" }),
+      v({ resultado: "alcanzado", lotes: { l1: { terminos: "c" } } }),
+      v({ resultado: "alcanzado", lotes: { l1: { existencia_kg: "-5" } } }),
+      v({ resultado: "otro" }),
+      validarEntrada(r1, { ronda: "otra", productorId: "p1", resultado: "alcanzado" }, []),
+    ];
+    check("R8 · validarEntrada rechaza: lote ajeno, campo inventado, datos sin contacto, volver sin fecha, opción falsa, número no positivo, resultado falso, otra ronda",
+      rechaza.every((x) => !x.ok), rechaza.map((x) => x.ok).join());
+    check("R8 · validarEntrada acepta «volver a llamar» con su fecha y sin datos", v({ resultado: "volver_a_llamar", volverEl: "2026-11-10" }).ok && RESULTADOS.length === 3);
+  }
+
+  // R9 · las vistas no escriben texto propio: todo sale de textos/ (una fuente por idioma) o de la DEFINICIÓN de la ronda.
+  for (const ruta of ["src/components/os/vistas/Ronda.tsx", "src/components/os/vistas/Rondas.tsx", FORMULARIO_DE_RONDAS]) {
+    const x = codigo.find((y) => y.ruta === ruta);
+    check(`R9 · ${ruta} existe`, !!x);
+    if (!x) continue;
+    const propios = textoPropioDe(x.limpio);
+    check(`R9 · ${ruta} no escribe texto propio: todo sale de textos/ o de la definición`, propios.length === 0, propios.map((p) => `${lineaDe(x.limpio, p.pos)}: «${p.txt.trim()}»`).join(" | "));
+    check(`R9 · ${ruta} lee sus textos de textosDelOs()`, /textosDelOs\(\)/.test(x.limpio));
+  }
+  check("R9 · Inicio describe Rondas con los textos de su idioma", /rondas: textosDelOs\(\)\.modulos\.rondas/.test(quitarComentarios(leer("src/components/os/vistas/Inicio.tsx"))));
+
+  // R10 · la bitácora: su migración está escrita (SIN aplicar: la aplica el owner), con RLS sin políticas e inmutable.
+  const MIG = "docs/migraciones/2026-11-07_ronda_contactos.sql";
+  check(`R10 · ${MIG} existe`, existe(MIG));
+  if (existe(MIG)) {
+    const sql = leer(MIG);
+    check("R10 · crea ronda_contactos con RLS, sin políticas, sin permisos para anon/authenticated, e inmutable",
+      /create table public\.ronda_contactos/.test(sql) && /alter table public\.ronda_contactos enable row level security/.test(sql) && !/create policy/i.test(sql)
+        && /revoke all on public\.ronda_contactos from anon, authenticated/.test(sql) && /before update on public\.ronda_contactos/.test(sql));
+    const cols = columnasDe("ronda_contactos", CONTEXTO);
+    const faltan = TABLAS_DE_RONDAS.ronda_contactos.filter((x) => !cols.has(x));
+    check("R10 · cada columna que lee el lector existe en la migración", faltan.length === 0, faltan.join(", "));
+  }
+
+  // R11 · la demostración: la primera ronda con Personajes inventados (sin teléfonos que existan).
+  check("R11 · la demostración arma la ronda 1 con la MISMA armarRonda: tres Personajes, uno hecho",
+    RONDA_DEMO.slug === RONDAS[0].slug && RONDA_DEMO.total === 3 && RONDA_DEMO.hechos === 1 && RONDA_DEMO.contactos === "leidos");
+  check("R11 · la demostración no lleva un teléfono que pueda existir (todo ceros o ninguno)", RONDA_DEMO.tarjetas.every((t) => t.telefono === null || /^0+$/.test(t.telefono)));
 }
 
 // ── Las excepciones sin uso fallan ───────────────────────────────────────────

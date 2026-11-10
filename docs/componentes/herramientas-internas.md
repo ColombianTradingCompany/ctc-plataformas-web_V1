@@ -197,6 +197,13 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
 
 ## Pendientes
 
+- **2026-11-10 · el Divisor de video, guardado y sin montar** (rama `herramientas-internas/divisor-de-video`). HTML autónomo
+  del equipo (cortar un video largo en clips con marcadores, relleno de 0 a 3 s y nombre obligatorio `(1 of N) Nombre`) en
+  `private/herramientas-internas/divisor-de-video.html`, con su `README.md` al lado. **Ninguna ruta lo sirve todavía**: se usa
+  abriendo el archivo en local. Para montarlo: servirlo detrás de la sesión del ECP como `private/ocp-apps/` (ruta, lista
+  blanca, traza en `next.config.ts`, guardián) y pedir su entrada del rail a `consolas`; el grupo lo decide el owner (las
+  utilidades del equipo salieron de este charter el 2026-09-19 hacia «Caja de herramientas»). Dueño: `herramientas-internas`,
+  con `consolas` (el rail).
 - **2026-11-06 · V6.22 · F-01 etapa 2 · el cotizador de lotes abre la Mermas pública** (de `herramientas-cafe`, decisión del owner del 6 nov;
   la etapa 1 está en `ALINEACION` §3 del 2026-11-06). `AppFrame.tsx` abre `/tools/mermas-ctc/mermas-ctc.html` con el puente inerte; la copia
   privada `private/ocp-apps/cotizador-lotes.html` queda de respaldo detrás de un interruptor; se retira tras dos semanas de uso y el sí del
